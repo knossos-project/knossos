@@ -140,7 +140,7 @@ void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
     obj.addExistingSubObject(newSubObj);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColorUniqueFromId(const uint64_t subObjectID) const {
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorUniqueFromId(const uint64_t subObjectID) const {
     const uint8_t red   =  subObjectID        & 0xFF;
     const uint8_t green = (subObjectID >> 8)  & 0xFF;
     const uint8_t blue  = (subObjectID >> 16) & 0xFF;
@@ -152,7 +152,25 @@ uint64_t Segmentation::subobjectIdFromUniqueColor(std::tuple<uint8_t, uint8_t, u
     return std::get<0>(color) + (std::get<1>(color) << 8) + (std::get<2>(color) << 16);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::objectColorFromSubobject(const uint64_t subObjectID) const {
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
+    bool multipleSelectedObjects = std::count_if(std::begin(subobject.objects), std::end(subobject.objects), [](const Segmentation::Object & object){
+        return object.selected;
+    }) > 1;
+    if (multipleSelectedObjects) {
+        return std::make_tuple(255, 0, 0, alpha);
+    }
+
+    auto & object = std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [](const Segmentation::Object & object){
+        return object.selected;
+    })->get();
+
+    const uint8_t red   = overlayColorMap[0][object.id % 256];
+    const uint8_t green = overlayColorMap[1][object.id % 256];
+    const uint8_t blue  = overlayColorMap[2][object.id % 256];
+    return std::make_tuple(red, green, blue, alpha);
+}
+
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(const uint64_t subObjectID) const {
     if (subObjectID == 0) {
         return std::make_tuple(0, 0, 0, 0);
     }
@@ -168,16 +186,17 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::objectColorFromSubo
     if (subobject.objects.front().get().id == 0) {
         return std::make_tuple(0, 0, 0, 0);
     }
+    if (subobject.selected) {
+        return colorOfSelectedObject(subobject);
+    } else if (!renderAllObjs) {
+        return std::make_tuple(0, 0, 0, 0);
+    }
 
     const auto & object = largestObjectContainingSubobject(subobject);
     const uint8_t red   = overlayColorMap[0][object.id % 256];
     const uint8_t green = overlayColorMap[1][object.id % 256];
     const uint8_t blue  = overlayColorMap[2][object.id % 256];
-    uint8_t currAlpha = alpha;
-    if (renderAllObjs == false && object.selected == false) {
-        currAlpha = 0;
-    }
-    return std::make_tuple(red, green, blue, currAlpha);
+    return std::make_tuple(red, green, blue, alpha);
 }
 
 bool Segmentation::subobjectExists(const uint64_t & subobjectId) {
@@ -213,10 +232,12 @@ Segmentation::Object & Segmentation::largestImmutableObjectContainingSubobject(c
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
+    emit dataChanged();
 }
 
 void Segmentation::untouchObjects() {
     touched_subobject_id = 0;
+    emit dataChanged();
 }
 
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedObjects() {
@@ -294,21 +315,6 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
             selectObject(object);
         }
         emit dataChanged();
-    }
-}
-
-void Segmentation::unmergeSubObject(Segmentation::Object & object, Segmentation::SubObject & subobject) {
-    const auto & otherIt = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
-        , [&](const Segmentation::Object & elem){
-            return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobject.id;
-        });
-    //create object to unmerge if there’s none except the currently selected one
-    if (otherIt == std::end(subobject.objects)) {
-        auto objectId = ++highestObjectId;
-        auto & other = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobject)).first->second;
-        unmergeObject(object, other);
-    } else {
-        unmergeObject(object, otherIt->get());
     }
 }
 
@@ -414,6 +420,28 @@ void Segmentation::mergeSelectedObjects() {
                 merge(selectedObjects.front().get(), obj);
             }
         }
+    }
+    emit dataChanged();
+}
+
+void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToUnmerge) {
+    const auto & otherIt = std::find_if(std::begin(subobjectToUnmerge.objects), std::end(subobjectToUnmerge.objects)
+        , [&](const Segmentation::Object & elem){
+            return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobjectToUnmerge.id;
+        });
+    //create object to unmerge if there’s none except the currently selected one
+    if (otherIt == std::end(subobjectToUnmerge.objects)) {
+        auto objectId = ++highestObjectId;
+        auto & other = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobjectToUnmerge)).first->second;
+        unmergeSelectedObjects(other);
+    } else {
+        unmergeSelectedObjects(otherIt->get());
+    }
+}
+
+void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
+    for (auto & obj : selectedObjects) {
+        unmergeObject(obj, objectToUnmerge);
     }
     emit dataChanged();
 }

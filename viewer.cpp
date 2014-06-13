@@ -405,7 +405,7 @@ void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
             uint64_t subObjectID;
             memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
+            const auto color = Segmentation::singleton().colorObjectFromId(subObjectID);
             slicePtr[0] = std::get<0>(color);
             slicePtr[1] = std::get<1>(color);
             slicePtr[2] = std::get<2>(color);
@@ -467,7 +467,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
             uint64_t subObjectID;
             memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
+            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
             slice[0] = std::get<0>(color);
             slice[1] = std::get<1>(color);
             slice[2] = std::get<2>(color);
@@ -483,7 +483,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
                 uint64_t subObjectID;
                 memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-                const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
+                const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
                 slice[0] = std::get<0>(color);
                 slice[1] = std::get<1>(color);
                 slice[2] = std::get<2>(color);
@@ -503,7 +503,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
             uint64_t subObjectID;
             memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
+            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
             slice[0] = std::get<0>(color);
             slice[1] = std::get<1>(color);
             slice[2] = std::get<2>(color);
@@ -1332,7 +1332,6 @@ void Viewer::run() {
                 }
             }
             state->viewerState->userMove = false;
-            return;
         }
     }
 }

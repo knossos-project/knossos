@@ -83,6 +83,7 @@ Q_OBJECT
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
     Object & const_merge(Object & one, Object & other);
     Object & merge(Object & one, Object & other);
+    void unmergeObject(Object & object, Object & other);
 public:
     static Segmentation & singleton();
     // This array holds the table for overlay coloring.
@@ -128,9 +129,10 @@ public:
     Object & createObject(const uint64_t objectId, const uint64_t initialSubobjectId, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColorUniqueFromId(const uint64_t subObjectID) const;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorUniqueFromId(const uint64_t subObjectID) const;
     uint64_t subobjectIdFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) const;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) const;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
     bool subobjectExists(const uint64_t & subobjectId);
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
@@ -143,8 +145,6 @@ public:
     void clearObjectSelection();
     void selectObject(Object & object);
     void unselectObject(Object & object);
-    void unmergeObject(Object & object, Object & other);
-    void unmergeSubObject(Object & object, SubObject & subobject);
     void selectObjectFromSubObject(SubObject &subobject);
     void selectObject(const uint64_t & objectId);
     std::size_t selectedObjectsCount();
@@ -155,6 +155,8 @@ signals:
 public slots:
     void deleteSelectedObjects();
     void mergeSelectedObjects();
+    void unmergeSelectedObjects(SubObject & subobjectToUnmerge);
+    void unmergeSelectedObjects(Object & objectToUnmerge);
 };
 
 #endif // SEGMENTATION_H
