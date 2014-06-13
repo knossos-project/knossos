@@ -13,10 +13,6 @@
 
 extern stateInfo *state;
 
-int TouchedObjectModel::rowCount(const QModelIndex &) const {
-    return Segmentation::singleton().touchedObjects().size();
-}
-
 void TouchedObjectModel::recreate() {
     beginResetModel();
     objectCache.clear();
@@ -29,7 +25,7 @@ void TouchedObjectModel::recreate() {
 }
 
 int SegmentationObjectModel::rowCount(const QModelIndex &) const {
-    return Segmentation::singleton().objects.size();
+    return objectCache.size();
 }
 
 int SegmentationObjectModel::columnCount(const QModelIndex &) const {
@@ -182,6 +178,10 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
 }
 
 void SegmentationTab::touchedObjSelectionChanged() {
+    if (touchedObjectSelectionProtection) {
+        return;
+    }
+
     Segmentation::singleton().blockSignals(true);//prevent ping pong
     emit clearSegObjSelectionSignal();
     for (const auto & index : touchedObjsTable.selectionModel()->selectedRows()) {
@@ -192,6 +192,10 @@ void SegmentationTab::touchedObjSelectionChanged() {
 }
 
 void SegmentationTab::selectionChanged() {
+    if (objectSelectionProtection) {
+        return;
+    }
+
     Segmentation::singleton().blockSignals(true);//prevent ping pong
     emit clearSegObjSelectionSignal();
 
@@ -229,14 +233,10 @@ void SegmentationTab::updateTouchedObjSelection() {
                              touchedObjectModel.index(objIndex-1, touchedObjectModel.columnCount()-1));
     }
 
-    touchedObjsTable.selectionModel()->blockSignals(true);
+    touchedObjectSelectionProtection = true;//using block signals prevents update of the tableview
     touchedObjsTable.clearSelection();
     touchedObjsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
-    touchedObjsTable.selectionModel()->blockSignals(false);
-
-//    if (!selectedItems.indexes().isEmpty()) { // scroll to first selected entry
-//        touchedObjsTable.scrollTo(selectedItems.indexes().front());
-//    }
+    touchedObjectSelectionProtection= false;
 }
 
 void SegmentationTab::updateSelection() {
@@ -264,10 +264,10 @@ void SegmentationTab::updateSelection() {
                              objectModel.index(objIndex-1, objectModel.columnCount()-1));
     }
 
-    objectsTable.selectionModel()->blockSignals(true);
+    objectSelectionProtection = true;//using block signals prevents update of the tableview
     objectsTable.clearSelection();
     objectsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
-    objectsTable.selectionModel()->blockSignals(false);
+    objectSelectionProtection = false;
 
     if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
         objectsTable.scrollTo(selectedItems.indexes().front());

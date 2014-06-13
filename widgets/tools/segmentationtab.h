@@ -30,7 +30,6 @@ public:
 
 class TouchedObjectModel : public SegmentationObjectModel {
 Q_OBJECT
-    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
 public:
     void recreate();
 };
@@ -47,6 +46,8 @@ Q_OBJECT
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
+    bool objectSelectionProtection = false;
+    bool touchedObjectSelectionProtection = false;
 public:
     explicit SegmentationTab(QWidget & parent);
     void selectionChanged();
