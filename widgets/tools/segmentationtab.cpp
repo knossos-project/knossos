@@ -202,8 +202,8 @@ void SegmentationTab::selectionChanged() {
     for (const auto & index : objectsTable.selectionModel()->selectedRows()) {
         Segmentation::singleton().selectObject(index.data().toInt());
     }
-    touchedObjectModel.recreate();
     Segmentation::singleton().untouchObjects();
+    touchedObjectModel.recreate();
     updateTouchedObjSelection();
     Segmentation::singleton().blockSignals(false);
 }
