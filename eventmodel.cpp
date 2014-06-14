@@ -176,7 +176,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                 } else {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         segmentation.selectObjectFromSubObject(subobject);
-                    } else {
+                    } else if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
                         segmentation.selectObject(objectToMerge);//select largest object
                     }
                     if (segmentation.selectedObjectsCount() >= 2) {
