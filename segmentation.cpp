@@ -89,7 +89,22 @@ Segmentation::Object & Segmentation::merge(Segmentation::Object & one, Segmentat
     return one;
 }
 
-bool Segmentation::hasObjects() {
+void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
+    std::ifstream overlayLutFile(filename, std::ios_base::binary);
+    if (overlayLutFile) {
+        std::vector<char> buffer(std::istreambuf_iterator<char>(overlayLutFile), std::istreambuf_iterator<char>{});//consume whole file
+
+        const auto expectedSize = 768 * sizeof(buffer[0]);
+        if (buffer.size() == expectedSize) {
+            std::move(std::begin(buffer), std::end(buffer), &Segmentation::singleton().overlayColorMap[0][0]);
+            qDebug() << "sucessfully loaded »stdOverlay.lut«";
+        } else {
+            qDebug() << "stdOverlay.lut corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
+        }
+    }
+}
+
+bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
@@ -199,7 +214,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
     return std::make_tuple(red, green, blue, alpha);
 }
 
-bool Segmentation::subobjectExists(const uint64_t & subobjectId) {
+bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
     auto it = subobjects.find(subobjectId);
     return it != std::end(subobjects);
 }
@@ -249,11 +264,11 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedO
     }
 }
 
-bool Segmentation::isSelected(const SubObject & rhs) {
+bool Segmentation::isSelected(const SubObject & rhs) const{
     return rhs.selected;
 }
 
-bool Segmentation::isSelected(const Object & rhs) {
+bool Segmentation::isSelected(const Object & rhs) const {
     return rhs.selected;
 }
 
@@ -339,7 +354,7 @@ void Segmentation::selectObject(const uint64_t & objectId) {
     }
 }
 
-std::size_t Segmentation::selectedObjectsCount() {
+std::size_t Segmentation::selectedObjectsCount() const {
     return selectedObjects.size();
 }
 

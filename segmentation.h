@@ -21,17 +21,16 @@
 class Segmentation : public QObject {
 Q_OBJECT
     friend class SegmentationObjectModel;
-    friend class TouchedObjectModel;
     friend class SegmentationTab;
 
     class Object;
     class SubObject {
         friend class Segmentation;
         std::vector<std::reference_wrapper<Object>> objects;
+        bool selected;
     public:
         const uint64_t id;
-        bool selected;
-        explicit SubObject(const uint64_t id) : id(id), selected(false) {}
+        explicit SubObject(const uint64_t id) : selected(false), id(id) {}
         SubObject(SubObject &&) = delete;
         SubObject(const SubObject &) = delete;
     };
@@ -47,7 +46,6 @@ Q_OBJECT
 
     class Object {
         friend class SegmentationObjectModel;
-        friend class TouchedObjectModel;
         friend class Segmentation;
 
         QString category;
@@ -75,17 +73,9 @@ Q_OBJECT
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
     // Selection via subobjects touches all objects containing the subobject.
-    // The biggest touched object, i.e. the one with the most subobjects, is selected.
     uint64_t touched_subobject_id = 0;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     static uint64_t highestObjectId;
-
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
-    Object & const_merge(Object & one, Object & other);
-    Object & merge(Object & one, Object & other);
-    void unmergeObject(Object & object, Object & other);
-public:
-    static Segmentation & singleton();
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
     std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
@@ -118,38 +108,56 @@ public:
         }
         return lut;
     }();
-    uint8_t alpha;
-    bool segmentationMode;
-    QString filename;
 
-    Segmentation();
-    bool hasObjects();
-    void setDefaultFilename();
     Object & createObject(const uint64_t initialSubobjectId);
     Object & createObject(const uint64_t objectId, const uint64_t initialSubobjectId, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
+
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
+
+    Object & const_merge(Object & one, Object & other);
+    Object & merge(Object & one, Object & other);
+    void unmergeObject(Object & object, Object & other);
+public:
+    uint8_t alpha;
+    bool segmentationMode;
+    QString filename;
+
+    static Segmentation & singleton();
+    Segmentation();
+    //color picking
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorUniqueFromId(const uint64_t subObjectID) const;
     uint64_t subobjectIdFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) const;
+    //rendering
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
-    bool subobjectExists(const uint64_t & subobjectId);
+    //data query
+    bool hasObjects() const;
+    bool subobjectExists(const uint64_t & subobjectId) const;
+    //data access
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
     Object & largestImmutableObjectContainingSubobject(const SubObject & subobject) const;
+    //selection query
+    bool isSelected(const SubObject & rhs) const;
+    bool isSelected(const Object & rhs) const;
+    std::size_t selectedObjectsCount() const;
+    //selection modification
+    void selectObject(const uint64_t & objectId);
+    void selectObject(Object & object);
+    void selectObjectFromSubObject(SubObject &subobject);
+    void unselectObject(Object & object);
+    void clearObjectSelection();
+
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
-    bool isSelected(const SubObject & rhs);
-    bool isSelected(const Object & rhs);
-    void clearObjectSelection();
-    void selectObject(Object & object);
-    void unselectObject(Object & object);
-    void selectObjectFromSubObject(SubObject &subobject);
-    void selectObject(const uint64_t & objectId);
-    std::size_t selectedObjectsCount();
+    //files
+    void setDefaultFilename();
     void saveMergelist(const QString & toFile = Segmentation::singleton().filename);
     void loadMergelist(const std::string & fileName);
+    void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
 signals:
     void dataChanged();
 public slots:
