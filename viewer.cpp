@@ -920,18 +920,7 @@ bool Viewer::initViewer() {
     calcLeftUpperTexAbsPx();
 
     if (state->overlay) {
-        std::ifstream overlayLutFile("stdOverlay.lut", std::ios_base::binary);
-        if (overlayLutFile) {
-            std::vector<char> buffer(std::istreambuf_iterator<char>(overlayLutFile), std::istreambuf_iterator<char>{});
-
-            const auto expectedSize = 768 * sizeof(buffer[0]);
-            if (buffer.size() == expectedSize) {
-                std::move(std::begin(buffer), std::end(buffer), &Segmentation::singleton().overlayColorMap[0][0]);
-                qDebug() << "sucessfully loaded »stdOverlay.lut«";
-            } else {
-                qDebug() << "stdOverlay.lut corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
-            }
-        }
+        Segmentation::singleton().loadOverlayLutFromFile();
     }
 
     // This is the buffer that holds the actual texture data (for _all_ textures)
