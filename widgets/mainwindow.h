@@ -176,7 +176,6 @@ public slots:
 
     /* window menu */
     void taskSlot();
-    void logSlot();
 
     /* toolbar slots */
     void copyClipboardCoordinates();

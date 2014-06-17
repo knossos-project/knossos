@@ -404,15 +404,9 @@ struct assignment {
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
 
-#ifdef QT_DEBUG
-#include "widgets/console.h"
-#endif
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-#ifdef QT_DEBUG
-    Console *console;
-#endif
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
@@ -1331,40 +1325,5 @@ struct skeletonState {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-#define FPRINTF_STR_FILE(fh, str) \
-    { \
-    if (NULL != fh) {fprintf(fh, "%s", str);} \
-    }
-#define FILE_FLUSH(fh) \
-    { \
-    if (NULL != fh) { fflush(fh);} \
-    }
-#define FILE_CLOSE(fh) \
-    { \
-    if (NULL != fh) { fclose(fh); fh = NULL;} \
-    }
-extern char logFilename[];
-
-#define LOG(...) \
-{ \
-    char msg[1024]; \
-    FILE *logFile = NULL; \
-    logFile = fopen(logFilename, "a+"); \
-    sprintf(msg, "[%s\t%d ] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    FILE_FLUSH(stdout); \
-    FILE_CLOSE(logFile); \
-}
-
-// New log implementation, merge old one into new once the new doesn't crash anymore
-/*
-#define LOG(...) \
-extern stateInfo *state; \
-if(state->console) { \
-    state->console->log(__VA_ARGS__); \
-} \
-*/
-
 
 #endif

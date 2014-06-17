@@ -922,16 +922,6 @@ void MainWindow::defaultPreferencesSlot() {
     }
 }
 
-/* window menu functionality */
-
-void MainWindow::logSlot()
-{
-    this->widgetContainer->console->show();
-    this->widgetContainer->console->adjustSize();
-    if(widgetContainer->console->pos().x() <= 0 or this->widgetContainer->console->pos().y() <= 0)
-        this->widgetContainer->console->move(QWidget::mapToGlobal(centralWidget()->pos()));
-}
-
 /* toolbar slots */
 
 void MainWindow::copyClipboardCoordinates() {
@@ -955,7 +945,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
         coordinateEditingFinished();
     } else {
-        LOG("Unable to fetch text from clipboard");
+        qDebug() << "Unable to fetch text from clipboard";
     }
 }
 
@@ -1006,9 +996,6 @@ void MainWindow::saveSettings() {
 
     widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
-#ifdef QT_DEBUG
-    widgetContainer->console->saveSettings();
-#endif
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
@@ -1117,9 +1104,6 @@ void MainWindow::loadSettings() {
 
     widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
-#ifdef QT_DEBUG
-    widgetContainer->console->loadSettings();
-#endif
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();

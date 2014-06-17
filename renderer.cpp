@@ -59,7 +59,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 
     glScalef(-1., 1., 1.);
     //);
-    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
+    //qDebug("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
     glRotatef(235., 1., 0., 0.);
     glRotatef(210., 0., 0., 1.);
     setRotationState(ROTATIONSTATERESET);
@@ -463,7 +463,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
          || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-       LOG("Wrong VP type given for renderOrthogonalVP() call.")
+       qDebug() << "Wrong VP type given for renderOrthogonalVP() call."; 
         return false;
     }
 
@@ -556,7 +556,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 1.);
-               // LOG("ortho VP tex XY id: %d", state->viewerState->vpConfigs[currentVP].texture.texHandle)
+               // qDebug("ortho VP tex XY id: %d", state->viewerState->vpConfigs[currentVP].texture.texHandle);
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
@@ -1083,7 +1083,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glLoadIdentity();
     }
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
-//LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel)
+//qDebug("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);
     glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
@@ -1328,7 +1328,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
 
-            //LOG("skeleton VP tex XY id: %d", state->viewerState->vpConfigs[i].texture.texHandle)
+            //qDebug("skeleton VP tex XY id: %d", state->viewerState->vpConfigs[i].texture.texHandle);
             glLoadName(VIEWPORT_XY);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
@@ -2269,8 +2269,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     }
     glPointSize(1.f);
 
-    //LOG("verts lines: %d", state->skeletonState->lineVertBuffer.vertsIndex)
-    //LOG("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex)
+    //qDebug("verts lines: %d", state->skeletonState->lineVertBuffer.vertsIndex);
+    //qDebug("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex);
 
     /* Highlight active node */
     if(state->skeletonState->activeNode
