@@ -546,9 +546,9 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
+    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
-    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans);
+    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans, state->cubeEdgeLength);
 
     // We calculate the coordinate of the DC that holds the slice that makes up the upper left
     // corner of our texture.
@@ -786,7 +786,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
+    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
@@ -1431,7 +1431,7 @@ bool Viewer::userMove(int x, int y, int z) {
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
-    lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+    lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     viewerState->userMove = true;
 
@@ -1457,7 +1457,7 @@ bool Viewer::userMove(int x, int y, int z) {
 
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
-    newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+    newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;

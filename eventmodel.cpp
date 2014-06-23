@@ -67,17 +67,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             return false;
         }
 
-//        //in other VPs we traverse nodelist to find nearest node inside the radius
-//        clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-//        if(clickedCoordinate) {
-//            newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
-//            if(newActiveNode != NULL) {
-//                free(clickedCoordinate);
-//                emit setActiveNodeSignal(NULL, newActiveNode->nodeID);
-//                emit nodeActivatedSignal();
-//                return true;
-//            }
-//        }
         return false;
     } else if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -87,12 +76,11 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     } else {
         // check click mode of orthogonal viewports
         if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
-            Coordinate *clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-            if(clickedCoordinate == NULL) {
-                return true;
+            if(validPosition(event, VPfound) == false) {
+                return false;
             }
-            emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
-            free(clickedCoordinate);
+            Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+            emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
             Knossos::sendRemoteSignal();
         } else {// Activate motion tracking for this VP
             state->viewerState->vpConfigs[VPfound].motionTracking = 1;
@@ -190,7 +178,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 
     int newNodeID;
-    Coordinate *clickedCoordinate = NULL, movement, lastPos;
+    Coordinate movement, lastPos;
 
     /* We have to activate motion tracking only for the skeleton VP for a right click */
     if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
@@ -198,31 +186,30 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     /* If not, we look up which skeletonizer work mode is
     active and do the appropriate operation */
-    clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-
-    /* could not find any coordinate... */
-    if(clickedCoordinate == NULL) {
+    if(validPosition(event, VPfound) == false) {
         return;
     }
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
-        newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
-        newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
             emit unselectNodesSignal();
-            if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
+            if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(&clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 emit pushBranchNodeSignal(true, true, NULL, newNodeID);
@@ -239,7 +226,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
         emit unselectNodesSignal();
-        newNode = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
+        newNode = addSkeletonNodeAndLinkWithActiveSignal(&clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
         if(newNode == false) { //could not add node
@@ -248,9 +235,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         /* Highlight the viewport with the biggest movement component and set
            behavior of f / d keys accordingly. */
-        movement.x = clickedCoordinate->x - lastPos.x;
-        movement.y = clickedCoordinate->y - lastPos.y;
-        movement.z = clickedCoordinate->z - lastPos.z;
+        movement.x = clickedCoordinate.x - lastPos.x;
+        movement.y = clickedCoordinate.y - lastPos.y;
+        movement.z = clickedCoordinate.z - lastPos.z;
         /* Determine which viewport to highlight based on which movement component is biggest. */
         if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
             state->viewerState->highlightVp = VIEWPORT_YZ;
@@ -279,15 +266,15 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT) {
             switch(state->viewerState->vpConfigs[VPfound].type) {
             case VIEWPORT_XY:
-                clickedCoordinate->z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
+                clickedCoordinate.z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
                                      state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
                 break;
             case VIEWPORT_XZ:
-                clickedCoordinate->y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
+                clickedCoordinate.y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
                                      state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
                 break;
             case VIEWPORT_YZ:
-                clickedCoordinate->x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
+                clickedCoordinate.x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
                                      state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
                 break;
             }
@@ -301,32 +288,32 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             walkingVector.z = movement.z;
             //Additional move of specified steps along tracing direction
             if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING) {
-                clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate.x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate.y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate.z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
             }
             //Additional move of steps equal to distance between last and new node along tracing direction.
             if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR) {
-                clickedCoordinate->x += walkingVector.x;
-                clickedCoordinate->y += walkingVector.y;
-                clickedCoordinate->z += walkingVector.z;
+                clickedCoordinate.x += walkingVector.x;
+                clickedCoordinate.y += walkingVector.y;
+                clickedCoordinate.z += walkingVector.z;
             }
         }
 
         /* Do not allow clicks outside the dataset */
-        if (clickedCoordinate->x < 0) { clickedCoordinate->x = 0; }
-        else if (clickedCoordinate->x > state->boundary.x) { clickedCoordinate->x = state->boundary.x; }
-        if (clickedCoordinate->y < 0) { clickedCoordinate->y = 0; }
-        else if (clickedCoordinate->y > state->boundary.y) { clickedCoordinate->y = state->boundary.y; }
-        if (clickedCoordinate->z < 0) { clickedCoordinate->z = 0; }
-        else if (clickedCoordinate->z > state->boundary.z) { clickedCoordinate->z = state->boundary.z; }
+        if (clickedCoordinate.x < 0) { clickedCoordinate.x = 0; }
+        else if (clickedCoordinate.x > state->boundary.x) { clickedCoordinate.x = state->boundary.x; }
+        if (clickedCoordinate.y < 0) { clickedCoordinate.y = 0; }
+        else if (clickedCoordinate.y > state->boundary.y) { clickedCoordinate.y = state->boundary.y; }
+        if (clickedCoordinate.z < 0) { clickedCoordinate.z = 0; }
+        else if (clickedCoordinate.z > state->boundary.z) { clickedCoordinate.z = state->boundary.z; }
 
 
         break;
     }
     /* Move to the new node position */
     if (newNode) {
-        emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+        emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
         emit nodeAddedSignal();
         if (newTree) {
             emit treeAddedSignal(state->skeletonState->activeTree);
@@ -334,8 +321,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     emit updateViewerStateSignal();
     Knossos::sendRemoteSignal();
-
-    free(clickedCoordinate);
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) {
@@ -563,38 +548,38 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
     return true;
 }
 
-bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/) {
+void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
-           state->skeletonState->rotdx += xrel(event->x());
-           state->skeletonState->rotdy += yrel(event->y());
-           state->skeletonState->viewChanged = true;
-       }
-    return true;
+        state->skeletonState->rotdx += xrel(event->x());
+        state->skeletonState->rotdy += yrel(event->y());
+        state->skeletonState->viewChanged = true;
+    }
 }
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
-    if (Segmentation::singleton().segmentationMode
-        && event->x() == mouseDownX && event->y() == mouseDownY) {
-        auto & segmentation = Segmentation::singleton();
-        const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
-        if (subobjectId != 0) {// don’t select the unsegmented area as object
-            auto & subobject = segmentation.subobjectFromId(subobjectId);
-            auto & obj = segmentation.largestObjectContainingSubobject(subobject);
-            if (!event->modifiers().testFlag(Qt::ControlModifier)) {
-                segmentation.clearObjectSelection();
-                segmentation.selectObject(obj);
-            } else if (segmentation.isSelected(obj)) {// unselect if selected
-                segmentation.unselectObject(obj);
-            } else { // select largest object
-                segmentation.selectObject(obj);
+    if (Segmentation::singleton().segmentationMode) {
+        if(event->x() == mouseDownX && event->y() == mouseDownY) {
+            auto & segmentation = Segmentation::singleton();
+            const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+            if (subobjectId != 0) {// don’t select the unsegmented area as object
+                auto & subobject = segmentation.subobjectFromId(subobjectId);
+                auto & obj = segmentation.largestObjectContainingSubobject(subobject);
+                if (!event->modifiers().testFlag(Qt::ControlModifier)) {
+                    segmentation.clearObjectSelection();
+                    segmentation.selectObject(obj);
+                } else if (segmentation.isSelected(obj)) {// unselect if selected
+                    segmentation.unselectObject(obj);
+                } else { // select largest object
+                    segmentation.selectObject(obj);
+                }
+                if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
+                    segmentation.touchObjects(subobjectId);
+                } else {
+                    segmentation.untouchObjects();
+                }
             }
-            if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
-                segmentation.touchObjects(subobjectId);
-            } else {
-                segmentation.untouchObjects();
-            }
+            return;
         }
-        return;
     }
 
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
@@ -1115,24 +1100,13 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
     }
 }
 
-Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
-
-    Coordinate *foundCoordinate;
-    foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
+Coordinate EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
     int x, y, z;
-    x = y = z = 0;
 
     // These variables store the distance in screen pixels from the left and
     // upper border from the user mouse click to the VP boundaries.
-    uint xDistance, yDistance;
-
-    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)) {
-            free(foundCoordinate);
-            return NULL;
-    }
-
-    xDistance = event->x();
-    yDistance = event->y();
+    int xDistance = event->x();
+    int yDistance = event->y();
 
     switch(state->viewerState->vpConfigs[VPfound].type) {
         case VIEWPORT_XY:
@@ -1185,16 +1159,22 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
                 );
             break;
     }
-    //check if coordinates are in range
-    if((x > 0) && (x <= state->boundary.x)
-        &&(y > 0) && (y <= state->boundary.y)
-        &&(z > 0) && (z <= state->boundary.z)) {
-        SET_COORDINATE(*foundCoordinate, x, y, z);
-        return foundCoordinate;
+    return Coordinate(x, y, z);
+}
+
+bool EventModel::validPosition(QMouseEvent *event, int VPfound) {
+    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)) {
+            return false;
     }
 
-    free(foundCoordinate);
-    return NULL;
+    Coordinate pos = getCoordinateFromOrthogonalClick(event, VPfound);
+    //check if coordinates are in range
+    if((pos.x < 0) || (pos.x > state->boundary.x)
+        ||(pos.y < 0) || (pos.y > state->boundary.y)
+        ||(pos.z < 0) || (pos.z > state->boundary.z)) {
+        return false;
+    }
+    return true;
 }
 
 void EventModel::startNodeSelection(int x, int y, int vpId) {

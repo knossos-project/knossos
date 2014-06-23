@@ -50,6 +50,8 @@
 class EventModel : public QObject
 {
     Q_OBJECT
+    bool validPosition(QMouseEvent *event, int VPfound);
+
 public:
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
@@ -58,14 +60,13 @@ public:
     bool handleMouseMotion(QMouseEvent *event, int VPfound);
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
     void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     void handleMouseWheel(QWheelEvent * const event, int VPfound);
     void handleKeyPress(QKeyEvent *event, int VPfound);
     void handleKeyRelease(QKeyEvent *event);
-    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
-
+    static Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
     void startNodeSelection(int x, int y, int vpId);
     void nodeSelection(int x, int y, int vpId);
     int xrel(int x);

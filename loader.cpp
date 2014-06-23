@@ -478,7 +478,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         return false;
     }
     memset(DcArray, 0, sizeof(DcArray[0]) * cubeElemCount);
-    currentOrigin = Coordinate::Px2DcCoord(state->currentPositionX);
+    currentOrigin = Coordinate::Px2DcCoord(state->currentPositionX, state->cubeEdgeLength);
     i = 0;
     this->currentMaxMetric = 0;
     for (x = -halfSc; x < halfSc + 1; x++) {

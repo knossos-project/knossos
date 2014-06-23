@@ -47,6 +47,8 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
+#include "coordinate.h"
+
 #define KVERSION "4.1 Pre Alpha"
 
 #define FAIL    -1
@@ -262,40 +264,6 @@ template<typename T>
 constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t res = 0) {
     return val < base ? res : int_log(val/base, base, res+1);
 }
-
-struct floatCoordinate {
-    float x;
-    float y;
-    float z;
-};
-
-#define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-class Coordinate{
-public:
-    Coordinate() { }
-    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
-    int x;
-    int y;
-    int z;
-    static Coordinate Px2DcCoord(Coordinate pxCoordinate);
-    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
-    static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
-    void operator=(Coordinate const&rhs);
-
-};
-
-class CoordinateDecorator : public QObject {
-    Q_OBJECT
-public slots:
-    Coordinate *new_Coordinate() { return new Coordinate(); }
-    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
-    int x(Coordinate *self) { return self->x; }
-    void setX(Coordinate *self, int x) { self->x = x; }
-    int y(Coordinate *self) { return self->y; }
-    void setY(Coordinate *self, int y) { self->y = y; }
-    int z(Coordinate *self) { return self->z; }
-    void setZ(Coordinate *self, int z) { self->z = z; }
-};
 
 typedef struct {
         GLfloat r;
@@ -1223,13 +1191,6 @@ struct skeletonState {
 #define ABS(x) (((x) >= 0) ? (x) : -(x))
 #define SQR(x) ((x)*(x))
 
-#define SET_COORDINATE(coordinate, a, b, c) \
-        { \
-        (coordinate).x = (a); \
-        (coordinate).y = (b); \
-        (coordinate).z = (c); \
-        }
-
 #define CALC_VECTOR_NORM(v) \
     ( \
         sqrt(SQR((v).x) + SQR((v).y) + SQR((v).z)) \
@@ -1250,71 +1211,12 @@ struct skeletonState {
     ( \
         ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
     )
-#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
-    { \
-        SET_COORDINATE((coordinate), \
-                       (ox) + (offset_array)[0], \
-                       (oy) + (offset_array)[1], \
-                       (oz) + (offset_array)[2]); \
-    }
 
 #define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
     { \
         (offset_array)[(direction_index)] = (k); \
         (offset_array)[((direction_index) + 1) % 3] = (i); \
         (offset_array)[((direction_index) + 2) % 3] = (j); \
-    }
-
-#define COMPARE_COORDINATE(c1, c2) \
-    ( \
-        (c1).x == (c2).x    \
-        && (c1).y == (c2).y \
-        && (c1).z == (c2).z \
-    )
-
-#define CONTAINS_COORDINATE(c1, c2, c3) \
-    ( \
-        (c2).x <= (c1).x    \
-        && (c1).x <= (c3).x \
-        && (c2).y <= (c1).y \
-        && (c1).y <= (c3).y \
-        && (c2).z <= (c1).z \
-        && (c1).z <= (c3).z \
-    )
-
-#define ADD_COORDINATE(c1, c2) \
-    { \
-            (c1).x += (c2).x; \
-            (c1).y += (c2).y; \
-            (c1).z += (c2).z; \
-    }
-
-#define MUL_COORDINATE(c1, f) \
-    {\
-            (c1).x *= f;\
-            (c1).y *= f;\
-            (c1).z *= f;\
-    }
-
-#define SUB_COORDINATE(c1, c2) \
-    { \
-            (c1).x -= (c2).x; \
-            (c1).y -= (c2).y; \
-            (c1).z -= (c2).z; \
-    }
-
-#define DIV_COORDINATE(c1, c2) \
-    { \
-            (c1).x /= (c2); \
-            (c1).y /= (c2); \
-            (c1).z /= (c2); \
-    }
-
-#define CPY_COORDINATE(c1, c2) \
-    { \
-            (c1).x = (c2).x; \
-            (c1).y = (c2).y; \
-            (c1).z = (c2).z; \
     }
 
 // This is used by the hash function. It rotates the bits by n to the left. It
