@@ -348,11 +348,14 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseReleaseMiddle(event, id);
-    }
     if(event->button() == Qt::LeftButton) {
         eventDelegate->handleMouseReleaseLeft(event, id);
+    }
+    if(event->button() == Qt::RightButton) {
+        eventDelegate->handleMouseReleaseRight(event, id);
+    }
+    if(event->button() == Qt::MiddleButton) {
+        eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
     for (std::size_t i = 0; i < state->viewerState->numberViewports; i++) {

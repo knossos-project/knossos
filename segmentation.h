@@ -11,12 +11,15 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <set>
 #include <time.h>
 
 #include <QDebug>
 #include <QString>
 #include <QObject>
 #include <QStandardPaths>
+
+#include "coordinate.h"
 
 class Segmentation : public QObject {
 Q_OBJECT
@@ -123,6 +126,8 @@ public:
     uint8_t alpha;
     bool segmentationMode;
     QString filename;
+    // line merging: the drawn line merges all visited objects
+    std::vector<Coordinate> mergeLine;
 
     static Segmentation & singleton();
     Segmentation();

@@ -283,6 +283,9 @@ void Segmentation::clearObjectSelection() {
 }
 
 void Segmentation::selectObject(Object & object) {
+    if(object.selected) {
+        return;
+    }
     object.selected = true;
     for (auto & subobj : object.subobjects) {
         subobj.get().selected = true;

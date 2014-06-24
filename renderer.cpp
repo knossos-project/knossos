@@ -42,6 +42,7 @@
     #include <GL/glut.h>
 #endif
 #include "skeletonizer.h"
+#include "segmentation.h"
 #include "viewer.h"
 
 extern stateInfo *state;
@@ -579,6 +580,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
             renderSkeleton(currentVP, VIEWPORT_XY);
+            if(Segmentation::singleton().segmentationMode) {
+                renderMergeLine(currentVP);
+            }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -706,10 +710,10 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-
             renderSkeleton(currentVP, VIEWPORT_XZ);
-
-
+            if(Segmentation::singleton().segmentationMode) {
+                renderMergeLine(currentVP);
+            }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -829,7 +833,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
             renderSkeleton(currentVP, VIEWPORT_YZ);
-
+            if(Segmentation::singleton().segmentationMode) {
+                renderMergeLine(currentVP);
+            }
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
@@ -1661,6 +1667,28 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glLoadIdentity();
     renderViewportBorders(currentVP);
     return true;
+}
+
+void Renderer::renderMergeLine(uint viewportType) {
+    glPushMatrix();
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
+    // draw active line
+    auto & seg = Segmentation::singleton();
+    glColor4f(1., 0., 0., 1.);
+    glLineWidth(3);
+    glBegin(GL_LINE_STRIP);
+        for(const auto & coord : seg.mergeLine) {
+            switch(viewportType) {
+            case VIEWPORT_XY:
+                glVertex3i(coord.x, coord.y, coord.z - 0.1);
+            case VIEWPORT_XZ:
+                glVertex3i(coord.x, coord.y + 1, coord.z);
+            case VIEWPORT_YZ:
+                glVertex3i(coord.x - 0.1, coord.y, coord.z);
+            }
+        }
+    glEnd();
+    glPopMatrix();
 }
 
 void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {

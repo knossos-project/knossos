@@ -146,37 +146,12 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    auto & segmentation = Segmentation::singleton();
-    if (segmentation.segmentationMode) {
-        auto & segmentation = Segmentation::singleton();
-        const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
-        if (subobjectId != 0) {//don’t select the unsegmented area as object
-            if (segmentation.selectedObjectsCount() == 1) {
-                auto & subobject = segmentation.subobjectFromId(subobjectId);
-                auto & objectToMerge = segmentation.largestImmutableObjectContainingSubobject(subobject);
-                //select if not selected and merge
-                if (segmentation.isSelected(subobject)) {
-                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        segmentation.unmergeSelectedObjects(subobject);
-                    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                        segmentation.unmergeSelectedObjects(objectToMerge);
-                    }
-                } else {
-                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        segmentation.selectObjectFromSubObject(subobject);
-                    } else if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
-                        segmentation.selectObject(objectToMerge);//select largest object
-                    }
-                    if (segmentation.selectedObjectsCount() >= 2) {
-                        segmentation.mergeSelectedObjects();
-                    }
-                }
-                segmentation.touchObjects(subobjectId);
-            }
+    if(Segmentation::singleton().segmentationMode) {
+        if(validPosition(event, VPfound)) {
+            Segmentation::singleton().mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
         }
         return;
     }
-
     int newNodeID;
     Coordinate movement, lastPos;
 
@@ -549,6 +524,23 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 }
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
+    auto & segmentation = Segmentation::singleton();
+    if(segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
+        if(validPosition(event, VPfound)) {
+            if(segmentation.mergeLine.size() == 1) { // begin line merging
+                segmentation.clearObjectSelection();
+            }
+            segmentation.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
+            const auto subObjID = segmentationColorPicking(event->x(), event->y(), VPfound);
+
+            if(subObjID != 0) {
+                auto & subObj = segmentation.subobjectFromId(subObjID);
+                auto & obj = segmentation.largestImmutableObjectContainingSubobject(subObj);
+                segmentation.selectObject(obj);
+            }
+        }
+        return;
+    }
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
         state->skeletonState->rotdx += xrel(event->x());
         state->skeletonState->rotdy += yrel(event->y());
@@ -578,8 +570,8 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     segmentation.untouchObjects();
                 }
             }
-            return;
         }
+        return;
     }
 
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
@@ -615,6 +607,45 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         }
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
         nodeSelection(event->pos().x(), event->pos().y(), VPfound);
+    }
+}
+
+void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
+    auto & seg = Segmentation::singleton();
+    if(seg.segmentationMode) {
+        // merging by clicking
+        if(seg.mergeLine.size() == 1) {
+            const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+            if (subobjectId != 0) {//don’t select the unsegmented area as object
+                if (seg.selectedObjectsCount() == 1) {
+                    auto & subobject = seg.subobjectFromId(subobjectId);
+                    auto & objectToMerge = seg.largestImmutableObjectContainingSubobject(subobject);
+                    //select if not selected and merge
+                    if (seg.isSelected(subobject)) {
+                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                            seg.unmergeSelectedObjects(subobject);
+                        } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            seg.unmergeSelectedObjects(objectToMerge);
+                        }
+                    } else {
+                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                            seg.selectObjectFromSubObject(subobject);
+                        } else if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            seg.selectObject(objectToMerge);//select largest object
+                        }
+                        if (seg.selectedObjectsCount() >= 2) {
+                            seg.mergeSelectedObjects();
+                        }
+                    }
+                    seg.touchObjects(subobjectId);
+                }
+            }
+        }
+        else { // merging by line drawing
+            seg.mergeSelectedObjects();
+        }
+        seg.mergeLine.clear();
+        return;
     }
 }
 
