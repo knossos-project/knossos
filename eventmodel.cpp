@@ -527,12 +527,9 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
     if(segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
         if(validPosition(event, VPfound)) {
-            if(segmentation.mergeLine.size() == 1) { // begin line merging
-                segmentation.clearObjectSelection();
-            }
             segmentation.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
-            const auto subObjID = segmentationColorPicking(event->x(), event->y(), VPfound);
 
+            const auto subObjID = segmentationColorPicking(event->x(), event->y(), VPfound);
             if(subObjID != 0) {
                 auto & subObj = segmentation.subobjectFromId(subObjID);
                 auto & obj = segmentation.smallestImmutableObjectContainingSubobject(subObj);
