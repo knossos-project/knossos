@@ -146,7 +146,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    if(Segmentation::singleton().segmentationMode) {
+    if(Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
         if(validPosition(event, VPfound)) {
             Segmentation::singleton().mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
         }
@@ -609,7 +609,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     auto & seg = Segmentation::singleton();
-    if(seg.segmentationMode) {
+    if(seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
         // merging by clicking
         if(seg.mergeLine.size() == 1) {
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
