@@ -252,21 +252,25 @@ void MainWindow::updateTitlebar() {
 
 // -- static methods -- //
 
-/** This method adds a file path to the queue data structure
-    Use this method only after checking if the entry is already in the menu
-*/
-
-bool MainWindow::addRecentFile(const QString &fileName) {
-
-    if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
-        skeletonFileHistory->enqueue(fileName);
-    } else {
-        skeletonFileHistory->dequeue();
-        skeletonFileHistory->enqueue(fileName);
+void MainWindow::updateRecentFile(const QString & fileName) {
+    bool notAlreadyExists = std::find(std::begin(*skeletonFileHistory), std::end(*skeletonFileHistory), fileName) == std::end(*skeletonFileHistory);
+    if (notAlreadyExists) {
+        if (skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
+            skeletonFileHistory->enqueue(fileName);
+        } else {//shrink if necessary
+            skeletonFileHistory->dequeue();
+            skeletonFileHistory->enqueue(fileName);
+        }
+    } else {//move to front if already existing
+        skeletonFileHistory->move(skeletonFileHistory->indexOf(fileName), 0);
     }
-
-    updateFileHistoryMenu();
-    return true;
+    //update the menu
+    int i = 0;
+    for (const auto & path : *skeletonFileHistory) {
+        historyEntryActions[i]->setText(path);
+        historyEntryActions[i]->setVisible(!path.isEmpty());
+        ++i;
+    }
 }
 
 /**
@@ -381,8 +385,7 @@ void MainWindow::recentFileSelected() {
 
     QString fileName = action->text();
     if(fileName.isNull() == false) {
-        this->loadSkeletonAfterUserDecision(fileName);
-
+        loadSkeletonAfterUserDecision(fileName);
     }
 }
 
@@ -613,60 +616,18 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 //file menu functionality
-bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
-    if(!fileName.isEmpty()) {
-        QApplication::processEvents();
-
-        if(state->skeletonState->treeElements > 0) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Question);
-            prompt.setText("Which Action do you like to choose?<ul>\
-                           <li>Merge the new Skeleton into the current one ?</li>\
-                           <li>Override the current Skeleton</li>\
-                           </ul>");
-            QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
-            QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
-            prompt.addButton("Cancel", QMessageBox::ActionRole);
-            prompt.exec();
-
-            if(prompt.clickedButton() == merge) {
-                state->skeletonState->mergeOnLoadFlag = true;
-            } else if(prompt.clickedButton() == override) {
-                state->skeletonState->mergeOnLoadFlag = false;
-            } else {
-                return false;
-            }
-
-        }
-
-        state->skeletonState->skeletonFileAsQString = fileName;
-
-        bool result = loadSkeletonSignal(fileName);
-
-        updateTitlebar();
-
-        if(!alreadyInMenu(fileName)) {
-            addRecentFile(fileName);
-        } else {
-            becomeFirstEntry(fileName);
-        }
-
-        emit updateTreeviewSignal();
-        state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
-        return result;
-    }
-    return false;
+bool MainWindow::loadSkeletonAfterUserDecision(const QString & fileName) {
+    QStringList filenames(fileName);
+    return loadSkeletonAfterUserDecision(filenames);
 }
 
-bool MainWindow::loadSkeletonAfterUserDecision(QStringList fileNames) {
-    if(fileNames.empty()) {
+bool MainWindow::loadSkeletonAfterUserDecision(const QStringList & fileNames) {
+    if (fileNames.empty()) {
         return false;
     }
     QApplication::processEvents();
-    bool result = false;
 
-    if(state->skeletonState->treeElements > 0) {
+    if (state->skeletonState->treeElements > 0) {
         QMessageBox prompt;
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
         prompt.setIcon(QMessageBox::Question);
@@ -686,56 +647,26 @@ bool MainWindow::loadSkeletonAfterUserDecision(QStringList fileNames) {
         } else {
             return false;
         }
-
     }
 
-    if(fileNames.size() == 1) {
-        state->skeletonState->skeletonFileAsQString = fileNames.at(0);
+    bool multipleFiles = fileNames.size() > 1;
 
-        result = loadSkeletonSignal(fileNames.at(0));
+    state->skeletonState->skeletonFileAsQString = multipleFiles == false ? fileNames.front() : "";
+    updateTitlebar();
 
-        updateTitlebar();
+    bool success = true;
 
-        if(!alreadyInMenu(fileNames.at(0))) {
-            addRecentFile(fileNames.at(0));
-        } else {
-            becomeFirstEntry(fileNames.at(0));
+    for (QString file : fileNames) {
+        if (success &= loadSkeletonSignal(file, multipleFiles)) {
+            updateRecentFile(file);
         }
-
-        emit updateTreeviewSignal();
+        state->skeletonState->mergeOnLoadFlag = true;//merge next file
     }
-
-    else { // multiple files to load
-        for(QString file : fileNames) {
-            state->skeletonState->skeletonFileAsQString = file;
-            if((result = loadSkeletonSignal(file, true))) {
-                updateTitlebar();
-
-                if(alreadyInMenu(file) == false) {
-                    addRecentFile(file);
-                }
-                else {
-                    becomeFirstEntry(file);
-                }
-                emit updateTreeviewSignal();
-            }
-            state->skeletonState->mergeOnLoadFlag = true; // merge next file
-        }
-    }
+    emit updateTreeviewSignal();
 
     state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
-    return result;
-}
 
-/** if a queue´s entry is reused and not more at position zero it will moved to the first entry (most recent) and the
- *  menu will be updated
-*/
-void MainWindow::becomeFirstEntry(const QString &entry) {
-    int index = skeletonFileHistory->indexOf(entry);
-    if(index > 0) {
-        skeletonFileHistory->move(index, 0);
-        updateFileHistoryMenu();
-    }
+    return success;
 }
 
 /**
@@ -766,46 +697,10 @@ void MainWindow::openSlot() {
     state->viewerState->renderInterval = FAST;
 }
 
-/** So far this variant is needed only for drag n drop skeleton files */
-void MainWindow::openSlot(QStringList fileNames) {
+void MainWindow::openFileDispatch(QStringList fileNames) {
     state->viewerState->renderInterval = SLOW;
     loadSkeletonAfterUserDecision(fileNames);
     state->viewerState->renderInterval = FAST;
-
-}
-
-/** This method checks if a candidate is already in the queue */
-bool MainWindow::alreadyInMenu(const QString &path) {
-
-    for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
-        if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseSensitive)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-/**
-  * This method puts the history entries of the loaded skeleton files to the recent file menu section
-  * The order is: 1. AddRecentFile and then 2. updateFileHistoryMenu
-  */
-void MainWindow::updateFileHistoryMenu() {
-
-    QQueue<QString>::iterator it;
-    int i = 0;
-    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-        QString path = *it;
-
-        historyEntryActions[i]->setText(path);
-        if(!historyEntryActions[i]->text().isEmpty()) {
-            //recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected()));
-            historyEntryActions[i]->setVisible(true);
-        } else {
-            historyEntryActions[i]->setVisible(false);
-        }
-        i++;
-    }
 }
 
 void MainWindow::saveSlot() {
@@ -845,10 +740,7 @@ void MainWindow::saveSlot() {
 
         emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
 
-        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-            addRecentFile(state->skeletonState->skeletonFileAsQString);
-        }
-        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+        updateRecentFile(state->skeletonState->skeletonFileAsQString);
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;
     }
@@ -906,11 +798,7 @@ void MainWindow::saveAsSlot() {
 
             emit saveSkeletonSignal(fileName);
 
-            if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-                addRecentFile(state->skeletonState->skeletonFileAsQString);
-            }
-            becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-
+            updateRecentFile(state->skeletonState->skeletonFileAsQString);
             updateTitlebar();
             state->skeletonState->unsavedChanges = false;
         }
@@ -1123,12 +1011,10 @@ void MainWindow::saveSettings() {
 
     settings.setValue(WORK_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
 
-    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-        if(i < skeletonFileHistory->size()) {
-            settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
-        } else {
-            settings.setValue(QString("loaded_file%1").arg(i+1), "");
-        }
+    int i = 0;
+    for (const auto & path : *skeletonFileHistory) {
+        settings.setValue(QString("loaded_file%1").arg(i+1), path);
+        ++i;
     }
 
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
@@ -1205,44 +1091,16 @@ void MainWindow::loadSettings() {
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(skeletonizerWorkMode));
     }
 
-    if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
-
-    }
-    if(!settings.value(LOADED_FILE2).toString().isNull() and !settings.value(LOADED_FILE2).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE2).toString());
-
-    }
-    if(!settings.value(LOADED_FILE3).isNull() and !settings.value(LOADED_FILE3).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE3).toString());
-
-    }
-    if(!settings.value(LOADED_FILE4).isNull() and !settings.value(LOADED_FILE4).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE4).toString());
-
-    }
-    if(!settings.value(LOADED_FILE5).isNull() and !settings.value(LOADED_FILE5).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE5).toString());
-
-    }
-    if(!settings.value(LOADED_FILE6).isNull() and !settings.value(LOADED_FILE6).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE6).toString());
-
-    }
-    if(!settings.value(LOADED_FILE7).isNull() and !settings.value(LOADED_FILE7).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE7).toString());
-
-    }
-    if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());
-    }
-    if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE9).toString());
-    }
-    if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());
-    }
-    this->updateFileHistoryMenu();
+    updateRecentFile(settings.value(LOADED_FILE1, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE2, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE3, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE4, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE5, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE6, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE7, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE8, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE9, "").toString());
+    updateRecentFile(settings.value(LOADED_FILE10, "").toString());
 
     settings.endGroup();
     this->setGeometry(x, y, width, height);
@@ -1351,7 +1209,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
             prompt.exec();
         }
         if(fileNames.empty() == false) {
-            openSlot(fileNames);
+            openFileDispatch(fileNames);
             event->accept();
         }
     }

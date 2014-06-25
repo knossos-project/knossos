@@ -60,7 +60,6 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
-    void becomeFirstEntry(const QString &entry);
     QMenu *skelFileMenu;
     QMenu *segFileMenu;
     QMenu *skelEditMenu;
@@ -157,16 +156,13 @@ signals:
 
 public slots:
     // for the recent file menu
-    bool loadSkeletonAfterUserDecision(QStringList fileNames);
-    bool loadSkeletonAfterUserDecision(const QString &fileName);
-    void updateFileHistoryMenu();
-    bool alreadyInMenu(const QString &path);
-    bool addRecentFile(const QString &fileName);
-    //QUndoStack *undoStack;
+    bool loadSkeletonAfterUserDecision(const QString & fileName);
+    bool loadSkeletonAfterUserDecision(const QStringList & fileNames);
+    void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
     void openSlot();
-    void openSlot(QStringList fileNames); // for the drag n drop version
+    void openFileDispatch(QStringList fileNames);
     void saveSlot();
     void saveAsSlot();
 
