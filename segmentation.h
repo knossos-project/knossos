@@ -142,7 +142,7 @@ public:
     //data access
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
-    Object & largestImmutableObjectContainingSubobject(const SubObject & subobject) const;
+    Object & smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     //selection query
     bool isSelected(const SubObject & rhs) const;
     bool isSelected(const Object & rhs) const;

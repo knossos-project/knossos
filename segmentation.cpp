@@ -238,10 +238,11 @@ Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segm
         })->get();
 }
 
-Segmentation::Object & Segmentation::largestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
-    return std::max_element(std::begin(subobject.objects), std::end(subobject.objects)
+Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+    return std::min_element(std::begin(subobject.objects), std::end(subobject.objects)
         , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
-            return (!lhs.immutable && rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
+            //operator< substitute, prefer immutable objects and choose the smallest
+            return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
         })->get();
 }
 

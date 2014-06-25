@@ -535,7 +535,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
             if(subObjID != 0) {
                 auto & subObj = segmentation.subobjectFromId(subObjID);
-                auto & obj = segmentation.largestImmutableObjectContainingSubobject(subObj);
+                auto & obj = segmentation.smallestImmutableObjectContainingSubobject(subObj);
                 segmentation.selectObject(obj);
             }
         }
@@ -619,7 +619,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             if (subobjectId != 0) {//don’t select the unsegmented area as object
                 if (seg.selectedObjectsCount() == 1) {
                     auto & subobject = seg.subobjectFromId(subobjectId);
-                    auto & objectToMerge = seg.largestImmutableObjectContainingSubobject(subobject);
+                    auto & objectToMerge = seg.smallestImmutableObjectContainingSubobject(subobject);
                     //select if not selected and merge
                     if (seg.isSelected(subobject)) {
                         if (event->modifiers().testFlag(Qt::ControlModifier)) {
