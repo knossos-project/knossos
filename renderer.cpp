@@ -451,32 +451,18 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 //static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
-    float dataPxX, dataPxY;
-
-    floatCoordinate *n, *v1, *v2;
-
-    n = &(state->viewerState->vpConfigs[currentVP].n);
-
-    v1 = &(state->viewerState->vpConfigs[currentVP].v1);
-
-    v2 = &(state->viewerState->vpConfigs[currentVP].v2);
-
-    if(!((state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XY)
-            || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
-            || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
-         || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-       LOG("Wrong VP type given for renderOrthogonalVP() call.")
-        return false;
-    }
-
-
+    floatCoordinate * n = &(state->viewerState->vpConfigs[currentVP].n);
+    floatCoordinate * v1 = &(state->viewerState->vpConfigs[currentVP].v1);
+    floatCoordinate * v2 = &(state->viewerState->vpConfigs[currentVP].v2);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
     if(!state->viewerState->selectModeFlag && !state->viewerState->uniqueColorMode) {
-        if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
+        if(state->viewerState->multisamplingOnOff) {
+            glEnable(GL_MULTISAMPLE);
+        }
 
         if(state->viewerState->lightOnOff) {
             /* Configure light. optimize that! TDitem */
@@ -501,12 +487,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
     /* Multiplying by state->magnification increases the area covered
      * by the textured OpenGL quad for downsampled datasets. */
-
-    dataPxX = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthX
+    float dataPxX = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[currentVP].texture.texUnitsPerDataPx
             * 0.5;
 //            * (float)state->magnification;
-    dataPxY = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthY
+    float dataPxY = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[currentVP].texture.texUnitsPerDataPx
             * 0.5;
 //            * (float)state->magnification;
@@ -579,9 +564,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            renderSkeleton(currentVP, VIEWPORT_XY);
-            if(Segmentation::singleton().segmentationMode) {
-                renderMergeLine(currentVP);
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_XY);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderMergeLine(currentVP);
+                }
             }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -710,9 +697,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            renderSkeleton(currentVP, VIEWPORT_XZ);
-            if(Segmentation::singleton().segmentationMode) {
-                renderMergeLine(currentVP);
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_XZ);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderMergeLine(currentVP);
+                }
             }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -832,9 +821,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
-            renderSkeleton(currentVP, VIEWPORT_YZ);
-            if(Segmentation::singleton().segmentationMode) {
-                renderMergeLine(currentVP);
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_YZ);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderMergeLine(currentVP);
+                }
             }
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -969,7 +960,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
         if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
-        renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
+
+        if (!state->viewerState->uniqueColorMode) {
+            renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
+        }
+
         glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
         glLoadName(3);
@@ -1023,43 +1018,34 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
+        if (state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2->z, v2->y, v2->x, 0.3);
-
                 glVertex3f(-dataPxX * v1->x + 0.5 * v2->x - 0.0001 * n->x,
-
                            -dataPxX * v1->y + 0.5 * v2->y - 0.0001 * n->y,
-
                            -dataPxX * v1->z + 0.5 * v2->z - 0.0001 * n->z);
 
                 glVertex3f(dataPxX * v1->x + 0.5 * v2->x - 0.0001 * n->x,
-
                            dataPxX * v1->y + 0.5 * v2->y - 0.0001 * n->y,
-
                            dataPxX * v1->z + 0.5 * v2->z - 0.0001 * n->z);
 
                 glColor4f(v1->z, v1->y, v1->x, 0.3);
-
                 glVertex3f(0.5 * v1->x - dataPxY * v2->x - 0.0001 * n->x,
-
                            0.5 * v1->y - dataPxY * v2->y - 0.0001 * n->y,
-
                            0.5 * v1->z - dataPxY * v2->z - 0.0001 * n->z);
 
                 glVertex3f(0.5 * v1->x + dataPxY * v2->x - 0.0001 * n->x,
-
                            0.5 * v1->y + dataPxY * v2->y - 0.0001 * n->y,
-
                            0.5 * v1->z + dataPxY * v2->z - 0.0001 * n->z);
             glEnd();
         }
         break;
     }
     glDisable(GL_BLEND);
-    if(!state->viewerState->uniqueColorMode)
+    if (!state->viewerState->uniqueColorMode) {
         renderViewportBorders(currentVP);
+    }
     return true;
 }
 
