@@ -1667,10 +1667,13 @@ void Renderer::renderMergeLine(uint viewportType) {
             switch(viewportType) {
             case VIEWPORT_XY:
                 glVertex3i(coord.x, coord.y, coord.z - 0.1);
+                break;
             case VIEWPORT_XZ:
                 glVertex3i(coord.x, coord.y + 1, coord.z);
+                break;
             case VIEWPORT_YZ:
                 glVertex3i(coord.x - 0.1, coord.y, coord.z);
+                break;
             }
         }
     glEnd();
