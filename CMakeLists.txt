@@ -12,12 +12,13 @@ include(CustomLibraryLocations.cmake)#prefill variables
 #the *.cpp file of openjpeg (why ever its named *.cpp) is skipped because it causes problems
 file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
 
-file(GLOB root *.cpp *.h)
+file(GLOB root *.cpp *.h *.qrc)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
 set(SRC_LIST ${openjpeg} ${root} ${widgets})
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)#Resources.qrc
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(KNOSSOS_STATIC_LIBRARIES OFF CACHE BOOL "try to find static versions of all libraries")
 if(KNOSSOS_STATIC_LIBRARIES)
@@ -59,8 +60,6 @@ find_package(Qt5Gui 5.1 REQUIRED)
 find_package(Qt5Help 5.1 REQUIRED)
 find_package(Qt5OpenGL 5.1 REQUIRED)
 find_package(Qt5Widgets 5.1 REQUIRED)
-#qt resources
-qt5_add_resources(CompiledResourceFiles Resources.qrc)
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
