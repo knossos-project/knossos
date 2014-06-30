@@ -176,7 +176,7 @@ void ViewportSettingsWidget::loadSettings() {
     slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(luminanceRangeDelta);
     slicePlaneViewportWidget->rangeDeltaSpinBox->valueChanged(luminanceRangeDelta);
 
-    const auto segmentationOverlayAlpha = settings.value(SEGMENTATION_OVERLAY_ALPHA, 127).toInt();
+    const auto segmentationOverlayAlpha = settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt();
     slicePlaneViewportWidget->segmenationOverlaySlider.setValue(segmentationOverlayAlpha);
     slicePlaneViewportWidget->segmenationOverlaySlider.valueChanged(segmentationOverlayAlpha);
 
@@ -190,15 +190,15 @@ void ViewportSettingsWidget::loadSettings() {
 
 
     //skeleton vp settings
-    const auto xyplane = settings.value(SHOW_XY_PLANE, false).toBool();
+    const auto xyplane = settings.value(SHOW_XY_PLANE, true).toBool();
     skeletonViewportWidget->showXYPlaneCheckBox.setChecked(xyplane);
     skeletonViewportWidget->showXYPlaneCheckBox.clicked(xyplane);
 
-    const auto xzplane = settings.value(SHOW_XZ_PLANE, false).toBool();
+    const auto xzplane = settings.value(SHOW_XZ_PLANE, true).toBool();
     skeletonViewportWidget->showXZPlaneCheckBox.setChecked(xzplane);
     skeletonViewportWidget->showXZPlaneCheckBox.clicked(xzplane);
 
-    const auto yzplane = settings.value(SHOW_YZ_PLANE, false).toBool();
+    const auto yzplane = settings.value(SHOW_YZ_PLANE, true).toBool();
     skeletonViewportWidget->showYZPlaneCheckBox.setChecked(yzplane);
     skeletonViewportWidget->showYZPlaneCheckBox.clicked(yzplane);
 
