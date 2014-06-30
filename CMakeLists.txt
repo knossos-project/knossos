@@ -78,10 +78,10 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qhp"
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.html"
 )
-set(SRC_LIST ${SRC_LIST} "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch" )
 
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${CompiledResourceFiles})
+add_executable(${PROJECT_NAME} ${SRC_LIST})
+set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch")
 include_directories(
     ${CURL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIR}
