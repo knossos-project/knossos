@@ -59,11 +59,11 @@ linux {
 }
 
 win32 {
-    DEFINES += CURL_STATICLIB
-    LIBS += -lcurl -lwsock32 -lidn -lz -lintl -liconv
+    #DEFINES += CURL_STATICLIB
+    LIBS += -lcurl -lwsock32 #-lidn -lz -lintl -liconv
 
-    DEFINES += FREEGLUT_STATIC
-    LIBS += -lfreeglut_static
+    #DEFINES += FREEGLUT_STATIC
+    LIBS += -lglut32 #-lfreeglut_static
 
     RC_FILE = knossos.rc
 }
@@ -83,8 +83,8 @@ turbojpeg {
         LIBS += -L/opt/libjpeg-turbo/lib
     }
     win32 {
-        #INCLUDEPATH += C:/libjpeg-turbo-gcc/include
-        #LIBS += -LC:/libjpeg-turbo-gcc/lib
+        INCLUDEPATH += C:/libjpeg-turbo-gcc/include
+        LIBS += -LC:/libjpeg-turbo-gcc/lib
     }
     LIBS += -lturbojpeg
 }
