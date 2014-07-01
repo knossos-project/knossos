@@ -1498,3 +1498,10 @@ void MainWindow::resizeViewports(int width, int height) {
         }
     }
 }
+
+void MainWindow::setSimpleTracing(bool active) {
+    QAction *editMenu = menuBar()->actions().at(1);
+    editMenu->menu()->actions().at(1)->setEnabled(!active); // add one unlinked node
+    editMenu->menu()->actions().at(3)->setEnabled(!active); // add unlinked nodes
+    editMenu->menu()->actions().at(5)->setEnabled(!active); // add tree
+}

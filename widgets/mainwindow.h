@@ -164,6 +164,7 @@ public slots:
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
     void clearSkeletonWithoutConfirmation();
+    void setSimpleTracing(bool active);
 
     /* view menu */
     void dragDatasetSlot();

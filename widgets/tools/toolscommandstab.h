@@ -87,6 +87,7 @@ public slots:
     void commentLockEditChanged(QString comment);
     void locktoActiveButtonClicked();
     void disableCurrentLockButtonClicked();
+    void setSimpleTracing(bool active);
 
     void update();
 };

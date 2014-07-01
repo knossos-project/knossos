@@ -41,6 +41,7 @@ signals:
     void updateTreeviewSignal();
     void userMoveSignal(int x, int y, int z);
     void setRecenteringPositionSignal(int x, int y, int z);
+    void setSimpleTracing(bool active);
 
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);

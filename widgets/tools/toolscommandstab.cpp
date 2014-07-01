@@ -264,6 +264,10 @@ void ToolsCommandsTab::disableCurrentLockButtonClicked() {
     emit unlockPositionSignal();
 }
 
+void ToolsCommandsTab::setSimpleTracing(bool active) {
+    newTreeButton->setEnabled(!active);
+}
+
 void ToolsCommandsTab::update() {
     this->blockSignals(true);//don’t notify changes, because this shall update the display when changes are already done
     activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);

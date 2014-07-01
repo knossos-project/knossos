@@ -1068,6 +1068,7 @@ struct skeletonState {
     int idleTimeNow;
     int idleTimeLast;
 
+    bool simpleTracing;
     Hashtable *skeletonDCs;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;

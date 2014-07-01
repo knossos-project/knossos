@@ -1853,6 +1853,9 @@ void Viewer::rewire() {
     QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(skeletonizer, &Skeletonizer::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing, window, &MainWindow::setSimpleTracing);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing,
+                     window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setSimpleTracing);
     // end skeletonizer signals
     //event model signals
     QObject::connect(eventModel, &EventModel::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
