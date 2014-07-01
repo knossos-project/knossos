@@ -124,7 +124,6 @@ Q_OBJECT
 public:
     uint8_t alpha;
     bool segmentationMode;
-    QString filename;
     // line merging: the drawn line merges all visited objects
     std::vector<Coordinate> mergeLine;
 
@@ -158,13 +157,13 @@ public:
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
     //files
-    void setDefaultFilename();
-    void saveMergelist(const QString & toFile = Segmentation::singleton().filename);
-    void loadMergelist(const std::string & fileName);
+    void saveMergelist(QIODevice & file) const;
+    void loadMergelist(QIODevice & file);
     void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
 signals:
     void dataChanged();
 public slots:
+    void clear();
     void deleteSelectedObjects();
     void mergeSelectedObjects();
     void unmergeSelectedObjects(SubObject & subobjectToUnmerge);

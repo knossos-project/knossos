@@ -1,4 +1,4 @@
-project(Knossos)
+project(knossos)
 cmake_minimum_required(VERSION 2.8.11)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
@@ -60,6 +60,8 @@ find_package(Qt5Gui 5.1 REQUIRED)
 find_package(Qt5Help 5.1 REQUIRED)
 find_package(Qt5OpenGL 5.1 REQUIRED)
 find_package(Qt5Widgets 5.1 REQUIRED)
+find_package(QuaZip REQUIRED)
+include_directories(${QUAZIP_INCLUDE_DIRS})
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
@@ -98,6 +100,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Help
     Qt5::OpenGL
     Qt5::Widgets
+    ${QUAZIP_LIBRARIES}
 )
 
 

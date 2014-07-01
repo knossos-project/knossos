@@ -69,6 +69,16 @@ Segmentation & Segmentation::singleton() {
 
 Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {}
 
+void Segmentation::clear() {
+    selectedObjects.clear();
+    objects.clear();
+    subobjects.clear();
+    touched_subobject_id = 0;
+    highestObjectId = 1;
+
+    emit dataChanged();
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
     const uint8_t red   = overlayColorMap[0][subObjectID % 256];
     const uint8_t green = overlayColorMap[1][subObjectID % 256];
@@ -106,23 +116,6 @@ void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
 
 bool Segmentation::hasObjects() const {
     return !this->objects.empty();
-}
-
-void Segmentation::setDefaultFilename() {
-    // Generate a default file name based on date and time.
-    auto currentTime = time(nullptr);
-    auto localTime = localtime(&currentTime);
-    if(localTime->tm_year >= 100) {
-        localTime->tm_year -= 100;
-    }
-    filename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-            + "/segmentationFiles/segmentation-%1%2%3-%4%5.000.mrg")
-            //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
 }
 
 Segmentation::Object & Segmentation::createObject(const uint64_t objectId, const uint64_t initialSubobjectId, const bool & immutable) {
@@ -291,7 +284,7 @@ void Segmentation::selectObject(Object & object) {
     for (auto & subobj : object.subobjects) {
         subobj.get().selected = true;
     }
-    selectedObjects.push_back(object);
+    selectedObjects.emplace_back(object);
     emit dataChanged();
 }
 
@@ -362,48 +355,44 @@ std::size_t Segmentation::selectedObjectsCount() const {
     return selectedObjects.size();
 }
 
-void Segmentation::saveMergelist(const QString & toFile) {
-    std::ofstream file(toFile.toStdString());
+void Segmentation::saveMergelist(QIODevice & file) const {
+    QTextStream stream(&file);
     for (const auto & obj : objects) {
-        file << obj.first << " " << obj.second.immutable;
+        stream << obj.first << ' ' << obj.second.immutable;
         for (const auto & subObj : obj.second.subobjects) {
-            file << " " << subObj.get().id;
+            stream << ' ' << subObj.get().id;
         }
-        file << std::endl << obj.second.category.toStdString() << std::endl << obj.second.comment.toStdString()
-             << std::endl;
+        stream << '\n';
+        stream << obj.second.category << '\n';
+        stream << obj.second.comment << '\n';
     }
 }
 
-void Segmentation::loadMergelist(const std::string & fileName) {
-    std::ifstream file(fileName);
-    std::string line;
-    int lineCount = 0;
-    while (std::getline(file, line)) {
-        Object *obj;
-        if(lineCount == 0) {
-            std::istringstream lineIss(line);
-            uint64_t objID;
-            bool immutable;
-            uint64_t initialVolume;
+void Segmentation::loadMergelist(QIODevice & file) {
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream stream(&file);
+    QString line;
+    while (!(line = stream.readLine()).isNull()) {
+        std::istringstream lineStream(line.toStdString());
+        uint64_t objID;
+        bool immutable;
+        uint64_t initialVolume;
+        QString category;
+        QString comment;
 
-            if (lineIss >> objID && lineIss >> immutable && lineIss >> initialVolume) {
-                obj = &createObject(objID, initialVolume, immutable);
-                while (lineIss >> objID) {
-                    newSubObject(*obj, objID);
-                }
-                lineCount++;
+        bool valid0 = (lineStream >> objID) && (lineStream >> immutable) && (lineStream >> initialVolume);
+        bool valid1 = !(category = stream.readLine()).isNull();
+        bool valid2 = !(comment = stream.readLine()).isNull();
+
+        if (valid0 && valid1 && valid2) {
+            auto & obj = createObject(objID, initialVolume, immutable);
+            while (lineStream >> objID) {
+                newSubObject(obj, objID);
             }
-            else {
-                qDebug() << "loadMergelist fail";
-            }
-        }
-        else if(lineCount == 1) {
-            obj->category = QString::fromStdString(line);
-            lineCount++;
-        }
-        else if(lineCount == 2) {
-            obj->comment = QString::fromStdString(line);
-            lineCount = 0;
+            obj.category = category;
+            obj.comment = comment;
+        } else {
+            qDebug() << "loadMergelist fail";
         }
     }
     emit dataChanged();

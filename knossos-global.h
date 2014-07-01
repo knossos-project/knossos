@@ -1173,8 +1173,6 @@ struct skeletonState {
 
     uint serialSkeletonCounter;
     uint maxUndoSteps;
-
-    QString skeletonFileAsQString;
 };
 
 /* global functions */

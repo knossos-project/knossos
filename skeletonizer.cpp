@@ -21,15 +21,17 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "skeletonizer.h"
 
 #include <cstring>
 #include <vector>
 
 #include <QProgressDialog>
-#include "skeletonizer.h"
+
+#include "file_io.h"
+#include "functions.h"
 #include "knossos-global.h"
 #include "knossos.h"
-#include "functions.h"
 #include "viewer.h"
 
 extern stateInfo *state;
@@ -326,17 +328,14 @@ void Skeletonizer::autoSaveIfElapsed() {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();//save timestamp
 
                 if (state->skeletonState->unsavedChanges && state->skeletonState->firstTree != nullptr) {//there’re real changes
-                    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no filename yet
-                        state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
-                    }
-                    emit saveSkeletonSignal();
+                    emit autosaveSignal();
                 }
             }
         }
     }
 }
 
-bool Skeletonizer::saveXmlSkeleton(QString fileName) {
+bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     treeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
@@ -364,11 +363,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
         pushBranchNode(false, false, currentNode, 0);
     }
 
-    QFile file(fileName);
-    if(!file.open(QIODevice::WriteOnly)) {
-        qErrnoWarning("Failed to open file");
-        return false;
-    }
     QString tmp;
 
     QXmlStreamWriter xml(&file);
@@ -459,7 +453,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        file.close();
         return false; // No Skeleton to save
     }
 
@@ -543,11 +536,10 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
-    file.close();
     return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
+bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
     int merge = false;
     int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
@@ -562,7 +554,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
 
-    QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");
         return false;
@@ -830,9 +821,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
             attribute = attributes.value("comment"); // the tree comment
             if(attribute.isNull() == false && attribute.length() > 0) {
                 addTreeComment(currentTree->treeID, attribute.toLocal8Bit().data());
-            }
-            else if(multiple) {
-                addTreeComment(currentTree->treeID, fileName);
+            } else {
+                addTreeComment(currentTree->treeID, treeCmtOnMultiLoad);
             }
 
             while (xml.readNextStartElement()) {
@@ -1005,24 +995,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     }
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
-}
-
-QString Skeletonizer::getDefaultSkelFileName() {
-    // Generate a default file name based on date and time.
-    auto currentTime = time(nullptr);
-    auto localTime = localtime(&currentTime);
-    if(localTime->tm_year >= 100) {
-        localTime->tm_year -= 100;
-    }
-    auto relativePath = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/skeletonFiles/skeleton-%1%2%3-%4%5.000.nml")
-            //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
-
-    return QFileInfo(relativePath).absoluteFilePath();
 }
 
 bool Skeletonizer::delActiveNode() {

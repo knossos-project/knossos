@@ -53,6 +53,7 @@ class WidgetContainer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
+    friend class TaskManagementMainTab;
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -60,14 +61,12 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
-    QMenu *skelFileMenu;
-    QMenu *segFileMenu;
+    QMenu fileMenu{"File"};
     QMenu *skelEditMenu;
     QMenu *segEditMenu;
+    QString annotationFilename;
     QString openFileDirectory;
-    QString openSegFileDirectory;
-    QString saveSkelFileDirectory;
-    QString saveSegFileDirectory;
+    QString saveFileDirectory;
 public:
     QSpinBox *xField, *yField, *zField;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
@@ -75,7 +74,7 @@ public:
     // contains all widgets
     WidgetContainer *widgetContainer;
 
-    QAction **historyEntryActions;
+    std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
     QAction *segEditSegModeAction;
     QAction *segEditSkelModeAction;
@@ -106,8 +105,6 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
 
-    void updateFileName(QString &fileName);
-
     void closeEvent(QCloseEvent *event);
     void updateTitlebar();
 
@@ -118,8 +115,6 @@ signals:
     bool changeDatasetMagSignal(uint upOrDownFlag);
     void recalcTextureOffsetsSignal();
     void clearSkeletonSignal(int loadingSkeleton);
-    bool loadSkeletonSignal(QString fileName, bool multiple=false);
-    bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
     void updateTreeviewSignal();
@@ -156,13 +151,12 @@ signals:
 
 public slots:
     // for the recent file menu
-    bool loadSkeletonAfterUserDecision(const QString & fileName);
-    bool loadSkeletonAfterUserDecision(const QStringList & fileNames);
+    bool openFileDispatch(QStringList fileNames);
     void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
     void openSlot();
-    void openFileDispatch(QStringList fileNames);
+    void autosaveSlot();
     void saveSlot();
     void saveAsSlot();
 

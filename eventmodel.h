@@ -101,7 +101,6 @@ signals:
     bool editCommentSignal(commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     void addSegmentSignal(int sourceNodeID, int targetNodeID);
     void jumpToActiveNodeSignal();
-    void saveSkeletonSignal();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();

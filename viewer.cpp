@@ -1954,7 +1954,7 @@ void Viewer::rewire() {
     QObject::connect(skeletonizer, &Skeletonizer::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(skeletonizer, &Skeletonizer::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::autosaveSignal, window, &MainWindow::autosaveSlot);
     // end skeletonizer signals
     //event model signals
     QObject::connect(eventModel, &EventModel::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
@@ -1978,7 +1978,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
     QObject::connect(eventModel, &EventModel::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(eventModel, &EventModel::saveSkeletonSignal, window, &MainWindow::saveSlot);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
     QObject::connect(eventModel, &EventModel::editNodeSignal, &Skeletonizer::editNode);
@@ -2000,8 +1999,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
     QObject::connect(window, &MainWindow::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(window, &MainWindow::saveSkeletonSignal, skeletonizer, &Skeletonizer::saveXmlSkeleton);
-    QObject::connect(window, &MainWindow::loadSkeletonSignal, skeletonizer, &Skeletonizer::loadXmlSkeleton);
     QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
@@ -2081,9 +2078,8 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     // -- end dataset property signals
     // task management signals --
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal,
-                     window, static_cast<bool(MainWindow::*)(const QString&)>(&MainWindow::loadSkeletonAfterUserDecision));
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
     // --- end widget signals
 }

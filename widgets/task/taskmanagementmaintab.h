@@ -39,8 +39,8 @@ protected:
 
 signals:
     void hideSignal();
-    void saveSkeletonSignal();
-    bool loadSkeletonSignal(QString fileNames, bool multiple=false);
+    void autosaveSignal();
+    bool loadSkeletonSignal(QStringList fileNames);
     void setDescriptionSignal(QString description);
     void setCommentSignal(QString comment);
 
@@ -52,7 +52,7 @@ public slots:
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
     void logoutButtonClicked();
-    
+
 };
 
 #endif // TASKMANAGEMENTMAINTAB_H
