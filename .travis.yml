@@ -19,7 +19,7 @@ before_install:
   - sudo apt-get -qq install freeglut3-dev
   - sudo apt-get -qq install libcurl4-openssl-dev
   - sudo apt-get -qq install libjpeg-turbo8-dev
-  - sudo apt-get -qq install libquazip
+  - sudo apt-get -qq install libquazip0-dev
   - sudo apt-get -qq install libxmu-dev libxi-dev
   - sudo apt-get -qq install ninja-build
   - sudo apt-get -qq install qt52base qt52tools
