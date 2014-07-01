@@ -3,20 +3,20 @@
 
 #include <functional>
 
-#include <QAbstractTableModel>
+#include <QAbstractItemModel>
+#include <QCheckBox>
 #include <QLabel>
-#include <QTableView>
+#include <QSplitter>
+#include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QCheckBox>
-#include <QSplitter>
 
 #include "segmentation.h"
 
-class SegmentationObjectModel : public QAbstractTableModel {
+class SegmentationObjectModel : public QAbstractItemModel {
 Q_OBJECT
 protected:
-    const std::vector<QString> header{"Object ID", "immutable", "category", "comment", "color", "subobject IDs"};
+    const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "subobject IDs"};
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -25,6 +25,8 @@ public:
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
+    QModelIndex index(int row, int column, const QModelIndex & = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex &) const override;
     void recreate();
 };
 
@@ -41,8 +43,8 @@ Q_OBJECT
     SegmentationObjectModel objectModel;
     TouchedObjectModel touchedObjectModel;
     QCheckBox showAllChck{"Show all objects"};
-    QTableView touchedObjsTable;
-    QTableView objectsTable;
+    QTreeView touchedObjsTable;
+    QTreeView objectsTable;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
