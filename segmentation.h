@@ -150,6 +150,7 @@ public:
     void selectObject(const uint64_t & objectId);
     void selectObject(Object & object);
     void selectObjectFromSubObject(SubObject &subobject);
+    void unselectObject(const uint64_t & objectId);
     void unselectObject(Object & object);
     void clearObjectSelection();
 

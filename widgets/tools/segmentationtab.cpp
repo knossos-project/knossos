@@ -174,36 +174,38 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
 
     touchedObjectModel.recreate();
     objectModel.recreate();
+
     updateLabels();
 }
 
-void SegmentationTab::touchedObjSelectionChanged() {
+void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
     if (touchedObjectSelectionProtection) {
         return;
     }
 
     Segmentation::singleton().blockSignals(true);//prevent ping pong
-    emit clearSegObjSelectionSignal();
-    for (const auto & index : touchedObjsTable.selectionModel()->selectedRows()) {
+    for (const auto & index : deselected.indexes()) {
+        Segmentation::singleton().unselectObject(index.data().toInt());
+    }
+    for (const auto & index : selected.indexes()) {
         Segmentation::singleton().selectObject(index.data().toInt());
     }
     updateSelection();
     Segmentation::singleton().blockSignals(false);
 }
 
-void SegmentationTab::selectionChanged() {
+void SegmentationTab::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
     if (objectSelectionProtection) {
         return;
     }
 
     Segmentation::singleton().blockSignals(true);//prevent ping pong
-    emit clearSegObjSelectionSignal();
-
-    for (const auto & index : objectsTable.selectionModel()->selectedRows()) {
+    for (const auto & index : deselected.indexes()) {
+        Segmentation::singleton().unselectObject(index.data().toInt());
+    }
+    for (const auto & index : selected.indexes()) {
         Segmentation::singleton().selectObject(index.data().toInt());
     }
-    Segmentation::singleton().untouchObjects();
-    touchedObjectModel.recreate();
     updateTouchedObjSelection();
     Segmentation::singleton().blockSignals(false);
 }

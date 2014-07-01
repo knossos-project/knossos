@@ -288,7 +288,18 @@ void Segmentation::selectObject(Object & object) {
     emit dataChanged();
 }
 
+void Segmentation::unselectObject(const uint64_t & objectId) {
+    auto iter = objects.find(objectId);
+    if (iter != std::end(objects)) {
+        unselectObject(iter->second);
+    }
+}
+
+
 void Segmentation::unselectObject(Object & object) {
+    if (!object.selected) {
+        return;
+    }
     object.selected = false;
     for (auto & subobj : object.subobjects) {
         subobj.get().selected = false;

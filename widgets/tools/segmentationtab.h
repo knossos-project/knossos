@@ -50,8 +50,8 @@ Q_OBJECT
     bool touchedObjectSelectionProtection = false;
 public:
     explicit SegmentationTab(QWidget & parent);
-    void selectionChanged();
-    void touchedObjSelectionChanged();
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();
