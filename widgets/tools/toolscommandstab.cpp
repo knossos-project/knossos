@@ -264,8 +264,8 @@ void ToolsCommandsTab::disableCurrentLockButtonClicked() {
     emit unlockPositionSignal();
 }
 
-void ToolsCommandsTab::setSimpleTracing(bool active) {
-    newTreeButton->setEnabled(!active);
+void ToolsCommandsTab::setSimpleTracing(bool simple) {
+    newTreeButton->setEnabled(!simple);
 }
 
 void ToolsCommandsTab::update() {
