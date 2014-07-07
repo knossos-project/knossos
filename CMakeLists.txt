@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
