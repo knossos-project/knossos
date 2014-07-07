@@ -895,7 +895,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
         coordinateEditingFinished();
     } else {
-        LOG("Unable to fetch text from clipboard");
+        qDebug("Unable to fetch text from clipboard");
     }
 }
 

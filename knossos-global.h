@@ -1230,26 +1230,4 @@ struct skeletonState {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 
-#include <QTextStream>
-
-template<typename T>
-void log(QTextStream & oss, T t) {
-    oss << t;
-}
-
-template<typename T, typename... Ts>
-void log(QTextStream & oss, T t, Ts... ts) {
-    oss << t;
-    log(oss, ts...);
-}
-
-//TODO replace all occurences of the LOG macro with qDebug calls and remove this macro
-#define LOG(...)\
-{\
-    QString data;\
-    QTextStream oss(&data);\
-    log(oss, __VA_ARGS__);\
-    qDebug() << data;\
-}\
-
 #endif
