@@ -123,7 +123,11 @@ Segmentation::Object & Segmentation::createObject(const uint64_t objectId, const
     if (objectIt == std::end(objects)) {
         highestObjectId = objectId > highestObjectId ? objectId : highestObjectId;
         //first is iterator to the newly inserted key-value pair
-        auto & subobject = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first->second;
+        auto subobjectIt = subobjects.find(initialSubobjectId);
+        if (subobjectIt == std::end(subobjects)) {
+            subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
+        }
+        auto & subobject = subobjectIt->second;
         return objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, immutable, subobject)).first->second;//create object from supervoxel
     } else {
         qDebug() << "tried to create object with id" << objectId << "which already exists";
@@ -144,8 +148,11 @@ void Segmentation::removeObject(Object & object) {
 }
 
 void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
-    auto & newSubObj = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(subObjID), std::forward_as_tuple(subObjID)).first->second;
-    obj.addExistingSubObject(newSubObj);
+    auto subobjectIt = subobjects.find(subObjID);
+    if (subobjectIt == std::end(subobjects)) {
+        subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(subObjID), std::forward_as_tuple(subObjID)).first;
+    }
+    obj.addExistingSubObject(subobjectIt->second);
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorUniqueFromId(const uint64_t subObjectID) const {
