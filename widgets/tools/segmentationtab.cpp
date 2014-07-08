@@ -165,6 +165,12 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
+    for (const auto & index : {0, 1, 2, 3}) {
+        //comment (4) shall not waste space, also displaying all supervoxel ids (5) causes problems
+        touchedObjsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
+        objectsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
+    }
+
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
@@ -172,12 +178,6 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, [&](){
-        for (const auto & index : {0, 1, 2, 3, 5}) {
-            objectsTable.resizeColumnToContents(index);
-            touchedObjsTable.resizeColumnToContents(index);
-        }
-    });
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
