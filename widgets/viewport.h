@@ -84,7 +84,7 @@ private:
     bool resizeButtonHold;
     void resizeVP(QMouseEvent *event);
     void moveVP(QMouseEvent *event);
-signals:    
+signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);

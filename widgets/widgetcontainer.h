@@ -68,7 +68,7 @@ public:
 signals:
 
 public slots:
-    
+
 };
 
 #endif // WIDGETCONTAINER_H

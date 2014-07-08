@@ -17,7 +17,7 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 {
     branchNodesOnlyCheckbox = new QCheckBox("Branch nodes only");
     filterLabel = new QLabel("Filter:");
-    filterField = new QLineEdit();    
+    filterField = new QLineEdit();
 
     QTableWidgetItem *left, *right;
     left = new QTableWidgetItem(QString("Node ID"));
@@ -27,7 +27,7 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
     nodeTable->setColumnCount(2);
     nodeTable->setAlternatingRowColors(true);
 
-    nodeTable->setHorizontalHeaderItem(0, left);    
+    nodeTable->setHorizontalHeaderItem(0, left);
     nodeTable->setHorizontalHeaderItem(1, right);
     nodeTable->horizontalHeader()->setStretchLastSection(true);
 
@@ -87,9 +87,9 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
             if(!node->comment or !node->nodeID) {
                 node = node->next;
                 continue;
-            }           
+            }
 
-            if(filtered) {               
+            if(filtered) {
                 if(strstr(node->comment->content, filter) != NULL) {
                     if((branchNodesOnlyCheckbox->isChecked() and node->isBranchNode) or !branchNodesOnlyCheckbox->isChecked()) {
 
