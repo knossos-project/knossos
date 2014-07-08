@@ -45,7 +45,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     /*@todo
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        qDebug("Unable to create skeleton hash-table.");
+        qDebug() << "Unable to create skeleton hash-table.";
         return false;
     }*/
 
@@ -140,7 +140,7 @@ nodeListElement *Skeletonizer::addNodeListElement(
 
     newElement = (nodeListElement*) malloc(sizeof(struct nodeListElement));
     if(newElement == NULL) {
-        qDebug("Out of memory while trying to allocate memory for a new nodeListElement.");
+        qDebug() << "Out of memory while trying to allocate memory for a new nodeListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct nodeListElement));
@@ -187,7 +187,7 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
 
     newElement = (segmentListElement*) malloc(sizeof(struct segmentListElement));
     if(newElement == NULL) {
-        qDebug("Out of memory while trying to allocate memory for a new segmentListElement.");
+        qDebug() << "Out of memory while trying to allocate memory for a new segmentListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct segmentListElement));
@@ -261,7 +261,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                           -1,
                           true);
     if(!addedNodeID) {
-        qDebug("Error: Could not add new node!");
+        qDebug() << "Error: Could not add new node!";
         return false;
     }
 
@@ -282,7 +282,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     int targetNodeID;
 
     if(!state->skeletonState->activeNode) {
-        qDebug("Please create a node before trying to link nodes.");
+        qDebug() << "Please create a node before trying to link nodes.";
         return false;
     }
 
@@ -297,7 +297,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
                            -1,
                            true);
     if(!targetNodeID) {
-        qDebug("Could not add new node while trying to add node and link with active node!");
+        qDebug() << "Could not add new node while trying to add node and link with active node!";
         return false;
     }
 
@@ -1028,7 +1028,7 @@ bool Skeletonizer::delActiveTree() {
         }
     }
     else {
-       qDebug("No active tree available.");
+       qDebug() << "No active tree available.";
        return false;
     }
 
@@ -1048,7 +1048,7 @@ bool Skeletonizer::delSegment(int sourceNodeID, int targetNodeID, segmentListEle
     }
 
     if(!segToDel) {
-        qDebug("Cannot delete segment, no segment with corresponding node IDs available!");
+        qDebug() << "Cannot delete segment, no segment with corresponding node IDs available!";
         return false;
     }
 
@@ -1512,12 +1512,12 @@ bool Skeletonizer::addSegment(int sourceNodeID, int targetNodeID) {
     targetNode = findNodeByNodeID(targetNodeID);
 
     if(!(sourceNode) || !(targetNode)) {
-        qDebug("Could not link the nodes, because at least one is missing!");
+        qDebug() << "Could not link the nodes, because at least one is missing!";
         return false;
     }
 
     if(sourceNode == targetNode) {
-        qDebug("Cannot link node with itself!");
+        qDebug() << "Cannot link node with itself!";
         return false;
     }
 
@@ -1600,7 +1600,7 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     //Create a new hash-table that holds the skeleton datacubes
     //state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
     //if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-    //    qDebug("Unable to create skeleton hash-table.");
+    //    qDebug() << "Unable to create skeleton hash-table.";
     //    Knossos::unlockSkeleton(false);
     //    return false;
     //}
@@ -1634,7 +1634,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     nodeListElement *firstNode, *lastNode;
 
     if(treeID1 == treeID2) {
-        qDebug("Could not merge trees. Provided IDs are the same!");
+        qDebug() << "Could not merge trees. Provided IDs are the same!";
         return false;
     }
 
@@ -1642,7 +1642,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     tree2 = findTreeByTreeID(treeID2);
 
     if(!(tree1) || !(tree2)) {
-        qDebug("Could not merge trees, provided IDs are not valid!");
+        qDebug() << "Could not merge trees, provided IDs are not valid!";
         return false;
     }
 
@@ -1731,7 +1731,7 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, b
             }
             tree = tree->next;
         }
-        qDebug("no nodes to move to");
+        qDebug() << "no nodes to move to";
         return NULL;
     }
     treeListElement *tree;
@@ -1794,7 +1794,7 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
             }
             tree = tree->next;
         }
-        qDebug("no nodes to move to");
+        qDebug() << "no nodes to move to";
         return NULL;
     }
     treeListElement *tree;
@@ -1861,7 +1861,7 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
     if(newElement == NULL) {
-        qDebug("Out of memory while trying to allocate memory for a new treeListElement.");
+        qDebug() << "Out of memory while trying to allocate memory for a new treeListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct treeListElement));
@@ -1942,7 +1942,7 @@ treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
         if(tree) {
             return tree;
         }
-        qDebug("no tree to move to");
+        qDebug() << "no tree to move to";
         return NULL;
     }
     while(tree) {
@@ -1976,7 +1976,7 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
         if(tree) {
             return tree;
         }
-        qDebug("no tree to move to");
+        qDebug() << "no tree to move to";
         return NULL;
     }
     while(tree) {
@@ -2134,14 +2134,14 @@ void* Skeletonizer::popStack(stack *stack) {
 
 bool Skeletonizer::pushStack(stack *stack, void *element) {
     if(element == NULL) {
-        qDebug("Stack can't hold NULL.");
+        qDebug() << "Stack can't hold NULL.";
         return false;
     }
 
     if(stack->stackpointer + 1 == stack->size) {
         stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
         if(stack->elements == NULL) {
-            qDebug("Out of memory.");
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         stack->size = stack->size * 2;
@@ -2159,20 +2159,20 @@ stack* Skeletonizer::newStack(int size) {
     struct stack *newStack = NULL;
 
     if(size <= 0) {
-        qDebug("That doesn't really make any sense, right? Cannot create stack with size <= 0.");
+        qDebug() << "That doesn't really make any sense, right? Cannot create stack with size <= 0.";
         return NULL;
     }
 
     newStack = (stack *)malloc(sizeof(struct stack));
     if(newStack == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newStack, '\0', sizeof(struct stack));
 
     newStack->elements = (void **)malloc(sizeof(void *) * size);
     if(newStack->elements == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newStack->elements, '\0', sizeof(void *) * size);
@@ -2211,7 +2211,7 @@ bool Skeletonizer::setDynArray(dynArray *array, int pos, void *value) {
         array->elements = (void**)realloc(array->elements, (array->end + 1 +
                                   array->firstSize) * sizeof(void *));
         if(array->elements == NULL) {
-            qDebug("Out of memory.");
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
@@ -2228,14 +2228,14 @@ dynArray* Skeletonizer::newDynArray(int size) {
 
     newArray = (dynArray*)malloc(sizeof(struct dynArray));
     if(newArray == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newArray, '\0', sizeof(struct dynArray));
 
     newArray->elements = (void**)malloc(sizeof(void *) * size);
     if(newArray->elements == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newArray->elements, '\0', sizeof(void *) * size);
@@ -2307,7 +2307,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
 
     if(visitedRight == NULL || visitedLeft == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
 
@@ -2334,7 +2334,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         while(index > *visitedLen) {
             *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
             if(*visited == NULL) {
-                qDebug("Out of memory.");
+                qDebug() << "Out of memory.";
                 _Exit(false);
             }
 
@@ -2441,7 +2441,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         state->skeletonState->skeletonChanged = true;
     }
     else {
-        qDebug("The connected component is equal to the entire tree, not splitting.");
+        qDebug() << "The connected component is equal to the entire tree, not splitting.";
     }
 
     delStack(remainingNodes);
@@ -2525,7 +2525,7 @@ bool Skeletonizer::delComment(commentListElement *currentComment, int commentNod
     }
 
     if(!currentComment) {
-        qDebug("Please provide a valid comment element to delete!");
+        qDebug() << "Please provide a valid comment element to delete!";
         return false;
     }
 
@@ -2574,7 +2574,7 @@ bool Skeletonizer::editComment(commentListElement *currentComment, int nodeID, Q
         currentComment = findNodeByNodeID(nodeID)->comment;
     }
     if(!currentComment) {
-        qDebug("Please provide a valid comment element to edit!");
+        qDebug() << "Please provide a valid comment element to edit!";
         return false;
     }
 
@@ -2734,7 +2734,7 @@ bool Skeletonizer::searchInComment(char */*searchString*/, commentListElement */
 
 bool Skeletonizer::unlockPosition() {
     if(state->skeletonState->positionLocked) {
-        qDebug("Spatial locking disabled.");
+        qDebug() << "Spatial locking disabled.";
     }
     state->skeletonState->positionLocked = false;
 
@@ -2775,7 +2775,7 @@ bool Skeletonizer::popBranchNode() {
             box.setIcon(QMessageBox::Information);
             box.setInformativeText("No branch points remain");
             box.exec();
-            qDebug("No branch points remain.");
+            qDebug() << "No branch points remain.";
 
             goto exit_popbranchnode;
         }
@@ -2829,12 +2829,12 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
 
         }
         else {
-            qDebug("Active node is already a branch point");
+            qDebug() << "Active node is already a branch point";
             return true;
         }
     }
     else {
-        qDebug("Make a node active before adding branch points.");
+        qDebug() << "Make a node active before adding branch points.";
         return true;
     }
 

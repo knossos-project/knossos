@@ -16,7 +16,7 @@ bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode
     if(cookiePath) {
         cookie = fopen(cookiePath, "r");
         if(cookie == NULL) {
-            qDebug("no cookie");
+            qDebug() << "no cookie";
             return false;
         }
         fclose(cookie);
@@ -196,7 +196,7 @@ QString taskState::CSRFToken() {
         return NULL;
     }
     if(cookie.open(QIODevice::ReadOnly|QIODevice::Text) == false) {
-        qDebug("failed to open cookie file");
+        qDebug() << "failed to open cookie file";
         return NULL;
     }
     QString content;
@@ -209,7 +209,7 @@ QString taskState::CSRFToken() {
         }
         return QString (content.mid(index + strlen("csrftoken ")).toStdString().c_str());
     }
-    qDebug("no csrf token found!");
+    qDebug() << "no csrf token found!";
     return NULL;
 }
 

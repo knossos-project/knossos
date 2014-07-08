@@ -53,7 +53,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
     if (NULL == curlm) {
         curlm = curl_multi_init();
         if (NULL == curlm) {
-            qDebug("Failed to initialize CURL multi-mode");
+            qDebug() << "Failed to initialize CURL multi-mode";
             return EXIT_FAILURE;
         }
     }
@@ -89,7 +89,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
                 isBreak = true;
             }
             if (isBreak) {
-                qDebug("FTP thread should exit");
+                qDebug() << "FTP thread should exit";
                 *hadErrors = true;
                 retVal = EXIT_FAILURE;
                 break;
@@ -101,13 +101,13 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
           FD_ZERO(&W);
           FD_ZERO(&E);
           if (curl_multi_fdset(curlm, &R, &W, &E, &M)) {
-            qDebug("E: curl_multi_fdset\n");
+            qDebug() << "E: curl_multi_fdset\n";
             *hadErrors = true;
             retVal = EXIT_FAILURE;
             break;
           }
           if (curl_multi_timeout(curlm, &L)) {
-            qDebug("E: curl_multi_timeout\n");
+            qDebug() << "E: curl_multi_timeout\n";
             *hadErrors = true;
             retVal = EXIT_FAILURE;
             break;
@@ -232,7 +232,7 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
 
     eh_array = (CURL**)malloc(sizeof(CURL *) * fts->cubeCount);
     if (NULL == eh_array) {
-        qDebug("Error allocating eh_array");
+        qDebug() << "Error allocating eh_array";
         return EXIT_FAILURE;
     }
     memset(eh_array, 0, sizeof(CURL *) * fts->cubeCount);
@@ -244,7 +244,7 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
     multiCubes = randomize_connection_number(&max_connections, &pipelines_per_connection, &MAX_DOWNLOADS);
     i = 0;
     if (NULL == multiCubes) {
-        qDebug("Error allocating multiCubes!");
+        qDebug() << "Error allocating multiCubes!";
         return false;
     }
     while (currentCube != firstCube) {

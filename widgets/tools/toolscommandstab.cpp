@@ -256,7 +256,7 @@ void ToolsCommandsTab::locktoActiveButtonClicked() {
         emit lockPositionSignal(state->skeletonState->activeNode->position);
     }
     else {
-        qDebug("There is not active node to lock");
+        qDebug() << "There is not active node to lock";
     }
 }
 

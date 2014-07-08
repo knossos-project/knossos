@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     // from data and knossos.conf from data overrides defaults.
 
     if(Knossos::configDefaults() != true) {
-        qDebug("Error loading default parameters.");
+        qDebug() << "Error loading default parameters.";
         _Exit(false);
     }
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
 
     if(argc >= 2) {
         if(Knossos::configFromCli(argc, argv) == false) {
-            qDebug("Error reading configuration from command line.");
+            qDebug() << "Error reading configuration from command line.";
         }
     }
     bool datasetLoaded = knossos->initStates();
@@ -405,7 +405,7 @@ bool Knossos::readConfigFile(const char *path) {
         } else if (token == "compression_ratio") {
             state->compressionRatio = tokenList.at(1).toInt();
         } else {
-            qDebug("Skipping unknown parameter");
+            qDebug() << "Skipping unknown parameter";
         }
 
     }
@@ -617,7 +617,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         if(state->lowestAvailableMag == INT_MAX) {
             // This can happen if an error in the string parsing above causes knossos to
             // search the wrong directories or a wrong path was entered
-            qDebug("Path does not exist or unsupported data path format.");
+            qDebug() << "Path does not exist or unsupported data path format.";
             return false;
         }
 
@@ -642,7 +642,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         pathLen = strlen(state->path);
         if(!pathLen) {
-            qDebug("No valid dataset specified.\n");
+            qDebug() << "No valid dataset specified.\n";
             return false;
         }
 
@@ -784,7 +784,7 @@ bool Knossos::configDefaults() {
 
     state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
     if(state->viewerState->vpConfigs == NULL) {
-        qDebug("Out of memory.");
+        qDebug() << "Out of memory.";
         return false;
     }
     memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
@@ -862,7 +862,7 @@ bool Knossos::readDataConfAndLocalConf() {
 
     if(length >= 1010) {
         // We need to append "/knossos.conf"
-        qDebug("Data path too long.");
+        qDebug() << "Data path too long.";
         _Exit(false);
     }
 
@@ -917,7 +917,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
              equals++;
              rval = (char *)malloc((strlen(equals) + 1) * sizeof(char));
              if(rval == NULL) {
-                 qDebug("Out of memory.");
+                 qDebug() << "Out of memory.";
                  _Exit(false);
              }
              memset(rval, '\0', strlen(equals) + 1);
@@ -929,7 +929,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
      }
      lval = (char *) malloc((llen + 1) * sizeof(char));
      if(lval == NULL) {
-         qDebug("Out of memory.");
+         qDebug() << "Out of memory.";
          _Exit(false);
      }
      memset(lval, '\0', llen + 1);
@@ -943,7 +943,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                    qDebug("switch not applicable anymore");
+                    qDebug() << "switch not applicable anymore";
                      break;
                  case 2:
                      state->scale.x = (float)strtod(rval, NULL);

@@ -259,7 +259,7 @@ void ToolsTreeviewTab::restoreColorAction() {
 
 void ToolsTreeviewTab::deleteTreesAction() {
     if(state->skeletonState->selectedTrees.size() == 0) {
-        qDebug("no trees to delete");
+        qDebug() << "no trees to delete";
     } else {
         QMessageBox prompt;
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -363,7 +363,7 @@ void ToolsTreeviewTab::deleteNodesAction() {
         nodeActivated();//removes active node from activeNodeTable
     } else {
         if(state->skeletonState->selectedNodes.size() == 0) {
-            qDebug("no nodes");
+            qDebug() << "no nodes";
             return;
         }
         bool deleteNodes = true;
@@ -1021,7 +1021,7 @@ bool ToolsTreeviewTab::matchesSearchString(QString searchString, QString string,
     if(useRegEx) {
         QRegularExpression regex(searchString);
         if(regex.isValid() == false) {
-            qDebug("invalid regex");
+            qDebug() << "invalid regex";
             return false;
         }
         return regex.match(string).hasMatch();

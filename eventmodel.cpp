@@ -113,7 +113,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             if(keyMod.testFlag(Qt::ControlModifier)) {
-                qDebug("shift and control and mouse middle");
+                qDebug() << "shift and control and mouse middle";
                 // Pressed SHIFT and CTRL
             } else {
                 // Delete segment between clicked and active node

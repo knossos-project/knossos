@@ -119,7 +119,7 @@ void DatasetPropertyWidget::loadSettings() {
     }
 
     if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
         throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
     }
 
