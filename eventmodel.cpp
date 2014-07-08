@@ -68,7 +68,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         }
 
         return false;
-    } else if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+    } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && !Segmentation::singleton().segmentationMode) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
     } else if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
         // always drag in skeleton vp
