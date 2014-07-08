@@ -37,6 +37,7 @@ if(WIN32)
         add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
         #satisfy additional dependecies
         set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+        add_definitions(-DQUAZIP_STATIC)
     endif()
 endif()
 
@@ -55,11 +56,7 @@ include_directories(${TURBOJPEG_INCLUDE_DIR})
 add_definitions(-DKNOSSOS_USE_TURBOJPEG)
 
 
-find_package(Qt5Core 5.1 REQUIRED)
-find_package(Qt5Gui 5.1 REQUIRED)
-find_package(Qt5Help 5.1 REQUIRED)
-find_package(Qt5OpenGL 5.1 REQUIRED)
-find_package(Qt5Widgets 5.1 REQUIRED)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
 find_package(QuaZip REQUIRED)
 include_directories(${QUAZIP_INCLUDE_DIRS})
 #platform dependent resources
