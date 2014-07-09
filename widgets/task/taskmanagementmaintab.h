@@ -52,7 +52,7 @@ public slots:
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
     void logoutButtonClicked();
-    
+
 };
 
 #endif // TASKMANAGEMENTMAINTAB_H

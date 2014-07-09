@@ -815,7 +815,7 @@ bool Viewer::initViewer() {
         if(loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
                           GL_RGBA) == false) {
-            qDebug() << "Overlay color map stdOverlay.lut does not exist."; 
+            qDebug() << "Overlay color map stdOverlay.lut does not exist.";
             state->overlay = false;
         }
     }
@@ -828,7 +828,7 @@ bool Viewer::initViewer() {
                * sizeof(Byte)
                * 3);
     if(state->viewerState->texData == NULL) {
-        qDebug() << "Out of memory."; 
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(state->viewerState->texData, '\0',
@@ -846,7 +846,7 @@ bool Viewer::initViewer() {
                    sizeof(Byte) *
                    4);
         if(state->viewerState->overlayData == NULL) {
-            qDebug() << "Out of memory."; 
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(state->viewerState->overlayData, '\0',
@@ -863,7 +863,7 @@ bool Viewer::initViewer() {
                                                          * sizeof(Byte)
                                                          * 3);
     if(state->viewerState->defaultTexData == NULL) {
-        qDebug() << "Out of memory."; 
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -874,7 +874,7 @@ bool Viewer::initViewer() {
     for (std::size_t i = 0; i < state->viewerState->numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
-            qDebug() << "Out of memory."; 
+            qDebug() << "Out of memory.";
             exit(0);
         }
         memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
@@ -887,7 +887,7 @@ bool Viewer::initViewer() {
                                                                  * sizeof(Byte)
                                                                  * 4);
         if(state->viewerState->defaultOverlayData == NULL) {
-            qDebug() << "Out of memory."; 
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -939,13 +939,13 @@ bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
     if(readBytes != size) {
         qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
         if(fclose(lutFile) != 0) {
-            qDebug() << "Additionally, an error occured closing the file."; 
+            qDebug() << "Additionally, an error occured closing the file.";
         }
         return false;
     }
 
     if(fclose(lutFile) != 0) {
-        qDebug() << "Error closing LUT file."; 
+        qDebug() << "Error closing LUT file.";
         return false;
     }
 
@@ -995,12 +995,12 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     if(readBytes != size) {
         qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
         if(fclose(lutFile) != 0) {
-            qDebug() << "Additionally, an error occured closing the file."; 
+            qDebug() << "Additionally, an error occured closing the file.";
         }
         return false;
     }
     if(fclose(lutFile) != 0) {
-        qDebug() << "Error closing LUT file."; 
+        qDebug() << "Error closing LUT file.";
         return false;
     }
 

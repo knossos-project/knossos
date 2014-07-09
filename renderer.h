@@ -55,7 +55,7 @@ protected:
     bool initMesh(mesh *meshToInit, uint initialSize);
     bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
     bool updateFrustumClippingPlanes(uint viewportType);
-    
+
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);

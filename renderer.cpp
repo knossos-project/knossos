@@ -463,7 +463,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
          || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-       qDebug() << "Wrong VP type given for renderOrthogonalVP() call."; 
+       qDebug() << "Wrong VP type given for renderOrthogonalVP() call.";
         return false;
     }
 

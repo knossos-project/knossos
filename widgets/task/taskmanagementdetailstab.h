@@ -15,13 +15,13 @@ public:
 protected:
     QLabel categoryDescriptionLabel;
     QLabel taskCommentLabel;
-    
+
 signals:
-    
+
 public slots:
     void setDescription(QString description);
     void setComment(QString comment);
-    
+
 };
 
 #endif // TASKMANAGEMENTDETAILSTAB_H

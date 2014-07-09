@@ -20,7 +20,7 @@ class ToolsCommandsTab : public QWidget
 
 public:
     explicit ToolsCommandsTab(QWidget *parent = 0);
-    
+
 protected:
     QLabel *treeLabel;
     QLabel *activeTreeLabel;

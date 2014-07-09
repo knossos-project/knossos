@@ -729,13 +729,13 @@ bool Loader::initLoader() {
     // Load the bogus dc (a placeholder when data is unavailable).
     this->bogusDc = (Byte*)malloc(state->cubeBytes);
     if(this->bogusDc == NULL) {
-        qDebug() << "Out of memory."; 
+        qDebug() << "Out of memory.";
         return false;
     }
     FILE * bogusDc = fopen("bogus.raw", "r");
     if(bogusDc != NULL) {
         if(fread(this->bogusDc, 1, state->cubeBytes, bogusDc) < state->cubeBytes) {
-            qDebug() << "Unable to read the correct amount of bytes from the bogus dc file."; 
+            qDebug() << "Unable to read the correct amount of bytes from the bogus dc file.";
             memset(this->bogusDc, '\0', state->cubeBytes);
         }
         fclose(bogusDc);
@@ -747,7 +747,7 @@ bool Loader::initLoader() {
         // bogus oc is white
         this->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
         if(this->bogusOc == NULL) {
-            qDebug() << "Out of memory."; 
+            qDebug() << "Out of memory.";
                     return false;
         }
         memset(this->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);

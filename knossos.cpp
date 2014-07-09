@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     // from data and knossos.conf from data overrides defaults.
 
     if(Knossos::configDefaults() != true) {
-        qDebug() << "Error loading default parameters."; 
+        qDebug() << "Error loading default parameters.";
         _Exit(false);
     }
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 
     if(argc >= 2) {
         if(Knossos::configFromCli(argc, argv) == false) {
-            qDebug() << "Error reading configuration from command line."; 
+            qDebug() << "Error reading configuration from command line.";
         }
     }
     bool datasetLoaded = knossos->initStates();
@@ -787,7 +787,7 @@ bool Knossos::configDefaults() {
 
     state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
     if(state->viewerState->vpConfigs == NULL) {
-        qDebug() << "Out of memory."; 
+        qDebug() << "Out of memory.";
         return false;
     }
     memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
@@ -865,7 +865,7 @@ bool Knossos::readDataConfAndLocalConf() {
 
     if(length >= 1010) {
         // We need to append "/knossos.conf"
-        qDebug() << "Data path too long."; 
+        qDebug() << "Data path too long.";
         _Exit(false);
     }
 
@@ -920,7 +920,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
              equals++;
              rval = (char *)malloc((strlen(equals) + 1) * sizeof(char));
              if(rval == NULL) {
-                 qDebug() << "Out of memory."; 
+                 qDebug() << "Out of memory.";
                  _Exit(false);
              }
              memset(rval, '\0', strlen(equals) + 1);
@@ -932,7 +932,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
      }
      lval = (char *) malloc((llen + 1) * sizeof(char));
      if(lval == NULL) {
-         qDebug() << "Out of memory."; 
+         qDebug() << "Out of memory.";
          _Exit(false);
      }
      memset(lval, '\0', llen + 1);
