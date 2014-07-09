@@ -167,6 +167,7 @@ public slots:
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
     void clearSkeletonWithoutConfirmation();
+    void setSimpleTracing(bool simple);
 
     /* view menu */
     void dragDatasetSlot();
@@ -179,7 +180,6 @@ public slots:
 
     /* window menu */
     void taskSlot();
-    void logSlot();
 
     /* toolbar slots */
     void copyClipboardCoordinates();

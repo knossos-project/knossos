@@ -37,6 +37,8 @@
 extern stateInfo *state;
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
+    state->skeletonState->simpleTracing = false;
+
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
 
@@ -587,7 +589,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<std::pair<int, int>> edgeVector;
 
     bench.start();
-
+    emit setSimpleTracing(false);
     if (!xml.readNextStartElement() || xml.name() != "things") {
         qDebug() << "invalid xml token: " << xml.name();
         return false;
@@ -609,6 +611,13 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
                     }
+                } else if(xml.name() == "tracing") {
+                    QStringRef attribute = attributes.value("simple");
+                    state->skeletonState->simpleTracing = false;
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->simpleTracing = static_cast<bool>(attribute.toLocal8Bit().toInt());
+                    }
+                    emit setSimpleTracing(state->skeletonState->simpleTracing);
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.

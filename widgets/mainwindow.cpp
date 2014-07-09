@@ -862,16 +862,6 @@ void MainWindow::defaultPreferencesSlot() {
     }
 }
 
-/* window menu functionality */
-
-void MainWindow::logSlot()
-{
-    this->widgetContainer->console->show();
-    this->widgetContainer->console->adjustSize();
-    if(widgetContainer->console->pos().x() <= 0 or this->widgetContainer->console->pos().y() <= 0)
-        this->widgetContainer->console->move(QWidget::mapToGlobal(centralWidget()->pos()));
-}
-
 /* toolbar slots */
 
 void MainWindow::copyClipboardCoordinates() {
@@ -944,9 +934,6 @@ void MainWindow::saveSettings() {
 
     widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
-#ifdef QT_DEBUG
-    widgetContainer->console->saveSettings();
-#endif
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
@@ -1021,9 +1008,6 @@ void MainWindow::loadSettings() {
 
     widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
-#ifdef QT_DEBUG
-    widgetContainer->console->loadSettings();
-#endif
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
@@ -1399,4 +1383,11 @@ void MainWindow::resizeViewports(int width, int height) {
             viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
         }
     }
+}
+
+void MainWindow::setSimpleTracing(bool simple) {
+    QAction *editMenu = menuBar()->actions().at(1);
+    editMenu->menu()->actions().at(1)->setEnabled(!simple); // add one unlinked node
+    editMenu->menu()->actions().at(3)->setEnabled(!simple); // add unlinked nodes
+    editMenu->menu()->actions().at(5)->setEnabled(!simple); // add tree
 }

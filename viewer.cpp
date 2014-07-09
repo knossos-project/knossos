@@ -46,9 +46,6 @@ Viewer::Viewer(QObject *parent) :
 
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-#ifdef QT_DEBUG
-    state->console = window->widgetContainer->console;
-#endif
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();
@@ -1193,7 +1190,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             qDebug("left upper tex px of VP %d is: %d, %d, %d",i,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)
+                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
         }
     }*/
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -1955,6 +1952,9 @@ void Viewer::rewire() {
     QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(skeletonizer, &Skeletonizer::autosaveSignal, window, &MainWindow::autosaveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing, window, &MainWindow::setSimpleTracing);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing,
+                     window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setSimpleTracing);
     // end skeletonizer signals
     //event model signals
     QObject::connect(eventModel, &EventModel::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);

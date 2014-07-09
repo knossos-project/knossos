@@ -46,7 +46,7 @@ protected:
     QLabel **labels;
     QPushButton *button;
 
-    
+
 };
 
 #endif // COMMENTSHORTCUTSTAB_H

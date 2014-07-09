@@ -20,7 +20,7 @@ class ToolsCommandsTab : public QWidget
 
 public:
     explicit ToolsCommandsTab(QWidget *parent = 0);
-    
+
 protected:
     QLabel *treeLabel;
     QLabel *activeTreeLabel;
@@ -87,6 +87,7 @@ public slots:
     void commentLockEditChanged(QString comment);
     void locktoActiveButtonClicked();
     void disableCurrentLockButtonClicked();
+    void setSimpleTracing(bool simple);
 
     void update();
 };

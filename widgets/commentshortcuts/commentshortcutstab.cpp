@@ -72,7 +72,7 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
 void CommentShortCutsTab::deleteCommentsWithoutConfirmation() {
 
     for(int i = 0; i < NUM; i++) {
-        textFields[i]->clear();        
+        textFields[i]->clear();
     }
 }
 
