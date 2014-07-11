@@ -16,7 +16,7 @@
 class SegmentationObjectModel : public QAbstractItemModel {
 Q_OBJECT
 protected:
-    const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "subobjects", "subobject IDs"};
+    const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
 public:

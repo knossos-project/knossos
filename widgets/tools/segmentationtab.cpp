@@ -167,8 +167,8 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
-    for (const auto & index : {0, 1, 2, 3}) {
-        //comment (4) shall not waste space, also displaying all supervoxel ids (5) causes problems
+    for (const auto & index : {0, 1, 2, 5}) {
+        //comment (4) shall not waste space, also displaying all supervoxel ids (6) causes problems
         touchedObjsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
         objectsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
     }
