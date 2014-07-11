@@ -63,10 +63,12 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
             case 1: return static_cast<quint64>(obj.id);
             case 3: return obj.category;
             case 4: return obj.comment;
-            case 5: {
+            case 5: return static_cast<quint64>(obj.subobjects.size());
+            case 6: {
                 QString output;
-                for (const auto & elem : obj.subobjects) {
-                    output += QString::number(elem.get().id) + ", ";
+                const auto elemCount = std::min(MAX_SHOWN_SUBOBJECTS, obj.subobjects.size());
+                for (std::size_t i = 0; i < elemCount; ++i) {
+                    output += QString::number(obj.subobjects[i].get().id) + ", ";
                 }
                 output.chop(2);
                 return output;
