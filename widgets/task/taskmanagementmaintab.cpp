@@ -302,7 +302,10 @@ void TaskManagementMainTab::submitDialogOk() {
 
     handle = curl_easy_init();
     multihandle = curl_multi_init();
-
+    if(handle == NULL || multihandle == NULL) {
+        setResponse("<font color='red'>Connection error!</font>");
+        return;
+    }
     // fill the multipart post form. TDItem: comments are not supported, yet.
     std::string CSRFToken_stdstr = taskState::CSRFToken().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken",
