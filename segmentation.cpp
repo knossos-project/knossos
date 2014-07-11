@@ -417,8 +417,8 @@ void Segmentation::loadMergelist(QIODevice & file) {
 }
 
 void Segmentation::deleteSelectedObjects() {
-    for (auto & elem : selectedObjects) {
-        removeObject(elem.get());
+    while (!selectedObjects.empty()) {
+        removeObject(selectedObjects.back().get());
     }
     emit dataChanged();
 }
