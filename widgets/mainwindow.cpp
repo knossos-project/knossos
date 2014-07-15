@@ -723,10 +723,11 @@ void MainWindow::saveAsSlot() {
     }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
-    if (!fileName.contains(".k.zip")) {
-        fileName += ".k.zip";
-    }
     if (!fileName.isEmpty()) {
+        if (!fileName.contains(".k.zip")) {
+            fileName += ".k.zip";
+        }
+
         annotationFilename = fileName;
         saveFileDirectory = QFileInfo(fileName).absolutePath();
 
