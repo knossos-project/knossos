@@ -58,18 +58,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         if(VPfound == VIEWPORT_SKELETON) {
             return false;
         }
-
-//        //in other VPs we traverse nodelist to find nearest node inside the radius
-//        clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-//        if(clickedCoordinate) {
-//            newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
-//            if(newActiveNode != NULL) {
-//                free(clickedCoordinate);
-//                emit setActiveNodeSignal(NULL, newActiveNode->nodeID);
-//                emit nodeActivatedSignal();
-//                return true;
-//            }
-//        }
         return false;
     } else if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -96,13 +84,19 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     if(QApplication::keyboardModifiers() == Qt::ALT) {
         int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
-            if(state->skeletonState->activeNode) {
-                if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode, NULL);
-                } else if(findSegmentByNodeIDSignal(clickedNode, state->skeletonState->activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+            auto activeNode = state->skeletonState->activeNode;
+            if(activeNode) {
+                if(findSegmentByNodeIDSignal(activeNode->nodeID, clickedNode)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
+                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNode, activeNode->nodeID, NULL);
                 } else{
-                    emit addSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode);
+                    if(state->skeletonState->simpleTracing
+                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
+                        // prevent cycles
+                        return false;
+                    }
+                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
             }
         }
@@ -114,29 +108,22 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
+        auto activeNode = state->skeletonState->activeNode;
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
-            if(keyMod.testFlag(Qt::ControlModifier)) {
-                qDebug("shift and control and mouse middle");
-                // Pressed SHIFT and CTRL
-            } else {
-                // Delete segment between clicked and active node
-                if(state->skeletonState->activeNode) {
-                    if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID,
-                                            clickedNode)) {
-                        emit delSegmentSignal(
-                                   state->skeletonState->activeNode->nodeID,
-                                   clickedNode,
-                                   0);
-                    } else if(findSegmentByNodeIDSignal(clickedNode,
-                                            state->skeletonState->activeNode->nodeID)) {
-                        emit delSegmentSignal(
-                                   clickedNode,
-                                   state->skeletonState->activeNode->nodeID,
-                                   0);
-                    } else {
-                        emit addSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode);
+            // Delete segment between clicked and active node
+            if(activeNode) {
+                if(findSegmentByNodeIDSignal(activeNode->nodeID,
+                                        clickedNode)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNode, 0);
+                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNode, activeNode->nodeID, 0);
+                } else {
+                    if(state->skeletonState->simpleTracing
+                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
+                        return false;
                     }
+                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
             }
         } else {
@@ -145,7 +132,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
             state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
-
     return true;
 }
 
@@ -945,7 +931,6 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
         // emit updateTreeviewSignal();
-
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
            state->viewerState->drawVPCrosshairs = false;

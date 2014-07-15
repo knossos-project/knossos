@@ -24,6 +24,8 @@
 
 #include <cstring>
 #include <vector>
+#include <queue>
+#include <set>
 
 #include <QProgressDialog>
 #include "skeletonizer.h"
@@ -1618,47 +1620,38 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     treeListElement *currentTree, *treeToDel;
+    auto skeletonState = state->skeletonState;
 
-    currentTree = state->skeletonState->firstTree;
+    currentTree = skeletonState->firstTree;
     while(currentTree) {
         treeToDel = currentTree;
         currentTree = treeToDel->next;
         delTree(treeToDel->treeID);
     }
 
-    state->skeletonState->activeNode = NULL;
-    state->skeletonState->activeTree = NULL;
+    skeletonState->activeNode = NULL;
+    skeletonState->activeTree = NULL;
 
-    //Hashtable::ht_rmtable(state->skeletonState->skeletonDCs);
-    delDynArray(state->skeletonState->nodeCounter);
-    delDynArray(state->skeletonState->nodesByNodeID);
-    delStack(state->skeletonState->branchStack);
-
-    //Create a new hash-table that holds the skeleton datacubes
-    //state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
-    //if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-    //    qDebug() << "Unable to create skeleton hash-table.";
-    //    Knossos::unlockSkeleton(false);
-    //    return false;
-    //}
+    delDynArray(skeletonState->nodeCounter);
+    delDynArray(skeletonState->nodesByNodeID);
+    delStack(skeletonState->branchStack);
 
     //Generate empty tree structures
-    state->skeletonState->firstTree = NULL;
-    state->skeletonState->totalNodeElements = 0;
-    state->skeletonState->totalSegmentElements = 0;
-    state->skeletonState->treeElements = 0;
-    state->skeletonState->activeTree = NULL;
-    state->skeletonState->activeNode = NULL;
+    skeletonState->firstTree = NULL;
+    skeletonState->totalNodeElements = 0;
+    skeletonState->totalSegmentElements = 0;
+    skeletonState->treeElements = 0;
+    skeletonState->activeTree = NULL;
+    skeletonState->activeNode = NULL;
+    skeletonState->simpleTracing = false;
 
-    state->skeletonState->nodeCounter = newDynArray(1048576);
-    state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(1048576);
+    skeletonState->nodeCounter = newDynArray(1048576);
+    skeletonState->nodesByNodeID = newDynArray(1048576);
+    skeletonState->branchStack = newStack(1048576);
 
-    state->skeletonState->unsavedChanges = true;
-
+    skeletonState->unsavedChanges = true;
     resetSkeletonMeta();
-
-    state->skeletonState->unsavedChanges = false;
+    skeletonState->unsavedChanges = false;
 
     return true;
 }
@@ -3265,6 +3258,82 @@ unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comm
         }
     }
     return -1;
+}
+
+bool Skeletonizer::areNeighbors(struct nodeListElement v, struct nodeListElement w) {
+    auto reachableNodes = dijkstraGraphSearch(&v);
+    auto iter = reachableNodes.find(w.nodeID);
+    if(iter != reachableNodes.end()) {
+        return iter->second == 1;
+    }
+    return false;
+}
+
+// returns a map of all reached nodes with key: nodeID and value: distance from 'node'
+std::unordered_map<uint, uint> Skeletonizer::dijkstraGraphSearch(struct nodeListElement *node) {
+    std::unordered_map<uint, uint> result;
+     // an ordered set to reduce look-up time for the node with shortest distance
+    std::set<std::pair<uint, struct nodeListElement *> > nodeQueue;
+    result.insert({node->nodeID, 0});
+    nodeQueue.insert(std::make_pair(0, node));
+
+    std::queue<struct nodeListElement *> tmpQueue;
+    std::unordered_map<uint, struct nodeListElement *> visitedNodes;
+    tmpQueue.push(node);
+    visitedNodes.insert({node->nodeID, node});
+
+    // BFS to mark all connected nodes with distance of infinity
+    while(tmpQueue.empty() == false) {
+       struct nodeListElement *nextNode = tmpQueue.front();
+       tmpQueue.pop();
+
+       if(nextNode != node) {
+           result.insert({nextNode->nodeID, UINT_MAX});
+           nodeQueue.insert(std::make_pair(UINT_MAX, nextNode));
+       }
+
+       struct segmentListElement *seg = nextNode->firstSegment;
+       while(seg) {
+           struct nodeListElement *source = seg->source;
+           if(visitedNodes.find(source->nodeID) == visitedNodes.end()) {
+               visitedNodes.insert({source->nodeID, source});
+               tmpQueue.push(source);
+           }
+           struct nodeListElement *target = seg->target;
+           if(visitedNodes.find(target->nodeID) == visitedNodes.end()) {
+               visitedNodes.insert({target->nodeID, target});
+               tmpQueue.push(target);
+           }
+           seg = seg->next;
+       }
+    }
+    // dijkstra's algorithm
+    while(nodeQueue.empty() == false) {
+        struct nodeListElement *nextNode = nodeQueue.begin()->second;
+        nodeQueue.erase(nodeQueue.begin());
+
+        struct segmentListElement *seg = nextNode->firstSegment;
+        while(seg) {
+            struct nodeListElement *source = seg->source;
+            uint currDistance = result[source->nodeID];
+            uint altDistance = result[nextNode->nodeID] + 1;
+            if(altDistance < currDistance) {
+                nodeQueue.erase(std::make_pair(currDistance, source));
+                result[source->nodeID] = altDistance;
+                nodeQueue.insert(std::make_pair(altDistance, source));
+            }
+            struct nodeListElement *target = seg->target;
+            currDistance = result[target->nodeID];
+            altDistance = result[nextNode->nodeID] + 1;
+            if(altDistance < currDistance) {
+                nodeQueue.erase(std::make_pair(currDistance, target));
+                result[target->nodeID] = altDistance;
+                nodeQueue.insert(std::make_pair(altDistance, target));
+            }
+            seg = seg->next;
+        }
+    }
+    return result;
 }
 
 bool Skeletonizer::isObfuscatedTime(int time) {

@@ -417,15 +417,19 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
 }
 
 void ToolsTreeviewTab::linkNodesAction() {
-    const auto node0 = state->skeletonState->selectedNodes[0]->nodeID;
-    const auto node1 = state->skeletonState->selectedNodes[1]->nodeID;
+    const auto node0 = state->skeletonState->selectedNodes[0];
+    const auto node1 = state->skeletonState->selectedNodes[1];
     //segments are only stored and searched in one direction so we have to search for both
-    if (Skeletonizer::findSegmentByNodeIDs(node0, node1) != nullptr) {
-        emit delSegmentSignal(node0, node1, nullptr);
-    } else if (Skeletonizer::findSegmentByNodeIDs(node1, node0) != nullptr) {
-        emit delSegmentSignal(node1, node0, nullptr);
+    if (Skeletonizer::findSegmentByNodeIDs(node0->nodeID, node1->nodeID) != nullptr) {
+        emit delSegmentSignal(node0->nodeID, node1->nodeID, nullptr);
+    } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
+        emit delSegmentSignal(node1->nodeID, node0->nodeID, nullptr);
     } else{
-        emit addSegmentSignal(node0, node1);
+        if(state->skeletonState->simpleTracing
+           && Skeletonizer::areNeighbors(*node0, *node1) == false) {
+            return;
+        }
+        emit addSegmentSignal(node0->nodeID, node1->nodeID);
     }
 }
 

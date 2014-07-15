@@ -26,6 +26,7 @@
  */
 
 
+#include <unordered_map>
 #include <QObject>
 #include <QtCore>
 #include "knossos-global.h"
@@ -139,8 +140,10 @@ public:
 
     TracingMode getTracingMode() const;
     void setTracingMode(TracingMode mode);
+    static bool areNeighbors(struct nodeListElement v, struct nodeListElement w);
 private:
     TracingMode tracingMode;
+    static std::unordered_map<uint, uint> dijkstraGraphSearch(nodeListElement *node);
 };
 
 #endif // SKELETONIZER_H
