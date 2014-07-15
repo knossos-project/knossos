@@ -90,11 +90,11 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
     void jumpToActiveNodeSignal();
 
-    bool addCommentSignal(QString content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
+    bool addCommentSignal(QString content, nodeListElement *node, uint nodeID);
+    bool editCommentSignal(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);

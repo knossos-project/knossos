@@ -45,12 +45,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
 
-    /*@todo
-    if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        qDebug() << "Unable to create skeleton hash-table.";
-        return false;
-    }*/
-
     state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
@@ -125,8 +119,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
 }
 
-nodeListElement *Skeletonizer::addNodeListElement(
-              int nodeID,
+nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
               float radius,
               nodeListElement **currentNode,
               Coordinate *position,
@@ -240,8 +233,6 @@ void Skeletonizer::popBranchNodeCanceled() {
 }
 
 bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
-    int addedNodeID;
-
     color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
@@ -253,7 +244,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
         addTreeListElement(0, treeCol);
     }
 
-    addedNodeID = addNode(
+    auto addedNodeID = addNode(
                           0,
                           state->skeletonState->defaultNodeRadius,
                           state->skeletonState->activeTree->treeID,
@@ -269,27 +260,24 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
 
     setActiveNode(NULL, addedNodeID);
 
-    if((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+    if((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
         pushBranchNode(true, true, NULL, addedNodeID);
         addComment("First Node", NULL, addedNodeID);
     }
-
     return true;
 }
 
 uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive) {
-    int targetNodeID;
-
     if(!state->skeletonState->activeNode) {
         qDebug() << "Please create a node before trying to link nodes.";
         return false;
     }
 
     //Add a new node at the target position first.
-    targetNodeID = addNode(
+    auto targetNodeID = addNode(
                            0,
                            state->skeletonState->defaultNodeRadius,
                            state->skeletonState->activeTree->treeID,
@@ -308,7 +296,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     if(makeNodeActive) {
         setActiveNode(NULL, targetNodeID);
     }
-    if((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+    if((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
@@ -343,7 +331,7 @@ void Skeletonizer::autoSaveIfElapsed() {
 bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     treeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
-    PTRSIZEINT currentBranchPointID;
+    PTRSIZEUINT currentBranchPointID;
     segmentListElement *currentSegment = NULL;
     commentListElement *currentComment = NULL;
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
@@ -357,13 +345,13 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     reverseBranchStack = newStack(2048);
     tempReverseStack = newStack(2048);
     while((currentBranchPointID =
-          (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
+        (PTRSIZEUINT)popStack(state->skeletonState->branchStack))) {
         pushStack(reverseBranchStack, (void *)currentBranchPointID);
         pushStack(tempReverseStack, (void *)currentBranchPointID);
     }
 
     while((currentBranchPointID =
-          (PTRSIZEINT)popStack(tempReverseStack))) {
+        (PTRSIZEUINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
         pushBranchNode(false, false, currentNode, 0);
     }
@@ -395,10 +383,8 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeAttribute("version", QString(ptr));
     xml.writeEndElement();
 
-    xml.writeStartElement("scale");
-    xml.writeAttribute("x", tmp.setNum((float)state->scale.x / state->magnification));
-    xml.writeAttribute("y", tmp.setNum((float)state->scale.y / state->magnification));
-    xml.writeAttribute("z", tmp.setNum((float)state->scale.z / state->magnification));
+    xml.writeStartElement("tracing");
+    xml.writeAttribute("simple", tmp.setNum((state->skeletonState->simpleTracing)? 1 : 0));
     xml.writeEndElement();
 
     xml.writeStartElement("offset");
@@ -538,7 +524,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     }
 
     xml.writeStartElement("branchpoints");
-    while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
+    while((currentBranchPointID = (PTRSIZEUINT)popStack(reverseBranchStack))) {
         xml.writeStartElement("branchpoint");
         xml.writeAttribute("id", tmp.setNum(currentBranchPointID));
         xml.writeEndElement();
@@ -553,17 +539,16 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
 bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     int merge = false;
-    int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
+    uint activeNodeID = 0, greatestNodeIDbeforeLoading = 0;
+    int greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
     int globalMagnificationSpecified = false;
 
     treeListElement *currentTree;
 
     Coordinate offset;
-    floatCoordinate scale;
     Coordinate loadedPosition;
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
-    SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
 
     QFile file(fileName);
@@ -596,8 +581,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     QXmlStreamReader xml(&file);
 
     std::vector<uint> branchVector;
-    std::vector<std::pair<int, QString>> commentsVector;
-    std::vector<std::pair<int, int>> edgeVector;
+    std::vector<std::pair<uint, QString>> commentsVector;
+    std::vector<std::pair<uint, uint>> edgeVector;
 
     bench.start();
     emit setSimpleTracing(false);
@@ -665,20 +650,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                 } else if(xml.name() == "activeNode" && !merge) {
                     QStringRef attribute = attributes.value("id");
                     if(attribute.isNull() == false) {
-                        activeNodeID = attribute.toLocal8Bit().toInt();
-                    }
-                } else if(xml.name() == "scale") {
-                    QStringRef attribute = attributes.value("x");
-                    if(attribute.isNull() == false) {
-                        scale.x = attribute.toLocal8Bit().toFloat();
-                    }
-                    attribute = attributes.value("y");
-                    if(attribute.isNull() == false) {
-                        scale.y = attribute.toLocal8Bit().toFloat();
-                    }
-                    attribute = attributes.value("z");
-                    if(attribute.isNull() == false) {
-                        scale.z = attribute.toLocal8Bit().toFloat();
+                        activeNodeID = attribute.toLocal8Bit().toUInt();
                     }
                 } else if(xml.name() == "editPosition") {
                     QStringRef attribute = attributes.value("x");
@@ -756,12 +728,12 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                 if(xml.name() == "branchpoint") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("id");
-                    int nodeID;
+                    uint nodeID;
                     if(attribute.isNull() == false) {
                         if(merge == false) {
-                            nodeID = attribute.toLocal8Bit().toInt();
+                            nodeID = attribute.toLocal8Bit().toUInt();
                         } else {
-                            nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
+                            nodeID = attribute.toLocal8Bit().toUInt() + greatestNodeIDbeforeLoading;
                         }
                         branchVector.emplace_back(nodeID);
                     }
@@ -776,12 +748,12 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                 if(xml.name() == "comment") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("node");
-                    int nodeID;
+                    uint nodeID;
                     if(attribute.isNull() == false) {
                         if(merge == false) {
-                            nodeID = attribute.toLocal8Bit().toInt();
+                            nodeID = attribute.toLocal8Bit().toUInt();
                         } else {
-                            nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
+                            nodeID = attribute.toLocal8Bit().toUInt() + greatestNodeIDbeforeLoading;
                         }
                     }
                     attribute = attributes.value("content");
@@ -852,10 +824,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                         if(xml.name() == "node") {
                             attributes = xml.attributes();
 
-                            int nodeID;
+                            uint nodeID;
                             attribute = attributes.value("id");
                             if(attribute.isNull() == false) {
-                                nodeID = attribute.toLocal8Bit().toInt();
+                                nodeID = attribute.toLocal8Bit().toUInt();
                             } else {
                                 nodeID = 0;
                             }
@@ -936,17 +908,17 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                         if(xml.name() == "edge") {
                             attributes = xml.attributes();
                             // Add edge
-                            int sourcecNodeId;
+                            uint sourcecNodeId;
                             attribute = attributes.value("source");
                             if(attribute.isNull() == false) {
-                                sourcecNodeId = attribute.toLocal8Bit().toInt();
+                                sourcecNodeId = attribute.toLocal8Bit().toUInt();
                             } else {
                                 sourcecNodeId = 0;
                             }
-                            int targetNodeId;
+                            uint targetNodeId;
                             attribute = attributes.value("target");
                             if(attribute.isNull() == false) {
-                                targetNodeId = attribute.toLocal8Bit().toInt();
+                                targetNodeId = attribute.toLocal8Bit().toUInt();
                             } else {
                                 targetNodeId = 0;
                             }
@@ -993,9 +965,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if(!merge) {
-
         if(activeNodeID) {
-            if(setActiveNode(NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
+            if(setActiveNode(NULL, activeNodeID) == false and state->skeletonState->firstTree) {
+            // if nml has invalid active node ID, simply make first node active
                 if(state->skeletonState->firstTree->firstNode) {
                     setActiveNode(NULL, state->skeletonState->firstTree->firstNode->nodeID);
                 }
@@ -1074,9 +1046,7 @@ bool Skeletonizer::delActiveTree() {
     return true;
 }
 
-bool Skeletonizer::delSegment(int sourceNodeID, int targetNodeID, segmentListElement *segToDel) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
+bool Skeletonizer::delSegment(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel) {
     // Delete the segment out of the segment list and out of the visualization structure!
 
     if(!segToDel)
@@ -1094,9 +1064,6 @@ bool Skeletonizer::delSegment(int sourceNodeID, int targetNodeID, segmentListEle
     /* numSegs counts forward AND backward segments!!! */
     segToDel->source->numSegs--;
     segToDel->target->numSegs--;
-
-    //Out of skeleton structure
-    //delSegmentFromSkeletonStruct(segToDel);
 
     if(segToDel == segToDel->source->firstSegment)
         segToDel->source->firstSegment = segToDel->next;
@@ -1134,21 +1101,19 @@ bool Skeletonizer::delSegment(int sourceNodeID, int targetNodeID, segmentListEle
  * We have to delete the node from 2 structures: the skeleton's nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
-bool Skeletonizer::delNode(int nodeID, nodeListElement *nodeToDel) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
+bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     struct segmentListElement *currentSegment;
     struct segmentListElement *tempNext = NULL;
     struct nodeListElement *newActiveNode = NULL;
     int treeID;
 
 
-    if(!nodeToDel)
+    if(!nodeToDel) {
         nodeToDel = findNodeByNodeID(nodeID);
-
+    }
     nodeID = nodeToDel->nodeID;
     if(!nodeToDel) {
-        qDebug("The given node %d doesn't exist. Unable to delete it.", nodeID);
+        qDebug("The given node %u doesn't exist. Unable to delete it.", nodeID);
         return false;
     }
 
@@ -1168,19 +1133,18 @@ bool Skeletonizer::delNode(int nodeID, nodeListElement *nodeToDel) {
     currentSegment = nodeToDel->firstSegment;
 
     while(currentSegment) {
-
         tempNext = currentSegment->next;
 
-        if(currentSegment->flag == SEGMENT_FORWARD)
+        if(currentSegment->flag == SEGMENT_FORWARD) {
             delSegment(0,0, currentSegment);
-        else if(currentSegment->flag == SEGMENT_BACKWARD)
+        }
+        else if(currentSegment->flag == SEGMENT_BACKWARD) {
             delSegment(0,0, currentSegment->reverseSegment);
-
+        }
         currentSegment = tempNext;
     }
 
     nodeToDel->firstSegment = NULL;
-
 
     if(state->skeletonState->selectedCommentNode == nodeToDel) {
         state->skeletonState->selectedCommentNode = NULL;
@@ -1202,17 +1166,15 @@ bool Skeletonizer::delNode(int nodeID, nodeListElement *nodeToDel) {
     if(state->skeletonState->activeNode == nodeToDel) {
         newActiveNode = findNearbyNode(nodeToDel->correspondingTree,
                                        nodeToDel->position);
-
         setActiveNode(newActiveNode, 0);
     }
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
-    //state->viewerState->gui->totalNodes--;
 
     setDynArray(state->skeletonState->nodeCounter,
             treeID,
-            (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, treeID) - 1));
+            (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, treeID) - 1));
 
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
@@ -1221,9 +1183,6 @@ bool Skeletonizer::delNode(int nodeID, nodeListElement *nodeToDel) {
 }
 
 bool Skeletonizer::delTree(int treeID) {
-
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
     treeListElement *currentTree;
     nodeListElement *currentNode, *nodeToDel;
 
@@ -1380,9 +1339,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     return true;
 }
 
-bool Skeletonizer::setActiveNode(nodeListElement *node, int nodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
+bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
      // If both *node and nodeID are specified, nodeID wins.
      // If neither *node nor nodeID are specified
      // (node == NULL and nodeID == 0), the active node is
@@ -1391,7 +1348,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, int nodeID) {
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
-            qDebug("No node with id %d available.", nodeID);
+            qDebug("No node with id %u available.", nodeID);
             return false;
         }
     }
@@ -1435,8 +1392,8 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, int nodeID) {
     return true;
 }
 
-int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *position, Byte VPtype, int inMag, int time, int respectLocks) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *position,
+                           Byte VPtype, int inMag, int time, int respectLocks) {
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
@@ -1475,7 +1432,7 @@ int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *posi
     }
 
     if(tempNode) {
-        qDebug("Node with ID %d already exists, no node added.", nodeID);
+        qDebug("Node with ID %u already exists, no node added.", nodeID);
         return false;
     }
     tempTree = findTreeByTreeID(treeID);
@@ -1491,7 +1448,7 @@ int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *posi
     // One more node in this tree.
     setDynArray(state->skeletonState->nodeCounter,
                 treeID,
-                (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, treeID) + 1));
+                (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, treeID) + 1));
 
     if(nodeID == 0) {
         nodeID = state->skeletonState->totalNodeElements;
@@ -1520,11 +1477,6 @@ int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *posi
 
     setDynArray(state->skeletonState->nodesByNodeID, nodeID, (void *)tempNode);
 
-    //printf("Added node %p, id %d, tree %p\n", tempNode, tempNode->nodeID,
-    //        tempNode->correspondingTree);
-
-    //Add a pointer to the node in the skeleton DC structure
-   // addNodeToSkeletonStruct(tempNode);
     state->skeletonState->skeletonChanged = true;
 
     if(nodeID > state->skeletonState->greatestNodeID) {
@@ -1535,14 +1487,13 @@ int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *posi
     return nodeID;
 }
 
-bool Skeletonizer::addSegment(int sourceNodeID, int targetNodeID) {
+bool Skeletonizer::addSegment(uint sourceNodeID, uint targetNodeID) {
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
     floatCoordinate node1, node2;
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
-        qDebug("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID);
+        qDebug("Segment between nodes %u and %u exists already.", sourceNodeID, targetNodeID);
         return false;
     }
 
@@ -1588,12 +1539,6 @@ bool Skeletonizer::addSegment(int sourceNodeID, int targetNodeID) {
    sourceSeg->length = sourceSeg->reverseSegment->length
        = sqrtf(scalarProduct(&node2, &node2));
 
-    // Add the segment to the skeleton DC structure
-
-    //addSegmentToSkeletonStruct(sourceSeg);
-
-    // printf("added segment for nodeID %d: %d, %d, %d -> nodeID %d: %d, %d, %d\n", sourceNode->nodeID, sourceNode->position.x + 1, sourceNode->position.y + 1, sourceNode->position.z + 1, targetNode->nodeID, targetNode->position.x + 1, targetNode->position.y + 1, targetNode->position.z + 1);
-
     updateCircRadius(sourceNode);
 
     state->skeletonState->skeletonChanged = true;
@@ -1617,8 +1562,6 @@ void Skeletonizer::clearNodeSelection() {
 }
 
 bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
     treeListElement *currentTree, *treeToDel;
     auto skeletonState = state->skeletonState;
 
@@ -1657,8 +1600,6 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 }
 
 bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
     treeListElement *tree1, *tree2;
     nodeListElement *currentNode;
     nodeListElement *firstNode, *lastNode;
@@ -1709,9 +1650,9 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     setDynArray(state->skeletonState->nodeCounter,
                 tree1->treeID,
                 (void *)
-                ((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                ((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
                                         tree1->treeID) +
-                (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+               (PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
                                         tree2->treeID)));
 
     // The old tree is gone and has 0 nodes.
@@ -1867,16 +1808,14 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
     return nextNode;
 }
 
-nodeListElement* Skeletonizer::findNodeByNodeID(int nodeID) {
+nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
     nodeListElement *node;
     node = (struct nodeListElement *)getDynArray(state->skeletonState->nodesByNodeID, nodeID);
     return node;
 }
 
 treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
-     //  The variable sync is a workaround for the problem that this function
+     // The variable sync is a workaround for the problem that this function
      // will sometimes be called by other syncable functions that themselves hold
      // the lock and handle synchronization. If set to false, all synchro
      // routines will be skipped.
@@ -2027,7 +1966,6 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
 }
 
 bool Skeletonizer::addTreeComment(int treeID, QString comment) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     treeListElement *tree = NULL;
 
     tree = findTreeByTreeID(treeID);
@@ -2041,37 +1979,30 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     return true;
 }
 
-segmentListElement* Skeletonizer::findSegmentByNodeIDs(int sourceNodeID, int targetNodeID) {
-    //qDebug() << "entered findSegmentByID";
+segmentListElement* Skeletonizer::findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID) {
     segmentListElement *currentSegment;
     nodeListElement *currentNode;
 
     currentNode = findNodeByNodeID(sourceNodeID);
-    //qDebug() << "Current Node ID =" << currentNode;
 
     if(!currentNode) { return NULL;}
     currentSegment = currentNode->firstSegment;
-    //qDebug() << currentSegment;
     while(currentSegment) {
-        //qDebug() << "SEGMENT_BACK=2 : " << currentSegment->flag;
         if(currentSegment->flag == SEGMENT_BACKWARD) {
             currentSegment = currentSegment->next;
             continue;
         }
         if(currentSegment->target->nodeID == targetNodeID) {
-            //qDebug() << "success";
             return currentSegment;
         }
         currentSegment = currentSegment->next;
     }
-
-    //qDebug() << "returning null";
     return NULL;
 }
 
 bool Skeletonizer::genTestNodes(uint number) {
     uint i;
-    int nodeID;
+    uint nodeID;
     struct nodeListElement *node;
     Coordinate pos;
     color4F treeCol;
@@ -2116,13 +2047,14 @@ bool Skeletonizer::genTestNodes(uint number) {
     return true;
 }
 
-bool Skeletonizer::editNode(int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag) {
+bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
+                            float newRadius, int newXPos, int newYPos, int newZPos, int inMag) {
 
     if(!node) {
         node = findNodeByNodeID(nodeID);
     }
     if(!node) {
-        qDebug("Cannot edit: node id %d invalid.", nodeID);
+        qDebug("Cannot edit: node id %u invalid.", nodeID);
         return false;
     }
 
@@ -2277,169 +2209,71 @@ dynArray* Skeletonizer::newDynArray(int size) {
 }
 
 int Skeletonizer::splitConnectedComponent(int nodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+    //  This function takes a node and splits the connected component
+    //  containing that node into a new tree, unless the connected component
+    //  is equivalent to exactly one entire tree.
 
-    stack *remainingNodes = NULL;
-    stack *componentNodes = NULL;
-    nodeListElement *n = NULL, *last = NULL, *node = NULL;
-    treeListElement *newTree = NULL, *currentTree = NULL;
-    segmentListElement *currentEdge = NULL;
-    dynArray *treesSeen = NULL;
-    int treesCount = 0;
-    int i = 0, id;
-    PTRSIZEINT nodeCountAllTrees = 0, nodeCount = 0;
-    uint visitedBase, index;
-    Byte *visitedRight = NULL, *visitedLeft = NULL, **visited = NULL;
-    uint visitedRightLen = 16384, visitedLeftLen = 16384, *visitedLen = NULL;
+    //  It uses depth-first search. Breadth-first-search would be the same with
+    //  a queue instead of a stack for storing pending nodes. There is no
+    //  practical difference between the two algorithms for this task.
+    //
+    //  TODO trees might become empty when the connected component spans more
+    //       than one tree.
 
-     //  This function takes a node and splits the connected component
-     //  containing that node into a new tree, unless the connected component
-     //  is equivalent to exactly one entire tree.
-
-     //  It uses depth-first search. Breadth-first-search would be the same with
-     //  a queue instead of a stack for storing pending nodes. There is no
-     //  practical difference between the two algorithms for this task.
-     //
-     //  TODO trees might become empty when the connected component spans more
-     //       than one tree.
-
-
-    node = findNodeByNodeID(nodeID);
+    auto node = findNodeByNodeID(nodeID);
     if(!node) {
         return false;
     }
 
+    std::unordered_map<uint, uint> connectedComponent = dijkstraGraphSearch(node);
 
-     //  This stack can be rather small without ever having to be resized as
-     //  our graphs are usually very sparse.
+    //  This is used to keep track of which trees we've seen. The connected
+    //  component for a specific node can be part of more than one tree. That
+    //  makes it slightly tedious to check whether the connected component is a
+    //  strict subgraph.
 
-
-    remainingNodes = newStack(512);
-    componentNodes = newStack(4096);
-
-
-     //  This is used to keep track of which trees we've seen. The connected
-     //  component for a specific node can be part of more than one tree. That
-     //  makes it slightly tedious to check whether the connected component is a
-     //  strict subgraph.
-
-
-    treesSeen = newDynArray(16);
-
-
-     //  These are used to store which nodes have been visited.
-     //  Nodes with IDs smaller than the entry node will be stored in
-     //  visitedLeft, nodes with equal or larger ID will be stored in
-     //  visitedRight. This is done to save some memory. ;)
-
-
-    visitedRight = (Byte*)malloc(16384 * sizeof(Byte));
-    visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
-
-    if(visitedRight == NULL || visitedLeft == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-
-    memset(visitedLeft, NODE_PRISTINE, 16384);
-    memset(visitedRight, NODE_PRISTINE, 16384);
-
-    visitedBase = node->nodeID;
-    pushStack(remainingNodes, (void *)node);
-
-    // popStack() returns NULL when the stack is empty.
-    while((n = (struct nodeListElement *)popStack(remainingNodes))) {
-        if(n->nodeID >= visitedBase) {
-            index = n->nodeID - visitedBase;
-            visited = &visitedRight;
-            visitedLen = &visitedRightLen;
-        }
-        else {
-            index = visitedBase - n->nodeID - 1;
-            visited = &visitedLeft;
-            visitedLen = &visitedLeftLen;
-        }
-
-        // If the index is out bounds of the visited array, we resize the array
-        while(index > *visitedLen) {
-            *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
-            if(*visited == NULL) {
-                qDebug() << "Out of memory.";
-                _Exit(false);
-            }
-
-            memset(*visited + *visitedLen, NODE_PRISTINE, 16384 * sizeof(Byte));
-            *visitedLen = *visitedLen + 16384;
-        }
-
-        if((*visited)[index] == NODE_VISITED) {
-            continue;
-        }
-        (*visited)[index] = NODE_VISITED;
-
-        pushStack(componentNodes, (void *)n);
-
-        // Check if the node is in a tree we haven't yet seen.
-        // If it is, add that tree as seen.
-        for(i = 0; i < treesCount; i++) {
-            if(getDynArray(treesSeen, i) == (void *)n->correspondingTree) {
-                break;
-            }
-        }
-        if(i == treesCount) {
-            setDynArray(treesSeen, treesCount, (void *)n->correspondingTree);
-            treesCount++;
-        }
-
-        nodeCount = nodeCount + 1;
-
-        // And now we push all adjacent nodes on the stack.
-        currentEdge = n->firstSegment;
-        while(currentEdge) {
-            if(currentEdge->flag == SEGMENT_FORWARD) {
-                pushStack(remainingNodes, (void *)currentEdge->target);
-            }
-            else if(currentEdge->flag == SEGMENT_BACKWARD) {
-                pushStack(remainingNodes, (void *)currentEdge->source);
-            }
-            currentEdge = currentEdge->next;
+    std::vector<treeListElement*> treesSeen;
+    for(const auto pair : connectedComponent) {
+        auto node = findNodeByNodeID(pair.first);
+        if(node) {
+            treesSeen.push_back(node->correspondingTree);
         }
     }
 
-     //  If the total number of nodes visited is smaller than the sum of the
-     //  number of nodes in all trees we've seen, the connected component is a
-     //  strict subgraph of the graph containing all trees we've seen and we
-     //  should split it.
+    //  If the total number of nodes visited is smaller than the sum of the
+    //  number of nodes in all trees we've seen, the connected component is a
+    //  strict subgraph of the graph containing all trees we've seen and we
+    //  should split it.
 
-     //  Since we're checking for treesCount > 1 below, this implementation is
-     //  now slightly redundant. We want this function to not do anything when
-     //  there are no disconnected components in the same tree, but create a new
-     //  tree when the connected component spans several trees. This is a useful
-     //  feature when performing skeleton consolidation and allows one to merge
-     //  many trees at once.
-     //  Just remove the treesCount > 1 below to get back to the original
-     //  behaviour of only splitting strict subgraphs.
+    //  Since we're checking for treesCount > 1 below, this implementation is
+    //  now slightly redundant. We want this function to not do anything when
+    //  there are no disconnected components in the same tree, but create a new
+    //  tree when the connected component spans several trees. This is a useful
+    //  feature when performing skeleton consolidation and allows one to merge
+    //  many trees at once.
+    //  Just remove the treesCount > 1 below to get back to the original
+    //  behaviour of only splitting strict subgraphs.
 
-    for(i = 0; i < treesCount; i++) {
-        currentTree = (struct treeListElement *)getDynArray(treesSeen, i);
-        id = currentTree->treeID;
-        nodeCountAllTrees += (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
-                                                     id);
+    uint nodeCountAllTrees = 0;
+    for(auto tree : treesSeen) {
+        nodeCountAllTrees +=(PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
+                                                     tree->treeID);
     }
 
-    if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
+    if(treesSeen.size() > 1 || connectedComponent.size() < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = state->viewer->skeletonizer->addTreeListElement(0, treeCol);
-        // Splitting the connected component.
+        auto newTree = state->viewer->skeletonizer->addTreeListElement(0, treeCol);
 
-        while((n = (struct nodeListElement *)popStack(componentNodes))) {
+        // Splitting the connected component.
+        struct nodeListElement *last = NULL;
+        for(auto nodePair : connectedComponent) {
             // Removing node list element from its old position
+            auto n = findNodeByNodeID(nodePair.first);
             setDynArray(state->skeletonState->nodeCounter,
                         n->correspondingTree->treeID,
-                        (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
-                                                         n->correspondingTree->treeID) - 1));
-
+                        (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
+                                                        n->correspondingTree->treeID) - 1));
             if(n->previous != NULL) {
                 n->previous->next = n->next;
             }
@@ -2449,14 +2283,11 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
             if(n->next != NULL) {
                 n->next->previous = n->previous;
             }
-
             // Inserting node list element into new list.
             setDynArray(state->skeletonState->nodeCounter, newTree->treeID,
-                        (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                        (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
                                                          newTree->treeID) + 1));
-
             n->next = NULL;
-
             if(last != NULL) {
                 n->previous = last;
                 last->next = n;
@@ -2473,21 +2304,11 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     else {
         qDebug() << "The connected component is equal to the entire tree, not splitting.";
     }
-
-    delStack(remainingNodes);
-    delStack(componentNodes);
-
-    free(visitedLeft);
-    free(visitedRight);
-
     state->skeletonState->unsavedChanges = true;
-
-    return nodeCount;
+    return connectedComponent.size();
 }
 
-bool Skeletonizer::addComment(QString content, nodeListElement *node, int nodeID) {
-    //This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
+bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeID) {
     commentListElement *newComment;
 
     std::string content_stdstr = content.toStdString();
@@ -2541,10 +2362,7 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, int nodeID
     return true;
 }
 
-bool Skeletonizer::delComment(commentListElement *currentComment, int commentNodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
-    int nodeID = 0;
+bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNodeID) {
     nodeListElement *commentNode = NULL;
 
     if(commentNodeID) {
@@ -2563,7 +2381,6 @@ bool Skeletonizer::delComment(commentListElement *currentComment, int commentNod
         free(currentComment->content);
     }
     if(currentComment->node) {
-        nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
         state->skeletonState->skeletonChanged = true;
     }
@@ -2592,8 +2409,8 @@ bool Skeletonizer::delComment(commentListElement *currentComment, int commentNod
     return true;
 }
 
-bool Skeletonizer::editComment(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+bool Skeletonizer::editComment(commentListElement *currentComment, uint nodeID, QString newContent,
+                               nodeListElement *newNode, uint newNodeID) {
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
 
@@ -2617,14 +2434,6 @@ bool Skeletonizer::editComment(commentListElement *currentComment, int nodeID, Q
         currentComment->content = (char*)malloc(strlen(newContent_cstr) * sizeof(char) + 1);
         memset(currentComment->content, '\0', strlen(newContent_cstr) * sizeof(char) + 1);
         strncpy(currentComment->content, newContent_cstr, strlen(newContent_cstr));
-
-        //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
-        /*
-        memset(state->skeletonState->commentBuffer, '\0', 10240);
-        strncpy(state->skeletonState->commentBuffer,
-                state->skeletonState->currentComment->content,
-                strlen(state->skeletonState->currentComment->content));
-        */
     }
 
     if(newNodeID) {
@@ -2653,9 +2462,7 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
         //(we insert new comments always as first elements)
         if(state->skeletonState->currentComment) {
             state->skeletonState->currentComment = state->skeletonState->currentComment->previous;
-            setActiveNode(
-                          state->skeletonState->currentComment->node,
-                          0);
+            setActiveNode(state->skeletonState->currentComment->node, 0);
             jumpToActiveNode();
         }
     }
@@ -2666,9 +2473,7 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
             do {
                 if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
-                    setActiveNode(
-                                  state->skeletonState->currentComment->node,
-                                  0);
+                    setActiveNode(state->skeletonState->currentComment->node, 0);
                     jumpToActiveNode();
                     break;
                 }
@@ -2711,9 +2516,7 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
     if(!strlen(searchString_cstr)) {
         if(state->skeletonState->currentComment) {
             state->skeletonState->currentComment = state->skeletonState->currentComment->next;
-            setActiveNode(
-                          state->skeletonState->currentComment->node,
-                          0);
+            setActiveNode(state->skeletonState->currentComment->node, 0);
             jumpToActiveNode();
         }
     }
@@ -2724,9 +2527,7 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
             do {
                 if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
-                    setActiveNode(
-                                  state->skeletonState->currentComment->node,
-                                  0);
+                    setActiveNode(state->skeletonState->currentComment->node, 0);
                     jumpToActiveNode();
                     break;
                 }
@@ -2784,13 +2585,8 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
 
 /* @todo loader gets out of sync (endless loop) */
 bool Skeletonizer::popBranchNode() {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-    // SYNCHRO BUG:
-    // both instances will have to confirm branch point deletion if
-    // confirmation is asked.
-
     nodeListElement *branchNode = NULL;
-    PTRSIZEINT branchNodeID = 0;
+    PTRSIZEUINT branchNodeID = 0;
 
     // Nodes on the branch stack may not actually exist anymore
     while(true){
@@ -2798,7 +2594,7 @@ bool Skeletonizer::popBranchNode() {
             if (branchNode->isBranchNode == true) {
                 break;
             }
-        branchNodeID = (PTRSIZEINT)popStack(state->skeletonState->branchStack);
+        branchNodeID =(PTRSIZEUINT)popStack(state->skeletonState->branchStack);
         if(branchNodeID == 0) {
             QMessageBox box;
             box.setWindowTitle("Knossos Information");
@@ -2833,23 +2629,19 @@ bool Skeletonizer::popBranchNode() {
     }
 
 exit_popbranchnode:
-
     state->skeletonState->unsavedChanges = true;
-
     state->skeletonState->totalBranchpoints--;
     return true;
 }
 
 bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint,
-                                  nodeListElement *branchNode, int branchNodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
+                                  nodeListElement *branchNode, uint branchNodeID) {
     if(branchNodeID) {
         branchNode = findNodeByNodeID(branchNodeID);
     }
     if(branchNode) {
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
-            pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
+            pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEUINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
 
@@ -3011,7 +2803,6 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
         if(node->comment != NULL) {
             if(state->skeletonState->commentNodeRadiusOn == false) {
                 // conditional node radius is disabled
-                // return
                 return;
             }
 
@@ -3028,7 +2819,6 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
 }
 
 bool Skeletonizer::moveToPrevTree() {
-
     struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     struct nodeListElement *node;
     if(state->skeletonState->activeTree == NULL) {
@@ -3173,7 +2963,7 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
             // decrement node counter for the old tree
             setDynArray(state->skeletonState->nodeCounter,
                     node->correspondingTree->treeID,
-                    (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, node->correspondingTree->treeID) - 1));
+                    (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, node->correspondingTree->treeID) - 1));
         }
     }
 
@@ -3199,7 +2989,7 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
     // increment node counter for the new tree
     setDynArray(state->skeletonState->nodeCounter,
             newTree->treeID,
-            (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, newTree->treeID) + 1));
+            (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, newTree->treeID) + 1));
 
     return true;
 }
@@ -3294,15 +3084,10 @@ std::unordered_map<uint, uint> Skeletonizer::dijkstraGraphSearch(struct nodeList
 
        struct segmentListElement *seg = nextNode->firstSegment;
        while(seg) {
-           struct nodeListElement *source = seg->source;
-           if(visitedNodes.find(source->nodeID) == visitedNodes.end()) {
-               visitedNodes.insert({source->nodeID, source});
-               tmpQueue.push(source);
-           }
-           struct nodeListElement *target = seg->target;
-           if(visitedNodes.find(target->nodeID) == visitedNodes.end()) {
-               visitedNodes.insert({target->nodeID, target});
-               tmpQueue.push(target);
+           struct nodeListElement *neighbor = (seg->flag == SEGMENT_FORWARD)? seg->target : seg->source;
+           if(visitedNodes.find(neighbor->nodeID) == visitedNodes.end()) {
+               visitedNodes.insert({neighbor->nodeID, neighbor});
+               tmpQueue.push(neighbor);
            }
            seg = seg->next;
        }
@@ -3314,21 +3099,13 @@ std::unordered_map<uint, uint> Skeletonizer::dijkstraGraphSearch(struct nodeList
 
         struct segmentListElement *seg = nextNode->firstSegment;
         while(seg) {
-            struct nodeListElement *source = seg->source;
-            uint currDistance = result[source->nodeID];
+            struct nodeListElement *neighbor = (seg->flag == SEGMENT_FORWARD)? seg->target : seg->source;
+            uint currDistance = result[neighbor->nodeID];
             uint altDistance = result[nextNode->nodeID] + 1;
             if(altDistance < currDistance) {
-                nodeQueue.erase(std::make_pair(currDistance, source));
-                result[source->nodeID] = altDistance;
-                nodeQueue.insert(std::make_pair(altDistance, source));
-            }
-            struct nodeListElement *target = seg->target;
-            currDistance = result[target->nodeID];
-            altDistance = result[nextNode->nodeID] + 1;
-            if(altDistance < currDistance) {
-                nodeQueue.erase(std::make_pair(currDistance, target));
-                result[target->nodeID] = altDistance;
-                nodeQueue.insert(std::make_pair(altDistance, target));
+                nodeQueue.erase(std::make_pair(currDistance, neighbor));
+                result[neighbor->nodeID] = altDistance;
+                nodeQueue.insert(std::make_pair(altDistance, neighbor));
             }
             seg = seg->next;
         }

@@ -42,12 +42,10 @@ EventModel::EventModel(QObject *parent) :
 }
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    uint clickedNode;
-
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
-        clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
             emit setActiveNodeSignal(NULL, clickedNode);
@@ -82,7 +80,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::ALT) {
-        int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
             auto activeNode = state->skeletonState->activeNode;
             if(activeNode) {
@@ -105,7 +103,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+    auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
         auto activeNode = state->skeletonState->activeNode;
@@ -128,7 +126,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
             }
         } else {
             // No modifier pressed
-            state->viewerState->vpConfigs[VPfound].draggedNode = findNodeByNodeIDSignal(clickedNode);
+            state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNode);
             state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
@@ -136,7 +134,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    int newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
     /* We have to activate motion tracking only for the skeleton VP for a right click */
@@ -169,6 +166,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
             emit unselectNodesSignal();
+            uint newNodeID;
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
@@ -525,9 +523,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
-        int nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
+        auto nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
         if (nodeID != 0) {
-            nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
+            nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
             if (selectedNode != nullptr) {
                 //check if already in buffer
                 auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);

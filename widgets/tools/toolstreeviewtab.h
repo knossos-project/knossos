@@ -84,10 +84,10 @@ signals:
     void deleteSelectedNodesSignal();
     void clearTreeSelectionSignal();
     void clearNodeSelectionSignal();
-    void setActiveNodeSignal(nodeListElement *node, int nodeID);
+    void setActiveNodeSignal(nodeListElement *node, uint nodeID);
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int sourceNodeID, int targetNodeID);
-    void delSegmentSignal(int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();

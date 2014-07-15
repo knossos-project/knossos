@@ -484,8 +484,7 @@ void ToolsTreeviewTab::setNodeCommentAction() {
                     Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(),
                                              state->skeletonState->activeNode, 0);
                 } else {
-                    Skeletonizer::editComment(
-                                              state->skeletonState->activeNode->comment, 0,
+                    Skeletonizer::editComment(state->skeletonState->activeNode->comment, 0,
                                               nodeCommentBuffer.toLocal8Bit().data(),
                                               state->skeletonState->activeNode, 0);
                 }
@@ -507,10 +506,9 @@ void ToolsTreeviewTab::setNodeCommentAction() {
                     if (node->comment == nullptr) {
                         Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     } else {
-                        Skeletonizer::editComment(
-                                                  node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
+                        Skeletonizer::editComment(node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     }
-                } else if (node-> comment != nullptr) {
+                } else if (node->comment != nullptr) {
                     Skeletonizer::delComment(node->comment, node->nodeID);
                 }
             }
@@ -725,7 +723,7 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
     if(idItem == nullptr) {
         return;
     }
-    nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toInt());
+    nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toUInt());
     if(selectedNode == nullptr) {
         return;
     }
@@ -956,7 +954,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toInt());
+        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toUInt());
         //select node
         if (node != nullptr) {
             node->selected = true;
@@ -1230,7 +1228,7 @@ void ToolsTreeviewTab::treesDeleted() {
     int nodeRows = nodeTable->rowCount();
     QVector<int> rowsToDel;
     for (int i = 0; i < nodeRows; ++i) {
-        if (Skeletonizer::findNodeByNodeID(nodeTable->item(i, NodeTable::NODE_ID)->text().toInt()) == nullptr) {
+        if (Skeletonizer::findNodeByNodeID(nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt()) == nullptr) {
             rowsToDel.push_back(i);
         }
     }
