@@ -111,6 +111,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, [&](){
+        state->skeletonState->unsavedChanges = true;
+        updateTitlebar();
+    });
+
     createToolBar();
     createMenus();
     setCentralWidget(new QWidget(this));
@@ -598,6 +603,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
         if (button == 0) {
             state->skeletonState->mergeOnLoadFlag = true;
+            state->skeletonState->unsavedChanges = true;//merge implies changes
         } else if(button == 1) {
             state->skeletonState->mergeOnLoadFlag = false;
             state->skeletonState->unsavedChanges = false;
@@ -612,8 +618,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
             + tr("</ul>");
         const auto button = QMessageBox::question(this, tr("Existing Merge List"), text, tr("Merge"), tr("Clear and Load"), tr("Cancel"), 0, 2);
 
-        if(button == 1) {//clear segmentation
+        if (button == 0) {
+            state->skeletonState->unsavedChanges = true;//merge implies changes
+        } else if (button == 1) {//clear segmentation
             Segmentation::singleton().clear();
+            state->skeletonState->unsavedChanges = false;
         } else if (button == 2) {
             return false;
         }
