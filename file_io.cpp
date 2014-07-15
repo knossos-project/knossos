@@ -40,7 +40,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
         }
         if (archive.setCurrentFile("mergelist.txt")) {
             QuaZipFile file(&archive);
-            Segmentation::singleton().loadMergelist(file);
+            Segmentation::singleton().mergelistLoad(file);
         } else {
             qDebug() << filename << "missing mergelist";
         }
@@ -58,20 +58,18 @@ void annotationFileSave(const QString & filename) {
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
             return file_write.open(QIODevice::WriteOnly, fileinfo);
         };
-        if (state->skeletonState->firstTree != nullptr) {
-            QuaZipFile file_write(&archive_write);
-            const bool open = zipCreateFile(file_write, "annotation.xml");
-            if (open) {
-                state->viewer->skeletonizer->saveXmlSkeleton(file_write);
-            } else {
-                qDebug() << filename << "saving nml failed";
-            }
+        QuaZipFile file_write(&archive_write);
+        const bool open = zipCreateFile(file_write, "annotation.xml");
+        if (open) {
+            state->viewer->skeletonizer->saveXmlSkeleton(file_write);
+        } else {
+            qDebug() << filename << "saving nml failed";
         }
         if (Segmentation::singleton().hasObjects()) {
             QuaZipFile file_write(&archive_write);
             const bool open = zipCreateFile(file_write, "mergelist.txt");
             if (open) {
-                Segmentation::singleton().saveMergelist(file_write);
+                Segmentation::singleton().mergelistSave(file_write);
             } else {
                 qDebug() << filename << "saving mergelist failed";
             }

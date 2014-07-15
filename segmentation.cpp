@@ -373,7 +373,7 @@ std::size_t Segmentation::selectedObjectsCount() const {
     return selectedObjects.size();
 }
 
-void Segmentation::saveMergelist(QIODevice & file) const {
+void Segmentation::mergelistSave(QIODevice & file) const {
     QTextStream stream(&file);
     for (const auto & obj : objects) {
         stream << obj.first << ' ' << obj.second.immutable;
@@ -386,7 +386,7 @@ void Segmentation::saveMergelist(QIODevice & file) const {
     }
 }
 
-void Segmentation::loadMergelist(QIODevice & file) {
+void Segmentation::mergelistLoad(QIODevice & file) {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream stream(&file);
     QString line;

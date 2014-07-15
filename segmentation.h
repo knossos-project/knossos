@@ -158,8 +158,8 @@ public:
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
     //files
-    void saveMergelist(QIODevice & file) const;
-    void loadMergelist(QIODevice & file);
+    void mergelistSave(QIODevice & file) const;
+    void mergelistLoad(QIODevice & file);
     void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
 signals:
     void dataChanged();
