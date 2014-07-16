@@ -495,6 +495,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
         xml.writeAttribute("node", QString::number(currentComment->node->nodeID));
         xml.writeAttribute("content", QString(currentComment->content));
         xml.writeEndElement();
+        if (currentComment->next == state->skeletonState->currentComment) {//comment list is circular
+            break;
+        }
     }
     xml.writeEndElement(); // end comments
 
