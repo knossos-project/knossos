@@ -47,6 +47,40 @@ uint64_t segmentationColorPicking(const int x, const int y, const int viewportId
     return Segmentation::singleton().subobjectIdFromUniqueColor(color);
 }
 
+void merging(QMouseEvent *event, const int vp) {
+    auto & seg = Segmentation::singleton();
+    const auto subobjectId = segmentationColorPicking(event->x(), event->y(), vp);
+    if (subobjectId != 0) {//don’t select the unsegmented area as object
+        if (seg.selectedObjectsCount() == 1) {
+            seg.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, vp));
+            auto & subobject = seg.subobjectFromId(subobjectId);
+            auto & objectToMerge = seg.smallestImmutableObjectContainingSubobject(subobject);
+            //select if not selected and merge
+            if (seg.isSelected(subobject)) {
+                if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                        seg.unmergeSelectedObjects(subobject);
+                    } else {
+                        seg.unmergeSelectedObjects(objectToMerge);
+                    }
+                }
+            } else {
+                if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
+                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                        seg.selectObjectFromSubObject(subobject);
+                    } else {
+                        seg.selectObject(objectToMerge);//select largest object
+                    }
+                }
+                if (seg.selectedObjectsCount() >= 2) {
+                    seg.mergeSelectedObjects();
+                }
+            }
+            seg.touchObjects(subobjectId);
+        }
+    }
+}
+
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     mouseDownX = event->x();
     mouseDownY = event->y();
@@ -146,9 +180,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    if(Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if(validPosition(event, VPfound)) {
-            Segmentation::singleton().mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
+    if (Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
+        if (validPosition(event, VPfound)) {
+            merging(event, VPfound);
         }
         return;
     }
@@ -525,16 +559,9 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if(segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if(validPosition(event, VPfound)) {
-            segmentation.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, VPfound));
-
-            const auto subObjID = segmentationColorPicking(event->x(), event->y(), VPfound);
-            if(subObjID != 0) {
-                auto & subObj = segmentation.subobjectFromId(subObjID);
-                auto & obj = segmentation.smallestImmutableObjectContainingSubobject(subObj);
-                segmentation.selectObject(obj);
-            }
+    if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
+        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty()) {
+            merging(event, VPfound);
         }
         return;
     }
@@ -609,42 +636,8 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     auto & seg = Segmentation::singleton();
-    if(seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        // merging by clicking
-        if(seg.mergeLine.size() == 1) {
-            const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
-            if (subobjectId != 0) {//don’t select the unsegmented area as object
-                if (seg.selectedObjectsCount() == 1) {
-                    auto & subobject = seg.subobjectFromId(subobjectId);
-                    auto & objectToMerge = seg.smallestImmutableObjectContainingSubobject(subobject);
-                    //select if not selected and merge
-                    if (seg.isSelected(subobject)) {
-                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                                seg.unmergeSelectedObjects(subobject);
-                            } else {
-                                seg.unmergeSelectedObjects(objectToMerge);
-                            }
-                        }
-                    } else {
-                        if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                                seg.selectObjectFromSubObject(subobject);
-                            } else {
-                                seg.selectObject(objectToMerge);//select largest object
-                            }
-                        }
-                        if (seg.selectedObjectsCount() >= 2) {
-                            seg.mergeSelectedObjects();
-                        }
-                    }
-                    seg.touchObjects(subobjectId);
-                }
-            }
-        }
-        else { // merging by line drawing
-            seg.mergeSelectedObjects();
-        }
+    if (seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
+        merging(event, VPfound);
         seg.mergeLine.clear();
         return;
     }
@@ -1132,7 +1125,7 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
     }
 }
 
-Coordinate EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
+Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
     int x, y, z;
 
     // These variables store the distance in screen pixels from the left and

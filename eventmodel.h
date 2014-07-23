@@ -47,6 +47,10 @@
   * You will save a couple of hours ..
   */
 
+Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
+uint64_t segmentationColorPicking(const int x, const int y, const int viewportId);
+void merging(QMouseEvent *event, const int vp);
+
 class EventModel : public QObject
 {
     Q_OBJECT
@@ -67,7 +71,6 @@ public:
     void handleMouseWheel(QWheelEvent * const event, int VPfound);
     void handleKeyPress(QKeyEvent *event, int VPfound);
     void handleKeyRelease(QKeyEvent *event);
-    static Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
     void startNodeSelection(int x, int y, int vpId);
     void nodeSelection(int x, int y, int vpId);
     int xrel(int x);
