@@ -376,6 +376,7 @@ void SegmentationTab::updateSelection() {
 void SegmentationTab::filter() {
     bool combineWithAnd = (filterCombineButton.text() == "and")? true : false;
     objectModel.recreate(commentFilter.text(), categoryFilter.currentText(), regExCheckbox.isChecked(), combineWithAnd);
+    updateSelection();
 }
 
 void SegmentationTab::updateCategories() {
