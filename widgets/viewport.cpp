@@ -117,7 +117,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 void Viewport::initializeGL() {
     if(viewportType != VIEWPORT_SKELETON) {
         glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
 
@@ -205,7 +204,6 @@ bool Viewport::setOrientation(int orientation) {
 
 void Viewport::createOverlayTextures() {
     glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
 

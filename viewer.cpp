@@ -622,8 +622,6 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             glBindTexture(GL_TEXTURE_2D,
                           currentVp.texture.texHandle);
 
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
             // This is used to index into the texture. texData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
@@ -655,10 +653,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             }
             //Take care of the overlay textures.
             if(state->overlay) {
-                glBindTexture(GL_TEXTURE_2D,
-                              currentVp.texture.overlayHandle);
-                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
+                glBindTexture(GL_TEXTURE_2D, currentVp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
@@ -719,7 +714,6 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     CPY_COORDINATE(currentPx_float, rowPx_float);
 
     glBindTexture(GL_TEXTURE_2D, currentVp.texture.texHandle);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     int s = 0, t = 0, t_old = 0;
     while(s < currentVp.s_max) {
