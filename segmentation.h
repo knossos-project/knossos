@@ -77,7 +77,7 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
-    std::set<QString> categories;
+    std::set<QString> categories = {"mito", "myelin", "neuron", "synapse"};
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
