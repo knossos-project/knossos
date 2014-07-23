@@ -68,7 +68,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         }
 
         return false;
-    } else if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+    } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && !Segmentation::singleton().segmentationMode) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
     } else if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
         // always drag in skeleton vp
@@ -113,7 +113,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             if(keyMod.testFlag(Qt::ControlModifier)) {
-                qDebug("shift and control and mouse middle");
+                qDebug() << "shift and control and mouse middle";
                 // Pressed SHIFT and CTRL
             } else {
                 // Delete segment between clicked and active node

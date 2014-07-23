@@ -21,20 +21,24 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "skeletonizer.h"
 
 #include <cstring>
 #include <vector>
 
 #include <QProgressDialog>
-#include "skeletonizer.h"
+
+#include "file_io.h"
+#include "functions.h"
 #include "knossos-global.h"
 #include "knossos.h"
-#include "functions.h"
 #include "viewer.h"
 
 extern stateInfo *state;
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
+    state->skeletonState->simpleTracing = false;
+
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
 
@@ -43,7 +47,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     /*@todo
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        LOG("Unable to create skeleton hash-table.")
+        qDebug() << "Unable to create skeleton hash-table.";
         return false;
     }*/
 
@@ -138,7 +142,7 @@ nodeListElement *Skeletonizer::addNodeListElement(
 
     newElement = (nodeListElement*) malloc(sizeof(struct nodeListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new nodeListElement.")
+        qDebug() << "Out of memory while trying to allocate memory for a new nodeListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct nodeListElement));
@@ -185,7 +189,7 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
 
     newElement = (segmentListElement*) malloc(sizeof(struct segmentListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new segmentListElement.")
+        qDebug() << "Out of memory while trying to allocate memory for a new segmentListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct segmentListElement));
@@ -259,7 +263,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                           -1,
                           true);
     if(!addedNodeID) {
-        LOG("Error: Could not add new node!")
+        qDebug() << "Error: Could not add new node!";
         return false;
     }
 
@@ -280,7 +284,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     int targetNodeID;
 
     if(!state->skeletonState->activeNode) {
-        LOG("Please create a node before trying to link nodes.");
+        qDebug() << "Please create a node before trying to link nodes.";
         return false;
     }
 
@@ -295,7 +299,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
                            -1,
                            true);
     if(!targetNodeID) {
-        LOG("Could not add new node while trying to add node and link with active node!")
+        qDebug() << "Could not add new node while trying to add node and link with active node!";
         return false;
     }
 
@@ -326,56 +330,37 @@ void Skeletonizer::autoSaveIfElapsed() {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();//save timestamp
 
                 if (state->skeletonState->unsavedChanges && state->skeletonState->firstTree != nullptr) {//there’re real changes
-                    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no filename yet
-                        state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
-                    }
-                    emit saveSkeletonSignal();
+                    emit autosaveSignal();
                 }
             }
         }
     }
 }
 
-bool Skeletonizer::saveXmlSkeleton(QString fileName) {
-    treeListElement *currentTree = NULL;
-    nodeListElement *currentNode = NULL;
-    PTRSIZEINT currentBranchPointID;
-    segmentListElement *currentSegment = NULL;
-    commentListElement *currentComment = NULL;
-    stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
-
+bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     //  This function should always be called through UI_saveSkeleton
     // for proper error and file name display to the user.
 
     // We need to do this to be able to save the branch point stack to a file
     //and still have the branch points available to the user afterwards.
 
-    reverseBranchStack = newStack(2048);
-    tempReverseStack = newStack(2048);
-    while((currentBranchPointID =
-          (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
-        pushStack(reverseBranchStack, (void *)currentBranchPointID);
-        pushStack(tempReverseStack, (void *)currentBranchPointID);
+    stack * const reverseBranchStack = newStack(2048);
+    stack * const tempReverseStack = newStack(2048);
+    while (const auto currentBranchPointID = popStack(state->skeletonState->branchStack)) {
+        pushStack(reverseBranchStack, currentBranchPointID);
+        pushStack(tempReverseStack, currentBranchPointID);
     }
 
-    while((currentBranchPointID =
-          (PTRSIZEINT)popStack(tempReverseStack))) {
-        currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
+    while (const auto currentBranchPointID = (ptrdiff_t)popStack(tempReverseStack)) {
+        auto currentNode = findNodeByNodeID(currentBranchPointID);
         pushBranchNode(false, false, currentNode, 0);
     }
-
-    QFile file(fileName);
-    if(!file.open(QIODevice::WriteOnly)) {
-        qErrnoWarning("Failed to open file");
-        return false;
-    }
-    QString tmp;
 
     QXmlStreamWriter xml(&file);
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
 
-    xml.writeStartElement("things");
+    xml.writeStartElement("things");//root node
 
     xml.writeStartElement("parameters");
     xml.writeStartElement("experiment");
@@ -387,69 +372,65 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeEndElement();
 
     xml.writeStartElement("createdin");
-    char *ptr = state->skeletonState->skeletonCreatedInVersion;
-    xml.writeAttribute("version", QString(ptr));
+    const auto & createdInVersion = QString(state->skeletonState->skeletonCreatedInVersion);
+    xml.writeAttribute("version", createdInVersion);
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
-    xml.writeAttribute("x", tmp.setNum((float)state->scale.x / state->magnification));
-    xml.writeAttribute("y", tmp.setNum((float)state->scale.y / state->magnification));
-    xml.writeAttribute("z", tmp.setNum((float)state->scale.z / state->magnification));
+    xml.writeAttribute("x", QString::number(state->scale.x / state->magnification));
+    xml.writeAttribute("y", QString::number(state->scale.y / state->magnification));
+    xml.writeAttribute("z", QString::number(state->scale.z / state->magnification));
     xml.writeEndElement();
 
     xml.writeStartElement("offset");
-    xml.writeAttribute("x", tmp.setNum(state->offset.x / state->magnification));
-    xml.writeAttribute("y", tmp.setNum(state->offset.y / state->magnification));
-    xml.writeAttribute("z", tmp.setNum(state->offset.z / state->magnification));
+    xml.writeAttribute("x", QString::number(state->offset.x / state->magnification));
+    xml.writeAttribute("y", QString::number(state->offset.y / state->magnification));
+    xml.writeAttribute("z", QString::number(state->offset.z / state->magnification));
     xml.writeEndElement();
 
     xml.writeStartElement("RadiusLocking");
-    xml.writeAttribute("enableCommentLocking", tmp.setNum(state->skeletonState->lockPositions));
-    xml.writeAttribute("lockingRadius", tmp.setNum(state->skeletonState->lockRadius));
+    xml.writeAttribute("enableCommentLocking", QString::number(state->skeletonState->lockPositions));
+    xml.writeAttribute("lockingRadius", QString::number(state->skeletonState->lockRadius));
     xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->onCommentLock));
     xml.writeEndElement();
 
     xml.writeStartElement("time");
     const int time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
-    xml.writeAttribute("ms", tmp.setNum(time));
+    xml.writeAttribute("ms", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
     xml.writeAttribute("checksum", timeChecksum);
     xml.writeEndElement();
 
-    if(state->skeletonState->activeNode) {
+    if (state->skeletonState->activeNode) {
         xml.writeStartElement("activeNode");
-        xml.writeAttribute("id", tmp.setNum(state->skeletonState->activeNode->nodeID));
+        xml.writeAttribute("id", QString::number(state->skeletonState->activeNode->nodeID));
         xml.writeEndElement();
     }
 
     xml.writeStartElement("editPosition");
-    xml.writeAttribute("x", tmp.setNum(state->viewerState->currentPosition.x + 1));
-    xml.writeAttribute("y", tmp.setNum(state->viewerState->currentPosition.y + 1));
-    xml.writeAttribute("z", tmp.setNum(state->viewerState->currentPosition.z + 1));
+    xml.writeAttribute("x", QString::number(state->viewerState->currentPosition.x + 1));
+    xml.writeAttribute("y", QString::number(state->viewerState->currentPosition.y + 1));
+    xml.writeAttribute("z", QString::number(state->viewerState->currentPosition.z + 1));
     xml.writeEndElement();
 
     xml.writeStartElement("skeletonVPState");
-    int j = 0;
-    char element[8];
-    for(j = 0; j < 16; j++) {
-        sprintf(element, "E%d", j);
-        ptr = element;
-        xml.writeAttribute(QString(ptr), tmp.setNum(state->skeletonState->skeletonVpModelView[j]));
+    for (int j = 0; j < 16; ++j) {
+        xml.writeAttribute(QString("E%1").arg(j), QString::number(state->skeletonState->skeletonVpModelView[j]));
     }
-    xml.writeAttribute("translateX", tmp.setNum(state->skeletonState->translateX));
-    xml.writeAttribute("translateY", tmp.setNum(state->skeletonState->translateY));
+    xml.writeAttribute("translateX", QString::number(state->skeletonState->translateX));
+    xml.writeAttribute("translateY", QString::number(state->skeletonState->translateY));
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
-    xml.writeAttribute("XYPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel));
-    xml.writeAttribute("XZPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
-    xml.writeAttribute("YZPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
-    xml.writeAttribute("SkelPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_SKELETON].texture.zoomLevel));
+    xml.writeAttribute("XYPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel));
+    xml.writeAttribute("XZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
+    xml.writeAttribute("YZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
+    xml.writeAttribute("SkelPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_SKELETON].texture.zoomLevel));
     xml.writeEndElement();
 
     xml.writeStartElement("idleTime");
-    xml.writeAttribute("ms", tmp.setNum(state->skeletonState->idleTime));
+    xml.writeAttribute("ms", QString::number(state->skeletonState->idleTime));
     const auto idleTimeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&state->skeletonState->idleTime), sizeof(state->skeletonState->idleTime));
     const QString idleTimeChecksum = QCryptographicHash::hash(idleTimeData, QCryptographicHash::Sha256).toHex().constData();
     xml.writeAttribute("checksum", idleTimeChecksum);
@@ -457,97 +438,83 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
     xml.writeEndElement(); // end parameters
 
-    currentTree = state->skeletonState->firstTree;
-    if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        file.close();
-        return false; // No Skeleton to save
-    }
-
-    while(currentTree) {
-        //Every "thing" has associated nodes and edges.
+    for (auto currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
+        //Every "thing" (tree) has associated nodes and edges.
         xml.writeStartElement("thing");
-        xml.writeAttribute("id", tmp.setNum(currentTree->treeID));
+        xml.writeAttribute("id", QString::number(currentTree->treeID));
 
-        if(currentTree->colorSetManually) {
-            xml.writeAttribute("color.r", tmp.setNum(currentTree->color.r));
-            xml.writeAttribute("color.g", tmp.setNum(currentTree->color.g));
-            xml.writeAttribute("color.b", tmp.setNum(currentTree->color.b));
-            xml.writeAttribute("color.a", tmp.setNum(currentTree->color.a));
+        if (currentTree->colorSetManually) {
+            xml.writeAttribute("color.r", QString::number(currentTree->color.r));
+            xml.writeAttribute("color.g", QString::number(currentTree->color.g));
+            xml.writeAttribute("color.b", QString::number(currentTree->color.b));
+            xml.writeAttribute("color.a", QString::number(currentTree->color.a));
         } else {
             xml.writeAttribute("color.r", QString("-1."));
             xml.writeAttribute("color.g", QString("-1."));
             xml.writeAttribute("color.b", QString("-1."));
             xml.writeAttribute("color.a", QString("1."));
         }
-        if(currentTree->comment) {
+        if (currentTree->comment) {
             xml.writeAttribute("comment", QString(currentTree->comment));
         }
-        xml.writeStartElement("nodes");
-        currentNode = currentTree->firstNode;
-        while(currentNode) {
-            xml.writeStartElement("node");
-            xml.writeAttribute("id", tmp.setNum(currentNode->nodeID));
-            xml.writeAttribute("radius", tmp.setNum(currentNode->radius));
-            xml.writeAttribute("x", tmp.setNum(currentNode->position.x + 1));
-            xml.writeAttribute("y", tmp.setNum(currentNode->position.y + 1));
-            xml.writeAttribute("z", tmp.setNum(currentNode->position.z + 1));
-            xml.writeAttribute("inVp", tmp.setNum(currentNode->createdInVp));
-            xml.writeAttribute("inMag", tmp.setNum(currentNode->createdInMag));
-            xml.writeAttribute("time", tmp.setNum(currentNode->timestamp));
 
-            currentNode = currentNode->next;
+        xml.writeStartElement("nodes");
+        for (auto currentNode = currentTree->firstNode; currentNode != nullptr; currentNode = currentNode->next) {
+            xml.writeStartElement("node");
+            xml.writeAttribute("id", QString::number(currentNode->nodeID));
+            xml.writeAttribute("radius", QString::number(currentNode->radius));
+            xml.writeAttribute("x", QString::number(currentNode->position.x + 1));
+            xml.writeAttribute("y", QString::number(currentNode->position.y + 1));
+            xml.writeAttribute("z", QString::number(currentNode->position.z + 1));
+            xml.writeAttribute("inVp", QString::number(currentNode->createdInVp));
+            xml.writeAttribute("inMag", QString::number(currentNode->createdInMag));
+            xml.writeAttribute("time", QString::number(currentNode->timestamp));
             xml.writeEndElement(); // end node
         }
         xml.writeEndElement(); // end nodes
 
         xml.writeStartElement("edges");
-        currentNode = currentTree->firstNode;
-        while(currentNode) {
-            currentSegment = currentNode->firstSegment;
-            while(currentSegment) {
-                if(currentSegment->flag == SEGMENT_FORWARD) {
+        for (auto currentNode = currentTree->firstNode; currentNode != nullptr; currentNode = currentNode->next) {
+            for (auto currentSegment = currentNode->firstSegment; currentSegment != nullptr; currentSegment = currentSegment->next) {
+                if (currentSegment->flag == SEGMENT_FORWARD) {
                     xml.writeStartElement("edge");
-                    xml.writeAttribute("source", tmp.setNum(currentSegment->source->nodeID));
-                    xml.writeAttribute("target", tmp.setNum(currentSegment->target->nodeID));
+                    xml.writeAttribute("source", QString::number(currentSegment->source->nodeID));
+                    xml.writeAttribute("target", QString::number(currentSegment->target->nodeID));
                     xml.writeEndElement();
                 }
-                currentSegment = currentSegment->next;
             }
-            currentNode = currentNode->next;
         }
         xml.writeEndElement(); // end edges
-        currentTree = currentTree->next;
+
         xml.writeEndElement(); // end tree
     }
 
-    currentComment = state->skeletonState->currentComment;
-    if(state->skeletonState->currentComment) {
-        xml.writeStartElement("comments");
-        do {
-            xml.writeStartElement("comment");
-            xml.writeAttribute("node", tmp.setNum(currentComment->node->nodeID));
-            xml.writeAttribute("content", QString(currentComment->content));
-            xml.writeEndElement();
-            currentComment = currentComment->next;
-        } while(currentComment != state->skeletonState->currentComment);
-        xml.writeEndElement(); // end comments
+    xml.writeStartElement("comments");
+    for (auto currentComment = state->skeletonState->currentComment; currentComment != nullptr; currentComment = currentComment->next) {
+        xml.writeStartElement("comment");
+        xml.writeAttribute("node", QString::number(currentComment->node->nodeID));
+        xml.writeAttribute("content", QString(currentComment->content));
+        xml.writeEndElement();
+        if (currentComment->next == state->skeletonState->currentComment) {//comment list is circular
+            break;
+        }
     }
+    xml.writeEndElement(); // end comments
 
     xml.writeStartElement("branchpoints");
-    while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
+    while (const auto currentBranchPointID = (ptrdiff_t)popStack(reverseBranchStack)) {
         xml.writeStartElement("branchpoint");
-        xml.writeAttribute("id", tmp.setNum(currentBranchPointID));
+        xml.writeAttribute("id", QString::number(currentBranchPointID));
         xml.writeEndElement();
     }
     xml.writeEndElement(); // end branchpoints
 
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
-    file.close();
     return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
+bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
     int merge = false;
     int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
@@ -555,14 +522,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
 
     treeListElement *currentTree;
 
-    Coordinate offset;
-    floatCoordinate scale;
     Coordinate loadedPosition;
-    SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
-    SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
 
-    QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");
         return false;
@@ -596,7 +558,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     std::vector<std::pair<int, int>> edgeVector;
 
     bench.start();
-
+    emit setSimpleTracing(false);
     if (!xml.readNextStartElement() || xml.name() != "things") {
         qDebug() << "invalid xml token: " << xml.name();
         return false;
@@ -618,6 +580,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
                     }
+                } else if(xml.name() == "tracing") {
+                    QStringRef attribute = attributes.value("simple");
+                    state->skeletonState->simpleTracing = false;
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->simpleTracing = static_cast<bool>(attribute.toLocal8Bit().toInt());
+                    }
+                    emit setSimpleTracing(state->skeletonState->simpleTracing);
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.
@@ -633,15 +602,15 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                 } else if(xml.name() == "offset") {
                     QStringRef attribute = attributes.value("x");
                     if(attribute.isNull() == false) {
-                        offset.x = attribute.toLocal8Bit().toInt();
+                        state->offset.x = attribute.toLocal8Bit().toInt();
                     }
                     attribute = attributes.value("y");
                     if(attribute.isNull() == false) {
-                        offset.y = attribute.toLocal8Bit().toInt();
+                        state->offset.y = attribute.toLocal8Bit().toInt();
                     }
                     attribute = attributes.value("z");
                     if(attribute.isNull() == false) {
-                        offset.z = attribute.toLocal8Bit().toInt();
+                        state->offset.z = attribute.toLocal8Bit().toInt();
                     }
                 } else if(xml.name() == "time" && merge == false) {
                     QStringRef attribute = attributes.value("ms");
@@ -659,15 +628,15 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                 } else if(xml.name() == "scale") {
                     QStringRef attribute = attributes.value("x");
                     if(attribute.isNull() == false) {
-                        scale.x = attribute.toLocal8Bit().toFloat();
+                        state->scale.x = attribute.toLocal8Bit().toFloat();
                     }
                     attribute = attributes.value("y");
                     if(attribute.isNull() == false) {
-                        scale.y = attribute.toLocal8Bit().toFloat();
+                        state->scale.y = attribute.toLocal8Bit().toFloat();
                     }
                     attribute = attributes.value("z");
                     if(attribute.isNull() == false) {
-                        scale.z = attribute.toLocal8Bit().toFloat();
+                        state->scale.z = attribute.toLocal8Bit().toFloat();
                     }
                 } else if(xml.name() == "editPosition") {
                     QStringRef attribute = attributes.value("x");
@@ -830,9 +799,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
             attribute = attributes.value("comment"); // the tree comment
             if(attribute.isNull() == false && attribute.length() > 0) {
                 addTreeComment(currentTree->treeID, attribute.toLocal8Bit().data());
-            }
-            else if(multiple) {
-                addTreeComment(currentTree->treeID, fileName);
+            } else {
+                addTreeComment(currentTree->treeID, treeCmtOnMultiLoad);
             }
 
             while (xml.readNextStartElement()) {
@@ -1007,24 +975,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     return true;
 }
 
-QString Skeletonizer::getDefaultSkelFileName() {
-    // Generate a default file name based on date and time.
-    auto currentTime = time(nullptr);
-    auto localTime = localtime(&currentTime);
-    if(localTime->tm_year >= 100) {
-        localTime->tm_year -= 100;
-    }
-    auto relativePath = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/skeletonFiles/skeleton-%1%2%3-%4%5.000.nml")
-            //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
-
-    return QFileInfo(relativePath).absoluteFilePath();
-}
-
 bool Skeletonizer::delActiveNode() {
     if(state->skeletonState->activeNode) {
         delNode(0, state->skeletonState->activeNode);
@@ -1056,7 +1006,7 @@ bool Skeletonizer::delActiveTree() {
         }
     }
     else {
-       LOG("No active tree available.")
+       qDebug() << "No active tree available.";
        return false;
     }
 
@@ -1076,7 +1026,7 @@ bool Skeletonizer::delSegment(int sourceNodeID, int targetNodeID, segmentListEle
     }
 
     if(!segToDel) {
-        LOG("Cannot delete segment, no segment with corresponding node IDs available!")
+        qDebug() << "Cannot delete segment, no segment with corresponding node IDs available!";
         return false;
     }
 
@@ -1137,7 +1087,7 @@ bool Skeletonizer::delNode(int nodeID, nodeListElement *nodeToDel) {
 
     nodeID = nodeToDel->nodeID;
     if(!nodeToDel) {
-        LOG("The given node %d doesn't exist. Unable to delete it.", nodeID)
+        qDebug("The given node %d doesn't exist. Unable to delete it.", nodeID);
         return false;
     }
 
@@ -1218,7 +1168,7 @@ bool Skeletonizer::delTree(int treeID) {
 
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
-        LOG("There exists no tree with ID %d. Unable to delete it.", treeID)
+        qDebug("There exists no tree with ID %d. Unable to delete it.", treeID);
         return false;
     }
 
@@ -1352,7 +1302,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     treeListElement *currentTree;
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
-        LOG("There exists no tree with ID %d!", treeID)
+        qDebug("There exists no tree with ID %d!", treeID);
         return false;
     }
 
@@ -1380,7 +1330,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, int nodeID) {
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
-            LOG("No node with id %d available.", nodeID)
+            qDebug("No node with id %d available.", nodeID);
             return false;
         }
     }
@@ -1464,13 +1414,13 @@ int Skeletonizer::addNode(int nodeID, float radius, int treeID, Coordinate *posi
     }
 
     if(tempNode) {
-        LOG("Node with ID %d already exists, no node added.", nodeID)
+        qDebug("Node with ID %d already exists, no node added.", nodeID);
         return false;
     }
     tempTree = findTreeByTreeID(treeID);
 
     if(!tempTree) {
-        LOG("There exists no tree with the provided ID %d!", treeID)
+        qDebug("There exists no tree with the provided ID %d!", treeID);
         return false;
     }
 
@@ -1531,7 +1481,7 @@ bool Skeletonizer::addSegment(int sourceNodeID, int targetNodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
-        LOG("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID)
+        qDebug("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID);
         return false;
     }
 
@@ -1540,12 +1490,12 @@ bool Skeletonizer::addSegment(int sourceNodeID, int targetNodeID) {
     targetNode = findNodeByNodeID(targetNodeID);
 
     if(!(sourceNode) || !(targetNode)) {
-        LOG("Could not link the nodes, because at least one is missing!")
+        qDebug() << "Could not link the nodes, because at least one is missing!";
         return false;
     }
 
     if(sourceNode == targetNode) {
-        LOG("Cannot link node with itself!")
+        qDebug() << "Cannot link node with itself!";
         return false;
     }
 
@@ -1628,7 +1578,7 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     //Create a new hash-table that holds the skeleton datacubes
     //state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
     //if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-    //    LOG("Unable to create skeleton hash-table.")
+    //    qDebug() << "Unable to create skeleton hash-table.";
     //    Knossos::unlockSkeleton(false);
     //    return false;
     //}
@@ -1662,7 +1612,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     nodeListElement *firstNode, *lastNode;
 
     if(treeID1 == treeID2) {
-        LOG("Could not merge trees. Provided IDs are the same!")
+        qDebug() << "Could not merge trees. Provided IDs are the same!";
         return false;
     }
 
@@ -1670,7 +1620,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     tree2 = findTreeByTreeID(treeID2);
 
     if(!(tree1) || !(tree2)) {
-        LOG("Could not merge trees, provided IDs are not valid!")
+        qDebug() << "Could not merge trees, provided IDs are not valid!";
         return false;
     }
 
@@ -1759,7 +1709,7 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, b
             }
             tree = tree->next;
         }
-        qDebug("no nodes to move to");
+        qDebug() << "no nodes to move to";
         return NULL;
     }
     treeListElement *tree;
@@ -1822,7 +1772,7 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
             }
             tree = tree->next;
         }
-        qDebug("no nodes to move to");
+        qDebug() << "no nodes to move to";
         return NULL;
     }
     treeListElement *tree;
@@ -1883,13 +1833,13 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     newElement = findTreeByTreeID(treeID);
     if(newElement) {
-        LOG("Tree with ID %d already exists!", treeID)
+        qDebug("Tree with ID %d already exists!", treeID);
         return newElement;
     }
 
     newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new treeListElement.")
+        qDebug() << "Out of memory while trying to allocate memory for a new treeListElement.";
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct treeListElement));
@@ -1939,7 +1889,7 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
     state->skeletonState->firstTree = newElement;
 
     state->skeletonState->activeTree = newElement;
-    //LOG("Added new tree with ID: %d.", newElement->treeID)
+    //qDebug("Added new tree with ID: %d.", newElement->treeID);
 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
@@ -1970,7 +1920,7 @@ treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
         if(tree) {
             return tree;
         }
-        qDebug("no tree to move to");
+        qDebug() << "no tree to move to";
         return NULL;
     }
     while(tree) {
@@ -2004,7 +1954,7 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
         if(tree) {
             return tree;
         }
-        qDebug("no tree to move to");
+        qDebug() << "no tree to move to";
         return NULL;
     }
     while(tree) {
@@ -2120,7 +2070,7 @@ bool Skeletonizer::editNode(int nodeID, nodeListElement *node, float newRadius, 
         node = findNodeByNodeID(nodeID);
     }
     if(!node) {
-        LOG("Cannot edit: node id %d invalid.", nodeID)
+        qDebug("Cannot edit: node id %d invalid.", nodeID);
         return false;
     }
 
@@ -2162,14 +2112,14 @@ void* Skeletonizer::popStack(stack *stack) {
 
 bool Skeletonizer::pushStack(stack *stack, void *element) {
     if(element == NULL) {
-        LOG("Stack can't hold NULL.")
+        qDebug() << "Stack can't hold NULL.";
         return false;
     }
 
     if(stack->stackpointer + 1 == stack->size) {
         stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
         if(stack->elements == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         stack->size = stack->size * 2;
@@ -2187,20 +2137,20 @@ stack* Skeletonizer::newStack(int size) {
     struct stack *newStack = NULL;
 
     if(size <= 0) {
-        LOG("That doesn't really make any sense, right? Cannot create stack with size <= 0.")
+        qDebug() << "That doesn't really make any sense, right? Cannot create stack with size <= 0.";
         return NULL;
     }
 
     newStack = (stack *)malloc(sizeof(struct stack));
     if(newStack == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newStack, '\0', sizeof(struct stack));
 
     newStack->elements = (void **)malloc(sizeof(void *) * size);
     if(newStack->elements == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newStack->elements, '\0', sizeof(void *) * size);
@@ -2239,7 +2189,7 @@ bool Skeletonizer::setDynArray(dynArray *array, int pos, void *value) {
         array->elements = (void**)realloc(array->elements, (array->end + 1 +
                                   array->firstSize) * sizeof(void *));
         if(array->elements == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
@@ -2256,14 +2206,14 @@ dynArray* Skeletonizer::newDynArray(int size) {
 
     newArray = (dynArray*)malloc(sizeof(struct dynArray));
     if(newArray == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newArray, '\0', sizeof(struct dynArray));
 
     newArray->elements = (void**)malloc(sizeof(void *) * size);
     if(newArray->elements == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(newArray->elements, '\0', sizeof(void *) * size);
@@ -2335,7 +2285,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
 
     if(visitedRight == NULL || visitedLeft == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
 
@@ -2362,7 +2312,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         while(index > *visitedLen) {
             *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
             if(*visited == NULL) {
-                LOG("Out of memory.")
+                qDebug() << "Out of memory.";
                 _Exit(false);
             }
 
@@ -2469,7 +2419,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         state->skeletonState->skeletonChanged = true;
     }
     else {
-        LOG("The connected component is equal to the entire tree, not splitting.")
+        qDebug() << "The connected component is equal to the entire tree, not splitting.";
     }
 
     delStack(remainingNodes);
@@ -2540,9 +2490,6 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, int nodeID
 }
 
 bool Skeletonizer::delComment(commentListElement *currentComment, int commentNodeID) {
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
-    int nodeID = 0;
     nodeListElement *commentNode = NULL;
 
     if(commentNodeID) {
@@ -2553,7 +2500,7 @@ bool Skeletonizer::delComment(commentListElement *currentComment, int commentNod
     }
 
     if(!currentComment) {
-        LOG("Please provide a valid comment element to delete!")
+        qDebug() << "Please provide a valid comment element to delete!";
         return false;
     }
 
@@ -2561,7 +2508,6 @@ bool Skeletonizer::delComment(commentListElement *currentComment, int commentNod
         free(currentComment->content);
     }
     if(currentComment->node) {
-        nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
         state->skeletonState->skeletonChanged = true;
     }
@@ -2602,7 +2548,7 @@ bool Skeletonizer::editComment(commentListElement *currentComment, int nodeID, Q
         currentComment = findNodeByNodeID(nodeID)->comment;
     }
     if(!currentComment) {
-        LOG("Please provide a valid comment element to edit!")
+        qDebug() << "Please provide a valid comment element to edit!";
         return false;
     }
 
@@ -2762,7 +2708,7 @@ bool Skeletonizer::searchInComment(char */*searchString*/, commentListElement */
 
 bool Skeletonizer::unlockPosition() {
     if(state->skeletonState->positionLocked) {
-        LOG("Spatial locking disabled.")
+        qDebug() << "Spatial locking disabled.";
     }
     state->skeletonState->positionLocked = false;
 
@@ -2770,7 +2716,7 @@ bool Skeletonizer::unlockPosition() {
 }
 
 bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
-    LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z)
+    qDebug("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
     state->skeletonState->positionLocked = true;
     SET_COORDINATE(state->skeletonState->lockedPosition,
                    lockCoordinate.x,
@@ -2803,7 +2749,7 @@ bool Skeletonizer::popBranchNode() {
             box.setIcon(QMessageBox::Information);
             box.setInformativeText("No branch points remain");
             box.exec();
-            LOG("No branch points remain.");
+            qDebug() << "No branch points remain.";
 
             goto exit_popbranchnode;
         }
@@ -2813,9 +2759,9 @@ bool Skeletonizer::popBranchNode() {
 
     if(branchNode && branchNode->isBranchNode) {
 #if QT_POINTER_SIZE == 8
-        LOG("Branch point (node ID %ld) deleted.", branchNodeID)
+        qDebug("Branch point (node ID %ld) deleted.", branchNodeID);
 #else
-        LOG("Branch point (node ID %d) deleted.", branchNodeID)
+        qDebug("Branch point (node ID %d) deleted.", branchNodeID);
 #endif
 
         setActiveNode(branchNode, 0);
@@ -2852,17 +2798,17 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
                 branchNode->isBranchNode = true;
 
                 state->skeletonState->skeletonChanged = true;
-                LOG("Branch point (node ID %d) added.", branchNode->nodeID)
+                qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
             }
 
         }
         else {
-            LOG("Active node is already a branch point")
+            qDebug() << "Active node is already a branch point";
             return true;
         }
     }
     else {
-        LOG("Make a node active before adding branch points.")
+        qDebug() << "Make a node active before adding branch points.";
         return true;
     }
 

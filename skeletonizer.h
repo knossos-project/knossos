@@ -36,11 +36,12 @@ public:
     explicit Skeletonizer(QObject *parent = 0);
 
 signals:
-    void saveSkeletonSignal();
+    void autosaveSignal();
     void updateToolsSignal();
     void updateTreeviewSignal();
     void userMoveSignal(int x, int y, int z);
     void setRecenteringPositionSignal(int x, int y, int z);
+    void setSimpleTracing(bool active);
 
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
@@ -99,8 +100,8 @@ public slots:
     bool jumpToActiveNode();
     static bool setActiveTreeByID(int treeID);
 
-    bool loadXmlSkeleton(QString fileName, bool multiple);
-    bool saveXmlSkeleton(QString fileName);
+    bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    bool saveXmlSkeleton(QIODevice &file) const;
 
     static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     bool moveToNextTree();
@@ -122,7 +123,6 @@ public slots:
     static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-    static QString getDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
     bool popBranchNode();

@@ -372,16 +372,9 @@ struct assignment {
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
 
-#ifdef QT_DEBUG
-#include "widgets/console.h"
-#endif
-
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-#ifdef QT_DEBUG
-    Console *console;
-#endif
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
@@ -1041,6 +1034,7 @@ struct skeletonState {
     int idleTimeNow;
     int idleTimeLast;
 
+    bool simpleTracing;
     Hashtable *skeletonDCs;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
@@ -1173,8 +1167,6 @@ struct skeletonState {
 
     uint serialSkeletonCounter;
     uint maxUndoSteps;
-
-    QString skeletonFileAsQString;
 };
 
 /* global functions */
@@ -1231,27 +1223,5 @@ struct skeletonState {
 // of b (if b is a power of two).
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
-
-#include <QTextStream>
-
-template<typename T>
-void log(QTextStream & oss, T t) {
-    oss << t;
-}
-
-template<typename T, typename... Ts>
-void log(QTextStream & oss, T t, Ts... ts) {
-    oss << t;
-    log(oss, ts...);
-}
-
-//TODO replace all occurences of the LOG macro with qDebug calls and remove this macro
-#define LOG(...)\
-{\
-    QString data;\
-    QTextStream oss(&data);\
-    log(oss, __VA_ARGS__);\
-    qDebug() << data;\
-}\
 
 #endif

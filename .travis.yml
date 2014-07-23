@@ -5,14 +5,12 @@ compiler:
   - gcc
 
 before_install:
-  - lsb_release -a # should be 12.04
-  - sudo apt-add-repository -y ppa:jkeiren/ppa
+  - lsb_release -a # 12.04 assumed
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test # gcc4.8
   - sudo add-apt-repository -y ppa:kalakris/cmake # CMake 2.11.2
-  - sudo apt-add-repository -y ppa:ubuntu-sdk-team/ppa
-  - sudo apt-add-repository -y ppa:beineri/opt-qt521
-  - sudo apt-add-repository -y ppa:arankine/backports # ninja-build 1.3.4
   - sudo apt-add-repository -y ppa:yjwong/libjpeg-turbo # libjpeg-turbo 1.3.0
+  - sudo apt-add-repository -y ppa:arankine/backports # ninja-build 1.3.4
+  - sudo apt-add-repository -y ppa:beineri/opt-qt531 # Qt 5.3.1
   - sudo apt-get update -qq
   - sudo apt-get -qq install cmake
   - sudo apt-get -qq install freeglut3-dev
@@ -20,15 +18,22 @@ before_install:
   - sudo apt-get -qq install libjpeg-turbo8-dev
   - sudo apt-get -qq install libxmu-dev libxi-dev
   - sudo apt-get -qq install ninja-build
-  - sudo apt-get -qq install qt52base qt52tools
+  - sudo apt-get -qq install qt53base qt53tools
   - sudo apt-get install -qq gcc-4.8 g++-4.8
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
   - sudo update-alternatives --config gcc
   - sudo update-alternatives --config g++
-  - source /opt/qt52/bin/qt52-env.sh
+  - source /opt/qt53/bin/qt53-env.sh
 
 before_script:
+  - wget http://downloads.sourceforge.net/project/quazip/quazip/0.6.2/quazip-0.6.2.tar.gz
+  - tar -xzf quazip-0.6.2.tar.gz
+  - mkdir quazip-build
+  - cd quazip-build
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.6.2"
+  - sudo ninja install
+  - cd ..
   - mkdir build_debug
   - cd build_debug
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=DEBUG ..

@@ -23,11 +23,6 @@ void WidgetContainer::rewire() {
 }
 
 #include <QGraphicsBlurEffect>
-void WidgetContainer::createConsoleWidget() {
-    console = new Console();
-    console->setWindowFlags(Qt::WindowStaysOnTopHint);
-    console->setMinimumSize(200, 100);
-}
 
 void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
     tracingTimeWidget = new TracingTimeWidget(parent);
@@ -158,9 +153,6 @@ void WidgetContainer::createAnnotationWidget(QWidget *parent) {
 }
 
 void WidgetContainer::createWidgets(QWidget *parent) {
-#ifdef QT_DEBUG
-    createConsoleWidget();
-#endif
     createTracingTimeWidget(parent);
     createCommentsWidget(parent);
     createViewportSettingsWidget(parent);

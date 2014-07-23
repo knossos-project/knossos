@@ -22,9 +22,9 @@ public:
 protected:
     QSplitter *splitter;
 signals:
-    
+
 public slots:
-    
+
 };
 
 #endif // DOCUMENTATION_H

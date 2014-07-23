@@ -100,12 +100,12 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
         connect(substringFields[i], SIGNAL(editingFinished()), this, SLOT(substringEntered()));
         connect(colorComboBox[i], SIGNAL(currentIndexChanged(QString)), this, SLOT(colorChanged(QString)));
 
-        radiusSpinBox[i] = new QDoubleSpinBox();       
+        radiusSpinBox[i] = new QDoubleSpinBox();
         radiusSpinBox[i]->setSingleStep(0.25);
         radiusSpinBox[i]->setMaximum(500000);
         connect(radiusSpinBox[i], SIGNAL(valueChanged(double)), this, SLOT(radiusChanged(double)));
 
-        numLabel[i] = new QLabel(QString("%1").arg(i+1));        
+        numLabel[i] = new QLabel(QString("%1").arg(i+1));
         colorLabel[i] = new QLabel("color");
         radiusLabel[i] = new QLabel("radius");
 
@@ -132,9 +132,9 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
 void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
 
     if(on) {
-        state->skeletonState->userCommentColoringOn = true;        
+        state->skeletonState->userCommentColoringOn = true;
     } else {
-        state->skeletonState->userCommentColoringOn = false;       
+        state->skeletonState->userCommentColoringOn = false;
     }
 }
 

@@ -46,9 +46,6 @@ Viewer::Viewer(QObject *parent) :
 
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-#ifdef QT_DEBUG
-    state->console = window->widgetContainer->console;
-#endif
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();
@@ -805,9 +802,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            * state->cubeEdgeLength * state->magnification,
                            currentPosition_dc.z
                            * state->cubeEdgeLength * state->magnification);
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x >1000000){ LOG("uninit x %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x)}
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ LOG("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y)}
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ LOG("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x >1000000){ qDebug("uninit x %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x);}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ qDebug("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y);}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ qDebug("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);}
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
@@ -931,7 +928,7 @@ bool Viewer::initViewer() {
                * sizeof(Byte)
                * 3);
     if(state->viewerState->texData == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(state->viewerState->texData, '\0',
@@ -949,7 +946,7 @@ bool Viewer::initViewer() {
                    sizeof(Byte) *
                    4);
         if(state->viewerState->overlayData == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(state->viewerState->overlayData, '\0',
@@ -966,7 +963,7 @@ bool Viewer::initViewer() {
                                                          * sizeof(Byte)
                                                          * 3);
     if(state->viewerState->defaultTexData == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -977,7 +974,7 @@ bool Viewer::initViewer() {
     for (std::size_t i = 0; i < state->viewerState->numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
             exit(0);
         }
         memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
@@ -990,7 +987,7 @@ bool Viewer::initViewer() {
                                                                  * sizeof(Byte)
                                                                  * 4);
         if(state->viewerState->defaultOverlayData == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -1019,11 +1016,11 @@ bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
     std::string path_stdstr = path.toStdString();
     const char *cpath = path_stdstr.c_str();
 
-    LOG("Reading Dataset LUT at %s\n", cpath);
+    qDebug("Reading Dataset LUT at %s\n", cpath);
 
     lutFile = fopen(cpath, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Dataset LUT at %s.", cpath)
+        qDebug("Unable to open Dataset LUT at %s.", cpath);
         return false;
     }
 
@@ -1034,21 +1031,21 @@ bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
         size = RGBA_LUTSIZE;
     }
     else {
-        LOG("Requested color type %x does not exist.", type)
+        qDebug("Requested color type %x does not exist.", type);
         return false;
     }
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size)
+        qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
         if(fclose(lutFile) != 0) {
-            LOG("Additionally, an error occured closing the file.")
+            qDebug() << "Additionally, an error occured closing the file.";
         }
         return false;
     }
 
     if(fclose(lutFile) != 0) {
-        LOG("Error closing LUT file.")
+        qDebug() << "Error closing LUT file.";
         return false;
     }
 
@@ -1081,29 +1078,29 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     const char *cpath = path_stdstr.c_str();
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-    LOG("Reading Tree LUT at %s\n", cpath)
+    qDebug("Reading Tree LUT at %s\n", cpath);
 
     lutFile = fopen(cpath, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Tree LUT at %s.", cpath)
+        qDebug("Unable to open Tree LUT at %s.", cpath);
         return false;
     }
     if(type != GL_RGB) {
         /* AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type); */
-        LOG("Chosen color was of type %x, but expected GL_RGB", type)
+        qDebug("Chosen color was of type %x, but expected GL_RGB", type);
         return false;
     }
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size)
+        qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
         if(fclose(lutFile) != 0) {
-            LOG("Additionally, an error occured closing the file.")
+            qDebug() << "Additionally, an error occured closing the file.";
         }
         return false;
     }
     if(fclose(lutFile) != 0) {
-        LOG("Error closing LUT file.")
+        qDebug() << "Error closing LUT file.";
         return false;
     }
 
@@ -1190,10 +1187,10 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
     /*for(i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            LOG("left upper tex px of VP %d is: %d, %d, %d",i,
+            qDebug("left upper tex px of VP %d is: %d, %d, %d",i,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)
+                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
         }
     }*/
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -1449,10 +1446,10 @@ bool Viewer::userMove(int x, int y, int z) {
             state->currentDirectionsIndex = (state->currentDirectionsIndex + 1) % LL_CURRENT_DIRECTIONS_SIZE;
     }
     else {
-        LOG("Position (%d, %d, %d) out of bounds",
+        qDebug("Position (%d, %d, %d) out of bounds",
             viewerState->currentPosition.x + x + 1,
             viewerState->currentPosition.y + y + 1,
-            viewerState->currentPosition.z + z + 1)
+            viewerState->currentPosition.z + z + 1);
     }
 
     calcLeftUpperTexAbsPx();
@@ -1954,7 +1951,10 @@ void Viewer::rewire() {
     QObject::connect(skeletonizer, &Skeletonizer::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(skeletonizer, &Skeletonizer::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::autosaveSignal, window, &MainWindow::autosaveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing, window, &MainWindow::setSimpleTracing);
+    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing,
+                     window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setSimpleTracing);
     // end skeletonizer signals
     //event model signals
     QObject::connect(eventModel, &EventModel::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
@@ -1978,7 +1978,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
     QObject::connect(eventModel, &EventModel::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(eventModel, &EventModel::saveSkeletonSignal, window, &MainWindow::saveSlot);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
     QObject::connect(eventModel, &EventModel::editNodeSignal, &Skeletonizer::editNode);
@@ -2000,8 +1999,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
     QObject::connect(window, &MainWindow::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(window, &MainWindow::saveSkeletonSignal, skeletonizer, &Skeletonizer::saveXmlSkeleton);
-    QObject::connect(window, &MainWindow::loadSkeletonSignal, skeletonizer, &Skeletonizer::loadXmlSkeleton);
     QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
@@ -2081,9 +2078,8 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     // -- end dataset property signals
     // task management signals --
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal,
-                     window, static_cast<bool(MainWindow::*)(const QString&)>(&MainWindow::loadSkeletonAfterUserDecision));
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
     // --- end widget signals
 }

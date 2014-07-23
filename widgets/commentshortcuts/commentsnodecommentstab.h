@@ -14,7 +14,7 @@ class QTableWidgetItem;
 class CommentsNodeCommentsTab : public QWidget {
     Q_OBJECT
 public:
-    explicit CommentsNodeCommentsTab(QWidget *parent = 0);    
+    explicit CommentsNodeCommentsTab(QWidget *parent = 0);
 signals:
     void updateCommentsTableSignal();
     void setActiveNodeSignal(nodeListElement *node, int nodeID);
@@ -34,7 +34,7 @@ public slots:
 protected:
     QCheckBox *branchNodesOnlyCheckbox;
     QLabel *filterLabel;
-    QLineEdit *filterField;    
+    QLineEdit *filterField;
     QTableWidget *nodeTable;
     int tableIndex;
     QList<QString> *nodesWithComment;

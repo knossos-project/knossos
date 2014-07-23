@@ -1,11 +1,11 @@
-project(Knossos)
+project(knossos)
 cmake_minimum_required(VERSION 2.8.11)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
@@ -37,6 +37,7 @@ if(WIN32)
         add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
         #satisfy additional dependecies
         set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+        add_definitions(-DQUAZIP_STATIC)
     endif()
 endif()
 
@@ -55,11 +56,9 @@ include_directories(${TURBOJPEG_INCLUDE_DIR})
 add_definitions(-DKNOSSOS_USE_TURBOJPEG)
 
 
-find_package(Qt5Core 5.1 REQUIRED)
-find_package(Qt5Gui 5.1 REQUIRED)
-find_package(Qt5Help 5.1 REQUIRED)
-find_package(Qt5OpenGL 5.1 REQUIRED)
-find_package(Qt5Widgets 5.1 REQUIRED)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
+find_package(QuaZip REQUIRED)
+include_directories(${QUAZIP_INCLUDE_DIRS})
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
@@ -98,6 +97,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Help
     Qt5::OpenGL
     Qt5::Widgets
+    ${QUAZIP_LIBRARIES}
 )
 
 

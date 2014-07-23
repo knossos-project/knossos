@@ -256,12 +256,16 @@ void ToolsCommandsTab::locktoActiveButtonClicked() {
         emit lockPositionSignal(state->skeletonState->activeNode->position);
     }
     else {
-        qDebug("There is not active node to lock");
+        qDebug() << "There is not active node to lock";
     }
 }
 
 void ToolsCommandsTab::disableCurrentLockButtonClicked() {
     emit unlockPositionSignal();
+}
+
+void ToolsCommandsTab::setSimpleTracing(bool simple) {
+    newTreeButton->setEnabled(!simple);
 }
 
 void ToolsCommandsTab::update() {

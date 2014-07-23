@@ -54,7 +54,7 @@ public slots:
 protected:
     void closeEvent(QCloseEvent *event);
 
-    
+
 };
 
 #endif // DATASAVINGWIDGET_H

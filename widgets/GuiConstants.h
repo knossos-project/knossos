@@ -5,7 +5,6 @@
 const QString MAIN_WINDOW = "main_window";
 const QString COMMENTS_WIDGET = "comments_widget";
 const QString DATASET_WIDGET = "dataset_widget";
-const QString CONSOLE_WIDGET = "console_widget";
 const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
 const QString VIEWPORT_SETTINGS_WIDGET = "viewport_settings_widget";

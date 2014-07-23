@@ -3,24 +3,25 @@
 
 #include <functional>
 
-#include <QAbstractTableModel>
+#include <QAbstractItemModel>
+#include <QCheckBox>
 #include <QAbstractListModel>
 #include <QLabel>
-#include <QTableView>
+#include <QSplitter>
+#include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QCheckBox>
-#include <QComboBox>
-#include <QSplitter>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QComboBox>
 
 #include "segmentation.h"
 
-class SegmentationObjectModel : public QAbstractTableModel {
+class SegmentationObjectModel : public QAbstractItemModel {
 Q_OBJECT
 protected:
-    const std::vector<QString> header{"Object ID", "immutable", "category", "comment", "color", "subobject IDs"};
+    const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
+    const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
     bool filterOut(const Segmentation::Object &object, QString commentString, QString categoryString, bool useRegex, bool combineWithAnd);
     bool matchesSearchString(const QString searchString, const QString string, bool useRegEx);
@@ -32,6 +33,8 @@ public:
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
     void recreate(QString commentFilter, QString categoryFilter, bool useRegEx, bool combineFilterWithAnd);
+    QModelIndex index(int row, int column, const QModelIndex & = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex &) const override;
 };
 
 class TouchedObjectModel : public SegmentationObjectModel {
@@ -63,8 +66,8 @@ Q_OBJECT
     SegmentationObjectModel objectModel;
     TouchedObjectModel touchedObjectModel;
     QCheckBox showAllChck{"Show all objects"};
-    QTableView touchedObjsTable;
-    QTableView objectsTable;
+    QTreeView touchedObjsTable;
+    QTreeView objectsTable;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
@@ -72,8 +75,8 @@ Q_OBJECT
     bool touchedObjectSelectionProtection = false;
 public:
     explicit SegmentationTab(QWidget & parent);
-    void selectionChanged();
-    void touchedObjSelectionChanged();
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();

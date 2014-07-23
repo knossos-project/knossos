@@ -152,19 +152,19 @@ uint lll_calculate_filename(C_Element *elem) {
 
     elem->filename = (char*)malloc(filenameSize);
     if(elem->filename == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(elem->filename, '\0', filenameSize);
     elem->path = (char*)malloc(filenameSize);
     if(elem->path == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(elem->path, '\0', filenameSize);
     elem->fullpath_filename = (char*)malloc(filenameSize);
     if(elem->fullpath_filename == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(elem->fullpath_filename, '\0', filenameSize);
@@ -203,7 +203,7 @@ uint lll_calculate_filename(C_Element *elem) {
              boergens_param_3
              );
     free(magnificationStr);
-    /* LOG("Path: %s", elem->path); */
+    /* qDebug("Path: %s", elem->path); */
     snprintf(elem->filename, filenameSize,
              "%s_x%.4d_y%.4d_z%.4d.%s%s",
              state->loaderName,
@@ -217,7 +217,7 @@ uint lll_calculate_filename(C_Element *elem) {
              elem->path,
              file_dir_delim,
              elem->filename);
-    /* LOG("FullPath: %s", elem->fullpath_filename); */
+    /* qDebug("FullPath: %s", elem->fullpath_filename); */
 
     if (LM_FTP != state->loadMode) {
         return LLL_SUCCESS;
@@ -225,13 +225,13 @@ uint lll_calculate_filename(C_Element *elem) {
 
     local_cache_path_builder = (char*)malloc(filenameSize);
     if(local_cache_path_builder == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(local_cache_path_builder, '\0', filenameSize);
     local_cache_path_total = (char*)malloc(filenameSize);
     if(local_cache_path_total == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(local_cache_path_total, '\0', filenameSize);
@@ -244,7 +244,7 @@ uint lll_calculate_filename(C_Element *elem) {
 #ifdef Q_OS_WIN
     mkdir(local_cache_path_total);
 #endif
-    /* LOG("%s", local_cache_path_total); */
+    /* qDebug("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_1_name, boergens_param_1);
     strcat(local_cache_path_total, local_cache_path_builder);
 #ifdef Q_OS_UNIX
@@ -253,7 +253,7 @@ uint lll_calculate_filename(C_Element *elem) {
 #ifdef Q_OS_WIN
     mkdir(local_cache_path_total);
 #endif
-    /* LOG("%s", local_cache_path_total); */
+    /* qDebug("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_2_name, boergens_param_2);
     strcat(local_cache_path_total, local_cache_path_builder);
 #ifdef Q_OS_UNIX
@@ -262,7 +262,7 @@ uint lll_calculate_filename(C_Element *elem) {
 #ifdef Q_OS_WIN
     mkdir(local_cache_path_total);
 #endif
-    /* LOG("%s", local_cache_path_total); */
+    /* qDebug("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_3_name, boergens_param_3);
     strcat(local_cache_path_total, local_cache_path_builder);
 
@@ -272,12 +272,12 @@ uint lll_calculate_filename(C_Element *elem) {
 #ifdef Q_OS_WIN
     mkdir(local_cache_path_total);
 #endif
-    /* LOG("%s", local_cache_path_total); */
+    /* qDebug("%s", local_cache_path_total); */
     free(local_cache_path_builder);
 
     elem->local_filename = (char*)malloc(filenameSize);
     if(elem->local_filename == NULL) {
-        LOG("Out of memory.");
+        qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(elem->local_filename, '\0', filenameSize);
@@ -298,7 +298,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
             (key.x < 0) ||
             (key.y < 0) ||
             (key.z < 0)) {
-        /* LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
+        /* qDebug("Requested cube coordinate (%d, %d, %d) out of bounds.",
             key.x,
             key.y,
             key.z); */
@@ -351,7 +351,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
 
     destElement->coordinate.x++;
 
-    /* LOG("(%d, %d, %d)", key.x, key.y, key.z); */
+    /* qDebug("(%d, %d, %d)", key.x, key.y, key.z); */
 
     return LLL_SUCCESS;
 }
@@ -384,7 +384,7 @@ void Loader::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos,
     metrics[i++] = distance_from_origin;
 
     this->currentMaxMetric = MAX(this->currentMaxMetric, i);
-    /* LOG("%f\t%f\t%f\t%f\t%f\t%f",
+    /* qDebug("%f\t%f\t%f\t%f\t%f\t%f",
         currentMetricPos.x, currentMetricPos.y, currentMetricPos.z,
         metrics[0], metrics[1], metrics[2]); */
 }
@@ -401,7 +401,7 @@ int Loader::CompareLoadOrderMetric(const void * a, const void * b)
     for (metric_index = 0; metric_index < this->currentMaxMetric; metric_index++) {
         m_a = elem_a->loadOrderMetrics[metric_index];
         m_b = elem_b->loadOrderMetrics[metric_index];
-        /* LOG("i %d\ta\t%d,%d,%d\t=\t%f\tb\t%d,%d,%d\t=\t%f", metric_index,
+        /* qDebug("i %d\ta\t%d,%d,%d\t=\t%f\tb\t%d,%d,%d\t=\t%f", metric_index,
             elem_a->offset.x, elem_a->offset.y, elem_a->offset.z, m_a,
             elem_b->offset.x, elem_b->offset.y, elem_b->offset.z, m_b); */
         if (m_a != m_b) {
@@ -465,7 +465,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     direction = find_close_xyz(direction);
     direction_norm = CALC_VECTOR_NORM(direction);
     if (0 == direction_norm) {
-        LOG("No average movement, fabricating x direction!");
+        qDebug() << "No average movement, fabricating x direction!";
         dx = 1;
         SET_COORDINATE(direction, dx, dy, dz);
         direction_norm = CALC_VECTOR_NORM(direction);
@@ -532,7 +532,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
                 lts->thisPtr->freeOcSlots.remove(currentOcSlot);
             } else {
-                LOG("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+                qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
             }
             state->protectCube2Pointer->unlock();
         }
@@ -570,7 +570,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     }
     state->protectLoaderSlots->unlock();
     if (NULL == currentDcSlot) {
-        LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
+        qDebug("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
             lts->currentCube->coordinate.x,
             lts->currentCube->coordinate.y,
             lts->currentCube->coordinate.z,
@@ -596,15 +596,15 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
-            //LOG("fopen failed for %s!", filename);
+            //qDebug("fopen failed for %s!", filename);
             goto loadcube_fail;
         }
 
         readBytes = fread(currentDcSlot, 1, state->cubeBytes, cubeFile);
         if(readBytes != state->cubeBytes) {
-            LOG("fread error!");
+            qDebug() << "fread error!";
             if(fclose(cubeFile) != 0) {
-                LOG("Additionally, an error occured closing the file");
+                qDebug() << "Additionally, an error occured closing the file";
             }
             goto loadcube_fail;
         } else {
@@ -615,51 +615,51 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
 #ifdef KNOSSOS_USE_TURBOJPEG
         cubeFile = fopen(filename, "rb");
         if(cubeFile == NULL) {
-            LOG("fopen failed for %s!\n", filename);
+            qDebug("fopen failed for %s!\n", filename);
             goto loadcube_fail;
         }
         if (0 != fseek(cubeFile, 0, SEEK_END)) {
-            LOG("fseek END failed for %s!\n", filename);
+            qDebug("fseek END failed for %s!\n", filename);
             goto loadcube_fail;
         }
         localCompressedBufSize = ftell(cubeFile);
         if (0 != fseek(cubeFile, 0, SEEK_SET)) {
-            LOG("fseek SET failed for %s!\n", filename);
+            qDebug("fseek SET failed for %s!\n", filename);
             goto loadcube_fail;
         }
         localCompressedBuf = (Byte*)malloc(localCompressedBufSize);
         if (NULL == localCompressedBuf) {
-            LOG("malloc failed!\n");
+            qDebug() << "malloc failed!\n";
             goto loadcube_fail;
         }
         readBytes = fread(localCompressedBuf, 1, localCompressedBufSize, cubeFile);
         fclose(cubeFile);
         if (localCompressedBufSize != readBytes) {
-            LOG("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
+            qDebug("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
             goto loadcube_fail;
         }
 
         _jpegDecompressor = tjInitDecompress();
         if (NULL == _jpegDecompressor) {
-            LOG("tjInitDecompress() failed!");
+            qDebug() << "tjInitDecompress() failed!";
             goto loadcube_fail;
         }
         if (0 != tjDecompressHeader2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, &width, &height, &jpegSubsamp)) {
-            LOG("tjDecompressHeader2() failed!");
+            qDebug() << "tjDecompressHeader2() failed!";
             goto loadcube_fail;
         }
         if (0 != tjDecompress2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, currentDcSlot, width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT)) {
-            LOG("tjDecompress2() failed!");
+            qDebug() << "tjDecompress2() failed!";
             goto loadcube_fail;
         }
 #else
-        LOG("JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.");
+        qDebug() << "JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.";
 #endif
         break;
     case 1001:
     default:
         if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
-            LOG("Decompression function failed!");
+            qDebug() << "Decompression function failed!";
             goto loadcube_fail;
         }
         break;
@@ -679,7 +679,7 @@ loadcube_manage:
     }
     state->protectCube2Pointer->lock();
     if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot) != HT_SUCCESS) {
-        LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+        qDebug("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
             lts->currentCube->coordinate.x,
             lts->currentCube->coordinate.y,
             lts->currentCube->coordinate.z,
@@ -735,7 +735,7 @@ bool Loader::initLoader() {
     // See the comment about the ht_new() call in knossos.c
     this->Dcoi = lll_new();
     if(this->Dcoi == HT_FAILURE) {
-        LOG("Unable to create Dcoi.");
+        qDebug() << "Unable to create Dcoi.";
         return false;
     }
 
@@ -745,14 +745,14 @@ bool Loader::initLoader() {
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
 
-    LOG("Allocating %d bytes for the datacubes.", state->cubeSetBytes);
+    qDebug("Allocating %d bytes for the datacubes.", state->cubeSetBytes);
     for(size_t i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         DcSetChunk.emplace_back(state->cubeBytes, 0);//zero init chunk of chars
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
     }
 
     if(state->overlay) {
-        LOG("Allocating %u bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
+        qDebug("Allocating %u bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
         for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
             OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
             freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
@@ -762,13 +762,13 @@ bool Loader::initLoader() {
     // Load the bogus dc (a placeholder when data is unavailable).
     this->bogusDc = (Byte*)malloc(state->cubeBytes);
     if(this->bogusDc == NULL) {
-        LOG("Out of memory.")
+        qDebug() << "Out of memory.";
         return false;
     }
     FILE * bogusDc = fopen("bogus.raw", "r");
     if(bogusDc != NULL) {
         if(fread(this->bogusDc, 1, state->cubeBytes, bogusDc) < state->cubeBytes) {
-            LOG("Unable to read the correct amount of bytes from the bogus dc file.")
+            qDebug() << "Unable to read the correct amount of bytes from the bogus dc file.";
             memset(this->bogusDc, '\0', state->cubeBytes);
         }
         fclose(bogusDc);
@@ -780,7 +780,7 @@ bool Loader::initLoader() {
         // bogus oc is white
         this->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
         if(this->bogusOc == NULL) {
-            LOG("Out of memory.")
+            qDebug() << "Out of memory.";
                     return false;
         }
         memset(this->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);
@@ -823,7 +823,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          */
         if((delCubePtr = Hashtable::ht_get(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
             if(Hashtable::ht_del(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
+                qDebug("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
@@ -832,7 +832,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
             }
             freeDcSlots.emplace_back(delCubePtr);
             /*
-            LOG("Added %d, %d, %d => %d available",
+            qDebug("Added %d, %d, %d => %d available",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
@@ -846,7 +846,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
 
         if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
             if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
+                qDebug("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z);
@@ -898,7 +898,7 @@ uint Loader::loadCubes() {
         loadCubeThreadSem->acquire();
         for (thread_index = 0; (thread_index < decompThreads) && lts_array[thread_index].isBusy; thread_index++);
         if (decompThreads == thread_index) {
-            LOG("All threads occupied, c'est impossible! Au revoir loader!");
+            qDebug() << "All threads occupied, c'est impossible! Au revoir loader!";
             retVal = false;
             break;
         }
@@ -930,7 +930,7 @@ uint Loader::loadCubes() {
         isBreak = (state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == true) || (true == hadError);
         state->protectLoadSignal->unlock();
         if (isBreak) {
-            //LOG("loadCubes Interrupted!");
+            //qDebug() << "loadCubes Interrupted!";
             retVal = false;
             break;
         }
@@ -948,7 +948,7 @@ uint Loader::loadCubes() {
             }
         }
         if (this->Dcoi == currentCube) {
-            LOG("No more cubes to load, c'est impossible! Au revoird loader!");
+            qDebug() << "No more cubes to load, c'est impossible! Au revoird loader!";
             break;
         }
         /*
@@ -985,7 +985,7 @@ uint Loader::loadCubes() {
 
     for (thread_index = 0; thread_index <  decompThreads; thread_index++) {
         if (NULL != threadHandle_array[thread_index]) {
-            //LOG("LOADER Decompression thread %d was open! Waiting...", thread_index);
+            //qDebug("LOADER Decompression thread %d was open! Waiting...", thread_index);
             threadHandle_array[thread_index]->wait();
             delete threadHandle_array[thread_index];
             threadHandle_array[thread_index] = NULL;
@@ -1058,7 +1058,7 @@ bool Loader::load() {
     }
 
     if(state->quitSignal == true) {
-        LOG("Loader quitting.");
+        qDebug() << "Loader quitting.";
         state->protectLoadSignal->unlock();
         return true;
     }
@@ -1073,7 +1073,7 @@ bool Loader::load() {
 
     mergeCube2Pointer = Hashtable::ht_new(state->cubeSetElements * 20);
     if(mergeCube2Pointer == HT_FAILURE) {
-        LOG("Unable to create the temporary cube2pointer table.");
+        qDebug() << "Unable to create the temporary cube2pointer table.";
         state->protectLoadSignal->unlock();
         return true;
     }
@@ -1083,7 +1083,7 @@ bool Loader::load() {
             state->Oc2Pointer[state->loaderMagnification]);
     state->protectCube2Pointer->unlock();
     if (HT_SUCCESS != funcRetVal) {
-        LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
+        qDebug("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
         state->protectLoadSignal->unlock();
         return true;
     }
@@ -1101,7 +1101,7 @@ bool Loader::load() {
 
 
     if(DcoiFromPos(this->Dcoi, magChange ? NULL : mergeCube2Pointer) != true) {
-        LOG("Error computing DCOI from position.");
+        qDebug() << "Error computing DCOI from position.";
         state->protectLoadSignal->unlock();
         return true;
     }
@@ -1113,19 +1113,19 @@ bool Loader::load() {
     or simply all cubes in case of magnification change
     */
     if(removeLoadedCubes(mergeCube2Pointer, prevLoaderMagnification) != true) {
-        LOG("Error removing already loaded cubes from DCOI.");
+        qDebug() << "Error removing already loaded cubes from DCOI.";
         state->protectLoadSignal->unlock();
         return true;
     }
     if (Hashtable::ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
-        LOG("Error removing temporary cube to pointer table. This is a memory leak.");
+        qDebug() << "Error removing temporary cube to pointer table. This is a memory leak.";
     }
 
     state->protectLoadSignal->unlock();
 
     if (!state->loaderDummy) {
         if(loadCubes() == false) {
-            //qDebug("Loading of all DCOI did not complete.");
+            //qDebug() << "Loading of all DCOI did not complete.";
         }
     }
     lll_rmlist(this->Dcoi);

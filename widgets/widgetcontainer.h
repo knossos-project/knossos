@@ -5,7 +5,6 @@
 
 #include <QObject>
 
-#include "console.h"
 #include "tracingtimewidget.h"
 #include "datasavingwidget.h"
 #include "splashscreenwidget.h"
@@ -36,8 +35,6 @@ class WidgetContainer : public QObject
 public:
     explicit WidgetContainer(MainWindow *parent = 0);
     void rewire();
-    void createConsoleWidget();
-    void showConsoleWidget();
     void createTracingTimeWidget(QWidget *parent);
     void showTracingTimeWidget();
     void createCommentsWidget(QWidget *parent);
@@ -55,7 +52,6 @@ public:
     void createAnnotationWidget(QWidget *parent);
     void createWidgets(QWidget *parent);
 
-    Console *console;
     TracingTimeWidget *tracingTimeWidget;
     CommentsWidget *commentsWidget;
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
@@ -72,7 +68,7 @@ public:
 signals:
 
 public slots:
-    
+
 };
 
 #endif // WIDGETCONTAINER_H
