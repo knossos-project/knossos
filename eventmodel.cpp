@@ -619,16 +619,20 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
                     auto & objectToMerge = seg.smallestImmutableObjectContainingSubobject(subobject);
                     //select if not selected and merge
                     if (seg.isSelected(subobject)) {
-                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                            seg.unmergeSelectedObjects(subobject);
-                        } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            seg.unmergeSelectedObjects(objectToMerge);
+                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                                seg.unmergeSelectedObjects(subobject);
+                            } else {
+                                seg.unmergeSelectedObjects(objectToMerge);
+                            }
                         }
                     } else {
-                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                            seg.selectObjectFromSubObject(subobject);
-                        } else if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            seg.selectObject(objectToMerge);//select largest object
+                        if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                                seg.selectObjectFromSubObject(subobject);
+                            } else {
+                                seg.selectObject(objectToMerge);//select largest object
+                            }
                         }
                         if (seg.selectedObjectsCount() >= 2) {
                             seg.mergeSelectedObjects();
