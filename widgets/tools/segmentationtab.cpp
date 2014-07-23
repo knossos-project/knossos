@@ -118,10 +118,14 @@ Qt::ItemFlags SegmentationObjectModel::flags(const QModelIndex & index) const {
     return flags;
 }
 
-void SegmentationObjectModel::recreate() {
+void SegmentationObjectModel::recreate(QString commentFilter = "", QString categoryFilter = "",
+                                       bool useRegEx = false, bool combineFilterWithAnd = false) {
     beginResetModel();
     objectCache.clear();
     for (auto & pair : Segmentation::singleton().objects) {
+        if(filterOut(pair.second, commentFilter, categoryFilter, useRegEx, combineFilterWithAnd)) {
+            continue;
+        }
         objectCache.emplace_back(pair.second);
     }
 
@@ -129,8 +133,71 @@ void SegmentationObjectModel::recreate() {
     endResetModel();
 }
 
+bool SegmentationObjectModel::filterOut(const Segmentation::Object &object, QString commentString, QString categoryString,
+                                        bool useRegex, bool combineWithAnd) {
+    if(commentString.isEmpty() && categoryString == "<category>") {
+        return false;
+    }
+
+    bool commentMatch = matchesSearchString(commentString, object.comment, useRegex);
+    bool categoryMatch = categoryString == object.category;
+
+
+    if(commentString.isEmpty()) {
+        return !categoryMatch;
+    }
+    if(categoryString == "<category>") {
+        return !commentMatch;
+    }
+
+    if(combineWithAnd) {
+        return !(commentMatch && categoryMatch);
+    }
+    return !(commentMatch || categoryMatch);
+}
+
+bool SegmentationObjectModel::matchesSearchString(const QString searchString, const QString string, bool useRegEx) {
+    if(useRegEx) {
+        QRegularExpression regex(searchString);
+        if(regex.isValid() == false) {
+            qDebug("invalid regex");
+            return false;
+        }
+        return regex.match(string).hasMatch();
+    }
+    return string.contains(searchString, Qt::CaseInsensitive);
+}
+
+
+void CategoryModel::recreate() {
+    beginResetModel();
+    categories.clear();
+    categories.emplace_back("<category>");
+    for (auto & category : Segmentation::singleton().categories) {
+        categories.emplace_back(category);
+    }
+    endResetModel();
+}
+
+int CategoryModel::rowCount(const QModelIndex &) const {
+    return categories.size();
+}
+
+QVariant CategoryModel::data(const QModelIndex &index, int role) const {
+    if(role == Qt::DisplayRole) {
+        return categories[index.row()];
+    }
+    return QVariant();
+}
+
+
 SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
+    categoryFilter.setModel(&categoryModel);
+    categoryModel.recreate();
+    categoryFilter.setCurrentIndex(0);
+    commentFilter.setPlaceholderText("Filter for comment...");
+    filterCombineButton.setFocusPolicy(Qt::NoFocus);
 
     touchedObjsTable.setModel(&touchedObjectModel);
     touchedObjsTable.verticalHeader()->setVisible(false);
@@ -143,19 +210,33 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     objectsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    filterLayout.addWidget(&categoryFilter);
+    filterLayout.addWidget(&filterCombineButton);
+    filterLayout.addWidget(&commentFilter);
+    filterLayout.addWidget(&regExCheckbox);
+
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
 
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&touchedObjsTable);
     splitter.addWidget(&objectsTable);
-
     layout.addWidget(&showAllChck);
+    layout.addLayout(&filterLayout);
     layout.addWidget(&splitter);
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
+    QObject::connect(&filterCombineButton, &QPushButton::pressed, this, [&](){
+        (filterCombineButton.text() == "and")? filterCombineButton.setText("or") : filterCombineButton.setText("and");
+    });
+    QObject::connect(&filterCombineButton, &QPushButton::pressed, this, &SegmentationTab::filter);
+    QObject::connect(&commentFilter, &QLineEdit::textEdited, this, &SegmentationTab::filter);
+    QObject::connect(&categoryFilter,  static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+                     this, &SegmentationTab::filter);
+    QObject::connect(&regExCheckbox, &QCheckBox::pressed, this, &SegmentationTab::filter);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateCategories);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, [&](){objectModel.recreate();});
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateSelection);
@@ -272,6 +353,16 @@ void SegmentationTab::updateSelection() {
     if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
         objectsTable.scrollTo(selectedItems.indexes().front());
     }
+}
+
+void SegmentationTab::filter() {
+    bool combineWithAnd = (filterCombineButton.text() == "and")? true : false;
+    objectModel.recreate(commentFilter.text(), categoryFilter.currentText(), regExCheckbox.isChecked(), combineWithAnd);
+}
+
+void SegmentationTab::updateCategories() {
+    categoryModel.recreate();
+    categoryFilter.setCurrentIndex(0);
 }
 
 void SegmentationTab::updateLabels() {

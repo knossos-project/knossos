@@ -399,6 +399,9 @@ void Segmentation::loadMergelist(const std::string & fileName) {
         }
         else if(lineCount == 1) {
             obj->category = QString::fromStdString(line);
+            if(obj->category.isEmpty() == false) {
+                categories.insert(obj->category);
+            }
             lineCount++;
         }
         else if(lineCount == 2) {
