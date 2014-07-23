@@ -412,17 +412,6 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         } else {
             qDebug() << "loadMergelist fail";
         }
-        else if(lineCount == 1) {
-            obj->category = QString::fromStdString(line);
-            if(obj->category.isEmpty() == false) {
-                categories.insert(obj->category);
-            }
-            lineCount++;
-        }
-        else if(lineCount == 2) {
-            obj->comment = QString::fromStdString(line);
-            lineCount = 0;
-        }
     }
     emit dataChanged();
 }
