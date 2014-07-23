@@ -181,8 +181,10 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if (Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if (validPosition(event, VPfound)) {
-            merging(event, VPfound);
+        if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
+             rightMouseDownX = event->x();
+             rightMouseDownY = event->y();
+             merging(event, VPfound);
         }
         return;
     }
@@ -560,7 +562,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
     if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty()) {
+        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty() && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
             merging(event, VPfound);
         }
         return;
@@ -637,7 +639,10 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     auto & seg = Segmentation::singleton();
     if (seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        merging(event, VPfound);
+        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {//merge took already place on mouse down
+            merging(event, VPfound);
+        }
+        rightMouseDownX = rightMouseDownY = -1;
         seg.mergeLine.clear();
         return;
     }

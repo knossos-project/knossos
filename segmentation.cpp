@@ -248,12 +248,12 @@ Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
-    emit dataChanged();
+    emit touchObjectsChanged();
 }
 
 void Segmentation::untouchObjects() {
     touched_subobject_id = 0;
-    emit dataChanged();
+    emit touchObjectsChanged();
 }
 
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedObjects() {
@@ -292,7 +292,7 @@ void Segmentation::selectObject(Object & object) {
         subobj.get().selected = true;
     }
     selectedObjects.emplace_back(object);
-    emit dataChanged();
+    emit selectionChanged();
 }
 
 void Segmentation::unselectObject(const uint64_t & objectId) {
@@ -417,13 +417,16 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 }
 
 void Segmentation::deleteSelectedObjects() {
+    blockSignals(true);
     while (!selectedObjects.empty()) {
         removeObject(selectedObjects.back().get());
     }
+    blockSignals(false);
     emit dataChanged();
 }
 
 void Segmentation::mergeSelectedObjects() {
+    blockSignals(true);
     while (selectedObjects.size() > 1) {
         auto & obj = selectedObjects.back().get();
         obj.selected = false;
@@ -447,10 +450,12 @@ void Segmentation::mergeSelectedObjects() {
             }
         }
     }
+    blockSignals(false);
     emit dataChanged();
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToUnmerge) {
+    blockSignals(true);
     const auto & otherIt = std::find_if(std::begin(subobjectToUnmerge.objects), std::end(subobjectToUnmerge.objects)
         , [&](const Segmentation::Object & elem){
             return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobjectToUnmerge.id;
@@ -463,11 +468,15 @@ void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToU
     } else {
         unmergeSelectedObjects(otherIt->get());
     }
+    blockSignals(false);
+    emit dataChanged();
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
+    blockSignals(true);
     for (auto & obj : selectedObjects) {
         unmergeObject(obj, objectToUnmerge);
     }
+    blockSignals(false);
     emit dataChanged();
 }

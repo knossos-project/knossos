@@ -167,6 +167,8 @@ public:
     void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
 signals:
     void dataChanged();
+    void selectionChanged();
+    void touchObjectsChanged();
 public slots:
     void clear();
     void deleteSelectedObjects();

@@ -75,6 +75,8 @@ public:
     void nodeSelection(int x, int y, int vpId);
     int xrel(int x);
     int yrel(int y);
+    int rightMouseDownX;
+    int rightMouseDownY;
     int mouseDownX;
     int mouseDownY;
     int mouseX;

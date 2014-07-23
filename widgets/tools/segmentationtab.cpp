@@ -248,7 +248,6 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     QObject::connect(&categoryFilter,  static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
                      this, &SegmentationTab::filter);
     QObject::connect(&regExCheckbox, &QCheckBox::pressed, this, &SegmentationTab::filter);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateCategories);
 
     for (const auto & index : {0, 1, 2, 5}) {
         //comment (4) shall not waste space, also displaying all supervoxel ids (6) causes problems
@@ -257,10 +256,10 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     }
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, [&](){objectModel.recreate();});
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::touchedObjects, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateSelection);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateTouchedObjSelection);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateSelection);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
