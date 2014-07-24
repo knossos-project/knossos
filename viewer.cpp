@@ -38,6 +38,17 @@
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 
+#if defined(Q_OS_WIN)
+#include <GL/wglext.h>
+#elif defined(Q_OS_LINUX)
+#include <QDesktopWidget>
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+static int dummy(int) {
+    return 0;
+}
+
 extern stateInfo *state;
 
 Viewer::Viewer(QObject *parent) :
@@ -1300,10 +1311,39 @@ void Viewer::run() {
             skeletonizer->autoSaveIfElapsed();
             window->updateTitlebar();//display changes after filename
 
+            static auto disableVsync = [this](){
+                bool condition = false;
+                void * func = nullptr;
+#if defined(Q_OS_WIN)
+                condition = std::string(((PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT"))()).find("WGL_EXT_swap_control") != std::string::npos;
+                func = (void*)wglGetProcAddress("wglSwapIntervalEXT");
+#elif defined(Q_OS_LINUX)
+                const auto display = glXGetCurrentDisplay();
+                const auto screen = qApp->desktop()->screenNumber(window);
+                condition = std::string(glXQueryExtensionsString(display, screen)).find("GLX_SGI_swap_control") != std::string::npos;
+                func = (void*)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+#endif
+                if (condition && func != nullptr) {
+#if defined(Q_OS_WIN)
+                    return std::bind((PFNWGLSWAPINTERVALEXTPROC)func, 0);
+#elif defined(Q_OS_LINUX)
+                    return std::bind((PFNGLXSWAPINTERVALSGIPROC)func, 0);
+#endif
+                } else {
+                    qDebug() << "disabling vsync not available";
+                    return std::bind(&dummy, 0);
+                }
+            }();
+
+            disableVsync();
             vpUpperLeft->updateGL();
+            disableVsync();
             vpLowerLeft->updateGL();
+            disableVsync();
             vpUpperRight->updateGL();
+            disableVsync();
             vpLowerRight->updateGL();
+            disableVsync();
 
             static uint call = 0;
             if (++call % 1000 == 0) {
