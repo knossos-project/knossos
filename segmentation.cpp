@@ -280,7 +280,7 @@ void Segmentation::clearObjectSelection() {
         unselectObject(selectedObjects.front());
     }
     this->blockSignals(blockState);
-    emit dataChanged();
+    emit selectionChanged();
 }
 
 void Segmentation::selectObject(Object & object) {
@@ -301,7 +301,6 @@ void Segmentation::unselectObject(const uint64_t & objectId) {
         unselectObject(iter->second);
     }
 }
-
 
 void Segmentation::unselectObject(Object & object) {
     if (!object.selected) {
