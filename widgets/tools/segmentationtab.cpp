@@ -256,7 +256,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     }
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, [&](){objectModel.recreate();});
-    QObject::connect(&Segmentation::singleton(), &Segmentation::touchedObjects, &touchedObjectModel, &TouchedObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::touchObjectsChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateTouchedObjSelection);
