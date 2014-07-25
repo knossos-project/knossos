@@ -1842,8 +1842,8 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     state->viewerState->uniqueColorMode = false;
     state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
 
-    glFlush();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFlush();
 
     return std::make_tuple(pixel[0], pixel[1], pixel[2]);
 }
