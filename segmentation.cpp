@@ -77,6 +77,8 @@ void Segmentation::clear() {
     highestObjectId = 1;
 
     emit dataChanged();
+    emit selectionChanged();
+    emit touchObjectsChanged();
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
@@ -317,7 +319,7 @@ void Segmentation::unselectObject(Object & object) {
         }
     }
     selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::cref(object)));
-    emit dataChanged();
+    emit selectionChanged();
 }
 
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {

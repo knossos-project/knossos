@@ -1,30 +1,30 @@
 #ifndef SEGMENTATIONTAB_H
 #define SEGMENTATIONTAB_H
 
-#include <functional>
+#include "segmentation.h"
 
 #include <QAbstractItemModel>
-#include <QCheckBox>
 #include <QAbstractListModel>
+#include <QCheckBox>
+#include <QComboBox>
 #include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSortFilterProxyModel>
 #include <QSplitter>
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QComboBox>
 
-#include "segmentation.h"
+#include <functional>
 
 class SegmentationObjectModel : public QAbstractItemModel {
 Q_OBJECT
+    friend class SegmentationTab;//selection
 protected:
     const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
-    bool filterOut(const Segmentation::Object &object, QString commentString, QString categoryString, bool useRegex, bool combineWithAnd);
-    bool matchesSearchString(const QString searchString, const QString string, bool useRegEx);
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -32,7 +32,7 @@ public:
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
-    void recreate(QString commentFilter, QString categoryFilter, bool useRegEx, bool combineFilterWithAnd);
+    void recreate();
     QModelIndex index(int row, int column, const QModelIndex & = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &) const override;
 };
@@ -59,11 +59,12 @@ Q_OBJECT
     QHBoxLayout filterLayout;
     QSplitter splitter;
     QComboBox categoryFilter;
-    QPushButton filterCombineButton{"and"};
     QLineEdit commentFilter;
     QCheckBox regExCheckbox{"RegEx"};
     CategoryModel categoryModel;
     SegmentationObjectModel objectModel;
+    QSortFilterProxyModel objectProxyModelCategory;
+    QSortFilterProxyModel objectProxyModelComment;
     TouchedObjectModel touchedObjectModel;
     QCheckBox showAllChck{"Show all objects"};
     QTreeView touchedObjsTable;
@@ -77,15 +78,15 @@ public:
     explicit SegmentationTab(QWidget & parent);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void commitSelection(const QItemSelection &selected, const QItemSelection &deselected);
+    QItemSelection blockSelection(const SegmentationObjectModel &model);
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();
-signals:
-    void clearSegObjSelectionSignal();
 public slots:
     void filter();
     void updateCategories();
-    void contextMenu(QPoint pos);
+    void contextMenu(const QAbstractScrollArea & widget, const QPoint & pos);
 };
 
 #endif // SEGMENTATIONTAB_H

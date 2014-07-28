@@ -1,15 +1,16 @@
 #include "segmentationtab.h"
 
-#include <chrono>
-#include <QString>
+#include "knossos-global.h"
 
+#include <QApplication>
+#include <QHeaderView>
 #include <QMenu>
 #include <QMessageBox>
-#include <QHeaderView>
 #include <QPushButton>
 #include <QSplitter>
+#include <QString>
 
-#include "knossos-global.h"
+#include <chrono>
 
 extern stateInfo *state;
 
@@ -19,8 +20,6 @@ void TouchedObjectModel::recreate() {
     for (auto & obj : Segmentation::singleton().touchedObjects()) {
         objectCache.emplace_back(obj);
     }
-
-    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
     endResetModel();
 }
 
@@ -120,18 +119,12 @@ Qt::ItemFlags SegmentationObjectModel::flags(const QModelIndex & index) const {
     return flags;
 }
 
-void SegmentationObjectModel::recreate(QString commentFilter = "", QString categoryFilter = "",
-                                       bool useRegEx = false, bool combineFilterWithAnd = false) {
+void SegmentationObjectModel::recreate() {
     beginResetModel();
     objectCache.clear();
     for (auto & pair : Segmentation::singleton().objects) {
-        if(filterOut(pair.second, commentFilter, categoryFilter, useRegEx, combineFilterWithAnd)) {
-            continue;
-        }
         objectCache.emplace_back(pair.second);
     }
-
-    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
     endResetModel();
 }
 
@@ -142,43 +135,6 @@ QModelIndex SegmentationObjectModel::index(int row, int column, const QModelInde
 QModelIndex SegmentationObjectModel::parent(const QModelIndex &) const {
     return QModelIndex();
 }
-
-
-bool SegmentationObjectModel::filterOut(const Segmentation::Object &object, QString commentString, QString categoryString,
-                                        bool useRegex, bool combineWithAnd) {
-    if(commentString.isEmpty() && categoryString == "<category>") {
-        return false;
-    }
-
-    bool commentMatch = matchesSearchString(commentString, object.comment, useRegex);
-    bool categoryMatch = categoryString == object.category;
-
-
-    if(commentString.isEmpty()) {
-        return !categoryMatch;
-    }
-    if(categoryString == "<category>") {
-        return !commentMatch;
-    }
-
-    if(combineWithAnd) {
-        return !(commentMatch && categoryMatch);
-    }
-    return !(commentMatch || categoryMatch);
-}
-
-bool SegmentationObjectModel::matchesSearchString(const QString searchString, const QString string, bool useRegEx) {
-    if(useRegEx) {
-        QRegularExpression regex(searchString);
-        if(regex.isValid() == false) {
-            qDebug("invalid regex");
-            return false;
-        }
-        return regex.match(string).hasMatch();
-    }
-    return string.contains(searchString, Qt::CaseInsensitive);
-}
-
 
 void CategoryModel::recreate() {
     beginResetModel();
@@ -201,30 +157,36 @@ QVariant CategoryModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-
 SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
-    showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
     categoryFilter.setModel(&categoryModel);
     categoryModel.recreate();
     categoryFilter.setCurrentIndex(0);
     commentFilter.setPlaceholderText("Filter for comment...");
-    filterCombineButton.setFocusPolicy(Qt::NoFocus);
+    showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
 
     touchedObjsTable.setModel(&touchedObjectModel);
     touchedObjsTable.setAllColumnsShowFocus(true);
+    touchedObjsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     touchedObjsTable.setRootIsDecorated(false);
     touchedObjsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
     touchedObjsTable.setUniformRowHeights(true);//perf hint from doc
 
-    objectsTable.setModel(&objectModel);
+    //proxy model chaining, so we can filter twice
+    objectProxyModelCategory.setSourceModel(&objectModel);
+    objectProxyModelComment.setSourceModel(&objectProxyModelCategory);
+    objectProxyModelCategory.setFilterKeyColumn(3);
+    objectProxyModelComment.setFilterKeyColumn(4);
+    objectsTable.setModel(&objectProxyModelComment);
     objectsTable.setAllColumnsShowFocus(true);
     objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     objectsTable.setRootIsDecorated(false);
     objectsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
     objectsTable.setUniformRowHeights(true);//perf hint from doc
+    //sorting seems pretty slow concerning selection and recreation of the model
+    //objectsTable.setSortingEnabled(true);
+    //objectsTable.sortByColumn(1, Qt::AscendingOrder);
 
     filterLayout.addWidget(&categoryFilter);
-    filterLayout.addWidget(&filterCombineButton);
     filterLayout.addWidget(&commentFilter);
     filterLayout.addWidget(&regExCheckbox);
 
@@ -240,14 +202,9 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
-    QObject::connect(&filterCombineButton, &QPushButton::pressed, this, [&](){
-        (filterCombineButton.text() == "and")? filterCombineButton.setText("or") : filterCombineButton.setText("and");
-    });
-    QObject::connect(&filterCombineButton, &QPushButton::pressed, this, &SegmentationTab::filter);
+    QObject::connect(&categoryFilter,  &QComboBox::currentTextChanged, this, &SegmentationTab::filter);
     QObject::connect(&commentFilter, &QLineEdit::textEdited, this, &SegmentationTab::filter);
-    QObject::connect(&categoryFilter,  static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-                     this, &SegmentationTab::filter);
-    QObject::connect(&regExCheckbox, &QCheckBox::pressed, this, &SegmentationTab::filter);
+    QObject::connect(&regExCheckbox, &QCheckBox::stateChanged, this, &SegmentationTab::filter);
 
     for (const auto & index : {0, 1, 2, 5}) {
         //comment (4) shall not waste space, also displaying all supervoxel ids (6) causes problems
@@ -255,14 +212,18 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
         objectsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
     }
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, [&](){objectModel.recreate();});
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::touchObjectsChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::touchObjectsChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::touchObjectsChanged, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateTouchedObjSelection);
-    QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
-    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
+
+    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(objectsTable, point);});
+    QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
@@ -275,62 +236,74 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     updateLabels();
 }
 
+void SegmentationTab::commitSelection(const QItemSelection & selected, const QItemSelection & deselected) {
+    for (const auto & index : deselected.indexes()) {
+        if (index.column() == 1) {//only evaluate id cell
+            Segmentation::singleton().unselectObject(index.data().toInt());
+        }
+    }
+    for (const auto & index : selected.indexes()) {
+        if (index.column() == 1) {//only evaluate id cell
+            Segmentation::singleton().selectObject(index.data().toInt());
+        }
+    }
+}
+
 void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
     if (touchedObjectSelectionProtection) {
         return;
     }
 
     Segmentation::singleton().blockSignals(true);//prevent ping pong
-    for (const auto & index : deselected.indexes()) {
-        Segmentation::singleton().unselectObject(index.data().toInt());
+    if (!QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
+        //unselect all selected objects which are not present in the touchedObjectsTable
+        auto selection = touchedObjsTable.selectionModel()->selection();
+        commitSelection(selection, objectsTable.selectionModel()->selection());
     }
-    for (const auto & index : selected.indexes()) {
-        Segmentation::singleton().selectObject(index.data().toInt());
-    }
-    updateSelection();
+    commitSelection(selected, deselected);
     Segmentation::singleton().blockSignals(false);
+
+    updateSelection();
 }
 
 void SegmentationTab::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
     if (objectSelectionProtection) {
         return;
     }
-
     Segmentation::singleton().blockSignals(true);//prevent ping pong
-    for (const auto & index : deselected.indexes()) {
-        Segmentation::singleton().unselectObject(index.data().toInt());
-    }
-    for (const auto & index : selected.indexes()) {
-        Segmentation::singleton().selectObject(index.data().toInt());
-    }
-    updateTouchedObjSelection();
+    commitSelection(selected, deselected);
     Segmentation::singleton().blockSignals(false);
+    updateTouchedObjSelection();
 }
 
-void SegmentationTab::updateTouchedObjSelection() {
+QItemSelection SegmentationTab::blockSelection(const SegmentationObjectModel & model) {
     QItemSelection selectedItems;
-    bool blockSelection = false;
-    std::size_t startIndex;
-    std::size_t objIndex = 0;
 
-    for (auto & elem : Segmentation::singleton().touchedObjects()) {
+    bool blockSelection = false;
+    std::size_t blockStartIndex;
+
+    std::size_t objIndex = 0;
+    for (auto & elem : model.objectCache) {
         if (!blockSelection && elem.get().selected) { //start block selection
             blockSelection = true;
-            startIndex = objIndex;
+            blockStartIndex = objIndex;
         }
         if (blockSelection && !elem.get().selected) { //end block selection
-            selectedItems.select(touchedObjectModel.index(startIndex, 0),
-                                 touchedObjectModel.index(objIndex-1, touchedObjectModel.columnCount()-1));
+            selectedItems.select(model.index(blockStartIndex, 0), model.index(objIndex-1, model.columnCount()-1));
             blockSelection = false;
         }
         ++objIndex;
     }
-
     //finish last blockselection – if any
     if (blockSelection) {
-        selectedItems.select(touchedObjectModel.index(startIndex, 0),
-                             touchedObjectModel.index(objIndex-1, touchedObjectModel.columnCount()-1));
+        selectedItems.select(model.index(blockStartIndex, 0), model.index(objIndex-1, model.columnCount()-1));
     }
+
+    return selectedItems;
+}
+
+void SegmentationTab::updateTouchedObjSelection() {
+    const auto & selectedItems = blockSelection(touchedObjectModel);
 
     touchedObjectSelectionProtection = true;//using block signals prevents update of the tableview
     touchedObjsTable.clearSelection();
@@ -339,33 +312,12 @@ void SegmentationTab::updateTouchedObjSelection() {
 }
 
 void SegmentationTab::updateSelection() {
-    QItemSelection selectedItems;// = objectsTable.selectionModel()->selection();
-    bool blockSelection = false;
-    std::size_t startIndex;
-    std::size_t objIndex = 0;
-
-    for (auto & elem : Segmentation::singleton().objects) {
-        if (!blockSelection && elem.second.selected) { //start block selection
-            blockSelection = true;
-            startIndex = objIndex;
-        }
-        if (blockSelection && !elem.second.selected) {//end block selection
-            selectedItems.select(objectModel.index(startIndex, 0),
-                                 objectModel.index(objIndex-1, objectModel.columnCount()-1));
-            blockSelection = false;
-        }
-        ++objIndex;
-    }
-
-    //finish last blockselection – if any
-    if (blockSelection) {
-        selectedItems.select(objectModel.index(startIndex, 0),
-                             objectModel.index(objIndex-1, objectModel.columnCount()-1));
-    }
+    const auto & selectedItems = blockSelection(objectModel);
+    const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
 
     objectSelectionProtection = true;//using block signals prevents update of the tableview
     objectsTable.clearSelection();
-    objectsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::Select);
     objectSelectionProtection = false;
 
     if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
@@ -374,9 +326,18 @@ void SegmentationTab::updateSelection() {
 }
 
 void SegmentationTab::filter() {
-    bool combineWithAnd = (filterCombineButton.text() == "and")? true : false;
-    objectModel.recreate(commentFilter.text(), categoryFilter.currentText(), regExCheckbox.isChecked(), combineWithAnd);
+    if (categoryFilter.currentText() != "<category>") {
+        objectProxyModelCategory.setFilterFixedString(categoryFilter.currentText());
+    } else {
+        objectProxyModelCategory.setFilterFixedString("");
+    }
+    if (regExCheckbox.isChecked()) {
+        objectProxyModelComment.setFilterRegExp(commentFilter.text());
+    } else {
+        objectProxyModelComment.setFilterFixedString(commentFilter.text());
+    }
     updateSelection();
+    updateTouchedObjSelection();
 }
 
 void SegmentationTab::updateCategories() {
@@ -389,10 +350,10 @@ void SegmentationTab::updateLabels() {
     subobjectCountLabel.setText(QString("Subobjects: %0").arg(Segmentation::singleton().subobjects.size()));
 }
 
-void SegmentationTab::contextMenu(QPoint pos) {
+void SegmentationTab::contextMenu(const QAbstractScrollArea & widget, const QPoint & pos) {
     QMenu contextMenu;
     QObject::connect(contextMenu.addAction("merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
     QObject::connect(contextMenu.addAction("delete"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
-    contextMenu.exec(objectsTable.viewport()->mapToGlobal(pos));
+    contextMenu.exec(widget.viewport()->mapToGlobal(pos));
 }
 
