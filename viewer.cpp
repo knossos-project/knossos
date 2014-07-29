@@ -41,11 +41,11 @@
 #if defined(Q_OS_WIN)
 #include <GL/wglext.h>
 #elif defined(Q_OS_LINUX)
-#include <QDesktopWidget>
+#define WINAPI
 #include <GL/glx.h>
 #include <GL/glxext.h>
 #endif
-static int dummy(int) {
+static WINAPI int dummy(int) {
     return 0;
 }
 
@@ -1312,18 +1312,13 @@ void Viewer::run() {
             window->updateTitlebar();//display changes after filename
 
             static auto disableVsync = [this](){
-                bool condition = false;
                 void * func = nullptr;
 #if defined(Q_OS_WIN)
-                condition = std::string(((PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT"))()).find("WGL_EXT_swap_control") != std::string::npos;
                 func = (void*)wglGetProcAddress("wglSwapIntervalEXT");
 #elif defined(Q_OS_LINUX)
-                const auto display = glXGetCurrentDisplay();
-                const auto screen = qApp->desktop()->screenNumber(window);
-                condition = std::string(glXQueryExtensionsString(display, screen)).find("GLX_SGI_swap_control") != std::string::npos;
                 func = (void*)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
 #endif
-                if (condition && func != nullptr) {
+                if (func != nullptr) {
 #if defined(Q_OS_WIN)
                     return std::bind((PFNWGLSWAPINTERVALEXTPROC)func, 0);
 #elif defined(Q_OS_LINUX)
