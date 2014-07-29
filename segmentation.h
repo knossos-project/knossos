@@ -31,10 +31,10 @@ Q_OBJECT
     class SubObject {
         friend class Segmentation;
         std::vector<std::reference_wrapper<Object>> objects;
-        bool selected;
+        std::size_t selectedObjectsCount = 0;
     public:
         const uint64_t id;
-        explicit SubObject(const uint64_t id) : selected(false), id(id) {}
+        explicit SubObject(const uint64_t id) : id(id) {}
         SubObject(SubObject &&) = delete;
         SubObject(const SubObject &) = delete;
     };
@@ -76,7 +76,7 @@ Q_OBJECT
 
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
-    std::vector<std::reference_wrapper<Object>> selectedObjects;
+    std::unordered_map<uint64_t, std::reference_wrapper<Object>> selectedObjects;
     std::set<QString> categories = {"mito", "myelin", "neuron", "synapse"};
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;

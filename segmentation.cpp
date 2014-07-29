@@ -170,11 +170,8 @@ uint64_t Segmentation::subobjectIdFromUniqueColor(std::tuple<uint8_t, uint8_t, u
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
-    bool multipleSelectedObjects = std::count_if(std::begin(subobject.objects), std::end(subobject.objects), [](const Segmentation::Object & object){
-        return object.selected;
-    }) > 1;
-    if (multipleSelectedObjects) {
-        return std::make_tuple(255, 0, 0, alpha);
+    if (subobject.selectedObjectsCount > 1) {
+        return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
     }
 
     auto & object = std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [](const Segmentation::Object & object){
@@ -203,7 +200,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
     if (subobject.objects.front().get().id == 0) {
         return std::make_tuple(0, 0, 0, 0);
     }
-    if (subobject.selected) {
+    if (subobject.selectedObjectsCount != 0) {
         return colorOfSelectedObject(subobject);
     } else if (!renderAllObjs) {
         return std::make_tuple(0, 0, 0, 0);
@@ -268,7 +265,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedO
 }
 
 bool Segmentation::isSelected(const SubObject & rhs) const{
-    return rhs.selected;
+    return rhs.selectedObjectsCount != 0;
 }
 
 bool Segmentation::isSelected(const Object & rhs) const {
@@ -279,21 +276,21 @@ void Segmentation::clearObjectSelection() {
     bool blockState = this->signalsBlocked();
     this->blockSignals(true);
     while (!selectedObjects.empty()) {
-        unselectObject(selectedObjects.front());
+        unselectObject(std::begin(selectedObjects)->second);
     }
     this->blockSignals(blockState);
     emit selectionChanged();
 }
 
 void Segmentation::selectObject(Object & object) {
-    if(object.selected) {
+    if (object.selected) {
         return;
     }
     object.selected = true;
     for (auto & subobj : object.subobjects) {
-        subobj.get().selected = true;
+        ++subobj.get().selectedObjectsCount;
     }
-    selectedObjects.emplace_back(object);
+    selectedObjects.emplace(std::piecewise_construct, std::forward_as_tuple(object.id), std::forward_as_tuple(object));
     emit selectionChanged();
 }
 
@@ -310,15 +307,9 @@ void Segmentation::unselectObject(Object & object) {
     }
     object.selected = false;
     for (auto & subobj : object.subobjects) {
-        subobj.get().selected = false;
-        for (const auto & obj : subobj.get().objects) {
-            if (obj.get().selected) {
-                subobj.get().selected = true;
-                break;
-            }
-        }
+        --subobj.get().selectedObjectsCount;
     }
-    selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::cref(object)));
+    selectedObjects.erase(object.id);
     emit selectionChanged();
 }
 
@@ -420,7 +411,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 void Segmentation::deleteSelectedObjects() {
     blockSignals(true);
     while (!selectedObjects.empty()) {
-        removeObject(selectedObjects.back().get());
+        removeObject(std::begin(selectedObjects)->second);
     }
     blockSignals(false);
     emit dataChanged();
@@ -429,26 +420,28 @@ void Segmentation::deleteSelectedObjects() {
 void Segmentation::mergeSelectedObjects() {
     blockSignals(true);
     while (selectedObjects.size() > 1) {
-        auto & obj = selectedObjects.back().get();
-        obj.selected = false;
-        selectedObjects.pop_back();
-        if (obj.id != 0) {//don’t merge void into another object
-            auto & first = selectedObjects.front().get();
-            if (first.immutable && obj.immutable) {
-                auto & newObj = const_merge(first, obj);
-                first.selected = false;
-                newObj.selected = true;
-                selectedObjects.front() = newObj;
-            } else if (first.immutable) {
-                obj.merge(first);
-                first.selected = false;
-                obj.selected = true;
-                selectedObjects.front() = obj;
-            } else if (obj.immutable) {
-                first.merge(obj);
-            } else {
-                merge(selectedObjects.front().get(), obj);
-            }
+        auto & firstObj = std::begin(selectedObjects)->second.get();
+        auto & secondObj = std::next(std::begin(selectedObjects))->second.get();
+        //objects are no longer selected when they got merged
+        if (firstObj.immutable) {
+            firstObj.selected = false;
+            selectedObjects.erase(firstObj.id);
+        }
+        if (secondObj.immutable || (!firstObj.immutable && !secondObj.immutable)) {
+            secondObj.selected = false;
+            selectedObjects.erase(secondObj.id);
+        }
+        //(im)mutability possibilities
+        if (secondObj.immutable && firstObj.immutable) {
+            auto & newObj = const_merge(secondObj, firstObj);
+            newObj.selected = true;
+            selectedObjects.emplace(std::piecewise_construct, std::forward_as_tuple(newObj.id), std::forward_as_tuple(newObj));
+        } else if (secondObj.immutable) {
+            firstObj.merge(secondObj);
+        } else if (firstObj.immutable) {
+            secondObj.merge(firstObj);
+        } else {
+            merge(firstObj, secondObj);
         }
     }
     blockSignals(false);
@@ -476,7 +469,7 @@ void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToU
 void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
     blockSignals(true);
     for (auto & obj : selectedObjects) {
-        unmergeObject(obj, objectToUnmerge);
+        unmergeObject(obj.second, objectToUnmerge);
     }
     blockSignals(false);
     emit dataChanged();
