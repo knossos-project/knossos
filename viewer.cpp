@@ -45,6 +45,7 @@
 #include <GL/glx.h>
 #include <GL/glxext.h>
 #endif
+
 static WINAPI int dummy(int) {
     return 0;
 }
@@ -407,17 +408,26 @@ void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
         innerCubeIncrement = state->cubeEdgeLength * OBJID_BYTES;
         break;
     }
+
     // draw overlay in first pass
+    auto &seg = Segmentation::singleton();
+    uint64_t idCache = 0;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
     for(int j = 0; j < outerLoopBoundary; j++) { // for xy and yz vp outer loop is only visited once
         for(int i = 0; i < innerLoopBoundary; i++) {
             uint64_t subObjectID;
             memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().colorObjectFromId(subObjectID);
+            std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color;
+            color = (idCache == subObjectID)? colorCache : seg.colorObjectFromId(subObjectID);
+
             slicePtr[0] = std::get<0>(color);
             slicePtr[1] = std::get<1>(color);
             slicePtr[2] = std::get<2>(color);
             slicePtr[3] = std::get<3>(color);
+
+            idCache = subObjectID;
+            colorCache = color;
 
             cubePtr += innerCubeIncrement;
             slicePtr += 4;
@@ -1312,9 +1322,9 @@ void Viewer::run() {
             window->updateTitlebar();//display changes after filename
 
             static auto disableVsync = [this](){
-                void * func = nullptr;
+                void (*func)(int) = nullptr;
 #if defined(Q_OS_WIN)
-                func = (void*)wglGetProcAddress("wglSwapIntervalEXT");
+                func = (void(*)(int))wglGetProcAddress("wglSwapIntervalEXT");
 #elif defined(Q_OS_LINUX)
                 func = (void*)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
 #endif
