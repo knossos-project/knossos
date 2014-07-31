@@ -1326,7 +1326,7 @@ void Viewer::run() {
 #if defined(Q_OS_WIN)
                 func = (void(*)(int))wglGetProcAddress("wglSwapIntervalEXT");
 #elif defined(Q_OS_LINUX)
-                func = (void*)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+                func = (void(*)(int))glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
 #endif
                 if (func != nullptr) {
 #if defined(Q_OS_WIN)
