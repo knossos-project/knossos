@@ -24,17 +24,21 @@
 class Segmentation : public QObject {
 Q_OBJECT
     friend class SegmentationObjectModel;
+    friend class TouchedObjectModel;
     friend class CategoryModel;
     friend class SegmentationTab;
 
     class Object;
     class SubObject {
+        friend class SegmentationObjectModel;
         friend class Segmentation;
-        std::vector<std::reference_wrapper<Object>> objects;
+        std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
     public:
         const uint64_t id;
-        explicit SubObject(const uint64_t id) : id(id) {}
+        explicit SubObject(const uint64_t & id) : id(id) {
+            objects.reserve(10);//improves merging performance by a factor of 3
+        }
         SubObject(SubObject &&) = delete;
         SubObject(const SubObject &) = delete;
     };
@@ -50,38 +54,37 @@ Q_OBJECT
 
     class Object {
         friend class SegmentationObjectModel;
+        friend class TouchedObjectModel;
         friend class SegmentationTab;
         friend class Segmentation;
 
-        QString category;
+        static uint64_t highestId;
 
         //see http://coliru.stacked-crooked.com/a/aba85777991b4425
         std::vector<std::reference_wrapper<SubObject>> subobjects;
     public:
-        const uint64_t id;
+        uint64_t id = ++highestId;
         bool immutable;
+        QString category;
         QString comment;
         bool selected = false;
-        Object(Object &&) = delete;
-        Object(const Object &) = delete;
+
         explicit Object(SubObject & initialVolume);
-        explicit Object(const uint64_t id, const bool & immutable, SubObject & initialVolume);
-        explicit Object(const uint64_t id, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
-        explicit Object(const uint64_t id, const Object & first, const Object & second);
+        explicit Object(const bool & immutable, SubObject & initialVolume);
+        explicit Object(const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
+        explicit Object(Object &first, Object &second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
-        Object & merge(const Object & other);
-        Object & moveFrom(Object & other);
+        Object & merge(Object & other);
     };
 
     std::unordered_map<uint64_t, SubObject> subobjects;
-    std::unordered_map<uint64_t, Object> objects;
-    std::unordered_map<uint64_t, std::reference_wrapper<Object>> selectedObjects;
+    std::vector<Object> objects;
+    std::set<uint64_t> selectedObjects;
     std::set<QString> categories = {"mito", "myelin", "neuron", "synapse"};
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
-    static uint64_t highestObjectId;
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
     std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
@@ -115,15 +118,13 @@ Q_OBJECT
         return lut;
     }();
 
-    Object & createObject(const uint64_t initialSubobjectId);
-    Object & createObject(const uint64_t objectId, const uint64_t initialSubobjectId, const bool & immutable = false);
+    Object & createObject(const uint64_t initialSubobjectId, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
 
     Object & const_merge(Object & one, Object & other);
-    Object & merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other);
 public:
     uint8_t alpha;
@@ -144,8 +145,11 @@ public:
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
     SubObject & subobjectFromId(const uint64_t & subobjectId);
-    Object & largestObjectContainingSubobject(const SubObject & subobject) const;
-    Object & smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
+    bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;
+    Object &largestObjectContainingSubobject(const SubObject & subobject);
+    const Object &largestObjectContainingSubobject(const SubObject & subobject) const;
+    Object &smallestImmutableObjectContainingSubobject(const SubObject & subobject);
+    const Object &smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     //selection query
     bool isSelected(const SubObject & rhs) const;
     bool isSelected(const Object & rhs) const;
@@ -166,9 +170,14 @@ public:
     void mergelistLoad(QIODevice & file);
     void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
 signals:
-    void dataChanged();
-    void selectionChanged();
-    void touchObjectsChanged();
+    void beforeAppendRow();
+    void beforeRemoveRow();
+    void appendedRow();
+    void removedRow();
+    void changedRow(int id);
+    void resetData();
+    void resetSelection();
+    void resetTouchedObjects();
 public slots:
     void clear();
     void deleteSelectedObjects();

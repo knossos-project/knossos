@@ -1,30 +1,35 @@
 #include "segmentation.h"
 
-uint64_t Segmentation::highestObjectId = 1;
+uint64_t Segmentation::Object::highestId = -1;
 
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
-    : id(initialVolume.id), immutable(false), comment("") {
+    : immutable(false)
+{
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const uint64_t id, const bool & immutable, Segmentation::SubObject & initialVolume)
-    : id(id), immutable(immutable), comment("") {
+Segmentation::Object::Object(const bool & immutable, Segmentation::SubObject & initialVolume)
+    : immutable(immutable)
+{
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const uint64_t id, const bool & immutable,
-                             std::vector<std::reference_wrapper<SubObject>> initialVolumes)
-    : id(id), immutable(immutable), comment("") {
+Segmentation::Object::Object(const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
+    : immutable(immutable)
+{
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
     }
+    std::sort(std::begin(subobjects), std::end(subobjects));
 }
 
-Segmentation::Object::Object(const uint64_t id, const Object & first,
-                             const Segmentation::Object & second)
-    : id(id), immutable(false), comment("") {
+Segmentation::Object::Object(Object & first, Object & second)
+    : immutable(false), selected{true}//merge is selected
+{
+    subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
     merge(second);
+    subobjects.shrink_to_fit();
 }
 
 bool Segmentation::Object::operator==(const Segmentation::Object & other) const {
@@ -33,32 +38,23 @@ bool Segmentation::Object::operator==(const Segmentation::Object & other) const 
 
 void Segmentation::Object::addExistingSubObject(Segmentation::SubObject & sub) {
     subobjects.emplace_back(sub);//add child
-    sub.objects.emplace_back(*this);//register parent
+    auto objectPosIt = std::lower_bound(std::begin(sub.objects), std::end(sub.objects), this->id);
+    sub.objects.emplace(objectPosIt, this->id);//register parent
 }
 
-Segmentation::Object & Segmentation::Object::merge(const Segmentation::Object & other) {
+Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other) {
     for (auto & elem : other.subobjects) {//add parent
         auto & objects = elem.get().objects;
+        elem.get().selectedObjectsCount = 1;
         //don’t insert twice
-        if (std::find(std::begin(objects), std::end(objects), std::cref(*this)) == std::end(objects)) {
-            objects.push_back(*this);
+        auto posIt = std::lower_bound(std::begin(objects), std::end(objects), this->id);
+        if (posIt == std::end(objects) || *posIt != this->id) {
+            objects.emplace(posIt, this->id);
         }
     }
-
-    decltype(subobjects) tmp(std::begin(subobjects), std::end(subobjects));
-    tmp.insert(std::end(tmp), std::begin(other.subobjects), std::end(other.subobjects));
-    std::sort(std::begin(tmp), std::end(tmp)), std::end(tmp);
-    tmp.erase(std::unique(std::begin(tmp), std::end(tmp)), std::end(tmp));
-    std::swap(subobjects, tmp);
-    return *this;
-}
-
-Segmentation::Object & Segmentation::Object::moveFrom(Segmentation::Object & other) {
-    for (auto & elem : other.subobjects) {//remove parent
-        auto & objects = elem.get().objects;
-        objects.erase(std::remove(std::begin(objects), std::end(objects), std::cref(other)));
-    }
-    merge(other);
+    auto it = subobjects.insert(std::end(subobjects), std::begin(other.subobjects), std::end(other.subobjects));
+    std::inplace_merge(std::begin(subobjects), it, std::end(subobjects));
+    subobjects.erase(std::unique(std::begin(subobjects), std::end(subobjects)), std::end(subobjects));
     return *this;
 }
 
@@ -72,13 +68,13 @@ Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {}
 void Segmentation::clear() {
     selectedObjects.clear();
     objects.clear();
+    Object::highestId = -1;
     subobjects.clear();
     touched_subobject_id = 0;
-    highestObjectId = 1;
 
-    emit dataChanged();
-    emit selectionChanged();
-    emit touchObjectsChanged();
+    emit resetData();
+    emit resetSelection();
+    emit resetTouchedObjects();
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
@@ -89,16 +85,10 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(cons
 }
 
 Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Segmentation::Object & other) {
-    const auto id = ++highestObjectId;
-    return objects.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(id, one, other)).first->second;
-}
-
-Segmentation::Object & Segmentation::merge(Segmentation::Object & one, Segmentation::Object & other) {
-    one.moveFrom(other);
-    //remove object
-    objects.erase(other.id);
-    emit dataChanged();
-    return one;
+    emit beforeAppendRow();
+    objects.emplace_back(one, other);
+    emit appendedRow();
+    return objects.back();
 }
 
 void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
@@ -120,40 +110,48 @@ bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
-Segmentation::Object & Segmentation::createObject(const uint64_t objectId, const uint64_t initialSubobjectId, const bool & immutable) {
-    const auto & objectIt = objects.find(objectId);
-    if (objectIt == std::end(objects)) {
-        highestObjectId = objectId > highestObjectId ? objectId : highestObjectId;
-        //first is iterator to the newly inserted key-value pair
-        auto subobjectIt = subobjects.find(initialSubobjectId);
-        if (subobjectIt == std::end(subobjects)) {
-            subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
-        }
-        auto & subobject = subobjectIt->second;
-        return objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, immutable, subobject)).first->second;//create object from supervoxel
-    } else {
-        qDebug() << "tried to create object with id" << objectId << "which already exists";
-        return objectIt->second;
-    }
+Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & immutable) {
+    //first is iterator to the newly inserted key-value pair or the already existing value
+    auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
+    auto & subobject = subobjectIt->second;
+    emit beforeAppendRow();
+    objects.emplace_back(immutable, subobject);//create object from supervoxel
+    emit appendedRow();
+    return objects.back();
 }
 
 void Segmentation::removeObject(Object & object) {
     unselectObject(object);
     for (auto & elem : object.subobjects) {
         auto & subobject = elem.get();
-        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), std::cref(object)));
+        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), object.id));
         if (subobject.objects.empty()) {
             subobjects.erase(subobject.id);
         }
     }
-    objects.erase(object.id);
+    //swap with last, so no intermediate rows need to be deleted
+    if (objects.size() > 1) {
+        //replace object id in subobjects
+        for (auto & elem : objects.back().subobjects) {
+            auto & subobject = elem.get();
+            std::replace(std::begin(subobject.objects), std::end(subobject.objects), objects.back().id, object.id);
+        }
+        //replace object id in selected objects
+        if (selectedObjects.find(objects.back().id) != std::end(selectedObjects)) {
+            selectedObjects.erase(objects.back().id);
+            selectedObjects.emplace(object.id);
+        }
+        std::swap(object.id, objects.back().id);
+        std::swap(object, objects.back());
+    }
+    emit beforeRemoveRow();
+    objects.pop_back();
+    emit removedRow();
+    --Object::highestId;
 }
 
 void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
-    auto subobjectIt = subobjects.find(subObjID);
-    if (subobjectIt == std::end(subobjects)) {
-        subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(subObjID), std::forward_as_tuple(subObjID)).first;
-    }
+    auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(subObjID), std::forward_as_tuple(subObjID)).first;
     obj.addExistingSubObject(subobjectIt->second);
 }
 
@@ -173,11 +171,10 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
     }
-
-    auto & object = std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [](const Segmentation::Object & object){
-        return object.selected;
-    })->get();
-
+    const auto objectId = *std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [this](const uint64_t id){
+        return objects[id].selected;
+    });
+    const auto & object = objects[objectId];
     const uint8_t red   = overlayColorMap[0][object.id % 256];
     const uint8_t green = overlayColorMap[1][object.id % 256];
     const uint8_t blue  = overlayColorMap[2][object.id % 256];
@@ -197,9 +194,6 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
         }
     }
     const auto & subobject = subobjectIt->second;
-    if (subobject.objects.front().get().id == 0) {
-        return std::make_tuple(0, 0, 0, 0);
-    }
     if (subobject.selectedObjectsCount != 0) {
         return colorOfSelectedObject(subobject);
     } else if (!renderAllObjs) {
@@ -219,46 +213,61 @@ bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
 }
 
 Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId) {
-    //check if subobject exists
-    auto it = subobjects.find(subobjectId);
-    if (it == std::end(subobjects)) {//create an object for the selected subobject
-        const auto id = ++highestObjectId;
-        createObject(id, subobjectId);
+    auto it = subobjects.find(subobjectId);//check if subobject exists
+    if (it == std::end(subobjects)) {
+        createObject(subobjectId);//create an object for the selected subobject
         it = subobjects.find(subobjectId);
-        emit dataChanged();
     }
     return it->second;
 }
 
-Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
-    return std::max_element(std::begin(subobject.objects), std::end(subobject.objects)
-        , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
-            return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
-        })->get();
+bool Segmentation::objectOrder(const uint64_t & lhsId, const uint64_t & rhsId) const {
+    const auto & lhs = objects[lhsId];
+    const auto & rhs = objects[rhsId];
+    //operator< substitute, prefer immutable objects and choose the smallest
+    return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
 }
 
-Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
-    return std::min_element(std::begin(subobject.objects), std::end(subobject.objects)
-        , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
-            //operator< substitute, prefer immutable objects and choose the smallest
-            return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
-        })->get();
+Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) {
+    const auto & segmentationConstRef = *this;
+    return const_cast<Segmentation::Object&>(segmentationConstRef.largestObjectContainingSubobject(subobject));
+}
+const Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+    //same comparitor for both functions, it seems to work as it is, so i don’t waste my head now to find out why
+    //there may have been some reasoning… (at first glance it seems to restrictive for the largest object)
+    auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
+    const auto objectId = *std::max_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
+    return objects[objectId];
+}
+
+Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) {
+    const auto & segmentationConstRef = *this;
+    return const_cast<Segmentation::Object&>(segmentationConstRef.smallestImmutableObjectContainingSubobject(subobject));
+}
+const Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+    auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
+    const auto objectId = *std::min_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
+    return objects[objectId];
 }
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
-    emit touchObjectsChanged();
+    emit resetTouchedObjects();
 }
 
 void Segmentation::untouchObjects() {
     touched_subobject_id = 0;
-    emit touchObjectsChanged();
+    emit resetTouchedObjects();
 }
 
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedObjects() {
     auto it = subobjects.find(touched_subobject_id);
     if (it != std::end(subobjects)) {
-        return it->second.objects;
+        std::vector<std::reference_wrapper<Segmentation::Object>> vec;
+        for (const auto & id : it->second.objects) {
+            vec.emplace_back(objects[id]);
+        }
+        return vec;
     } else {
         return {};
     }
@@ -274,12 +283,12 @@ bool Segmentation::isSelected(const Object & rhs) const {
 
 void Segmentation::clearObjectSelection() {
     bool blockState = this->signalsBlocked();
-    this->blockSignals(true);
+    blockSignals(true);
     while (!selectedObjects.empty()) {
-        unselectObject(std::begin(selectedObjects)->second);
+        unselectObject(*std::begin(selectedObjects));
     }
-    this->blockSignals(blockState);
-    emit selectionChanged();
+    blockSignals(blockState);
+    emit resetSelection();
 }
 
 void Segmentation::selectObject(Object & object) {
@@ -290,14 +299,13 @@ void Segmentation::selectObject(Object & object) {
     for (auto & subobj : object.subobjects) {
         ++subobj.get().selectedObjectsCount;
     }
-    selectedObjects.emplace(std::piecewise_construct, std::forward_as_tuple(object.id), std::forward_as_tuple(object));
-    emit selectionChanged();
+    selectedObjects.emplace(object.id);
+    emit resetSelection();
 }
 
 void Segmentation::unselectObject(const uint64_t & objectId) {
-    auto iter = objects.find(objectId);
-    if (iter != std::end(objects)) {
-        unselectObject(iter->second);
+    if (objectId < objects.size()) {
+        unselectObject(objects[objectId]);
     }
 }
 
@@ -310,44 +318,44 @@ void Segmentation::unselectObject(Object & object) {
         --subobj.get().selectedObjectsCount;
     }
     selectedObjects.erase(object.id);
-    emit selectionChanged();
+    emit resetSelection();
 }
 
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {
     auto & otherSubobjects = other.subobjects;
-
-    std::sort(std::begin(object.subobjects), std::end(object.subobjects));
-    std::sort(std::begin(otherSubobjects), std::end(otherSubobjects));
-
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(otherSubobjects), std::end(otherSubobjects), std::back_inserter(tmp));
     if (!tmp.empty()) {//only unmerge if subobjects remain
         if (object.immutable) {
             unselectObject(object);
-            auto objectId = ++highestObjectId;
-            auto & newObject = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, tmp)).first->second;
-            selectObject(newObject);
+            emit beforeAppendRow();
+            objects.emplace_back(false, tmp);
+            emit appendedRow();
+            selectObject(objects.back());
         } else {
             unselectObject(object);
             for (auto & elem : otherSubobjects) {
                 auto & objects = elem.get().objects;
-                objects.erase(std::remove(std::begin(objects), std::end(objects), std::cref(object)));//remove parent
+                objects.erase(std::remove(std::begin(objects), std::end(objects), object.id));//remove parent
             }
             std::swap(object.subobjects, tmp);
             selectObject(object);
+            emit changedRow(object.id);
         }
-        emit dataChanged();
     }
 }
 
 void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject) {
     const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
-        , [&](const Segmentation::Object & elem){
-            return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobject.id;
-        });
+    , [&](const uint64_t elemId){
+        const auto & elem = objects[elemId];
+        return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobject.id;
+    });
     if (other == std::end(subobject.objects)) {
-        auto objectId = ++highestObjectId;
-        auto & newObject = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobject)).first->second;
+        emit beforeAppendRow();
+        objects.emplace_back(false, subobject);
+        emit appendedRow();
+        auto & newObject = objects.back();
         selectObject(newObject);
     } else {
         selectObject(*other);
@@ -355,9 +363,8 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
 }
 
 void Segmentation::selectObject(const uint64_t & objectId) {
-    auto iter = objects.find(objectId);
-    if (iter != std::end(objects)) {
-        selectObject(iter->second);
+    if (objectId < objects.size()) {
+        selectObject(objects[objectId]);
     }
 }
 
@@ -368,13 +375,13 @@ std::size_t Segmentation::selectedObjectsCount() const {
 void Segmentation::mergelistSave(QIODevice & file) const {
     QTextStream stream(&file);
     for (const auto & obj : objects) {
-        stream << obj.first << ' ' << obj.second.immutable;
-        for (const auto & subObj : obj.second.subobjects) {
+        stream << obj.id << ' ' << obj.immutable;
+        for (const auto & subObj : obj.subobjects) {
             stream << ' ' << subObj.get().id;
         }
         stream << '\n';
-        stream << obj.second.category << '\n';
-        stream << obj.second.comment << '\n';
+        stream << obj.category << '\n';
+        stream << obj.comment << '\n';
     }
 }
 
@@ -382,6 +389,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream stream(&file);
     QString line;
+    blockSignals(true);
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
         uint64_t objID;
@@ -395,82 +403,91 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         bool valid2 = !(comment = stream.readLine()).isNull();
 
         if (valid0 && valid1 && valid2) {
-            auto & obj = createObject(objID, initialVolume, immutable);
+            auto & obj = createObject(initialVolume, immutable);
             while (lineStream >> objID) {
                 newSubObject(obj, objID);
             }
+            std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
             obj.category = category;
             obj.comment = comment;
         } else {
             qDebug() << "loadMergelist fail";
         }
     }
-    emit dataChanged();
+    blockSignals(false);
+    emit resetData();
 }
 
 void Segmentation::deleteSelectedObjects() {
-    blockSignals(true);
     while (!selectedObjects.empty()) {
-        removeObject(std::begin(selectedObjects)->second);
+        removeObject(objects[*std::begin(selectedObjects)]);
     }
-    blockSignals(false);
-    emit dataChanged();
 }
 
 void Segmentation::mergeSelectedObjects() {
-    blockSignals(true);
     while (selectedObjects.size() > 1) {
-        auto & firstObj = std::begin(selectedObjects)->second.get();
-        auto & secondObj = std::next(std::begin(selectedObjects))->second.get();
+        auto beginIt = std::begin(selectedObjects);
+        auto & firstObj = objects[*beginIt];
+        auto & secondObj = objects[*std::next(beginIt)];
         //objects are no longer selected when they got merged
-        if (firstObj.immutable) {
-            firstObj.selected = false;
-            selectedObjects.erase(firstObj.id);
-        }
-        if (secondObj.immutable || (!firstObj.immutable && !secondObj.immutable)) {
-            secondObj.selected = false;
-            selectedObjects.erase(secondObj.id);
-        }
+        auto flat_deselect = [this](Object & object){
+            object.selected = false;
+            selectedObjects.erase(object.id);
+        };
         //(im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
-            auto & newObj = const_merge(secondObj, firstObj);
-            newObj.selected = true;
-            selectedObjects.emplace(std::piecewise_construct, std::forward_as_tuple(newObj.id), std::forward_as_tuple(newObj));
+            flat_deselect(firstObj);
+            flat_deselect(secondObj);
+            if (firstObj.subobjects.size() < secondObj.subobjects.size()) {
+                auto & newObj = const_merge(firstObj, secondObj);
+                selectedObjects.emplace(newObj.id);
+            } else {
+                auto & newObj = const_merge(secondObj, firstObj);
+                selectedObjects.emplace(newObj.id);
+            }
         } else if (secondObj.immutable) {
+            flat_deselect(secondObj);
             firstObj.merge(secondObj);
+            emit changedRow(firstObj.id);
         } else if (firstObj.immutable) {
+            flat_deselect(firstObj);
             secondObj.merge(firstObj);
+            emit changedRow(secondObj.id);
         } else {
-            merge(firstObj, secondObj);
+            if (firstObj.subobjects.size() > secondObj.subobjects.size()) {
+                flat_deselect(secondObj);
+                firstObj.merge(secondObj);
+                removeObject(secondObj);
+                emit changedRow(firstObj.id);
+            } else {
+                flat_deselect(firstObj);
+                secondObj.merge(firstObj);
+                removeObject(firstObj);
+                emit changedRow(secondObj.id);
+            }
         }
     }
-    blockSignals(false);
-    emit dataChanged();
+    emit resetSelection();//flat deselect does not update the table
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToUnmerge) {
-    blockSignals(true);
     const auto & otherIt = std::find_if(std::begin(subobjectToUnmerge.objects), std::end(subobjectToUnmerge.objects)
-        , [&](const Segmentation::Object & elem){
-            return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobjectToUnmerge.id;
-        });
+    , [&](const uint64_t & elemId){
+        const auto & elem = objects[elemId];
+        return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobjectToUnmerge.id;
+    });
     //create object to unmerge if there’s none except the currently selected one
     if (otherIt == std::end(subobjectToUnmerge.objects)) {
-        auto objectId = ++highestObjectId;
-        auto & other = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobjectToUnmerge)).first->second;
+        beforeAppendRow();
+        objects.emplace_back(false, subobjectToUnmerge);
+        appendedRow();
+        auto & other = objects.back();
         unmergeSelectedObjects(other);
     } else {
-        unmergeSelectedObjects(otherIt->get());
+        unmergeSelectedObjects(objects[*otherIt]);
     }
-    blockSignals(false);
-    emit dataChanged();
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
-    blockSignals(true);
-    for (auto & obj : selectedObjects) {
-        unmergeObject(obj.second, objectToUnmerge);
-    }
-    blockSignals(false);
-    emit dataChanged();
+    unmergeObject(objects[*std::begin(selectedObjects)], objectToUnmerge);
 }

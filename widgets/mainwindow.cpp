@@ -111,10 +111,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, [&](){
+    auto segmentationUpdate = [&](){
         state->skeletonState->unsavedChanges = true;
         updateTitlebar();
-    });
+    };
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, segmentationUpdate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, segmentationUpdate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, segmentationUpdate);
 
     createToolBar();
     createMenus();
