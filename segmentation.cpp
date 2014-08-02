@@ -52,8 +52,9 @@ Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other)
             objects.emplace(posIt, this->id);
         }
     }
-    auto it = subobjects.insert(std::end(subobjects), std::begin(other.subobjects), std::end(other.subobjects));
-    std::inplace_merge(std::begin(subobjects), it, std::end(subobjects));
+    decltype(subobjects) tmp;
+    std::merge(std::begin(subobjects), std::end(subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
+    std::swap(subobjects, tmp);
     subobjects.erase(std::unique(std::begin(subobjects), std::end(subobjects)), std::end(subobjects));
     return *this;
 }
