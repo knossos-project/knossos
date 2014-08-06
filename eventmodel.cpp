@@ -29,6 +29,7 @@
 #include "renderer.h"
 #include "segmentation.h"
 #include "viewer.h"
+#include "renderer.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
 
@@ -42,9 +43,20 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
-uint64_t segmentationColorPicking(const int x, const int y, const int viewportId) {
+uint64_t segmentationColorPicking(int x, int y, const int viewportId) {
+    QTime t;
+    t.start();
     const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-    return Segmentation::singleton().subobjectIdFromUniqueColor(color);
+    auto id = Segmentation::singleton().subobjectIdFromUniqueColor(color);
+    Renderer::debugInt = t.elapsed();
+    return id;
+
+//    QTime t;
+//    t.start();
+//    const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
+//    auto id = Segmentation::singleton().subobjectIdFromUniqueColor(color);;
+//    Renderer::debugInt = t.elapsed();
+//    return id;
 }
 
 void merging(QMouseEvent *event, const int vp) {

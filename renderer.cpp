@@ -45,6 +45,7 @@
 #include "segmentation.h"
 #include "viewer.h"
 
+int Renderer::debugInt = 0;
 extern stateInfo *state;
 
 Renderer::Renderer(QObject *parent) : QObject(parent) {
@@ -78,7 +79,6 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 
     initMesh(&(state->skeletonState->lineVertBuffer), 1024);
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
-
 }
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
@@ -438,7 +438,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width));
+        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(debugInt).arg(width));
     }
 
     glLineWidth(1.);
@@ -1797,23 +1797,23 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y) {
-    GLdouble vp_height;
-
+    Viewport *vp = nullptr;
     if(currentVP == VIEWPORT_XY) {
-        refVPXY->makeCurrent();
-        vp_height = refVPXY->height();
+        vp = refVPXY;
     } else if(currentVP == VIEWPORT_XZ) {
-        refVPXZ->makeCurrent();
-        vp_height = refVPXZ->height();
+        vp = refVPXZ;
     } else if(currentVP == VIEWPORT_YZ) {
-        refVPYZ->makeCurrent();
-        vp_height = refVPYZ->height();
+        vp = refVPYZ;
     } else if(currentVP == VIEWPORT_SKELETON) {
         refVPSkel->makeCurrent();
-        vp_height = refVPSkel->height();
         return std::make_tuple(0, 0, 0); // disable skeleton viewport until segmentation works in it
     }
 
+    if(pickBuffer.upToDate(currentVP, vp->width(), state->viewerState->currentPosition)) {
+        return pickBuffer.getColor(x, y);
+    }
+
+    vp->makeCurrent();
     // disable any special filtering
     glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1834,10 +1834,12 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // color picking
-    GLubyte pixel[3];
-    glReadBuffer(GL_BACK);
-    glReadPixels(x, vp_height-y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pixel);
 
+    //GLubyte pixel[3];
+    pickBuffer.update(currentVP, vp->width(), state->viewerState->currentPosition);
+    glReadBuffer(GL_BACK);
+    glReadPixels(0, 0, pickBuffer.size - 1, pickBuffer.size - 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pickBuffer.buffer);
+    //glReadPixels(x, vp->height() - y, 1,1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)pixel);
     // restore normal segmentation texture
     state->viewerState->uniqueColorMode = false;
     state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
@@ -1845,7 +1847,8 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glFlush();
 
-    return std::make_tuple(pixel[0], pixel[1], pixel[2]);
+    return pickBuffer.getColor(x, y);
+    //return std::make_tuple(pixel[0], pixel[1], pixel[2]);
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

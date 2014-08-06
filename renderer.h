@@ -30,6 +30,46 @@
 #include <QList>
 
 class Viewport;
+
+class ColorPickBuffer : public QObject {
+    uint vpId;
+
+    Coordinate position;
+
+public:
+    uint size;
+    GLubyte *buffer;
+
+    ColorPickBuffer() : vpId(0), size(0), buffer(nullptr) {
+        SET_COORDINATE(position, -1, -1, -1);
+    }
+
+    void update(uint currVp, uint currSize, Coordinate currPos) {
+        vpId = currVp;
+        size = currSize;
+        SET_COORDINATE(position, currPos.x, currPos.y, currPos.z);
+        free(buffer);
+        buffer = (GLubyte*)calloc(3, size * size);
+    }
+
+    bool upToDate(uint currVp, uint currSize, Coordinate currPos) {
+        return currVp == vpId && size == currSize && COMPARE_COORDINATE(currPos, position);
+    }
+
+    std::tuple<uint8_t, uint8_t, uint8_t> getColor(uint x, uint y) {
+        if(x > size || y > size) {
+            return std::make_tuple(0, 0, 0);
+        }
+        return std::make_tuple(*(buffer + 0 + ((size - y)*size*3) + (x*3)),
+                               *(buffer + 1 + ((size - y)*size*3) + (x*3)),
+                               *(buffer + 2 + ((size - y)*size*3) + (x*3)));
+    }
+
+    ~ColorPickBuffer() {
+        free(buffer);
+    }
+};
+
 class Renderer : public QObject {
     Q_OBJECT
     /* The first 50 entries of the openGL namespace are reserved
@@ -39,7 +79,8 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-
+    static int debugInt;
+    ColorPickBuffer pickBuffer;
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
