@@ -534,10 +534,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
     }
 }
 
-static int texIndex(uint x,
-                        uint y,
-                        uint colorMultiplicationFactor,
-                        viewportTexture *texture) {
+static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportTexture *texture) {
     uint index = 0;
 
     index = x * state->cubeSliceArea + y
@@ -547,7 +544,7 @@ static int texIndex(uint x,
     return index;
 }
 
-bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
+bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
@@ -558,7 +555,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     Byte *datacube = NULL, *overlayCube = NULL;
     int dcOffset = 0, index = 0;
 
-    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
+    CPY_COORDINATE(currPosTrans, state->viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
     CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
@@ -577,19 +574,16 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
-                   //* (viewerState->currentPosition.z - state->cubeEdgeLength
                    * (currPosTrans.z - state->cubeEdgeLength
                    * currentPosition_dc.z);
         break;
     case SLICE_XZ:
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
-                   //     * (viewerState->currentPosition.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
         break;
     case SLICE_YZ:
-        dcOffset = //viewerState->currentPosition.x - state->cubeEdgeLength
-                   currPosTrans.x - state->cubeEdgeLength
+        dcOffset = currPosTrans.x - state->cubeEdgeLength
                    * currentPosition_dc.x;
         break;
     default:
@@ -643,11 +637,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             glBindTexture(GL_TEXTURE_2D,
                           currentVp.texture.texHandle);
 
-            // This is used to index into the texture. texData[index] is the first
+            // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
-            if(datacube == HT_FAILURE || viewerState->uniqueColorMode) {
+            if(datacube == HT_FAILURE || state->viewerState->uniqueColorMode) {
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -656,10 +650,10 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                 state->cubeEdgeLength,
                                 GL_RGB,
                                 GL_UNSIGNED_BYTE,
-                                viewerState->defaultTexData);
+                                state->viewerState->defaultTexData);
             } else {
                 dcSliceExtract(datacube,
-                               &(viewerState->texData[index]),
+                               state->viewerState->texData + index,
                                dcOffset,
                                &currentVp);
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -670,7 +664,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                 state->cubeEdgeLength,
                                 GL_RGB,
                                 GL_UNSIGNED_BYTE,
-                                &(viewerState->texData[index]));
+                                state->viewerState->texData + index);
             }
             //Take care of the overlay textures.
             if(state->overlay) {
@@ -688,17 +682,17 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                     state->cubeEdgeLength,
                                     GL_RGBA,
                                     GL_UNSIGNED_BYTE,
-                                    viewerState->defaultOverlayData);
+                                    state->viewerState->defaultOverlayData);
                 }
                 else {
-                    if(viewerState->uniqueColorMode) {
+                    if(state->viewerState->uniqueColorMode) {
                         ocSliceExtractUnique(overlayCube,
-                                             &(viewerState->overlayData[index]),
+                                             state->viewerState->overlayData + index,
                                              dcOffset * OBJID_BYTES,
                                              &currentVp);
                     } else {
                         ocSliceExtract(overlayCube,
-                                       &(viewerState->overlayData[index]),
+                                       state->viewerState->overlayData + index,
                                        dcOffset * OBJID_BYTES,
                                        &currentVp);
                     }
@@ -711,7 +705,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                     state->cubeEdgeLength,
                                     GL_RGBA,
                                     GL_UNSIGNED_BYTE,
-                                    &(viewerState->overlayData[index]));
+                                    state->viewerState->overlayData + index);
                 }
             }
         }
@@ -1309,7 +1303,7 @@ void Viewer::run() {
 
         if(currentVp.type != VIEWPORT_SKELETON) {
             if(currentVp.type != VIEWPORT_ARBITRARY) {
-                vpGenerateTexture(currentVp, state->viewerState);
+                vpGenerateTexture(currentVp);
             } else {
                 vpGenerateTexture_arb(currentVp);
             }

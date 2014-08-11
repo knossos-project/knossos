@@ -105,7 +105,7 @@ public slots:
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);
-    bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
+    bool vpGenerateTexture(vpConfig &currentVp);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

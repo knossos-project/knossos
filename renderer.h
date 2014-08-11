@@ -76,11 +76,10 @@ class Renderer : public QObject {
     for static objects (like slice plane quads...) */
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
+    ColorPickBuffer pickBuffer;
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    static int debugInt;
-    ColorPickBuffer pickBuffer;
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();

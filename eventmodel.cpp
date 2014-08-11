@@ -44,19 +44,8 @@ EventModel::EventModel(QObject *parent) :
 }
 
 uint64_t segmentationColorPicking(int x, int y, const int viewportId) {
-    QTime t;
-    t.start();
     const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-    auto id = Segmentation::singleton().subobjectIdFromUniqueColor(color);
-    Renderer::debugInt = t.elapsed();
-    return id;
-
-//    QTime t;
-//    t.start();
-//    const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-//    auto id = Segmentation::singleton().subobjectIdFromUniqueColor(color);;
-//    Renderer::debugInt = t.elapsed();
-//    return id;
+    return Segmentation::singleton().subobjectIdFromUniqueColor(color);
 }
 
 void merging(QMouseEvent *event, const int vp) {

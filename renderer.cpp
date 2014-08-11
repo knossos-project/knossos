@@ -45,7 +45,6 @@
 #include "segmentation.h"
 #include "viewer.h"
 
-int Renderer::debugInt = 0;
 extern stateInfo *state;
 
 Renderer::Renderer(QObject *parent) : QObject(parent) {
@@ -438,7 +437,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(debugInt).arg(width));
+        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width));
     }
 
     glLineWidth(1.);
@@ -1798,6 +1797,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
 
 std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y) {
     Viewport *vp = nullptr;
+    vpConfig &vpConf = state->viewerState->vpConfigs[currentVP];
     if(currentVP == VIEWPORT_XY) {
         vp = refVPXY;
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1815,40 +1815,38 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
 
     vp->makeCurrent();
     // disable any special filtering
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D,vpConf.texture.overlayHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // set and generate unique color segmentation texture
     state->viewerState->uniqueColorMode = true;
-    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
+    state->viewer->vpGenerateTexture(vpConf);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
     renderOrthogonalVP(currentVP);
 
     // reset filtering
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, vpConf.texture.overlayHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // color picking
-
-    //GLubyte pixel[3];
     pickBuffer.update(currentVP, vp->width(), state->viewerState->currentPosition);
     glReadBuffer(GL_BACK);
-    glReadPixels(0, 0, pickBuffer.size - 1, pickBuffer.size - 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pickBuffer.buffer);
-    //glReadPixels(x, vp->height() - y, 1,1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)pixel);
+    glPixelStoref(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, pickBuffer.size, pickBuffer.size, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pickBuffer.buffer);
+
     // restore normal segmentation texture
     state->viewerState->uniqueColorMode = false;
-    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
+    state->viewer->vpGenerateTexture(vpConf);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glFlush();
 
     return pickBuffer.getColor(x, y);
-    //return std::make_tuple(pixel[0], pixel[1], pixel[2]);
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
