@@ -283,13 +283,9 @@ bool Segmentation::isSelected(const Object & rhs) const {
 }
 
 void Segmentation::clearObjectSelection() {
-    bool blockState = this->signalsBlocked();
-    blockSignals(true);
     while (!selectedObjects.empty()) {
         unselectObject(*std::begin(selectedObjects));
     }
-    blockSignals(blockState);
-    emit resetSelection();
 }
 
 void Segmentation::selectObject(Object & object) {
@@ -301,7 +297,7 @@ void Segmentation::selectObject(Object & object) {
         ++subobj.get().selectedObjectsCount;
     }
     selectedObjects.emplace(object.id);
-    emit resetSelection();
+    emit changedRow(object.id);
 }
 
 void Segmentation::unselectObject(const uint64_t & objectId) {
@@ -319,7 +315,7 @@ void Segmentation::unselectObject(Object & object) {
         --subobj.get().selectedObjectsCount;
     }
     selectedObjects.erase(object.id);
-    emit resetSelection();
+    emit changedRow(object.id);
 }
 
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {
@@ -434,6 +430,7 @@ void Segmentation::mergeSelectedObjects() {
         auto flat_deselect = [this](Object & object){
             object.selected = false;
             selectedObjects.erase(object.id);
+            emit changedRow(object.id);//deselect
         };
         //(im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
@@ -468,7 +465,6 @@ void Segmentation::mergeSelectedObjects() {
             }
         }
     }
-    emit resetSelection();//flat deselect does not update the table
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToUnmerge) {

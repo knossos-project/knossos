@@ -3,7 +3,6 @@
 
 #include "segmentation.h"
 
-#include <QAbstractItemModel>
 #include <QAbstractListModel>
 #include <QCheckBox>
 #include <QComboBox>
@@ -18,7 +17,7 @@
 
 #include <functional>
 
-class SegmentationObjectModel : public QAbstractItemModel {
+class SegmentationObjectModel : public QAbstractListModel {
 Q_OBJECT
     friend class SegmentationTab;//selection
 protected:
@@ -39,8 +38,6 @@ public:
     void appendRow();
     void popRow();
     void changeRow(int index);
-    QModelIndex index(int row, int column, const QModelIndex & = QModelIndex()) const override;
-    QModelIndex parent(const QModelIndex &) const override;
 };
 
 class TouchedObjectModel : public SegmentationObjectModel {

@@ -167,14 +167,6 @@ void SegmentationObjectModel::changeRow(int id) {
     emit dataChanged(index(id, 0), index(id, columnCount()-1));
 }
 
-QModelIndex SegmentationObjectModel::index(int row, int column, const QModelIndex &) const {
-    return createIndex(row, column);
-}
-
-QModelIndex SegmentationObjectModel::parent(const QModelIndex &) const {
-    return QModelIndex();
-}
-
 void CategoryModel::recreate() {
     beginResetModel();
     categories.clear();
@@ -221,9 +213,9 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     objectsTable.setRootIsDecorated(false);
     objectsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
     objectsTable.setUniformRowHeights(true);//perf hint from doc
-    //sorting seems pretty slow concerning selection and recreation of the model
-    objectsTable.setSortingEnabled(true);
-    objectsTable.sortByColumn(1, Qt::DescendingOrder);
+    //sorting seems pretty slow concerning selection and scroll to
+//    objectsTable.setSortingEnabled(true);
+//    objectsTable.sortByColumn(1, Qt::DescendingOrder);
 
     filterLayout.addWidget(&categoryFilter);
     filterLayout.addWidget(&commentFilter);
@@ -245,10 +237,10 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     QObject::connect(&commentFilter, &QLineEdit::textEdited, this, &SegmentationTab::filter);
     QObject::connect(&regExCheckbox, &QCheckBox::stateChanged, this, &SegmentationTab::filter);
 
-    for (const auto & index : {0, 1, 2, 5}) {
-        //comment (4) shall not waste space, also displaying all supervoxel ids (6) causes problems
-        touchedObjsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
-        objectsTable.header()->setSectionResizeMode(index, QHeaderView::ResizeToContents);
+    for (const auto & index : {0, 1, 2}) {
+        //resize once, constantly resizing slows down selection and scroll to considerably
+        touchedObjsTable.resizeColumnToContents(index);
+        objectsTable.resizeColumnToContents(index);
     }
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::beforeAppendRow, &objectModel, &SegmentationObjectModel::appendRowBegin);
@@ -256,9 +248,9 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
         objectSelectionProtection = true;
         objectModel.popRowBegin();
         if (Segmentation::singleton().objects.back().selected) {
-            const auto & selectedItems = QItemSelection(objectModel.index(objectModel.rowCount(), 0), objectModel.index(objectModel.rowCount(), objectModel.columnCount()));
-            const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
-            objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::Deselect);
+            const auto id = Segmentation::singleton().objects.back().id;
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            objectsTable.selectionModel()->select(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
         touchedObjectModel.recreate();
@@ -269,9 +261,9 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
         objectSelectionProtection = true;
         objectModel.appendRow();
         if (Segmentation::singleton().objects.back().selected) {
-            const auto & selectedItems = QItemSelection(objectModel.index(objectModel.rowCount(), 0), objectModel.index(objectModel.rowCount(), objectModel.columnCount()));
-            const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
-            objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::Select);
+            const auto id = Segmentation::singleton().objects.back().id;
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
         touchedObjectModel.recreate();
@@ -287,10 +279,11 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, [this](int id){
         objectSelectionProtection = true;
         objectModel.changeRow(id);
-        if (Segmentation::singleton().objects.back().selected) {
-            const auto & selectedItems = QItemSelection(objectModel.index(id, 0), objectModel.index(id, objectModel.columnCount()));
-            const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
-            objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::Select);
+        const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+        if (Segmentation::singleton().objects[id].selected) {
+            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        } else {
+            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
         touchedObjectModel.recreate();
@@ -403,9 +396,8 @@ void SegmentationTab::updateTouchedObjSelection() {
     const auto & selectedItems = blockSelection(touchedObjectModel, touchedObjectModel.objectCache);
 
     touchedObjectSelectionProtection = true;//using block signals prevents update of the tableview
-    touchedObjsTable.clearSelection();
-    touchedObjsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
-    touchedObjectSelectionProtection= false;
+    touchedObjsTable.selectionModel()->select(selectedItems, QItemSelectionModel::ClearAndSelect);
+    touchedObjectSelectionProtection = false;
 }
 
 void SegmentationTab::updateSelection() {
@@ -413,8 +405,7 @@ void SegmentationTab::updateSelection() {
     const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
 
     objectSelectionProtection = true;//using block signals prevents update of the tableview
-    objectsTable.clearSelection();
-    objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::Select);
+    objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::ClearAndSelect);
     objectSelectionProtection = false;
 
     if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
