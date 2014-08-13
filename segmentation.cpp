@@ -61,7 +61,9 @@ Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other)
         }
     }
     decltype(subobjects) tmp;
+    tmp.reserve(subobjects.size() + other.subobjects.size());
     std::merge(std::begin(subobjects), std::end(subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
+    tmp.shrink_to_fit();
     std::swap(subobjects, tmp);
     subobjects.erase(std::unique(std::begin(subobjects), std::end(subobjects)), std::end(subobjects));
     return *this;
