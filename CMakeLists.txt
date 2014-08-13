@@ -4,13 +4,6 @@ cmake_minimum_required(VERSION 2.8.11)
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
-if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-    add_definitions(-D_GLIBCXX_DEBUG)
-    add_definitions(-D_GLIBCXX_DEBUG_PEDANTIC)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")#no openmp for clang
-    add_definitions(-D_GLIBCXX_PARALLEL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
@@ -111,9 +104,18 @@ target_link_libraries(${PROJECT_NAME}
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
-
-#set(CMAKE_CXX_COMPILER "clang++")#for convenience: switch to clang if you wish
-#if(CMAKE_CXX_COMPILER MATCHES "clang")
+#set(CMAKE_C_COMPILER "clang")
+#set(CMAKE_CXX_COMPILER "clang++")
+#if(CMAKE_CXX_COMPILER MATCHES "clang")#sadly there’s no recent libc++ for travis
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
 #    target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
 #endif()
+
+if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+    add_definitions(-D_GLIBCXX_DEBUG)
+    add_definitions(-D_GLIBCXX_DEBUG_PEDANTIC)
+elseif(NOT CMAKE_CXX_COMPILER MATCHES "clang" AND CMAKE_BUILD_TYPE MATCHES "RELEASE")#no openmp for clang
+    add_definitions(-D_GLIBCXX_PARALLEL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -floop-parallelize-all -ftree-parallelize-loops=4")
+endif()
