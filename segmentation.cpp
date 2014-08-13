@@ -269,15 +269,13 @@ void Segmentation::untouchObjects() {
 
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedObjects() {
     auto it = subobjects.find(touched_subobject_id);
+    std::vector<std::reference_wrapper<Segmentation::Object>> vec;
     if (it != std::end(subobjects)) {
-        std::vector<std::reference_wrapper<Segmentation::Object>> vec;
         for (const auto & id : it->second.objects) {
             vec.emplace_back(objects[id]);
         }
-        return vec;
-    } else {
-        return {};
     }
+    return vec;
 }
 
 bool Segmentation::isSelected(const SubObject & rhs) const{
