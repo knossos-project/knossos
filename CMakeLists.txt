@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 2.8.11)
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
+if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+    add_definitions(-D_GLIBCXX_DEBUG)
+    add_definitions(-D_GLIBCXX_DEBUG_PEDANTIC)
+else()
+    add_definitions(-D_GLIBCXX_PARALLEL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
