@@ -90,7 +90,7 @@ Q_OBJECT
     std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
         std::array<std::array<uint8_t, 256>, 3> lut;
         //interleaved spectral colors
-        for (std::size_t i = 0; i < 256; ++i) {
+        for (std::size_t i = 0; i < 256 - 6; ++i) {//account for icrements inside the loop
             lut[0][i] = i;
             lut[1][i] = 255;
             lut[2][i] = 0;
