@@ -7,7 +7,7 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     add_definitions(-D_GLIBCXX_DEBUG)
     add_definitions(-D_GLIBCXX_DEBUG_PEDANTIC)
-else()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")#no openmp for clang
     add_definitions(-D_GLIBCXX_PARALLEL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
