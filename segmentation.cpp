@@ -73,7 +73,9 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {}
+Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {
+    loadOverlayLutFromFile();
+}
 
 void Segmentation::clear() {
     selectedObjectIds.clear();
@@ -108,11 +110,13 @@ void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
 
         const auto expectedSize = 768 * sizeof(buffer[0]);
         if (buffer.size() == expectedSize) {
-            std::move(std::begin(buffer), std::end(buffer), &Segmentation::singleton().overlayColorMap[0][0]);
+            std::move(std::begin(buffer), std::end(buffer), &overlayColorMap[0][0]);
             qDebug() << "sucessfully loaded »stdOverlay.lut«";
         } else {
             qDebug() << "stdOverlay.lut corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
         }
+    } else {
+        qDebug() << "coult not open »stdOverlay.lut«";
     }
 }
 
