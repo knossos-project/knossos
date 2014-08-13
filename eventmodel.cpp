@@ -1120,7 +1120,6 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
-            QApplication::quit();
         }
     }
 }

@@ -48,10 +48,10 @@
 #define NUMTHREADS 4
 
 stateInfo * state = nullptr;//state lives here
-std::unique_ptr<Loader> loader;
-Knossos::Knossos(QObject *parent) : QObject(parent) {}
-
 std::unique_ptr<Knossos> knossos;
+std::unique_ptr<Loader> loader;
+
+Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 class myEventFilter: public QObject {
 public:
@@ -981,7 +981,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      state->magnification = (int)atoi(rval);
                      break;
                  case 13:
-                     state->overlay = true;
+                     state->overlay = std::stoi(rval);
                      break;
              }
          }

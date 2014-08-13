@@ -1,6 +1,7 @@
 #ifndef DATASETPROPERTYWIDGET_H
 #define DATASETPROPERTYWIDGET_H
 
+#include <QCheckBox>
 #include <QDialog>
 
 class QComboBox;
@@ -24,6 +25,7 @@ protected:
     QPushButton *datasetfileDialog;
     QSpinBox *supercubeEdgeSpin;
     QLabel *supercubeSizeLabel;
+    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QPushButton *cancelButton;
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
@@ -38,7 +40,7 @@ signals:
     void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
-    void supercubeEdgeSpinValueChanged(const int value);
+    void adaptMemoryConsumption();
     void cancelButtonClicked();
     void processButtonClicked();
 };

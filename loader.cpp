@@ -356,11 +356,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     return LLL_SUCCESS;
 }
 
-Loader::Loader(QObject *parent) :
-    QThread(parent)
-{
-
-}
+Loader::Loader(QObject *parent) : QThread(parent) {}
 
 int calc_nonzero_sign(float x) {
     if (x > 0) {
@@ -745,14 +741,14 @@ bool Loader::initLoader() {
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
 
-    qDebug("Allocating %d bytes for the datacubes.", state->cubeSetBytes);
+    qDebug() << "Allocating" << state->cubeSetBytes << "bytes for the datacubes.";
     for(size_t i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         DcSetChunk.emplace_back(state->cubeBytes, 0);//zero init chunk of chars
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
     }
 
     if(state->overlay) {
-        qDebug("Allocating %u bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
+        qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
         for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
             OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
             freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element

@@ -24,12 +24,13 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "loader.h"
 #include "widgets/mainwindow.h"
+
+#include <QObject>
 
 #include <memory>
 
-#include <qobject.h>
-#include <QtOpenGL>
 
 class Splash {
     QSplashScreen screen;
@@ -72,5 +73,6 @@ public slots:
 };
 
 extern std::unique_ptr<Knossos> knossos;
+extern std::unique_ptr<Loader> loader;
 
 #endif

@@ -38,10 +38,8 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     }
     supercubeEdgeSpin->setRange(3, maxM);
     supercubeEdgeSpin->setSingleStep(2);
-    supercubeEdgeSpin->setValue(state->M);
     supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     supercubeSizeLabel = new QLabel();
-    supercubeEdgeSpinValueChanged(state->M);//init label
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
@@ -59,6 +57,7 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     auto localLayout = new QVBoxLayout();
     localLayout->addLayout(hLayout);
     localLayout->addLayout(hLayout2);
+    localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
     localGroup->setLayout(localLayout);
 
@@ -67,7 +66,8 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     setLayout(mainLayout);
 
     QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetPropertyWidget::datasetfileDialogClicked);
-    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetPropertyWidget::supercubeEdgeSpinValueChanged);
+    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetPropertyWidget::adaptMemoryConsumption);
+    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetPropertyWidget::adaptMemoryConsumption);
     QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetPropertyWidget::cancelButtonClicked);
     QObject::connect(processButton, &QPushButton::clicked, this, &DatasetPropertyWidget::processButtonClicked);
 
@@ -87,12 +87,8 @@ void DatasetPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
     settings.setValue(DATASET_MRU, getRecentDirsItems());
-    if(state->M == 0) {
-        settings.setValue(DATASET_M, 3);
-    }
-    else {
-        settings.setValue(DATASET_M, state->M);
-    }
+    settings.setValue(DATASET_M, state->M);
+    settings.setValue(DATASET_OVERLAY, state->overlay);
     settings.endGroup();
 }
 
@@ -101,13 +97,17 @@ void DatasetPropertyWidget::loadSettings() {
     settings.beginGroup(DATASET_WIDGET);
     path->clear();
     path->insertItems(0, settings.value(DATASET_MRU).toStringList());
-    if (state->M == 0) {//M is invalid
+    if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_M, 3).toInt();
+    }
+    if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
+        state->overlay = settings.value(DATASET_OVERLAY, true).toBool();
     }
     settings.endGroup();
 
     supercubeEdgeSpin->setValue(state->M);
-    supercubeEdgeSpinValueChanged(state->M);//refill label
+    segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
+    adaptMemoryConsumption();
 
     //settings depending on M
     state->cubeSetElements = state->M * state->M * state->M;
@@ -152,10 +152,12 @@ void DatasetPropertyWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = FAST;
 }
 
-void DatasetPropertyWidget::supercubeEdgeSpinValueChanged(const int value) {
-    const auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(value, 3) / std::pow(1024, 2);
+void DatasetPropertyWidget::adaptMemoryConsumption() {
+    const auto superCubeEdge = supercubeEdgeSpin->value();
+    auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
+    mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
     auto text = QString("Data cache cube edge length (%1 MiB RAM").arg(mibibytes);
-    if (state->M != supercubeEdgeSpin->value()) {
+    if (state->M != supercubeEdgeSpin->value() || state->overlay != segmentationOverlayCheckbox.isChecked()) {
         text.append(", restart required");
     }
     text.append(")");
@@ -213,6 +215,35 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
         return;
     }
 
+    const auto superCubeChange = state->M != supercubeEdgeSpin->value();
+    const auto segmentationOverlayChange = state->overlay != segmentationOverlayCheckbox.isChecked();
+    if (isGUI && (superCubeChange || segmentationOverlayChange)) {
+        auto text = QString("You chose to:\n");
+        if (superCubeChange) {
+            text += "• change the data cache cube edge length\n";
+        }
+        if (segmentationOverlayChange) {
+            text += "• change the display of the segmentation data\n";
+        }
+        text += QString("\nKnossos needs to restart to apply this.\n")
+                + QString("You will loose your annotation if you didn’t save or already cleared it.");
+        if (QMessageBox::question(this, "Knossos restart – loss of unsaved annotation", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
+            auto args = QApplication::arguments();
+            if (superCubeChange) {
+                args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
+            }
+            if (segmentationOverlayChange) {
+                args.append(QString("--overlay=%0").arg(segmentationOverlayCheckbox.isChecked()));
+            }
+            qDebug() << args;
+            QApplication::closeAllWindows();//stop loader, and queue application closing
+            loader.reset();//free cubes before loading the new knossos instance
+            const auto program = args[0];
+            QProcess::startDetached(program, args);
+            return;
+        }
+    }
+
     int dirRecentIndex = this->getRecentDirsItems().indexOf(dir);
     if (-1 != dirRecentIndex) {
         this->path->removeItem(dirRecentIndex);
@@ -260,20 +291,6 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     }
 
     knossos->commonInitStates();
-
-    if (isGUI && state->M != supercubeEdgeSpin->value()) {
-        auto text = QString("You chose to change the data cache cube edge length. \n")
-                +QString("\nKnossos needs to restart to apply this.\n\n")
-                +QString("You will loose your skeleton if you didn’t save or already cleared it.");
-        if (QMessageBox::question(this, "Knossos restart", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
-            //ideally one would use qApp->quit(), but the cleanup steps are not connected to this
-            static_cast<MainWindow*>(parent())->close();//call Knossos cleanup func
-            auto args = qApp->arguments();
-            args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
-            qDebug() << args;
-            QProcess::startDetached(qApp->arguments()[0], args);
-        }
-    }
 
     this->waitForLoader();
 
