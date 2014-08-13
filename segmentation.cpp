@@ -1,5 +1,13 @@
 #include "segmentation.h"
 
+#include <QTextStream>
+
+#include <algorithm>
+#include <fstream>
+#include <random>
+#include <sstream>
+#include <utility>
+
 uint64_t Segmentation::Object::highestId = -1;
 
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)

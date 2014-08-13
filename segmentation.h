@@ -1,25 +1,18 @@
 #ifndef SEGMENTATION_H
 #define SEGMENTATION_H
 
-#include <algorithm>
-#include <array>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <istream>
-#include <functional>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
-#include <set>
-#include <time.h>
+#include "coordinate.h"
 
 #include <QDebug>
 #include <QString>
 #include <QObject>
-#include <QStandardPaths>
 
-#include "coordinate.h"
+#include <array>
+#include <functional>
+#include <set>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 class Segmentation : public QObject {
 Q_OBJECT
@@ -89,31 +82,33 @@ Q_OBJECT
     // The colors should be "maximally different".
     std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
         std::array<std::array<uint8_t, 256>, 3> lut;
+        std::mt19937 rng;
+        std::uniform_int_distribution<> dist(0, 255);
         //interleaved spectral colors
         for (std::size_t i = 0; i < 256 - 6; ++i) {//account for icrements inside the loop
-            lut[0][i] = i;
+            lut[0][i] = 255;
+            lut[1][i] = 0;
+            lut[2][i] = dist(rng);
+            ++i;
+            lut[0][i] = dist(rng);
             lut[1][i] = 255;
             lut[2][i] = 0;
             ++i;
-            lut[0][i] = i;
-            lut[1][i] = 0;
+            lut[0][i] = 0;
+            lut[1][i] = dist(rng);
             lut[2][i] = 255;
             ++i;
             lut[0][i] = 255;
-            lut[1][i] = i;
+            lut[1][i] = dist(rng);
             lut[2][i] = 0;
             ++i;
-            lut[0][i] = 0;
-            lut[1][i] = i;
-            lut[2][i] = 255;
-            ++i;
-            lut[0][i] = 255;
+            lut[0][i] = dist(rng);
             lut[1][i] = 0;
-            lut[2][i] = i;
+            lut[2][i] = 255;
             ++i;
             lut[0][i] = 0;
             lut[1][i] = 255;
-            lut[2][i] = i;
+            lut[2][i] = dist(rng);
         }
         return lut;
     }();
