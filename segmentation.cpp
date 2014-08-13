@@ -77,7 +77,7 @@ Segmentation & Segmentation::singleton() {
 Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {}
 
 void Segmentation::clear() {
-    selectedObjects.clear();
+    selectedObjectIds.clear();
     objects.clear();
     Object::highestId = -1;
     subobjects.clear();
@@ -148,10 +148,7 @@ void Segmentation::removeObject(Object & object) {
             std::replace(std::begin(subobject.objects), std::end(subobject.objects), objects.back().id, object.id);
         }
         //replace object id in selected objects
-        if (selectedObjects.find(objects.back().id) != std::end(selectedObjects)) {
-            selectedObjects.erase(objects.back().id);
-            selectedObjects.emplace(object.id);
-        }
+        selectedObjectIds.replace(objects.back().id, object.id);
         std::swap(object.id, objects.back().id);
         std::swap(object, objects.back());
     }
@@ -198,7 +195,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
     }
     const auto subobjectIt = subobjects.find(subObjectID);
     if (subobjectIt == std::end(subobjects)) {
-        if (renderAllObjs || selectedObjects.empty()) {
+        if (renderAllObjs || selectedObjectIds.empty()) {
             return subobjectColor(subObjectID);
         } else {
             return std::make_tuple(0, 0, 0, 0);
@@ -293,8 +290,8 @@ bool Segmentation::isSelected(const Object & rhs) const {
 }
 
 void Segmentation::clearObjectSelection() {
-    while (!selectedObjects.empty()) {
-        unselectObject(*std::begin(selectedObjects));
+    while (!selectedObjectIds.empty()) {
+        unselectObject(selectedObjectIds.back());
     }
 }
 
@@ -306,7 +303,7 @@ void Segmentation::selectObject(Object & object) {
     for (auto & subobj : object.subobjects) {
         ++subobj.get().selectedObjectsCount;
     }
-    selectedObjects.emplace(object.id);
+    selectedObjectIds.emplace_back(object.id);
     emit changedRow(object.id);
 }
 
@@ -324,7 +321,7 @@ void Segmentation::unselectObject(Object & object) {
     for (auto & subobj : object.subobjects) {
         --subobj.get().selectedObjectsCount;
     }
-    selectedObjects.erase(object.id);
+    selectedObjectIds.erase(object.id);
     emit changedRow(object.id);
 }
 
@@ -376,7 +373,7 @@ void Segmentation::selectObject(const uint64_t & objectId) {
 }
 
 std::size_t Segmentation::selectedObjectsCount() const {
-    return selectedObjects.size();
+    return selectedObjectIds.size();
 }
 
 void Segmentation::mergelistSave(QIODevice & file) const {
@@ -426,33 +423,36 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 }
 
 void Segmentation::deleteSelectedObjects() {
-    while (!selectedObjects.empty()) {
-        removeObject(objects[*std::begin(selectedObjects)]);
+    while (!selectedObjectIds.empty()) {
+        removeObject(objects[selectedObjectIds.back()]);
     }
 }
 
 void Segmentation::mergeSelectedObjects() {
-    while (selectedObjects.size() > 1) {
-        auto beginIt = std::begin(selectedObjects);
-        auto & firstObj = objects[*beginIt];
-        auto & secondObj = objects[*std::next(beginIt)];
+    while (selectedObjectIds.size() > 1) {
+        auto & firstObj = objects[selectedObjectIds.front()];//front is the merge origin
+        auto & secondObj = objects[selectedObjectIds.back()];
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = false;
-            selectedObjects.erase(object.id);
+            selectedObjectIds.erase(object.id);
             emit changedRow(object.id);//deselect
         };
-        //(im)mutability possibilities
+        //4 (im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
-            flat_deselect(firstObj);
             flat_deselect(secondObj);
+
+            uint64_t newid;
             if (firstObj.subobjects.size() < secondObj.subobjects.size()) {
-                auto & newObj = const_merge(firstObj, secondObj);
-                selectedObjects.emplace(newObj.id);
+                newid = const_merge(firstObj, secondObj).id;
             } else {
-                auto & newObj = const_merge(secondObj, firstObj);
-                selectedObjects.emplace(newObj.id);
+                newid = const_merge(secondObj, firstObj).id;
             }
+            selectedObjectIds.emplace_back(newid);
+            //move new id to front, so it gets the new merge origin
+            swap(selectedObjectIds.back(), selectedObjectIds.front());
+            //delay deselection after we swapped new with first
+            flat_deselect(firstObj);
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
@@ -461,17 +461,17 @@ void Segmentation::mergeSelectedObjects() {
             flat_deselect(firstObj);
             secondObj.merge(firstObj);
             emit changedRow(secondObj.id);
-        } else {
+        } else {//if both are mutable we can choose the merge order
             if (firstObj.subobjects.size() > secondObj.subobjects.size()) {
                 flat_deselect(secondObj);
                 firstObj.merge(secondObj);
-                removeObject(secondObj);
                 emit changedRow(firstObj.id);
+                removeObject(secondObj);
             } else {
                 flat_deselect(firstObj);
                 secondObj.merge(firstObj);
-                removeObject(firstObj);
                 emit changedRow(secondObj.id);
+                removeObject(firstObj);
             }
         }
     }
@@ -496,5 +496,5 @@ void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToU
 }
 
 void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
-    unmergeObject(objects[*std::begin(selectedObjects)], objectToUnmerge);
+    unmergeObject(objects[selectedObjectIds.front()], objectToUnmerge);
 }
