@@ -228,9 +228,10 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
         text += QString("\nKnossos needs to restart to apply this.\n")
                 + QString("You will loose your annotation if you didn’t save or already cleared it.");
         if (QMessageBox::question(this, "Knossos restart – loss of unsaved annotation", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
-            auto args = QApplication::arguments();
+            auto args = QApplication::arguments();//append to previous args, newer values will overwrite previous ones
+            //change via cmdline so it is not saved on a crash/kill
             if (superCubeChange) {
-                args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
+                args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));
             }
             if (segmentationOverlayChange) {
                 args.append(QString("--overlay=%0").arg(segmentationOverlayCheckbox.isChecked()));
@@ -239,6 +240,7 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
             QApplication::closeAllWindows();//stop loader, and queue application closing
             loader.reset();//free cubes before loading the new knossos instance
             const auto program = args[0];
+            args.pop_front();//remove program path from args
             QProcess::startDetached(program, args);
             return;
         }
