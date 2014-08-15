@@ -28,8 +28,8 @@
  */
 
 #include <QDialog>
+#include <QLabel>
 
-class QLabel;
 class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
@@ -50,6 +50,7 @@ public slots:
     void update();
     void loadSettings();
     void saveSettings();
+    void updateCompressionRatioDisplay();
 protected:
     /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
      * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
@@ -57,7 +58,10 @@ protected:
     float lastZoomSkel;
     bool userZoomSkel;
 
+    // compression section
+    QLabel compressionLabel;
     // top layout
+    QLabel zoomSectionLabel{"Zoom Settings"};
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewportLabel;
     QDoubleSpinBox *orthogonalDataViewportSpinBox;

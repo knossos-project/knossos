@@ -306,6 +306,6 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
-
+    emit updateCompressionLabel();
     this->hide();
 }

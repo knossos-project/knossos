@@ -1932,6 +1932,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpLowerLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperRight, &Viewport::setOrientation);
+    QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::updateCompressionRatioDisplay);
     //end event handler signals
     // mainwindow signals
     QObject::connect(window, &MainWindow::branchPushedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPushed);
@@ -2021,6 +2022,7 @@ void Viewer::rewire() {
     // dataset property signals --
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::updateCompressionLabel, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::updateCompressionRatioDisplay);
     // -- end dataset property signals
     // task management signals --
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal,

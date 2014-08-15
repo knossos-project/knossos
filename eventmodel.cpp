@@ -1039,6 +1039,7 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
             state->compressionRatio = originalCompressionRatio;
         }
         state->viewer->changeDatasetMag(DATA_SET);
+        emit compressionRatioToggled();
     }
 }
 

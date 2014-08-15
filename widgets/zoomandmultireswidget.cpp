@@ -46,6 +46,21 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     setWindowIcon(QIcon(":/images/icons/zoom-in.png"));
     setWindowTitle("Zoom and Multiresolution");
 
+    // compression section
+    switch(state->compressionRatio) {
+    case 0:
+        compressionLabel.setText("Current compression: none (toggle with (5))");
+        break;
+    case 1000:
+        compressionLabel.setText("Current compression: jpg (toggle with (5))");
+        break;
+    case 1001:
+        compressionLabel.setText("Current compression: j2k (toggle with (5))");
+        break;
+    default:
+        compressionLabel.setText("Current compression: jp2 (toggle with (5))");
+    }
+
     // top layout
     QGridLayout *topLayout = new QGridLayout();
     this->orthogonalDataViewportLabel = new QLabel(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
@@ -61,21 +76,27 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->skeletonViewportSpinBox->setMinimum(0);
     this->skeletonViewportSpinBox->setSuffix("\%");
 
-    topLayout->addWidget(this->orthogonalDataViewportLabel, 0, 1);
-    topLayout->addWidget(this->orthogonalDataViewportSpinBox, 0, 2);
+    QFrame *line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    topLayout->addWidget(&zoomSectionLabel, 0, 0);
+    topLayout->addWidget(line, 1, 0, 1, 2);
+    topLayout->addWidget(this->orthogonalDataViewportLabel, 2, 0);
+    topLayout->addWidget(this->orthogonalDataViewportSpinBox, 2, 1);
 
-    topLayout->addWidget(this->skeletonViewportLabel, 1, 1);
-    topLayout->addWidget(this->skeletonViewportSpinBox, 1, 2);
+    topLayout->addWidget(this->skeletonViewportLabel, 3, 0);
+    topLayout->addWidget(this->skeletonViewportSpinBox, 3, 1);
 
     this->zoomDefaultsButton = new QPushButton("All Zoom defaults");
     zoomDefaultsButton->setAutoDefault(false);
-    topLayout->addWidget(zoomDefaultsButton, 2, 1);
+    topLayout->addWidget(zoomDefaultsButton, 4, 0);
 
     // main layout
     QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addWidget(&compressionLabel);
     mainLayout->addLayout(topLayout);
 
-    QFrame *line = new QFrame();
+    line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
@@ -112,6 +133,22 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     connect(this->lockDatasetCheckBox, SIGNAL(toggled(bool)), this, SLOT(lockDatasetMagChecked(bool)));
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
+
+void ZoomAndMultiresWidget::updateCompressionRatioDisplay() {
+    switch(state->compressionRatio) {
+    case 0:
+        compressionLabel.setText("Current compression: none (toggle with (5))");
+        break;
+    case 1000:
+        compressionLabel.setText("Current compression: jpg (toggle with (5))");
+        break;
+    case 1001:
+        compressionLabel.setText("Current compression: j2k (toggle with (5))");
+        break;
+    default:
+        compressionLabel.setText("Current compression: jp2 (toggle with (5))");
+    }
 }
 
 /**

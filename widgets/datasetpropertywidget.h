@@ -36,6 +36,7 @@ signals:
     void userMoveSignal(int x, int y, int z);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
+    void updateCompressionLabel();
 public slots:
     void datasetfileDialogClicked();
     void supercubeEdgeSpinValueChanged(const int value);

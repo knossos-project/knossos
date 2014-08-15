@@ -572,9 +572,25 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             if(fclose(cubeFile) != 0) {
                 LOG("Additionally, an error occured closing the file");
             }
+            if(LM_FTP == state->loadMode) {
+                if(remove(filename) != 0) {
+                    qDebug() << "Failed to delete cube file " << filename;
+                }
+                else {
+                    qDebug("successful delete");
+                }
+            }
             goto loadcube_fail;
         } else {
             fclose(cubeFile);
+            if(LM_FTP == state->loadMode) {
+                if(remove(filename) != 0) {
+                    qDebug() << "Failed to delete cube file " << filename;
+                }
+                else {
+                    qDebug("successful delete");
+                }
+            }
         }
         break;
     case 1000:
@@ -598,8 +614,10 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             LOG("malloc failed!\n");
             goto loadcube_fail;
         }
+
         readBytes = fread(localCompressedBuf, 1, localCompressedBufSize, cubeFile);
         fclose(cubeFile);
+
         if (localCompressedBufSize != readBytes) {
             LOG("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
             goto loadcube_fail;
@@ -618,6 +636,12 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             LOG("tjDecompress2() failed!");
             goto loadcube_fail;
         }
+
+        if(LM_FTP == state->loadMode) {
+            if(remove((const char*)filename) != 0) {
+                qDebug() << "Failed to delete cube file " << filename;
+            }
+        }
 #else
         LOG("JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.");
 #endif
@@ -627,6 +651,9 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
             LOG("Decompression function failed!");
             goto loadcube_fail;
+        }
+        if(LM_FTP == state->loadMode) {
+            remove(filename);
         }
         break;
     }
