@@ -1027,6 +1027,21 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     }
 }
 
+void EventModel::handleKeyRelease(QKeyEvent *event) {
+    if (event->key() == Qt::Key_5) { // switch between compresed and raw
+        static uint originalCompressionRatio;
+        static bool changeToRaw = false;
+        changeToRaw = !changeToRaw;
+        if (changeToRaw) {
+            originalCompressionRatio = state->compressionRatio;
+            state->compressionRatio = 0;
+        } else {
+            state->compressionRatio = originalCompressionRatio;
+        }
+        state->viewer->changeDatasetMag(DATA_SET);
+    }
+}
+
 Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
 
     Coordinate *foundCoordinate;

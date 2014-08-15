@@ -63,6 +63,7 @@ public:
     void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     void handleMouseWheel(QWheelEvent * const event, int VPfound);
     void handleKeyboard(QKeyEvent *event, int VPfound);
+    void handleKeyRelease(QKeyEvent *event);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
     void startNodeSelection(int x, int y, int vpId);

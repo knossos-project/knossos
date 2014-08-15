@@ -444,6 +444,8 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         state->repeatDirection[0] /= 10;
         state->repeatDirection[1] /= 10;
         state->repeatDirection[2] /= 10;
+    } else {
+        eventDelegate->handleKeyRelease(event);
     }
 }
 
