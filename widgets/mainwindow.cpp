@@ -193,7 +193,7 @@ void MainWindow:: createToolBar() {
         return button;
     };
     auto tracingTimeButton = createToolToogleButton(":/images/icons/appointment.png", "Tracing Time");
-    auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Zoom and Multiresolution");
+    auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Dataset Options");
     auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
     auto commentShortcutsButton = createToolToogleButton(":/images/icons/insert-text.png", "Comment Shortcuts");
     auto annotationButton = createToolToogleButton(":/images/icons/graph.png", "Annotation");
@@ -202,13 +202,13 @@ void MainWindow:: createToolBar() {
     QObject::connect(tracingTimeButton, &QToolButton::toggled, widgetContainer->tracingTimeWidget, &TracingTimeWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
-    QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::setVisible);
+    QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     QObject::connect(commentShortcutsButton, &QToolButton::toggled, widgetContainer->commentsWidget, &CommentsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->tracingTimeWidget, &TracingTimeWidget::visibilityChanged, tracingTimeButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
+    QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->commentsWidget, &CommentsWidget::visibilityChanged, commentShortcutsButton, &QToolButton::setChecked);
 
     toolBar->addSeparator();
@@ -387,7 +387,7 @@ void MainWindow::recentFileSelected() {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", widgetContainer->datasetPropertyWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
     fileMenu.addAction(QIcon(":/images/icons/open-skeleton.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
@@ -555,7 +555,7 @@ void MainWindow::createMenus() {
     auto windowMenu = menuBar()->addMenu("Windows");
     windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
     windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", widgetContainer->zoomAndMultiresWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", widgetContainer->tracingTimeWidget, SLOT(show()));
 
 
@@ -945,10 +945,10 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    widgetContainer->datasetPropertyWidget->saveSettings();
+    widgetContainer->datasetLoadWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
-    widgetContainer->zoomAndMultiresWidget->saveSettings();
+    widgetContainer->datasetOptionsWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
@@ -1019,10 +1019,10 @@ void MainWindow::loadSettings() {
     this->setGeometry(x, y, width, height);
 
 
-    widgetContainer->datasetPropertyWidget->loadSettings();
+    widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
-    widgetContainer->zoomAndMultiresWidget->loadSettings();
+    widgetContainer->datasetOptionsWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();

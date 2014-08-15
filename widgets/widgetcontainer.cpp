@@ -51,16 +51,16 @@ void WidgetContainer::createCommentsWidget(QWidget *parent) {
     commentsWidget->setFixedHeight(commentsWidget->height());
 }
 
-void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
-    zoomAndMultiresWidget = new ZoomAndMultiresWidget(parent);
+void WidgetContainer::createDatasetOptionsWidget(QWidget *parent) {
+    datasetOptionsWidget = new DatasetOptionsWidget(parent);
 #ifdef Q_OS_UNIX
-    zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+    datasetOptionsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    zoomAndMultiresWidget->layout()->update();
-    zoomAndMultiresWidget->layout()->activate();
-    zoomAndMultiresWidget->move(QApplication::desktop()->screen()->rect().center().x(),
+    datasetOptionsWidget->layout()->update();
+    datasetOptionsWidget->layout()->activate();
+    datasetOptionsWidget->move(QApplication::desktop()->screen()->rect().center().x(),
                          QApplication::desktop()->screen()->rect().center().y());
-    zoomAndMultiresWidget->setFixedSize(zoomAndMultiresWidget->size());
+    datasetOptionsWidget->setFixedSize(datasetOptionsWidget->size());
 }
 
 void WidgetContainer::createNavigationWidget(QWidget *parent) {
@@ -100,12 +100,12 @@ void WidgetContainer::createDataSavingWidget(QWidget *parent) {
     dataSavingWidget->setFixedSize(dataSavingWidget->size());
 }
 
-void WidgetContainer::createDatasetPropertyWidget(QWidget *parent) {
-    datasetPropertyWidget = new DatasetPropertyWidget(parent);
+void WidgetContainer::createDatasetLoadWidget(QWidget *parent) {
+    datasetLoadWidget = new DatasetLoadWidget(parent);
 #ifdef Q_OS_UNIX
-    datasetPropertyWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+    datasetLoadWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    datasetPropertyWidget->setFixedHeight(datasetPropertyWidget->sizeHint().height());
+    datasetLoadWidget->setFixedHeight(datasetLoadWidget->sizeHint().height());
 }
 
 void WidgetContainer::createTaskWidgets(QWidget *parent) {
@@ -156,15 +156,15 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createTracingTimeWidget(parent);
     createCommentsWidget(parent);
     createViewportSettingsWidget(parent);
-    createZoomAndMultiresWidget(parent);
+    createDatasetOptionsWidget(parent);
     createNavigationWidget(parent);
     createDataSavingWidget(parent);
-    createDatasetPropertyWidget(parent);
+    createDatasetLoadWidget(parent);
     createTaskWidgets(parent);
     createSplashScreenWidget(parent);
     createDocumentationWidget(parent);
     createAnnotationWidget(parent);
     rewire();
 
-    connect(this->datasetPropertyWidget, SIGNAL(datasetSwitchZoomDefaults()), this->zoomAndMultiresWidget, SLOT(zoomDefaultsClicked()));
+    connect(this->datasetLoadWidget, SIGNAL(datasetSwitchZoomDefaults()), this->datasetOptionsWidget, SLOT(zoomDefaultsClicked()));
 }

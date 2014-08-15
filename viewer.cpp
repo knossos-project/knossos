@@ -1210,7 +1210,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
 
-    emit updateZoomAndMultiresWidgetSignal();
+    emit updateDatasetOptionsWidgetSignal();
 
     return true;
 }
@@ -1977,7 +1977,7 @@ bool Viewer::moveVPonTop(uint currentVP) {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    connect(this, &Viewer::updateZoomAndMultiresWidgetSignal,window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    connect(this, &Viewer::updateDatasetOptionsWidgetSignal,window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::updateCoordinatesSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
@@ -2005,7 +2005,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
-    QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::deleteActiveNodeSignal, &Skeletonizer::delActiveNode);
     QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
@@ -2022,6 +2022,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpLowerLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperRight, &Viewport::setOrientation);
+    QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     //end event handler signals
     // mainwindow signals
     QObject::connect(window, &MainWindow::branchPushedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPushed);
@@ -2053,10 +2054,10 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
     //end mainwindow signals
     //viewport signals
-    QObject::connect(vpUpperLeft, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpLowerLeft, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpUpperRight, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpLowerRight, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpUpperRight, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerRight, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
 
     QObject::connect(vpUpperLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
     QObject::connect(vpLowerLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
@@ -2102,14 +2103,14 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
 
     //  -- end viewport settings widget signals
-    //  zoom and multires signals --
-    QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
-    QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
-    //  -- end zoom and multires signals
-    // dataset property signals --
-    QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
-    QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
-    // -- end dataset property signals
+    //  dataset options signals --
+    QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
+    QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
+    //  -- end dataset options signals
+    // dataset load signals --
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    // -- end dataset load signals
     // task management signals --
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::autosaveSignal, window, &MainWindow::autosaveSlot);

@@ -169,9 +169,9 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::userMoveSignal, &viewer, &Viewer::userMove);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
 
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
@@ -189,7 +189,8 @@ int main(int argc, char *argv[]) {
     viewer.run();
     remote.start();
 
-    viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+    viewer.window->widgetContainer->datasetLoadWidget->changeDataSet(false);
+    viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
 
     a.installEventFilter(new myEventFilter());
@@ -729,7 +730,7 @@ bool Knossos::configDefaults() {
     state->offset.y = 0;
     state->offset.z = 0;
     state->cubeEdgeLength = 128;
-    state->M = 0;//invalid M, so the datasetpropertywidget can tell if M was provided by cmdline
+    state->M = 0;//invalid M, so the datasetLoadWidget can tell if M was provided by cmdline
     state->magnification = 1;
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;

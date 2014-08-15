@@ -495,7 +495,7 @@ void Viewport::zoomOrthogonals(float step){
         emit changeDatasetMagSignal(triggerMagChange);
    }
    emit recalcTextureOffsetsSignal();
-   emit updateZoomAndMultiresWidget();
+   emit updateDatasetOptionsWidget();
 
 }
 
@@ -506,7 +506,7 @@ void Viewport::zoomOutSkeletonVP() {
             state->skeletonState->zoomLevel = SKELZOOMMIN;
         }
         state->skeletonState->viewChanged = true;
-        emit updateZoomAndMultiresWidget();
+        emit updateDatasetOptionsWidget();
     }
 }
 void Viewport::zoomInSkeletonVP() {
@@ -516,7 +516,7 @@ void Viewport::zoomInSkeletonVP() {
             state->skeletonState->zoomLevel = SKELZOOMMAX;
         }
         state->skeletonState->viewChanged = true;
-        emit updateZoomAndMultiresWidget();
+        emit updateDatasetOptionsWidget();
     }
 }
 

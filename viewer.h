@@ -75,7 +75,7 @@ public:
 signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
-    void updateZoomAndMultiresWidgetSignal();
+    void updateDatasetOptionsWidgetSignal();
 protected:
     bool resetViewPortData(vpConfig *viewport);
 

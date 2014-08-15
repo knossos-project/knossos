@@ -19,9 +19,9 @@
 #include "viewportsettings/vpskeletonviewportwidget.h"
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
 
-#include "zoomandmultireswidget.h"
+#include "datasetoptionswidget.h"
 #include "navigationwidget.h"
-#include "datasetpropertywidget.h"
+#include "datasetloadwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
 #include "documentationwidget.h"
@@ -39,14 +39,14 @@ public:
     void showTracingTimeWidget();
     void createCommentsWidget(QWidget *parent);
     void showCommentsWidget();
-    void createZoomAndMultiresWidget(QWidget *parent);
+    void createDatasetOptionsWidget(QWidget *parent);
 
     void createNavigationWidget(QWidget *parent);
     void createViewportSettingsWidget(QWidget *parent);
     void createDataSavingWidget(QWidget *parent);
     void createSychronizationWidget(QWidget *parent);
     void createSplashScreenWidget(QWidget *parent);
-    void createDatasetPropertyWidget(QWidget *parent);
+    void createDatasetLoadWidget(QWidget *parent);
     void createTaskWidgets(QWidget *parent);
     void createDocumentationWidget(QWidget *parent);
     void createAnnotationWidget(QWidget *parent);
@@ -54,12 +54,12 @@ public:
 
     TracingTimeWidget *tracingTimeWidget;
     CommentsWidget *commentsWidget;
-    ZoomAndMultiresWidget *zoomAndMultiresWidget;
+    DatasetOptionsWidget *datasetOptionsWidget;
     NavigationWidget *navigationWidget;
     ViewportSettingsWidget *viewportSettingsWidget;
     DataSavingWidget *dataSavingWidget;
     SplashScreenWidget *splashWidget;
-    DatasetPropertyWidget *datasetPropertyWidget;
+    DatasetLoadWidget *datasetLoadWidget;
     TaskLoginWidget *taskLoginWidget;
     TaskManagementWidget *taskManagementWidget;
     DocumentationWidget *docWidget;

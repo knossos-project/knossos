@@ -88,7 +88,7 @@ signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
-    void updateZoomAndMultiresWidget();
+    void updateDatasetOptionsWidget();
     void loadSkeleton(const QString &path);
 public slots:
     void zoomOrthogonals(float step);
