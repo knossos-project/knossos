@@ -1128,6 +1128,18 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->overlay = true;
     }
+    if (event->key() == Qt::Key_5) {
+        static uint originalCompressionRatio;
+        static bool changeToRaw = false;
+        changeToRaw = !changeToRaw;
+        if (changeToRaw) {
+            originalCompressionRatio = state->compressionRatio;
+            state->compressionRatio = 0;
+        } else {
+            state->compressionRatio = originalCompressionRatio;
+        }
+        state->viewer->changeDatasetMag(DATA_SET);
+    }
 }
 
 Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
