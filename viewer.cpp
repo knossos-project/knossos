@@ -36,6 +36,18 @@
 #include <qopengl.h>
 #include <QtConcurrent/QtConcurrentRun>
 
+#if defined(Q_OS_WIN)
+#include <GL/wglext.h>
+#elif defined(Q_OS_LINUX)
+#define WINAPI
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+
+static WINAPI int dummy(int) {
+    return 0;
+}
+
 extern stateInfo *state;
 
 Viewer::Viewer(QObject *parent) :
@@ -1208,6 +1220,35 @@ void Viewer::run() {
             recalcTextureOffsets();
             skeletonizer->autoSaveIfElapsed();
             window->updateTitlebar();//display changes after filename
+
+            static auto disableVsync = [this](){
+                void (*func)(int) = nullptr;
+#if defined(Q_OS_WIN)
+                func = (void(*)(int))wglGetProcAddress("wglSwapIntervalEXT");
+#elif defined(Q_OS_LINUX)
+                func = (void(*)(int))glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+#endif
+                if (func != nullptr) {
+#if defined(Q_OS_WIN)
+                    return std::bind((PFNWGLSWAPINTERVALEXTPROC)func, 0);
+#elif defined(Q_OS_LINUX)
+                    return std::bind((PFNGLXSWAPINTERVALSGIPROC)func, 0);
+#endif
+                } else {
+                    qDebug() << "disabling vsync not available";
+                    return std::bind(&dummy, 0);
+                }
+            }();
+
+            disableVsync();
+            vpUpperLeft->updateGL();
+            disableVsync();
+            vpLowerLeft->updateGL();
+            disableVsync();
+            vpUpperRight->updateGL();
+            disableVsync();
+            vpLowerRight->updateGL();
+            disableVsync();
 
             vpUpperLeft->updateGL();
             vpLowerLeft->updateGL();
