@@ -138,13 +138,13 @@ void Segmentation::removeObject(Object & object) {
     unselectObject(object);
     for (auto & elem : object.subobjects) {
         auto & subobject = elem.get();
-        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), object.id));
+        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), object.id), std::end(subobject.objects));
         if (subobject.objects.empty()) {
             subobjects.erase(subobject.id);
         }
     }
     //swap with last, so no intermediate rows need to be deleted
-    if (objects.size() > 1) {
+    if (objects.size() > 1 && object.id != objects.back().id) {
         //replace object id in subobjects
         for (auto & elem : objects.back().subobjects) {
             auto & subobject = elem.get();
@@ -152,8 +152,9 @@ void Segmentation::removeObject(Object & object) {
         }
         //replace object id in selected objects
         selectedObjectIds.replace(objects.back().id, object.id);
-        std::swap(object.id, objects.back().id);
-        std::swap(object, objects.back());
+        std::swap(objects.back().id, object.id);
+        std::swap(objects.back(), object);
+        emit changedRow(object.id);//object now references the former end
     }
     emit beforeRemoveRow();
     objects.pop_back();
@@ -327,9 +328,8 @@ void Segmentation::unselectObject(Object & object) {
 }
 
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {
-    auto & otherSubobjects = other.subobjects;
     decltype(object.subobjects) tmp;
-    std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(otherSubobjects), std::end(otherSubobjects), std::back_inserter(tmp));
+    std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
     if (!tmp.empty()) {//only unmerge if subobjects remain
         if (object.immutable) {
             unselectObject(object);
@@ -339,9 +339,9 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
             selectObject(objects.back());
         } else {
             unselectObject(object);
-            for (auto & elem : otherSubobjects) {
+            for (auto & elem : other.subobjects) {
                 auto & objects = elem.get().objects;
-                objects.erase(std::remove(std::begin(objects), std::end(objects), object.id));//remove parent
+                objects.erase(std::remove(std::begin(objects), std::end(objects), object.id), std::end(objects));//remove parent
             }
             std::swap(object.subobjects, tmp);
             selectObject(object);
