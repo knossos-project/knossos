@@ -55,11 +55,12 @@
 #include "skeletonizer.h"
 #include "viewer.h"
 #include "viewport.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
 extern  stateInfo *state;
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
@@ -104,9 +105,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
-
-    widgetContainer = new WidgetContainer(this);
-    widgetContainer->createWidgets(this);
 
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);

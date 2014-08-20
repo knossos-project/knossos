@@ -15,7 +15,6 @@ class TaskManagementWidget : public QDialog
 {
     Q_OBJECT
     friend class Viewer;
-    friend class WidgetContainer;
     friend class MainWindow;
     friend class TaskLoginWidget;
 public:

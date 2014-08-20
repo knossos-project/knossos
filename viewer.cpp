@@ -36,6 +36,8 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgets/widgetcontainer.h"
 
 #if defined(Q_OS_WIN)
@@ -82,8 +84,8 @@ Viewer::Viewer(QObject *parent) :
 
     state->viewer = this;
     rewire();
-    window->loadSettings();
     window->show();
+    window->loadSettings();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
                             desktop->availableGeometry().topLeft().y() + 50,

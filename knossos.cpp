@@ -110,7 +110,9 @@ int main(int argc, char *argv[]) {
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
+#ifdef NDEBUG
     Splash splash(":/images/splash.png", 1500);
+#endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
@@ -410,14 +412,9 @@ bool Knossos::readConfigFile(const char *path) {
         } else {
             qDebug() << "Skipping unknown parameter";
         }
-
     }
 
-    if(file.isOpen())
-        file.close();
-
-
-        return true;
+    return true;
 }
 
 bool Knossos::printConfigValues() {
