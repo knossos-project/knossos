@@ -7,6 +7,7 @@
 #include <sstream>
 #include <utility>
 
+uint64_t Segmentation::SubObject::highestId = 0;
 uint64_t Segmentation::Object::highestId = -1;
 
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)

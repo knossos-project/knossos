@@ -31,13 +31,23 @@ struct floatCoordinate {
     float z;
 };
 
-class Coordinate{
-public:
+#include <boost/functional/hash.hpp>
+
+struct Coordinate {
+    struct Hash {
+        std::size_t operator()(Coordinate cord) const {
+            return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
+        }
+    };
+
     int x;
     int y;
     int z;
-    Coordinate() {}
-    Coordinate(int x, int y, int z) : x(x), y(y), z(z) {}
+    Coordinate(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
+
+    bool operator==(const Coordinate & rhs) const {
+        return x == rhs.x && y == rhs.y && z == rhs.z;
+    }
 
     /**
      * This function calculates the coordinates of the datacube from pixel coordinates

@@ -28,6 +28,7 @@
 #include "skeletonizer.h"
 #include "renderer.h"
 #include "segmentation.h"
+#include "segmentation_split.h"
 #include "viewer.h"
 #include "renderer.h"
 #include "widgets/widgetcontainer.h"
@@ -653,7 +654,11 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     }
 }
 
-void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
+void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
+    if (Segmentation::singleton().segmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+        verticalSplittingPlane(clickedCoordinate);
+    }
     // a node was dragged to a new position
     if(state->skeletonState->activeNode) {
         emit nodePositionChangedSignal(state->skeletonState->activeNode);

@@ -18,6 +18,7 @@
 
 class Segmentation : public QObject {
 Q_OBJECT
+    friend void verticalSplittingPlane(const Coordinate & seed);
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
     friend class CategoryModel;
@@ -25,13 +26,16 @@ Q_OBJECT
 
     class Object;
     class SubObject {
+        friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class Segmentation;
+        static uint64_t highestId;
         std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
     public:
         const uint64_t id;
         explicit SubObject(const uint64_t & id) : id(id) {
+            highestId = std::max(id, highestId);
             objects.reserve(10);//improves merging performance by a factor of 3
         }
         SubObject(SubObject &&) = delete;
@@ -48,6 +52,7 @@ Q_OBJECT
     }
 
     class Object {
+        friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class TouchedObjectModel;
         friend class SegmentationTab;

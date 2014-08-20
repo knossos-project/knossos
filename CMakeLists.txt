@@ -1,5 +1,5 @@
 project(knossos)
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.0)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
@@ -25,6 +25,7 @@ if(KNOSSOS_STATIC_LIBRARIES)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
+find_package(Boost REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -82,11 +83,13 @@ add_custom_command(
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch")
 include_directories(
+    ${Boost_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
 )
 target_link_libraries(${PROJECT_NAME}
+    ${Boost_LIBRARIES}
     ${CURL_LIBRARIES}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
