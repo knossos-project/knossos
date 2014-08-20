@@ -788,7 +788,7 @@ struct viewerState {
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
     Coordinate currentPosition;
-    Coordinate lastRecenteringPosition;
+    std::deque<Coordinate> lastRecenteringPositions;
 
     uint recenteringTime;
     uint recenteringTimeOrth;
