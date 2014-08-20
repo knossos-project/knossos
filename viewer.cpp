@@ -36,6 +36,8 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgets/widgetcontainer.h"
 
 #if defined(Q_OS_WIN)

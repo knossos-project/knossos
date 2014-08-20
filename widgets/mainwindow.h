@@ -27,6 +27,7 @@
 
 #include "viewport.h"
 #include "knossos-global.h"
+#include "widgetcontainer.h"
 
 #include <array>
 #include <memory>
@@ -49,7 +50,6 @@ class QCheckBox;
 class QMessageBox;
 class QGridLayout;
 class QFile;
-class WidgetContainer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -72,7 +72,8 @@ public:
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
-    WidgetContainer *widgetContainer;
+    WidgetContainer widgetContainerObject;
+    WidgetContainer * widgetContainer;
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 

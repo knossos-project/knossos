@@ -32,6 +32,8 @@
 #include "renderer.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 
 #include <cstdlib>
 
