@@ -75,9 +75,9 @@ public:
         auto it = positions.find(oldValue);
         if (it != std::end(positions)) {
             *it->second = newValue;//replace value
-            positions.erase(oldValue);//remove old mapping
             //new mapping to unchanged position
             positions.emplace(std::piecewise_construct, std::forward_as_tuple(newValue), std::forward_as_tuple(it->second));
+            positions.erase(oldValue);//remove old mapping
         }
     }
     std::size_t size() const {
