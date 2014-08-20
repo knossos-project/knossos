@@ -545,8 +545,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
     strcpy(state->skeletonState->skeletonLastSavedInVersion, "pre-3.2");
 
-    // Default for skeletons created in very old versions that don't have that
-    //   attribute
+    // Default for skeletons created in very old versions that don't have a
+    // skeletonTime.
+    // It is okay to set it to 0 in newer versions, because the time will be
+    // read from file anyway in case of no merge.
     if(!merge) {
         state->skeletonState->skeletonTime = 0;
     }
@@ -612,7 +614,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         state->offset.z = attribute.toLocal8Bit().toInt();
                     }
-                } else if(xml.name() == "time" && merge == false) {
+                } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if(attribute.isNull() == false) {
                         state->skeletonState->skeletonTime = attribute.toLocal8Bit().toInt();
@@ -698,7 +700,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->onCommentLock, static_cast<const char*>(attribute.toString().toStdString().c_str()));
                     }
-                } else if(merge == false && xml.name() == "idleTime") {
+                } else if(merge == false && xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
                     QStringRef attribute = attributes.value("ms");
                     if(attribute.isNull() == false) {
                         state->skeletonState->idleTime = attribute.toString().toInt();
@@ -971,7 +973,14 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         }
 
     }
-    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+    if(merge == false) {
+        // when a skeleton is *not* merged on loading, it overrides the current annotation.
+        // On saving the time should then be:
+        // the skeleton's time + knossos running time - running time until loading.
+        // On merging though, the current annotation's time is kept and no time correction
+        // should take place
+        state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+    }
     return true;
 }
 
