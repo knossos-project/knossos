@@ -143,13 +143,11 @@ public:
     //data access
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;
-    Object &largestObjectContainingSubobject(const SubObject & subobject);
-    const Object &largestObjectContainingSubobject(const SubObject & subobject) const;
-    Object &smallestImmutableObjectContainingSubobject(const SubObject & subobject);
-    const Object &smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
+    uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
+    uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     //selection query
     bool isSelected(const SubObject & rhs) const;
-    bool isSelected(const Object & rhs) const;
+    bool isSelected(const uint64_t &objectId) const;
     std::size_t selectedObjectsCount() const;
     //selection modification
     void selectObject(const uint64_t & objectId);
@@ -179,8 +177,7 @@ public slots:
     void clear();
     void deleteSelectedObjects();
     void mergeSelectedObjects();
-    void unmergeSelectedObjects(SubObject & subobjectToUnmerge);
-    void unmergeSelectedObjects(Object & objectToUnmerge);
+    void unmergeSelectedObjects();
 };
 
 #endif // SEGMENTATION_H

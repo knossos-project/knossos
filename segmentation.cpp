@@ -212,10 +212,10 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
         return std::make_tuple(0, 0, 0, 0);
     }
 
-    const auto & object = largestObjectContainingSubobject(subobject);
-    const uint8_t red   = overlayColorMap[0][object.id % 256];
-    const uint8_t green = overlayColorMap[1][object.id % 256];
-    const uint8_t blue  = overlayColorMap[2][object.id % 256];
+    const auto objectId = largestObjectContainingSubobject(subobject);
+    const uint8_t red   = overlayColorMap[0][objectId % 256];
+    const uint8_t green = overlayColorMap[1][objectId % 256];
+    const uint8_t blue  = overlayColorMap[2][objectId % 256];
     return std::make_tuple(red, green, blue, alpha);
 }
 
@@ -240,26 +240,18 @@ bool Segmentation::objectOrder(const uint64_t & lhsId, const uint64_t & rhsId) c
     return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
 }
 
-Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) {
-    const auto & segmentationConstRef = *this;
-    return const_cast<Segmentation::Object&>(segmentationConstRef.largestObjectContainingSubobject(subobject));
-}
-const Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+uint64_t Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
     //same comparitor for both functions, it seems to work as it is, so i don’t waste my head now to find out why
     //there may have been some reasoning… (at first glance it seems to restrictive for the largest object)
     auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
     const auto objectId = *std::max_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
-    return objects[objectId];
+    return objectId;
 }
 
-Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) {
-    const auto & segmentationConstRef = *this;
-    return const_cast<Segmentation::Object&>(segmentationConstRef.smallestImmutableObjectContainingSubobject(subobject));
-}
-const Segmentation::Object & Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
     auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
     const auto objectId = *std::min_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
-    return objects[objectId];
+    return objectId;
 }
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {
@@ -287,8 +279,8 @@ bool Segmentation::isSelected(const SubObject & rhs) const{
     return rhs.selectedObjectsCount != 0;
 }
 
-bool Segmentation::isSelected(const Object & rhs) const {
-    return rhs.selected;
+bool Segmentation::isSelected(const uint64_t & objectId) const {
+    return objects[objectId].selected;
 }
 
 void Segmentation::clearObjectSelection() {
@@ -478,24 +470,10 @@ void Segmentation::mergeSelectedObjects() {
     }
 }
 
-void Segmentation::unmergeSelectedObjects(Segmentation::SubObject & subobjectToUnmerge) {
-    const auto & otherIt = std::find_if(std::begin(subobjectToUnmerge.objects), std::end(subobjectToUnmerge.objects)
-    , [&](const uint64_t & elemId){
-        const auto & elem = objects[elemId];
-        return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobjectToUnmerge.id;
-    });
-    //create object to unmerge if there’s none except the currently selected one
-    if (otherIt == std::end(subobjectToUnmerge.objects)) {
-        beforeAppendRow();
-        objects.emplace_back(false, subobjectToUnmerge);
-        appendedRow();
-        auto & other = objects.back();
-        unmergeSelectedObjects(other);
-    } else {
-        unmergeSelectedObjects(objects[*otherIt]);
+void Segmentation::unmergeSelectedObjects() {
+    while (selectedObjectIds.size() > 1) {
+        auto & objectToUnmerge = objects[selectedObjectIds.back()];
+        unmergeObject(objects[selectedObjectIds.front()], objectToUnmerge);
+        unselectObject(objectToUnmerge);
     }
-}
-
-void Segmentation::unmergeSelectedObjects(Segmentation::Object & objectToUnmerge) {
-    unmergeObject(objects[selectedObjectIds.front()], objectToUnmerge);
 }

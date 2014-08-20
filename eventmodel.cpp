@@ -45,7 +45,7 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
-uint64_t segmentationColorPicking(int x, int y, const int viewportId) {
+uint64_t segmentationColorPicking(const int x, const int y, const int viewportId) {
     const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
     return Segmentation::singleton().subobjectIdFromUniqueColor(color);
 }
@@ -57,14 +57,16 @@ void merging(QMouseEvent *event, const int vp) {
         if (seg.selectedObjectsCount() == 1) {
             seg.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, vp));
             auto & subobject = seg.subobjectFromId(subobjectId);
-            auto & objectToMerge = seg.smallestImmutableObjectContainingSubobject(subobject);
+            const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
             //select if not selected and merge
             if (seg.isSelected(subobject)) {
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        seg.unmergeSelectedObjects(subobject);
+                        seg.selectObjectFromSubObject(subobject);
+                        seg.unmergeSelectedObjects();
                     } else {
-                        seg.unmergeSelectedObjects(objectToMerge);
+                        seg.selectObject(objectToMergeId);
+                        seg.unmergeSelectedObjects();
                     }
                 }
             } else {
@@ -72,7 +74,7 @@ void merging(QMouseEvent *event, const int vp) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         seg.selectObjectFromSubObject(subobject);
                     } else {
-                        seg.selectObject(objectToMerge);//select largest object
+                        seg.selectObject(objectToMergeId);//select largest object
                     }
                 }
                 if (seg.selectedObjectsCount() >= 2) {
@@ -584,14 +586,14 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId);
-                auto & obj = segmentation.largestObjectContainingSubobject(subobject);
+                auto objId = segmentation.largestObjectContainingSubobject(subobject);
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
                     segmentation.clearObjectSelection();
-                    segmentation.selectObject(obj);
-                } else if (segmentation.isSelected(obj)) {// unselect if selected
-                    segmentation.unselectObject(obj);
+                    segmentation.selectObject(objId);
+                } else if (segmentation.isSelected(objId)) {// unselect if selected
+                    segmentation.unselectObject(objId);
                 } else { // select largest object
-                    segmentation.selectObject(obj);
+                    segmentation.selectObject(objId);
                 }
                 if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
                     segmentation.touchObjects(subobjectId);
