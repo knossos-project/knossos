@@ -135,26 +135,12 @@ bool Remote::remoteWalk(int x, int y, int z) {
     float tempBeta = state->beta;
 
     float alpha, beta, dAlpha, dBeta;
-
-    // calculate avg of last x recentering positions
-    int avg_x = 0, avg_y = 0, avg_z = 0;
-    for(const auto coord : state->viewerState->lastRecenteringPositions) {
-        avg_x += coord.x;
-        avg_y += coord.y;
-        avg_z += coord.z;
-    }
-    avg_x /= state->viewerState->lastRecenteringPositions.size();
-    avg_y /= state->viewerState->lastRecenteringPositions.size();
-    avg_z /= state->viewerState->lastRecenteringPositions.size();
-
-    int dx = this->recenteringPosition.x - avg_x;
-    int dy = this->recenteringPosition.y - avg_y;
-    int dz = this->recenteringPosition.z - avg_z;
-    if(state->viewerState->lastRecenteringPositions.size() == 10) {
-        state->viewerState->lastRecenteringPositions.pop_front();
-    }
-    state->viewerState->lastRecenteringPositions.push_back(this->recenteringPosition);
-
+    int dx = this->recenteringPosition.x - state->viewerState->lastRecenteringPosition.x;
+    int dy = this->recenteringPosition.y -state->viewerState->lastRecenteringPosition.y;
+    int dz = this->recenteringPosition.z -state->viewerState->lastRecenteringPosition.z;
+    state->viewerState->lastRecenteringPosition.x = this->recenteringPosition.x;
+    state->viewerState->lastRecenteringPosition.y = this->recenteringPosition.y;
+    state->viewerState->lastRecenteringPosition.z = this->recenteringPosition.z;
     walkVector.x = (float) x;
     walkVector.y = (float) y;
     walkVector.z = (float) z;

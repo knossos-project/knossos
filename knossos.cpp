@@ -768,13 +768,9 @@ bool Knossos::configDefaults() {
     state->viewerState->currentPosition.x = 0;
     state->viewerState->currentPosition.y = 0;
     state->viewerState->currentPosition.z = 0;
-
-    Coordinate coord;
-    coord.x = state->viewerState->currentPosition.x;
-    coord.y = state->viewerState->currentPosition.y;
-    coord.z = state->viewerState->currentPosition.z;
-    state->viewerState->lastRecenteringPositions.push_back(coord);
-
+    state->viewerState->lastRecenteringPosition.x = state->viewerState->currentPosition.x;
+    state->viewerState->lastRecenteringPosition.y = state->viewerState->currentPosition.y;
+    state->viewerState->lastRecenteringPosition.z = state->viewerState->currentPosition.z;
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;
     state->viewerState->voxelDimZ = state->scale.z;
