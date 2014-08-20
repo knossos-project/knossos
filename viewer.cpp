@@ -82,8 +82,8 @@ Viewer::Viewer(QObject *parent) :
 
     state->viewer = this;
     rewire();
-    window->loadSettings();
     window->show();
+    window->loadSettings();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
                             desktop->availableGeometry().topLeft().y() + 50,
