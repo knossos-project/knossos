@@ -568,7 +568,8 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
     if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty() && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
+        const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
+        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty() && notOrigin) {
             merging(event, VPfound);
         }
         return;
