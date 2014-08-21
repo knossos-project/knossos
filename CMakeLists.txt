@@ -109,10 +109,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
 #set(CMAKE_C_COMPILER "clang")
 #set(CMAKE_CXX_COMPILER "clang++")
-#if(CMAKE_CXX_COMPILER MATCHES "clang")#sadly there’s no recent libc++ for travis
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
-#    target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
-#endif()
+if(CMAKE_CXX_COMPILER MATCHES "clang")#sadly there’s no recent libc++ for travis
+    if(DEFINED ENV{TRAVIS})#there’s no libc++ for 12.04
+        #(stupid) clang #defines (wrongly) disable boost features
+        add_definitions(-D__GNUC_MINOR__=8)#evil workaround
+        #see https://svn.boost.org/trac/boost/ticket/7473
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
+        target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
+    endif()
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     add_definitions(-D_GLIBCXX_DEBUG)
