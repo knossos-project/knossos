@@ -33,9 +33,13 @@ struct floatCoordinate {
 
 #include <boost/functional/hash.hpp>
 
-struct Coordinate {
+template<std::size_t = 0>
+struct Coord {
+    using Coordinate = Coord<>;
+    using CoordOfCube = Coord<1>;
+    using CoordInCube = Coord<2>;
     struct Hash {
-        std::size_t operator()(Coordinate cord) const {
+        std::size_t operator()(Coord cord) const {
             return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
         }
     };
@@ -43,9 +47,9 @@ struct Coordinate {
     int x;
     int y;
     int z;
-    Coordinate(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
+    Coord(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
 
-    bool operator==(const Coordinate & rhs) const {
+    bool operator==(const Coord & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
     }
 
@@ -53,14 +57,16 @@ struct Coordinate {
      * This function calculates the coordinates of the datacube from pixel coordinates
      */
     static Coordinate Px2DcCoord(Coordinate pxCoordinate, int cubeEdgeLength) {
-        Coordinate dcCoordinate;
+        auto cubeCoord = pxCoordinate.cube(cubeEdgeLength);
+        return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
+    }
 
-        // Rounding should be explicit.
-        dcCoordinate.x = pxCoordinate.x / cubeEdgeLength;
-        dcCoordinate.y = pxCoordinate.y / cubeEdgeLength;
-        dcCoordinate.z = pxCoordinate.z / cubeEdgeLength;
+    CoordOfCube cube(const int size) const {
+        return {x / size, y / size, z / size};
+    }
 
-        return dcCoordinate;
+    CoordInCube insideCube(const int size) const {
+        return {x % size, y % size, z % size};
     }
 
     /** test with overloadable operator, maybe obsolet */
@@ -70,6 +76,9 @@ struct Coordinate {
         z = rhs.z;
     }
 };
+using Coordinate = Coord<>;
+using CoordOfCube = Coord<1>;
+using CoordInCube = Coord<2>;
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
