@@ -28,7 +28,7 @@
 #include "skeletonizer.h"
 #include "renderer.h"
 #include "segmentation.h"
-#include "segmentation_split.h"
+#include "segmentationsplit.h"
 #include "viewer.h"
 #include "renderer.h"
 #include "widgets/widgetcontainer.h"
