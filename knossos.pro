@@ -60,10 +60,13 @@ linux {
 
 win32 {
     #DEFINES += CURL_STATICLIB
-    LIBS += -lcurl -lwsock32 #-lidn -lz -lintl -liconv
+    LIBS += -lcurl -lws2_32 -lidn -lz -lintl -liconv
 
     #DEFINES += FREEGLUT_STATIC
-    LIBS += -lglut32 #-lfreeglut_static
+    LIBS += -lglut
+    
+    DEFINES += QUAZIP_STATIC
+    LIBS += -lquazip -lz
 
     RC_FILE = knossos.rc
 }

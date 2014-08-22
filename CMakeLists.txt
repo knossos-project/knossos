@@ -94,13 +94,13 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
-    TurboJPEG
+    TurboJPEG::TurboJPEG
     Qt5::Core
     Qt5::Gui
     Qt5::Help
     Qt5::OpenGL
     Qt5::Widgets
-    ${QUAZIP_LIBRARIES}
+    QuaZip::QuaZip
 )
 
 
