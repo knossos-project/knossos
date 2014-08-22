@@ -20,46 +20,32 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#Resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(KNOSSOS_STATIC_LIBRARIES OFF CACHE BOOL "try to find static versions of all libraries")
-if(KNOSSOS_STATIC_LIBRARIES)
+option(BUILD_SHARED_LIBS "try to find static versions of all libraries")
+if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
-find_package(Boost REQUIRED)
+find_package(boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(TurboJPEG REQUIRED)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
+find_package(QuaZip 0.6.2 REQUIRED)
 
+#custom adjustments
 if(WIN32)
-    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
-    if(KNOSSOS_STATIC_LIBRARIES)
+    if(NOT BUILD_SHARED_LIBS)
+        set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
         #these definitions remove the dllimport directives from the includes
         add_definitions(-DCURL_STATICLIB)
         add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
         #satisfy additional dependecies
         set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
-        add_definitions(-DQUAZIP_STATIC)
     endif()
+    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
 endif()
 
-#i refrained from creating an external FindTurboJPEG.cmake
-#but a TurboJPEG-config.cmake in the install directory would be nice
-find_path(TURBOJPEG_INCLUDE_DIR turbojpeg.h REQUIRED)
-find_library(TURBOJPEG_LIBRARY turbojpeg)
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(TURBOJPEG DEFAULT_MSG TURBOJPEG_INCLUDE_DIR TURBOJPEG_LIBRARY)
-
-add_library(TurboJPEG STATIC IMPORTED)
-set_property(TARGET TurboJPEG PROPERTY IMPORTED_LOCATION ${TURBOJPEG_LIBRARY})
-include_directories(${TURBOJPEG_INCLUDE_DIR})
-#enable turbojpeg inside knossos
-add_definitions(-DKNOSSOS_USE_TURBOJPEG)
-
-
-find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
-find_package(QuaZip REQUIRED)
-include_directories(${QUAZIP_INCLUDE_DIRS})
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
