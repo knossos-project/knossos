@@ -25,7 +25,7 @@ if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
-find_package(boost 1.50 REQUIRED)
+find_package(Boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
