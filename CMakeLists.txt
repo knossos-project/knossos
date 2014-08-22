@@ -60,12 +60,12 @@ if(NOT BUILD_SHARED_LIBS)
     #these definitions remove the dllimport directives from the includes
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
-    if(UNIX AND NOT ${CURL_LIBRARIES} MATCHES ".so")
+    if(UNIX AND NOT "${CURL_LIBRARIES}" MATCHES ".so")
         execute_process(COMMAND curl-config --static-libs
             OUTPUT_VARIABLE CURL_LIBRARIES
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        message(${CURL_LIBRARIES})
+        separate_arguments(CURL_LIBRARIES)
     endif()
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
