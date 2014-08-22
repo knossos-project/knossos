@@ -34,16 +34,24 @@ find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 #custom adjustments
-if(WIN32)
-    if(NOT BUILD_SHARED_LIBS)
+if(NOT BUILD_SHARED_LIBS)
+    #these definitions remove the dllimport directives from the includes
+    add_definitions(-DCURL_STATICLIB)
+    add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
+    if(UNIX AND NOT ${CURL_LIBRARIES} MATCHES ".so")
+        execute_process(COMMAND curl-config --static-libs
+            OUTPUT_VARIABLE CURL_LIBRARIES
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        set(CURL_LIBRARIES "-l${CURL_LIBRARIES}")
+        message(${CURL_LIBRARIES})
+    endif()
+    if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
-        #these definitions remove the dllimport directives from the includes
-        add_definitions(-DCURL_STATICLIB)
-        add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
         #satisfy additional dependecies
         set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+        set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
     endif()
-    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
 endif()
 
 #platform dependent resources
