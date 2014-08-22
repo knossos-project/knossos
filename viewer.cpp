@@ -2112,6 +2112,7 @@ void Viewer::rewire() {
     // dataset load signals --
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     // -- end dataset load signals
     // task management signals --
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);

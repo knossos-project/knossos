@@ -17,11 +17,11 @@ public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
-    void changeDataSet(bool isGUI);
+    void changeDataset(bool isGUI);
 
 protected:
     QGroupBox *localGroup;
-    QComboBox *path;
+    QComboBox *pathDropdown;
     QPushButton *datasetfileDialog;
     QSpinBox *supercubeEdgeSpin;
     QLabel *supercubeSizeLabel;
@@ -30,11 +30,12 @@ protected:
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
     void waitForLoader();
-    QStringList getRecentDirsItems();
+    QStringList getRecentPathItems();
 signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
+    void updateDatasetCompression();
     void userMoveSignal(int x, int y, int z);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();

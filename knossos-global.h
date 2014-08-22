@@ -411,9 +411,6 @@ public:
     char loaderName[1024];
     char magNames[int_log(NUM_MAG_DATASETS)+1][1024];
 
-    char datasetBaseExpName[1024];
-
-
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
     // state->magnification should only be used by the viewer,

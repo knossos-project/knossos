@@ -27,10 +27,10 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
     datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    this->path = new QComboBox();
-    this->path->setInsertPolicy(QComboBox::NoInsert);
-    this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    this->path->setEditable(true);
+    this->pathDropdown = new QComboBox();
+    this->pathDropdown->setInsertPolicy(QComboBox::NoInsert);
+    this->pathDropdown->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    this->pathDropdown->setEditable(true);
     supercubeEdgeSpin = new QSpinBox;
     int maxM = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
     if (maxM % 2 == 0) {
@@ -44,7 +44,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     processButton = new QPushButton("Use");
 
     auto hLayout = new QHBoxLayout;
-    hLayout->addWidget(path);
+    hLayout->addWidget(pathDropdown);
     hLayout->addWidget(datasetfileDialog);
     auto hLayout2 = new QHBoxLayout;
     hLayout2->addWidget(supercubeEdgeSpin);
@@ -74,19 +74,19 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-QStringList DatasetLoadWidget::getRecentDirsItems() {
-    QStringList recentDirs;
-    int dirCount = this->path->count();
+QStringList DatasetLoadWidget::getRecentPathItems() {
+    QStringList recentPaths;
+    int dirCount = this->pathDropdown->count();
     for (int i = 0; i < dirCount; i++) {
-        recentDirs.append(this->path->itemText(i));
+        recentPaths.append(this->pathDropdown->itemText(i));
     }
-    return recentDirs;
+    return recentPaths;
 }
 
 void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
-    settings.setValue(DATASET_MRU, getRecentDirsItems());
+    settings.setValue(DATASET_MRU, getRecentPathItems());
     settings.setValue(DATASET_M, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
     settings.endGroup();
@@ -95,8 +95,8 @@ void DatasetLoadWidget::saveSettings() {
 void DatasetLoadWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
-    path->clear();
-    path->insertItems(0, settings.value(DATASET_MRU).toStringList());
+    pathDropdown->clear();
+    pathDropdown->insertItems(0, settings.value(DATASET_MRU).toStringList());
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_M, 3).toInt();
     }
@@ -145,9 +145,9 @@ void DatasetLoadWidget::loadSettings() {
 void DatasetLoadWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
-    QString selectDir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
-    if(!selectDir.isNull()) {
-        path->setEditText(selectDir);
+    QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+    if(!selectFile.isNull()) {
+        pathDropdown->setEditText(selectFile);
     }
     state->viewerState->renderInterval = FAST;
 }
@@ -182,39 +182,82 @@ void DatasetLoadWidget::cancelButtonClicked() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    changeDataSet(true);
+    changeDataset(true);
 }
 
-void DatasetLoadWidget::changeDataSet(bool isGUI) {
-    QString dir = this->path->currentText();
-    if(dir.isNull() || dir.isEmpty()) {
+/* dataset can be selected in three ways:
+ * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
+ * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
+ * 3. by specifying a .conf directly.
+ */
+void DatasetLoadWidget::changeDataset(bool isGUI) {
+    QString path = pathDropdown->currentText();
+    if(path.isNull() || path.isEmpty()) {
         if (isGUI) {
             QMessageBox info;
             info.setWindowFlags(Qt::WindowStaysOnTopHint);
             info.setIcon(QMessageBox::Information);
             info.setWindowTitle("Information");
-            info.setText("No directory specified!");
+            info.setText("No path selected!");
             info.addButton(QMessageBox::Ok);
             info.exec();
         }
         return;
     }
 
-    QString conf = QString(dir).append("/knossos.conf");
-    QFile confFile(conf);
-    if(!confFile.exists()) {
-        if (isGUI) {
-            QMessageBox info;
-            info.setWindowFlags(Qt::WindowStaysOnTopHint);
-            info.setIcon(QMessageBox::Information);
-            info.setWindowTitle("Information");
-            info.setText("There is no knossos.conf");
-            info.addButton(QMessageBox::Ok);
-            info.exec();
-        }
-        return;
+    QFile confFile;
+    QString filePath; // for holding the whole path to a .conf file
+    QFileInfo pathInfo(path);
+    if(pathInfo.isFile()) { // .conf file selected (case 3)
+        filePath = path;
+        confFile.setFileName(filePath);
     }
-
+    else { // folder selected
+        if(path.endsWith('/') == false && path.endsWith('\\') == false) {
+            // qFileInfo only recognizes paths with trailing slash as directories.
+            path.append('/');
+            pathInfo.setFile(path);
+        }
+        QDir directory(path);
+        QStringList dirContent = directory.entryList(QStringList("*.conf"));
+        if(dirContent.empty()) { // apparently the base dataset folder (case 2) was selected
+            // find the magnification subfolders and look for a .conf file starting at lowest mag
+            bool foundConf = false;
+            dirContent = directory.entryList(QStringList("*mag*"), QDir::Dirs, QDir::Name);
+            for(const auto magPath : dirContent) {
+                QDir magDir(QString("%1/%2").arg(directory.absolutePath()).arg(magPath));
+                QStringList subDirContent = magDir.entryList(QStringList("*.conf"), QDir::Files);
+                if(subDirContent.empty() == false) {
+                    filePath = QString("%1/%2/%3").arg(directory.absolutePath()).arg(magPath).arg(subDirContent.front());
+                    confFile.setFileName(filePath);
+                    QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
+                    foundConf = true;
+                    break;
+                }
+            }
+            if(foundConf == false) {
+                if (isGUI) {
+                    QMessageBox info;
+                    info.setWindowFlags(Qt::WindowStaysOnTopHint);
+                    info.setIcon(QMessageBox::Information);
+                    info.setWindowTitle("Information");
+                    info.setText("Could not find a dataset file (*.conf)");
+                    info.addButton(QMessageBox::Ok);
+                    info.exec();
+                }
+                return;
+            }
+        }
+        else {
+            filePath = QString("%1/%2").arg(directory.absolutePath()).arg(dirContent.front());
+            if(QRegExp(".*mag[0-9]+").exactMatch(directory.absolutePath())) {
+                // apparently the magnification folder was selected (case 1)
+                directory.cdUp();
+                QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
+            }
+        }
+    }
+    // check if user changed the supercube size. If so, KNOSSOS needs to restart
     const auto superCubeChange = state->M != supercubeEdgeSpin->value();
     const auto segmentationOverlayChange = state->overlay != segmentationOverlayCheckbox.isChecked();
     if (isGUI && (superCubeChange || segmentationOverlayChange)) {
@@ -225,10 +268,11 @@ void DatasetLoadWidget::changeDataSet(bool isGUI) {
         if (segmentationOverlayChange) {
             text += "• change the display of the segmentation data\n";
         }
-        text += QString("\nKnossos needs to restart to apply this.\n")
-                + QString("You will loose your annotation if you didn’t save or already cleared it.");
-        if (QMessageBox::question(this, "Knossos restart – loss of unsaved annotation", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
-            auto args = QApplication::arguments();//append to previous args, newer values will overwrite previous ones
+        text += QString("\nKnossos needs to restart to apply this.\
+                        You will loose your annotation if you didn’t save or already cleared it.");
+        if (QMessageBox::question(this, "Knossos restart – loss of unsaved annotation",
+                                  text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
+            auto args = QApplication::arguments(); //append to previous args, newer values will overwrite previous ones
             //change via cmdline so it is not saved on a crash/kill
             if (superCubeChange) {
                 args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));
@@ -246,12 +290,12 @@ void DatasetLoadWidget::changeDataSet(bool isGUI) {
         }
     }
 
-    int dirRecentIndex = this->getRecentDirsItems().indexOf(dir);
-    if (-1 != dirRecentIndex) {
-        this->path->removeItem(dirRecentIndex);
+    int pathRecentIndex = this->getRecentPathItems().indexOf(path);
+    if (-1 != pathRecentIndex) {
+        this->pathDropdown->removeItem(pathRecentIndex);
     }
-    this->path->insertItem(0, dir);
-    this->path->setCurrentIndex(0);
+    this->pathDropdown->insertItem(0, path);
+    this->pathDropdown->setCurrentIndex(0);
 
     // Note:
     // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
@@ -264,7 +308,7 @@ void DatasetLoadWidget::changeDataSet(bool isGUI) {
 
     // BUG BUG BUG
     // The following code, combined with the way loader::run in currently implemented
-    // (revision 966) contains a minor timing issue that may result in a crash, namely
+    // (revision 966) contains a minor timing    issue that may result in a crash, namely
     // since loader::loadCubes begins executing in LM_LOCAL mode and ends in LM_FTP,
     // if at this point in the code we're in LM_LOCAL, and are about an FTP dataset
     // BUG BUG BUG
@@ -279,24 +323,30 @@ void DatasetLoadWidget::changeDataSet(bool isGUI) {
 
     this->waitForLoader();
 
-    strcpy(state->path, dir.toStdString().c_str());
-
-    if(false == Knossos::readConfigFile(conf.toStdString().c_str())) {
+    if(false == Knossos::readConfigFile(filePath.toStdString().c_str())) {
         QMessageBox info;
         info.setWindowFlags(Qt::WindowStaysOnTopHint);
         info.setIcon(QMessageBox::Information);
         info.setWindowTitle("Information");
-        info.setText(QString("Failed to read config from %s").arg(conf));
+        info.setText(QString("Failed to read config from %1").arg(filePath));
         info.addButton(QMessageBox::Ok);
         info.exec();
         return;
     }
 
+    // we want state->path to hold the path to the dataset folder
+    // instead of a path to a subfolder of a specific magnification
+    QDir datasetDir(pathInfo.absolutePath());
+    if(QRegExp(".*mag[0-9]+").exactMatch(datasetDir.absolutePath())) {
+        datasetDir.cdUp();
+    }
+    strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
     knossos->commonInitStates();
 
     this->waitForLoader();
 
     emit changeDatasetMagSignal(DATA_SET);
+    emit updateDatasetCompression();
 
     // Back to usual...
     state->loaderDummy = false;

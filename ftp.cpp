@@ -188,7 +188,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
     return retVal;
 }
 
-int downloadFile(char *remote_path, char *local_filename) {
+int downloadFile(const char *remote_path, char *local_filename) {
     int retVal;
     int hadErrors;
     C_Element elem;
@@ -196,7 +196,9 @@ int downloadFile(char *remote_path, char *local_filename) {
 
     C_Element *elem_array = &elem;
     memset(&elem, 0, sizeof(elem));
-    elem.fullpath_filename = remote_path;
+    elem.fullpath_filename = (char*)malloc(strlen(remote_path) + 1);
+    strcpy(elem.fullpath_filename, remote_path);
+    qDebug("elem.fullpath: %s", elem.fullpath_filename);
     elem.local_filename = local_filename;
     eh = curl_easy_init();
     if (NULL == eh) {
