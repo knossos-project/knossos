@@ -383,6 +383,12 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeAttribute("version", QString(ptr));
     xml.writeEndElement();
 
+    xml.writeStartElement("scale");
+    xml.writeAttribute("x", tmp.setNum((float)state->scale.x / state->magnification));
+    xml.writeAttribute("y", tmp.setNum((float)state->scale.y / state->magnification));
+    xml.writeAttribute("z", tmp.setNum((float)state->scale.z / state->magnification));
+    xml.writeEndElement();
+
     xml.writeStartElement("tracing");
     xml.writeAttribute("simple", tmp.setNum((state->skeletonState->simpleTracing)? 1 : 0));
     xml.writeEndElement();
@@ -607,6 +613,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
                     }
+                } else if(xml.name() == "tracing") {
+                    QStringRef attribute = attributes.value("simple");
+                    state->skeletonState->simpleTracing = false;
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->simpleTracing = static_cast<bool>(attribute.toLocal8Bit().toInt());
+                    }
+                    emit setSimpleTracing(state->skeletonState->simpleTracing);
                 } else if(xml.name() == "tracing") {
                     QStringRef attribute = attributes.value("simple");
                     state->skeletonState->simpleTracing = false;
