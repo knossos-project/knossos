@@ -56,7 +56,7 @@ void annotationFileSave(const QString & filename) {
             auto fileinfo = QuaZipNewInfo(name);
             //without permissions set, some archive utilities will not grant any on extract
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
-            return file_write.open(QIODevice::WriteOnly, fileinfo);
+            return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, 1);
         };
         QuaZipFile file_write(&archive_write);
         const bool open = zipCreateFile(file_write, "annotation.xml");
