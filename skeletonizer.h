@@ -97,15 +97,15 @@ public slots:
     static bool addComment(QString content, nodeListElement *node, int nodeID);
     static bool editComment(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
     static bool delComment(commentListElement *currentComment, int commentNodeID);
-    bool jumpToActiveNode();
+    void jumpToActiveNode(bool *isSuccess = NULL);
     static bool setActiveTreeByID(int treeID);
 
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
     bool saveXmlSkeleton(QIODevice &file) const;
 
     static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
-    bool moveToNextTree();
-    bool moveToPrevTree();
+    void moveToNextTree(bool *isSuccess = NULL);
+    void moveToPrevTree(bool *isSuccess = NULL);
     bool moveToPrevNode();
     bool moveToNextNode();
     static bool moveNodeToTree(nodeListElement *node, int treeID);

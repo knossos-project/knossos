@@ -25,6 +25,8 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include <QMetaType>
+
 struct floatCoordinate {
     float x;
     float y;
@@ -79,6 +81,9 @@ struct Coord {
 using Coordinate = Coord<>;
 using CoordOfCube = Coord<1>;
 using CoordInCube = Coord<2>;
+
+Q_DECLARE_METATYPE(Coordinate)
+Q_DECLARE_METATYPE(floatCoordinate)
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \

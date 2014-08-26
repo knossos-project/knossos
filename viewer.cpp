@@ -800,6 +800,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
     for (i = 0; i < viewerState->numberViewports; i++) {
+        floatCoordinate v1, v2;
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
             //Set the coordinate of left upper data pixel currently stored in the texture
@@ -872,7 +873,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
             break;
         case VIEWPORT_ARBITRARY:
-            floatCoordinate v1, v2;
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,

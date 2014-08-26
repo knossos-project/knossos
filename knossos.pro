@@ -36,6 +36,8 @@ OTHER_FILES += \
     logo.ico \
     ChangeLog_v4.txt
 
+include(scriptengine/scriptengine.pri)
+
 macx:QMAKE_MAC_SDK = macosx10.9
 macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 macx {

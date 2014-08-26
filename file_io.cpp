@@ -29,27 +29,36 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad) {
+void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad, bool *isSuccess) {
+    bool annotationSuccess = false;
+    bool mergelistSuccess = false;
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
         if (archive.setCurrentFile("annotation.xml")) {
             QuaZipFile file(&archive);
             state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            annotationSuccess = true;
         } else {
             qDebug() << filename << "missing nml";
         }
         if (archive.setCurrentFile("mergelist.txt")) {
             QuaZipFile file(&archive);
             Segmentation::singleton().mergelistLoad(file);
+            mergelistSuccess = true;
         } else {
             qDebug() << filename << "missing mergelist";
         }
     } else {
         qDebug() << "opening" << filename << "for reading failed";
     }
+
+    if (NULL != isSuccess) {
+        *isSuccess = mergelistSuccess || annotationSuccess;
+    }
 }
 
-void annotationFileSave(const QString & filename) {
+void annotationFileSave(const QString & filename, bool *isSuccess) {
+    bool allSuccess = true;
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
         auto zipCreateFile = [](QuaZipFile & file_write, const QString & name){
@@ -64,6 +73,7 @@ void annotationFileSave(const QString & filename) {
             state->viewer->skeletonizer->saveXmlSkeleton(file_write);
         } else {
             qDebug() << filename << "saving nml failed";
+            allSuccess = false;
         }
         if (Segmentation::singleton().hasObjects()) {
             QuaZipFile file_write(&archive_write);
@@ -72,10 +82,16 @@ void annotationFileSave(const QString & filename) {
                 Segmentation::singleton().mergelistSave(file_write);
             } else {
                 qDebug() << filename << "saving mergelist failed";
+                allSuccess = false;
             }
         }
     } else {
         qDebug() << "opening" << filename << " for writing failed";
+        allSuccess = false;
+    }
+
+    if (NULL != isSuccess) {
+        *isSuccess = allSuccess;
     }
 }
 

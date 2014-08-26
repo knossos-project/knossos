@@ -40,6 +40,7 @@
 #include <QQueue>
 #include <QComboBox>
 #include <QUndoStack>
+#include "scriptengine/proxies/skeletonproxy.h"
 
 class QLabel;
 class QToolBar;
@@ -54,6 +55,7 @@ class QFile;
 class MainWindow : public QMainWindow {
     Q_OBJECT
     friend class TaskManagementMainTab;
+    friend SkeletonProxy;
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -133,11 +135,11 @@ signals:
     /* */
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
-    void moveToPrevTreeSignal();
-    void moveToNextTreeSignal();
+    void moveToPrevTreeSignal(bool *isSuccess = NULL);
+    void moveToNextTreeSignal(bool *isSuccess = NULL);
     bool popBranchNodeSignal();
     bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
-    void jumpToActiveNodeSignal();
+    void jumpToActiveNodeSignal(bool *isSuccess = NULL);
 
     bool addCommentSignal(QString content, nodeListElement *node, int nodeID);
     bool editCommentSignal(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
@@ -212,6 +214,8 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
+    void pythonSlot();
+    void pythonPropertiesSlot();
 };
 
 #endif // MAINWINDOW_H

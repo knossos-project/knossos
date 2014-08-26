@@ -27,6 +27,7 @@
 
 #include <QObject>
 #include "knossos-global.h"
+#include "scriptengine/decorators/meshdecorator.h"
 #include <QList>
 
 class Viewport;
@@ -72,6 +73,7 @@ public:
 
 class Renderer : public QObject {
     Q_OBJECT
+    friend class MeshDecorator;
     /* The first 50 entries of the openGL namespace are reserved
     for static objects (like slice plane quads...) */
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
@@ -92,6 +94,7 @@ protected:
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);
     void renderMergeLine(uint viewportType);
+    bool resizemeshCapacity(mesh *toResize, uint n);
     bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
     bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);

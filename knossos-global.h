@@ -31,6 +31,8 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
+#include "coordinate.h"
+
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
 #include <curl/curl.h>
 
@@ -46,8 +48,6 @@
 #include <QtNetwork/qhostaddress.h>
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
-
-#include "coordinate.h"
 
 #define KVERSION "4.1 Pre Alpha"
 
@@ -252,6 +252,13 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class floatCoordinate;
+class color4F;
+class treeListElement;
+class nodeListElement;
+class segmentListElement;
+class mesh;
+
 //Structures and custom types
 typedef uint8_t Byte;
 
@@ -265,12 +272,15 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
     return val < base ? res : int_log(val/base, base, res+1);
 }
 
-typedef struct {
+class color4F {
+public:
+    color4F();
+    color4F(float r, float g, float b, float a);
         GLfloat r;
         GLfloat g;
         GLfloat b;
         GLfloat a;
-} color4F;
+};
 
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
@@ -870,11 +880,15 @@ struct commentListElement {
     struct nodeListElement *node;
 };
 
-struct treeListElement {
+class treeListElement {
 public:
-    struct treeListElement *next;
-    struct treeListElement *previous;
-    struct nodeListElement *firstNode;
+    treeListElement();
+    treeListElement(int treeID, QString comment, color4F color);
+    treeListElement(int treeID, QString comment, float r, float g, float b, float a);
+
+    treeListElement *next;
+    treeListElement *previous;
+    nodeListElement *firstNode;
 
     int treeID;
     color4F color;
@@ -882,29 +896,22 @@ public:
     int colorSetManually;
 
     char comment[8192];
+    QList<nodeListElement *> *getNodes();
+    QList<segmentListElement *> getSegments();
+
 };
 
-//class TreeListElementDecorator : public QObject {
-//    Q_OBJECT
-//public slots:
-//    treeListElement *new_treeListElement() { return new treeListElement(); }
-//    void next(treeListElement *self) { return self->next; }
-//    void
-//    void setNext(treeListElement *self, treeListElement *next) { self->next = next; }
-//    void setPrevious(treeListElement *self, treeListElement *previous) { self->previous = previous; }
-//    void setFirstNode(treeListElement *self, treeListElement *first) { self->firstNode = first; }
+class nodeListElement {
+public:
+   nodeListElement();
+   nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time);
 
-//    int treeID(treeListElement *self) { return self->treeID; }
+    nodeListElement *next;
+    nodeListElement *previous;
 
-//};
+    segmentListElement *firstSegment;
 
-struct nodeListElement {
-    struct nodeListElement *next;
-    struct nodeListElement *previous;
-
-    struct segmentListElement *firstSegment;
-
-    struct treeListElement *correspondingTree;
+    treeListElement *correspondingTree;
 
     float radius;
 
@@ -913,7 +920,7 @@ struct nodeListElement {
     Byte createdInMag;
     int timestamp;
 
-    struct commentListElement *comment;
+    commentListElement *comment;
 
     // counts forward AND backward segments!!!
     int numSegs;
@@ -925,15 +932,18 @@ struct nodeListElement {
     Coordinate position;
     bool isBranchNode;
     bool selected;
+
+    QList<segmentListElement *> *getSegments();
 };
 
-
-struct segmentListElement {
-    struct segmentListElement *next;
-    struct segmentListElement *previous;
+class segmentListElement {
+public:
+    segmentListElement() {}
+    segmentListElement *next;
+    segmentListElement *previous;
 
     //Contains the reference to the segment inside the target node
-    struct segmentListElement *reverseSegment;
+    segmentListElement *reverseSegment;
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
@@ -948,8 +958,8 @@ struct segmentListElement {
     //Coordinate pos1;
     //Coordinate pos2;
 
-    struct nodeListElement *source;
-    struct nodeListElement *target;
+    nodeListElement *source;
+    nodeListElement *target;
 };
 
 struct serialSkeletonListElement {
@@ -988,7 +998,10 @@ struct IOBuffer {
     Byte *data;
 };
 
-typedef struct {
+class mesh {
+public:
+    mesh();
+    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
@@ -1001,7 +1014,9 @@ typedef struct {
     uint vertsIndex;
     uint normsIndex;
     uint colsIndex;
-} mesh;
+    uint mode;
+    uint size;
+};
 
 typedef struct {
         GLbyte r;

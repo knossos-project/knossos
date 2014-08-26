@@ -211,6 +211,21 @@ void MainWindow:: createToolBar() {
 
     toolBar->addSeparator();
 
+    QToolButton *pythonButton = new QToolButton();
+    QMenu *menu = new QMenu();
+    QAction *pythonAction = menu->addAction(QIcon(":/images/python.png"), "Python", this, SLOT(pythonSlot()));
+    QAction *pythonPropertiesAction = menu->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
+    menu->setDefaultAction(pythonAction);
+    menu->setIcon(QIcon(":/images/python.png"));
+
+    pythonButton->setMenu(menu);
+    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
+    pythonButton->addAction(pythonAction);
+    pythonButton->addAction(pythonPropertiesAction);
+    pythonButton->setIcon(QIcon(":/images/python.png"));
+    toolBar->addWidget(pythonButton);
+
+    toolBar->addSeparator();
 
     auto resetVPsButton = new QPushButton("Reset VP Positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
@@ -950,6 +965,7 @@ void MainWindow::saveSettings() {
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
+    widgetContainer->pythonPropertyWidget->saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
 
@@ -1400,4 +1416,12 @@ void MainWindow::setSimpleTracing(bool simple) {
     skelEditMenu->actions().at(1)->setEnabled(!simple); // add one unlinked node
     skelEditMenu->actions().at(3)->setEnabled(!simple); // add unlinked nodes
     skelEditMenu->actions().at(5)->setEnabled(!simple); // add tree
+}
+
+void MainWindow::pythonSlot() {
+    widgetContainer->pythonPropertyWidget->openTerminal();
+}
+
+void MainWindow::pythonPropertiesSlot() {
+    widgetContainer->pythonPropertyWidget->show();
 }

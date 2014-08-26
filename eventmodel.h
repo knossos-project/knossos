@@ -113,7 +113,7 @@ signals:
     void popBranchNodeSignal();
 
     void moveToNextTreeSignal();
-    void moveToPrevTreeSignal();
+    void moveToPrevTreeSignal(bool *isSuccess = NULL);
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
 

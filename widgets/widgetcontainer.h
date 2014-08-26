@@ -13,19 +13,20 @@
 #include "task/taskmanagementwidget.h"
 #include "tracingtimewidget.h"
 #include "viewportsettingswidget.h"
+#include "pythonpropertywidget.h"
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidgetObject(parent), commentsWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
-        , navigationWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
+        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
         , taskManagementWidgetObject(&taskLoginWidgetObject, parent), tracingTimeWidgetObject(parent)
         , viewportSettingsWidgetObject(parent)
 
         , annotationWidget(&annotationWidgetObject), commentsWidget(&commentsWidgetObject)
         , datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
-        , splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
+        , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
         , tracingTimeWidget(&tracingTimeWidgetObject), viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         taskLoginWidgetObject.setTaskManagementWidget(&taskManagementWidgetObject);
@@ -40,6 +41,7 @@ struct WidgetContainer {
     DataSavingWidget dataSavingWidgetObject;
     DocumentationWidget docWidgetObject;
     NavigationWidget navigationWidgetObject;
+    PythonPropertyWidget pythonPropertyWidgetObject;
     SplashScreenWidget splashWidgetObject;
     TaskLoginWidget taskLoginWidgetObject;
     TaskManagementWidget taskManagementWidgetObject;
@@ -55,6 +57,7 @@ struct WidgetContainer {
     DataSavingWidget * const dataSavingWidget;
     DocumentationWidget * const docWidget;
     NavigationWidget * const navigationWidget;
+    PythonPropertyWidget * const pythonPropertyWidget;
     SplashScreenWidget * const splashWidget;
     TaskLoginWidget * const taskLoginWidget;
     TaskManagementWidget * const taskManagementWidget;
