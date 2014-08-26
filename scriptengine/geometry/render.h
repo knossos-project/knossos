@@ -1,10 +1,8 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef RENDER_H
+#define RENDER_H
 
 #include <QObject>
 #include <QList>
-
-
 
 class Point;
 class Shape;
@@ -20,6 +18,4 @@ public slots:
     void addPoint(Point *point);
 };
 
-
-
-#endif // RENDERER_H
+#endif // RENDER_H
