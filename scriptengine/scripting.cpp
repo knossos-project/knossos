@@ -48,7 +48,6 @@ Scripting::Scripting(QObject *parent) :
 
 void Scripting::run() {
     PythonQt::init(PythonQt::RedirectStdOut);
-    PythonQt_QtAll::init();
     PythonQtObjectPtr ctx = PythonQt::self()->createModuleFromScript("knossos_python_api");
 
     ctx.evalScript("import sys");

@@ -7,7 +7,6 @@
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/PythonQtPythonInclude.h>
 #include <PythonQt/PythonQtStdIn.h>
-#include <PythonQt/PythonQt_QtAll.h>
 
 class ColorDecorator;
 class FloatCoordinateDecorator;
@@ -28,7 +27,7 @@ class Scripting : public QThread
 {
     Q_OBJECT
 public:
-    explicit Scripting(QObject *parent = 0);   
+    explicit Scripting(QObject *parent = 0);
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -47,12 +46,12 @@ signals:
 
 public slots:
     static void addScriptingObject(const QString &name, QObject *obj);
-    void saveSettings(const QString &key, const QVariant &value);     
+    void saveSettings(const QString &key, const QVariant &value);
     void executeFromUserDirectory();
     void changeWorkingDirectory();
     void addWidgets(PythonQtObjectPtr &context);
 protected:
-    QSettings *settings;   
+    QSettings *settings;
 };
 
 #endif // SCRIPTING_H
