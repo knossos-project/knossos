@@ -28,7 +28,7 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
 
     pythonInterpreterField = new QLineEdit();
     pythonInterpreterButton = new QPushButton("Select Python Interpreter");
-    pythonInterpreterField->setToolTip("The complete path to ./python. This will be checked on save");    
+    pythonInterpreterField->setToolTip("The complete path to ./python. This will be checked on save");
     workingDirectoryButton = new QPushButton("Select working directory");
     workingDirectory = new QLineEdit();
     autoStartFolder = new QLineEdit();
@@ -145,6 +145,7 @@ void PythonPropertyWidget::openTerminal() {
 
             QFileInfo info(filename);
             filename = info.fileName();
+            qDebug() << "************* JSON Filename: " << filename;
     #ifdef Q_OS_OSX
             QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
             system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
@@ -154,7 +155,6 @@ void PythonPropertyWidget::openTerminal() {
             system(QString("/usr/bin/xterm -e '%1' &").arg(args).toUtf8().data());
     #endif
     #ifdef Q_OS_WIN
-            qDebug() << "************* JSON Filename: " << filename;
             QString args = QString("ipython console --existing '%1'").arg(filename);
             system(QString("start /b cmd /c %1").arg(args).toUtf8().data());
     #endif
