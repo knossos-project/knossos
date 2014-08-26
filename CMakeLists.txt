@@ -13,8 +13,9 @@ include(CustomLibraryLocations.cmake)#prefill variables
 file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
 
 file(GLOB root *.cpp *.h *.qrc)
+file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
-set(SRC_LIST ${openjpeg} ${root} ${widgets})
+set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#Resources.qrc
@@ -29,6 +30,9 @@ find_package(Boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(PythonInterp REQUIRED)
+find_package(PythonLibs REQUIRED)
+find_package(PythonQt5_3 REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -79,13 +83,17 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CURL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
+    ${PYTHON_INCLUDE_DIRS}
+    ${PythonQt_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
     ${CURL_LIBRARIES}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
+    ${PYTHON_LIBRARIES}
     #configs add includes and other settings automatically
+    PythonQt5_3
     TurboJPEG::TurboJPEG
     Qt5::Core
     Qt5::Gui
