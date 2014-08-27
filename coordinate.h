@@ -27,6 +27,8 @@
 
 #include <QMetaType>
 
+#include <cstddef>
+
 struct floatCoordinate {
     float x;
     float y;
@@ -36,16 +38,11 @@ struct floatCoordinate {
 #include <boost/functional/hash.hpp>
 
 template<std::size_t = 0>
-struct Coord {
+class Coord {
     using Coordinate = Coord<>;
     using CoordOfCube = Coord<1>;
     using CoordInCube = Coord<2>;
-    struct Hash {
-        std::size_t operator()(Coord cord) const {
-            return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
-        }
-    };
-
+public:
     int x;
     int y;
     int z;
@@ -84,6 +81,15 @@ using CoordInCube = Coord<2>;
 
 Q_DECLARE_METATYPE(Coordinate)
 Q_DECLARE_METATYPE(floatCoordinate)
+
+namespace std {
+template<std::size_t x>
+struct hash<Coord<x>> {
+    std::size_t operator()(const Coord<x> & cord) const {
+        return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
+    }
+};
+}
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \

@@ -26,12 +26,16 @@
  */
 #include "knossos-global.h"
 
-#include <list>
-#include <vector>
-
 #include <QObject>
 #include <QSemaphore>
 #include <QThread>
+
+#include <boost/multi_array.hpp>
+
+#include <list>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 /* Calculate movement trajectory for loading based on how many last single movements */
 #define LL_CURRENT_DIRECTIONS_SIZE (20)
@@ -120,11 +124,15 @@ int calc_nonzero_sign(float x);
 class Loader : public QThread {
     Q_OBJECT
     friend class LoadCubeThread;
+    friend void writeVoxel(const Coordinate &, const uint64_t);
+    friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
 private:
     std::list<std::vector<Byte>> DcSetChunk;
     std::list<std::vector<Byte>> OcSetChunk;
     std::list<Byte*> freeDcSlots;
     std::list<Byte*> freeOcSlots;
+    std::unordered_set<CoordOfCube> OcModified;
+    std::unordered_map<CoordOfCube, std::vector<Byte>> snappyCache;
     Byte *bogusDc;
     Byte *bogusOc;
     bool magChange;

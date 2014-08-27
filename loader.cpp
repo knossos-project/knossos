@@ -508,20 +508,27 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         if (!lts->thisPtr->freeOcSlots.empty()) {
             auto currentOcSlot = lts->thisPtr->freeOcSlots.front();
 
-            const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
-            std::ifstream inFile(inFilePath, std::ios_base::binary);
-            if (inFile) {
-                std::vector<char> buffer(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>{});
+            const auto cubeCoord = CoordOfCube(lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z);
+            auto snappyIt = snappyCache.find(cubeCoord);
+            if (snappyIt != std::end(snappyCache)) {
+                qDebug() << "load from snappy cache" << cubeCoord.x << cubeCoord.y << cubeCoord.z << std::end(snappyIt->second) - std::begin(snappyIt->second);
+                std::copy(std::begin(snappyIt->second), std::end(snappyIt->second), currentOcSlot);
+            } else {
+                const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
+                std::ifstream inFile(inFilePath, std::ios_base::binary);
+                if (inFile) {
+                    std::vector<char> buffer(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>{});
 
-                const auto expectedSize = state->cubeBytes * sizeof(uint64_t);
-                if (buffer.size() == expectedSize) {
-                    std::move(std::begin(buffer), std::end(buffer), currentOcSlot);
+                    const auto expectedSize = state->cubeBytes * sizeof(uint64_t);
+                    if (buffer.size() == expectedSize) {
+                        std::move(std::begin(buffer), std::end(buffer), currentOcSlot);
+                    } else {
+                        qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
+                        std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
+                    }
                 } else {
-                    qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
                     std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
-            } else {
-                std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
             }
 
             state->protectCube2Pointer->lock();
@@ -823,8 +830,9 @@ bool Loader::initLoader() {
 
 uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification) {
     for (C2D_Element *currentCube = currentLoadedHash->listEntry->next;
-         currentCube != currentLoadedHash->listEntry;
-         currentCube = currentCube->next) {
+            currentCube != currentLoadedHash->listEntry;
+            currentCube = currentCube->next) {
+        const auto cubeCoord = CoordOfCube(currentCube->coordinate.x, currentCube->coordinate.y, currentCube->coordinate.z);
         if (NULL != currentCube->datacube) {
             continue;
         }
@@ -868,6 +876,11 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          */
 
         if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if (OcModified.find(cubeCoord) != std::end(OcModified)) {
+                qDebug() << "insert into snappy cache" << cubeCoord.x << cubeCoord.y << cubeCoord.z;
+                snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(delCubePtr, delCubePtr + OBJID_BYTES * state->cubeBytes));
+                OcModified.erase(cubeCoord);
+            }
             if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                 qDebug("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
                     currentCube->coordinate.x,
