@@ -30,7 +30,7 @@ find_package(Boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(PythonLibs 2  REQUIRED)
+find_package(PythonLibs 2  REQUIRED)#we sadly need to find the python includes ourselves
 find_package(PythonQt5 REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
@@ -90,7 +90,6 @@ target_link_libraries(${PROJECT_NAME}
     ${CURL_LIBRARIES}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
-    ${PYTHON_LIBRARIES}
     #configs add includes and other settings automatically
     PythonQt5
     TurboJPEG::TurboJPEG

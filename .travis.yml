@@ -37,6 +37,7 @@ before_script:
   - sudo ninja install
   - cd ..
   - git clone https://github.com/Orochimarufan/PythonQt.git
+  - cd PythonQt
   - echo "message(skipping QtAll)" > extensions/CMakeLists.txt
   - sed -i '/add_dependencies(QtAll ${PythonQt_QtAll})/c\#add_dependencies(QtAll ${PythonQt_QtAll})' CMakeLists.txt
   - mkdir _debug
