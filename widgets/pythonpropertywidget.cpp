@@ -151,8 +151,8 @@ void PythonPropertyWidget::openTerminal() {
             system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
     #endif
     #ifdef Q_OS_LINUX
-            QString args = QString("ipython console --existing '%1'").arg(filename);
-            system(QString("/usr/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+            QString args = QString("ipython2 console --existing '%1'").arg(filename);
+            system(QString("xterm -e '%1' &").arg(args).toUtf8().data());
     #endif
     #ifdef Q_OS_WIN
             QString args = QString("ipython console --existing '%1'").arg(filename);

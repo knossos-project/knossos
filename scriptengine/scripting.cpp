@@ -96,7 +96,11 @@ void Scripting::run() {
     changeWorkingDirectory();
     executeFromUserDirectory();
 
+#ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
+    ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
+#else
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
+#endif
     ctx.evalScript("import IPython");
     ctx.evalScript("IPython.embed_kernel()");
 }
