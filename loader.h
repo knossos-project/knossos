@@ -131,8 +131,8 @@ private:
     std::list<std::vector<Byte>> OcSetChunk;
     std::list<Byte*> freeDcSlots;
     std::list<Byte*> freeOcSlots;
-    std::unordered_set<CoordOfCube> OcModified;
-    std::unordered_map<CoordOfCube, std::vector<Byte>> snappyCache;
+    std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
+    std::unordered_map<CoordOfCube, std::string> snappyCache;
     Byte *bogusDc;
     Byte *bogusOc;
     bool magChange;

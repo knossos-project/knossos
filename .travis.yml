@@ -19,7 +19,8 @@ before_install:
   - sudo apt-get -y install libboost1.55-dev
   - sudo apt-get -y install libcurl4-openssl-dev
   - sudo apt-get -y install libjpeg-turbo8-dev
-  - sudo apt-get -y install libxmu-dev libxi-dev
+  - sudo apt-get -y install libxmu-dev libxi-d
+  - sudo apt-get -y install libsnappy-dev
   - sudo apt-get -y install ninja-build
   - sudo apt-get -y install qt53base qt53tools
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20

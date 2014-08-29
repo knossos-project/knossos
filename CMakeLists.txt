@@ -32,6 +32,7 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(PythonLibs 2  REQUIRED)#we sadly need to find the python includes ourselves
 find_package(PythonQt5 REQUIRED)
+find_package(Snappy REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -99,6 +100,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::OpenGL
     Qt5::Widgets
     QuaZip::QuaZip
+    Snappy::Snappy
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

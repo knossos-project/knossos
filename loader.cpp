@@ -23,6 +23,12 @@
  */
 #include "loader.h"
 
+#include "ftp.h"
+#include "knossos.h"
+#include "segmentation.h"
+
+#include <snappy.h>
+
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
@@ -36,10 +42,6 @@ extern "C" {
 #ifdef KNOSSOS_USE_TURBOJPEG
 #include <turbojpeg.h>
 #endif
-
-#include "ftp.h"
-#include "knossos.h"
-#include "segmentation.h"
 
 extern stateInfo *state;
 
@@ -511,8 +513,8 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             const auto cubeCoord = CoordOfCube(lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z);
             auto snappyIt = snappyCache.find(cubeCoord);
             if (snappyIt != std::end(snappyCache)) {
-                qDebug() << "load from snappy cache" << cubeCoord.x << cubeCoord.y << cubeCoord.z << std::end(snappyIt->second) - std::begin(snappyIt->second);
-                std::copy(std::begin(snappyIt->second), std::end(snappyIt->second), currentOcSlot);
+                //directly uncompress snappy cube into the OC slot
+                snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char *>(currentOcSlot));
             } else {
                 const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
                 std::ifstream inFile(inFilePath, std::ios_base::binary);
@@ -876,10 +878,13 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          */
 
         if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
-            if (OcModified.find(cubeCoord) != std::end(OcModified)) {
-                qDebug() << "insert into snappy cache" << cubeCoord.x << cubeCoord.y << cubeCoord.z;
-                snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(delCubePtr, delCubePtr + OBJID_BYTES * state->cubeBytes));
-                OcModified.erase(cubeCoord);
+            if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
+                //insert empty string into snappy cache
+                auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
+                //compress cube into the new string
+                snappy::Compress(reinterpret_cast<const char *>(delCubePtr), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
+                //remove from work queue
+                OcModifiedCacheQueue.erase(cubeCoord);
             }
             if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                 qDebug("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
