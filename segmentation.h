@@ -133,6 +133,7 @@ public:
     bool segmentationMode;
     // line merging: the drawn line merges all visited objects
     std::vector<Coordinate> mergeLine;
+    int brush_size = 10;
 
     static Segmentation & singleton();
     Segmentation();

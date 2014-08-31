@@ -82,6 +82,7 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
+    void renderMergeCursor(uint viewportType, const int x, const int y);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -103,7 +104,7 @@ protected:
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
-    std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y);
+    std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };

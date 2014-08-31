@@ -1654,24 +1654,64 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
+void Renderer::renderMergeCursor(uint viewportType, const int x, const int y) {
+    glPushMatrix();
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
+    auto & seg = Segmentation::singleton();
+    auto bsize = seg.brush_size;
+    glColor4f(1., 0., 0., 1.);
+    glBegin(GL_LINE_STRIP);
+        switch(viewportType) {
+        case VIEWPORT_XY:
+            glVertex3i(x - bsize,   y - bsize,   -0.1);
+            glVertex3i(x + bsize+1, y - bsize,   -0.1);
+            glVertex3i(x + bsize+1, y + bsize+1, -0.1);
+            glVertex3i(x - bsize,   y + bsize+1, -0.1);
+            break;
+        case VIEWPORT_XZ:
+            glVertex3i(x - bsize  , 1, y - bsize  );
+            glVertex3i(x + bsize+1, 1, y - bsize  );
+            glVertex3i(x + bsize+1, 1, y + bsize+1);
+            glVertex3i(x - bsize  , 1, y + bsize+1);
+            break;
+        case VIEWPORT_YZ:
+            glVertex3i(-0.1, x - bsize,   y - bsize  );
+            glVertex3i(-0.1, x + bsize+1, y - bsize  );
+            glVertex3i(-0.1, x + bsize+1, y + bsize+1);
+            glVertex3i(-0.1, x - bsize,   y + bsize+1);
+            break;
+        }
+    glEnd();
+    glPopMatrix();
+}
+
 void Renderer::renderMergeLine(uint viewportType) {
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     // draw active line
     auto & seg = Segmentation::singleton();
+    auto bsize = seg.brush_size;
     glColor4f(1., 0., 0., 1.);
-    glLineWidth(3);
-    glBegin(GL_LINE_STRIP);
+    glBegin(GL_QUADS);
         for(const auto & coord : seg.mergeLine) {
             switch(viewportType) {
             case VIEWPORT_XY:
-                glVertex3i(coord.x, coord.y, coord.z - 0.1);
+                glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
+                glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
+                glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
+                glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
                 break;
             case VIEWPORT_XZ:
-                glVertex3i(coord.x, coord.y + 1, coord.z);
+                glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
+                glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
+                glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
+                glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
                 break;
             case VIEWPORT_YZ:
-                glVertex3i(coord.x - 0.1, coord.y, coord.z);
+                glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
+                glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
+                glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
+                glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
                 break;
             }
         }
@@ -1795,7 +1835,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     return foundNodes;
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y) {
+std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y) {
     Viewport *vp = nullptr;
     vpConfig &vpConf = state->viewerState->vpConfigs[currentVP];
     if(currentVP == VIEWPORT_XY) {
@@ -2351,7 +2391,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
     /* Restore modelview matrix */
     glPopMatrix();
-    glDisable(GL_CULL_FACE);
+//    glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
 }
 

@@ -37,6 +37,7 @@
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 
 #include <cstdlib>
+#include <unordered_set>
 
 extern  stateInfo *state;
 
@@ -51,10 +52,29 @@ uint64_t segmentationColorPicking(const int x, const int y, const int viewportId
     return Segmentation::singleton().subobjectIdFromUniqueColor(color);
 }
 
+std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, const uint w, const uint h, const int viewportId) {
+    std::unordered_set<uint64_t> found;
+    const auto& seg = Segmentation::singleton();
+    auto xscale = state->viewerState->vpConfigs[viewportId].screenPxXPerDataPx;
+    auto yscale = state->viewerState->vpConfigs[viewportId].screenPxYPerDataPx;
+    auto iw = static_cast<int>(w);
+    auto ih = static_cast<int>(h);
+    for(int ry = -ih; ry <= ih; ++ry) {
+        for(int rx = -iw; rx <= iw; ++rx) {
+            auto found_color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x + rx * xscale, y + ry * yscale);
+            auto found_id = seg.subobjectIdFromUniqueColor(found_color);
+            if(found_id != 0) { //don’t select the unsegmented area as object
+                found.insert(found_id);
+            }
+        }
+    }
+    return found;
+}
+
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    const auto subobjectId = segmentationColorPicking(event->x(), event->y(), vp);
-    if (subobjectId != 0) {//don’t select the unsegmented area as object
+    const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush_size, seg.brush_size, vp);
+    for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             seg.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, vp));
             auto & subobject = seg.subobjectFromId(subobjectId);
@@ -1068,23 +1088,32 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
         state->skeletonState->skeletonChanged = true;//idk
     } else if(event->key() == Qt::Key_Plus) {
-        if(Segmentation::singleton().alpha + 10 > 255) {
-            Segmentation::singleton().alpha = 255;
+        if(control) {
+            Segmentation::singleton().brush_size += 1;
+        } else {
+            if(Segmentation::singleton().alpha + 10 > 255) {
+                Segmentation::singleton().alpha = 255;
+            }
+            else {
+                Segmentation::singleton().alpha += 10;
+            }
+            const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
+            sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
-        else {
-            Segmentation::singleton().alpha += 10;
-        }
-        const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-        sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
     } else if(event->key() == Qt::Key_Minus) {
-        if(Segmentation::singleton().alpha - 10 < 0) {
-            Segmentation::singleton().alpha = 0;
+        if(control) {
+            if(Segmentation::singleton().brush_size > 0)
+                Segmentation::singleton().brush_size -= 1;
+        } else {
+            if(Segmentation::singleton().alpha - 10 < 0) {
+                Segmentation::singleton().alpha = 0;
+            }
+            else {
+                Segmentation::singleton().alpha -= 10;
+            }
+            const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
+            sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
-        else {
-            Segmentation::singleton().alpha -= 10;
-        }
-        const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-        sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
     } else if(event->key() == Qt::Key_Delete) {
