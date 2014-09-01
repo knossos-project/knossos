@@ -1,21 +1,18 @@
 #include "pythonpropertywidget.h"
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QFormLayout>
-#include <QCheckBox>
-#include <QFile>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QDebug>
-#include <QDirIterator>
-#include <QSettings>
-#include <QApplication>
-#include <QDesktopWidget>
+
 #include "GuiConstants.h"
 #include "knossos-global.h"
-#include <stdio.h>
-#include <unistd.h>
+
+#include <QApplication>
+#include <QCheckBox>
+#include <QDebug>
+#include <QDesktopWidget>
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QProcess>
+#include <QPushButton>
+#include <QSettings>
 
 extern stateInfo *state;
 
@@ -43,8 +40,6 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     layout->addRow(autoStartFolder, autoStartFolderButton);
     layout->addWidget(autoStartTerminal);
 
-
-
     setLayout(layout);
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
@@ -53,22 +48,21 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
 }
 
-void PythonPropertyWidget::closeEvent(QCloseEvent *e) {
+void PythonPropertyWidget::closeEvent(QCloseEvent *) {
     this->hide();
 }
 
 void PythonPropertyWidget::pythonInterpreterButtonClicked() {
-    state->viewerState->renderInterval = SLOW;
+     state->viewerState->renderInterval = SLOW;
      QString selection = QFileDialog::getOpenFileName(this, "select the python interpreter", QDir::homePath());
      if(!selection.isEmpty()) {
          pythonInterpreterField->setText(selection);
      }
-
      state->viewerState->renderInterval = FAST;
 }
 
 void PythonPropertyWidget::autoStartFolderButtonClicked() {
-    state->viewerState->renderInterval = SLOW;
+     state->viewerState->renderInterval = SLOW;
      QString selection = QFileDialog::getExistingDirectory(this, "select the autostart folder", QDir::homePath());
      if(!selection.isEmpty()) {
          autoStartFolder->setText(selection);
@@ -121,45 +115,24 @@ void PythonPropertyWidget::autoConf() {
 
     QString version(buffer);
 
-
     pclose(pipe);
-
 }
+
 void PythonPropertyWidget::openTerminal() {
-    pid_t pid = getpid();
-    char *home = getenv("HOME");
-    if(!home) {
-        return;
-    }
-
-    QString path(QString("%1%2").arg(home).arg("/.ipython/profile_default/security"));
-    QRegExp regex("[-.]");
-
-    QDirIterator it(path);
-    while(it.hasNext()) {
-        QString filename = it.next();
-
-        QStringList list = filename.split(regex);
-        // 0 = /Users .. 1 = .ipython/... 2 = pid 3 = json
-        if(list.at(2).toInt() == pid) {
-
-            QFileInfo info(filename);
-            filename = info.fileName();
-            qDebug() << "************* JSON Filename: " << filename;
+    const auto pid = QCoreApplication::applicationPid();
+    qDebug() << "************* PID to connect to: " << pid;
     #ifdef Q_OS_OSX
-            QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
-            system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+    QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(pid);
+    system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
     #endif
     #ifdef Q_OS_LINUX
-            QString args = QString("ipython2 console --existing '%1'").arg(filename);
-            system(QString("xterm -e '%1' &").arg(args).toUtf8().data());
+    QString args = QString("ipython2 console --existing '%1'").arg(pid);
+    system(QString("xterm -e '%1' &").arg(args).toUtf8().data());
     #endif
     #ifdef Q_OS_WIN
-            QString args = QString("ipython console --existing '%1'").arg(filename);
-            system(QString("start /b cmd /c %1").arg(args).toUtf8().data());
+    QString args = QString("ipython console --existing '%1'").arg(pid);
+    system(QString("start /b cmd /c %1").arg(args).toUtf8().data());
     #endif
-        }
-    }
 }
 
 void PythonPropertyWidget::saveSettings() {
