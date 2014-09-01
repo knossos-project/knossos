@@ -211,18 +211,12 @@ void MainWindow:: createToolBar() {
 
     toolBar->addSeparator();
 
-    QToolButton *pythonButton = new QToolButton();
-    QMenu *menu = new QMenu();
-    QAction *pythonAction = menu->addAction(QIcon(":/images/python.png"), "Python", this, SLOT(pythonSlot()));
-    QAction *pythonPropertiesAction = menu->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
-    menu->setDefaultAction(pythonAction);
-    menu->setIcon(QIcon(":/images/python.png"));
-
-    pythonButton->setMenu(menu);
-    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
-    pythonButton->addAction(pythonAction);
-    pythonButton->addAction(pythonPropertiesAction);
+    auto * const pythonButton = new QToolButton();
+    pythonButton->setMenu(new QMenu());
     pythonButton->setIcon(QIcon(":/images/python.png"));
+    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
+    QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
+    pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
     toolBar->addWidget(pythonButton);
 
     toolBar->addSeparator();
