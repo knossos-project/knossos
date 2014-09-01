@@ -537,7 +537,8 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
                 lts->thisPtr->freeOcSlots.remove(currentOcSlot);
             } else {
-                qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+                qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d]."
+                       , lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
             }
             state->protectCube2Pointer->unlock();
         }
@@ -830,6 +831,26 @@ bool Loader::initLoader() {
     return true;
 }
 
+void Loader::snappyCacheAdd(const CoordOfCube & cubeCoord, const Byte * cube) {
+    //insert empty string into snappy cache
+    auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
+    //compress cube into the new string
+    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
+}
+
+void Loader::snappyCacheFlush() {
+    state->protectCube2Pointer->lock();
+    for (const auto & cubeCoord : OcModifiedCacheQueue) {
+        auto cube = Hashtable::ht_get(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+        if (cube != HT_FAILURE) {
+            snappyCacheAdd(cubeCoord, cube);
+        }
+    }
+    //clear work queue
+    OcModifiedCacheQueue.clear();
+    state->protectCube2Pointer->unlock();
+}
+
 uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification) {
     for (C2D_Element *currentCube = currentLoadedHash->listEntry->next;
             currentCube != currentLoadedHash->listEntry;
@@ -879,10 +900,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
 
         if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
             if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-                //insert empty string into snappy cache
-                auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
-                //compress cube into the new string
-                snappy::Compress(reinterpret_cast<const char *>(delCubePtr), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
+                snappyCacheAdd(cubeCoord, delCubePtr);
                 //remove from work queue
                 OcModifiedCacheQueue.erase(cubeCoord);
             }

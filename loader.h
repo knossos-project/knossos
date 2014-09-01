@@ -126,6 +126,8 @@ class Loader : public QThread {
     friend class LoadCubeThread;
     friend void writeVoxel(const Coordinate &, const uint64_t);
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
+    friend void annotationFileLoad(const QString &, const QString &, bool *);
+    friend void annotationFileSave(const QString &, bool *);
 private:
     std::list<std::vector<Byte>> DcSetChunk;
     std::list<std::vector<Byte>> OcSetChunk;
@@ -149,6 +151,8 @@ private:
     void loadCube(loadcube_thread_struct *lts);
     uint removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
+    void snappyCacheAdd(const CoordOfCube &, const Byte *cube);
+    void snappyCacheFlush();
 public:
     explicit Loader(QObject *parent = 0);
     int CompareLoadOrderMetric(const void * a, const void * b);

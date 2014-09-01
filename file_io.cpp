@@ -1,5 +1,7 @@
 #include "file_io.h"
 
+#include "knossos.h"
+
 #include <ctime>
 
 #include <QStandardPaths>
@@ -32,22 +34,29 @@ QString annotationFileDefaultPath() {
 void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad, bool *isSuccess) {
     bool annotationSuccess = false;
     bool mergelistSuccess = false;
+    QRegExp cubeRegEx = QRegExp(".*x([0-9]*)y([0-9]*)z([0-9]*)\\.segmentation.snappy");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
-        if (archive.setCurrentFile("annotation.xml")) {
+        for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             QuaZipFile file(&archive);
-            state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
-            annotationSuccess = true;
-        } else {
-            qDebug() << filename << "missing nml";
+            const auto & fileInside = archive.getCurrentFileName();
+            if (fileInside == "annotation.xml") {
+                state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+                annotationSuccess = true;
+            }
+            if (fileInside == "mergelist.txt") {
+                Segmentation::singleton().mergelistLoad(file);
+                mergelistSuccess = true;
+            }
+            if (cubeRegEx.exactMatch(fileInside)) {
+                file.open(QIODevice::ReadOnly);
+                auto cube = file.readAll();
+                qDebug() << "cube size" << cube.size();
+                const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
+                loader->snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube.data(), cube.size())).first;
+            }
         }
-        if (archive.setCurrentFile("mergelist.txt")) {
-            QuaZipFile file(&archive);
-            Segmentation::singleton().mergelistLoad(file);
-            mergelistSuccess = true;
-        } else {
-            qDebug() << filename << "missing mergelist";
-        }
+        state->viewer->changeDatasetMag(DATA_SET);//load from snappy cache
     } else {
         qDebug() << "opening" << filename << "for reading failed";
     }
@@ -61,14 +70,14 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     bool allSuccess = true;
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
-        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name){
+        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level){
             auto fileinfo = QuaZipNewInfo(name);
             //without permissions set, some archive utilities will not grant any on extract
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
-            return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, 1);
+            return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, level);
         };
         QuaZipFile file_write(&archive_write);
-        const bool open = zipCreateFile(file_write, "annotation.xml");
+        const bool open = zipCreateFile(file_write, "annotation.xml", 1);
         if (open) {
             state->viewer->skeletonizer->saveXmlSkeleton(file_write);
         } else {
@@ -77,7 +86,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
         }
         if (Segmentation::singleton().hasObjects()) {
             QuaZipFile file_write(&archive_write);
-            const bool open = zipCreateFile(file_write, "mergelist.txt");
+            const bool open = zipCreateFile(file_write, "mergelist.txt", 1);
             if (open) {
                 Segmentation::singleton().mergelistSave(file_write);
             } else {
@@ -85,6 +94,23 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 allSuccess = false;
             }
         }
+        QTime time;
+        time.start();
+        loader->snappyCacheFlush();
+        qDebug() << "flush" << time.restart();
+        for (const auto & pair : loader->snappyCache) {
+            QuaZipFile file_write(&archive_write);
+            const auto cubeCoord = pair.first;
+            const auto name = QString("%1_mag%2x%3y%4z%5.segmentation.snappy").arg(state->name).arg(1).arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
+            const bool open = zipCreateFile(file_write, name, 0);
+            if (open) {
+                file_write.write(pair.second.c_str(), pair.second.length());
+            } else {
+                qDebug() << filename << "saving snappy cube failed";
+                allSuccess = false;
+            }
+        }
+        qDebug() << "save" << time.restart();
     } else {
         qDebug() << "opening" << filename << " for writing failed";
         allSuccess = false;
