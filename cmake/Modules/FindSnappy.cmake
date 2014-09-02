@@ -1,4 +1,4 @@
-# provides an imported target for the dynamically built snappy library
+# provides an imported target for the snappy library
 
 find_library(SNAPPY_LIB snappy)
 find_path(SNAPPY_INCLUDE snappy.h)
@@ -9,7 +9,7 @@ find_package_handle_standard_args(SNAPPY
 )
 
 if(SNAPPY_FOUND)
-    add_library(Snappy::Snappy SHARED IMPORTED)
+    add_library(Snappy::Snappy UNKNOWN IMPORTED)
     set_target_properties(Snappy::Snappy PROPERTIES
         IMPORTED_LOCATION ${SNAPPY_LIB}
         INTERFACE_INCLUDE_DIRECTORIES ${SNAPPY_INCLUDE}

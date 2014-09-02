@@ -1,4 +1,4 @@
-# provides an imported target for the statically built quazip library
+# provides an imported target for the quazip library
 
 find_package(ZLIB REQUIRED)
 
@@ -11,11 +11,15 @@ find_package_handle_standard_args(QUAZIP
 )
 
 if(QUAZIP_FOUND)
-    add_library(QuaZip::QuaZip STATIC IMPORTED)
+    add_library(QuaZip::QuaZip UNKNOWN IMPORTED)
     set_target_properties(QuaZip::QuaZip PROPERTIES
         IMPORTED_LOCATION ${QUAZIP_LIBRARY}
         INTERFACE_INCLUDE_DIRECTORIES ${QUAZIP_INCLUDE_DIR}
         INTERFACE_LINK_LIBRARIES ${ZLIB_LIBRARIES}
+    )
+    if(${QUAZIP_LIBRARY} MATCHES ".so")
+    set_target_properties(QuaZip::QuaZip PROPERTIES
         INTERFACE_COMPILE_DEFINITIONS "QUAZIP_STATIC"
     )
+    endif()
 endif(QUAZIP_FOUND)
