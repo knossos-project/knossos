@@ -306,6 +306,8 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         eventDelegate->mouseX = event->x();
         eventDelegate->mouseY = event->y();
     }
+    eventDelegate->mousePosX = event->x();
+    eventDelegate->mousePosY = event->y();
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {

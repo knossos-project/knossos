@@ -82,7 +82,7 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    void renderMergeCursor(uint viewportType, const int x, const int y);
+    void renderRectCursor(uint viewportType, Coordinate coord);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -94,7 +94,6 @@ protected:
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);
-    void renderMergeLine(uint viewportType);
     bool resizemeshCapacity(mesh *toResize, uint n);
     bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);

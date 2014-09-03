@@ -566,7 +566,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XY);
                 if (Segmentation::singleton().segmentationMode) {
-                    renderMergeLine(currentVP);
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
 
@@ -699,7 +699,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XZ);
                 if (Segmentation::singleton().segmentationMode) {
-                    renderMergeLine(currentVP);
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
 
@@ -823,7 +823,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_YZ);
                 if (Segmentation::singleton().segmentationMode) {
-                    renderMergeLine(currentVP);
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -1654,67 +1654,57 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
-void Renderer::renderMergeCursor(uint viewportType, const int x, const int y) {
+void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
     auto bsize = seg.brush_size;
-    glColor4f(1., 0., 0., 1.);
-    glBegin(GL_LINE_STRIP);
-        switch(viewportType) {
-        case VIEWPORT_XY:
-            glVertex3i(x - bsize,   y - bsize,   -0.1);
-            glVertex3i(x + bsize+1, y - bsize,   -0.1);
-            glVertex3i(x + bsize+1, y + bsize+1, -0.1);
-            glVertex3i(x - bsize,   y + bsize+1, -0.1);
-            break;
-        case VIEWPORT_XZ:
-            glVertex3i(x - bsize  , 1, y - bsize  );
-            glVertex3i(x + bsize+1, 1, y - bsize  );
-            glVertex3i(x + bsize+1, 1, y + bsize+1);
-            glVertex3i(x - bsize  , 1, y + bsize+1);
-            break;
-        case VIEWPORT_YZ:
-            glVertex3i(-0.1, x - bsize,   y - bsize  );
-            glVertex3i(-0.1, x + bsize+1, y - bsize  );
-            glVertex3i(-0.1, x + bsize+1, y + bsize+1);
-            glVertex3i(-0.1, x - bsize,   y + bsize+1);
-            break;
-        }
+    glLineWidth(2.0f);
+    glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
+    glBegin(GL_LINE_LOOP);
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
+        glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
+        glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
+        glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
+        break;
+    case VIEWPORT_XZ:
+        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
+        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
+        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
+        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
+        break;
+    case VIEWPORT_YZ:
+        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
+        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
+        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
+        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
+        break;
+    }
     glEnd();
-    glPopMatrix();
-}
-
-void Renderer::renderMergeLine(uint viewportType) {
-    glPushMatrix();
-    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
-    // draw active line
-    auto & seg = Segmentation::singleton();
-    auto bsize = seg.brush_size;
-    glColor4f(1., 0., 0., 1.);
-    glBegin(GL_QUADS);
-        for(const auto & coord : seg.mergeLine) {
-            switch(viewportType) {
-            case VIEWPORT_XY:
-                glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
-                glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
-                glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
-                glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
-                break;
-            case VIEWPORT_XZ:
-                glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
-                glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
-                glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
-                glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
-                break;
-            case VIEWPORT_YZ:
-                glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
-                glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
-                glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
-                glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
-                break;
-            }
-        }
+    glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
+    glBegin(GL_LINE_LOOP);
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        glVertex3i(coord.x - bsize-1, coord.y - bsize-1, coord.z - 0.1);
+        glVertex3i(coord.x + bsize+2, coord.y - bsize-1, coord.z - 0.1);
+        glVertex3i(coord.x + bsize+2, coord.y + bsize+2, coord.z - 0.1);
+        glVertex3i(coord.x - bsize-1, coord.y + bsize+2, coord.z - 0.1);
+        break;
+    case VIEWPORT_XZ:
+        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z - bsize-1);
+        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z - bsize-1);
+        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z + bsize+2);
+        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z + bsize+2);
+        break;
+    case VIEWPORT_YZ:
+        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z - bsize-1);
+        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z - bsize-1);
+        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z + bsize+2);
+        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z + bsize+2);
+        break;
+    }
     glEnd();
     glPopMatrix();
 }

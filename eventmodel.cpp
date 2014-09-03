@@ -35,6 +35,7 @@
 #include "widgets/viewport.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
+#include "segmentationsplit.h"
 
 #include <cstdlib>
 #include <unordered_set>
@@ -47,11 +48,13 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
+// point pick
 uint64_t segmentationColorPicking(const int x, const int y, const int viewportId) {
     const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
     return Segmentation::singleton().subobjectIdFromUniqueColor(color);
 }
 
+// rectangle pick
 std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, const uint w, const uint h, const int viewportId) {
     std::unordered_set<uint64_t> found;
     const auto& seg = Segmentation::singleton();
@@ -71,12 +74,21 @@ std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, 
     return found;
 }
 
+// triplane pick
+std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, const uint w, const uint h) {
+    std::unordered_set<uint64_t> all_found;
+    for(auto vp : {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ}) {
+        const auto& found = segmentationColorPicking(x, y, w, h, vp);
+        all_found.insert(found.begin(), found.end());
+    }
+    return all_found;
+}
+
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
     const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush_size, seg.brush_size, vp);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
-            seg.mergeLine.push_back(getCoordinateFromOrthogonalClick(event, vp));
             auto & subobject = seg.subobjectFromId(subobjectId);
             const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
             //select if not selected and merge
@@ -139,7 +151,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             if(validPosition(event, VPfound) == false) {
                 return false;
             }
-            Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+            Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
             Knossos::sendRemoteSignal();
         } else {// Activate motion tracking for this VP
@@ -226,7 +238,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(validPosition(event, VPfound) == false) {
         return;
     }
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
 
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
@@ -589,7 +601,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
     if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
-        if (validPosition(event, VPfound) && !segmentation.mergeLine.empty() && notOrigin) {
+        if (validPosition(event, VPfound) && notOrigin) {
             merging(event, VPfound);
         }
         return;
@@ -670,14 +682,13 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             merging(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
-        seg.mergeLine.clear();
         return;
     }
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (Segmentation::singleton().segmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
-        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         verticalSplittingPlane(clickedCoordinate);
     }
     // a node was dragged to a new position
@@ -1182,61 +1193,56 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
     }
 }
 
-Coordinate getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
-    int x, y, z;
-
-    // These variables store the distance in screen pixels from the left and
-    // upper border from the user mouse click to the VP boundaries.
-    int xDistance = event->x();
-    int yDistance = event->y();
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound) {
+    int x = 0, y = 0, z = 0;
 
     switch(state->viewerState->vpConfigs[VPfound].type) {
         case VIEWPORT_XY:
             x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)xDistance)
+                + ((int)(((float)x_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
             y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)yDistance)
+                + ((int)(((float)y_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             z = state->viewerState->currentPosition.z;
             break;
         case VIEWPORT_XZ:
             x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)xDistance)
+                + ((int)(((float)x_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
             z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)yDistance)
+                + ((int)(((float)y_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             y = state->viewerState->currentPosition.y;
             break;
         case VIEWPORT_YZ:
             z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)xDistance)
+                + ((int)(((float)x_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
             y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)yDistance)
+                + ((int)(((float)y_dist)
                 / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             x = state->viewerState->currentPosition.x;
             break;
         case VIEWPORT_ARBITRARY:
             x = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.x
-                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v1.x
-                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v2.x
                 );
 
             y = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.y
-                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v1.y
-                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v2.y
                 );
 
             z = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.z
-                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v1.z
-                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
                     * state->viewerState->vpConfigs[VPfound].v2.z
                 );
             break;
@@ -1249,7 +1255,7 @@ bool EventModel::validPosition(QMouseEvent *event, int VPfound) {
             return false;
     }
 
-    Coordinate pos = getCoordinateFromOrthogonalClick(event, VPfound);
+    Coordinate pos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     //check if coordinates are in range
     if((pos.x < 0) || (pos.x > state->boundary.x)
         ||(pos.y < 0) || (pos.y > state->boundary.y)
@@ -1311,4 +1317,6 @@ int EventModel::yrel(int y) {
     return (y - this->mouseY);
 }
 
-
+Coordinate EventModel::getMouseCoordinate(int VPfound) {
+    return getCoordinateFromOrthogonalClick(mousePosX, mousePosY, VPfound);
+}
