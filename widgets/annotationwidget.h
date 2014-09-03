@@ -16,7 +16,7 @@ class AnnotationWidget : public QDialog
     Q_OBJECT
 public:
     ToolsTreeviewTab *treeviewTab;
-    SegmentationTab segmentationTab{*this};
+    SegmentationTab segmentationTab{this};
     ToolsCommandsTab *commandsTab;
     QVBoxLayout *mainLayout;
     explicit AnnotationWidget(QWidget *parent = 0);
