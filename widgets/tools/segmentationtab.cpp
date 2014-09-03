@@ -188,7 +188,7 @@ QVariant CategoryModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(&parent) {
+SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     categoryFilter.setModel(&categoryModel);
     categoryModel.recreate();
     categoryFilter.setCurrentIndex(0);
