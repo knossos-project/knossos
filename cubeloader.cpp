@@ -27,15 +27,9 @@ uint64_t readVoxel(const Coordinate & pos) {
 }
 
 void writeVoxel(const Coordinate & pos, const uint64_t value) {
-    const bool xValid = (pos.x >= 0) && (pos.x < state->boundary.x);
-    const bool yValid = (pos.y >= 0) && (pos.y < state->boundary.y);
-    const bool zValid = (pos.z >= 0) && (pos.z < state->boundary.z);
-
-    if (xValid && yValid && zValid) {
-        const auto inCube = pos.insideCube(state->cubeEdgeLength);
-        getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-        loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
-    }
+    const auto inCube = pos.insideCube(state->cubeEdgeLength);
+    getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
+    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
 }
 
 void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) {
@@ -43,8 +37,16 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
         value = 0;
     }
     if (brush.getTool() != brush_t::tool_t::merge) {
-        std::array<int, 3> start = {{pos.x - brush.getRadius(), pos.y - brush.getRadius(), pos.z - brush.getRadius()}};
-        std::array<int, 3> end = {{pos.x + brush.getRadius(), pos.y + brush.getRadius(), pos.z + brush.getRadius()}};
+        std::array<int, 3> start = {{
+            std::max(0, pos.x - brush.getRadius()),
+            std::max(0, pos.y - brush.getRadius()),
+            std::max(0, pos.z - brush.getRadius())
+        }};
+        std::array<int, 3> end = {{
+            std::min(state->boundary.x, pos.x + brush.getRadius()),
+            std::min(state->boundary.y, pos.y + brush.getRadius()),
+            std::min(state->boundary.z, pos.z + brush.getRadius())
+        }};
         if (brush.getMode() == brush_t::mode_t::two_dim) {//disable depth
             if(brush.getView() == brush.view_t::xy) {
                 start[2] = end[2] = pos.z;
@@ -54,7 +56,7 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
                 start[0] = end[0] = pos.x;
             }
         }
-        for (int x = start[0]; x <= end[0]; ++x)
+        for (int x = start[0]; x <= end[0]; ++x)//end is inclusive
         for (int y = start[1]; y <= end[1]; ++y)
         for (int z = start[2]; z <= end[2]; ++z) {
             if (brush.getTool() == brush_t::tool_t::erase) {
