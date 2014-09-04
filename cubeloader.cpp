@@ -27,9 +27,15 @@ uint64_t readVoxel(const Coordinate & pos) {
 }
 
 void writeVoxel(const Coordinate & pos, const uint64_t value) {
-    const auto inCube = pos.insideCube(state->cubeEdgeLength);
-    getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    const bool xValid = (pos.x >= 0) && (pos.x < state->boundary.x);
+    const bool yValid = (pos.y >= 0) && (pos.y < state->boundary.y);
+    const bool zValid = (pos.z >= 0) && (pos.z < state->boundary.z);
+
+    if (xValid && yValid && zValid) {
+        const auto inCube = pos.insideCube(state->cubeEdgeLength);
+        getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
+        loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    }
 }
 
 void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) {
