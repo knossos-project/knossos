@@ -440,8 +440,11 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         state->repeatDirection[0] /= 10;
         state->repeatDirection[1] /= 10;
         state->repeatDirection[2] /= 10;
-    }
-    else {
+
+        if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::erase) {
+            Segmentation::singleton().brush.setTool(brush_t::tool_t::add);
+        }
+    } else {
         eventDelegate->handleKeyRelease(event);
     }
 }

@@ -1028,6 +1028,10 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->repeatDirection[0] *= 10;
         state->repeatDirection[1] *= 10;
         state->repeatDirection[2] *= 10;
+        //enable erase mode on shift down
+        if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::add) {
+            Segmentation::singleton().brush.setTool(brush_t::tool_t::erase);
+        }
     } else if(event->key() == Qt::Key_K) {
         if(state->viewerState->vpOrientationLocked == false) {
             state->viewerState->alphaCache += 1;
