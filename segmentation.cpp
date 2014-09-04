@@ -125,6 +125,10 @@ bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
+void Segmentation::createObject() {
+    createObject(SubObject::highestId+1);
+}
+
 Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;

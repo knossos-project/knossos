@@ -69,6 +69,7 @@ Q_OBJECT
     QPushButton mergeBtn{"Merge Mode"};
     QPushButton addBtn{"Add Mode"};
     QPushButton eraseBtn{"Erase Mode"};
+    QLabel brushRadiusLabel{"Brush Radius"};
     QSpinBox brushRadiusEdit;
     QButtonGroup toolGroup;
     QPushButton twodBtn{"2D"};
@@ -78,7 +79,7 @@ Q_OBJECT
     CategoryModel categoryModel;
     QComboBox categoryFilter;
     QLineEdit commentFilter;
-    QCheckBox regExCheckbox{"RegEx"};
+    QCheckBox regExCheckbox{"regex"};
 
     SegmentationObjectModel objectModel;
     QSortFilterProxyModel objectProxyModelCategory;
@@ -88,9 +89,11 @@ Q_OBJECT
     QTreeView touchedObjsTable;
     QSplitter splitter;
     QTreeView objectsTable;
+    QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
-    QHBoxLayout bottomHLayout;
+    QPushButton objectCreateButton{"Create new object"};
+
     bool objectSelectionProtection = false;
     bool touchedObjectSelectionProtection = false;
 public:

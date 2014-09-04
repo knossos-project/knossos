@@ -203,10 +203,13 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
+    toolsLayout.addWidget(&showAllChck);
+    toolsLayout.addStretch();
     toolsLayout.addWidget(&mergeBtn);
     toolsLayout.addWidget(&addBtn);
     toolsLayout.addWidget(&eraseBtn);
     toolsLayout.addStretch();
+    toolsLayout.addWidget(&brushRadiusLabel);
     toolsLayout.addWidget(&brushRadiusEdit);
     toolsLayout.addStretch();
     toolsLayout.addWidget(&twodBtn);
@@ -247,11 +250,11 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
 
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
+    bottomHLayout.addWidget(&objectCreateButton, 0, Qt::AlignRight);
 
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&touchedObjsTable);
     splitter.addWidget(&objectsTable);
-    layout.addWidget(&showAllChck);
     layout.addLayout(&filterLayout);
     layout.addWidget(&splitter);
     layout.addLayout(&bottomHLayout);
@@ -354,6 +357,8 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
         Segmentation::singleton().renderAllObjs = value;
     });
+
+    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createObject();});
 
     touchedObjectModel.recreate();
     objectModel.recreate();
