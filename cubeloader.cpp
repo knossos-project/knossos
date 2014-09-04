@@ -60,9 +60,12 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
         for (int y = start[1]; y <= end[1]; ++y)
         for (int z = start[2]; z <= end[2]; ++z) {
             if (brush.getTool() == brush_t::tool_t::erase) {
-                auto & subobject = Segmentation::singleton().subobjectFromId(readVoxel({x, y, z}));
-                if (Segmentation::singleton().isSelected(subobject)) {
-                    writeVoxel({x, y, z}, 0);
+                const auto soid = readVoxel({x, y, z});
+                if (Segmentation::singleton().subobjectExists(soid)) {
+                    auto & subobject = Segmentation::singleton().subobjectFromId(soid);
+                    if (Segmentation::singleton().isSelected(subobject)) {
+                        writeVoxel({x, y, z}, 0);
+                    }
                 }
             } else {
                 writeVoxel({x, y, z}, value);
