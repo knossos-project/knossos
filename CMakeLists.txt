@@ -101,7 +101,6 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Widgets
     QuaZip::QuaZip
     Snappy::Snappy
-    -lxcb -lXxf86vm -ldl
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
