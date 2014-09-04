@@ -93,6 +93,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         if (seg.selectedObjectsCount() != 0) {
             const auto soid = seg.subobjectIdOfFirstSelectedObject();
             writeVoxels(coord, soid, seg.brush);
+            state->viewer->window->notifyUnsavedChanges();
         }
     }
 }

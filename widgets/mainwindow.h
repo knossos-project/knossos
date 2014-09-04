@@ -109,6 +109,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
 
     void closeEvent(QCloseEvent *event);
+    void notifyUnsavedChanges();
     void updateTitlebar();
 
     static void reloadDataSizeWin();
