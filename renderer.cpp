@@ -1662,17 +1662,17 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     glLineWidth(2.0f);
     glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     glBegin(GL_LINE_LOOP);
-    if(viewportType == VIEWPORT_XY && bview == seg.brush.view_t::xy) {
+    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
         glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
         glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
         glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
         glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
-    } else if(viewportType == VIEWPORT_XZ && bview == seg.brush.view_t::xz) {
+    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
         glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
         glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
         glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
         glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
-    } else if(viewportType == VIEWPORT_YZ && bview == seg.brush.view_t::yz) {
+    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
         glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
         glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
         glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
@@ -1681,17 +1681,17 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     glEnd();
     glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     glBegin(GL_LINE_LOOP);
-    if(viewportType == VIEWPORT_XY && bview == seg.brush.view_t::xy) {
+    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
         glVertex3i(coord.x - bsize-1, coord.y - bsize-1, coord.z - 0.1);
         glVertex3i(coord.x + bsize+2, coord.y - bsize-1, coord.z - 0.1);
         glVertex3i(coord.x + bsize+2, coord.y + bsize+2, coord.z - 0.1);
         glVertex3i(coord.x - bsize-1, coord.y + bsize+2, coord.z - 0.1);
-    } else if(viewportType == VIEWPORT_XZ && bview == seg.brush.view_t::xz) {
+    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
         glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z - bsize-1);
         glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z - bsize-1);
         glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z + bsize+2);
         glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z + bsize+2);
-    } else if(viewportType == VIEWPORT_YZ && bview == seg.brush.view_t::yz) {
+    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
         glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z - bsize-1);
         glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z - bsize-1);
         glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z + bsize+2);
