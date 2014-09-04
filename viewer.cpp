@@ -52,8 +52,6 @@ static WINAPI int dummy(int) {
     return 0;
 }
 
-extern stateInfo *state;
-
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {

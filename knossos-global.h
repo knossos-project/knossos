@@ -252,6 +252,9 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class stateInfo;
+extern stateInfo * state;
+
 class floatCoordinate;
 class color4F;
 class treeListElement;

@@ -13,8 +13,6 @@
 #include "taskmanagementwidget.h"
 #include "knossos-global.h"
 
-extern stateInfo *state;
-
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QDialog(parent), taskManagementWidget(NULL)
 {

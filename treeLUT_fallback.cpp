@@ -22,10 +22,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
 #include "knossos.h"
-
-extern stateInfo *state;
+#include "knossos-global.h"
 
 void Knossos::loadTreeLUTFallback() {
     qDebug() << "entered load tree LUT fallback";

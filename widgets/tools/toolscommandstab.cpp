@@ -10,8 +10,6 @@
 #include "skeletonizer.h"
 #include "toolscommandstab.h"
 
-extern stateInfo *state;
-
 ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QWidget(parent)
 {

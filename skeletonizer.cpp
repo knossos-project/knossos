@@ -34,8 +34,6 @@
 #include "knossos.h"
 #include "viewer.h"
 
-extern stateInfo *state;
-
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->simpleTracing = false;
 

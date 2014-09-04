@@ -9,7 +9,6 @@
 #include <quazip/quazipfile.h>
 
 #include "knossos-global.h"
-extern stateInfo * state;
 #include "segmentation.h"
 #include "skeletonizer.h"
 #include "viewer.h"

@@ -26,8 +26,6 @@
 #include "knossos-global.h"
 #include "widgets/mainwindow.h"
 
-extern stateInfo *state;
-
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
 {

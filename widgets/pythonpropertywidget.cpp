@@ -14,8 +14,6 @@
 #include <QPushButton>
 #include <QSettings>
 
-extern stateInfo *state;
-
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     QDialog(parent)
 {

@@ -17,8 +17,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-extern stateInfo *state;
-
 TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, QWidget *parent) :
     QWidget(parent)
 {

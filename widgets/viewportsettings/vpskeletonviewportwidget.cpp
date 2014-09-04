@@ -25,8 +25,6 @@
 #include "vpskeletonviewportwidget.h"
 #include "knossos-global.h"
 
-extern stateInfo * const state;
-
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
     line.setFrameShape(QFrame::HLine);
     line.setFrameShadow(QFrame::Sunken);

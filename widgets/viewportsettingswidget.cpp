@@ -38,8 +38,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-extern stateInfo *state;
-
 ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent) {
     this->generalTabWidget = new VPGeneralTabWidget();
     this->slicePlaneViewportWidget = new VPSlicePlaneViewportWidget();

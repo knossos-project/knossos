@@ -12,8 +12,6 @@
 
 #include <chrono>
 
-extern stateInfo *state;
-
 int TouchedObjectModel::rowCount(const QModelIndex &) const {
     return objectCache.size();
 }

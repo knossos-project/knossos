@@ -8,8 +8,6 @@ Q_DECLARE_METATYPE(color4F)
 
 Q_DECLARE_METATYPE(mesh)
 
-extern stateInfo *state;
-
 MeshDecorator::MeshDecorator(QObject *parent) :
     QObject(parent)
 {

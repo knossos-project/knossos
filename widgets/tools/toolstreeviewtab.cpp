@@ -33,8 +33,6 @@ enum {
     DISPLAY_ALL
 };
 
-extern stateInfo *state;
-
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QWidget(parent), selectedNodes("selected nodes")

@@ -45,8 +45,6 @@
 #include "segmentation.h"
 #include "viewer.h"
 
-extern stateInfo *state;
-
 Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

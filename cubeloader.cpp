@@ -2,10 +2,9 @@
 
 #include "coordinate.h"
 #include "knossos.h"
+#include "knossos-global.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
-
-extern stateInfo * const state;
 
 boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
     const auto posDc = Coordinate::Px2DcCoord(pos, state->cubeEdgeLength);

@@ -6,8 +6,6 @@
 
 #include "knossos-global.h"
 
-extern stateInfo *state;
-
 PythonProxy::PythonProxy(QObject *parent) :
     QObject(parent)
 {

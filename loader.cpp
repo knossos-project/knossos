@@ -43,8 +43,6 @@ extern "C" {
 #include <turbojpeg.h>
 #endif
 
-extern stateInfo *state;
-
 C_Element *lll_new()
 {
     C_Element *lll = NULL;

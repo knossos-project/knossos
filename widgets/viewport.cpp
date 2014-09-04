@@ -34,8 +34,6 @@
 #include "viewer.h"
 #include "viewport.h"
 
-extern stateInfo *state;
-
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {

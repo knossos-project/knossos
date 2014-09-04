@@ -14,8 +14,6 @@
 #include "GuiConstants.h"
 #include "annotationwidget.h"
 
-extern stateInfo *state;
-
 AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent)
 {
     setWindowIcon(QIcon(":/images/icons/graph.png"));

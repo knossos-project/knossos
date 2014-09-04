@@ -50,7 +50,6 @@
 
 #define NUMTHREADS 4
 
-stateInfo * state = nullptr;//state lives here
 std::unique_ptr<Knossos> knossos;
 std::unique_ptr<Loader> loader;
 

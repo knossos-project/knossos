@@ -8,8 +8,6 @@
 #include <QApplication>
 #include <QFile>
 
-extern stateInfo *state;
-
 SkeletonProxySignalDelegate *signalDelegate = new SkeletonProxySignalDelegate();
 
 SkeletonProxy::SkeletonProxy(QObject *parent) :
