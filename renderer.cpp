@@ -1658,7 +1658,7 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
-    auto bsize = seg.brush_size;
+    const auto bsize = seg.brush.getRadius();
     glLineWidth(2.0f);
     glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     glBegin(GL_LINE_LOOP);

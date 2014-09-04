@@ -225,6 +225,10 @@ bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
     return it != std::end(subobjects);
 }
 
+uint64_t Segmentation::subobjectIdOfFirstSelectedObject() {
+    return objects[selectedObjectIds.front()].subobjects.front().get().id;
+}
+
 Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId) {
     auto it = subobjects.find(subobjectId);//check if subobject exists
     if (it == std::end(subobjects)) {

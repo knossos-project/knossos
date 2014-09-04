@@ -22,6 +22,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "cubeloader.h"
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
@@ -39,8 +40,6 @@
 
 #include <cstdlib>
 #include <unordered_set>
-
-extern  stateInfo *state;
 
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
@@ -84,9 +83,21 @@ std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, 
     return all_found;
 }
 
+void segmentation_work(QMouseEvent *event, const int vp) {
+    const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+    if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::merge) {
+        merging(event, vp);
+    } else {//add, erase
+        if (Segmentation::singleton().selectedObjectsCount() != 0) {
+            const auto soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject();
+            writeVoxels(coord, soid, Segmentation::singleton().brush);
+        }
+    }
+}
+
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush_size, seg.brush_size, vp);
+    const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush.getRadius(), seg.brush.getRadius(), vp);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             auto & subobject = seg.subobjectFromId(subobjectId);
@@ -222,7 +233,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
              rightMouseDownX = event->x();
              rightMouseDownY = event->y();
-             merging(event, VPfound);
+             segmentation_work(event, VPfound);
         }
         return;
     }
@@ -602,7 +613,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
         if (validPosition(event, VPfound) && notOrigin) {
-            merging(event, VPfound);
+            segmentation_work(event, VPfound);
         }
         return;
     }
@@ -679,7 +690,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     auto & seg = Segmentation::singleton();
     if (seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
         if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {//merge took already place on mouse down
-            merging(event, VPfound);
+            segmentation_work(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
         return;
@@ -1100,7 +1111,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->skeletonState->skeletonChanged = true;//idk
     } else if(event->key() == Qt::Key_Plus) {
         if(control) {
-            Segmentation::singleton().brush_size += 1;
+            Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1);
         } else {
             if(Segmentation::singleton().alpha + 10 > 255) {
                 Segmentation::singleton().alpha = 255;
@@ -1113,8 +1124,9 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Minus) {
         if(control) {
-            if(Segmentation::singleton().brush_size > 0)
-                Segmentation::singleton().brush_size -= 1;
+            if(Segmentation::singleton().brush.getRadius() > 0) {
+                Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1);
+            }
         } else {
             if(Segmentation::singleton().alpha - 10 < 0) {
                 Segmentation::singleton().alpha = 0;

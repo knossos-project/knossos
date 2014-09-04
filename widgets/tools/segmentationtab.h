@@ -4,11 +4,13 @@
 #include "segmentation.h"
 
 #include <QAbstractListModel>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QSortFilterProxyModel>
 #include <QSplitter>
 #include <QTreeView>
@@ -62,18 +64,29 @@ public:
 class SegmentationTab : public QWidget {
 Q_OBJECT
     QVBoxLayout layout;
+    QHBoxLayout toolsLayout;
+    QButtonGroup modeGroup;
+    QPushButton mergeBtn{"Merge Mode"};
+    QPushButton addBtn{"Add Mode"};
+    QPushButton eraseBtn{"Erase Mode"};
+    QSpinBox brushRadiusEdit;
+    QButtonGroup toolGroup;
+    QPushButton twodBtn{"2D"};
+    QPushButton threedBtn{"3D"};
+    QCheckBox showAllChck{"Show all objects"};
     QHBoxLayout filterLayout;
-    QSplitter splitter;
+    CategoryModel categoryModel;
     QComboBox categoryFilter;
     QLineEdit commentFilter;
     QCheckBox regExCheckbox{"RegEx"};
-    CategoryModel categoryModel;
+
     SegmentationObjectModel objectModel;
     QSortFilterProxyModel objectProxyModelCategory;
     QSortFilterProxyModel objectProxyModelComment;
     TouchedObjectModel touchedObjectModel;
-    QCheckBox showAllChck{"Show all objects"};
+
     QTreeView touchedObjsTable;
+    QSplitter splitter;
     QTreeView objectsTable;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;

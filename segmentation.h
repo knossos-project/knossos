@@ -3,6 +3,7 @@
 
 #include "coordinate.h"
 #include "hash_list.h"
+#include "segmentationsplit.h"
 
 #include <QDebug>
 #include <QString>
@@ -131,8 +132,7 @@ Q_OBJECT
 public:
     uint8_t alpha;
     bool segmentationMode;
-    int brush_size = 10;
-
+    brush_t brush;
 
     static Segmentation & singleton();
     Segmentation();
@@ -147,6 +147,7 @@ public:
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
     SubObject & subobjectFromId(const uint64_t & subobjectId);
+    uint64_t subobjectIdOfFirstSelectedObject();
     bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;

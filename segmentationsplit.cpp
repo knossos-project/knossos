@@ -115,26 +115,3 @@ void verticalSplittingPlane(const Coordinate & seed) {
         Segmentation::singleton().unmergeSelectedObjects();
     }
 }
-
-void fillCuboid(const Coordinate& center, const uint64_t id, const int w, const int h, const int d) {
-    for(int z = -d; z <= d; ++z) {
-        for(int y = -h; y <= h; ++y) {
-            for(int x = -w; x <= w; ++x) {
-                writeVoxel({center.x + x, center.y + y, center.z + z}, id);
-            }
-        }
-    }
-}
-
-void fillCuboidInObject(const Coordinate& center, const uint64_t id, std::set<uint64_t> in_ids, const int w, const int h, const int d) {
-    for(int z = -d; z <= d; ++z) {
-        for(int y = -h; y <= h; ++y) {
-            for(int x = -w; x <= w; ++x) {
-                auto cur_id = readVoxel({center.x + x, center.y + y, center.z + z});
-                if(!(in_ids.find(cur_id) != in_ids.end())) {
-                    writeVoxel({center.x + x, center.y + y, center.z + z}, id);
-                }
-            }
-        }
-    }
-}
