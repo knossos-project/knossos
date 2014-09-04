@@ -85,12 +85,14 @@ std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, 
 
 void segmentation_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-    if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::merge) {
+    auto& seg = Segmentation::singleton();
+
+    if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
     } else {//add, erase
-        if (Segmentation::singleton().selectedObjectsCount() != 0) {
-            const auto soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject();
-            writeVoxels(coord, soid, Segmentation::singleton().brush);
+        if (seg.selectedObjectsCount() != 0) {
+            const auto soid = seg.subobjectIdOfFirstSelectedObject();
+            writeVoxels(coord, soid, seg.brush);
         }
     }
 }
@@ -710,6 +712,7 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
 
 void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     const int directionSign = event->delta() > 0 ? -1 : 1;
+    auto& seg = Segmentation::singleton();
 
     if((state->skeletonState->activeNode) and (event->modifiers() == Qt::SHIFT)) {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
@@ -733,6 +736,10 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         }
     } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
         emit zoomOrthoSignal(directionSign * 0.1);
+    } else if(Segmentation::singleton().segmentationMode && event->modifiers() == Qt::SHIFT) {
+        seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
+        if(seg.brush.getRadius() < 0)
+            seg.brush.setRadius(0);
     } else {
         const auto multiplier = directionSign * state->viewerState->dropFrames * state->magnification;
         const auto type = state->viewerState->vpConfigs[VPfound].type;

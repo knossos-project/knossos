@@ -40,7 +40,13 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
         std::array<int, 3> start = {{pos.x - brush.getRadius(), pos.y - brush.getRadius(), pos.z - brush.getRadius()}};
         std::array<int, 3> end = {{pos.x + brush.getRadius(), pos.y + brush.getRadius(), pos.z + brush.getRadius()}};
         if (brush.getMode() == brush_t::mode_t::two_dim) {//disable depth
-            start[2] = end[2] = pos.z;
+            if(brush.getView() == brush.view_t::xy) {
+                start[2] = end[2] = pos.z;
+            } else if(brush.getView() == brush.view_t::xz) {
+                start[1] = end[1] = pos.y;
+            } else if(brush.getView() == brush.view_t::yz) {
+                start[0] = end[0] = pos.x;
+            }
         }
         for (int x = start[0]; x <= end[0]; ++x)
         for (int y = start[1]; y <= end[1]; ++y)

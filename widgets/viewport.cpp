@@ -33,6 +33,7 @@
 #include "renderer.h"
 #include "viewer.h"
 #include "viewport.h"
+#include "segmentation.h"
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
@@ -306,6 +307,8 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     }
     eventDelegate->mousePosX = event->x();
     eventDelegate->mousePosY = event->y();
+
+    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {

@@ -16,6 +16,10 @@ public:
     enum class tool_t {
         merge, add, erase
     };
+    enum class view_t {
+        xy, xz, yz
+    };
+
     void setMode(const mode_t newMode) {
         mode = newMode;
         emit modeChanged(mode);
@@ -37,14 +41,21 @@ public:
     tool_t getTool() const {
         return tool;
     }
+    void setView(const view_t newView) {
+        view = newView;
+    }
+    view_t getView() const {
+        return view;
+    }
 signals:
     void modeChanged(const mode_t);
     void radiusChanged(const int);
     void toolChanged(const tool_t);
 private:
-    mode_t mode = mode_t::two_dim;
     int radius = 10;
+    mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
+    view_t view = view_t::xy;
 };
 
 void verticalSplittingPlane(const Coordinate & seed);
