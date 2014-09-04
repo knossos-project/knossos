@@ -48,11 +48,11 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
             std::min(state->boundary.z, pos.z + brush.getRadius())
         }};
         if (brush.getMode() == brush_t::mode_t::two_dim) {//disable depth
-            if(brush.getView() == brush.view_t::xy) {
+            if (brush.getView() == brush_t::view_t::xy) {
                 start[2] = end[2] = pos.z;
-            } else if(brush.getView() == brush.view_t::xz) {
+            } else if(brush.getView() == brush_t::view_t::xz) {
                 start[1] = end[1] = pos.y;
-            } else if(brush.getView() == brush.view_t::yz) {
+            } else if(brush.getView() == brush_t::view_t::yz) {
                 start[0] = end[0] = pos.x;
             }
         }
