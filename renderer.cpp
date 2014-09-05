@@ -1660,7 +1660,10 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     const auto bview = seg.brush.getView();
 
     glLineWidth(2.0f);
-    glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
+    if(seg.brush.getTool() == brush_t::tool_t::erase)
+        glColor4f(0.6f, 0.1f, 0.1f, 1.0f);
+    else
+        glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     glBegin(GL_LINE_LOOP);
     if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
         glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
@@ -1679,7 +1682,11 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
         glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
     }
     glEnd();
-    glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
+
+    if(seg.brush.getTool() == brush_t::tool_t::erase)
+        glColor4f(1.0f, 0.1f, 0.1f, 1.0f);
+    else
+        glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     glBegin(GL_LINE_LOOP);
     if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
         glVertex3i(coord.x - bsize-1, coord.y - bsize-1, coord.z - 0.1);
