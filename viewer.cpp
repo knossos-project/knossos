@@ -2000,6 +2000,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::unselectNodesSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearNodeTableSelection);
     QObject::connect(eventModel, &EventModel::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
+    QObject::connect(eventModel, &EventModel::zoomReset, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
     QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);

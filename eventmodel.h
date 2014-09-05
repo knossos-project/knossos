@@ -89,6 +89,7 @@ signals:
     void userMoveSignal(int x, int y, int z);
     void userMoveArbSignal(float x, float y, float z);
     void pasteCoordinateSignal();
+    void zoomReset();
     void zoomOrthoSignal(float step);
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();

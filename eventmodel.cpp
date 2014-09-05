@@ -1088,6 +1088,10 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         //emit genTestNodesSignal(50000);
         // emit updateTreeviewSignal();
 
+    } else if (event->key() == Qt::Key_0) {
+        if (control) {
+            emit zoomReset();
+        }
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
            state->viewerState->drawVPCrosshairs = false;
