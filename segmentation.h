@@ -19,6 +19,7 @@
 
 class Segmentation : public QObject {
 Q_OBJECT
+    friend void connectedComponent(const Coordinate & seed);
     friend void verticalSplittingPlane(const Coordinate & seed);
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
@@ -27,6 +28,7 @@ Q_OBJECT
 
     class Object;
     class SubObject {
+        friend void connectedComponent(const Coordinate & seed);
         friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class Segmentation;
@@ -53,6 +55,7 @@ Q_OBJECT
     }
 
     class Object {
+        friend void connectedComponent(const Coordinate & seed);
         friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class TouchedObjectModel;

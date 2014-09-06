@@ -703,7 +703,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (Segmentation::singleton().segmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-        verticalSplittingPlane(clickedCoordinate);
+        connectedComponent(clickedCoordinate);
     }
     // a node was dragged to a new position
     if(state->skeletonState->activeNode) {

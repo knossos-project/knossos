@@ -58,6 +58,7 @@ private:
     view_t view = view_t::xy;
 };
 
+void connectedComponent(const Coordinate & seed);
 void verticalSplittingPlane(const Coordinate & seed);
 
 #endif//SEGMENTATION_SPLIT_H
