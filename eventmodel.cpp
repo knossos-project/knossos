@@ -235,9 +235,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if (Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
-        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-            Segmentation::singleton().brush.setInverse(true);
-        }
+        Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
              rightMouseDownX = event->x();
              rightMouseDownY = event->y();
@@ -1034,9 +1032,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->repeatDirection[1] *= 10;
         state->repeatDirection[2] *= 10;
         //enable erase mode on shift down
-        if (!Segmentation::singleton().brush.isInverse()) {
-            Segmentation::singleton().brush.setInverse(true);
-        }
+        Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K) {
         if(state->viewerState->vpOrientationLocked == false) {
             state->viewerState->alphaCache += 1;

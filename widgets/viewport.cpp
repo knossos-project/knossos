@@ -441,9 +441,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         state->repeatDirection[1] /= 10;
         state->repeatDirection[2] /= 10;
 
-        if (Segmentation::singleton().brush.isInverse()) {
-            Segmentation::singleton().brush.setInverse(false);
-        }
+        Segmentation::singleton().brush.setInverse(false);
     } else {
         eventDelegate->handleKeyRelease(event);
     }
