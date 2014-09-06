@@ -2002,6 +2002,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
     QObject::connect(eventModel, &EventModel::zoomReset, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
     QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
+    QObject::connect(eventModel, &EventModel::zoomOrthoSignal, renderer, &Renderer::invalidatePickingBuffer);
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
