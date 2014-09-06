@@ -34,8 +34,8 @@ class Viewport;
 
 class ColorPickBuffer : public QObject {
     uint vpId;
-
     Coordinate position;
+    bool invalidated = false;
 
 public:
     uint size;
@@ -45,16 +45,21 @@ public:
         SET_COORDINATE(position, -1, -1, -1);
     }
 
+    void invalidate() {
+        invalidated = true;
+    }
+
     void update(uint currVp, uint currSize, Coordinate currPos) {
         vpId = currVp;
         size = currSize;
         SET_COORDINATE(position, currPos.x, currPos.y, currPos.z);
         free(buffer);
         buffer = (GLubyte*)calloc(3, size * size);
+        invalidated = false;
     }
 
     bool upToDate(uint currVp, uint currSize, Coordinate currPos) {
-        return currVp == vpId && size == currSize && COMPARE_COORDINATE(currPos, position);
+        return currVp == vpId && size == currSize && COMPARE_COORDINATE(currPos, position) && !invalidated;
     }
 
     std::tuple<uint8_t, uint8_t, uint8_t> getColor(uint x, uint y) {
@@ -101,6 +106,7 @@ protected:
     bool updateFrustumClippingPlanes(uint viewportType);
 
 public slots:
+    void invalidatePickingBuffer();
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y);

@@ -78,6 +78,10 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 }
 
+void Renderer::invalidatePickingBuffer() {
+    pickBuffer.invalidate();
+}
+
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
     float currentAngle = 0.;
         floatCoordinate segDirection, tempVec, *tempVec2;
