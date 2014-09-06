@@ -79,7 +79,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 }
 
 void Renderer::invalidatePickingBuffer() {
-    pickBuffer.invalidate();
+    pickBuffer.invalidated = true;
 }
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
@@ -1869,10 +1869,9 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // color picking
-    pickBuffer.update(currentVP, vp->width(), state->viewerState->currentPosition);
     glReadBuffer(GL_BACK);
     glPixelStoref(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, pickBuffer.size, pickBuffer.size, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pickBuffer.buffer);
+    pickBuffer = ColorPickBuffer(currentVP, vp->width(), state->viewerState->currentPosition);
 
     // restore normal segmentation texture
     state->viewerState->uniqueColorMode = false;

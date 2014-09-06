@@ -24,55 +24,36 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
-#include <QObject>
 #include "knossos-global.h"
 #include "scriptengine/decorators/meshdecorator.h"
+
 #include <QList>
+#include <QObject>
+
+#include <boost/multi_array.hpp>
 
 class Viewport;
 
-class ColorPickBuffer : public QObject {
-    uint vpId;
-    Coordinate position;
-    bool invalidated = false;
-
+struct ColorPickBuffer {
+private:
+    uint vpId = 0;
+    uint size{0};
+    Coordinate position{-1, -1, -1};
+    //one cannot assign multi_arrays of different sizes → pointer
+    std::unique_ptr<boost::multi_array<std::array<GLubyte, 3>, 2>> buffer;
 public:
-    uint size;
-    GLubyte *buffer;
-
-    ColorPickBuffer() : vpId(0), size(0), buffer(nullptr) {
-        SET_COORDINATE(position, -1, -1, -1);
+    bool invalidated{false};
+    ColorPickBuffer() = default;
+    ColorPickBuffer(const uint & vpid, const uint & size, const Coordinate & pos)
+            : vpId{vpid}, size{size}, position{pos}, buffer(new decltype(buffer)::element_type(boost::extents[size][size])) {
+        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer->data()));
     }
-
-    void invalidate() {
-        invalidated = true;
+    bool upToDate(const uint & currVp, const uint & currSize, const Coordinate & currPos) const {
+        return currVp == vpId && size == currSize && currPos == position && !invalidated;
     }
-
-    void update(uint currVp, uint currSize, Coordinate currPos) {
-        vpId = currVp;
-        size = currSize;
-        SET_COORDINATE(position, currPos.x, currPos.y, currPos.z);
-        free(buffer);
-        buffer = (GLubyte*)calloc(3, size * size);
-        invalidated = false;
-    }
-
-    bool upToDate(uint currVp, uint currSize, Coordinate currPos) {
-        return currVp == vpId && size == currSize && COMPARE_COORDINATE(currPos, position) && !invalidated;
-    }
-
-    std::tuple<uint8_t, uint8_t, uint8_t> getColor(uint x, uint y) {
-        if(x > size || y > size) {
-            return std::make_tuple(0, 0, 0);
-        }
-        return std::make_tuple(*(buffer + 0 + ((size - y)*size*3) + (x*3)),
-                               *(buffer + 1 + ((size - y)*size*3) + (x*3)),
-                               *(buffer + 2 + ((size - y)*size*3) + (x*3)));
-    }
-
-    ~ColorPickBuffer() {
-        free(buffer);
+    std::tuple<uint8_t, uint8_t, uint8_t> getColor(const uint & x, const uint & y) {
+        const auto yinverse = size-y-1;
+        return std::make_tuple((*buffer)[yinverse][x][0], (*buffer)[yinverse][x][1], (*buffer)[yinverse][x][2]);
     }
 };
 
