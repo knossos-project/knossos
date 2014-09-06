@@ -90,12 +90,13 @@ void segmentation_work(QMouseEvent *event, const int vp) {
     if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
     } else {//add, erase
-        if (seg.selectedObjectsCount() != 0) {
-            const auto soid = seg.subobjectIdOfFirstSelectedObject();
-            writeVoxels(coord, soid, seg.brush);
-            state->viewer->window->notifyUnsavedChanges();
-        	state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
+        if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
+            seg.createAndSelectObject();
         }
+        const auto soid = seg.subobjectIdOfFirstSelectedObject();
+        writeVoxels(coord, soid, seg.brush);
+        state->viewer->window->notifyUnsavedChanges();
+        state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
     }
 }
 
@@ -234,6 +235,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if (Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
+        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+            Segmentation::singleton().brush.setInverse(true);
+        }
         if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
              rightMouseDownX = event->x();
              rightMouseDownY = event->y();
@@ -1030,8 +1034,8 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->repeatDirection[1] *= 10;
         state->repeatDirection[2] *= 10;
         //enable erase mode on shift down
-        if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::add) {
-            Segmentation::singleton().brush.setTool(brush_t::tool_t::erase);
+        if (!Segmentation::singleton().brush.isInverse()) {
+            Segmentation::singleton().brush.setInverse(true);
         }
     } else if(event->key() == Qt::Key_K) {
         if(state->viewerState->vpOrientationLocked == false) {

@@ -33,9 +33,6 @@ void writeVoxel(const Coordinate & pos, const uint64_t value) {
 }
 
 void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) {
-    if (brush.getTool() == brush_t::tool_t::erase) {
-        value = 0;
-    }
     if (brush.getTool() != brush_t::tool_t::merge) {
         std::array<int, 3> start = {{
             std::max(0, pos.x - brush.getRadius()),
@@ -59,13 +56,18 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
         for (int x = start[0]; x <= end[0]; ++x)//end is inclusive
         for (int y = start[1]; y <= end[1]; ++y)
         for (int z = start[2]; z <= end[2]; ++z) {
-            if (brush.getTool() == brush_t::tool_t::erase) {
-                const auto soid = readVoxel({x, y, z});
-                if (Segmentation::singleton().subobjectExists(soid)) {
-                    auto & subobject = Segmentation::singleton().subobjectFromId(soid);
-                    if (Segmentation::singleton().isSelected(subobject)) {
-                        writeVoxel({x, y, z}, 0);
+            if (brush.isInverse()) {
+                //if there’re selected objects, we only want to erase these
+                bool shouldErase = Segmentation::singleton().selectedObjectsCount() != 0;
+                if (!shouldErase) {
+                    const auto soid = readVoxel({x, y, z});
+                    if (Segmentation::singleton().subobjectExists(soid)) {
+                        const auto & subobject = Segmentation::singleton().subobjectFromId(soid);
+                        shouldErase = Segmentation::singleton().isSelected(subobject);
                     }
+                }
+                if (shouldErase) {
+                    writeVoxel({x, y, z}, 0);
                 }
             } else {
                 writeVoxel({x, y, z}, value);

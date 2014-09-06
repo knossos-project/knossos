@@ -14,12 +14,19 @@ public:
         two_dim, three_dim
     };
     enum class tool_t {
-        merge, add, erase
+        merge, add
     };
     enum class view_t {
         xy, xz, yz
     };
 
+    void setInverse(const bool newInverse) {
+        inverse = newInverse;
+        emit inverseChanged(inverse);
+    }
+    bool isInverse() const {
+        return inverse;
+    }
     void setMode(const mode_t newMode) {
         mode = newMode;
         emit modeChanged(mode);
@@ -48,11 +55,13 @@ public:
         return view;
     }
 signals:
+    void inverseChanged(const bool);
     void modeChanged(const mode_t);
     void radiusChanged(const int);
     void toolChanged(const tool_t);
 private:
     int radius = 10;
+    bool inverse = false;
     mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
     view_t view = view_t::xy;
