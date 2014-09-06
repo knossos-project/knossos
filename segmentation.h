@@ -149,7 +149,7 @@ public:
     bool hasObjects() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
-    void createObject();
+    void createAndSelectObject();
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     uint64_t subobjectIdOfFirstSelectedObject();
     bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;

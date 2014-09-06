@@ -126,8 +126,10 @@ bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
-void Segmentation::createObject() {
-    createObject(SubObject::highestId+1);
+void Segmentation::createAndSelectObject() {
+    clearObjectSelection();
+    auto & newObject = createObject(SubObject::highestId+1);
+    selectObject(newObject);
 }
 
 Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & immutable) {

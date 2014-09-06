@@ -358,7 +358,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
         Segmentation::singleton().renderAllObjs = value;
     });
 
-    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createObject();});
+    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject();});
 
     touchedObjectModel.recreate();
     objectModel.recreate();
