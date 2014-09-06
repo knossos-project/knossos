@@ -82,6 +82,7 @@ void Segmentation::clear() {
     selectedObjectIds.clear();
     objects.clear();
     Object::highestId = -1;
+    SubObject::highestId = 0;
     subobjects.clear();
     touched_subobject_id = 0;
 
