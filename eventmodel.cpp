@@ -740,7 +740,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         if(seg.brush.getRadius() < 0)
             seg.brush.setRadius(0);
     } else {
-        const auto multiplier = directionSign * state->viewerState->dropFrames * state->magnification;
+        const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
         const auto type = state->viewerState->vpConfigs[VPfound].type;
         if (type == VIEWPORT_XY) {
             emit userMoveSignal(0, 0, multiplier);
