@@ -28,6 +28,7 @@ class Scripting : public QThread
     Q_OBJECT
 public:
     explicit Scripting(QObject *parent = 0);
+    ~Scripting();
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
