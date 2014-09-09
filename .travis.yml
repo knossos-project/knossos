@@ -5,30 +5,46 @@ compiler:
   - gcc
 
 before_install:
-  - lsb_release -a # should be 12.04
-  - sudo apt-add-repository -y ppa:jkeiren/ppa
+  - lsb_release -a # 12.04 assumed
+  - sudo add-apt-repository -y ppa:boost-latest/ppa # boost 1.55
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test # gcc4.8
-  - sudo add-apt-repository -y ppa:kalakris/cmake # CMake 2.11.2
-  - sudo apt-add-repository -y ppa:ubuntu-sdk-team/ppa
-  - sudo apt-add-repository -y ppa:beineri/opt-qt521
-  - sudo apt-add-repository -y ppa:arankine/backports # ninja-build 1.3.4
+  - sudo add-apt-repository -y ppa:andykimpe/cmake3 # CMake 3.0.0
   - sudo apt-add-repository -y ppa:yjwong/libjpeg-turbo # libjpeg-turbo 1.3.0
-  - sudo apt-get update -qq
-  - sudo apt-get -qq install cmake
-  - sudo apt-get -qq install freeglut3-dev
-  - sudo apt-get -qq install libcurl4-openssl-dev
-  - sudo apt-get -qq install libjpeg-turbo8-dev
-  - sudo apt-get -qq install libxmu-dev libxi-dev
-  - sudo apt-get -qq install ninja-build
-  - sudo apt-get -qq install qt52base qt52tools
-  - sudo apt-get install -qq gcc-4.8 g++-4.8
+  - sudo apt-add-repository -y ppa:arankine/backports # ninja-build 1.3.4
+  - sudo apt-add-repository -y ppa:beineri/opt-qt531 # Qt 5.3.1
+  - sudo apt-get update -y
+  - sudo apt-get -y install cmake3
+  - sudo apt-get -y install freeglut3-dev
+  - sudo apt-get -y install gcc-4.8 g++-4.8
+  - sudo apt-get -y install libboost1.55-dev
+  - sudo apt-get -y install libcurl4-openssl-dev
+  - sudo apt-get -y install libjpeg-turbo8-dev
+  - sudo apt-get -y install libxmu-dev libxi-dev
+  - sudo apt-get -y install libsnappy-dev
+  - sudo apt-get -y install ninja-build
+  - sudo apt-get -y install qt53base qt53tools
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
   - sudo update-alternatives --config gcc
   - sudo update-alternatives --config g++
-  - source /opt/qt52/bin/qt52-env.sh
+  - source /opt/qt53/bin/qt53-env.sh
 
 before_script:
+  - wget http://downloads.sourceforge.net/project/quazip/quazip/0.7/quazip-0.7.tar.gz
+  - tar -xzf quazip-0.7.tar.gz
+  - mkdir quazip-build
+  - cd quazip-build
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7"
+  - sudo ninja install
+  - cd ..
+  - git clone https://github.com/Orochimarufan/PythonQt.git
+  - echo "message(skipping QtAll)" > PythonQt/extensions/CMakeLists.txt
+  - sed -i '/add_dependencies(QtAll ${PythonQt_QtAll})/c\#add_dependencies(QtAll ${PythonQt_QtAll})' PythonQt/CMakeLists.txt
+  - mkdir PythonQt-build
+  - cd PythonQt-build
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Qt5=TRUE ../PythonQt
+  - sudo ninja install
+  - cd ..
   - mkdir build_debug
   - cd build_debug
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=DEBUG ..

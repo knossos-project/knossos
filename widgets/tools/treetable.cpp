@@ -7,8 +7,6 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 
-extern stateInfo *state;
-
 TreeTable::TreeTable(QWidget *parent) : QTableWidget(parent), droppedOnTreeID(0), selectionProtection(true) {}
 
 void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {

@@ -27,10 +27,12 @@
 
 #include "knossos-global.h"
 
+#include <QLabel>
+#include <QSpinBox>
+#include <QHBoxLayout>
+#include <QSlider>
 #include <QWidget>
-#include <qgl.h>
 
-class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
@@ -61,7 +63,6 @@ public slots:
     void biasChanged(int value);
     void rangeDeltaSliderMoved(int value);
     void rangeDeltaChanged(int value);
-    void enableColorOverlayChecked(bool on);
     void drawIntersectionsCrossHairChecked(bool on);
     void showViewPortsSizeChecked(bool on);
     void updateIntersection();
@@ -87,11 +88,17 @@ protected:
     QSpinBox *biasSpinBox, *rangeDeltaSpinBox;
     QSlider *biasSlider, *rangeDeltaSlider;
 
-    QLabel *objectIDOverlayLabel, *viewportObjectsLabel;
-    QCheckBox *enableColorOverlayCheckBox, *drawIntersectionsCrossHairCheckBox, *showViewPortsSizeCheckBox;
+    QLabel *viewportObjectsLabel;
+    QCheckBox *drawIntersectionsCrossHairCheckBox, *showViewPortsSizeCheckBox;
 
     QLabel *datasetLutFile;
     QLabel *treeLutFile;
+
+    QLabel segmenationOverlayGroupLabel{"Segmentation Overlay"};
+    QLabel segmenationOverlayLabel{"Opaqueness"};
+    QSpinBox segmenationOverlaySpinBox;
+    QSlider segmenationOverlaySlider{Qt::Horizontal};
+    QHBoxLayout segmentationOverlayLayout;
 };
 
 #endif // VPSLICEPLANEVIEWPORTWIDGET_H

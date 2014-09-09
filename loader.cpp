@@ -21,21 +21,27 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "loader.h"
+
+#include "ftp.h"
+#include "knossos.h"
+#include "segmentation.h"
+
+#include <snappy.h>
 
 #include <cmath>
+#include <fstream>
 #include <stdexcept>
 
-#include <dirent.h>
-#include "loader.h"
-#include "knossos.h"
-#include <sys/stat.h>
-#include "ftp.h"
+extern "C" {
+    int jp2_decompress_main(char *infile, char *buf, int bufsize);
+}
 
+#include <dirent.h>
+#include <sys/stat.h>
 #ifdef KNOSSOS_USE_TURBOJPEG
 #include <turbojpeg.h>
 #endif
-
-extern stateInfo *state;
 
 C_Element *lll_new()
 {
@@ -350,11 +356,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     return LLL_SUCCESS;
 }
 
-Loader::Loader(QObject *parent) :
-    QThread(parent)
-{
-
-}
+Loader::Loader(QObject *parent) : QThread(parent) {}
 
 int calc_nonzero_sign(float x) {
     if (x > 0) {
@@ -472,7 +474,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         return false;
     }
     memset(DcArray, 0, sizeof(DcArray[0]) * cubeElemCount);
-    currentOrigin = Coordinate::Px2DcCoord(state->currentPositionX);
+    currentOrigin = Coordinate::Px2DcCoord(state->currentPositionX, state->cubeEdgeLength);
     i = 0;
     this->currentMaxMetric = 0;
     for (x = -halfSc; x < halfSc + 1; x++) {
@@ -500,11 +502,47 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     return true;
 }
 
-extern "C" {
-    int jp2_decompress_main(char *infile, char *buf, int bufsize);
-}
-
 void Loader::loadCube(loadcube_thread_struct *lts) {
+    if (state->overlay) {
+        state->protectLoaderSlots->lock();
+        if (!lts->thisPtr->freeOcSlots.empty()) {
+            auto currentOcSlot = lts->thisPtr->freeOcSlots.front();
+
+            const auto cubeCoord = CoordOfCube(lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z);
+            auto snappyIt = snappyCache.find(cubeCoord);
+            if (snappyIt != std::end(snappyCache)) {
+                //directly uncompress snappy cube into the OC slot
+                snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char *>(currentOcSlot));
+            } else {
+                const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
+                std::ifstream inFile(inFilePath, std::ios_base::binary);
+                if (inFile) {
+                    std::vector<char> buffer(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>{});
+
+                    const auto expectedSize = state->cubeBytes * sizeof(uint64_t);
+                    if (buffer.size() == expectedSize) {
+                        std::move(std::begin(buffer), std::end(buffer), currentOcSlot);
+                    } else {
+                        qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
+                        std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
+                    }
+                } else {
+                    std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
+                }
+            }
+
+            state->protectCube2Pointer->lock();
+            if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
+                lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+            } else {
+                qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d]."
+                       , lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+            }
+            state->protectCube2Pointer->unlock();
+        }
+        state->protectLoaderSlots->unlock();
+    }
+
     bool retVal = true;
     bool isPut = false;
     char *filename;
@@ -562,7 +600,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
-            qDebug("fopen failed for %s!", filename);
+            //qDebug("fopen failed for %s!", filename);
             goto loadcube_fail;
         }
 
@@ -572,9 +610,25 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             if(fclose(cubeFile) != 0) {
                 qDebug() << "Additionally, an error occured closing the file";
             }
+            if(LM_FTP == state->loadMode) {
+                if(remove(filename) != 0) {
+                    qDebug() << "Failed to delete cube file " << filename;
+                }
+                else {
+                    qDebug("successful delete");
+                }
+            }
             goto loadcube_fail;
         } else {
             fclose(cubeFile);
+            if(LM_FTP == state->loadMode) {
+                if(remove(filename) != 0) {
+                    qDebug() << "Failed to delete cube file " << filename;
+                }
+                else {
+                    qDebug("successful delete");
+                }
+            }
         }
         break;
     case 1000:
@@ -598,8 +652,10 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             qDebug() << "malloc failed!\n";
             goto loadcube_fail;
         }
+
         readBytes = fread(localCompressedBuf, 1, localCompressedBufSize, cubeFile);
         fclose(cubeFile);
+
         if (localCompressedBufSize != readBytes) {
             qDebug("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
             goto loadcube_fail;
@@ -618,6 +674,12 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             qDebug() << "tjDecompress2() failed!";
             goto loadcube_fail;
         }
+
+        if(LM_FTP == state->loadMode) {
+            if(remove((const char*)filename) != 0) {
+                qDebug() << "Failed to delete cube file " << filename;
+            }
+        }
 #else
         qDebug() << "JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.";
 #endif
@@ -627,6 +689,9 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
             qDebug() << "Decompression function failed!";
             goto loadcube_fail;
+        }
+        if(LM_FTP == state->loadMode) {
+            remove(filename);
         }
         break;
     }
@@ -652,8 +717,7 @@ loadcube_manage:
             currentDcSlot,
             state->loaderMagnification);
         retVal = false;
-    }
-    else {
+    } else {
         isPut = true;
     }
     state->protectCube2Pointer->unlock();
@@ -712,14 +776,14 @@ bool Loader::initLoader() {
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
 
-    qDebug("Allocating %d bytes for the datacubes.", state->cubeSetBytes);
+    qDebug() << "Allocating" << state->cubeSetBytes << "bytes for the datacubes.";
     for(size_t i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         DcSetChunk.emplace_back(state->cubeBytes, 0);//zero init chunk of chars
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
     }
 
     if(state->overlay) {
-        qDebug("Allocating %u bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
+        qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
         for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
             OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
             freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
@@ -765,10 +829,31 @@ bool Loader::initLoader() {
     return true;
 }
 
+void Loader::snappyCacheAdd(const CoordOfCube & cubeCoord, const Byte * cube) {
+    //insert empty string into snappy cache
+    auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
+    //compress cube into the new string
+    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
+}
+
+void Loader::snappyCacheFlush() {
+    state->protectCube2Pointer->lock();
+    for (const auto & cubeCoord : OcModifiedCacheQueue) {
+        auto cube = Hashtable::ht_get(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+        if (cube != HT_FAILURE) {
+            snappyCacheAdd(cubeCoord, cube);
+        }
+    }
+    //clear work queue
+    OcModifiedCacheQueue.clear();
+    state->protectCube2Pointer->unlock();
+}
+
 uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification) {
     for (C2D_Element *currentCube = currentLoadedHash->listEntry->next;
-         currentCube != currentLoadedHash->listEntry;
-         currentCube = currentCube->next) {
+            currentCube != currentLoadedHash->listEntry;
+            currentCube = currentCube->next) {
+        const auto cubeCoord = CoordOfCube(currentCube->coordinate.x, currentCube->coordinate.y, currentCube->coordinate.z);
         if (NULL != currentCube->datacube) {
             continue;
         }
@@ -797,7 +882,6 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
                     prevLoaderMagnification);
                 return false;
             }
-
             freeDcSlots.emplace_back(delCubePtr);
             /*
             qDebug("Added %d, %d, %d => %d available",
@@ -813,6 +897,11 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          */
 
         if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
+                snappyCacheAdd(cubeCoord, delCubePtr);
+                //remove from work queue
+                OcModifiedCacheQueue.erase(cubeCoord);
+            }
             if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                 qDebug("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
                     currentCube->coordinate.x,
@@ -820,8 +909,6 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
                     currentCube->coordinate.z);
                 return false;
             }
-
-            memset(delCubePtr, 0, state->cubeSetBytes * OBJID_BYTES);
             freeOcSlots.emplace_back(delCubePtr);
         }
 
@@ -1095,7 +1182,7 @@ bool Loader::load() {
 
     if (!state->loaderDummy) {
         if(loadCubes() == false) {
-            //qDebug("Loading of all DCOI did not complete.");
+            //qDebug() << "Loading of all DCOI did not complete.";
         }
     }
     lll_rmlist(this->Dcoi);

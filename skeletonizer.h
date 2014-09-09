@@ -37,7 +37,7 @@ public:
     explicit Skeletonizer(QObject *parent = 0);
 
 signals:
-    void saveSkeletonSignal();
+    void autosaveSignal();
     void updateToolsSignal();
     void updateTreeviewSignal();
     void userMoveSignal(int x, int y, int z);
@@ -98,15 +98,15 @@ public slots:
     static bool addComment(QString content, nodeListElement *node, uint nodeID);
     static bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     static bool delComment(commentListElement *currentComment, uint commentNodeID);
-    bool jumpToActiveNode();
+    void jumpToActiveNode(bool *isSuccess = NULL);
     static bool setActiveTreeByID(int treeID);
 
-    bool loadXmlSkeleton(QString fileName, bool multiple);
-    bool saveXmlSkeleton(QString fileName);
+    bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    bool saveXmlSkeleton(QIODevice &file) const;
 
     static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    bool moveToNextTree();
-    bool moveToPrevTree();
+    void moveToNextTree(bool *isSuccess = NULL);
+    void moveToPrevTree(bool *isSuccess = NULL);
     bool moveToPrevNode();
     bool moveToNextNode();
     static bool moveNodeToTree(nodeListElement *node, int treeID);
@@ -124,7 +124,6 @@ public slots:
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-    static QString getDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
     bool popBranchNode();

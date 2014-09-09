@@ -31,6 +31,8 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
+#include "coordinate.h"
+
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
 #include <curl/curl.h>
 
@@ -47,7 +49,7 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.0"
+#define KVERSION "4.1 Pre Alpha"
 
 #define FAIL    -1
 
@@ -78,7 +80,7 @@
 #define MAX_BOUNDARY    9999
 
 // Bytes for an object ID.
-#define OBJID_BYTES  3
+#define OBJID_BYTES sizeof(uint64_t)
 
 //	For the hashtable.
 #define HT_SUCCESS  1
@@ -250,6 +252,16 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class stateInfo;
+extern stateInfo * state;
+
+class floatCoordinate;
+class color4F;
+class treeListElement;
+class nodeListElement;
+class segmentListElement;
+class mesh;
+
 //Structures and custom types
 typedef uint8_t Byte;
 
@@ -263,46 +275,15 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
     return val < base ? res : int_log(val/base, base, res+1);
 }
 
-struct floatCoordinate {
-    float x;
-    float y;
-    float z;
-};
-
-#define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-class Coordinate{
+class color4F {
 public:
-    Coordinate() { }
-    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
-    int x;
-    int y;
-    int z;
-    static Coordinate Px2DcCoord(Coordinate pxCoordinate);
-    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
-    static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
-    void operator=(Coordinate const&rhs);
-
-};
-
-class CoordinateDecorator : public QObject {
-    Q_OBJECT
-public slots:
-    Coordinate *new_Coordinate() { return new Coordinate(); }
-    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
-    int x(Coordinate *self) { return self->x; }
-    void setX(Coordinate *self, int x) { self->x = x; }
-    int y(Coordinate *self) { return self->y; }
-    void setY(Coordinate *self, int y) { self->y = y; }
-    int z(Coordinate *self) { return self->z; }
-    void setZ(Coordinate *self, int z) { self->z = z; }
-};
-
-typedef struct {
+    color4F();
+    color4F(float r, float g, float b, float a);
         GLfloat r;
         GLfloat g;
         GLfloat b;
         GLfloat a;
-} color4F;
+};
 
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
@@ -442,9 +423,6 @@ public:
     char name[1024];
     char loaderName[1024];
     char magNames[int_log(NUM_MAG_DATASETS)+1][1024];
-
-    char datasetBaseExpName[1024];
-
 
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
@@ -876,10 +854,8 @@ struct viewerState {
     float treeAdjustmentTable[RGB_LUTSIZE];
     float defaultTreeTable[RGB_LUTSIZE];
 
-     // This array holds the table for overlay coloring.
-     // The colors should be "maximally different".
-    GLuint overlayColorMap[4][256];
-    bool overlayVisible;
+    bool uniqueColorMode;
+
     // Advanced Tracing Modes Stuff
 
     bool autoTracingEnabled;
@@ -907,11 +883,15 @@ struct commentListElement {
     struct nodeListElement *node;
 };
 
-struct treeListElement {
+class treeListElement {
 public:
-    struct treeListElement *next;
-    struct treeListElement *previous;
-    struct nodeListElement *firstNode;
+    treeListElement();
+    treeListElement(int treeID, QString comment, color4F color);
+    treeListElement(int treeID, QString comment, float r, float g, float b, float a);
+
+    treeListElement *next;
+    treeListElement *previous;
+    nodeListElement *firstNode;
 
     int treeID;
     color4F color;
@@ -919,29 +899,22 @@ public:
     int colorSetManually;
 
     char comment[8192];
+    QList<nodeListElement *> *getNodes();
+    QList<segmentListElement *> getSegments();
+
 };
 
-//class TreeListElementDecorator : public QObject {
-//    Q_OBJECT
-//public slots:
-//    treeListElement *new_treeListElement() { return new treeListElement(); }
-//    void next(treeListElement *self) { return self->next; }
-//    void
-//    void setNext(treeListElement *self, treeListElement *next) { self->next = next; }
-//    void setPrevious(treeListElement *self, treeListElement *previous) { self->previous = previous; }
-//    void setFirstNode(treeListElement *self, treeListElement *first) { self->firstNode = first; }
+class nodeListElement {
+public:
+   nodeListElement();
+   nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time);
 
-//    int treeID(treeListElement *self) { return self->treeID; }
+    nodeListElement *next;
+    nodeListElement *previous;
 
-//};
+    segmentListElement *firstSegment;
 
-struct nodeListElement {
-    struct nodeListElement *next;
-    struct nodeListElement *previous;
-
-    struct segmentListElement *firstSegment;
-
-    struct treeListElement *correspondingTree;
+    treeListElement *correspondingTree;
 
     float radius;
 
@@ -950,7 +923,7 @@ struct nodeListElement {
     Byte createdInMag;
     int timestamp;
 
-    struct commentListElement *comment;
+    commentListElement *comment;
 
     // counts forward AND backward segments!!!
     int numSegs;
@@ -962,15 +935,18 @@ struct nodeListElement {
     Coordinate position;
     bool isBranchNode;
     bool selected;
+
+    QList<segmentListElement *> *getSegments();
 };
 
-
-struct segmentListElement {
-    struct segmentListElement *next;
-    struct segmentListElement *previous;
+class segmentListElement {
+public:
+    segmentListElement() {}
+    segmentListElement *next;
+    segmentListElement *previous;
 
     //Contains the reference to the segment inside the target node
-    struct segmentListElement *reverseSegment;
+    segmentListElement *reverseSegment;
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
@@ -985,8 +961,8 @@ struct segmentListElement {
     //Coordinate pos1;
     //Coordinate pos2;
 
-    struct nodeListElement *source;
-    struct nodeListElement *target;
+    nodeListElement *source;
+    nodeListElement *target;
 };
 
 struct serialSkeletonListElement {
@@ -1025,7 +1001,10 @@ struct IOBuffer {
     Byte *data;
 };
 
-typedef struct {
+class mesh {
+public:
+    mesh();
+    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
@@ -1038,7 +1017,9 @@ typedef struct {
     uint vertsIndex;
     uint normsIndex;
     uint colsIndex;
-} mesh;
+    uint mode;
+    uint size;
+};
 
 typedef struct {
         GLbyte r;
@@ -1201,8 +1182,6 @@ struct skeletonState {
 
     uint serialSkeletonCounter;
     uint maxUndoSteps;
-
-    QString skeletonFileAsQString;
 };
 
 /* global functions */
@@ -1218,13 +1197,6 @@ struct skeletonState {
 
 #define ABS(x) (((x) >= 0) ? (x) : -(x))
 #define SQR(x) ((x)*(x))
-
-#define SET_COORDINATE(coordinate, a, b, c) \
-        { \
-        (coordinate).x = (a); \
-        (coordinate).y = (b); \
-        (coordinate).z = (c); \
-        }
 
 #define CALC_VECTOR_NORM(v) \
     ( \
@@ -1246,71 +1218,12 @@ struct skeletonState {
     ( \
         ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
     )
-#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
-    { \
-        SET_COORDINATE((coordinate), \
-                       (ox) + (offset_array)[0], \
-                       (oy) + (offset_array)[1], \
-                       (oz) + (offset_array)[2]); \
-    }
 
 #define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
     { \
         (offset_array)[(direction_index)] = (k); \
         (offset_array)[((direction_index) + 1) % 3] = (i); \
         (offset_array)[((direction_index) + 2) % 3] = (j); \
-    }
-
-#define COMPARE_COORDINATE(c1, c2) \
-    ( \
-        (c1).x == (c2).x    \
-        && (c1).y == (c2).y \
-        && (c1).z == (c2).z \
-    )
-
-#define CONTAINS_COORDINATE(c1, c2, c3) \
-    ( \
-        (c2).x <= (c1).x    \
-        && (c1).x <= (c3).x \
-        && (c2).y <= (c1).y \
-        && (c1).y <= (c3).y \
-        && (c2).z <= (c1).z \
-        && (c1).z <= (c3).z \
-    )
-
-#define ADD_COORDINATE(c1, c2) \
-    { \
-            (c1).x += (c2).x; \
-            (c1).y += (c2).y; \
-            (c1).z += (c2).z; \
-    }
-
-#define MUL_COORDINATE(c1, f) \
-    {\
-            (c1).x *= f;\
-            (c1).y *= f;\
-            (c1).z *= f;\
-    }
-
-#define SUB_COORDINATE(c1, c2) \
-    { \
-            (c1).x -= (c2).x; \
-            (c1).y -= (c2).y; \
-            (c1).z -= (c2).z; \
-    }
-
-#define DIV_COORDINATE(c1, c2) \
-    { \
-            (c1).x /= (c2); \
-            (c1).y /= (c2); \
-            (c1).z /= (c2); \
-    }
-
-#define CPY_COORDINATE(c1, c2) \
-    { \
-            (c1).x = (c2).x; \
-            (c1).y = (c2).y; \
-            (c1).z = (c2).z; \
     }
 
 // This is used by the hash function. It rotates the bits by n to the left. It
@@ -1325,6 +1238,5 @@ struct skeletonState {
 // of b (if b is a power of two).
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
-#define COMP_STATE_VAL(val) (state->val == tempConfig->val)
 
 #endif

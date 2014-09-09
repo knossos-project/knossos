@@ -4,7 +4,7 @@
 #include <QThread>
 #include "knossos-global.h"
 
-int downloadFile(char *remote_path, char *local_filename);
+int downloadFile(const char *remote_path, char *local_filename);
 
 class FtpThread : public QThread
 {

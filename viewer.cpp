@@ -22,21 +22,35 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include <cmath>
+#include <fstream>
 
-#include "viewer.h"
 #include <QDebug>
-#include "knossos.h"
-#include "skeletonizer.h"
-#include "renderer.h"
-#include "widgets/widgetcontainer.h"
-
-#include "widgets/mainwindow.h"
-#include "widgets/viewport.h"
-#include "functions.h"
 #include <qopengl.h>
 #include <QtConcurrent/QtConcurrentRun>
 
-extern stateInfo *state;
+#include "functions.h"
+#include "knossos.h"
+#include "renderer.h"
+#include "segmentation.h"
+#include "skeletonizer.h"
+#include "viewer.h"
+#include "widgets/mainwindow.h"
+#include "widgets/viewport.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
+#include "widgets/widgetcontainer.h"
+
+#if defined(Q_OS_WIN)
+#include <GL/wglext.h>
+#elif defined(Q_OS_LINUX)
+#define WINAPI
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+
+static WINAPI int dummy(int) {
+    return 0;
+}
 
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
@@ -68,8 +82,8 @@ Viewer::Viewer(QObject *parent) :
 
     state->viewer = this;
     rewire();
-    window->loadSettings();
     window->show();
+    window->loadSettings();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
                             desktop->availableGeometry().topLeft().y() + 50,
@@ -357,36 +371,141 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
     return true;
 }
 
-bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    int i, j;
-    int objId, *objIdP;
 
-    objIdP = &objId;
+/**
+ * @brief Viewer::ocSliceExtract extracts subObject IDs from datacube
+ *      and paints slice at the corresponding position with a color depending on the ID.
+ * @param datacube pointer to the datacube for data extraction
+ * @param slice pointer to a slice in which to draw the overlay
+ *
+ * In the first pass all pixels are filled with the color corresponding the subObject-ID.
+ * In the second pass the datacube is traversed again to find edge voxels, i.e. all voxels
+ * where at least one of their neighbors (left, right, top, bot) have a different ID than their own.
+ * The opacity of these voxels is slightly increased to highlight the edges.
+ *
+ */
+void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+    Byte *cubePtr = datacube + dcOffset;
+    Byte *slicePtr = slice;
+    // configure variable increments depending on viewport type. Note that additional outer loop only exists for xz vp!
+    // configuration for xy vp
+    int innerLoopBoundary = state->cubeSliceArea;
+    int outerLoopBoundary = 1;
+    int outerCubeIncrement = 0;
+    int innerCubeIncrement = OBJID_BYTES;
+    int horizNBdistance = OBJID_BYTES;
+    int vertNBdistance = state->cubeEdgeLength * OBJID_BYTES;
+    switch(vpConfig->type) {
+    case SLICE_XZ:
+        outerLoopBoundary = state->cubeEdgeLength;
+        innerLoopBoundary = state->cubeEdgeLength;
+        outerCubeIncrement = state->cubeSliceArea*OBJID_BYTES - state->cubeEdgeLength*OBJID_BYTES;
+        vertNBdistance = state->cubeSliceArea*OBJID_BYTES;
+        break;
+    case SLICE_YZ:
+        horizNBdistance = state->cubeEdgeLength * OBJID_BYTES;
+        vertNBdistance = state->cubeSliceArea * OBJID_BYTES;
+        innerCubeIncrement = state->cubeEdgeLength * OBJID_BYTES;
+        break;
+    }
+
+    // draw overlay in first pass
+    auto &seg = Segmentation::singleton();
+    uint64_t idCache = 0;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
+    for(int j = 0; j < outerLoopBoundary; j++) { // for xy and yz vp outer loop is only visited once
+        for(int i = 0; i < innerLoopBoundary; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
+
+            std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color;
+            color = (idCache == subObjectID)? colorCache : seg.colorObjectFromId(subObjectID);
+
+            slicePtr[0] = std::get<0>(color);
+            slicePtr[1] = std::get<1>(color);
+            slicePtr[2] = std::get<2>(color);
+            slicePtr[3] = std::get<3>(color);
+
+            idCache = subObjectID;
+            colorCache = color;
+
+            cubePtr += innerCubeIncrement;
+            slicePtr += 4;
+        }
+        cubePtr += outerCubeIncrement;
+    }
+    // highlight edges in a second pass
+    cubePtr = datacube + dcOffset;
+    slicePtr = slice;
+    Byte *datacubeEnd = datacube + state->cubeEdgeLength * state->cubeSliceArea * OBJID_BYTES;
+
+    for(int j = 0; j < outerLoopBoundary; j++) {
+        for(int i = 0; i < innerLoopBoundary; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
+            auto & segmentation = Segmentation::singleton();
+            if (segmentation.subobjectExists(subObjectID)) {//don’t create objects from subobjects here
+                const auto & subobject = segmentation.subobjectFromId(subObjectID);
+                if (segmentation.isSelected(subobject)) {
+                    uint64_t left = subObjectID;
+                    uint64_t right = subObjectID;
+                    uint64_t top = subObjectID;
+                    uint64_t bot = subObjectID;
+
+                    if(cubePtr - horizNBdistance - datacube >= 0) {
+                        memcpy(&left, cubePtr - horizNBdistance, sizeof(left));
+                    }
+                    if(cubePtr + horizNBdistance - datacubeEnd <= 0) {
+                        memcpy(&right, cubePtr + horizNBdistance, sizeof(right));
+                    }
+                    if(cubePtr - vertNBdistance - datacube >= 0) {
+                        memcpy(&top, cubePtr - vertNBdistance, sizeof(top));
+                    }
+                    if(cubePtr + vertNBdistance - datacubeEnd <= 0) {
+                        memcpy(&bot, cubePtr + vertNBdistance, sizeof(bot));
+                    }
+                    if(subObjectID !=left || subObjectID != right || subObjectID != top || subObjectID != bot) {
+                        slicePtr[3] = (slicePtr[3]*4 > 255)? 255 : slicePtr[3]*4;
+                    }
+                }
+            }
+            cubePtr += innerCubeIncrement;
+            slicePtr += 4;
+        }
+        cubePtr += outerCubeIncrement;
+    }
+}
+
+void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
 
     switch(vpConfig->type) {
     case SLICE_XY:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            memcpy(objIdP, datacube, OBJID_BYTES);
-            slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-            slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-            slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-            slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            //printf("(%d, %d, %d, %d)", slice[0], slice[1], slice[2], slice[3]);
+            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
             datacube += OBJID_BYTES;
             slice += 4;
         }
         break;
     case SLICE_XZ:
-        for(j = 0; j < state->cubeEdgeLength; j++) {
-            for(i = 0; i < state->cubeEdgeLength; i++) {
-                memcpy(objIdP, datacube, OBJID_BYTES);
-                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int j = 0; j < state->cubeEdgeLength; j++) {
+            for(int i = 0; i < state->cubeEdgeLength; i++) {
+                uint64_t subObjectID;
+                memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+                const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
+                slice[0] = std::get<0>(color);
+                slice[1] = std::get<1>(color);
+                slice[2] = std::get<2>(color);
+                slice[3] = std::get<3>(color);
 
                 datacube += OBJID_BYTES;
                 slice += 4;
@@ -398,26 +517,24 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
         }
         break;
     case SLICE_YZ:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            memcpy(objIdP, datacube, OBJID_BYTES);
-            slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-            slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-            slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-            slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
             datacube += state->cubeEdgeLength * OBJID_BYTES;
             slice += 4;
         }
-
         break;
     }
-    return true;
 }
 
-static int texIndex(uint x,
-                        uint y,
-                        uint colorMultiplicationFactor,
-                        viewportTexture *texture) {
+static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportTexture *texture) {
     uint index = 0;
 
     index = x * state->cubeSliceArea + y
@@ -427,7 +544,7 @@ static int texIndex(uint x,
     return index;
 }
 
-bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
+bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
@@ -438,15 +555,15 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     Byte *datacube = NULL, *overlayCube = NULL;
     int dcOffset = 0, index = 0;
 
-    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
+    CPY_COORDINATE(currPosTrans, state->viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
     CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
+    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
-    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans);
+    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans, state->cubeEdgeLength);
 
     // We calculate the coordinate of the DC that holds the slice that makes up the upper left
     // corner of our texture.
@@ -457,19 +574,16 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
-                   //* (viewerState->currentPosition.z - state->cubeEdgeLength
                    * (currPosTrans.z - state->cubeEdgeLength
                    * currentPosition_dc.z);
         break;
     case SLICE_XZ:
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
-                   //     * (viewerState->currentPosition.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
         break;
     case SLICE_YZ:
-        dcOffset = //viewerState->currentPosition.x - state->cubeEdgeLength
-                   currPosTrans.x - state->cubeEdgeLength
+        dcOffset = currPosTrans.x - state->cubeEdgeLength
                    * currentPosition_dc.x;
         break;
     default:
@@ -523,13 +637,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             glBindTexture(GL_TEXTURE_2D,
                           currentVp.texture.texHandle);
 
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-            // This is used to index into the texture. texData[index] is the first
+            // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
-            if(datacube == HT_FAILURE) {
+            if(datacube == HT_FAILURE || state->viewerState->uniqueColorMode) {
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -538,10 +650,10 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                 state->cubeEdgeLength,
                                 GL_RGB,
                                 GL_UNSIGNED_BYTE,
-                                viewerState->defaultTexData);
+                                state->viewerState->defaultTexData);
             } else {
                 dcSliceExtract(datacube,
-                               &(viewerState->texData[index]),
+                               state->viewerState->texData + index,
                                dcOffset,
                                &currentVp);
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -552,14 +664,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                 state->cubeEdgeLength,
                                 GL_RGB,
                                 GL_UNSIGNED_BYTE,
-                                &(viewerState->texData[index]));
+                                state->viewerState->texData + index);
             }
             //Take care of the overlay textures.
             if(state->overlay) {
-                glBindTexture(GL_TEXTURE_2D,
-                              currentVp.texture.overlayHandle);
-                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
+                glBindTexture(GL_TEXTURE_2D, currentVp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
@@ -573,13 +682,20 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                     state->cubeEdgeLength,
                                     GL_RGBA,
                                     GL_UNSIGNED_BYTE,
-                                    viewerState->defaultOverlayData);
+                                    state->viewerState->defaultOverlayData);
                 }
                 else {
-                    ocSliceExtract(overlayCube,
-                                   &(viewerState->overlayData[index]),
-                                   dcOffset * OBJID_BYTES,
-                                   &currentVp);
+                    if(state->viewerState->uniqueColorMode) {
+                        ocSliceExtractUnique(overlayCube,
+                                             state->viewerState->overlayData + index,
+                                             dcOffset * OBJID_BYTES,
+                                             &currentVp);
+                    } else {
+                        ocSliceExtract(overlayCube,
+                                       state->viewerState->overlayData + index,
+                                       dcOffset * OBJID_BYTES,
+                                       &currentVp);
+                    }
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -589,7 +705,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                     state->cubeEdgeLength,
                                     GL_RGBA,
                                     GL_UNSIGNED_BYTE,
-                                    &(viewerState->overlayData[index]));
+                                    state->viewerState->overlayData + index);
                 }
             }
         }
@@ -613,7 +729,6 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     CPY_COORDINATE(currentPx_float, rowPx_float);
 
     glBindTexture(GL_TEXTURE_2D, currentVp.texture.texHandle);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     int s = 0, t = 0, t_old = 0;
     while(s < currentVp.s_max) {
@@ -677,12 +792,13 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
+    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
     for (i = 0; i < viewerState->numberViewports; i++) {
+        floatCoordinate v1, v2;
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
             //Set the coordinate of left upper data pixel currently stored in the texture
@@ -755,7 +871,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
             break;
         case VIEWPORT_ARBITRARY:
-            floatCoordinate v1, v2;
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
@@ -810,14 +925,8 @@ bool Viewer::calcLeftUpperTexAbsPx() {
 bool Viewer::initViewer() {
     calcLeftUpperTexAbsPx();
 
-    if(state->overlay) {
-        qDebug("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
-        if(loadDatasetColorTable("stdOverlay.lut",
-                          &(state->viewerState->overlayColorMap[0][0]),
-                          GL_RGBA) == false) {
-            qDebug() << "Overlay color map stdOverlay.lut does not exist.";
-            state->overlay = false;
-        }
+    if (state->overlay) {
+        Segmentation::singleton().loadOverlayLutFromFile();
     }
 
     // This is the buffer that holds the actual texture data (for _all_ textures)
@@ -1101,7 +1210,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
 
-    emit updateZoomAndMultiresWidgetSignal();
+    emit updateDatasetOptionsWidgetSignal();
 
     return true;
 }
@@ -1194,7 +1303,7 @@ void Viewer::run() {
 
         if(currentVp.type != VIEWPORT_SKELETON) {
             if(currentVp.type != VIEWPORT_ARBITRARY) {
-                vpGenerateTexture(currentVp, state->viewerState);
+                vpGenerateTexture(currentVp);
             } else {
                 vpGenerateTexture_arb(currentVp);
             }
@@ -1206,10 +1315,34 @@ void Viewer::run() {
             skeletonizer->autoSaveIfElapsed();
             window->updateTitlebar();//display changes after filename
 
+            static auto disableVsync = [this](){
+                void (*func)(int) = nullptr;
+#if defined(Q_OS_WIN)
+                func = (void(*)(int))wglGetProcAddress("wglSwapIntervalEXT");
+#elif defined(Q_OS_LINUX)
+                func = (void(*)(int))glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+#endif
+                if (func != nullptr) {
+#if defined(Q_OS_WIN)
+                    return std::bind((PFNWGLSWAPINTERVALEXTPROC)func, 0);
+#elif defined(Q_OS_LINUX)
+                    return std::bind((PFNGLXSWAPINTERVALSGIPROC)func, 0);
+#endif
+                } else {
+                    qDebug() << "disabling vsync not available";
+                    return std::bind(&dummy, 0);
+                }
+            }();
+
+            disableVsync();
             vpUpperLeft->updateGL();
+            disableVsync();
             vpLowerLeft->updateGL();
+            disableVsync();
             vpUpperRight->updateGL();
+            disableVsync();
             vpLowerRight->updateGL();
+            disableVsync();
 
             static uint call = 0;
             if (++call % 1000 == 0) {
@@ -1218,7 +1351,6 @@ void Viewer::run() {
                 }
             }
             state->viewerState->userMove = false;
-            return;
         }
     }
 }
@@ -1329,7 +1461,7 @@ bool Viewer::userMove(int x, int y, int z) {
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
-    lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+    lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     viewerState->userMove = true;
 
@@ -1355,7 +1487,7 @@ bool Viewer::userMove(int x, int y, int z) {
 
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
-    newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+    newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;
@@ -1845,14 +1977,14 @@ bool Viewer::moveVPonTop(uint currentVP) {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    connect(this, &Viewer::updateZoomAndMultiresWidgetSignal,window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    connect(this, &Viewer::updateDatasetOptionsWidgetSignal,window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::updateCoordinatesSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
     QObject::connect(skeletonizer, &Skeletonizer::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(skeletonizer, &Skeletonizer::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(skeletonizer, &Skeletonizer::autosaveSignal, window, &MainWindow::autosaveSlot);
     QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing, window, &MainWindow::setSimpleTracing);
     QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing,
                      window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setSimpleTracing);
@@ -1868,18 +2000,19 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::unselectNodesSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearNodeTableSelection);
     QObject::connect(eventModel, &EventModel::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
+    QObject::connect(eventModel, &EventModel::zoomReset, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
     QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
+    QObject::connect(eventModel, &EventModel::zoomOrthoSignal, renderer, &Renderer::invalidatePickingBuffer);
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
-    QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::deleteActiveNodeSignal, &Skeletonizer::delActiveNode);
     QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
     QObject::connect(eventModel, &EventModel::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(eventModel, &EventModel::saveSkeletonSignal, window, &MainWindow::saveSlot);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
     QObject::connect(eventModel, &EventModel::editNodeSignal, &Skeletonizer::editNode);
@@ -1890,6 +2023,7 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpLowerLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperRight, &Viewport::setOrientation);
+    QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     //end event handler signals
     // mainwindow signals
     QObject::connect(window, &MainWindow::branchPushedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPushed);
@@ -1900,8 +2034,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
     QObject::connect(window, &MainWindow::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(window, &MainWindow::saveSkeletonSignal, skeletonizer, &Skeletonizer::saveXmlSkeleton);
-    QObject::connect(window, &MainWindow::loadSkeletonSignal, skeletonizer, &Skeletonizer::loadXmlSkeleton);
     QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
@@ -1923,10 +2055,10 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
     //end mainwindow signals
     //viewport signals
-    QObject::connect(vpUpperLeft, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpLowerLeft, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpUpperRight, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
-    QObject::connect(vpLowerRight, &Viewport::updateZoomAndMultiresWidget, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpUpperRight, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerRight, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
 
     QObject::connect(vpUpperLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
     QObject::connect(vpLowerLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
@@ -1971,18 +2103,18 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
 
     //  -- end viewport settings widget signals
-    //  zoom and multires signals --
-    QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
-    QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
-    //  -- end zoom and multires signals
-    // dataset property signals --
-    QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
-    QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
-    // -- end dataset property signals
+    //  dataset options signals --
+    QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
+    QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
+    //  -- end dataset options signals
+    // dataset load signals --
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    // -- end dataset load signals
     // task management signals --
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal,
-                     window, static_cast<bool(MainWindow::*)(const QString&)>(&MainWindow::loadSkeletonAfterUserDecision));
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::saveSkeletonSignal, window, &MainWindow::saveSlot);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
     // --- end widget signals
 }

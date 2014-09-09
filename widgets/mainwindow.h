@@ -27,6 +27,7 @@
 
 #include "viewport.h"
 #include "knossos-global.h"
+#include "widgetcontainer.h"
 
 #include <array>
 #include <memory>
@@ -39,6 +40,7 @@
 #include <QQueue>
 #include <QComboBox>
 #include <QUndoStack>
+#include "scriptengine/proxies/skeletonproxy.h"
 
 class QLabel;
 class QToolBar;
@@ -49,67 +51,22 @@ class QCheckBox;
 class QMessageBox;
 class QGridLayout;
 class QFile;
-class WidgetContainer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
-public:
-    explicit MainWindow(QWidget *parent = 0);
+    friend class TaskManagementMainTab;
+    friend SkeletonProxy;
 
-    void updateSkeletonFileName(QString &fileName);
-
-    void closeEvent(QCloseEvent *event);
-    void updateTitlebar();
-
-    static void reloadDataSizeWin();
-    static void datasetColorAdjustmentsChanged();
-
-signals:
-    bool changeDatasetMagSignal(uint upOrDownFlag);
-    void recalcTextureOffsetsSignal();
-    void clearSkeletonSignal(int loadingSkeleton);
-    bool loadSkeletonSignal(QString fileName, bool multiple=false);
-    bool saveSkeletonSignal(QString fileName);
-    void recentFileSelectSignal(int index);
-    void updateToolsSignal();
-    void updateTreeviewSignal();
-    void updateCommentsTableSignal();
-    void userMoveSignal(int x, int y, int z);
-
-    void stopRenderTimerSignal();
-    void startRenderTimerSignal(int frequency);
-    void updateTreeColorsSignal();
-    void loadTreeLUTFallback();
-
-    treeListElement *addTreeListElementSignal(int treeID, color4F color);
-    void nextCommentSignal(QString searchString);
-    void previousCommentSignal(QString searchString);
-    /* */
-    void moveToPrevNodeSignal();
-    void moveToNextNodeSignal();
-    void moveToPrevTreeSignal();
-    void moveToNextTreeSignal();
-    bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    void jumpToActiveNodeSignal();
-
-    bool addCommentSignal(QString content, nodeListElement *node, uint nodeID);
-    bool editCommentSignal(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
-
-    void updateTaskDescriptionSignal(QString description);
-    void updateTaskCommentSignal(QString comment);
-
-    void treeAddedSignal(treeListElement *tree);
-    void branchPushedSignal();
-    void branchPoppedSignal();
-    void nodeCommentChangedSignal(nodeListElement *node);
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
-    void becomeFirstEntry(const QString &entry);
+    QMenu fileMenu{"File"};
+    QMenu *skelEditMenu;
+    QMenu *segEditMenu;
+    QString annotationFilename;
     QString openFileDirectory;
     QString saveFileDirectory;
 public:
@@ -117,10 +74,15 @@ public:
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
-    WidgetContainer *widgetContainer;
+    WidgetContainer widgetContainerObject;
+    WidgetContainer * widgetContainer;
 
-    QAction **historyEntryActions;
+    std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
+    QAction *segEditSegModeAction;
+    QAction *segEditSkelModeAction;
+    QAction *skelEditSegModeAction;
+    QAction *skelEditSkelModeAction;
     QAction *addNodeAction;
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
@@ -144,22 +106,67 @@ public:
     void loadSettings();
     void clearSettings();
 
+    explicit MainWindow(QWidget *parent = 0);
+
+    void closeEvent(QCloseEvent *event);
+    void notifyUnsavedChanges();
+    void updateTitlebar();
+
+    static void reloadDataSizeWin();
+    static void datasetColorAdjustmentsChanged();
+
+signals:
+    bool changeDatasetMagSignal(uint upOrDownFlag);
+    void recalcTextureOffsetsSignal();
+    void clearSkeletonSignal(int loadingSkeleton);
+    void recentFileSelectSignal(int index);
+    void updateToolsSignal();
+    void updateTreeviewSignal();
+    void updateCommentsTableSignal();
+    void userMoveSignal(int x, int y, int z);
+
+    void stopRenderTimerSignal();
+    void startRenderTimerSignal(int frequency);
+    void updateTreeColorsSignal();
+    void loadTreeLUTFallback();
+
+    treeListElement *addTreeListElementSignal(int treeID, color4F color);
+    void nextCommentSignal(QString searchString);
+    void previousCommentSignal(QString searchString);
+    /* */
+    void moveToPrevNodeSignal();
+    void moveToNextNodeSignal();
+    void moveToPrevTreeSignal(bool *isSuccess = NULL);
+    void moveToNextTreeSignal(bool *isSuccess = NULL);
+    bool popBranchNodeSignal();
+    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
+    void jumpToActiveNodeSignal(bool *isSuccess = NULL);
+
+    bool addCommentSignal(QString content, nodeListElement *node, uint nodeID);
+    bool editCommentSignal(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
+
+    void updateTaskDescriptionSignal(QString description);
+    void updateTaskCommentSignal(QString comment);
+
+    void treeAddedSignal(treeListElement *tree);
+    void branchPushedSignal();
+    void branchPoppedSignal();
+    void nodeCommentChangedSignal(nodeListElement *node);
+
 public slots:
     // for the recent file menu
-    bool loadSkeletonAfterUserDecision(QStringList fileNames);
-    bool loadSkeletonAfterUserDecision(const QString &fileName);
-    void updateFileHistoryMenu();
-    bool alreadyInMenu(const QString &path);
-    bool addRecentFile(const QString &fileName);
-    //QUndoStack *undoStack;
+    bool openFileDispatch(QStringList fileNames);
+    void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
     void openSlot();
-    void openSlot(QStringList fileNames); // for the drag n drop version
+    void autosaveSlot();
     void saveSlot();
     void saveAsSlot();
 
     /* edit skeleton menu*/
+    void segModeSelected();
+    void skelModeSelected();
     void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
@@ -208,6 +215,8 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
+    void pythonSlot();
+    void pythonPropertiesSlot();
 };
 
 #endif // MAINWINDOW_H

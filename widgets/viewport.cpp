@@ -33,8 +33,7 @@
 #include "renderer.h"
 #include "viewer.h"
 #include "viewport.h"
-
-extern stateInfo *state;
+#include "segmentation.h"
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
@@ -117,7 +116,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 void Viewport::initializeGL() {
     if(viewportType != VIEWPORT_SKELETON) {
         glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
 
@@ -182,6 +180,10 @@ void Viewport::initializeGL() {
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
+    if (state->overlay && viewportType != VIEWPORT_SKELETON) {
+        createOverlayTextures();
+    }
+
     if(viewportType == VIEWPORT_SKELETON) {//we want only one output
         qDebug() << reinterpret_cast<const char*>(glGetString(GL_VERSION));
     }
@@ -199,34 +201,22 @@ bool Viewport::setOrientation(int orientation) {
     return true;
 }
 
-void Viewport::initializeOverlayGL() {
-    if(viewportType != VIEWPORT_SKELETON) {
-        if(state->overlay) {
-            glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+void Viewport::createOverlayTextures() {
+    glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
 
-            //Set the parameters for the texture.
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //Set the parameters for the texture.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
 
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-            glTexImage2D(GL_TEXTURE_2D,
-                         0,
-                         GL_RGBA,
-                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                         0,
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         state->viewerState->defaultOverlayData);
-        }
-    }
+    const auto size = state->viewerState->vpConfigs[id].texture.edgeLengthPx;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
 void Viewport::resizeGL(int w, int h) {
@@ -248,12 +238,11 @@ void Viewport::resizeGL(int w, int h) {
 void Viewport::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-
     if(state->viewerState->viewerReady) {
-        if(this->viewportType != VIEWPORT_SKELETON) {
+        if (this->viewportType != VIEWPORT_SKELETON) {
            this->drawViewport(id);
-        }  else {
-            this->drawSkeletonViewport();
+        } else {
+           this->drawSkeletonViewport();
         }
     }
 }
@@ -316,6 +305,10 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         eventDelegate->mouseX = event->x();
         eventDelegate->mouseY = event->y();
     }
+    eventDelegate->mousePosX = event->x();
+    eventDelegate->mousePosY = event->y();
+
+    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
@@ -356,11 +349,14 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseReleaseMiddle(event, id);
-    }
     if(event->button() == Qt::LeftButton) {
         eventDelegate->handleMouseReleaseLeft(event, id);
+    }
+    if(event->button() == Qt::RightButton) {
+        eventDelegate->handleMouseReleaseRight(event, id);
+    }
+    if(event->button() == Qt::MiddleButton) {
+        eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
     for (std::size_t i = 0; i < state->viewerState->numberViewports; i++) {
@@ -420,7 +416,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
             state->viewerKeyRepeat = timeBase.restart() < 150;
         }
     }
-    eventDelegate->handleKeyboard(event, id);
+    eventDelegate->handleKeyPress(event, id);
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -444,6 +440,10 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         state->repeatDirection[0] /= 10;
         state->repeatDirection[1] /= 10;
         state->repeatDirection[2] /= 10;
+
+        Segmentation::singleton().brush.setInverse(false);
+    } else {
+        eventDelegate->handleKeyRelease(event);
     }
 }
 
@@ -499,7 +499,7 @@ void Viewport::zoomOrthogonals(float step){
         emit changeDatasetMagSignal(triggerMagChange);
    }
    emit recalcTextureOffsetsSignal();
-   emit updateZoomAndMultiresWidget();
+   emit updateDatasetOptionsWidget();
 
 }
 
@@ -510,7 +510,7 @@ void Viewport::zoomOutSkeletonVP() {
             state->skeletonState->zoomLevel = SKELZOOMMIN;
         }
         state->skeletonState->viewChanged = true;
-        emit updateZoomAndMultiresWidget();
+        emit updateDatasetOptionsWidget();
     }
 }
 void Viewport::zoomInSkeletonVP() {
@@ -520,7 +520,7 @@ void Viewport::zoomInSkeletonVP() {
             state->skeletonState->zoomLevel = SKELZOOMMAX;
         }
         state->skeletonState->viewChanged = true;
-        emit updateZoomAndMultiresWidget();
+        emit updateDatasetOptionsWidget();
     }
 }
 

@@ -36,6 +36,8 @@ OTHER_FILES += \
     logo.ico \
     ChangeLog_v4.txt
 
+include(scriptengine/scriptengine.pri)
+
 macx:QMAKE_MAC_SDK = macosx10.9
 macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 macx {
@@ -60,10 +62,13 @@ linux {
 
 win32 {
     #DEFINES += CURL_STATICLIB
-    LIBS += -lcurl -lwsock32 #-lidn -lz -lintl -liconv
+    LIBS += -lcurl -lws2_32 -lidn -lz -lintl -liconv
 
     #DEFINES += FREEGLUT_STATIC
-    LIBS += -lglut32 #-lfreeglut_static
+    LIBS += -lglut
+    
+    DEFINES += QUAZIP_STATIC
+    LIBS += -lquazip -lz
 
     RC_FILE = knossos.rc
 }

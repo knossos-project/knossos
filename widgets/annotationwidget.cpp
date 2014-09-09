@@ -14,10 +14,7 @@
 #include "GuiConstants.h"
 #include "annotationwidget.h"
 
-extern stateInfo *state;
-
-AnnotationWidget::AnnotationWidget(QWidget *parent) :
-    QDialog(parent)
+AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent)
 {
     setWindowIcon(QIcon(":/images/icons/graph.png"));
     setWindowTitle("Annotation");
@@ -25,6 +22,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     treeviewTab = new ToolsTreeviewTab(this);
     commandsTab = new ToolsCommandsTab(this);
     tabs->addTab(treeviewTab, "Tree View");
+    tabs->addTab(&segmentationTab, "Segmentation");
     tabs->addTab(commandsTab, "Commands");
 
     treeCountLabel = new QLabel("Total Tree Count: 0");
@@ -53,7 +51,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     connect(commandsTab, SIGNAL(branchPushedSignal()), treeviewTab, SLOT(branchPushed()));
     connect(commandsTab, SIGNAL(branchPoppedSignal()), treeviewTab, SLOT(branchPopped()));
 
-   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void AnnotationWidget::updateLabels() {

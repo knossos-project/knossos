@@ -1,74 +1,68 @@
 #ifndef WIDGETCONTAINER_H
 #define WIDGETCONTAINER_H
 
-/* Include your widget and your subwidgets and you have easy access via this class */
-
-#include <QObject>
-
-#include "tracingtimewidget.h"
-#include "datasavingwidget.h"
-#include "splashscreenwidget.h"
-
+#include "annotationwidget.h"
 #include "commentswidget.h"
-#include "commentshortcuts/commentshortcutstab.h"
-#include "commentshortcuts/commentshighlightingtab.h"
-#include "commentshortcuts/commentsnodecommentstab.h"
-
-#include "viewportsettingswidget.h"
-#include "viewportsettings/vpgeneraltabwidget.h"
-#include "viewportsettings/vpskeletonviewportwidget.h"
-#include "viewportsettings/vpsliceplaneviewportwidget.h"
-
-#include "zoomandmultireswidget.h"
+#include "datasetloadwidget.h"
+#include "datasetoptionswidget.h"
+#include "datasavingwidget.h"
+#include "documentationwidget.h"
 #include "navigationwidget.h"
-#include "datasetpropertywidget.h"
+#include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
-#include "documentationwidget.h"
-#include "annotationwidget.h"
+#include "tracingtimewidget.h"
+#include "viewportsettingswidget.h"
+#include "pythonpropertywidget.h"
 
-class Viewport;
-class MainWindow;
-class WidgetContainer : public QObject
-{
-    Q_OBJECT
-public:
-    explicit WidgetContainer(MainWindow *parent = 0);
-    void rewire();
-    void createTracingTimeWidget(QWidget *parent);
-    void showTracingTimeWidget();
-    void createCommentsWidget(QWidget *parent);
-    void showCommentsWidget();
-    void createZoomAndMultiresWidget(QWidget *parent);
+struct WidgetContainer {
+    WidgetContainer(QWidget * parent)
+        : annotationWidgetObject(parent), commentsWidgetObject(parent), datasetLoadWidgetObject(parent)
+        , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
+        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
+        , taskManagementWidgetObject(&taskLoginWidgetObject, parent), tracingTimeWidgetObject(parent)
+        , viewportSettingsWidgetObject(parent)
 
-    void createNavigationWidget(QWidget *parent);
-    void createViewportSettingsWidget(QWidget *parent);
-    void createDataSavingWidget(QWidget *parent);
-    void createSychronizationWidget(QWidget *parent);
-    void createSplashScreenWidget(QWidget *parent);
-    void createDatasetPropertyWidget(QWidget *parent);
-    void createTaskWidgets(QWidget *parent);
-    void createDocumentationWidget(QWidget *parent);
-    void createAnnotationWidget(QWidget *parent);
-    void createWidgets(QWidget *parent);
+        , annotationWidget(&annotationWidgetObject), commentsWidget(&commentsWidgetObject)
+        , datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
+        , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
+        , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
+        , tracingTimeWidget(&tracingTimeWidgetObject), viewportSettingsWidget(&viewportSettingsWidgetObject)
+    {
+        taskLoginWidgetObject.setTaskManagementWidget(&taskManagementWidgetObject);
+        QObject::connect(&this->datasetLoadWidgetObject, &DatasetLoadWidget::datasetSwitchZoomDefaults
+                         , &this->datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
+    }
 
-    TracingTimeWidget *tracingTimeWidget;
-    CommentsWidget *commentsWidget;
-    ZoomAndMultiresWidget *zoomAndMultiresWidget;
-    NavigationWidget *navigationWidget;
-    ViewportSettingsWidget *viewportSettingsWidget;
-    DataSavingWidget *dataSavingWidget;
-    SplashScreenWidget *splashWidget;
-    DatasetPropertyWidget *datasetPropertyWidget;
-    TaskLoginWidget *taskLoginWidget;
-    TaskManagementWidget *taskManagementWidget;
-    DocumentationWidget *docWidget;
-    AnnotationWidget *annotationWidget;
+    AnnotationWidget annotationWidgetObject;
+    CommentsWidget commentsWidgetObject;
+    DatasetLoadWidget datasetLoadWidgetObject;
+    DatasetOptionsWidget datasetOptionsWidgetObject;
+    DataSavingWidget dataSavingWidgetObject;
+    DocumentationWidget docWidgetObject;
+    NavigationWidget navigationWidgetObject;
+    PythonPropertyWidget pythonPropertyWidgetObject;
+    SplashScreenWidget splashWidgetObject;
+    TaskLoginWidget taskLoginWidgetObject;
+    TaskManagementWidget taskManagementWidgetObject;
+    TracingTimeWidget tracingTimeWidgetObject;
+    ViewportSettingsWidget viewportSettingsWidgetObject;
 
-signals:
-
-public slots:
-
+    //FIXME these pointers just point to the objects above
+    //one may replace all -> with . in the project and remove these
+    AnnotationWidget * const annotationWidget;
+    CommentsWidget * const commentsWidget;
+    DatasetLoadWidget * const datasetLoadWidget;
+    DatasetOptionsWidget * const datasetOptionsWidget;
+    DataSavingWidget * const dataSavingWidget;
+    DocumentationWidget * const docWidget;
+    NavigationWidget * const navigationWidget;
+    PythonPropertyWidget * const pythonPropertyWidget;
+    SplashScreenWidget * const splashWidget;
+    TaskLoginWidget * const taskLoginWidget;
+    TaskManagementWidget * const taskManagementWidget;
+    TracingTimeWidget * const tracingTimeWidget;
+    ViewportSettingsWidget * const viewportSettingsWidget;
 };
 
 #endif // WIDGETCONTAINER_H

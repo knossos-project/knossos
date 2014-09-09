@@ -13,8 +13,6 @@
 #include "taskmanagementwidget.h"
 #include "taskmanagementmaintab.h"
 
-extern stateInfo *state;
-
 TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget *parent) :
     QDialog(parent)
 {

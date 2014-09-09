@@ -4,6 +4,7 @@
 #include "skeletonizer.h"
 #include "taskmanagementmaintab.h"
 #include "taskmanagementwidget.h"
+#include "viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <QByteArray>
@@ -15,8 +16,6 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
-
-extern stateInfo *state;
 
 TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, QWidget *parent) :
     QWidget(parent)
@@ -141,13 +140,11 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
     if (taskState::copyInfoFromHeader(filename, &header, "filename")) {
         QFile tmpfile(tmpfilepath);
         tmpfile.rename(taskDir.absolutePath() + "/" + filename);
-        state->skeletonState->skeletonFileAsQString = tmpfile.fileName();
-    }
-
-    if (loadSkeletonSignal(state->skeletonState->skeletonFileAsQString) == false) {//BUG signals shall not be used to return something
-        statusLabel->setText("<font color='red'>Failed to load skeleton.</font>");
-    } else {
-        statusLabel->setText("<font color='green'>Loaded last submit successfully.</font>");
+        if (loadSkeletonSignal(QStringList(tmpfile.fileName())) == false) {//BUG signals shall not be used to return something
+            statusLabel->setText("<font color='red'>Failed to load skeleton.</font>");
+        } else {
+            statusLabel->setText("<font color='green'>Loaded last submit successfully.</font>");
+        }
     }
 
     free(header.content);
@@ -250,7 +247,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     prompt.exec();
     emit setDescriptionSignal(description);
     emit setCommentSignal(comment);
-    emit loadSkeletonSignal(state->taskState->taskFile);
+    emit loadSkeletonSignal(QStringList(state->taskState->taskFile));
     setResponse("<font color='green'>Loaded task successfully.</font>");
     free(header.content);
 }
@@ -294,8 +291,7 @@ void TaskManagementMainTab::submitDialogOk() {
     fclose(cookie);
 
     // save first, in case of errors during transmission
-    state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
-    emit saveSkeletonSignal(); //increment true
+    emit autosaveSignal(); //increment true
 
     //prompt for entering a comment for the submission
 
@@ -310,11 +306,11 @@ void TaskManagementMainTab::submitDialogOk() {
     std::string CSRFToken_stdstr = taskState::CSRFToken().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken",
                  CURLFORM_COPYCONTENTS, CSRFToken_stdstr.c_str(), CURLFORM_END);
-    std::string skeletonFileAsQString_strstr = state->skeletonState->skeletonFileAsQString.toStdString();
+    std::string skeletonFileAsQString_stdstr = state->viewer->window->annotationFilename.toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file",
-                 CURLFORM_FILE, skeletonFileAsQString_strstr.c_str(), CURLFORM_END);
+                 CURLFORM_FILE, skeletonFileAsQString_stdstr.c_str(), CURLFORM_END);
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename",
-                 CURLFORM_COPYCONTENTS, skeletonFileAsQString_strstr.c_str(), CURLFORM_END);
+                 CURLFORM_COPYCONTENTS, skeletonFileAsQString_stdstr.c_str(), CURLFORM_END);
     std::string submitDialogCommentField_stdstr = submitDialogCommentField->text().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_comment",
                  CURLFORM_COPYCONTENTS, submitDialogCommentField_stdstr.c_str(), CURLFORM_END);

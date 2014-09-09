@@ -24,22 +24,51 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
-#include <QObject>
 #include "knossos-global.h"
+#include "scriptengine/decorators/meshdecorator.h"
+
 #include <QList>
+#include <QObject>
+
+#include <boost/multi_array.hpp>
 
 class Viewport;
+
+struct ColorPickBuffer {
+private:
+    uint vpId = 0;
+    uint size{0};
+    Coordinate position{-1, -1, -1};
+    //one cannot assign multi_arrays of different sizes → pointer
+    std::unique_ptr<boost::multi_array<std::array<GLubyte, 3>, 2>> buffer;
+public:
+    bool invalidated{false};
+    ColorPickBuffer() = default;
+    ColorPickBuffer(const uint & vpid, const uint & size, const Coordinate & pos)
+            : vpId{vpid}, size{size}, position{pos}, buffer(new decltype(buffer)::element_type(boost::extents[size][size])) {
+        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer->data()));
+    }
+    bool upToDate(const uint & currVp, const uint & currSize, const Coordinate & currPos) const {
+        return currVp == vpId && size == currSize && currPos == position && !invalidated;
+    }
+    std::tuple<uint8_t, uint8_t, uint8_t> getColor(const uint & x, const uint & y) {
+        const auto yinverse = size-y-1;
+        return std::make_tuple((*buffer)[yinverse][x][0], (*buffer)[yinverse][x][1], (*buffer)[yinverse][x][2]);
+    }
+};
+
 class Renderer : public QObject {
     Q_OBJECT
+    friend class MeshDecorator;
     /* The first 50 entries of the openGL namespace are reserved
     for static objects (like slice plane quads...) */
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
+    ColorPickBuffer pickBuffer;
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-
+    void renderRectCursor(uint viewportType, Coordinate coord);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -51,14 +80,17 @@ protected:
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);
+    bool resizemeshCapacity(mesh *toResize, uint n);
     bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
     bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
     bool updateFrustumClippingPlanes(uint viewportType);
 
 public slots:
+    void invalidatePickingBuffer();
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
+    std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };

@@ -27,8 +27,6 @@
 #include <QDebug>
 #include <math.h>
 
-extern stateInfo *state;
-
 Remote::Remote(QObject *parent) : QThread(parent) {}
 
 void Remote::run() {

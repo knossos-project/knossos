@@ -21,71 +21,61 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "knossos.h"
+
+#include "file_io.h"
+#include "ftp.h"
+#include "knossos-global.h"
+#include "loader.h"
+#include "remote.h"
+#include "scriptengine/proxies/skeletonproxy.h"
+#include "scriptengine/scripting.h"
+#include "skeletonizer.h"
+#include "viewer.h"
+#include "widgets/tracingtimewidget.h"
+#include "widgets/widgetcontainer.h"
+
+#include <QApplication>
+
 #include <cmath>
+#include <iostream>
+#include <fstream>
 
 #define GLUT_DISABLE_ATEXIT_HACK
-#include <QApplication>
-#include <QMutex>
-#include <QWaitCondition>
-#include <QSettings>
-#include <QFile>
-#include "knossos-global.h"
-#include "knossos.h"
-#include "remote.h"
-#include "loader.h"
-#include "viewer.h"
-#include "widgets/mainwindow.h"
-#include "skeletonizer.h"
-#include "eventmodel.h"
-#include "widgets/viewport.h"
-#include "widgets/widgetcontainer.h"
-#include "widgets/tracingtimewidget.h"
-#include "ftp.h"
-
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
-#endif
-#ifdef Q_OS_WIN
+#else
 #include <GL/glut.h>
-#include "windows.h"
-#endif
-#ifdef Q_OS_LINUX
-#include <GL/freeglut_std.h>
 #endif
 
 #define NUMTHREADS 4
 
-stateInfo * state = nullptr;//state lives here
+std::unique_ptr<Knossos> knossos;
 std::unique_ptr<Loader> loader;
+
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
-std::unique_ptr<Knossos> knossos;
+class myEventFilter: public QObject {
+public:
+    myEventFilter() : QObject() {};
+    ~myEventFilter() {};
 
-class myEventFilter: public QObject
-{
-  public:
-  myEventFilter():QObject()
-  {};
-  ~myEventFilter(){};
-
-  bool eventFilter(QObject* object,QEvent* event)
-  {
-      // update idle time to current time on any user actions except just moving the mouse
-      int type = event->type();
-      if(type == QEvent::MouseButtonPress
-            || type == QEvent::KeyPress
-            || type == QEvent::Wheel) {
-          if (state != NULL
-                  && state->viewer != NULL
-                  && state->viewer->window != NULL
-                  && state->viewer->window->widgetContainer != NULL
-                  && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
-              state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
-          }
-      }
-
-      return QObject::eventFilter(object,event);
-  }
+    bool eventFilter(QObject* object,QEvent* event) {
+        // update idle time to current time on any user actions except just moving the mouse
+        int type = event->type();
+        if (type == QEvent::MouseButtonPress
+                || type == QEvent::KeyPress
+                || type == QEvent::Wheel) {
+            if (state != NULL
+                    && state->viewer != NULL
+                    && state->viewer->window != NULL
+                    && state->viewer->window->widgetContainer != NULL
+                    && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
+                state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
+            }
+        }
+        return QObject::eventFilter(object,event);
+    }
 };
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
@@ -95,22 +85,36 @@ Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QP
     timer.start(timeout_msec);
 }
 
+void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
+    QString intro;
+    switch (type) {
+    case QtDebugMsg:    intro = QString("Debug: ");    break;
+    case QtWarningMsg:  intro = QString("Warning: ");  break;
+    case QtCriticalMsg: intro = QString("Critical: "); break;
+    case QtFatalMsg:    intro = QString("Fatal: ");    break;
+    }
+    QString txt = QString("[%1:%2 %3] \t%4%5").arg(context.file).arg(context.line).arg(context.function).arg(intro).arg(msg);
+    //open the file once
+    static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
+    outFile   << txt.toStdString() << std::endl;
+    std::cout << txt.toStdString() << std::endl;
 
-int main(int argc, char *argv[])
-{
-#ifdef Q_OS_WIN
-    glutInit(&argc, argv);
-#endif
-#ifdef Q_OS_LINUX
-    glutInit(&argc, argv);
-#endif
+    if (type == QtFatalMsg) {
+        std::abort();
+    }
+}
 
+int main(int argc, char *argv[]) {
+    glutInit(&argc, argv);
     QApplication a(argc, argv);
+    qInstallMessageHandler(debugMessageHandler);
     /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
+#ifdef NDEBUG
     Splash splash(":/images/splash.png", 1500);
+#endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
@@ -169,9 +173,9 @@ int main(int argc, char *argv[])
 
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::userMoveSignal, &viewer, &Viewer::userMove);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
 
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
@@ -186,13 +190,32 @@ int main(int argc, char *argv[])
         // don't start loader, when there is no dataset, yet.
         loader->start();
     }
+    Scripting scripts;
+
     viewer.run();
     remote.start();
 
-    viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+    viewer.window->widgetContainer->datasetLoadWidget->changeDataset(false);
+    viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
 
     a.installEventFilter(new myEventFilter());
+
+    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
+
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::treeAddedSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::nodeAddedSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeAdded);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::updateTreeViewSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::moveToNextTreeSignal, viewer.skeletonizer, &Skeletonizer::moveToNextTree);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::moveToPreviousTreeSignal, viewer.skeletonizer, &Skeletonizer::moveToPrevTree);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::jumpToActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::jumpToActiveNode);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::updateToolsSignal, viewer.window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
+
+    scripts.start();
 
     return a.exec();
 }
@@ -391,6 +414,8 @@ bool Knossos::readConfigFile(const char *path) {
             }
         } else if(token == "magnification") {
             state->magnification = tokenList.at(1).toInt();
+            state->lowestAvailableMag = state->magnification;
+            state->highestAvailableMag = state->magnification;
         } else if(token == "ftp_mode") {
             state->loadMode = LM_FTP;
             int ti;
@@ -409,14 +434,9 @@ bool Knossos::readConfigFile(const char *path) {
         } else {
             qDebug() << "Skipping unknown parameter";
         }
-
     }
 
-    if(file.isOpen())
-        file.close();
-
-
-        return true;
+    return true;
 }
 
 bool Knossos::printConfigValues() {
@@ -464,185 +484,78 @@ stateInfo *Knossos::emptyState() {
     return state;
 }
 
-/**
- * This function checks the selected dataset directory for
- * available magnifications(subfolder ending with magX)
- * The main directory name should be end with mag1. Dont forget the
- * path separator
- * Otherwise some strange behaviour has been observed in single cases.
- */
 bool Knossos::findAndRegisterAvailableDatasets() {
-    /* state->path stores the path to the dataset K was launched with */
-    uint currMag, i;
-    uint isMultiresCompatible = false;
-    char currPath[1024];
-    char levelUpPath[1024];
-    char currKconfPath[1024];
-    char datasetBaseDirName[1024];
-    char datasetBaseExpName[1024];
-    int isPathSepTerminated = false;
-    uint pathLen;
-
-    memset(currPath, '\0', 1024);
-    memset(levelUpPath, '\0', 1024);
-    memset(currKconfPath, '\0', 1024);
-    memset(datasetBaseDirName, '\0', 1024);
-    memset(datasetBaseExpName, '\0', 1024);
-
-
-    /* Analyze state->name to find out whether K was launched with
-     * a dataset that allows multires. */
-
-    /* Multires is only enabled if K is launched with mag1!
-     * Launching it with another dataset than mag1 leads to the old
-     * behavior, that only this mag is shown, this happens also
-     * when the path contains no mag string. */
-
-    if(state->path[strlen(state->path) - 1] == '/'
-       || state->path[strlen(state->path) - 1] == '\\') {
-        isPathSepTerminated = true;
-    }
-
+    QDir datasetDir;
+    QString baseMagDirName;
+    bool isMultiresCompatible = false;
     if (LM_FTP == state->loadMode) {
         isMultiresCompatible = true;
     }
     else {
-        if(isPathSepTerminated) {
-            if(strncmp(&state->path[strlen(state->path) - 5], "mag1", 4) == 0) {
-                isMultiresCompatible = true;
-            }
-        }
-        else {
-            if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
-                isMultiresCompatible = true;
-            }
-        }
+        // dataset is multires-compatible if a mag subfolder exists.
+        datasetDir.setPath(state->path);
+        QStringList dirContent = datasetDir.entryList(QStringList("*mag*"), QDir::Dirs);
+        isMultiresCompatible = dirContent.empty() == false;
     }
 
-    if(isMultiresCompatible && (state->magnification == 1)) {
-        if (LM_FTP != state->loadMode) {
-            /* take base path and go one level up */
-            pathLen = strlen(state->path);
-
-            for(i = 1; i < pathLen; i++) {
-                if((state->path[pathLen-i] == '\\')
-                    || (state->path[pathLen-i] == '/')) {
-                    if(i == 1) {
-                        /* This is the trailing path separator, ignore. */
-                        isPathSepTerminated = true;
-                        continue;
-                    }
-                    /* this contains the path "one level up" */
-                    strncpy(levelUpPath, state->path, pathLen - i + 1);
-                    levelUpPath[pathLen - i + 1] = '\0';
-                    /* this contains the dataset dir without "mag1"
-                     * K must be launched with state->path set to the
-                     * mag1 dataset for multires to work! This is by convention. */
-                    if(isPathSepTerminated) {
-                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
-                        datasetBaseDirName[i - 6] = '\0';
-                    }
-                    else {
-                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
-                        datasetBaseDirName[i - 5] = '\0';
-                    }
-
-                    break;
-                }
-            }
+    if(isMultiresCompatible) {
+        if(LM_LOCAL == state->loadMode) {
+            // retrieve potential basename at the beginning of the mag subfolders,
+            // e.g. folder "xxx_mag1" with "xxx" being the basename
+            QStringList dirContent = datasetDir.entryList(QStringList("*mag*"), QDir::Dirs);
+            baseMagDirName = dirContent.front();
+            int magPart = baseMagDirName.lastIndexOf(QRegExp("mag.*"));
+            baseMagDirName.remove(magPart, baseMagDirName.length() - magPart);
         }
 
-        /* iterate over all possible mags and test their availability */
-        for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+        // iterate over all possible mags and test their availability
+        // (available if corresponding .conf file exists)
+        for(uint currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
             int currMagExists = false;
-            if (LM_FTP == state->loadMode) {
-                const char *ftpDirDelim = "/";
-                //int confSize = 0;
-                sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
-                /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
-                if (EXIT_SUCCESS == downloadFile(currPath, NULL)) {
+            QString currentPath;
+            if(LM_FTP == state->loadMode) {
+                currentPath = QString("%1mag%2/knossos.conf").arg(state->ftpBasePath).arg(currMag);
+                if (EXIT_SUCCESS == downloadFile(currentPath.toStdString().c_str(), NULL)) {
                     currMagExists = true;
                 }
             }
             else {
-                /* compile the path to the currently tested directory */
-                //if(i!=0) currMag *= 2;
-        #ifdef Q_OS_UNIX
-                sprintf(currPath,
-                    "%s%smag%d/",
-                    levelUpPath,
-                    datasetBaseDirName,
-                    currMag);
-        #else
-                sprintf(currPath,
-                    "%s%smag%d\\",
-                    levelUpPath,
-                    datasetBaseDirName,
-                    currMag);
-        #endif
-                FILE *testKconf;
-                sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
-
-                /* try fopen() on knossos.conf of currently tested dataset */
-                if ((testKconf = fopen(currKconfPath, "r"))) {
-                    fclose(testKconf);
+                currentPath = QString("%1/%2%3%4/").arg(state->path).arg(baseMagDirName).arg("mag").arg(currMag);
+                QDir currentMagDir(currentPath);
+                if(currentMagDir.entryList(QStringList("*.conf")).empty() == false) {
                     currMagExists = true;
                 }
             }
+
             if(currMagExists) {
                 if(state->lowestAvailableMag > currMag) {
                     state->lowestAvailableMag = currMag;
                 }
                 state->highestAvailableMag = currMag;
 
-                /* add dataset path to magPaths; magPaths is used by the loader */
-
-                strcpy(state->magPaths[int_log(currMag)], currPath);
-
-                /* the last 4 letters are "mag1" by convention; if not,
-                 * K multires won't work */
-                strncpy(datasetBaseExpName,
-                        state->name,
-                        strlen(state->name)-4);
-                datasetBaseExpName[strlen(state->name)-4] = '\0';
-
-                strncpy(state->datasetBaseExpName,
-                        datasetBaseExpName,
-                        strlen(datasetBaseExpName)-1);
-                state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
-
-                sprintf(state->magNames[int_log(currMag)], "%smag%d", datasetBaseExpName, currMag);
-            } else break;
+                // add dataset path to magPaths. magPaths is used by the loader
+                strcpy(state->magPaths[int_log(currMag)], currentPath.toStdString().c_str());
+                // save basename of .raw files,
+                // e.g. xxx_mag1_x0000_y0000_z0000.raw with "xxx_mag1" being the basename
+                QString fileBaseName(state->name);
+                int magIndex = fileBaseName.lastIndexOf(QRegExp("mag.*"));
+                if(magIndex != -1) {
+                    fileBaseName.remove(magIndex, fileBaseName.length() - magIndex);
+                }
+                sprintf(state->magNames[int_log(currMag)], "%smag%d", fileBaseName.toStdString().c_str(), currMag);
+            }
         }
-        qDebug("Highest Mag: %d", state->highestAvailableMag);
-
-        if(state->lowestAvailableMag == INT_MAX) {
-            // This can happen if an error in the string parsing above causes knossos to
-            // search the wrong directories or a wrong path was entered
-            qDebug() << "Path does not exist or unsupported data path format.";
-            return false;
-        }
+        qDebug("lowest Mag: %d, Highest Mag: %d", state->lowestAvailableMag, state->highestAvailableMag);
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {
             state->highestAvailableMag = NUM_MAG_DATASETS;
-            qDebug("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS);
+            qDebug("KNOSSOS currently supports only datasets downsampled by a factor of %d.\
+                   This can easily be changed in the source.", NUM_MAG_DATASETS);
         }
-
-        state->magnification = state->lowestAvailableMag;
-        /*state->boundary.x *= state->magnification;
-        state->boundary.y *= state->magnification;
-        state->boundary.z *= state->magnification;
-
-        state->scale.x /= (float)state->magnification;
-        state->scale.y /= (float)state->magnification;
-        state->scale.z /= (float)state->magnification;*/
-
     }
-    /* no magstring found, take mag read from .conf file of dataset */
-    else {
-        /* state->magnification already contains the right mag! */
-
-        pathLen = strlen(state->path);
+    // no magstring found, take mag read from .conf file of dataset
+    if(isMultiresCompatible == false) {
+        int pathLen = strlen(state->path);
         if(!pathLen) {
             qDebug() << "No valid dataset specified.\n";
             return false;
@@ -674,7 +587,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         state->boundary.x *= state->magnification;
         state->boundary.y *= state->magnification;
-        strcpy(state->datasetBaseExpName, state->name);
         state->boundary.z *= state->magnification;
 
         state->scale.x /= (float)state->magnification;
@@ -729,18 +641,17 @@ bool Knossos::configDefaults() {
     state->offset.y = 0;
     state->offset.z = 0;
     state->cubeEdgeLength = 128;
-    state->M = 0;//invalid M, so the datasetpropertywidget can tell if M was provided by cmdline
+    state->M = 0;//invalid M, so the datasetLoadWidget can tell if M was provided by cmdline
     state->magnification = 1;
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
-    state->overlay = false;
+    state->overlay = true;
 
     // For the viewer
     state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
     state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
     state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
     state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-    state->viewerState->overlayVisible = false;
     state->viewerState->datasetColortableOn = false;
     state->viewerState->datasetAdjustmentOn = false;
     state->viewerState->treeColortableOn = false;
@@ -982,8 +893,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      state->magnification = (int)atoi(rval);
                      break;
                  case 13:
-                     state->overlay = true;
-                     state->viewerState->overlayVisible = true;
+                     state->overlay = std::stoi(rval);
                      break;
              }
          }

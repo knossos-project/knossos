@@ -47,35 +47,49 @@
   * You will save a couple of hours ..
   */
 
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
+uint64_t segmentationColorPicking(int x, int y, const int viewportId);
+void merging(QMouseEvent *event, const int vp);
+
 class EventModel : public QObject
 {
     Q_OBJECT
+    bool validPosition(QMouseEvent *event, int VPfound);
+
 public:
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
-    bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
+    void handleMouseButtonRight(QMouseEvent *event, int VPfound);
     bool handleMouseMotion(QMouseEvent *event, int VPfound);
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseRight(QMouseEvent *event, int VPfound);
     void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     void handleMouseWheel(QWheelEvent * const event, int VPfound);
-    void handleKeyboard(QKeyEvent *event, int VPfound);
-    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
-
+    void handleKeyPress(QKeyEvent *event, int VPfound);
+    void handleKeyRelease(QKeyEvent *event);
     void startNodeSelection(int x, int y, int vpId);
     void nodeSelection(int x, int y, int vpId);
+    Coordinate getMouseCoordinate(int VPfound);
     int xrel(int x);
     int yrel(int y);
+    int rightMouseDownX;
+    int rightMouseDownY;
+    int mouseDownX;
+    int mouseDownY;
     int mouseX;
     int mouseY;
+    int mousePosX;
+    int mousePosY;
     bool grap;
 signals:
     void userMoveSignal(int x, int y, int z);
     void userMoveArbSignal(float x, float y, float z);
     void pasteCoordinateSignal();
+    void zoomReset();
     void zoomOrthoSignal(float step);
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
@@ -96,7 +110,6 @@ signals:
     bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
     void addSegmentSignal(uint sourceNodeID, uint targetNodeID);
     void jumpToActiveNodeSignal();
-    void saveSkeletonSignal();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
@@ -104,7 +117,7 @@ signals:
     void popBranchNodeSignal();
 
     void moveToNextTreeSignal();
-    void moveToPrevTreeSignal();
+    void moveToPrevTreeSignal(bool *isSuccess = NULL);
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
 
@@ -121,6 +134,8 @@ signals:
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);
+
+    void compressionRatioToggled();
 };
 
 #endif // EVENTMODEL_H

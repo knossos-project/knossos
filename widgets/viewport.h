@@ -60,9 +60,9 @@ public:
 
 protected:
     void initializeGL();
-    void initializeOverlayGL();
+    void createOverlayTextures();
+    void paintGL() override;
     void resizeGL(int w, int h);
-    void paintGL();
     void enterEvent(QEvent * event);
     void leaveEvent(QEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
@@ -88,7 +88,7 @@ signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
-    void updateZoomAndMultiresWidget();
+    void updateDatasetOptionsWidget();
     void loadSkeleton(const QString &path);
 public slots:
     void zoomOrthogonals(float step);

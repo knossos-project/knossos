@@ -42,8 +42,8 @@
     #include <GL/glut.h>
 #endif
 #include "skeletonizer.h"
-
-extern stateInfo *state;
+#include "segmentation.h"
+#include "viewer.h"
 
 Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
@@ -76,7 +76,10 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 
     initMesh(&(state->skeletonState->lineVertBuffer), 1024);
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+}
 
+void Renderer::invalidatePickingBuffer() {
+    pickBuffer.invalidated = true;
 }
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
@@ -449,32 +452,18 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 //static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
-    float dataPxX, dataPxY;
-
-    floatCoordinate *n, *v1, *v2;
-
-    n = &(state->viewerState->vpConfigs[currentVP].n);
-
-    v1 = &(state->viewerState->vpConfigs[currentVP].v1);
-
-    v2 = &(state->viewerState->vpConfigs[currentVP].v2);
-
-    if(!((state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XY)
-            || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
-            || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
-         || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-       qDebug() << "Wrong VP type given for renderOrthogonalVP() call.";
-        return false;
-    }
-
-
+    floatCoordinate * n = &(state->viewerState->vpConfigs[currentVP].n);
+    floatCoordinate * v1 = &(state->viewerState->vpConfigs[currentVP].v1);
+    floatCoordinate * v2 = &(state->viewerState->vpConfigs[currentVP].v2);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
-    if(state->viewerState->selectModeFlag == false) {
-        if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
+    if(!state->viewerState->selectModeFlag && !state->viewerState->uniqueColorMode) {
+        if(state->viewerState->multisamplingOnOff) {
+            glEnable(GL_MULTISAMPLE);
+        }
 
         if(state->viewerState->lightOnOff) {
             /* Configure light. optimize that! TDitem */
@@ -499,12 +488,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
     /* Multiplying by state->magnification increases the area covered
      * by the textured OpenGL quad for downsampled datasets. */
-
-    dataPxX = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthX
+    float dataPxX = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[currentVP].texture.texUnitsPerDataPx
             * 0.5;
 //            * (float)state->magnification;
-    dataPxY = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthY
+    float dataPxY = state->viewerState->vpConfigs[currentVP].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[currentVP].texture.texUnitsPerDataPx
             * 0.5;
 //            * (float)state->magnification;
@@ -577,7 +565,12 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            renderSkeleton(currentVP, VIEWPORT_XY);
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_XY);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                }
+            }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -603,29 +596,27 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glEnd();
             /* Draw the overlay textures */
             if(state->overlay) {
-                if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
-                    glBegin(GL_QUADS);
-                        glNormal3i(0, 0, 1);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                        glVertex3f(-dataPxX, -dataPxY, -0.1);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                        glVertex3f(dataPxX, -dataPxY, -0.1);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                        glVertex3f(dataPxX, dataPxY, -0.1);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                        glVertex3f(-dataPxX, dataPxY, -0.1);
-                    glEnd();
-                }
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                glBegin(GL_QUADS);
+                    glNormal3i(0, 0, 1);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLUy);
+                    glVertex3f(-dataPxX, -dataPxY, -0.1);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRUy);
+                    glVertex3f(dataPxX, -dataPxY, -0.1);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRLy);
+                    glVertex3f(dataPxX, dataPxY, -0.1);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLLy);
+                    glVertex3f(-dataPxX, dataPxY, -0.1);
+                glEnd();
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(0., 1., 0., 0.3);
@@ -707,10 +698,12 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-
-            renderSkeleton(currentVP, VIEWPORT_XZ);
-
-
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_XZ);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                }
+            }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -737,29 +730,27 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             /* Draw overlay */
             if(state->overlay) {
-                if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
-                    glBegin(GL_QUADS);
-                        glNormal3i(0,1,0);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                        glVertex3f(-dataPxX, 0.1, -dataPxY);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                        glVertex3f(dataPxX, 0.1, -dataPxY);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                        glVertex3f(dataPxX, 0.1, dataPxY);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                        glVertex3f(-dataPxX, 0.1, dataPxY);
-                    glEnd();
-                }
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                glBegin(GL_QUADS);
+                    glNormal3i(0,1,0);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLUy);
+                    glVertex3f(-dataPxX, 0.1, -dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRUy);
+                    glVertex3f(dataPxX, 0.1, -dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRLy);
+                    glVertex3f(dataPxX, 0.1, dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLLy);
+                    glVertex3f(-dataPxX, 0.1, dataPxY);
+                glEnd();
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -831,8 +822,12 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
-            renderSkeleton(currentVP, VIEWPORT_YZ);
-
+            if (!state->viewerState->uniqueColorMode) {
+                renderSkeleton(currentVP, VIEWPORT_YZ);
+                if (Segmentation::singleton().segmentationMode) {
+                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                }
+            }
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
@@ -858,15 +853,14 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             /* Draw overlay */
             if(state->overlay) {
-                if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
-                    glBegin(GL_QUADS);
-                        glNormal3i(1,0,0);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                        glVertex3f(-0.1, -dataPxX, -dataPxY);
-                        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
-                                     state->viewerState->vpConfigs[currentVP].texture.texRUy);
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                glBegin(GL_QUADS);
+                    glNormal3i(1,0,0);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLUy);
+                    glVertex3f(-0.1, -dataPxX, -dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRUy);
                     glVertex3f(-0.1, dataPxX, -dataPxY);
                     glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
                                  state->viewerState->vpConfigs[currentVP].texture.texRLy);
@@ -874,14 +868,12 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
                                  state->viewerState->vpConfigs[currentVP].texture.texLLy);
                     glVertex3f(-0.1, -dataPxX, dataPxY);
-                    glEnd();
-                }
-
+                glEnd();
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -969,7 +961,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
         if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
-        renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
+
+        if (!state->viewerState->uniqueColorMode) {
+            renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
+        }
+
         glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
         glLoadName(3);
@@ -995,83 +991,62 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         // Draw the overlay textures
         if(state->overlay) {
-            if(state->viewerState->overlayVisible) {
-                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
-                glBegin(GL_QUADS);
-                    glNormal3i(n->x, n->y, n->z);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
-                                 state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                    glVertex3f(-dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
-
-                               -dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
-
-                               -dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
-                                 state->viewerState->vpConfigs[currentVP].texture.texRUy);
-
-                    glVertex3f(dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
-
-                               dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
-
-                               dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
-                                 state->viewerState->vpConfigs[currentVP].texture.texRLy);
-
-                    glVertex3f(dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
-
-                               dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
-
-                               dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
-                                 state->viewerState->vpConfigs[currentVP].texture.texLLy);
-
-                    glVertex3f(-dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
-
-                               -dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
-
-                               -dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
-                glEnd();
-            }
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+            glBegin(GL_QUADS);
+                glNormal3i(n->x, n->y, n->z);
+                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
+                             state->viewerState->vpConfigs[currentVP].texture.texLUy);
+                glVertex3f(-dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
+                           -dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
+                           -dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
+                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
+                             state->viewerState->vpConfigs[currentVP].texture.texRUy);
+                glVertex3f(dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
+                           dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
+                           dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
+                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
+                             state->viewerState->vpConfigs[currentVP].texture.texRLy);
+                glVertex3f(dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
+                           dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
+                           dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
+                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
+                             state->viewerState->vpConfigs[currentVP].texture.texLLy);
+                glVertex3f(-dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
+                           -dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
+                           -dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
+            glEnd();
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if(state->viewerState->drawVPCrosshairs) {
+        if (state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2->z, v2->y, v2->x, 0.3);
-
                 glVertex3f(-dataPxX * v1->x + 0.5 * v2->x - 0.0001 * n->x,
-
                            -dataPxX * v1->y + 0.5 * v2->y - 0.0001 * n->y,
-
                            -dataPxX * v1->z + 0.5 * v2->z - 0.0001 * n->z);
 
                 glVertex3f(dataPxX * v1->x + 0.5 * v2->x - 0.0001 * n->x,
-
                            dataPxX * v1->y + 0.5 * v2->y - 0.0001 * n->y,
-
                            dataPxX * v1->z + 0.5 * v2->z - 0.0001 * n->z);
 
                 glColor4f(v1->z, v1->y, v1->x, 0.3);
-
                 glVertex3f(0.5 * v1->x - dataPxY * v2->x - 0.0001 * n->x,
-
                            0.5 * v1->y - dataPxY * v2->y - 0.0001 * n->y,
-
                            0.5 * v1->z - dataPxY * v2->z - 0.0001 * n->z);
 
                 glVertex3f(0.5 * v1->x + dataPxY * v2->x - 0.0001 * n->x,
-
                            0.5 * v1->y + dataPxY * v2->y - 0.0001 * n->y,
-
                            0.5 * v1->z + dataPxY * v2->z - 0.0001 * n->z);
             glEnd();
         }
         break;
     }
     glDisable(GL_BLEND);
-    renderViewportBorders(currentVP);
+    if (!state->viewerState->uniqueColorMode) {
+        renderViewportBorders(currentVP);
+    }
     return true;
 }
 
@@ -1681,6 +1656,64 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
+void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
+    glPushMatrix();
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
+    auto & seg = Segmentation::singleton();
+    const auto bsize = seg.brush.getRadius();
+    const auto bview = seg.brush.getView();
+
+    glLineWidth(2.0f);
+    if (seg.brush.isInverse()) {
+        glColor4f(0.6f, 0.1f, 0.1f, 1.0f);
+    } else {
+        glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
+    }
+    glBegin(GL_LINE_LOOP);
+    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+        glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
+        glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
+        glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
+        glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
+    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
+        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
+        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
+        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
+    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
+        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
+        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
+        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
+    }
+    glEnd();
+
+    if (seg.brush.isInverse()) {
+        glColor4f(1.0f, 0.1f, 0.1f, 1.0f);
+    } else {
+        glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
+    }
+    glBegin(GL_LINE_LOOP);
+    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+        glVertex3i(coord.x - bsize-1, coord.y - bsize-1, coord.z - 0.1);
+        glVertex3i(coord.x + bsize+2, coord.y - bsize-1, coord.z - 0.1);
+        glVertex3i(coord.x + bsize+2, coord.y + bsize+2, coord.z - 0.1);
+        glVertex3i(coord.x - bsize-1, coord.y + bsize+2, coord.z - 0.1);
+    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z - bsize-1);
+        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z - bsize-1);
+        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z + bsize+2);
+        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z + bsize+2);
+    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z - bsize-1);
+        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z - bsize-1);
+        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z + bsize+2);
+        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z + bsize+2);
+    }
+    glEnd();
+    glPopMatrix();
+}
+
 void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
     const auto & n = vp.n;
     const auto & v1 = vp.v1;
@@ -1795,6 +1828,59 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     state->viewerState->selectModeFlag = false;
 
     return foundNodes;
+}
+
+std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y) {
+    Viewport *vp = nullptr;
+    vpConfig &vpConf = state->viewerState->vpConfigs[currentVP];
+    if(currentVP == VIEWPORT_XY) {
+        vp = refVPXY;
+    } else if(currentVP == VIEWPORT_XZ) {
+        vp = refVPXZ;
+    } else if(currentVP == VIEWPORT_YZ) {
+        vp = refVPYZ;
+    } else if(currentVP == VIEWPORT_SKELETON) {
+        refVPSkel->makeCurrent();
+        return std::make_tuple(0, 0, 0); // disable skeleton viewport until segmentation works in it
+    }
+
+    if(pickBuffer.upToDate(currentVP, vp->width(), state->viewerState->currentPosition)) {
+        return pickBuffer.getColor(x, y);
+    }
+
+    vp->makeCurrent();
+    // disable any special filtering
+    glBindTexture(GL_TEXTURE_2D,vpConf.texture.overlayHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // set and generate unique color segmentation texture
+    state->viewerState->uniqueColorMode = true;
+    state->viewer->vpGenerateTexture(vpConf);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
+    renderOrthogonalVP(currentVP);
+
+    // reset filtering
+    glBindTexture(GL_TEXTURE_2D, vpConf.texture.overlayHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // color picking
+    glReadBuffer(GL_BACK);
+    glPixelStoref(GL_PACK_ALIGNMENT, 1);
+    pickBuffer = ColorPickBuffer(currentVP, vp->width(), state->viewerState->currentPosition);
+
+    // restore normal segmentation texture
+    state->viewerState->uniqueColorMode = false;
+    state->viewer->vpGenerateTexture(vpConf);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFlush();
+
+    return pickBuffer.getColor(x, y);
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
@@ -2299,23 +2385,25 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
     /* Restore modelview matrix */
     glPopMatrix();
-    glDisable(GL_CULL_FACE);
+//    glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
 }
 
 
-bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+bool Renderer::resizemeshCapacity(mesh *toResize, uint n) {
+    (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
+    (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
+    (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
 
-    (*toDouble).vertices = (floatCoordinate *)realloc((*toDouble).vertices, 2 * (*toDouble).vertsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).normals = (floatCoordinate *)realloc((*toDouble).normals, 2 * (*toDouble).normsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).colors = (color4F *)realloc((*toDouble).colors, 2 * (*toDouble).colsBuffSize * sizeof(color4F));
-
-    (*toDouble).vertsBuffSize = 2 * (*toDouble).vertsBuffSize;
-    (*toDouble).normsBuffSize = 2 * (*toDouble).normsBuffSize;
-    (*toDouble).colsBuffSize = 2 * (*toDouble).colsBuffSize;
-
+    (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
+    (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;
+    (*toResize).colsBuffSize = n * (*toResize).colsBuffSize;
 
     return true;
+}
+
+bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+    return resizemeshCapacity(toDouble, 2);
 }
 
 bool Renderer::initMesh(mesh *toInit, uint initialSize) {

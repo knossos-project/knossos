@@ -161,7 +161,7 @@ Hashtable *Hashtable::ht_new(uint tablesize) {
     // This is a dummy element used only for entry into the linked list.
 
     new_ht->listEntry->datacube = NULL;
-    SET_COORDINATE(new_ht->listEntry->coordinate, -1, -1, -1);
+    new_ht->listEntry->coordinate = Coordinate(-1, -1, -1);
 
     return new_ht;
 }

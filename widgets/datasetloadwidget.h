@@ -1,6 +1,7 @@
-#ifndef DATASETPROPERTYWIDGET_H
-#define DATASETPROPERTYWIDGET_H
+#ifndef DATASETLOADWIDGET_H
+#define DATASETLOADWIDGET_H
 
+#include <QCheckBox>
 #include <QDialog>
 
 class QComboBox;
@@ -10,37 +11,39 @@ class QLineEdit;
 class QPushButton;
 class QSpinBox;
 
-class DatasetPropertyWidget : public QDialog {
+class DatasetLoadWidget : public QDialog {
     Q_OBJECT
 public:
-    explicit DatasetPropertyWidget(QWidget *parent = 0);
+    explicit DatasetLoadWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
-    void changeDataSet(bool isGUI);
+    void changeDataset(bool isGUI);
 
 protected:
     QGroupBox *localGroup;
-    QComboBox *path;
+    QComboBox *pathDropdown;
     QPushButton *datasetfileDialog;
     QSpinBox *supercubeEdgeSpin;
     QLabel *supercubeSizeLabel;
+    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QPushButton *cancelButton;
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
     void waitForLoader();
-    QStringList getRecentDirsItems();
+    QStringList getRecentPathItems();
 signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
+    void updateDatasetCompression();
     void userMoveSignal(int x, int y, int z);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
-    void supercubeEdgeSpinValueChanged(const int value);
+    void adaptMemoryConsumption();
     void cancelButtonClicked();
     void processButtonClicked();
 };
 
-#endif // DATASETPROPERTYWIDGET_H
+#endif // DATASETLOADWIDGET_H

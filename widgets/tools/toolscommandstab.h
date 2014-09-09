@@ -58,7 +58,7 @@ signals:
     void setActiveTreeSignal(int id);
     void setActiveNodeSignal(nodeListElement *node, uint id);
 
-    void jumpToNodeSignal();
+    void jumpToNodeSignal(bool *isSuccess = NULL);
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint,
                               nodeListElement *branchNode, uint branchNodeID);

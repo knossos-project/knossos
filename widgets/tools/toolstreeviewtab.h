@@ -85,7 +85,7 @@ signals:
     void clearTreeSelectionSignal();
     void clearNodeSelectionSignal();
     void setActiveNodeSignal(nodeListElement *node, uint nodeID);
-    void JumpToActiveNodeSignal();
+    void JumpToActiveNodeSignal(bool *isSuccess = NULL);
     bool addSegmentSignal(int sourceNodeID, int targetNodeID);
     void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
 public slots:
