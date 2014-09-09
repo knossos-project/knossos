@@ -129,7 +129,7 @@ void PythonPropertyWidget::openTerminal() {
     #endif
     #ifdef Q_OS_WIN
     QString args = QString("ipython console --existing '%1'").arg(pid);
-    system(QString("start /b cmd /c %1").arg(args).toUtf8().data());
+    system(QString("start %1").arg(args).toUtf8().data());
     #endif
 }
 
