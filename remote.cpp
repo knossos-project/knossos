@@ -132,7 +132,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
     //float tempBetaCache =  state->viewerState->betaCache;
     float tempBeta = state->beta;
 
-    float alpha, beta, dAlpha, dBeta;
+    float alpha = 0, beta = 0, dAlpha = 0, dBeta = 0;
     int dx = this->recenteringPosition.x - state->viewerState->lastRecenteringPosition.x;
     int dy = this->recenteringPosition.y -state->viewerState->lastRecenteringPosition.y;
     int dz = this->recenteringPosition.z -state->viewerState->lastRecenteringPosition.z;
