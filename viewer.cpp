@@ -2018,7 +2018,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::editNodeSignal, &Skeletonizer::editNode);
     QObject::connect(eventModel, &EventModel::findNodeInRadiusSignal, &Skeletonizer::findNodeInRadius);
     QObject::connect(eventModel, &EventModel::findSegmentByNodeIDSignal, &Skeletonizer::findSegmentByNodeIDs);
-    QObject::connect(eventModel, &EventModel::findNodeByNodeIDSignal, &Skeletonizer::findNodeByNodeID);
     QObject::connect(eventModel, &EventModel::updateSlicePlaneWidgetSignal, window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateIntersection);
     QObject::connect(eventModel, &EventModel::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperLeft, &Viewport::setOrientation);
@@ -2085,7 +2084,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::deleteSelectedTreesSignal, skeletonizer, &Skeletonizer::deleteSelectedTrees);
     // commands tab signals
     QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::findTreeByTreeIDSignal, &Skeletonizer::findTreeByTreeID);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::findNodeByNodeIDSignal, &Skeletonizer::findNodeByNodeID);
     QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setActiveTreeSignal, &Skeletonizer::setActiveTreeByID);
     QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setActiveNodeSignal, &Skeletonizer::setActiveNode);
     QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::jumpToNodeSignal, skeletonizer, &Skeletonizer::jumpToActiveNode);

@@ -102,18 +102,18 @@ signals:
     void genTestNodesSignal(uint number);
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
-    void setActiveNodeSignal(nodeListElement *node, int nodeID);
+    void setActiveNodeSignal(nodeListElement *node, uint nodeID);
     void setRecenteringPositionSignal(int x, int y, int z);
-    void delSegmentSignal(int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
-    void editNodeSignal(int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    void addCommentSignal(const char *content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    void addSegmentSignal(int sourceNodeID, int targetNodeID);
+    void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void addCommentSignal(const char *content, nodeListElement *node, uint nodeID);
+    bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
+    void addSegmentSignal(uint sourceNodeID, uint targetNodeID);
     void jumpToActiveNodeSignal();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
-    void pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    void pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
     void popBranchNodeSignal();
 
     void moveToNextTreeSignal();
@@ -122,8 +122,7 @@ signals:
     void moveToNextNodeSignal();
 
     nodeListElement *findNodeInRadiusSignal(Coordinate searchPosition);
-    segmentListElement *findSegmentByNodeIDSignal(int sourceNodeID, int targetNodeID);
-    nodeListElement *findNodeByNodeIDSignal(int nodeID);
+    segmentListElement *findSegmentByNodeIDSignal(uint sourceNodeID, uint targetNodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     treeListElement *addTreeListElement(int treeID, color4F color);
     void setViewportOrientationSignal(int orientation);

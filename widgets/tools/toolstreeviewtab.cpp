@@ -415,15 +415,19 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
 }
 
 void ToolsTreeviewTab::linkNodesAction() {
-    const auto node0 = state->skeletonState->selectedNodes[0]->nodeID;
-    const auto node1 = state->skeletonState->selectedNodes[1]->nodeID;
+    const auto node0 = state->skeletonState->selectedNodes[0];
+    const auto node1 = state->skeletonState->selectedNodes[1];
     //segments are only stored and searched in one direction so we have to search for both
-    if (Skeletonizer::findSegmentByNodeIDs(node0, node1) != nullptr) {
-        emit delSegmentSignal(node0, node1, nullptr);
-    } else if (Skeletonizer::findSegmentByNodeIDs(node1, node0) != nullptr) {
-        emit delSegmentSignal(node1, node0, nullptr);
+    if (Skeletonizer::findSegmentByNodeIDs(node0->nodeID, node1->nodeID) != nullptr) {
+        emit delSegmentSignal(node0->nodeID, node1->nodeID, nullptr);
+    } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
+        emit delSegmentSignal(node1->nodeID, node0->nodeID, nullptr);
     } else{
-        emit addSegmentSignal(node0, node1);
+        if(state->skeletonState->simpleTracing
+           && Skeletonizer::areNeighbors(*node0, *node1) == false) {
+            return;
+        }
+        emit addSegmentSignal(node0->nodeID, node1->nodeID);
     }
 }
 
@@ -478,8 +482,7 @@ void ToolsTreeviewTab::setNodeCommentAction() {
                     Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(),
                                              state->skeletonState->activeNode, 0);
                 } else {
-                    Skeletonizer::editComment(
-                                              state->skeletonState->activeNode->comment, 0,
+                    Skeletonizer::editComment(state->skeletonState->activeNode->comment, 0,
                                               nodeCommentBuffer.toLocal8Bit().data(),
                                               state->skeletonState->activeNode, 0);
                 }
@@ -501,10 +504,9 @@ void ToolsTreeviewTab::setNodeCommentAction() {
                     if (node->comment == nullptr) {
                         Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     } else {
-                        Skeletonizer::editComment(
-                                                  node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
+                        Skeletonizer::editComment(node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     }
-                } else if (node-> comment != nullptr) {
+                } else if (node->comment != nullptr) {
                     Skeletonizer::delComment(node->comment, node->nodeID);
                 }
             }
@@ -719,7 +721,7 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
     if(idItem == nullptr) {
         return;
     }
-    nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toInt());
+    nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toUInt());
     if(selectedNode == nullptr) {
         return;
     }
@@ -950,7 +952,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toInt());
+        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toUInt());
         //select node
         if (node != nullptr) {
             node->selected = true;
@@ -1224,7 +1226,7 @@ void ToolsTreeviewTab::treesDeleted() {
     int nodeRows = nodeTable->rowCount();
     QVector<int> rowsToDel;
     for (int i = 0; i < nodeRows; ++i) {
-        if (Skeletonizer::findNodeByNodeID(nodeTable->item(i, NodeTable::NODE_ID)->text().toInt()) == nullptr) {
+        if (Skeletonizer::findNodeByNodeID(nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt()) == nullptr) {
             rowsToDel.push_back(i);
         }
     }

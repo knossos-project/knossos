@@ -26,6 +26,7 @@
  */
 
 
+#include <unordered_map>
 #include <QObject>
 #include <QtCore>
 #include "knossos-global.h"
@@ -49,7 +50,7 @@ public slots:
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
-    static int addNode(int nodeID, float radius, int treeID, Coordinate *position, Byte VPtype, int inMag, int time, int respectLocks);
+    static uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, Byte VPtype, int inMag, int time, int respectLocks);
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
@@ -60,7 +61,7 @@ public slots:
     static bool setDynArray(dynArray *array, int pos, void *value);
     static dynArray *newDynArray(int size);
 
-    static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
+    static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     void WRAP_popBranchNode();
@@ -85,33 +86,33 @@ public slots:
     void autoSaveIfElapsed();
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
-    static bool setActiveNode(nodeListElement *node, int nodeID);
+    static bool setActiveNode(nodeListElement *node, uint nodeID);
     static bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
     commentListElement *nextComment(QString searchString);
     commentListElement *previousComment(QString searchString);
-    static bool delSegment(int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
-    static bool editNode(int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    static bool delNode(int nodeID, nodeListElement *nodeToDel);
-    static bool addComment(QString content, nodeListElement *node, int nodeID);
-    static bool editComment(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
-    static bool delComment(commentListElement *currentComment, int commentNodeID);
+    static bool delSegment(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
+    static bool editNode(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    static bool delNode(uint nodeID, nodeListElement *nodeToDel);
+    static bool addComment(QString content, nodeListElement *node, uint nodeID);
+    static bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
+    static bool delComment(commentListElement *currentComment, uint commentNodeID);
     void jumpToActiveNode(bool *isSuccess = NULL);
     static bool setActiveTreeByID(int treeID);
 
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
     bool saveXmlSkeleton(QIODevice &file) const;
 
-    static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
     void moveToNextTree(bool *isSuccess = NULL);
     void moveToPrevTree(bool *isSuccess = NULL);
     bool moveToPrevNode();
     bool moveToNextNode();
     static bool moveNodeToTree(nodeListElement *node, int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
-    static nodeListElement *findNodeByNodeID(int nodeID);
-    static bool addSegment(int sourceNodeID, int targetNodeID);
+    static nodeListElement *findNodeByNodeID(uint nodeID);
+    static bool addSegment(uint sourceNodeID, uint targetNodeID);
     static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
 
@@ -120,7 +121,7 @@ public slots:
     static bool mergeTrees(int treeID1, int treeID2);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
-    static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
+    static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
@@ -138,8 +139,10 @@ public:
 
     TracingMode getTracingMode() const;
     void setTracingMode(TracingMode mode);
+    static bool areNeighbors(struct nodeListElement v, struct nodeListElement w);
 private:
     TracingMode tracingMode;
+    static std::unordered_map<uint, uint> dijkstraGraphSearch(nodeListElement *node);
 };
 
 #endif // SKELETONIZER_H

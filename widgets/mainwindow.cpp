@@ -678,10 +678,9 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 }
 
 /**
-  * This method opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
-  * the skeletonFileHistory Queue is updated with the file name entry. The history entries are compared to the the
-  * selected file names. If the file is already loaded it will not be put to the queue
-  * @todo lookup in skeleton directory, extend the file dialog with merge option
+  * opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
+  * the skeletonFileHistory queue is updated with the file name entry. The history entries are compared to the
+  * selected file names. If the file is already loaded it will not be put into the queue
   *
   */
 void MainWindow::openSlot() {

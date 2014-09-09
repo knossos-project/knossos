@@ -138,12 +138,10 @@ void merging(QMouseEvent *event, const int vp) {
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     mouseDownX = event->x();
     mouseDownY = event->y();
-    uint clickedNode;
-
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
-        clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
             emit setActiveNodeSignal(NULL, clickedNode);
@@ -154,7 +152,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         if(VPfound == VIEWPORT_SKELETON) {
             return false;
         }
-
         return false;
     } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && !Segmentation::singleton().segmentationMode) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -178,15 +175,21 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::ALT) {
-        int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
-            if(state->skeletonState->activeNode) {
-                if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode, NULL);
-                } else if(findSegmentByNodeIDSignal(clickedNode, state->skeletonState->activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+            auto activeNode = state->skeletonState->activeNode;
+            if(activeNode) {
+                if(findSegmentByNodeIDSignal(activeNode->nodeID, clickedNode)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
+                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNode, activeNode->nodeID, NULL);
                 } else{
-                    emit addSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode);
+                    if(state->skeletonState->simpleTracing
+                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
+                        // prevent cycles
+                        return false;
+                    }
+                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
             }
         }
@@ -195,41 +198,33 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+    auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
+        auto activeNode = state->skeletonState->activeNode;
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
-            if(keyMod.testFlag(Qt::ControlModifier)) {
-                qDebug() << "shift and control and mouse middle";
-                // Pressed SHIFT and CTRL
-            } else {
-                // Delete segment between clicked and active node
-                if(state->skeletonState->activeNode) {
-                    if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID,
-                                            clickedNode)) {
-                        emit delSegmentSignal(
-                                   state->skeletonState->activeNode->nodeID,
-                                   clickedNode,
-                                   0);
-                    } else if(findSegmentByNodeIDSignal(clickedNode,
-                                            state->skeletonState->activeNode->nodeID)) {
-                        emit delSegmentSignal(
-                                   clickedNode,
-                                   state->skeletonState->activeNode->nodeID,
-                                   0);
-                    } else {
-                        emit addSegmentSignal(state->skeletonState->activeNode->nodeID, clickedNode);
+            // Delete segment between clicked and active node
+            if(activeNode) {
+                if(findSegmentByNodeIDSignal(activeNode->nodeID,
+                                        clickedNode)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNode, 0);
+                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNode, activeNode->nodeID, 0);
+                } else {
+                    if(state->skeletonState->simpleTracing
+                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
+                        return false;
                     }
+                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
             }
         } else {
             // No modifier pressed
-            state->viewerState->vpConfigs[VPfound].draggedNode = findNodeByNodeIDSignal(clickedNode);
+            state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNode);
             state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
-
     return true;
 }
 
@@ -243,7 +238,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
         return;
     }
-    int newNodeID;
     Coordinate movement, lastPos;
 
     /* We have to activate motion tracking only for the skeleton VP for a right click */
@@ -275,6 +269,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
             emit unselectNodesSignal();
+            uint newNodeID;
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(&clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
@@ -660,9 +655,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
-        int nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
+        auto nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
         if (nodeID != 0) {
-            nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
+            nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
             if (selectedNode != nullptr) {
                 //check if already in buffer
                 auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
@@ -1088,7 +1083,6 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
         // emit updateTreeviewSignal();
-
     } else if (event->key() == Qt::Key_0) {
         if (control) {
             emit zoomReset();

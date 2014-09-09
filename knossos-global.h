@@ -65,9 +65,9 @@
 #define NUM_MAG_DATASETS 65536
 
 #if QT_POINTER_SIZE == 4
-#define PTRSIZEINT int
+#define PTRSIZEUINT uint
 #elif QT_POINTER_SIZE == 8
-#define PTRSIZEINT int64_t
+#define PTRSIZEUINT uint64_t
 #endif
 
 // The edge length of a datacube is 2^N, which makes the size of a
@@ -1143,7 +1143,7 @@ struct skeletonState {
     int totalNodeElements;
     int totalSegmentElements;
 
-    int greatestNodeID;
+    uint greatestNodeID;
     int greatestTreeID;
 
     color4F commentColors[NUM_COMMSUBSTR];

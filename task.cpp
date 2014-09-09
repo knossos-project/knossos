@@ -23,24 +23,30 @@ bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode
     }
 
     handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL, url); // send to this url
-    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L); // follow in case of redirect
-    if(cookiePath) {
-        curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath); // send this cookie to authenticate oneself
-    }
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
-    *code = curl_easy_perform(handle); // send the request
+    if(handle) {
+        curl_easy_setopt(handle, CURLOPT_URL, url); // send to this url
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L); // follow in case of redirect
+        if(cookiePath) {
+            curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath); // send this cookie to authenticate oneself
+        }
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
+        *code = curl_easy_perform(handle); // send the request
 
-    if(*code == CURLE_OK) {
-        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
-        curl_easy_cleanup(handle);
-        return true;
+        if(*code == CURLE_OK) {
+            curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+            curl_easy_cleanup(handle);
+            return true;
+        }
+        else {
+            qDebug("curle not ok. %i", *code);
+            curl_easy_cleanup(handle);
+            return false;
+        }
     }
     else {
-        qDebug("curle not ok. %i", *code);
-        curl_easy_cleanup(handle);
+        qDebug("curl init failed!");
         return false;
     }
 }
@@ -58,24 +64,30 @@ bool taskState::httpPOST(char *url, char *postdata, struct httpResponse *respons
     }
 
     handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL, url); // send to this url
-    curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata); // send this post data
-    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L); // follow in case of redirect
-    if(cookiePath) {
-        curl_easy_setopt(handle, CURLOPT_COOKIEJAR, cookiePath);
-    }
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
-    *code = curl_easy_perform(handle); // send the request
+    if(handle) {
+        curl_easy_setopt(handle, CURLOPT_URL, url); // send to this url
+        curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata); // send this post data
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L); // follow in case of redirect
+        if(cookiePath) {
+            curl_easy_setopt(handle, CURLOPT_COOKIEJAR, cookiePath);
+        }
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
+        *code = curl_easy_perform(handle); // send the request
 
-    if(*code == CURLE_OK) {
-        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        if(*code == CURLE_OK) {
+            curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+            curl_easy_cleanup(handle);
+            return true;
+        }
         curl_easy_cleanup(handle);
         return true;
     }
-    curl_easy_cleanup(handle);
-    return true;
+    else {
+        qDebug("curl init failed!");
+        return false;
+    }
 }
 
 bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpCode,
@@ -91,24 +103,30 @@ bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpC
     }
 
     handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL, url);
-    curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELETE");
-    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
-    if(cookiePath) {
-        curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath);
-    }
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
-    *code = curl_easy_perform(handle);
+    if(handle) {
+        curl_easy_setopt(handle, CURLOPT_URL, url);
+        curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
+        if(cookiePath) {
+            curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath);
+        }
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
+        *code = curl_easy_perform(handle);
 
-    if(*code == CURLE_OK) {
-        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        if(*code == CURLE_OK) {
+            curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+            curl_easy_cleanup(handle);
+            return true;
+        }
         curl_easy_cleanup(handle);
-        return true;
+        return false;
     }
-    curl_easy_cleanup(handle);
-    return false;
+    else {
+        qDebug("curl init failed!");
+        return false;
+    }
 }
 
 bool taskState::httpFileGET(char *url, char *postdata, httpResponse * response,
@@ -126,26 +144,32 @@ bool taskState::httpFileGET(char *url, char *postdata, httpResponse * response,
     }
 
     handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL, url);
-    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
-    if(cookiePath) {
-        curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath);
-    }
-    if(postdata) {
-        curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata);
-    }
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
-    curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
-    *code = curl_easy_perform(handle);
+    if(handle) {
+        curl_easy_setopt(handle, CURLOPT_URL, url);
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
+        if(cookiePath) {
+            curl_easy_setopt(handle, CURLOPT_COOKIEFILE, cookiePath);
+        }
+        if(postdata) {
+            curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata);
+        }
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
+        curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
+        curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
+        *code = curl_easy_perform(handle);
 
-    if(*code == CURLE_OK) {
-        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        if(*code == CURLE_OK) {
+            curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        }
+        curl_easy_cleanup(handle);
+        return true;
     }
-    curl_easy_cleanup(handle);
-    return true;
+    else {
+        qDebug("curl init failed!");
+        return false;
+    }
 }
 
 // for writing http response to memory
@@ -165,7 +189,7 @@ size_t taskState::readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 // for retrieving information from response headers. Useful for responses with file content
-// the information should be terminated with an ';' for sucessful parsing
+// the information should be terminated with a ';' for sucessful parsing
 int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info) {
     int numChars = 0;
     char *pos = strstr(header->content, info);

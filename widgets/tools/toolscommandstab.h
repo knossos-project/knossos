@@ -55,14 +55,13 @@ protected:
 
 signals:
     treeListElement *findTreeByTreeIDSignal(int value);
-    nodeListElement *findNodeByNodeIDSignal(int value);
     void setActiveTreeSignal(int id);
-    void setActiveNodeSignal(nodeListElement *node, int id);
+    void setActiveNodeSignal(nodeListElement *node, uint id);
 
     void jumpToNodeSignal(bool *isSuccess = NULL);
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint,
-                              nodeListElement *branchNode, int branchNodeID);
+                              nodeListElement *branchNode, uint branchNodeID);
     bool popBranchNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();
