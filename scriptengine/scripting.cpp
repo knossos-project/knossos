@@ -26,27 +26,23 @@
 #include "knossos-global.h"
 #include "widgets/mainwindow.h"
 
-Scripting::Scripting(QObject *parent) :
-    QThread(parent)
-{
-
-    floatCoordinateDecorator = new FloatCoordinateDecorator();
-    coordinateDecorator = new CoordinateDecorator();
-    colorDecorator = new ColorDecorator();
-    treeListDecorator = new TreeListDecorator();
-    nodeListDecorator = new NodeListDecorator();
-    segmentListDecorator = new SegmentListDecorator();
-    meshDecorator = new MeshDecorator();
-    transformDecorator = new TransformDecorator();
-    pointDecorator = new PointDecorator();
-
-    skeletonProxy = new SkeletonProxy();
-
-}
+Scripting::Scripting(QObject *parent) : QThread(parent) {}
 
 void Scripting::run() {
     PythonQt::init(PythonQt::RedirectStdOut);
     PythonQtObjectPtr ctx = PythonQt::self()->createModuleFromScript("knossos_python_api");
+
+    skeletonProxy = new SkeletonProxy();
+
+    colorDecorator = new ColorDecorator();
+    coordinateDecorator = new CoordinateDecorator();
+    floatCoordinateDecorator = new FloatCoordinateDecorator();
+    meshDecorator = new MeshDecorator();
+    nodeListDecorator = new NodeListDecorator();
+    segmentListDecorator = new SegmentListDecorator();
+    treeListDecorator = new TreeListDecorator();
+//    transformDecorator = new TransformDecorator();
+//    pointDecorator = new PointDecorator();
 
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
@@ -70,26 +66,26 @@ void Scripting::run() {
 
     QString module("internal");
 
-    PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
+    PythonQt::self()->addDecorators(colorDecorator);
+    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
 
-    PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
+    PythonQt::self()->addDecorators(floatCoordinateDecorator);
+    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
+
+    PythonQt::self()->addDecorators(meshDecorator);
+    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
+
+    PythonQt::self()->addDecorators(nodeListDecorator);
+    PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
     PythonQt::self()->registerCPPClass("Segment", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
 
     changeWorkingDirectory();
     executeFromUserDirectory();
