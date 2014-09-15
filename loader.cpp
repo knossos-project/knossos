@@ -86,40 +86,19 @@ void lll_rmlist(C_Element *Dcoi) {
 }
 
 uint lll_calculate_filename(C_Element *elem) {
-    char *local_dir_delim = NULL;
-    char *file_dir_delim = NULL;
+    char dir_delim[] = "/";//forward slash works on every system including windows
     char *magnificationStr = NULL;
     char typeExtension[8] = "";
-    char compressionExtension[8] = "";
+    std::string compressionExtension;
     int boergens_param_1 = 0, boergens_param_2 = 0, boergens_param_3 = 0;
-    char *boergens_param_1_name = "", *boergens_param_2_name = "", *boergens_param_3_name = "";
+    std::string boergens_param_1_name;
+    std::string boergens_param_2_name;
+    std::string boergens_param_3_name;
     char *local_cache_path_builder = NULL, *local_cache_path_total = NULL;
     int filenameSize = 1000;
     Coordinate coordinate;
 
     coordinate = elem->coordinate;
-
-    switch (state->loadLocalSystem) {
-    case LS_UNIX:
-        local_dir_delim = "/";
-        break;
-    case LS_WINDOWS:
-        local_dir_delim = "\\";
-        break;
-    default:
-        return LLL_FAILURE;
-    }
-
-    switch (state->loadMode) {
-    case LM_LOCAL:
-        file_dir_delim = local_dir_delim;
-        break;
-    case LM_FTP:
-        file_dir_delim = "/";
-        break;
-    default:
-        return LLL_FAILURE;
-    }
 
     /*
     To reverse into non-compression, normal raw file read, replace
@@ -130,19 +109,16 @@ uint lll_calculate_filename(C_Element *elem) {
     switch (state->compressionRatio) {
     case 0:
         strncpy(typeExtension, "raw", 4);
-        snprintf(compressionExtension, 1, "");
         break;
     case 1000:
         strncpy(typeExtension, "jpg", 4);
-        snprintf(compressionExtension, 1, "");
         break;
     case 1001:
         strncpy(typeExtension, "j2k", 4);
-        snprintf(compressionExtension, 1, "");
         break;
     default:
         strncpy(typeExtension, "jp2", 4);
-        snprintf(compressionExtension, sizeof(compressionExtension), "%d.", state->compressionRatio);
+        compressionExtension = std::to_string(state->compressionRatio);
         break;
     }
     /*
@@ -186,20 +162,20 @@ uint lll_calculate_filename(C_Element *elem) {
     magnificationStr = (char*)malloc(filenameSize);
     magnificationStr[0] = '\0';
     if (LM_FTP == state->loadMode) {
-        snprintf(magnificationStr, filenameSize, "mag%d%s", state->magnification, file_dir_delim);
+        snprintf(magnificationStr, filenameSize, "mag%d%s", state->magnification, dir_delim);
     }
 
     snprintf(elem->path, filenameSize,
              "%s%s%s%.4d%s%s%.4d%s%s%.4d",
              (LM_FTP == state->loadMode) ? state->ftpBasePath : state->loaderPath,
              magnificationStr,
-             boergens_param_1_name,
+             boergens_param_1_name.c_str(),
              boergens_param_1,
-             file_dir_delim,
-             boergens_param_2_name,
+             dir_delim,
+             boergens_param_2_name.c_str(),
              boergens_param_2,
-             file_dir_delim,
-             boergens_param_3_name,
+             dir_delim,
+             boergens_param_3_name.c_str(),
              boergens_param_3
              );
     free(magnificationStr);
@@ -210,12 +186,12 @@ uint lll_calculate_filename(C_Element *elem) {
              coordinate.x,
              coordinate.y,
              coordinate.z,
-             compressionExtension,
+             compressionExtension.c_str(),
              typeExtension);
     snprintf(elem->fullpath_filename, filenameSize,
              "%s%s%s",
              elem->path,
-             file_dir_delim,
+             dir_delim,
              elem->filename);
     /* qDebug("FullPath: %s", elem->fullpath_filename); */
 
@@ -235,7 +211,7 @@ uint lll_calculate_filename(C_Element *elem) {
         return LLL_FAILURE;
     }
     memset(local_cache_path_total, '\0', filenameSize);
-    snprintf(local_cache_path_builder, filenameSize, "%smag%d%s", state->loadFtpCachePath, state->magnification, local_dir_delim);
+    snprintf(local_cache_path_builder, filenameSize, "%smag%d%s", state->loadFtpCachePath, state->magnification, dir_delim);
     strcat(local_cache_path_total, local_cache_path_builder);
 
 #ifdef Q_OS_UNIX
@@ -245,7 +221,7 @@ uint lll_calculate_filename(C_Element *elem) {
     mkdir(local_cache_path_total);
 #endif
     /* qDebug("%s", local_cache_path_total); */
-    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_1_name, boergens_param_1);
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", dir_delim, boergens_param_1_name.c_str(), boergens_param_1);
     strcat(local_cache_path_total, local_cache_path_builder);
 #ifdef Q_OS_UNIX
     mkdir(local_cache_path_total, 0777);
@@ -254,7 +230,7 @@ uint lll_calculate_filename(C_Element *elem) {
     mkdir(local_cache_path_total);
 #endif
     /* qDebug("%s", local_cache_path_total); */
-    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_2_name, boergens_param_2);
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", dir_delim, boergens_param_2_name.c_str(), boergens_param_2);
     strcat(local_cache_path_total, local_cache_path_builder);
 #ifdef Q_OS_UNIX
     mkdir(local_cache_path_total, 0777);
@@ -263,7 +239,7 @@ uint lll_calculate_filename(C_Element *elem) {
     mkdir(local_cache_path_total);
 #endif
     /* qDebug("%s", local_cache_path_total); */
-    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_3_name, boergens_param_3);
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", dir_delim, boergens_param_3_name.c_str(), boergens_param_3);
     strcat(local_cache_path_total, local_cache_path_builder);
 
 #ifdef Q_OS_UNIX
@@ -284,7 +260,7 @@ uint lll_calculate_filename(C_Element *elem) {
     snprintf(elem->local_filename, filenameSize,
              "%s%s%s",
              local_cache_path_total,
-             local_dir_delim,
+             dir_delim,
              elem->filename);
     free(local_cache_path_total);
 
@@ -657,7 +633,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         fclose(cubeFile);
 
         if (localCompressedBufSize != readBytes) {
-            qDebug("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
+            qDebug() << "fread failed for" << filename << "! (" << readBytes << "instead of " << localCompressedBufSize << ")";
             goto loadcube_fail;
         }
 
@@ -924,11 +900,10 @@ uint Loader::loadCubes() {
 
     C_Element *currentCube = NULL;//, *prevCube = NULL, *decompedCube = NULL;
     uint loadedDc;
-    FtpThread *ftpThread;
-    ftp_thread_struct fts = {0};
-    loadcube_thread_struct lts_array[MAX_DECOMP_THREAD_NUM] = {0};
+    FtpThread *ftpThread = nullptr;
+    ftp_thread_struct fts;
+    loadcube_thread_struct lts_array[MAX_DECOMP_THREAD_NUM] = {};
     loadcube_thread_struct *lts_current;
-    loadcube_thread_struct lts_empty = {0};
     LoadCubeThread *threadHandle_array[MAX_DECOMP_THREAD_NUM] = {NULL};
     QSemaphore *loadCubeThreadSem = new QSemaphore(decompThreads);
     int hadError = false;
@@ -968,7 +943,7 @@ uint Loader::loadCubes() {
             loadedDc = lts_array[thread_index].retVal;
             delete threadHandle_array[thread_index];
             threadHandle_array[thread_index] = NULL;
-            lts_array[thread_index] = lts_empty;
+            lts_array[thread_index] = {};
             cubeCountFinished++;
             if (!loadedDc) {
                 retVal = false;
@@ -1013,7 +988,7 @@ uint Loader::loadCubes() {
          *
          */
         lts_current = &lts_array[thread_index];
-        *lts_current = lts_empty;
+        *lts_current = {};
         lts_current->currentCube = currentCube;
         lts_current->isBusy = true;
         lts_current->loadCubeThreadSem = loadCubeThreadSem;

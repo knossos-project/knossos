@@ -470,13 +470,13 @@ void Viewport::zoomOrthogonals(float step){
                 /* trigger a mag change when possible */
                 if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
                     && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
-                    && (state->magnification != state->lowestAvailableMag)) {
+                    && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
                     state->viewerState->vpConfigs[i].texture.zoomLevel += step;
                     triggerMagChange = MAG_DOWN;
                 }
                 if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
                     && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
-                    && (state->magnification != state->highestAvailableMag)) {
+                    && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
                     state->viewerState->vpConfigs[i].texture.zoomLevel += step;
                     triggerMagChange = MAG_UP;
                 }

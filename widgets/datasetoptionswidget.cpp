@@ -64,11 +64,11 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     orthogonalDataViewportSpinBox = new QDoubleSpinBox();
     orthogonalDataViewportSpinBox->setMaximum(100);
     orthogonalDataViewportSpinBox->setMinimum(0);
-    orthogonalDataViewportSpinBox->setSuffix("\%");
+    orthogonalDataViewportSpinBox->setSuffix(" %");
     skeletonViewportSpinBox = new QDoubleSpinBox();
     skeletonViewportSpinBox->setMaximum(100);
     skeletonViewportSpinBox->setMinimum(0);
-    skeletonViewportSpinBox->setSuffix("\%");
+    skeletonViewportSpinBox->setSuffix(" %");
     zoomDefaultsButton = new QPushButton("All Zoom defaults");
     zoomDefaultsButton->setAutoDefault(false);
 

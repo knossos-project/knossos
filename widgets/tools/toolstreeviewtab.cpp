@@ -1067,16 +1067,12 @@ void ToolsTreeviewTab::recreateTreesTable() {
             }
         }
         //check selection
-        if (currentTree->selected) {//tree is selected
-            if (!blockSelection) {
-                blockSelection = true;
-                startIndex = treeIndex;
-            }
-        } else {
-            if (blockSelection) {
-                selectedItems.select(treeTable->model()->index(startIndex, 0), treeTable->model()->index(treeIndex-1, treeTable->model()->columnCount()-1));
-                blockSelection = false;
-            }
+        if (!blockSelection && currentTree->selected) {//tree is selected
+            blockSelection = true;
+            startIndex = treeIndex;
+        } else if (blockSelection && !currentTree->selected) {
+            selectedItems.select(treeTable->model()->index(startIndex, 0), treeTable->model()->index(treeIndex-1, treeTable->model()->columnCount()-1));
+            blockSelection = false;
         }
 
         treeTable->setRow(treeIndex, QString::number(currentTree->treeID)

@@ -4,10 +4,9 @@
 
 
 nodeListElement::nodeListElement() {
-
 }
 
-nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time) {
+nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int, float radius, int inVp, int inMag, int time) {
     this->nodeID = nodeID;
     this->radius = radius;
 
@@ -15,7 +14,6 @@ nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int parentID, 
     this->createdInVp = inVp;
     this->createdInMag = inMag;
     this->timestamp = time;
-
 }
 
 QList<segmentListElement *> *nodeListElement::getSegments() {

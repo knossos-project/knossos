@@ -17,7 +17,7 @@ MeshDecorator::MeshDecorator(QObject *parent) :
 
 QList<floatCoordinate *> *MeshDecorator::vertices(mesh *self) {
     QList<floatCoordinate *> *vertices = new QList<floatCoordinate *>();
-    for(int i = 0; i < self->vertsIndex; i++) {
+    for (uint i = 0; i < self->vertsIndex; i++) {
         floatCoordinate *currentVertex = self->vertices++;
         vertices->append(currentVertex);
     }
@@ -27,7 +27,7 @@ QList<floatCoordinate *> *MeshDecorator::vertices(mesh *self) {
 
 QList<floatCoordinate *> *MeshDecorator::normals(mesh *self) {
     QList<floatCoordinate *> *normals = new QList<floatCoordinate *>();
-    for(int i = 0; i < self->normsIndex; i++) {
+    for (uint i = 0; i < self->normsIndex; i++) {
         floatCoordinate *currentNormal = self->normals++;
         normals->append(currentNormal);
     }
@@ -38,7 +38,7 @@ QList<floatCoordinate *> *MeshDecorator::normals(mesh *self) {
 
 QList<color4F *> *MeshDecorator::colors(mesh *self) {
     QList<color4F *> *colors = new QList<color4F *>();
-    for(int i = 0; i < self->colsIndex; i++) {
+    for (uint i = 0; i < self->colsIndex; i++) {
         color4F *currentColor = self->colors++;
         colors->append(currentColor);
     }

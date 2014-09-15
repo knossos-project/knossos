@@ -60,7 +60,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
     curl_multi_setopt(curlm, CURLMOPT_PIPELINING, (long)0);
     curl_multi_setopt(curlm, CURLMOPT_MAXCONNECTS, (long)currentCubeCount);
 
-    for (std::size_t C = 0; C < currentCubeCount; ++C) {
+    for (int C = 0; C < currentCubeCount; ++C) {
         eh = eh_array[C];
         currentCube = cubeArray[C];
         snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, currentCube->fullpath_filename);
@@ -144,7 +144,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
                 currentCube->isFinished = true;
                 currentCube->curlHandle = NULL;
                 if ((CURLE_OK != result) || (200 != httpCode)) {
-                    qDebug("result = %d, httpCode = %d", result, httpCode);
+                    qDebug() << "result =" << result << "httpCode =" << httpCode;
                     currentCube->hasError = true;
                     *hadErrors = true;
                 }
@@ -161,7 +161,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
           }
         }
     }
-    for (std::size_t C = 0; C < currentCubeCount; C++) {
+    for (int C = 0; C < currentCubeCount; C++) {
         currentCube = cubeArray[C];
         if (currentCube->isFinished) {
             continue;

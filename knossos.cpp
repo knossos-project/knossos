@@ -313,11 +313,9 @@ bool Knossos::initStates() {
 #ifdef Q_OS_UNIX
    const char *tmp = "/tmp/";
    strcpy(state->loadFtpCachePath, tmp);
-   state->loadLocalSystem = LS_UNIX;
 #endif
 #ifdef Q_OS_WIN32
     GetTempPathA(MAX_PATH, state->loadFtpCachePath);
-    state->loadLocalSystem = LS_WINDOWS;
 #endif
 
    return commonInitStates();

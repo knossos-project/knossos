@@ -7,6 +7,5 @@ Render::Render(QObject *parent) :
     userGeometry = new QList<Shape *>();
 }
 
-void Render::addPoint(Point *point) {
-
+void Render::addPoint(Point *) {
 }

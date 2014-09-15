@@ -537,7 +537,6 @@ public:
 
     // Cube loader affairs
     int    loadMode;
-    int    loadLocalSystem;
     char       *loadFtpCachePath;
     char       ftpBasePath[MAX_PATH];
     char       ftpHostName[MAX_PATH];

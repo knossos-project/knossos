@@ -48,12 +48,6 @@
 #define LLL_SUCCESS  1
 #define LLL_FAILURE  0
 
-/*
-For Loader file loader
-*/
-#define LS_UNIX     0
-#define LS_WINDOWS  1
-
 #define LM_LOCAL    0
 #define LM_FTP      1
 
@@ -95,13 +89,13 @@ struct ftp_thread_struct {
 struct loadcube_thread_struct {
     //DWORD beginTickCount;
     //DWORD decompTime;
-    int threadIndex;
-    QSemaphore *loadCubeThreadSem;
-    int isBusy;
-    C_Element *currentCube;
-    Loader* thisPtr;
-    bool retVal;
-    int threadCount;
+    int threadIndex = 0;
+    QSemaphore *loadCubeThreadSem = nullptr;
+    int isBusy = 0;
+    C_Element *currentCube = nullptr;
+    Loader* thisPtr = nullptr;
+    bool retVal = false;
+    int threadCount = 0;
 };
 
 class LoadCubeThread : public QThread
