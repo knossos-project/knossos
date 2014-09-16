@@ -388,7 +388,6 @@ struct assignment {
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-    float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
     bool overlay;
@@ -748,13 +747,6 @@ struct vpConfig {
   * @brief TODO
   */
 struct viewerState {
-
-    //Cache for Movements smaller than pixel coordinate
-    floatCoordinate moveCache;
-    //Orientation
-    float alphaCache;
-    float betaCache;
-
     bool vpOrientationLocked;
     int slicingMode; // MODE_ORTHO or MODE_ARBITRARY
 
@@ -791,13 +783,10 @@ struct viewerState {
     uint screenSizeX;
     uint screenSizeY;
 
-    uint activeVP;
-
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
     Coordinate currentPosition;
-    Coordinate lastRecenteringPosition;
 
     uint recenteringTime;
     uint recenteringTimeOrth;

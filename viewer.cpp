@@ -52,10 +52,7 @@ static WINAPI int dummy(int) {
     return 0;
 }
 
-Viewer::Viewer(QObject *parent) :
-    QThread(parent)
-{
-
+Viewer::Viewer(QObject *parent) : QThread(parent) {
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
@@ -98,9 +95,9 @@ Viewer::Viewer(QObject *parent) :
     renderer->refVPSkel = vpLowerRight;
 
     frames = 0;
-    state->alpha = 0;
-    state->beta = 0;
+    state->viewerState->renderInterval = FAST;
 
+    // for arbitrary viewport orientation
     for (uint i = 0; i < state->viewerState->numberViewports; i++){
         state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max =
                 (
@@ -112,10 +109,8 @@ Viewer::Viewer(QObject *parent) :
                     / 2)
                 *2;
     }
-
-    floatCoordinate v1, v2, v3;
-    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-
+    SET_COORDINATE(moveCache, 0, 0, 0);
+    resetRotation();
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].n , v3);
@@ -125,8 +120,6 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
-
-    state->viewerState->renderInterval = FAST;
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -1263,31 +1256,22 @@ void Viewer::run() {
     // Display info about skeleton save path here TODO
 
     // for arbitrary viewport orientation
-    state->alpha += state->viewerState->alphaCache;
-    state->beta += state->viewerState->betaCache;
-    state->viewerState->alphaCache = state->viewerState->betaCache = 0;
-    if (state->alpha >= 360) {
-        state->alpha -= 360;
-    } else if (state->alpha < 0) {
-        state->alpha += 360;
+    if(rotation.alpha != 0) {
+        rotateAndNormalize(v1, rotation.axis, rotation.alpha);
+        rotateAndNormalize(v2, rotation.axis, rotation.alpha);
+        rotateAndNormalize(v3, rotation.axis, rotation.alpha);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v1 , v1);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v2 , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].n , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
+        rotation = Rotation();
+        alphaCache = 0;
     }
-    if (state->beta >= 360) {
-        state->beta -= 360;
-    } else if (state->beta < 0) {
-        state->beta += 360;
-    }
-
-    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v2 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].n , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
     for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
@@ -1465,7 +1449,6 @@ bool Viewer::userMove(int x, int y, int z) {
 
     viewerState->userMove = true;
 
-
     if ((viewerState->currentPosition.x + x) >= 0 &&
         (viewerState->currentPosition.x + x) <= state->boundary.x &&
         (viewerState->currentPosition.y + y) >= 0 &&
@@ -1506,13 +1489,13 @@ bool Viewer::userMove(int x, int y, int z) {
 
 bool Viewer::userMove_arb(float x, float y, float z) {
     Coordinate step;
-    state->viewerState->moveCache.x += x;
-    state->viewerState->moveCache.y += y;
-    state->viewerState->moveCache.z += z;
-    step.x = roundFloat(state->viewerState->moveCache.x);
-    step.y = roundFloat(state->viewerState->moveCache.y);
-    step.z = roundFloat(state->viewerState->moveCache.z);
-    SUB_COORDINATE(state->viewerState->moveCache, step);
+    moveCache.x += x;
+    moveCache.y += y;
+    moveCache.z += z;
+    step.x = roundFloat(moveCache.x);
+    step.y = roundFloat(moveCache.y);
+    step.z = roundFloat(moveCache.z);
+    SUB_COORDINATE(moveCache, step);
     return userMove(step.x, step.y, step.z);
 }
 
@@ -2024,8 +2007,10 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpLowerLeft, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperRight, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
     // mainwindow signals
+    QObject::connect(window, &MainWindow::resetRotationSignal, this, &Viewer::resetRotation);
     QObject::connect(window, &MainWindow::branchPushedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPushed);
     QObject::connect(window, &MainWindow::branchPoppedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPopped);
     QObject::connect(window, &MainWindow::nodeCommentChangedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeCommentChanged);
@@ -2119,16 +2104,15 @@ void Viewer::rewire() {
     // --- end widget signals
 }
 
-bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
+void Viewer::setRotation(float x, float y, float z, float angle) {
+    alphaCache += angle; // angles are added up here until they are processed in the thread loop
+    rotation = Rotation(x, y, z, alphaCache);
+}
 
-        //alpha: rotation around z-axis
-        //beta: rotation around new (rotated) y-axis
-        alpha = alpha * (float)PI/180;
-        beta = beta * (float)PI/180;
-
-        SET_COORDINATE((*v1), (cos(alpha)*cos(beta)), (sin(alpha)*cos(beta)), (-sin(beta)));
-        SET_COORDINATE((*v2), (-sin(alpha)), (cos(alpha)), (0));
-        SET_COORDINATE((*v3), (cos(alpha)*sin(beta)), (sin(alpha)*sin(beta)), (cos(beta)));
-
-        return true;
+void Viewer::resetRotation() {
+    alphaCache = 0;
+    rotation = Rotation();
+    SET_COORDINATE(v1, 1, 0, 0);
+    SET_COORDINATE(v2, 0, 1, 0);
+    SET_COORDINATE(v3, 0, 0, 1);
 }

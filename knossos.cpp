@@ -180,9 +180,11 @@ int main(int argc, char *argv[]) {
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
+    QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
 
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
+    QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
     knossos->loadDefaultTreeLUT();
 
@@ -268,22 +270,6 @@ bool Knossos::initStates() {
    loadDefaultTreeLUT();
 
    state->viewerState->treeLutSet = false;
-
-   /* @arb */
-   state->alpha = 0;
-   state->beta = 0;
-   floatCoordinate v1, v2, v3;
-   Viewer::getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v2 , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].n , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v1 , v1);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v2 , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].n , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
    /* @todo todo emitting signals out of class seems to be problematic
    emit knossos->calcDisplayedEdgeLengthSignal();
@@ -664,22 +650,12 @@ bool Knossos::configDefaults() {
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.first, 0, 0, 0);
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.second, 0, 0, 0);
 
-    /* for arbitrary viewport orientation */
-    state->viewerState->moveCache.x = 0.0;
-    state->viewerState->moveCache.y = 0.0;
-    state->viewerState->moveCache.z = 0.0;
-    state->viewerState->alphaCache = 0;
-    state->viewerState->betaCache = 0;
-
     state->viewerState->screenSizeX = 1024;
     state->viewerState->screenSizeY = 740;
     state->viewerState->filterType = GL_LINEAR;
     state->viewerState->currentPosition.x = 0;
     state->viewerState->currentPosition.y = 0;
     state->viewerState->currentPosition.z = 0;
-    state->viewerState->lastRecenteringPosition.x = state->viewerState->currentPosition.x;
-    state->viewerState->lastRecenteringPosition.y = state->viewerState->currentPosition.y;
-    state->viewerState->lastRecenteringPosition.z = state->viewerState->currentPosition.z;
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;
     state->viewerState->voxelDimZ = state->scale.z;

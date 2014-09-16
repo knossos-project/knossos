@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "functions.h"
 #include <QObject>
 #include <QThread>
 #include <QDebug>
@@ -48,10 +49,12 @@ class Renderer;
 class EventModel;
 class Viewport;
 class MainWindow;
-class Viewer : public QThread
-{
+class Viewer : public QThread {
     Q_OBJECT
-
+private:
+    float alphaCache;
+    Rotation rotation;
+    floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
@@ -66,7 +69,6 @@ public:
 
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
-
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
@@ -106,6 +108,8 @@ public slots:
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);
     bool vpGenerateTexture(vpConfig &currentVp);
+    void setRotation(float x, float y, float z, float angle);
+    void resetRotation();
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

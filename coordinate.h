@@ -144,11 +144,11 @@ struct hash<Coord<x>> {
             (c1).z -= (c2).z; \
     }
 
-#define DIV_COORDINATE(c1, c2) \
+#define DIV_COORDINATE(c1, d) \
     { \
-            (c1).x /= (c2); \
-            (c1).y /= (c2); \
-            (c1).z /= (c2); \
+            (c1).x /= (d); \
+            (c1).y /= (d); \
+            (c1).z /= (d); \
     }
 
 #define CPY_COORDINATE(c1, c2) \

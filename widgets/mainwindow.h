@@ -152,7 +152,7 @@ signals:
     void branchPushedSignal();
     void branchPoppedSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
-
+    void resetRotationSignal();
 public slots:
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);

@@ -29,25 +29,30 @@
 #include <QThread>
 #include <knossos-global.h>
 
-class Remote : public QThread
-{
+class Remote : public QThread {
     Q_OBJECT
+private:
+    bool rotate;
+    uint activeVP;
+
+    std::deque<floatCoordinate> lastRecenterings;
 public:
     explicit Remote(QObject *parent = 0);
     void msleep(unsigned long msec);
 
-    bool remoteWalkTo(int x, int y, int z);
     bool remoteWalk(int x, int y, int z);
     void run();
 
-    Coordinate recenteringPosition;
+    floatCoordinate recenteringPosition;
 
 signals:
     void finished();
     void updateViewerStateSignal();
     void userMoveSignal(int x, int y, int z);
+    void rotationSignal(float x, float y, float z, float angle);
 public slots:
-    void setRecenteringPosition(int x, int y, int z);
+    void setRecenteringPosition(float x, float y, float z);
+    void setRecenteringPositionWithRotation(float x, float y, float z, uint vp);
     bool remoteJump(int x, int y, int z);
 };
 

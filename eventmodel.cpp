@@ -374,7 +374,12 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     /* Move to the new node position */
     if (newNode) {
-        emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
+        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
+            emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
+        }
+        else {
+            emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
+        }
         emit nodeAddedSignal();
         if (newTree) {
             emit treeAddedSignal(state->skeletonState->activeTree);
@@ -777,9 +782,9 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
-                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
-                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
-                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification);
+                         -10 * state->viewerState->vpConfigs[VPfound].v1.x * state->magnification,
+                         -10 * state->viewerState->vpConfigs[VPfound].v1.y * state->magnification,
+                         -10 * state->viewerState->vpConfigs[VPfound].v1.z * state->magnification);
                 break;
             }
         } else {
@@ -794,11 +799,11 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x
+                emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].v1.x
                             * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y
+                        -state->viewerState->vpConfigs[VPfound].v1.y
                             * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z
+                        -state->viewerState->vpConfigs[VPfound].v1.z
                             * state->viewerState->dropFrames * state->magnification);
                 break;
             }
@@ -817,9 +822,9 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification);
+                            10 * state->viewerState->vpConfigs[VPfound].v1.x * state->magnification,
+                            10 * state->viewerState->vpConfigs[VPfound].v1.y * state->magnification,
+                            10 * state->viewerState->vpConfigs[VPfound].v1.z * state->magnification);
                  break;
             }
         } else {
@@ -834,11 +839,11 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x
+                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].v1.x
                             * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y
+                        state->viewerState->vpConfigs[VPfound].v1.y
                             * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z
+                        state->viewerState->vpConfigs[VPfound].v1.z
                             * state->viewerState->dropFrames * state->magnification);
                 break;
             }
@@ -857,9 +862,9 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                     break;
                 case VIEWPORT_ARBITRARY:
                     emit userMoveArbSignal(
-                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
-                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
-                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification);
+                        -10 * state->viewerState->vpConfigs[VPfound].v2.x * state->magnification,
+                        -10 * state->viewerState->vpConfigs[VPfound].v2.y * state->magnification,
+                        -10 * state->viewerState->vpConfigs[VPfound].v2.z * state->magnification);
                      break;
             }
         } else {
@@ -874,11 +879,11 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x
+                    emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].v2.x
                             * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y
+                        -state->viewerState->vpConfigs[VPfound].v2.y
                             * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z
+                        -state->viewerState->vpConfigs[VPfound].v2.z
                             * state->viewerState->dropFrames * state->magnification);
                     break;
             }
@@ -897,9 +902,9 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
-                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification);
+                            10 * state->viewerState->vpConfigs[VPfound].v2.x * state->magnification,
+                            10 * state->viewerState->vpConfigs[VPfound].v2.y * state->magnification,
+                            10 * state->viewerState->vpConfigs[VPfound].v2.z * state->magnification);
                 break;
             }
         } else {
@@ -914,11 +919,11 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x
+                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].v2.x
                             * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y
+                        state->viewerState->vpConfigs[VPfound].v2.y
                             * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z
+                        state->viewerState->vpConfigs[VPfound].v2.z
                             * state->viewerState->dropFrames * state->magnification);
                 break;
             }
@@ -950,11 +955,11 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             break;
         case VIEWPORT_ARBITRARY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * state->magnification,
+                            * state->viewerState->vpConfigs[VPfound].n.x * state->magnification,
                     state->viewerState->currentPosition.y + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * state->magnification,
+                            * state->viewerState->vpConfigs[VPfound].n.y * state->magnification,
                     state->viewerState->currentPosition.z + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * state->magnification);
+                            * state->viewerState->vpConfigs[VPfound].n.z * state->magnification);
             Knossos::sendRemoteSignal();
             break;
         }
@@ -983,12 +988,12 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             Knossos::sendRemoteSignal();
             break;
         case VIEWPORT_ARBITRARY:
-            emit setRecenteringPositionSignal((int)state->viewerState->currentPosition.x - state->viewerState->walkFrames
-                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.x) * state->magnification,
-                        (int)state->viewerState->currentPosition.y - state->viewerState->walkFrames
-                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.y) * state->magnification,
-                        (int)state->viewerState->currentPosition.z - state->viewerState->walkFrames
-                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.z) * state->magnification);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x - state->viewerState->walkFrames
+                                * state->viewerState->vpConfigs[VPfound].n.x * state->magnification,
+                        state->viewerState->currentPosition.y - state->viewerState->walkFrames
+                                * state->viewerState->vpConfigs[VPfound].n.y * state->magnification,
+                        state->viewerState->currentPosition.z - state->viewerState->walkFrames
+                                * state->viewerState->vpConfigs[VPfound].n.z * state->magnification);
             Knossos::sendRemoteSignal();
             break;
         }
@@ -1030,7 +1035,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K) {
         if(state->viewerState->vpOrientationLocked == false) {
-            state->viewerState->alphaCache += 1;
+            emit rotationSignal(0., 0., 1., PI/180);
             emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
         }
         else {
@@ -1043,7 +1048,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_L) {
         if(state->viewerState->vpOrientationLocked == false) {
-            state->viewerState->betaCache += 1;
+            emit rotationSignal(0., 1., 0., PI/180);
             emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
         }
         else {
@@ -1056,7 +1061,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_M) {
         if(state->viewerState->vpOrientationLocked == false) {
-            state->viewerState->alphaCache -= 1;
+            emit rotationSignal(0., 0., 1., -PI/180);
             emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
         }
         else {
@@ -1069,7 +1074,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Comma) {
         if(state->viewerState->vpOrientationLocked == false) {
-            state->viewerState->betaCache -= 1;
+            emit rotationSignal(0., 1., 0., -PI/180);
             emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
         }
         else {

@@ -1213,7 +1213,7 @@ void MainWindow::resetVPOrientation() {
         viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
         viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
         viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
-        state->alpha = state->beta = state->viewerState->alphaCache = state->viewerState->betaCache = 0;
+        emit resetRotationSignal();
     }
     else {
         QMessageBox prompt;

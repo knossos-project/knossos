@@ -88,6 +88,7 @@ public:
 signals:
     void userMoveSignal(int x, int y, int z);
     void userMoveArbSignal(float x, float y, float z);
+    void rotationSignal(float x, float y, float z, float angle);
     void pasteCoordinateSignal();
     void zoomReset();
     void zoomOrthoSignal(float step);
@@ -103,7 +104,8 @@ signals:
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
     void setActiveNodeSignal(nodeListElement *node, uint nodeID);
-    void setRecenteringPositionSignal(int x, int y, int z);
+    void setRecenteringPositionSignal(float x, float y, float z);
+    void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
     void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
     void editNodeSignal(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     void addCommentSignal(const char *content, nodeListElement *node, uint nodeID);

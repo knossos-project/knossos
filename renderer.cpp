@@ -84,7 +84,7 @@ void Renderer::invalidatePickingBuffer() {
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
     float currentAngle = 0.;
-        floatCoordinate segDirection, tempVec, *tempVec2;
+        floatCoordinate segDirection, tempVec, tempVec2;
         GLUquadricObj *gluCylObj = NULL;
 
 
@@ -133,9 +133,7 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
 
             //some gl implementations have problems with the params occuring for
             //segs in straight directions. we need a fix here.
-            glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
-
-            free(tempVec2);
+            glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
             //tdItem use state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx for proper LOD
             //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
@@ -231,7 +229,7 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
         int i, distToCurrPos;
-        floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
+        floatCoordinate tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
         GLUquadricObj *gluCylObj = NULL;
 
         sSp_local.x = (float)segment->source->position.x;
@@ -323,8 +321,7 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
                     //temVec2 defines the rotation axis
                     tempVec2 = crossProduct(&tempVec, &segDir);
                     currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
-                    glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
-                    free(tempVec2);
+                    glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
                     glColor4f(0.,0.,0.,1.);
 
@@ -900,10 +897,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             ((float)(state->boundary.z) / 2.) - state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z,
             ((float)(state->boundary.z) / 2.) + state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z);
 
-
-        //glRotatef(state->alpha, 0., 0., 1.); ?
-        //glRotatef(state->beta, 0., 1., 0.); ?
-
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -917,21 +910,41 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     (float)state->viewerState->currentPosition.y,
                     (float)state->viewerState->currentPosition.z);
 
+        floatCoordinate normal;
+        floatCoordinate vec1;
         if (currentVP == 0) {
             glRotatef(180., 1.,0.,0.);
+            SET_COORDINATE(normal, 0, 0, 1);
+            SET_COORDINATE(vec1, 1, 0, 0);
         }
 
         else if (currentVP == 1) {
             glRotatef(90., 1., 0., 0.);
+            SET_COORDINATE(normal, 0, 1, 0);
+            SET_COORDINATE(vec1, 1, 0, 0);
         }
 
         else if (currentVP == 2){
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
+            SET_COORDINATE(normal, 1, 0, 0);
+            SET_COORDINATE(vec1, 0, 0, 1);
+        }
+        // first rotation makes the viewport face the camera
+        float scalar = scalarProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
+        float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
+        floatCoordinate axis = crossProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
+        if(normalizeVector(&axis)) {
+            glRotatef(-(angle*180/PI), axis.x, axis.y, axis.z);
+        } // second rotation also aligns the plane vectors with the camera
+        rotateAndNormalize(vec1, axis, angle);
+        scalar = scalarProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
+        angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
+        axis = crossProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
+        if(normalizeVector(&axis)) {
+            glRotatef(-(angle*180/PI), axis.x, axis.y, axis.z);
         }
 
-        glRotatef(-state->beta, 0., 1., 0.);
-        glRotatef(-state->alpha, 0., 0., 1.);
         glLoadName(3);
 
         glEnable(GL_TEXTURE_2D);

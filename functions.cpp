@@ -18,6 +18,9 @@ float euclidicNorm(floatCoordinate *v) {
 
 bool normalizeVector(floatCoordinate *v) {
     float norm = euclidicNorm(v);
+    if(norm == 0) {
+        return false;
+    }
     v->x /= norm;
     v->y /= norm;
     v->z /= norm;
@@ -40,17 +43,40 @@ float degToRad(float deg) {
     return ((deg / 180.) * PI);
 }
 
-floatCoordinate* crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
-    floatCoordinate *result = NULL;
-    result = (floatCoordinate*)malloc(sizeof(floatCoordinate));
-    result->x = v1->y * v2->z - v1->z * v2->y;
-    result->y = v1->z * v2->x - v1->x * v2->z;
-    result->z = v1->x * v2->y - v1->y * v2->x;
+floatCoordinate crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
+    floatCoordinate result;
+    SET_COORDINATE(result, v1->y * v2->z - v1->z * v2->y,
+                   v1->z * v2->x - v1->x * v2->z,
+                   v1->x * v2->y - v1->y * v2->x);
     return result;
 }
 
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
+}
+
+void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
+    // axis must be a normalized vector
+    float matrix[3][3];
+    const auto c = cosf(angle);
+    const auto s = sinf(angle);
+    matrix[0][0] = axis.x*axis.x*(1 - c) + c;
+    matrix[0][1] = axis.x*axis.y*(1 - c) - axis.z*s;
+    matrix[0][2] = axis.x*axis.z*(1 - c) + axis.y*s;
+
+    matrix[1][0] = axis.y*axis.x*(1 - c) + axis.z*s;
+    matrix[1][1] = axis.y*axis.y*(1 - c) + c;
+    matrix[1][2] = axis.y*axis.z*(1 - c) - axis.x*s;
+
+    matrix[2][0] = axis.x*axis.z*(1 - c) - axis.y*s;
+    matrix[2][1] = axis.y*axis.z*(1 - c) + axis.x*s;
+    matrix[2][2] = axis.z*axis.z*(1 - c) + c;
+
+    const auto x = matrix[0][0]*v.x + matrix[0][1]*v.y + matrix[0][2]*v.z;
+    const auto y = matrix[1][0]*v.x + matrix[1][1]*v.y + matrix[1][2]*v.z;
+    const auto z = matrix[2][0]*v.x + matrix[2][1]*v.y + matrix[2][2]*v.z;
+    SET_COORDINATE(v, x, y, z);
+    normalizeVector(&v);
 }
 
 bool checkTreeParameter(int id, float r, float g, float b, float a) {
