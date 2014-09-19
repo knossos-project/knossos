@@ -101,7 +101,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
             QuaZipFile file_write(&archive_write);
             const auto cubeCoord = pair.first;
             const auto name = QString("%1_mag%2x%3y%4z%5.segmentation.snappy").arg(state->name).arg(1).arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
-            const bool open = zipCreateFile(file_write, name, 0);
+            const bool open = zipCreateFile(file_write, name, 1);
             if (open) {
                 file_write.write(pair.second.c_str(), pair.second.length());
             } else {
