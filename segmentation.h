@@ -158,6 +158,7 @@ public:
     //selection query
     bool isSelected(const SubObject & rhs) const;
     bool isSelected(const uint64_t &objectId) const;
+    bool isSubObjectIdSelected(const uint64_t & subobjectId) const;
     std::size_t selectedObjectsCount() const;
     //selection modification
     void selectObject(const uint64_t & objectId);

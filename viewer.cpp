@@ -378,141 +378,73 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
  *
  */
 void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    Byte *cubePtr = datacube + dcOffset;
-    Byte *slicePtr = slice;
-    // configure variable increments depending on viewport type. Note that additional outer loop only exists for xz vp!
-    // configuration for xy vp
-    int innerLoopBoundary = state->cubeSliceArea;
-    int outerLoopBoundary = 1;
-    int outerCubeIncrement = 0;
-    int innerCubeIncrement = OBJID_BYTES;
-    int horizNBdistance = OBJID_BYTES;
-    int vertNBdistance = state->cubeEdgeLength * OBJID_BYTES;
-    switch(vpConfig->type) {
-    case SLICE_XZ:
-        outerLoopBoundary = state->cubeEdgeLength;
-        innerLoopBoundary = state->cubeEdgeLength;
-        outerCubeIncrement = state->cubeSliceArea*OBJID_BYTES - state->cubeEdgeLength*OBJID_BYTES;
-        vertNBdistance = state->cubeSliceArea*OBJID_BYTES;
-        break;
-    case SLICE_YZ:
-        horizNBdistance = state->cubeEdgeLength * OBJID_BYTES;
-        vertNBdistance = state->cubeSliceArea * OBJID_BYTES;
-        innerCubeIncrement = state->cubeEdgeLength * OBJID_BYTES;
-        break;
-    }
+    datacube += dcOffset;
+    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
+    const std::size_t sliceIncrement = vpConfig->type != SLICE_XY ? state->cubeSliceArea * OBJID_BYTES : state->cubeEdgeLength * OBJID_BYTES;
+    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
 
-    // draw overlay in first pass
-    auto &seg = Segmentation::singleton();
+    auto & seg = Segmentation::singleton();
+    //cache
     uint64_t idCache = 0;
+    bool selectedCache = false;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
-    for(int j = 0; j < outerLoopBoundary; j++) { // for xy and yz vp outer loop is only visited once
-        for(int i = 0; i < innerLoopBoundary; i++) {
-            uint64_t subObjectID;
-            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
+    //first and last row boundaries
+    const std::size_t min = state->cubeEdgeLength;
+    const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);
+    std::size_t counter = 0;//slice position
+    for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
+        for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
+            uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
 
-            std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color;
-            color = (idCache == subObjectID)? colorCache : seg.colorObjectFromId(subObjectID);
+            auto color = (idCache == subObjectID) ? colorCache : seg.colorObjectFromId(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
-            slicePtr[0] = std::get<0>(color);
-            slicePtr[1] = std::get<1>(color);
-            slicePtr[2] = std::get<2>(color);
-            slicePtr[3] = std::get<3>(color);
-
-            idCache = subObjectID;
-            colorCache = color;
-
-            cubePtr += innerCubeIncrement;
-            slicePtr += 4;
-        }
-        cubePtr += outerCubeIncrement;
-    }
-    // highlight edges in a second pass
-    cubePtr = datacube + dcOffset;
-    slicePtr = slice;
-    Byte *datacubeEnd = datacube + state->cubeEdgeLength * state->cubeSliceArea * OBJID_BYTES;
-
-    for(int j = 0; j < outerLoopBoundary; j++) {
-        for(int i = 0; i < innerLoopBoundary; i++) {
-            uint64_t subObjectID;
-            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
-            auto & segmentation = Segmentation::singleton();
-            if (segmentation.subobjectExists(subObjectID)) {//don’t create objects from subobjects here
-                const auto & subobject = segmentation.subobjectFromId(subObjectID);
-                if (segmentation.isSelected(subobject)) {
-                    uint64_t left = subObjectID;
-                    uint64_t right = subObjectID;
-                    uint64_t top = subObjectID;
-                    uint64_t bot = subObjectID;
-
-                    if(cubePtr - horizNBdistance - datacube >= 0) {
-                        memcpy(&left, cubePtr - horizNBdistance, sizeof(left));
-                    }
-                    if(cubePtr + horizNBdistance - datacubeEnd <= 0) {
-                        memcpy(&right, cubePtr + horizNBdistance, sizeof(right));
-                    }
-                    if(cubePtr - vertNBdistance - datacube >= 0) {
-                        memcpy(&top, cubePtr - vertNBdistance, sizeof(top));
-                    }
-                    if(cubePtr + vertNBdistance - datacubeEnd <= 0) {
-                        memcpy(&bot, cubePtr + vertNBdistance, sizeof(bot));
-                    }
-                    if(subObjectID !=left || subObjectID != right || subObjectID != top || subObjectID != bot) {
-                        slicePtr[3] = (slicePtr[3]*4 > 255)? 255 : slicePtr[3]*4;
-                    }
+            const bool selected = (idCache == subObjectID) ? selectedCache : seg.isSubObjectIdSelected(subObjectID);
+            const bool isPastFirstRow = counter >= min;
+            const bool isBeforeLastRow = counter < max;
+            const bool isNotFirstColumn = counter % state->cubeEdgeLength != 0;
+            const bool isNotLastColumn = (counter + 1) % state->cubeEdgeLength != 0;
+            if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
+                const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
+                const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
+                const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
+                //enhance alpha of subobject if any of the surrounding voxels belong to another object
+                if (subObjectID != left || subObjectID != right || subObjectID != top || subObjectID != bottom) {
+                    slice[3] = std::min(255, slice[3]*4);
                 }
             }
-            cubePtr += innerCubeIncrement;
-            slicePtr += 4;
+
+            //fill cache
+            idCache = subObjectID;
+            colorCache = color;
+            selectedCache = selected;
+
+            ++counter;
+
+            slice += 4;//RGBA per pixel
+            datacube += voxelIncrement;
         }
-        cubePtr += outerCubeIncrement;
+        datacube += sliceSubLineIncrement;
     }
 }
 
 void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
+    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
+    const std::size_t sliceIncrement = vpConfig->type != SLICE_XY ? state->cubeSliceArea * OBJID_BYTES : state->cubeEdgeLength * OBJID_BYTES;
+    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
 
-    switch(vpConfig->type) {
-    case SLICE_XY:
-        for(int i = 0; i < state->cubeSliceArea; i++) {
-            uint64_t subObjectID;
-            memcpy(&subObjectID, datacube, sizeof(subObjectID));
-
-            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
-            slice[0] = std::get<0>(color);
-            slice[1] = std::get<1>(color);
-            slice[2] = std::get<2>(color);
-            slice[3] = std::get<3>(color);
-
-            datacube += OBJID_BYTES;
-            slice += 4;
-        }
-        break;
-    case SLICE_XZ:
-        for(int j = 0; j < state->cubeEdgeLength; j++) {
-            for(int i = 0; i < state->cubeEdgeLength; i++) {
-                uint64_t subObjectID;
-                memcpy(&subObjectID, datacube, sizeof(subObjectID));
-
-                const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
-                slice[0] = std::get<0>(color);
-                slice[1] = std::get<1>(color);
-                slice[2] = std::get<2>(color);
-                slice[3] = std::get<3>(color);
-
-                datacube += OBJID_BYTES;
-                slice += 4;
-            }
-
-            datacube = datacube
-                       + state->cubeSliceArea * OBJID_BYTES
-                       - state->cubeEdgeLength * OBJID_BYTES;
-        }
-        break;
-    case SLICE_YZ:
-        for(int i = 0; i < state->cubeSliceArea; i++) {
-            uint64_t subObjectID;
-            memcpy(&subObjectID, datacube, sizeof(subObjectID));
+    for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
+        for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
+            uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
 
             const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
             slice[0] = std::get<0>(color);
@@ -520,10 +452,10 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
             slice[2] = std::get<2>(color);
             slice[3] = std::get<3>(color);
 
-            datacube += state->cubeEdgeLength * OBJID_BYTES;
-            slice += 4;
+            slice += 4;//RGBA per pixel
+            datacube += voxelIncrement;
         }
-        break;
+        datacube += sliceSubLineIncrement;
     }
 }
 

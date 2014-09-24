@@ -287,12 +287,17 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedO
     return vec;
 }
 
-bool Segmentation::isSelected(const SubObject & rhs) const{
+bool Segmentation::isSelected(const SubObject & rhs) const {
     return rhs.selectedObjectsCount != 0;
 }
 
 bool Segmentation::isSelected(const uint64_t & objectId) const {
     return objects[objectId].selected;
+}
+
+bool Segmentation::isSubObjectIdSelected(const uint64_t & subobjectId) const {
+    auto it = subobjects.find(subobjectId);
+    return it != std::end(subobjects) ? isSelected(it->second) : false;
 }
 
 void Segmentation::clearObjectSelection() {
