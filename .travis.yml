@@ -37,12 +37,12 @@ before_script:
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7"
   - sudo ninja install
   - cd ..
-  - git clone https://github.com/Orochimarufan/PythonQt.git
+  - git clone https://github.com/Optiligence/PythonQt.git
   - echo "message(skipping QtAll)" > PythonQt/extensions/CMakeLists.txt
   - sed -i '/add_dependencies(QtAll ${PythonQt_QtAll})/c\#add_dependencies(QtAll ${PythonQt_QtAll})' PythonQt/CMakeLists.txt
   - mkdir PythonQt-build
   - cd PythonQt-build
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Qt5=TRUE ../PythonQt
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Python3=FALSE -DPythonQt_Qt5=TRUE ../PythonQt
   - sudo ninja install
   - cd ..
   - mkdir build_debug
