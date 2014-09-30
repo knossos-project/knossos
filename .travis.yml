@@ -22,7 +22,7 @@ before_install:
   - sudo apt-get -y install libxmu-dev libxi-dev
   - sudo apt-get -y install libsnappy-dev
   - sudo apt-get -y install ninja-build
-  - sudo apt-get -y install qt53base qt53tools
+  - sudo apt-get -y install qt53*
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
   - sudo update-alternatives --config gcc
@@ -38,8 +38,6 @@ before_script:
   - sudo ninja install
   - cd ..
   - git clone https://github.com/Optiligence/PythonQt.git
-  - echo "message(skipping QtAll)" > PythonQt/extensions/CMakeLists.txt
-  - sed -i '/add_dependencies(QtAll ${PythonQt_QtAll})/c\#add_dependencies(QtAll ${PythonQt_QtAll})' PythonQt/CMakeLists.txt
   - mkdir PythonQt-build
   - cd PythonQt-build
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Python3=FALSE -DPythonQt_Qt5=TRUE ../PythonQt
