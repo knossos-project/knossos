@@ -565,51 +565,21 @@ void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
         return;
     }
     if (item->column() == TreeTable::TREE_COMMENT) {
-        Skeletonizer::addTreeComment(state->skeletonState->activeTree->treeID, item->text().toUtf8().data());
+        Skeletonizer::addTreeComment(state->skeletonState->activeTree->treeID, item->text());
         recreateTreesTable();
         treeActivated();
     }
 }
 
 void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
-//    if(treeTable->changeByCode) {
-//        return;
-//    }
-    QTableWidgetItem *idItem = treeTable->item(item->row(), TreeTable::TREE_ID);
-    if(idItem == nullptr) {
+    if (treeTable->selectionProtection) {
         return;
     }
-    treeListElement *selectedTree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
-    if(selectedTree == nullptr) {
-        return;
-    }
-
-    switch(item->column()) {
-    case TreeTable::TREE_COMMENT: {
-            Skeletonizer::addTreeComment(selectedTree->treeID, item->text().toLocal8Bit().data());
-            // check if tree will still be displayed in list
-            if(treeSearchField->text().isEmpty() == false) {
-                if(matchesSearchString(treeSearchField->text(),
-                                       QString(selectedTree->comment),
-                                       treeRegExCheck->isChecked()) == false) {
-                    for(int i = 0; i < treeTable->rowCount(); ++i) {
-                        if(treeTable->item(i, TreeTable::TREE_ID)->text().toInt() == selectedTree->treeID) {
-                            treeTable->removeRow(i);
-                            break;
-                        }
-                    }
-                }
-            }
-            // update active tree table if necessary
-            if(selectedTree == state->skeletonState->activeTree) {
-                if(activeTreeTable->item(0, TreeTable::TREE_COMMENT)) {
-                    setText(activeTreeTable, activeTreeTable->item(0, TreeTable::TREE_COMMENT), item->text());
-                }
-            }
-            break;
-        }
-    default:
-        break;
+    const auto treeId = treeTable->item(item->row(), TreeTable::TREE_ID)->text().toInt();
+    if (item->column() == TreeTable::TREE_COMMENT) {
+        Skeletonizer::addTreeComment(treeId, item->text());
+        recreateTreesTable();
+        treeActivated();
     }
 }
 
@@ -630,46 +600,30 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
     }
 
     switch(item->column()) {
-    case NodeTable::NODE_COMMENT:
-        if(activeNode->comment) {
-            if(activeRow != -1) {
-                setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
-            }
-            if(item->text().length() == 0) {
+    case NodeTable::NODE_COMMENT: {
+        auto matches = !nodeSearchField->text().isEmpty() && matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
+        if (item->text().isEmpty()) {
+            if (activeNode->comment) {
                 Skeletonizer::delComment(activeNode->comment, 0);
-                if(activeRow == -1) {
-                    break;
-                }
-                if(commentNodesChckBx->isChecked() or nodeSearchField->text().isEmpty() == false) {
-                    // since node has no comment anymore, it should be filtered out
-                    if(activeRow != -1) {
-                        nodeTable->removeRow(activeRow);
-                    }
-                }
-                break;
+                matches &= !commentNodesChckBx->isChecked();//no cmt anymore but cmts wanted
+            } else {
+                Skeletonizer::addComment(item->text(), activeNode, 0);
             }
-            Skeletonizer::editComment(activeNode->comment, 0,
-                                      item->text().toLocal8Bit().data(), activeNode, 0);
-            if(activeRow != -1) {
-                if(nodeSearchField->text().isEmpty() == false) {
-                    if(matchesSearchString(nodeSearchField->text(),
-                                           QString(activeNode->comment->content),
-                                           nodeRegExCheck->isChecked()) == false) {
-                        nodeTable->removeRow(activeRow);
-                    }
-                }
-            }
+        } else {
+            Skeletonizer::editComment(activeNode->comment, 0, item->text(), activeNode, 0);
         }
-        else {
-            // node will not need to be filtered out. It wasn't filtered out before, either.
-            if(item->text().length() == 0) {
-                break;
-            }
-            Skeletonizer::addComment(item->text().toLocal8Bit().data(), activeNode, 0);
-            if(activeRow != -1) {
+        if (activeRow != -1) {//remove not matching
+            if (matches) {
                 setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
+            } else {
+                nodeTable->selectionProtection = true;
+                nodeTable->removeRow(activeRow);
+                nodeTable->selectionProtection = false;
             }
+        } else if (matches) {//add matching
+            recreateNodesTable();
         }
+    }
         break;
     case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
@@ -726,43 +680,29 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
         return;
     }
     switch(item->column()) {
-    case NodeTable::NODE_COMMENT:
+    case NodeTable::NODE_COMMENT: {
         if(selectedNode == state->skeletonState->activeNode) {
             if(activeNodeTable->item(0, NodeTable::NODE_COMMENT)) {
                 setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
             }
         }
+        auto matches = !nodeSearchField->text().isEmpty() && matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
         if(selectedNode->comment) {
-            if(item->text().length() == 0) {
+            if (item->text().isEmpty()) {
                 Skeletonizer::delComment(selectedNode->comment, 0);
-                if(commentNodesChckBx->isChecked() or nodeSearchField->text().isEmpty() == false) {
-                    // since node has no comment anymore, it should be filtered out
-                    nodeTable->removeRow(item->row());
-                }
-                break;
+                matches &= !commentNodesChckBx->isChecked();//no cmt anymore but cmts wanted
+            } else {
+                Skeletonizer::addComment(item->text(), selectedNode, 0);
             }
-            Skeletonizer::editComment(selectedNode->comment, 0,
-                                      item->text().toLocal8Bit().data(), selectedNode, 0);
-            if(nodeSearchField->text().isEmpty() == false) {
-                if(matchesSearchString(nodeSearchField->text(),
-                                       QString(selectedNode->comment->content),
-                                       nodeRegExCheck->isChecked()) == false) {
-                    nodeTable->removeRow(item->row());
-                }
-            }
+        } else {
+            Skeletonizer::editComment(selectedNode->comment, 0, item->text(), selectedNode, 0);
         }
-        else {
-            // node will not need to be filtered out. It wasn't filtered out before, either.
-            if(item->text().length() == 0) {
-                break;
-            }
-            Skeletonizer::addComment(item->text().toLocal8Bit().data(), selectedNode, 0);
-            if(selectedNode == state->skeletonState->activeNode) {
-                if(activeNodeTable->item(0, NodeTable::NODE_COMMENT)) {
-                    setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
-                }
-            }
+        if (!matches) {
+            nodeTable->selectionProtection = true;
+            nodeTable->removeRow(item->row());
+            nodeTable->selectionProtection = false;
         }
+    }
         break;
     case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
