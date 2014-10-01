@@ -310,6 +310,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     putElement->hasError = false;
     putElement->curlHandle = NULL;
     putElement->isFinished = false;
+    putElement->retries = FTP_RETRY_NUM;
     putElement->isAborted = false;
     putElement->isLoaded = false;
     //putElement->debugVal = 0;

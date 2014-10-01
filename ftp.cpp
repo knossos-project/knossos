@@ -33,7 +33,7 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 }
 
 CURLM *curlm = NULL;
-int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[], int currentCubeCount, int /*max_connections*/, int /*pipelines_per_connection*/, int /*max_downloads*/, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int *hadErrors/*, DWORD beginTickCount*/)
+int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[], int currentCubeCount, int /*max_connections*/, int /*pipelines_per_connection*/, int /*max_downloads*/, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int *hadErrors, int *retriesPend/*, DWORD beginTickCount*/)
 {
     C_Element *currentCube;
     CURLMsg *msg;
@@ -47,8 +47,10 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
     int isBreak = false;
     int retVal = EXIT_SUCCESS;
     int result;
+    int actualCubeCount = 0;
 
     *hadErrors = false;
+    *retriesPend = false;
 
     if (NULL == curlm) {
         curlm = curl_multi_init();
@@ -58,11 +60,17 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
         }
     }
     curl_multi_setopt(curlm, CURLMOPT_PIPELINING, (long)0);
-    curl_multi_setopt(curlm, CURLMOPT_MAXCONNECTS, (long)currentCubeCount);
 
+    actualCubeCount = 0;
     for (int C = 0; C < currentCubeCount; ++C) {
         eh = eh_array[C];
         currentCube = cubeArray[C];
+        if (currentCube->isFinished) {
+            continue;
+        }
+        if (currentCube->hasError) {
+            currentCube->hasError = false;
+        }
         snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, currentCube->fullpath_filename);
         curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
         curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
@@ -72,7 +80,9 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
         curl_easy_setopt(eh, CURLOPT_CONNECTTIMEOUT, 10);
         currentCube->curlHandle = eh;
         curl_multi_add_handle(curlm, eh);
+        actualCubeCount++;
     }
+    curl_multi_setopt(curlm, CURLMOPT_MAXCONNECTS, (long)actualCubeCount);
 
     while (U) {
         if (NULL != ftpThreadSem) {
@@ -146,6 +156,11 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
                 if ((CURLE_OK != result) || (200 != httpCode)) {
                     qDebug() << "result =" << result << "httpCode =" << httpCode;
                     currentCube->hasError = true;
+                    currentCube->retries--;
+                    if (currentCube->retries > 0) {
+                        *retriesPend = true;
+                        currentCube->isFinished = false;
+                    }
                     *hadErrors = true;
                 }
                 if (NULL != currentCube->ftp_fh) {
@@ -155,7 +170,15 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
                         remove(currentCube->local_filename);
                     }
                 }
-                if (NULL != loaderThreadSem) {
+                if (
+                        (NULL != loaderThreadSem) &&
+                        (
+                            (0 == currentCube->retries)
+                            ||
+                            (!currentCube->hasError)
+                        )
+                    )
+                {
                     loaderThreadSem->release();
                 }
           }
@@ -163,7 +186,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
     }
     for (int C = 0; C < currentCubeCount; C++) {
         currentCube = cubeArray[C];
-        if (currentCube->isFinished) {
+        if (currentCube->isFinished || currentCube->hasError) {
             continue;
         }
         currentCube->isFinished = true;
@@ -190,7 +213,7 @@ int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[
 
 int downloadFile(const char *remote_path, char *local_filename) {
     int retVal;
-    int hadErrors;
+    int hadErrors, retriesPend;
     C_Element elem;
     CURL *eh = NULL;
 
@@ -204,7 +227,7 @@ int downloadFile(const char *remote_path, char *local_filename) {
     if (NULL == eh) {
         return EXIT_FAILURE;
     }
-    retVal = downloadFiles(&eh, 1, &elem_array, 1, 1, 1, 1, NULL, NULL, &hadErrors/*, GetTickCount()*/);
+    retVal = downloadFiles(&eh, 1, &elem_array, 1, 1, 1, 1, NULL, NULL, &hadErrors, &retriesPend/*, GetTickCount()*/);
     curl_easy_cleanup(eh); eh = NULL;
     if ((EXIT_FAILURE == retVal) || elem.hasError) {
         return EXIT_FAILURE;
@@ -226,10 +249,13 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
     CURL **eh_array = NULL;
     FILE *fh = NULL;
     int i;
+    extern int RETRIES_NUM;
+    int curRetry;
     int retVal = true;
+    int downloadRetVal;
     int MAX_DOWNLOADS;
     int max_connections, pipelines_per_connection;
-    int hadErrors = false;
+    int hadErrors, retriesPend;
     int totalDownloads = 0;
 
     eh_array = (CURL**)malloc(sizeof(CURL *) * fts->cubeCount);
@@ -262,16 +288,26 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
             multiCubes[i++] = currentCube;
         }
         if ((MAX_DOWNLOADS == i) || ((prevCube == firstCube) && (i > 0))) {
-            if (EXIT_SUCCESS != downloadFiles(eh_array, fts->cubeCount, multiCubes, i, max_connections, pipelines_per_connection, MAX_DOWNLOADS, fts->ftpThreadSem, fts->loaderThreadSem, &hadErrors/*, fts->beginTickCount*/)) {
-                retVal = false;
-                break;
-            }
+            hadErrors = false;
+            curRetry = 0;
+            do {
+                downloadRetVal = downloadFiles(eh_array, fts->cubeCount, multiCubes, i,
+                                               max_connections, pipelines_per_connection,
+                                               MAX_DOWNLOADS,  fts->ftpThreadSem,
+                                               fts->loaderThreadSem, &hadErrors, &retriesPend
+                                               /*, fts->beginTickCount*/);
+                if (EXIT_SUCCESS != downloadRetVal) {
+                    retVal = false;
+                    goto ftpthreadfunc_finish;
+                }
+            } while (retriesPend);
             totalDownloads += i;
             i = 0;
         }
         currentCube = prevCube;
     }
 
+ftpthreadfunc_finish:
     if (NULL != multiCubes) {
         free(multiCubes); multiCubes = NULL;
     }
