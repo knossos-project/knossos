@@ -10,11 +10,9 @@
 TreeTable::TreeTable(QWidget *parent) : QTableWidget(parent), droppedOnTreeID(0), selectionProtection(true) {}
 
 void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
-    if(item != NULL) {
-        selectionProtection = true;
-        QTableWidget::setItem(row, column, item);
-        selectionProtection = false;
-    }
+    selectionProtection = true;
+    QTableWidget::setItem(row, column, item);
+    selectionProtection = false;
 }
 
 void TreeTable::setRow(const int row, const QString & treeId, const QColor & treeColor, const QString & cmt) {

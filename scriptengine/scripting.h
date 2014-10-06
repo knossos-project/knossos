@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <PythonQt/PythonQt.h>
+#include <PythonQt/PythonQt_QtAll.h>
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/PythonQtPythonInclude.h>
 #include <PythonQt/PythonQtStdIn.h>
@@ -21,6 +22,8 @@ class PointDecorator;
 class Highlighter;
 class QSettings;
 class PythonQtObjectPtr;
+
+void PythonQtInit();
 
 /** This class intializes the python qt engine */
 class Scripting : public QThread

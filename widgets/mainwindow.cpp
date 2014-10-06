@@ -47,6 +47,7 @@
 #include <QToolButton>
 #include <QQueue>
 
+
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "knossos.h"
@@ -55,6 +56,7 @@
 #include "skeletonizer.h"
 #include "viewer.h"
 #include "viewport.h"
+#include "scriptengine/scripting.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
@@ -121,6 +123,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 
     createViewports();
     setAcceptDrops(true);
+
+    PythonQtInit();
 }
 
 void MainWindow::createViewports() {
@@ -213,6 +217,7 @@ void MainWindow:: createToolBar() {
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
     pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
+    pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python File", this, SLOT(pythonFileSlot()));
     toolBar->addWidget(pythonButton);
 
     toolBar->addSeparator();
@@ -1418,4 +1423,17 @@ void MainWindow::pythonSlot() {
 
 void MainWindow::pythonPropertiesSlot() {
     widgetContainer->pythonPropertyWidget->show();
+}
+
+void MainWindow::pythonFileSlot() {
+    QString pyFileName = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.py");
+    QFile pyFile(pyFileName);
+    pyFile.open(QIODevice::ReadOnly);
+    QString s;
+    QTextStream textStream(&pyFile);
+    s.append(textStream.readAll());
+    pyFile.close();
+
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    ctx.evalScript(s, Py_file_input);
 }

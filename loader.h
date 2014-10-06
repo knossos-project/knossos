@@ -51,6 +51,8 @@
 #define LM_LOCAL    0
 #define LM_FTP      1
 
+#define FTP_RETRY_NUM 3
+
 struct C_Element {
     Coordinate coordinate;
 
@@ -61,6 +63,7 @@ struct C_Element {
     CURL *curlHandle;
     FILE *ftp_fh;
     int hasError;
+    int retries;
     int isFinished;
     int isAborted;
     int isLoaded;

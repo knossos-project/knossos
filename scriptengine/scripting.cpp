@@ -26,6 +26,11 @@
 #include "knossos-global.h"
 #include "widgets/mainwindow.h"
 
+void PythonQtInit() {
+    PythonQt::init(PythonQt::RedirectStdOut);
+    PythonQt_QtAll::init();
+}
+
 Scripting::Scripting(QObject *parent) : QThread(parent) {}
 
 Scripting::~Scripting() {
@@ -43,7 +48,7 @@ Scripting::~Scripting() {
 }
 
 void Scripting::run() {
-    PythonQt::init(PythonQt::RedirectStdOut);
+    PythonQtInit();
     PythonQtObjectPtr ctx = PythonQt::self()->createModuleFromScript("knossos_python_api");
 
     skeletonProxy = new SkeletonProxy();
@@ -109,8 +114,8 @@ void Scripting::run() {
 #else
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
 #endif
-    ctx.evalScript("import IPython");
-    ctx.evalScript("IPython.embed_kernel()");
+//    ctx.evalScript("import IPython");
+//    ctx.evalScript("IPython.embed_kernel()");
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {

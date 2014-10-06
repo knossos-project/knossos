@@ -34,7 +34,7 @@ find_package(PythonLibs 2  REQUIRED)#we sadly need to find the python includes o
 find_package(PythonQt5 REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(TurboJPEG REQUIRED)
-find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help OpenGL Widgets)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL PrintSupport Sql Svg WebKitWidgets UiTools Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 #platform dependent resources
@@ -92,13 +92,21 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
+    PythonQt5_QtAll
     PythonQt5
     TurboJPEG::TurboJPEG
     Qt5::Core
     Qt5::Gui
     Qt5::Help
+    Qt5::Network
     Qt5::OpenGL
+    Qt5::PrintSupport
+    Qt5::Sql
+    Qt5::Svg
+    Qt5::UiTools
+    Qt5::WebKitWidgets
     Qt5::Widgets
+    Qt5::Xml
     QuaZip::QuaZip
     Snappy::Snappy
 )
