@@ -54,19 +54,20 @@ uint64_t segmentationColorPicking(const int x, const int y, const int viewportId
 }
 
 // rectangle pick
-std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, const uint w, const uint h, const int viewportId) {
+std::unordered_set<uint64_t> segmentationColorPicking(const int originx, const int originy, const int width, const int height, const int viewportId) {
     std::unordered_set<uint64_t> found;
-    const auto& seg = Segmentation::singleton();
-    auto xscale = state->viewerState->vpConfigs[viewportId].screenPxXPerDataPx;
-    auto yscale = state->viewerState->vpConfigs[viewportId].screenPxYPerDataPx;
-    auto iw = static_cast<int>(w);
-    auto ih = static_cast<int>(h);
-    for(int ry = -ih; ry <= ih; ++ry) {
-        for(int rx = -iw; rx <= iw; ++rx) {
-            auto found_color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x + rx * xscale, y + ry * yscale);
-            auto found_id = seg.subobjectIdFromUniqueColor(found_color);
-            if(found_id != 0) { //don’t select the unsegmented area as object
-                found.insert(found_id);
+    const int widthscaled = width * state->viewerState->vpConfigs[viewportId].screenPxXPerDataPx;
+    const int heightscaled = height * state->viewerState->vpConfigs[viewportId].screenPxYPerDataPx;
+    const std::size_t xmin = std::max(0, originx - widthscaled);
+    const std::size_t ymin = std::max(0, originy - heightscaled);
+    const std::size_t xmax = std::min(state->viewer->window->viewports[viewportId]->width(), originx + widthscaled + 1);
+    const std::size_t ymax = std::min(state->viewer->window->viewports[viewportId]->height(), originy + heightscaled + 1);
+    for (std::size_t y = ymin; y < ymax; ++y) {
+        for (std::size_t x = xmin; x < xmax; ++x) {
+            const auto found_color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
+            const auto found_id = Segmentation::singleton().subobjectIdFromUniqueColor(found_color);
+            if (found_id != 0) { //don’t select the unsegmented area as object
+                found.emplace(found_id);
             }
         }
     }
@@ -74,10 +75,10 @@ std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, 
 }
 
 // triplane pick
-std::unordered_set<uint64_t> segmentationColorPicking(const int x, const int y, const uint w, const uint h) {
+std::unordered_set<uint64_t> segmentationColorPicking(const int originx, const int originy, const int width, const int height) {
     std::unordered_set<uint64_t> all_found;
-    for(auto vp : {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ}) {
-        const auto& found = segmentationColorPicking(x, y, w, h, vp);
+    for (auto vp : {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ}) {
+        const auto found = segmentationColorPicking(originx, originy, width, height, vp);
         all_found.insert(found.begin(), found.end());
     }
     return all_found;
