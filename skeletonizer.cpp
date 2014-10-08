@@ -984,44 +984,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     return true;
 }
 
-bool Skeletonizer::delActiveNode() {
-    if(state->skeletonState->activeNode) {
-        delNode(0, state->skeletonState->activeNode);
-    }
-    else {
-        return false;
-    }
-    return true;
-}
-
-bool Skeletonizer::delActiveTree() {
-    struct treeListElement *nextTree = NULL;
-
-    if(state->skeletonState->activeTree) {
-        if(state->skeletonState->activeTree->next) {
-            nextTree = state->skeletonState->activeTree->next;
-        }
-        else if(state->skeletonState->activeTree->previous) {
-            nextTree = state->skeletonState->activeTree->previous;
-        }
-
-        delTree(state->skeletonState->activeTree->treeID);
-
-        if(nextTree) {
-            setActiveTreeByID(nextTree->treeID);
-        }
-        else {
-            state->skeletonState->activeTree = NULL;
-        }
-    }
-    else {
-       qDebug() << "No active tree available.";
-       return false;
-    }
-
-    return true;
-}
-
 bool Skeletonizer::delSegment(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel) {
     // Delete the segment out of the segment list and out of the visualization structure!
 
@@ -1078,79 +1040,65 @@ bool Skeletonizer::delSegment(uint sourceNodeID, uint targetNodeID, segmentListE
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
 bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
-    struct segmentListElement *currentSegment;
-    struct segmentListElement *tempNext = NULL;
-    struct nodeListElement *newActiveNode = NULL;
-    int treeID;
-
-
-    if(!nodeToDel) {
+    if (!nodeToDel) {
         nodeToDel = findNodeByNodeID(nodeID);
+        nodeID = nodeToDel->nodeID;
     }
-    nodeID = nodeToDel->nodeID;
-    if(!nodeToDel) {
+    if (!nodeToDel) {
         qDebug("The given node %u doesn't exist. Unable to delete it.", nodeID);
         return false;
     }
-
-    treeID = nodeToDel->correspondingTree->treeID;
-
-    if(nodeToDel->comment) {
+    if (nodeToDel->comment) {
         delComment(nodeToDel->comment, 0);
     }
-
-    if(nodeToDel->isBranchNode) {
+    if (nodeToDel->isBranchNode) {
         state->skeletonState->totalBranchpoints--;
     }
 
-     // First, delete all segments pointing towards and away of the nodeToDelhas
-     // been
-
-    currentSegment = nodeToDel->firstSegment;
-
-    while(currentSegment) {
-        tempNext = currentSegment->next;
-
-        if(currentSegment->flag == SEGMENT_FORWARD) {
+    for (auto * currentSegment = nodeToDel->firstSegment; currentSegment != nullptr;) {
+        auto * const nextSegment = currentSegment->next;
+        if (currentSegment->flag == SEGMENT_FORWARD) {
             delSegment(0,0, currentSegment);
-        }
-        else if(currentSegment->flag == SEGMENT_BACKWARD) {
+        } else if (currentSegment->flag == SEGMENT_BACKWARD) {
             delSegment(0,0, currentSegment->reverseSegment);
         }
-        currentSegment = tempNext;
+        currentSegment = nextSegment;
     }
+    nodeToDel->firstSegment = nullptr;
 
-    nodeToDel->firstSegment = NULL;
-
-    if(state->skeletonState->selectedCommentNode == nodeToDel) {
-        state->skeletonState->selectedCommentNode = NULL;
+    if (nodeToDel == state->skeletonState->selectedCommentNode) {
+        state->skeletonState->selectedCommentNode = nullptr;
     }
-
-    if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
+    if (nodeToDel->previous != nullptr) {
+        nodeToDel->previous->next = nodeToDel->next;
+    }
+    if (nodeToDel->next != nullptr) {
+        nodeToDel->next->previous = nodeToDel->previous;
+    }
+    if (nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
     }
-    else {
-        if(nodeToDel->previous) {
-            nodeToDel->previous->next = nodeToDel->next;
-        }
-        if(nodeToDel->next) {
-            nodeToDel->next->previous = nodeToDel->previous;
-        }
+
+    setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, nullptr);
+
+    auto & selectedNodes = state->skeletonState->selectedNodes;
+    const auto eraseit = std::find(std::begin(selectedNodes), std::end(selectedNodes), nodeToDel);
+    if (eraseit != std::end(selectedNodes)) {
+        selectedNodes.erase(eraseit);
     }
 
-    setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, NULL);
-    if(state->skeletonState->activeNode == nodeToDel) {
-        newActiveNode = findNearbyNode(nodeToDel->correspondingTree,
-                                       nodeToDel->position);
+    if (state->skeletonState->activeNode == nodeToDel) {
+        auto * newActiveNode = findNearbyNode(nodeToDel->correspondingTree, nodeToDel->position);
         setActiveNode(newActiveNode, 0);
     }
+
+    const auto treeID = nodeToDel->correspondingTree->treeID;
+    const auto nodesInTree = reinterpret_cast<PTRSIZEUINT>(getDynArray(state->skeletonState->nodeCounter, treeID));
+    setDynArray(state->skeletonState->nodeCounter, treeID, reinterpret_cast<void*>(nodesInTree - 1));
+
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
-
-    setDynArray(state->skeletonState->nodeCounter,
-            treeID,
-            (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, treeID) - 1));
 
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
@@ -1159,34 +1107,43 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
 }
 
 bool Skeletonizer::delTree(int treeID) {
-    treeListElement *currentTree;
-    nodeListElement *currentNode, *nodeToDel;
-
-    currentTree = findTreeByTreeID(treeID);
-    if(!currentTree) {
+    auto * const treeToDel = findTreeByTreeID(treeID);
+    if (treeToDel == nullptr) {
         qDebug("There exists no tree with ID %d. Unable to delete it.", treeID);
         return false;
     }
 
-    currentNode = currentTree->firstNode;
-    while(currentNode) {
-        nodeToDel = currentNode;
-        currentNode = nodeToDel->next;
-        delNode(0, nodeToDel);
+    for (auto * currentNode = treeToDel->firstNode; currentNode != nullptr;) {
+        auto * const nextNode = currentNode->next;
+        delNode(0, currentNode);
+        currentNode = nextNode;//currentNode got invalidated
     }
-    currentTree->firstNode = NULL;
+    treeToDel->firstNode = nullptr;
 
-    if (currentTree->previous != nullptr) {
-        currentTree->previous->next = currentTree->next;
+    if (treeToDel->previous != nullptr) {
+        treeToDel->previous->next = treeToDel->next;
     }
-    if (currentTree->next != nullptr) {
-        currentTree->next->previous = currentTree->previous;
+    if (treeToDel->next != nullptr) {
+        treeToDel->next->previous = treeToDel->previous;
     }
-    if(currentTree == state->skeletonState->firstTree) {
-        state->skeletonState->firstTree = currentTree->next;
+    if (treeToDel == state->skeletonState->firstTree) {
+        state->skeletonState->firstTree = treeToDel->next;
     }
 
-    free(currentTree);
+    auto & selectedTrees = state->skeletonState->selectedTrees;
+    const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
+    if (eraseit != std::end(selectedTrees)) {
+        selectedTrees.erase(eraseit);
+    }
+
+    setActiveNode(state->skeletonState->activeNode, 0);//set active tree through node
+    if (treeToDel == state->skeletonState->activeTree && state->skeletonState->firstTree != nullptr) {
+        setActiveTreeByID(state->skeletonState->firstTree->treeID);//if there is no node but a tree
+    }
+    if (state->skeletonState->firstTree == nullptr) {
+        state->skeletonState->activeTree = nullptr;//no trees
+    }
+    free(treeToDel);
 
     state->skeletonState->treeElements--;
 
@@ -1346,9 +1303,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 
     if(node) {
         setActiveTreeByID(node->correspondingTree->treeID);
-    }
-    else {
-        state->skeletonState->activeTree = NULL;
     }
     if(node) {
         if(node->comment) {
@@ -2586,11 +2540,7 @@ bool Skeletonizer::popBranchNode() {
     }
 
     if(branchNode && branchNode->isBranchNode) {
-#if QT_POINTER_SIZE == 8
-        qDebug("Branch point (node ID %ld) deleted.", branchNodeID);
-#else
-        qDebug("Branch point (node ID %d) deleted.", branchNodeID);
-#endif
+        qDebug() << "Branch point (" << branchNodeID << ") deleted.";
 
         setActiveNode(branchNode, 0);
 
@@ -2974,33 +2924,18 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
 }
 
 void Skeletonizer::deleteSelectedTrees() {
-    for (const auto & elem : state->skeletonState->selectedTrees) {
-        if (elem == state->skeletonState->activeTree) {
-            delActiveTree();
-        } else {
-            delTree(elem->treeID);
-        }
-    }
-    state->skeletonState->selectedTrees.clear();
-    if(state->skeletonState->activeTree) {
-        state->skeletonState->activeTree->selected = true;
-        state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
+    //make a copy because the selected objects can change
+    const auto treesToDelete = state->skeletonState->selectedTrees;
+    for (const auto & elem : treesToDelete) {
+        delTree(elem->treeID);
     }
 }
 
 void Skeletonizer::deleteSelectedNodes() {
+    //make a copy because the selected objects can change
     const auto nodesToDelete = state->skeletonState->selectedNodes;
     for (auto & elem : nodesToDelete) {
-        if (elem == state->skeletonState->activeNode) {
-            delActiveNode();
-        } else {
-            delNode(0, elem);
-        }
-    }
-    state->skeletonState->selectedNodes.clear();
-    if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->selected = true;
-        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+        delNode(0, elem);
     }
 }
 

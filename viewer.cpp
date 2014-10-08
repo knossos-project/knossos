@@ -1923,7 +1923,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(eventModel, &EventModel::deleteActiveNodeSignal, &Skeletonizer::delActiveNode);
     QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
@@ -1994,7 +1993,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearTreeSelectionSignal, &Skeletonizer::clearTreeSelection);
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearNodeSelectionSignal, &Skeletonizer::clearNodeSelection);
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::deleteSelectedNodesSignal, skeletonizer, &Skeletonizer::deleteSelectedNodes);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::delActiveNodeSignal, &Skeletonizer::delActiveNode);
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::JumpToActiveNodeSignal, skeletonizer, &Skeletonizer::jumpToActiveNode);
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::addSegmentSignal, &Skeletonizer::addSegment);
     QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::delSegmentSignal, &Skeletonizer::delSegment);

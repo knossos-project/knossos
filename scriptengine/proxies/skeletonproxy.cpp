@@ -55,15 +55,6 @@ bool SkeletonProxy::delete_tree(int tree_id) {
    return true;
 }
 
-bool SkeletonProxy::delete_active_tree() {
-    if(!Skeletonizer::delActiveTree()) {
-        emit echo (QString("there is no active tree to delete"));
-        return false;
-    }
-    emit signalDelegate->updateTreeViewSignal();
-    return true;
-}
-
 bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
     if (!Skeletonizer::mergeTrees(tree_id, other_tree_id)) {
        emit echo (QString("Skeletonizer::mergeTrees failed!"));
@@ -213,15 +204,6 @@ bool SkeletonProxy::delete_segment(int source_id, int target_id) {
 bool SkeletonProxy::delete_node(int node_id) {
     if(!Skeletonizer::delNode(node_id, NULL)) {
         emit echo(QString("could not delete the node with id %1").arg(node_id));
-        return false;
-    }
-    emit signalDelegate->updateTreeViewSignal();
-    return true;
-}
-
-bool SkeletonProxy::delete_active_node() {
-    if(!Skeletonizer::delActiveNode()) {
-        emit echo(QString("there is no active node to delete"));
         return false;
     }
     emit signalDelegate->updateTreeViewSignal();

@@ -80,7 +80,6 @@ protected:
 signals:
     void updateAnnotationLabelsSignal();
     void deleteSelectedTreesSignal();
-    void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
     void clearTreeSelectionSignal();
     void clearNodeSelectionSignal();

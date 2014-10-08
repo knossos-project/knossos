@@ -99,7 +99,6 @@ signals:
 
     void updateWidgetSignal();
 
-    void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 

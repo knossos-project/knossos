@@ -355,16 +355,12 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
 }
 
 void ToolsTreeviewTab::deleteNodesAction() {
-    if (activeNodeTable->hasFocus()) {
-        emit delActiveNodeSignal();//skeletonizer
-        recreateNodesTable();//removes active node from nodeTable
-        nodeActivated();//removes active node from activeNodeTable
-    } else {
+    bool deleteNodes = true;
+    if (nodeTable->hasFocus()) {
         if(state->skeletonState->selectedNodes.size() == 0) {
             qDebug() << "no nodes";
             return;
         }
-        bool deleteNodes = true;
         if(state->skeletonState->selectedNodes.size() != 1) {
             QMessageBox prompt;
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -376,11 +372,11 @@ void ToolsTreeviewTab::deleteNodesAction() {
             prompt.exec();
             deleteNodes = prompt.clickedButton() == confirmButton;
         }
-        if(deleteNodes) {
-            emit deleteSelectedNodesSignal();//skeletonizer
-            recreateNodesTable();//removes nodes from nodeTable
-            nodeActivated();//updates active node
-        }
+    }
+    if (deleteNodes) {
+        emit deleteSelectedNodesSignal();//skeletonizer
+        recreateNodesTable();//removes nodes from nodeTable
+        nodeActivated();//updates active node
     }
 }
 

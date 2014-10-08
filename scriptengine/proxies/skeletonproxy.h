@@ -22,7 +22,7 @@ signals:
     void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
     void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z);    
+    void userMoveSignal(int x, int y, int z);
     void updateTreeViewSignal();
 };
 
@@ -55,7 +55,6 @@ public slots:
     bool set_tree_comment(int tree_id, const QString &comment);
     bool set_active_tree(int tree_id);
     bool delete_tree(int tree_id);
-    bool delete_active_tree();
     bool merge_trees(int tree_id, int other_tree_id);
     bool move_to_next_tree();
     bool move_to_previous_tree();
@@ -69,7 +68,6 @@ public slots:
     bool edit_node(int node_id, float radius, int x, int y, int z, int in_mag);
     bool jump_to_active_node();
     bool delete_node(int node_id);
-    bool delete_active_node();
     bool set_active_node(int node_id);
     nodeListElement *active_node();
     bool add_node(int node_id, int x, int y, int z, int parent_tree_id = 0,

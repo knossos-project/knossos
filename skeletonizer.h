@@ -78,11 +78,9 @@ public slots:
 
     void UI_popBranchNode();
     static bool delTree(int treeID);
-    static bool delActiveTree();
     static void clearTreeSelection();
     static void clearNodeSelection();
     static bool clearSkeleton(int loadingSkeleton);
-    static bool delActiveNode();
     void autoSaveIfElapsed();
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
