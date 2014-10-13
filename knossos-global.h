@@ -40,7 +40,7 @@
 #include <cmath>
 
 #include <QtOpenGL/qgl.h>
-#include <QtCore/QTime>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/qmutex.h>
 #include <QtCore/qwaitcondition.h>
 #include <QtNetwork/qhostinfo.h>
@@ -517,7 +517,7 @@ public:
 
     //  Protect changes to the skeleton for network synchronization.
     QMutex *protectSkeleton;
-    QTime time; // it is not allowed to modify this object
+    QElapsedTimer time; // it is not allowed to modify this object
 
  //---  Info about the state of KNOSSOS in general. --------
 
