@@ -32,7 +32,7 @@
 #include "segmentationsplit.h"
 #include "viewer.h"
 #include "renderer.h"
-#include "widgets/widgetcontainer.h"
+#include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
@@ -325,7 +325,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
 
         //Additional move of specified steps along clicked viewport
-        if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT) {
+        if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
             switch(state->viewerState->vpConfigs[VPfound].type) {
             case VIEWPORT_XY:
                 clickedCoordinate.z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
@@ -342,20 +342,20 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             }
         }
 
-        if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING)
-            || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR)) {
+        if ((state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove)
+            || (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove)) {
             floatCoordinate walkingVector;
             walkingVector.x = movement.x;
             walkingVector.y = movement.y;
             walkingVector.z = movement.z;
             //Additional move of specified steps along tracing direction
-            if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING) {
+            if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
                 clickedCoordinate.x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
                 clickedCoordinate.y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
                 clickedCoordinate.z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
             }
             //Additional move of steps equal to distance between last and new node along tracing direction.
-            if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR) {
+            if (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove) {
                 clickedCoordinate.x += walkingVector.x;
                 clickedCoordinate.y += walkingVector.y;
                 clickedCoordinate.z += walkingVector.z;
@@ -375,10 +375,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     /* Move to the new node position */
     if (newNode) {
-        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
+        if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
-        }
-        else {
+        } else {
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
         }
         emit nodeAddedSignal();
@@ -387,7 +386,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
     }
     emit updateViewerStateSignal();
-    Knossos::sendRemoteSignal();
+    if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
+        Knossos::sendRemoteSignal();
+    }
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) {

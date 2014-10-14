@@ -21,11 +21,15 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "knossos-global.h"
 #include "remote.h"
+
 #include "functions.h"
+#include "knossos-global.h"
+#include "widgets/navigationwidget.h"
+
 #include <QDebug>
-#include <math.h>
+
+#include <cmath>
 
 Remote::Remote(QObject *parent) : QThread(parent) {}
 
@@ -146,7 +150,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         recenteringTime = state->viewerState->recenteringTimeOrth;
         state->viewerState->walkOrth = false;
     }
-    if ((state->viewerState->autoTracingMode != 0) && (state->viewerState->walkOrth == false)){
+    if ((state->viewerState->autoTracingMode != navigationMode::recenter) && (state->viewerState->walkOrth == false)){
         recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
     }
 

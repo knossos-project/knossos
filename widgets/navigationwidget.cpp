@@ -81,7 +81,7 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     line2->setFrameShape(QFrame::HLine);
     line2->setFrameShadow(QFrame::Sunken);
 
-    normalModeButton = new QRadioButton("Normal Mode");
+    normalModeButton = new QRadioButton("Normal Mode (Recentering)");
     additionalViewportDirectionMoveButton = new QRadioButton("Additional Viewport Direction Move");
     additionalTracingDirectionMoveButton = new QRadioButton("Additional Tracing Direction Move");
     additionalMirroredMoveButton = new QRadioButton("Additional Mirrored Move");
@@ -89,6 +89,7 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
 
     layout->addWidget(normalModeButton);
+    layout->addWidget(&noRecenteringButton);
     layout->addWidget(this->additionalViewportDirectionMoveButton);
     layout->addWidget(this->additionalTracingDirectionMoveButton);
     layout->addWidget(this->additionalMirroredMoveButton);
@@ -117,6 +118,11 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     connect(recenterTimeOrthoSpinBox, SIGNAL(valueChanged(int)), this, SLOT(recenterTimeOrthoChanged(int)));
 
     connect(normalModeButton, SIGNAL(clicked(bool)), this, SLOT(normalModeSelected(bool)));
+    QObject::connect(&noRecenteringButton, &QRadioButton::clicked, [](const bool checked){
+        if (checked) {
+            state->viewerState->autoTracingMode = navigationMode::noRecentering;
+        }
+    });
     connect(additionalViewportDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalViewportDirectionMoveSelected(bool)));
     connect(additionalTracingDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalTracingDirectionMoveSelected(bool)));
     connect(additionalMirroredMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalMirroredMoveSelected(bool)));
@@ -150,25 +156,25 @@ void NavigationWidget::recenterTimeParallelChanged(int value) {
 
 void NavigationWidget::normalModeSelected(bool on) {
     if(on) {
-        state->viewerState->autoTracingMode = AUTOTRACING_MODE_NORMAL;
+        state->viewerState->autoTracingMode = navigationMode::recenter;
     }
 }
 
 void NavigationWidget::additionalViewportDirectionMoveSelected(bool on) {
     if(on) {
-        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE;
+        state->viewerState->autoTracingMode = navigationMode::additionalVPMove;
     }
 }
 
 void NavigationWidget::additionalTracingDirectionMoveSelected(bool on) {
     if(on) {
-        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE;
+        state->viewerState->autoTracingMode = navigationMode::additionalTracingDirectionMove;
     }
 }
 
 void NavigationWidget::additionalMirroredMoveSelected(bool on) {
     if(on) {
-        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE;
+        state->viewerState->autoTracingMode = navigationMode::additionalMirroredMove;
     }
 }
 

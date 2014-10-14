@@ -26,6 +26,15 @@
  */
 
 #include <QDialog>
+#include <QRadioButton>
+
+enum class navigationMode {
+    recenter
+    , noRecentering
+    , additionalVPMove
+    , additionalTracingDirectionMove
+    , additionalMirroredMove
+};
 
 class QSpinBox;
 class QRadioButton;
@@ -71,12 +80,12 @@ protected:
     QSpinBox *recenterTimeOrthoSpinBox;
 
     QRadioButton *normalModeButton;
+    QRadioButton noRecenteringButton{"No Recentering"};
     QRadioButton *additionalViewportDirectionMoveButton;
     QRadioButton *additionalTracingDirectionMoveButton;
     QRadioButton *additionalMirroredMoveButton;
     QSpinBox *delayTimePerStepSpinBox;
     QSpinBox *numberOfStepsSpinBox;
-
 };
 
 #endif // NAVIGATIONWIDGET_H

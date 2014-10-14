@@ -256,7 +256,7 @@ bool Knossos::initStates() {
    state->time.start();
 
    // For the viewer
-   state->viewerState->autoTracingMode = 0;
+   state->viewerState->autoTracingMode = navigationMode::recenter;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;
    state->skeletonState->idleTimeSession = 0;

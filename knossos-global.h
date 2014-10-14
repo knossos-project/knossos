@@ -32,6 +32,7 @@
 #define KNOSSOS_GLOBAL_H
 
 #include "coordinate.h"
+#include "widgets/navigationwidget.h"
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
 #include <curl/curl.h>
@@ -210,20 +211,10 @@ values. The XY vp always used. */
 #define CURRENT_MAG_COORDINATES     0
 #define ORIGINAL_MAG_COORDINATES    1
 
-#define AUTOTRACING_NORMAL  0
-#define AUTOTRACING_VIEWPORT    1
-#define AUTOTRACING_TRACING 2
-#define AUTOTRACING_MIRROR  3
-
 #define ROTATIONSTATEXY    0
 #define ROTATIONSTATEXZ    1
 #define ROTATIONSTATEYZ    2
 #define ROTATIONSTATERESET 3
-
-#define AUTOTRACING_MODE_NORMAL 0
-#define AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE 1
-#define AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE 2
-#define AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE 3
 
 /* command types */
 
@@ -847,7 +838,7 @@ struct viewerState {
     // Advanced Tracing Modes Stuff
 
     bool autoTracingEnabled;
-    int autoTracingMode;
+    navigationMode autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
 
