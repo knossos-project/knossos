@@ -192,9 +192,8 @@ int main(int argc, char *argv[]) {
         // don't start loader, when there is no dataset, yet.
         loader->start();
     }
-    Scripting scripts;
-
     viewer.run();
+    Scripting scripts;
     remote.start();
 
     viewer.window->widgetContainer->datasetLoadWidget->changeDataset(false);
@@ -216,8 +215,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::moveToPreviousTreeSignal, viewer.skeletonizer, &Skeletonizer::moveToPrevTree);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::jumpToActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::jumpToActiveNode);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::updateToolsSignal, viewer.window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
-
-    scripts.start();
 
     return a.exec();
 }

@@ -31,25 +31,9 @@ void PythonQtInit() {
     PythonQt_QtAll::init();
 }
 
-Scripting::Scripting(QObject *parent) : QThread(parent) {}
-
-Scripting::~Scripting() {
-    const auto exitScript = std::string("ipython -c \"")
-        +"import IPython"
-        +";from IPython.lib.kernel import find_connection_file"
-        +";kernel_client = IPython.kernel.BlockingKernelClient()"
-        +";kernel_client.connection_file = find_connection_file('"+std::to_string(QCoreApplication::applicationPid())+"')"
-        +";kernel_client.load_connection_file()"
-        +";kernel_client.start_channels()"
-        +";kernel_client.shell_channel.execute('quit()')\"";
-    if (system(exitScript.c_str()) == 0) {
-        this->wait();
-    }//else we either finished earlier or ipython can’t connect (in which case we skip the endless loop and kill the thread)
-}
-
-void Scripting::run() {
+Scripting::Scripting() {
     PythonQtInit();
-    PythonQtObjectPtr ctx = PythonQt::self()->createModuleFromScript("knossos_python_api");
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
 

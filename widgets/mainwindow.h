@@ -94,6 +94,7 @@ public:
     QFile *loadedFile;
 
     QCheckBox *lockVPOrientationCheckbox;
+    SkeletonProxy *skeletonProxy;
 
     void createViewports();
 

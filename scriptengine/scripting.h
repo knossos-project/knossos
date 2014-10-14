@@ -26,12 +26,11 @@ class PythonQtObjectPtr;
 void PythonQtInit();
 
 /** This class intializes the python qt engine */
-class Scripting : public QThread
+class Scripting : public QObject
 {
     Q_OBJECT
 public:
-    explicit Scripting(QObject *parent = 0);
-    ~Scripting();
+    explicit Scripting();
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -43,9 +42,6 @@ public:
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
-
-    void run();
-    PythonQtObjectPtr ctx;
 signals:
 
 public slots:

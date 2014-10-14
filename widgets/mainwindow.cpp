@@ -47,7 +47,6 @@
 #include <QToolButton>
 #include <QQueue>
 
-
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "knossos.h"
@@ -123,8 +122,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 
     createViewports();
     setAcceptDrops(true);
-
-    PythonQtInit();
 }
 
 void MainWindow::createViewports() {
@@ -1424,7 +1421,7 @@ void MainWindow::pythonPropertiesSlot() {
 }
 
 void MainWindow::pythonFileSlot() {
-    QString pyFileName = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.py");
+    QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     QFile pyFile(pyFileName);
     pyFile.open(QIODevice::ReadOnly);
     QString s;

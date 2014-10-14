@@ -2,7 +2,8 @@
 
 #include "GuiConstants.h"
 #include "knossos-global.h"
-
+#include "scriptengine/scripting.h"
+#include <Python.h>
 #include <QApplication>
 #include <QCheckBox>
 #include <QDebug>
@@ -44,6 +45,8 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     connect(pythonInterpreterButton, SIGNAL(clicked()), this, SLOT(pythonInterpreterButtonClicked()));
     connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
     connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
+
+    console = NULL;
 }
 
 void PythonPropertyWidget::closeEvent(QCloseEvent *) {
@@ -117,20 +120,11 @@ void PythonPropertyWidget::autoConf() {
 }
 
 void PythonPropertyWidget::openTerminal() {
-    const auto pid = QCoreApplication::applicationPid();
-    qDebug() << "************* PID to connect to: " << pid;
-    #ifdef Q_OS_OSX
-    QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(pid);
-    system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
-    #endif
-    #ifdef Q_OS_LINUX
-    QString args = QString("ipython2 console --existing '%1'").arg(pid);
-    system(QString("xterm -e '%1' &").arg(args).toUtf8().data());
-    #endif
-    #ifdef Q_OS_WIN
-    QString args = QString("ipython console --existing '%1'").arg(pid);
-    system(QString("start %1").arg(args).toUtf8().data());
-    #endif
+    if (NULL == console) {
+        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+        console = new PythonQtScriptingConsole(NULL, ctx);
+    }
+    console->show();
 }
 
 void PythonPropertyWidget::saveSettings() {
@@ -196,6 +190,10 @@ void PythonPropertyWidget::loadSettings() {
     if(!settings.value(PYTHON_WORKING_DIRECTORY).isNull() and !settings.value(PYTHON_WORKING_DIRECTORY).toString().isEmpty()) {
         workingDirectory->setText(settings.value(PYTHON_WORKING_DIRECTORY).toString());
         emit changeWorkingDirectory();
+    }
+
+    if(!settings.value(PYTHON_AUTOSTART_TERMINAL).isNull() and settings.value(PYTHON_AUTOSTART_TERMINAL).toBool()) {
+        openTerminal();
     }
     settings.endGroup();
 }

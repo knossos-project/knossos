@@ -4,6 +4,9 @@
 #include <QWidget>
 #include <QDialog>
 
+#include <PythonQt/PythonQt.h>
+#include <PythonQt/gui/PythonQtScriptingConsole.h>
+
 class QPushButton;
 class QLineEdit;
 class QLabel;
@@ -23,6 +26,7 @@ protected:
     QLineEdit *autoStartFolder;
     QCheckBox *autoStartTerminal;
     QLineEdit *workingDirectory;
+    PythonQtScriptingConsole *console;
 
     void closeEvent(QCloseEvent *e);
 
