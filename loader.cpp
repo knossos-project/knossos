@@ -813,6 +813,11 @@ void Loader::snappyCacheAdd(const CoordOfCube & cubeCoord, const Byte * cube) {
     snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
 }
 
+void Loader::snappyCacheClear() {
+    OcModifiedCacheQueue.clear();
+    snappyCache.clear();
+}
+
 void Loader::snappyCacheFlush() {
     state->protectCube2Pointer->lock();
     for (const auto & cubeCoord : OcModifiedCacheQueue) {

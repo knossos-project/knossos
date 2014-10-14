@@ -26,6 +26,8 @@
  */
 #include "knossos-global.h"
 
+#include "segmentation.h"
+
 #include <QObject>
 #include <QSemaphore>
 #include <QThread>
@@ -125,6 +127,7 @@ class Loader : public QThread {
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
     friend void annotationFileLoad(const QString &, const QString &, bool *);
     friend void annotationFileSave(const QString &, bool *);
+    friend void Segmentation::clear();
 private:
     std::list<std::vector<Byte>> DcSetChunk;
     std::list<std::vector<Byte>> OcSetChunk;
@@ -149,6 +152,7 @@ private:
     uint removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
     void snappyCacheAdd(const CoordOfCube &, const Byte *cube);
+    void snappyCacheClear();
     void snappyCacheFlush();
 public:
     explicit Loader(QObject *parent = 0);

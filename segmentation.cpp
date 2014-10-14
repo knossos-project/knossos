@@ -1,5 +1,7 @@
 #include "segmentation.h"
 
+#include "knossos.h"
+
 #include <QTextStream>
 
 #include <algorithm>
@@ -85,6 +87,8 @@ void Segmentation::clear() {
     SubObject::highestId = 0;
     subobjects.clear();
     touched_subobject_id = 0;
+
+    loader->snappyCacheClear();
 
     emit resetData();
     emit resetSelection();
