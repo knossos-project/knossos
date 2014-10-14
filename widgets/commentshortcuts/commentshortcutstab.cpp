@@ -35,8 +35,6 @@
 #include <QMessageBox>
 #include "knossos-global.h"
 
-extern  stateInfo *state;
-
 CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
     QWidget(parent)
 {

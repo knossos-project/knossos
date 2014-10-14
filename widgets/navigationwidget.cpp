@@ -39,8 +39,6 @@
 #include "knossos-global.h"
 #include "navigationwidget.h"
 
-extern  stateInfo *state;
-
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)
 {

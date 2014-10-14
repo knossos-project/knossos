@@ -59,8 +59,6 @@
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
-extern  stateInfo *state;
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/images/logo.ico"));

@@ -20,8 +20,6 @@
 #include "mainwindow.h"
 #include "viewer.h"
 
-extern  stateInfo *state;
-
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     localGroup = new QGroupBox("Local Dataset");
 

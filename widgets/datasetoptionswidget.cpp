@@ -36,8 +36,6 @@
 #include <QDesktopWidget>
 #include "knossos-global.h"
 
-extern  stateInfo *state;
-
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true) {
     setWindowIcon(QIcon(":/images/icons/zoom-in.png"));

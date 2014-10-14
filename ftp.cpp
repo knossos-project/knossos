@@ -13,8 +13,6 @@
 #include <unistd.h>
 #endif
 
-extern  stateInfo *state;
-
 static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {
   C_Element *elem =(C_Element *)stream;

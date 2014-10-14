@@ -4,8 +4,6 @@
 
 #include "knossos-global.h"
 
-extern  stateInfo *state;
-
 // for looking up CURLcode: http://curl.haxx.se/libcurl/c/libcurl-errors.html
 
 bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode,

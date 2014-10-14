@@ -34,8 +34,6 @@
 #include "vpgeneraltabwidget.h"
 #include "widgets/mainwindow.h"
 
-extern  stateInfo *state;
-
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QWidget(parent)
 {

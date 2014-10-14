@@ -37,8 +37,6 @@
 #include <QGridLayout>
 #include <QFileDialog>
 
-extern  stateInfo *state;
-
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QWidget(parent)
 {

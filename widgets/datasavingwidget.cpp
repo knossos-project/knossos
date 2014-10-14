@@ -37,8 +37,6 @@
 
 #include "knossos-global.h"
 
-extern  stateInfo *state;
-
 DataSavingWidget::DataSavingWidget(QWidget *parent) :
     QDialog(parent)
 {

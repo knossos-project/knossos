@@ -38,7 +38,6 @@
 #include "tracingtimewidget.h"
 #include <QTableWidget>
 #include <QHeaderView>
-extern  stateInfo *state;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)
