@@ -459,9 +459,6 @@ public:
     // pixel-to-nanometer scale
     floatCoordinate scale;
 
-    // offset for synchronization between datasets
-    Coordinate offset;
-
     // With 2^N being the edge length of a datacube in pixels and
     // M being the edge length of a supercube (the set of all
     // simultaneously loaded datacubes) in datacubes:

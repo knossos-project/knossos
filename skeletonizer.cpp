@@ -374,12 +374,6 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("simple", QString::number(state->skeletonState->simpleTracing ? 1 : 0));
     xml.writeEndElement();
 
-    xml.writeStartElement("offset");
-    xml.writeAttribute("x", QString::number(state->offset.x / state->magnification));
-    xml.writeAttribute("y", QString::number(state->offset.y / state->magnification));
-    xml.writeAttribute("z", QString::number(state->offset.z / state->magnification));
-    xml.writeEndElement();
-
     xml.writeStartElement("RadiusLocking");
     xml.writeAttribute("enableCommentLocking", QString::number(state->skeletonState->lockPositions));
     xml.writeAttribute("lockingRadius", QString::number(state->skeletonState->lockRadius));
@@ -600,19 +594,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         globalMagnificationSpecified = true;
                     } else {
                         magnification = 0;
-                    }
-                } else if(xml.name() == "offset") {
-                    QStringRef attribute = attributes.value("x");
-                    if(attribute.isNull() == false) {
-                        state->offset.x = attribute.toLocal8Bit().toInt();
-                    }
-                    attribute = attributes.value("y");
-                    if(attribute.isNull() == false) {
-                        state->offset.y = attribute.toLocal8Bit().toInt();
-                    }
-                    attribute = attributes.value("z");
-                    if(attribute.isNull() == false) {
-                        state->offset.z = attribute.toLocal8Bit().toInt();
                     }
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");

@@ -618,9 +618,6 @@ bool Knossos::configDefaults() {
     state->scale.x = 1.;
     state->scale.y = 1.;
     state->scale.z = 1.;
-    state->offset.x = 0;
-    state->offset.y = 0;
-    state->offset.z = 0;
     state->cubeEdgeLength = 128;
     state->M = 0;//invalid M, so the datasetLoadWidget can tell if M was provided by cmdline
     state->magnification = 1;
