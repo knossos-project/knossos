@@ -571,17 +571,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 } else if(xml.name() == "tracing") {
                     QStringRef attribute = attributes.value("simple");
-                    state->skeletonState->simpleTracing = false;
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->simpleTracing = static_cast<bool>(attribute.toLocal8Bit().toInt());
-                    }
-                    emit setSimpleTracing(state->skeletonState->simpleTracing);
-                } else if(xml.name() == "tracing") {
-                    QStringRef attribute = attributes.value("simple");
-                    state->skeletonState->simpleTracing = false;
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->simpleTracing = static_cast<bool>(attribute.toLocal8Bit().toInt());
-                    }
+                    state->skeletonState->simpleTracing = attribute.isNull() ? false : static_cast<bool>(attribute.toInt());
                     emit setSimpleTracing(state->skeletonState->simpleTracing);
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
