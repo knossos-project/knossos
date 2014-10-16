@@ -412,7 +412,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("XYPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel));
     xml.writeAttribute("XZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
     xml.writeAttribute("YZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
-    xml.writeAttribute("SkelPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_SKELETON].texture.zoomLevel));
+    xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
     xml.writeEndElement();
 
     xml.writeStartElement("idleTime");
