@@ -27,6 +27,9 @@
 #include "knossos.h"
 #include "segmentation.h"
 
+#include <quazip/quazip.h>
+#include <quazip/quazipfile.h>
+
 #include <snappy.h>
 
 #include <cmath>
@@ -482,42 +485,66 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
 void Loader::loadCube(loadcube_thread_struct *lts) {
     if (state->overlay) {
         state->protectLoaderSlots->lock();
-        if (!lts->thisPtr->freeOcSlots.empty()) {
+        const bool freeOcSlotsAvailable = !lts->thisPtr->freeOcSlots.empty();
+        state->protectLoaderSlots->unlock();
+        if (freeOcSlotsAvailable) {
+            state->protectLoaderSlots->lock();
             auto currentOcSlot = lts->thisPtr->freeOcSlots.front();
+            lts->thisPtr->freeOcSlots.pop_front();
+            state->protectLoaderSlots->unlock();
 
             const auto cubeCoord = CoordOfCube(lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z);
             auto snappyIt = snappyCache.find(cubeCoord);
             if (snappyIt != std::end(snappyCache)) {
                 //directly uncompress snappy cube into the OC slot
-                snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char *>(currentOcSlot));
+                snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentOcSlot));
             } else {
-                const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
-                std::ifstream inFile(inFilePath, std::ios_base::binary);
-                if (inFile) {
-                    std::vector<char> buffer(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>{});
+                auto cubeName = QString(lts->currentCube->fullpath_filename);
+                const auto dotIndex = cubeName.lastIndexOf(".");
+                cubeName.resize(dotIndex);//remove last extension part
 
-                    const auto expectedSize = state->cubeBytes * sizeof(uint64_t);
-                    if (buffer.size() == expectedSize) {
-                        std::move(std::begin(buffer), std::end(buffer), currentOcSlot);
-                    } else {
-                        qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
-                        std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
+                bool success = false;
+
+                QuaZip archive(cubeName + ".seg.sz.zip");
+                if (archive.open(QuaZip::mdUnzip)) {
+                    archive.goToFirstFile();
+                    QuaZipFile file(&archive);//zip
+                    if (file.open(QIODevice::ReadOnly)) {
+                        auto data = file.readAll();
+                        success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
                     }
                 } else {
+                    QFile file(cubeName + ".seg.sz");//snappy
+                    if (file.open(QIODevice::ReadOnly)) {
+                        auto data = file.readAll();
+                        success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                    }
+                }
+                if (!success) {
+                    QFile file(cubeName + ".seg");//uncompressed
+                    if (file.open(QIODevice::ReadOnly)) {
+                        const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
+                        const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
+                        success = actualSize == expectedSize;
+                    }
+                }
+
+                if (!success) {
                     std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
             }
 
             state->protectCube2Pointer->lock();
             if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
+                state->protectLoaderSlots->lock();
                 lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+                state->protectLoaderSlots->unlock();
             } else {
                 qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d]."
                        , lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
             }
             state->protectCube2Pointer->unlock();
         }
-        state->protectLoaderSlots->unlock();
     }
 
     bool retVal = true;
