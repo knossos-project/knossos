@@ -1190,7 +1190,13 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
     } else if(event->key() == Qt::Key_Delete) {
-        if(state->skeletonState->selectedNodes.size() > 0) {
+        if(control) {
+            if(state->skeletonState->activeTree) {
+                Skeletonizer::delTree(state->skeletonState->activeTree->treeID);
+                emit updateTreeviewSignal();
+            }
+        }
+        else if(state->skeletonState->selectedNodes.size() > 0) {
             bool deleteNodes = true;
             if(state->skeletonState->selectedNodes.size() != 1) {
                 QMessageBox prompt;
