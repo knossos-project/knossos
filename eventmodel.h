@@ -86,7 +86,7 @@ public:
     int mousePosY;
     bool grap;
 signals:
-    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
+    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void userMoveArbSignal(float x, float y, float z);
     void rotationSignal(float x, float y, float z, float angle);
     void pasteCoordinateSignal();
@@ -126,7 +126,7 @@ signals:
     segmentListElement *findSegmentByNodeIDSignal(uint sourceNodeID, uint targetNodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     treeListElement *addTreeListElement(int treeID, color4F color);
-    void setViewportOrientationSignal(int orientation);
+    void setViewportOrientationSignal(ViewportType orientation);
     void unselectNodesSignal();
 
     void treeAddedSignal(treeListElement *tree);

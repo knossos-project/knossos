@@ -100,7 +100,7 @@ public slots:
     void r90ButtonClicked();
     void r180ButtonClicked();
     void resetButtonClicked();
-    bool setOrientation(int orientation);
+    bool setOrientation(ViewportType orientation);
     void showContextMenu(const QPoint &point);
 };
 

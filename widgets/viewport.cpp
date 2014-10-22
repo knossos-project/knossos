@@ -189,7 +189,7 @@ void Viewport::initializeGL() {
     }
 }
 
-bool Viewport::setOrientation(int orientation) {
+bool Viewport::setOrientation(ViewportType orientation) {
     if(orientation != VIEWPORT_XY
        && orientation != VIEWPORT_XZ
        && orientation != VIEWPORT_YZ

@@ -100,21 +100,16 @@
 #define	SLICE_YZ	2
 
 #define NUM_VP 4 //number of viewports
-#define VIEWPORT_XY	0
-#define VIEWPORT_XZ	1
-#define VIEWPORT_YZ	2
-#define VIEWPORT_SKELETON 3
-#define VIEWPORT_UNDEFINED 4
-#define VIEWPORT_ARBITRARY 5
+enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED, VIEWPORT_ARBITRARY};
+Q_DECLARE_METATYPE(ViewportType)
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
 values. The XY vp always used. */
-#define VIEWPORT_ORTHO 0
+const auto VIEWPORT_ORTHO = VIEWPORT_XY;
 
 // UserMove type
-#define USERMOVE_DRILL 0
-#define USERMOVE_HORIZONTAL 1
-#define USERMOVE_NEUTRAL 2
+enum UserMoveType {USERMOVE_DRILL, USERMOVE_HORIZONTAL, USERMOVE_NEUTRAL};
+Q_DECLARE_METATYPE(UserMoveType)
 
 // default position of xy viewport and default viewport size
 #define DEFAULT_VP_MARGIN 5
@@ -706,7 +701,7 @@ struct vpConfig {
     float displayedlengthInNmX;
     float displayedlengthInNmY;
 
-    Byte type; // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_ARBITRARY}
+    ViewportType type; // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_ARBITRARY}
     uint id; // id e {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT}
     // CORRECT THIS COMMENT TODO BUG
     //lower left corner of viewport in screen pixel coords (max: window borders)

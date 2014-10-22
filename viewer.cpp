@@ -1364,7 +1364,7 @@ bool Viewer::updateZoomCube() {
     return true;
 }
 
-bool Viewer::userMove(int x, int y, int z, Byte userMoveType, Byte viewportType) {
+bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
