@@ -76,7 +76,8 @@ bool Remote::remoteJump(int x, int y, int z) {
 
     emit userMoveSignal(x - state->viewerState->currentPosition.x,
                         y - state->viewerState->currentPosition.y,
-                        z - state->viewerState->currentPosition.z);
+                        z - state->viewerState->currentPosition.z,
+                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 
     return true;
 }
@@ -199,14 +200,16 @@ bool Remote::remoteWalk(int x, int y, int z) {
         }
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
-            emit userMoveSignal(doMove.x, doMove.y, doMove.z);
+            emit userMoveSignal(doMove.x, doMove.y, doMove.z,
+                                USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
         }
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
         msleep(timePerStep);
     }
-    emit userMoveSignal(round(residuals.x), round(residuals.y), round(residuals.z));
+    emit userMoveSignal(round(residuals.x), round(residuals.y), round(residuals.z),
+                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     return true;
 }
 

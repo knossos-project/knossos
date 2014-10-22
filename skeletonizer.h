@@ -40,7 +40,7 @@ signals:
     void autosaveSignal();
     void updateToolsSignal();
     void updateTreeviewSignal();
-    void userMoveSignal(int x, int y, int z);
+    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
     void setRecenteringPositionSignal(int x, int y, int z);
     void setSimpleTracing(bool active);
 

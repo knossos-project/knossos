@@ -349,14 +349,34 @@ void Loader::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos,
     float distance_from_plane, distance_from_origin, dot_product;
     int i = 0;
 
-    distance_from_plane = CALC_POINT_DISTANCE_FROM_PLANE(currentMetricPos, direction);
     distance_from_origin = CALC_VECTOR_NORM(currentMetricPos);
-    dot_product = CALC_DOT_PRODUCT(currentMetricPos, direction);
 
-    metrics[i++] = ( (distance_from_plane <= 1) || (distance_from_origin <= halfSc) ) ? -1.0 : 1.0;
-    metrics[i++] = distance_from_plane > 1 ? 1.0 : -1.0;
-    metrics[i++] = dot_product < 0 ?  1.0 : -1.0;
-    metrics[i++] = distance_from_plane;
+    switch (state->loaderUserMoveType) {
+    case USERMOVE_HORIZONTAL:
+    case USERMOVE_DRILL:
+        distance_from_plane = CALC_POINT_DISTANCE_FROM_PLANE(currentMetricPos, direction);
+        dot_product = CALC_DOT_PRODUCT(currentMetricPos, direction);
+
+        if (USERMOVE_HORIZONTAL == state->loaderUserMoveType) {
+            metrics[i++] = (0 == distance_from_plane ? -1.0 : 1.0);
+            metrics[i++] = (0 == INNER_MULT_VECTOR(currentMetricPos) ? -1.0 : 1.0);
+        }
+        else {
+            metrics[i++] = (( (distance_from_plane <= 1) || (distance_from_origin <= halfSc) ) ? -1.0 : 1.0);
+            metrics[i++] = (distance_from_plane > 1 ? 1.0 : -1.0);
+            metrics[i++] = (dot_product < 0 ?  1.0 : -1.0);
+            metrics[i++] = distance_from_plane;
+        }
+        break;
+    case USERMOVE_NEUTRAL:
+        // Priorities are XY->YZ->XZ
+        metrics[i++] = (0 == currentMetricPos.z ? -1.0 : 1.0);
+        metrics[i++] = (0 == currentMetricPos.x ? -1.0 : 1.0);
+        metrics[i++] = (0 == currentMetricPos.y ? -1.0 : 1.0);
+        break;
+    default:
+        break;
+    }
     metrics[i++] = distance_from_origin;
 
     this->currentMaxMetric = MAX(this->currentMaxMetric, i);
@@ -432,6 +452,8 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int)floorf(floatHalfSc);
 
+    CPY_COORDINATE(direction, state->loaderUserMoveViewportDirection);
+    /*
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
         dx += (float)state->currentDirections[i].x;
         dy += (float)state->currentDirections[i].y;
@@ -447,6 +469,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         direction_norm = CALC_VECTOR_NORM(direction);
     }
     NORM_VECTOR(direction, direction_norm);
+    */
 
     cubeElemCount = state->cubeSetElements;
     DcArray = (LO_Element*)malloc(sizeof(DcArray[0]) * cubeElemCount);
@@ -468,6 +491,11 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
             }
         }
     }
+
+    // Metrics are done, reset user-move variables
+    state->loaderUserMoveType = USERMOVE_NEUTRAL;
+    SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
+
     //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
     std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs){
         return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) < 0;

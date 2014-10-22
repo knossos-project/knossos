@@ -913,7 +913,7 @@ void MainWindow::coordinateEditingFinished() {
     const auto viewer_offset_x = xField->value() - 1 - state->viewerState->currentPosition.x;
     const auto viewer_offset_y = yField->value() - 1 - state->viewerState->currentPosition.y;
     const auto viewer_offset_z = zField->value() - 1 - state->viewerState->currentPosition.z;
-    emit userMoveSignal(viewer_offset_x, viewer_offset_y, viewer_offset_z);
+    emit userMoveSignal(viewer_offset_x, viewer_offset_y, viewer_offset_z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 void MainWindow::saveSettings() {

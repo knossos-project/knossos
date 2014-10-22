@@ -124,7 +124,7 @@ signals:
     void updateToolsSignal();
     void updateTreeviewSignal();
     void updateCommentsTableSignal();
-    void userMoveSignal(int x, int y, int z);
+    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
 
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);

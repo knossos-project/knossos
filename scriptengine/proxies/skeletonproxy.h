@@ -22,7 +22,7 @@ signals:
     void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
     void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z);
+    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
     void updateTreeViewSignal();
 };
 

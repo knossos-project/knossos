@@ -426,7 +426,8 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
                         emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0);
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
+                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
@@ -441,7 +442,8 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
                         emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideY);
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideY,
+                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
@@ -456,7 +458,8 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
                         emit userMoveSignal(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideX);
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideX,
+                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
@@ -750,11 +753,11 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
         const auto type = state->viewerState->vpConfigs[VPfound].type;
         if (type == VIEWPORT_XY) {
-            emit userMoveSignal(0, 0, multiplier);
+            emit userMoveSignal(0, 0, multiplier, USERMOVE_DRILL, type);
         } else if (type == VIEWPORT_XZ) {
-            emit userMoveSignal(0, multiplier, 0);
+            emit userMoveSignal(0, multiplier, 0, USERMOVE_DRILL, type);
         } else if (type == VIEWPORT_YZ) {
-            emit userMoveSignal(multiplier, 0, 0);
+            emit userMoveSignal(multiplier, 0, 0, USERMOVE_DRILL, type);
         } else if (type == VIEWPORT_ARBITRARY) {
             emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x * multiplier
                 , state->viewerState->vpConfigs[VPfound].n.y * multiplier
@@ -769,18 +772,23 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
 
+    const auto type = state->viewerState->vpConfigs[VPfound].type;
+
     // new qt version
     if(event->key() == Qt::Key_Left) {
         if(shift) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(-10 * state->magnification, 0, 0);
+                emit userMoveSignal(-10 * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(-10 * state->magnification, 0, 0);
+                emit userMoveSignal(-10 * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, 0, -10 * state->magnification);
+                emit userMoveSignal(0, 0, -10 * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -790,15 +798,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 break;
             }
         } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0);
+                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0);
+                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification);
+                emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].v1.x
@@ -812,15 +823,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Right) {
         if(shift) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(10 * state->magnification, 0, 0);
+                emit userMoveSignal(10 * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(10 * state->magnification, 0, 0);
+                emit userMoveSignal(10 * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, 0, 10 * state->magnification);
+                emit userMoveSignal(0, 0, 10 * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -830,15 +844,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                  break;
             }
         } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0);
+                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0);
+                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification);
+                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].v1.x
@@ -852,15 +869,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Down) {
         if(shift) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
                 case VIEWPORT_XY:
-                    emit userMoveSignal(0, -10 * state->magnification, 0);
+                    emit userMoveSignal(0, -10 * state->magnification, 0,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_XZ:
-                    emit userMoveSignal(0, 0, -10 * state->magnification);
+                    emit userMoveSignal(0, 0, -10 * state->magnification,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_YZ:
-                    emit userMoveSignal(0, -10 * state->magnification, 0);
+                    emit userMoveSignal(0, -10 * state->magnification, 0,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_ARBITRARY:
                     emit userMoveArbSignal(
@@ -870,15 +890,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                      break;
             }
         } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
                 case VIEWPORT_XY:
-                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0);
+                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_XZ:
-                    emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification);
+                    emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_YZ:
-                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0);
+                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0,
+                                        USERMOVE_HORIZONTAL, type);
                     break;
                 case VIEWPORT_ARBITRARY:
                     emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].v2.x
@@ -892,15 +915,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Up) {
         if(shift) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(0, 10 * state->magnification, 0);
+                emit userMoveSignal(0, 10 * state->magnification, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(0, 0, 10 * state->magnification);
+                emit userMoveSignal(0, 0, 10 * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, 10 * state->magnification, 0);
+                emit userMoveSignal(0, 10 * state->magnification, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -910,15 +936,18 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 break;
             }
         } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
-                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0);
+                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_XZ:
-                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification);
+                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_YZ:
-                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0);
+                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0,
+                                    USERMOVE_HORIZONTAL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].v2.x
@@ -932,7 +961,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_R) {
         state->viewerState->walkOrth = 1;
-        switch(state->viewerState->vpConfigs[VPfound].type) {
+        switch(type) {
         case VIEWPORT_XY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
                                               state->viewerState->currentPosition.y,
@@ -967,7 +996,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_E) {
         state->viewerState->walkOrth = 1;
-        switch(state->viewerState->vpConfigs[VPfound].type) {
+        switch(type) {
         case VIEWPORT_XY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
                                               state->viewerState->currentPosition.y,
@@ -1006,18 +1035,21 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
             const float shiftMultiplier = shift? 10 : 1;
             const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
-            switch(state->viewerState->vpConfigs[VPfound].type) {
+            switch(type) {
             case VIEWPORT_XY:
                 state->repeatDirection = {{0, 0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XY]}};
-                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
+                        USERMOVE_DRILL, type);
                 break;
             case VIEWPORT_XZ:
                 state->repeatDirection = {{0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XZ], 0}};
-                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
+                        USERMOVE_DRILL, type);
                 break;
             case VIEWPORT_YZ:
                 state->repeatDirection = {{multiplier * state->viewerState->vpKeyDirection[VIEWPORT_YZ], 0, 0}};
-                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
+                        USERMOVE_DRILL, type);
                 break;
             case VIEWPORT_ARBITRARY:
                 state->repeatDirection = {{

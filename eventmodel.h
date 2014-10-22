@@ -86,7 +86,7 @@ public:
     int mousePosY;
     bool grap;
 signals:
-    void userMoveSignal(int x, int y, int z);
+    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
     void userMoveArbSignal(float x, float y, float z);
     void rotationSignal(float x, float y, float z, float angle);
     void pasteCoordinateSignal();

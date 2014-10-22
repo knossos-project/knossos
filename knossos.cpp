@@ -595,6 +595,8 @@ bool Knossos::configDefaults() {
 
     state->loadSignal = false;
     state->loaderBusy = false;
+    state->loaderUserMoveType = USERMOVE_NEUTRAL;
+    SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
     state->loaderDummy = false;
     state->loaderDecompThreadsNumber = QThread::idealThreadCount();
     state->remoteSignal = false;

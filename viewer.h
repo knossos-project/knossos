@@ -98,7 +98,7 @@ protected:
     void rewire();
 public slots:
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    bool userMove(int x, int y, int z);
+    bool userMove(int x, int y, int z, Byte userMoveType, Byte viewportType);
     bool userMove_arb(float x, float y, float z);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();

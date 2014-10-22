@@ -1,6 +1,8 @@
 #ifndef DATASETLOADWIDGET_H
 #define DATASETLOADWIDGET_H
 
+#include "knossos-global.h"
+
 #include <QCheckBox>
 #include <QDialog>
 
@@ -36,7 +38,7 @@ signals:
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetCompression();
-    void userMoveSignal(int x, int y, int z);
+    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
 public slots:

@@ -317,7 +317,8 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
             state->viewerState->currentPosition.z = 0;
-    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength);
+    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength,
+                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 
     this->waitForLoader();
 
@@ -357,7 +358,8 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     emit userMoveSignal(
                 state->cubeEdgeLength,
                 state->cubeEdgeLength,
-                state->cubeEdgeLength);
+                state->cubeEdgeLength,
+                USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     // reset skeleton viewport
     if(state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;

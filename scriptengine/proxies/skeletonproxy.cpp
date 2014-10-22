@@ -411,7 +411,7 @@ bool SkeletonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val
 }
 
 void SkeletonProxy::set_current_position(int x, int y, int z) {
-    emit signalDelegate->userMoveSignal(x, y, z);
+    emit signalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 Coordinate SkeletonProxy::get_current_position() {

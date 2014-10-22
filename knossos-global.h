@@ -110,6 +110,12 @@
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
 values. The XY vp always used. */
 #define VIEWPORT_ORTHO 0
+
+// UserMove type
+#define USERMOVE_DRILL 0
+#define USERMOVE_HORIZONTAL 1
+#define USERMOVE_NEUTRAL 2
+
 // default position of xy viewport and default viewport size
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
@@ -387,6 +393,12 @@ public:
     bool loadSignal;
     // Is loader currently busy
     bool loaderBusy;
+    // How user movement was generated
+    Byte loaderUserMoveType;
+    // Direction of user movement in case of drilling,
+    // or normal to viewport plane in case of horizontal movement.
+    // Left unset in neutral movement.
+    Coordinate loaderUserMoveViewportDirection;
     // Should loader load real data or just dummy do-nothing
     bool loaderDummy;
     int loaderDecompThreadsNumber;
@@ -1173,6 +1185,8 @@ struct skeletonState {
 
 #define ABS(x) (((x) >= 0) ? (x) : -(x))
 #define SQR(x) ((x)*(x))
+
+#define INNER_MULT_VECTOR(v) ((v).x * (v).y * (v).z)
 
 #define CALC_VECTOR_NORM(v) \
     ( \

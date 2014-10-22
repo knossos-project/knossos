@@ -1169,8 +1169,10 @@ void Viewer::run() {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
-            if (state->viewerState->vpConfigs[0].type != VIEWPORT_ARBITRARY) {
-                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
+            const auto type = state->viewerState->vpConfigs[0].type;
+            if (type != VIEWPORT_ARBITRARY) {
+                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
+                        USERMOVE_DRILL, type);
             } else {
                 userMove_arb(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
             }
@@ -1362,7 +1364,7 @@ bool Viewer::updateZoomCube() {
     return true;
 }
 
-bool Viewer::userMove(int x, int y, int z) {
+bool Viewer::userMove(int x, int y, int z, Byte userMoveType, Byte viewportType) {
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -1407,6 +1409,34 @@ bool Viewer::userMove(int x, int y, int z) {
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;
 
+        state->loaderUserMoveType = userMoveType;
+        Coordinate direction;
+        switch (userMoveType) {
+        case USERMOVE_DRILL:
+            SET_COORDINATE(direction, x, y, z);
+            break;
+        case USERMOVE_HORIZONTAL:
+            qDebug() << "UserMove: viewportType = " << viewportType;
+            switch (viewportType) {
+            case VIEWPORT_XZ:
+                SET_COORDINATE(direction, 0, 1, 0);
+                break;
+            case VIEWPORT_YZ:
+                SET_COORDINATE(direction, 1, 0, 0);
+                break;
+            case VIEWPORT_XY:
+            default:
+                SET_COORDINATE(direction, 0, 0, 1);
+                break;
+            }
+            break;
+        case USERMOVE_NEUTRAL:
+            SET_COORDINATE(direction, 0, 0, 0);
+            break;
+        default:
+            break;
+        }
+        CPY_COORDINATE(state->loaderUserMoveViewportDirection, direction);
         sendLoadSignal(viewerState->currentPosition.x,
                        viewerState->currentPosition.y,
                        viewerState->currentPosition.z,
@@ -1428,7 +1458,9 @@ bool Viewer::userMove_arb(float x, float y, float z) {
     step.y = roundFloat(moveCache.y);
     step.z = roundFloat(moveCache.z);
     SUB_COORDINATE(moveCache, step);
-    return userMove(step.x, step.y, step.z);
+    // In fact the movement most likely is not neutral, but since arbitrary horizontal or drilling movement
+    // makes little difference for the (currently) orthogonal loading order, we leave it as such
+    return userMove(step.x, step.y, step.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 
