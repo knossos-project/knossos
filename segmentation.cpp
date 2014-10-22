@@ -430,6 +430,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             obj.comment = comment;
         } else {
             qDebug() << "loadMergelist fail";
+            break;
         }
     }
     blockSignals(false);
