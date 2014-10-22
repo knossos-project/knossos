@@ -122,7 +122,7 @@ void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
             qDebug() << "stdOverlay.lut corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
         }
     } else {
-        qDebug() << "coult not open »stdOverlay.lut«";
+        qDebug() << "could not open »stdOverlay.lut«";
     }
 }
 
