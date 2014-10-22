@@ -1799,13 +1799,10 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
         vp_height = refVPYZ->height();
     }
 
-    const GLdouble center_x = x + width/2;
-    const GLdouble center_y = vp_height - (y + height/2);//window y top→bottom, ogl y bottom→top
-
     GLint openGLviewport[4];
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
-    gluPickMatrix(center_x, center_y, width, height, openGLviewport);
+    gluPickMatrix(x, vp_height - y, width, height, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
