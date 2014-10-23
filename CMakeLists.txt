@@ -30,8 +30,8 @@ find_package(Boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(PythonLibs 2  REQUIRED)#we sadly need to find the python includes ourselves
-find_package(PythonQt5 REQUIRED)
+find_package(Qt5Python27 REQUIRED)
+find_package(Qt5Python27_QtAll REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL PrintSupport Sql Svg WebKitWidgets UiTools Widgets Xml)
@@ -84,7 +84,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIRS}
-    ${PythonQt_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
@@ -92,19 +91,15 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
-    PythonQt5_QtAll
-    PythonQt5
+    Qt5Python27
+    Qt5Python27_QtAll
     TurboJPEG::TurboJPEG
     Qt5::Core
     Qt5::Gui
     Qt5::Help
     Qt5::Network
     Qt5::OpenGL
-    Qt5::PrintSupport
     Qt5::Sql
-    Qt5::Svg
-    Qt5::UiTools
-    Qt5::WebKitWidgets
     Qt5::Widgets
     Qt5::Xml
     QuaZip::QuaZip
