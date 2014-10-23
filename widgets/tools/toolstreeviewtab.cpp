@@ -597,7 +597,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
 
     switch(item->column()) {
     case NodeTable::NODE_COMMENT: {
-        auto matches = !nodeSearchField->text().isEmpty() && matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
+        auto matches = nodeSearchField->text().isEmpty() || matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
         if (item->text().isEmpty()) {
             if (activeNode->comment) {
                 Skeletonizer::delComment(activeNode->comment, 0);
@@ -619,8 +619,8 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
         } else if (matches) {//add matching
             recreateNodesTable();
         }
-    }
         break;
+    }
     case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
             setText(activeNodeTable, item, QString::number(activeNode->position.x + 1));
@@ -682,24 +682,24 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
                 setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
             }
         }
-        auto matches = !nodeSearchField->text().isEmpty() && matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
+        auto matches = nodeSearchField->text().isEmpty() || matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
         if(selectedNode->comment) {
             if (item->text().isEmpty()) {
                 Skeletonizer::delComment(selectedNode->comment, 0);
                 matches &= !commentNodesChckBx->isChecked();//no cmt anymore but cmts wanted
             } else {
-                Skeletonizer::addComment(item->text(), selectedNode, 0);
+                Skeletonizer::editComment(selectedNode->comment, 0, item->text(), selectedNode, 0);
             }
         } else {
-            Skeletonizer::editComment(selectedNode->comment, 0, item->text(), selectedNode, 0);
+            Skeletonizer::addComment(item->text(), selectedNode, 0);
         }
         if (!matches) {
             nodeTable->selectionProtection = true;
             nodeTable->removeRow(item->row());
             nodeTable->selectionProtection = false;
         }
-    }
         break;
+    }
     case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
             setText(nodeTable, item, QString::number(selectedNode->position.x + 1));
