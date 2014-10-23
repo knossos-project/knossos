@@ -1,6 +1,8 @@
 #include "segmentation.h"
 
 #include "knossos.h"
+#include "loader.h"
+#include "viewer.h"
 
 #include <QTextStream>
 
@@ -89,6 +91,7 @@ void Segmentation::clear() {
     touched_subobject_id = 0;
 
     loader->snappyCacheClear();
+    state->viewer->changeDatasetMag(DATA_SET);//reload segmentation cubes
 
     emit resetData();
     emit resetSelection();

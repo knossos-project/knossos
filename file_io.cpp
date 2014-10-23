@@ -33,7 +33,7 @@ QString annotationFileDefaultPath() {
 void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad, bool *isSuccess) {
     bool annotationSuccess = false;
     bool mergelistSuccess = false;
-    QRegExp cubeRegEx = QRegExp(".*x([0-9]*)y([0-9]*)z([0-9]*)\\.seg.sz");
+    QRegExp cubeRegEx = QRegExp(R"regex(.*x([0-9]*)y([0-9]*)z([0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {

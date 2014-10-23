@@ -554,6 +554,13 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
                         const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
                         const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
                         success = actualSize == expectedSize;
+                    } else {//legacy
+                        QFile file(cubeName + ".raw.segmentation.raw");
+                        if (file.open(QIODevice::ReadOnly)) {
+                            const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
+                            const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
+                            success = actualSize == expectedSize;
+                        }
                     }
                 }
 
