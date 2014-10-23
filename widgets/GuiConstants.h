@@ -73,6 +73,7 @@ const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";
 const QString DEPTH_CUTOFF = "depth_cutoff";
+const QString SHOW_NODE_COMMENTS = "show_node_comments";
 const QString BIAS = "bias";
 const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";

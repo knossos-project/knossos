@@ -35,6 +35,8 @@
 #include "viewport.h"
 #include "segmentation.h"
 
+bool Viewport::showNodeComments = false;
+
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {

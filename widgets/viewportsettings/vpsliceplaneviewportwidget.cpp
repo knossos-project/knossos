@@ -125,6 +125,7 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(highlightIntersectionsCheckBox, 2, 0);
     gridLayout->addWidget(depthCutoffLabel, 4, 0);
     gridLayout->addWidget(depthCutoffSpinBox, 4, 1);
+    gridLayout->addWidget(&showNodeCommentsCheckBox, 5, 0);
     gridLayout->addWidget(colorLookupTablesLabel, 7, 0);
     gridLayout->addWidget(datasetDynamicRangeLabel, 7, 3);
     gridLayout->addWidget(line3, 8, 0, 1, 2);
@@ -153,6 +154,9 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(datasetLinearFilteringCheckBox, SIGNAL(clicked(bool)), this, SLOT(datasetLinearFilteringChecked(bool)));
     connect(highlightIntersectionsCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightIntersectionsChecked(bool)));
     connect(depthCutoffSpinBox, SIGNAL(valueChanged(double)), this, SLOT(depthCutoffChanged(double)));
+    QObject::connect(&showNodeCommentsCheckBox, &QCheckBox::clicked, [&](bool checked){
+        Viewport::showNodeComments = checked;
+    });
     QObject::connect(useOwnDatasetColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked);
     connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
     QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsClicked);

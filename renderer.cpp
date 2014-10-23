@@ -2309,11 +2309,17 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                                      currentColor, currentVP, viewportType);
                     }
                 }
-                /* Render the node description only when option is set. */
-                if(state->skeletonState->showNodeIDs) {
+                // Render the node description
+                if(currentNode != state->skeletonState->activeNode) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
-                    renderText(currentNode->position, QString::number(currentNode->nodeID));
+                    QString id = (state->skeletonState->showNodeIDs)? QString::number(currentNode->nodeID) : "";
+                    QString comment = (currentVP != VIEWPORT_SKELETON && Viewport::showNodeComments && currentNode->comment)?
+                                QString(":%1").arg(currentNode->comment->content) : "";
+                    if(id.isEmpty() == false || comment.isEmpty() == false) {
+                        renderText(currentNode->position, id.append(comment));
+                    }
                 }
+
                 lastRenderedNode = currentNode;
             }
 
@@ -2373,24 +2379,26 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
        && (state->skeletonState->displayMode & DSP_WHOLE
            || (state->skeletonState->displayMode & DSP_SELECTED_TREES
                && state->skeletonState->activeNode->correspondingTree->selected))) {
+        nodeListElement *active = state->skeletonState->activeNode;
         /* Set the default color for the active node */
         SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
 
         /* Color gets changes in case there is a comment & conditional comment
         highlighting */
-        Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
+        Skeletonizer::setColorFromNode(active, &currentColor);
         currentColor.a = 0.2f;
 
         if(state->skeletonState->overrideNodeRadiusBool)
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
+            renderSphere(&(active->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
         else
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, currentColor, currentVP, viewportType);
+            renderSphere(&(active->position), active->radius * 1.5, currentColor, currentVP, viewportType);
 
-        /* Description of active node is always rendered,
-        ignoring state->skeletonState->showNodeIDs */
-
+        // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
+        // Comment should only be rendered in orthogonal viewports.
         glColor4f(0., 0., 0., 1.);
-        renderText(state->skeletonState->activeNode->position, QString::number(state->skeletonState->activeNode->nodeID));
+        QString description = (currentVP != VIEWPORT_SKELETON && Viewport::showNodeComments && active->comment)?
+                    QString("%1:%2").arg(active->nodeID).arg(active->comment->content) : QString::number(active->nodeID);
+        renderText(active->position, description);
     }
 
     /* Restore modelview matrix */

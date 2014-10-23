@@ -32,8 +32,8 @@
 #include <QHBoxLayout>
 #include <QSlider>
 #include <QWidget>
+#include <QCheckBox>
 
-class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
 class QSpinBox;
@@ -75,6 +75,7 @@ protected:
     QCheckBox *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
+    QCheckBox showNodeCommentsCheckBox{"Show node comments"};
 
     QLabel *vpOrientationLabel;
     QCheckBox *lockVpOrientationCheckbox;

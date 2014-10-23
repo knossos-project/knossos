@@ -57,6 +57,7 @@ public:
     void hideButtons();
     void showButtons();
     EventModel *eventDelegate;
+    static bool showNodeComments;
 
 protected:
     void initializeGL();

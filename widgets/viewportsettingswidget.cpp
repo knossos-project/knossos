@@ -137,8 +137,8 @@ void ViewportSettingsWidget::loadSettings() {
 
     //sp vp settings
     const auto intersections = settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool();
-    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(intersections);
-    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->clicked(intersections);
+    slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(intersections);
+    slicePlaneViewportWidget->highlightIntersectionsCheckBox->clicked(intersections);
 
     const auto linearFiltering = settings.value(DATASET_LINEAR_FILTERING, true).toBool();
     slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked(linearFiltering);
@@ -147,6 +147,10 @@ void ViewportSettingsWidget::loadSettings() {
     const auto depthCutoff = settings.value(DEPTH_CUTOFF, 5.).toDouble();
     slicePlaneViewportWidget->depthCutoffSpinBox->setValue(depthCutoff);
     slicePlaneViewportWidget->depthCutoffSpinBox->valueChanged(depthCutoff);
+
+    const auto showNodeComments = settings.value(SHOW_NODE_COMMENTS, false).toBool();
+    slicePlaneViewportWidget->showNodeCommentsCheckBox.setChecked(showNodeComments);
+    slicePlaneViewportWidget->showNodeCommentsCheckBox.clicked(showNodeComments);
 
     slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE, "").toString());
     if (!slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
@@ -241,6 +245,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(HIGHLIGHT_INTERSECTIONS, slicePlaneViewportWidget->highlightIntersectionsCheckBox->isChecked());
     settings.setValue(DATASET_LINEAR_FILTERING, slicePlaneViewportWidget->datasetLinearFilteringCheckBox->isChecked());
     settings.setValue(DEPTH_CUTOFF, slicePlaneViewportWidget->depthCutoffSpinBox->value());
+    settings.setValue(SHOW_NODE_COMMENTS, slicePlaneViewportWidget->showNodeCommentsCheckBox.isChecked());
     settings.setValue(BIAS, slicePlaneViewportWidget->biasSpinBox->value());
     settings.setValue(RANGE_DELTA, slicePlaneViewportWidget->rangeDeltaSpinBox->value());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, slicePlaneViewportWidget->segmenationOverlaySlider.value());
