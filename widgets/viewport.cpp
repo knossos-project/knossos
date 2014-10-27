@@ -511,7 +511,6 @@ void Viewport::zoomOutSkeletonVP() {
         if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
             state->skeletonState->zoomLevel = SKELZOOMMIN;
         }
-        state->skeletonState->viewChanged = true;
         emit updateDatasetOptionsWidget();
     }
 }
@@ -521,7 +520,6 @@ void Viewport::zoomInSkeletonVP() {
         if(state->skeletonState->zoomLevel > SKELZOOMMAX) {
             state->skeletonState->zoomLevel = SKELZOOMMAX;
         }
-        state->skeletonState->viewChanged = true;
         emit updateDatasetOptionsWidget();
     }
 }

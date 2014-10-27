@@ -53,16 +53,12 @@
 
 #define KVERSION "4.1 Pre Alpha"
 
-#define FAIL    -1
-
-#define MIN_N   1
 #ifndef MAX_PATH
 #define MAX_PATH 256
 #endif
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
-
 
 #define NUM_MAG_DATASETS 65536
 
@@ -75,11 +71,6 @@
 // The edge length of a datacube is 2^N, which makes the size of a
 // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
 // So N cannot be larger than 10.
-#define MAX_N   10
-#define MIN_M   1
-#define MAX_M   10
-#define MIN_BOUNDARY    1
-#define MAX_BOUNDARY    9999
 
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
@@ -92,9 +83,6 @@
 #define LL_BEFORE   0
 #define LL_AFTER    2
 
-//Slicing Mode
-#define MODE_ORTHO 0
-#define MODE_ARBITRARY 1
  //	For the viewer.
 #define	SLICE_XY	0
 #define SLICE_XZ	1
@@ -124,15 +112,6 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define SKELVP_R180 4
 #define SKELVP_RESET 5
 
-
-#define X_AXIS 0
-#define Y_AXIS 1
-#define Z_AXIS 3
-
-#define USER_YES 1
-#define USER_NO 0
-#define USER_UNDEFINED 2
-
 // MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
 // a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
 // pixel size instead of 20 nm
@@ -141,13 +120,8 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define DATA_SET 3
 #define NO_MAG_CHANGE 0
 
-#define CUBE_DATA       0
-#define CUBE_OVERLAY    1
-
-#define ON_CLICK_RECENTER 1
 #define ON_CLICK_DRAG    0
-#define ON_CLICK_SELECT   2
-#define SKELETONIZER      2
+#define ON_CLICK_RECENTER 1
 
 // vp zoom max < vp zoom min, because vp zoom level translates to displayed edgeLength.
 // close zoom -> smaller displayed edge length
@@ -156,49 +130,16 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
-#define NUM_COMMSHORTCUTS 5 //number of shortcut places for comments
 #define NUM_COMMSUBSTR 5 //number of comment substrings for conditional comment node coloring/radii
 
 //  For the Lookup tables
-
  #define RGB_LUTSIZE  768
  #define RGBA_LUTSIZE 1024
  #define MAX_COLORVAL  255.
 
-//  For the GUI.
-
-#define MAX_RECENT_FILES 10
-
-// 	For the remote.
-
-#define MAX_BUFFER_SIZE 52428800 // 50 MiB
-
-// USEREVENTS
-#define USEREVENT_JUMP 5
-#define USEREVENT_MOVE 6
-#define USEREVENT_REDRAW 7
-#define USEREVENT_NOAUTOSAVE 8
-#define USEREVENT_REALQUIT 9
-
-//  For custom key bindings
-
-#define ACTION_NONE 0
-
 //  For the skeletonizer
-
 #define SEGMENT_FORWARD 1
 #define SEGMENT_BACKWARD 2
-
-//#define DISPLAY_WHOLE_SKELETON 0
-//#define DISPLAY_CURRENTCUBE_SKELETON 1
-//#define DISPLAY_ACTIVETREE_SKELETON 2
-//#define DISPLAY_NOTHING_SKELETON 3
-//#define DISPLAY_ONLYSLICEPLANE_SKELETON 4
-//#define DISPLAY_SEGS_AS_LINES 5
-//#define DISPLAY_LINES_POINTS_ONLY 6
-
-#define NODE_VISITED 1
-#define NODE_PRISTINE 0
 
 #define DSP_WHOLE           1
 #define DSP_CURRENTCUBE      2
@@ -210,37 +151,10 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define CATCH_RADIUS            10
 #define JMP_THRESHOLD           500 //for moving to next/prev node
 
-#define CURRENT_MAG_COORDINATES     0
-#define ORIGINAL_MAG_COORDINATES    1
-
 #define ROTATIONSTATEXY    0
 #define ROTATIONSTATEXZ    1
 #define ROTATIONSTATEYZ    2
 #define ROTATIONSTATERESET 3
-
-/* command types */
-
-//next line should be changeable for user later...
-#define CMD_MAXSTEPS 10 // Must not be 0!!
-
-#define CMD_DELTREE 1 //delete tree
-#define CMD_ADDTREE 2 //add tree
-#define CMD_SPLITTREE 3 //split tree
-#define CMD_MERGETREE 4 //merge tree
-#define CMD_CHGTREECOL 5 //change tree color
-#define CMD_CHGACTIVETREE 6 //change active tree
-
-#define CMD_DELNODE 7 //delete node
-#define CMD_ADDNODE 8 //add node
-#define CMD_LINKNODE 9 //add segment
-#define CMD_UNLINKNODE 10 //delete segment
-#define CMD_PUSHBRANCH 11 //add branchpoint
-#define CMD_POPBRANCH 12 //pop branchpoint
-#define CMD_CHGACTIVENODE 13 //change active node
-
-#define CMD_ADDCOMMENT 14 //add comment
-#define CMD_CHGCOMMENT 15 //change comment
-#define CMD_DELCOMMENT 16 //delete comment
 
 #define SLOW 1000
 #define FAST 10
@@ -360,11 +274,6 @@ struct stack {
     int size;
 };
 
-struct assignment {
-    char *lval;
-    char *rval;
-};
-
 /**
   * @stateInfo
   * @brief stateInfo holds everything we need to know about the current instance of Knossos
@@ -455,8 +364,6 @@ public:
 
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
-    //Coordinate loaderBoundary;
-    Coordinate *magBoundaries[int_log(NUM_MAG_DATASETS)+1];
 
     // pixel-to-nanometer scale
     floatCoordinate scale;
@@ -491,7 +398,6 @@ public:
     QMutex *protectLoaderSlots;
 
     // This should be accessed through sendRemoteSignal() only.
-
     QMutex *protectRemoteSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
@@ -499,14 +405,6 @@ public:
 
     QMutex *protectCube2Pointer;
 
-    //  Protect the network output buffer and the network peers list
-
-
-    QMutex *protectOutBuffer;
-    QMutex *protectPeerList;
-
-    //  Protect changes to the skeleton for network synchronization.
-    QMutex *protectSkeleton;
     QElapsedTimer time; // it is not allowed to modify this object
 
  //---  Info about the state of KNOSSOS in general. --------
@@ -761,17 +659,7 @@ struct viewerState {
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-    //Flag to indicate user repositioning
-    uint userRepositioning;
-
     float depthCutOff;
-
-    //Flag to indicate active mouse motion tracking: 0 off, 1 on
-    int motionTracking;
-
-    //Stores the current window size in screen pixels
-    uint screenSizeX;
-    uint screenSizeY;
 
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
@@ -813,7 +701,6 @@ struct viewerState {
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
     uint clickReaction;
-    bool superCubeChanged;
 
     struct guiConfig *gui;
 
@@ -835,17 +722,11 @@ struct viewerState {
     bool uniqueColorMode;
 
     // Advanced Tracing Modes Stuff
-
-    bool autoTracingEnabled;
     navigationMode autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
 
-    int saveCoords;
-    Coordinate clickedCoordinate;
     float cumDistRenderThres;
-    int showPosSizButtons;
-    int viewportOrder[4];
 
     bool defaultVPSizeAndPos;
     QDateTime lastIdleTimeCall;
@@ -944,42 +825,6 @@ public:
     nodeListElement *target;
 };
 
-struct serialSkeletonListElement {
-    struct serialSkeletonListElement *next;
-    struct serialSkeletonListElement *previous;
-    Byte* content;
-};
-
-struct skeletonDC {
-    struct skeletonDCsegment *firstSkeletonDCsegment;
-    struct skeletonDCnode *firstSkeletonDCnode;
-};
-
-struct skeletonDCnode {
-    struct nodeListElement *node;
-    struct skeletonDCnode *next;
-};
-
-struct skeletonDCsegment {
-    struct segmentListElement *segment;
-    struct skeletonDCsegment *next;
-};
-
-struct peerListElement {
-    uint id;
-    char *name;
-    floatCoordinate scale;
-    Coordinate offset;
-
-    struct peerListElement *next;
-};
-
-struct IOBuffer {
-    uint size;      // The current maximum size
-    uint length;    // The current amount of data in the buffer
-    Byte *data;
-};
-
 class mesh {
 public:
     mesh();
@@ -999,13 +844,6 @@ public:
     uint mode;
     uint size;
 };
-
-typedef struct {
-        GLbyte r;
-        GLbyte g;
-        GLbyte b;
-        GLbyte a;
-} color4B;
 
 /**
   * @struct skeletonState
@@ -1029,7 +867,6 @@ struct skeletonState {
     int idleTimeLast;
 
     bool simpleTracing;
-    Hashtable *skeletonDCs;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
     struct nodeListElement *activeNode;
@@ -1037,19 +874,14 @@ struct skeletonState {
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
-    struct serialSkeletonListElement *firstSerialSkeleton;
-    struct serialSkeletonListElement *lastSerialSkeleton;
-
     struct commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
-    char *filterCommentBuffer;
 
     struct stack *branchStack;
 
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
-    uint skeletonDCnumber;
     uint volBoundary;
 
     uint totalComments;
@@ -1072,18 +904,6 @@ struct skeletonState {
 
     float translateX, translateY;
 
-    // Display list,
-    //which renders the skeleton defined in skeletonDisplayMode
-    //(may be same as in displayListSkeletonSkeletonizerVPSlicePlaneVPs
-    GLuint displayListSkeletonSkeletonizerVP;
-    // Display list, which renders the skeleton of the slice plane VPs
-    GLuint displayListSkeletonSlicePlaneVP;
-    // Display list, which applies the basic openGL operations before the skeleton is rendered.
-    //(Light settings, view rotations, translations...)
-    GLuint displayListView;
-    // Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on
-    GLuint displayListDataset;
-
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
 
@@ -1093,15 +913,7 @@ struct skeletonState {
 
     //true, if all display lists must be updated
     bool skeletonChanged;
-    //true, if the view on the skeleton changed
-    bool viewChanged;
-    //true, if dataset parameters (size, ...) changed
-    bool datasetChanged;
-    //true, if only displayListSkeletonSlicePlaneVP must be updated.
-    bool skeletonSliceVPchanged;
-    bool commentsChanged;
 
-    //uint skeletonDisplayMode;
     uint displayMode;
 
     float segRadiusToNodeRadius;
@@ -1134,9 +946,6 @@ struct skeletonState {
     uint lastSaveTicks;
     bool autoSaveBool;
     uint autoSaveInterval;
-    uint saveCnt;
-
-    char *deleteSegment;
 
     float defaultNodeRadius;
 
@@ -1154,12 +963,6 @@ struct skeletonState {
     bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
     char skeletonLastSavedInVersion[32];
-
-    struct cmdList *undoList;
-    struct cmdList *redoList;
-
-    uint serialSkeletonCounter;
-    uint maxUndoSteps;
 };
 
 /* global functions */
@@ -1183,13 +986,6 @@ struct skeletonState {
         sqrt(SQR((v).x) + SQR((v).y) + SQR((v).z)) \
     )
 
-#define NORM_VECTOR(v, norm) \
-    { \
-        (v).x /= (norm); \
-        (v).y /= (norm); \
-        (v).z /= (norm); \
-    }
-
 #define CALC_DOT_PRODUCT(a, b) \
     ( \
         ((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z) \
@@ -1199,24 +995,15 @@ struct skeletonState {
         ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
     )
 
-#define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
-    { \
-        (offset_array)[(direction_index)] = (k); \
-        (offset_array)[((direction_index) + 1) % 3] = (i); \
-        (offset_array)[((direction_index) + 2) % 3] = (j); \
-    }
-
 // This is used by the hash function. It rotates the bits by n to the left. It
 // works analogously to the 8086 assembly instruction ROL and should actually
 // compile to that instruction on a decent compiler (confirmed for gcc).
 // ONLY FOR UNSIGNED 32-BIT INT, of course.
-
 #define ROL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
 // Compute a % b with b being a power of two. This works because a % b will
 // preserve all the bits less significant than the most significant bit
 // of b (if b is a power of two).
-
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 
 #endif

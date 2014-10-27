@@ -39,12 +39,6 @@
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->simpleTracing = false;
 
-    //This number is currently arbitrary, but high values ensure a good performance
-    state->skeletonState->skeletonDCnumber = 8000;
-
-    //Create a new hash-table that holds the skeleton datacubes
-    state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
-
     state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
@@ -63,10 +57,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->showNodeIDs = false;
     state->skeletonState->highlightActiveTree = true;
     state->skeletonState->showIntersections = false;
-
-    state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-    state->skeletonState->displayListView = 0;
-    state->skeletonState->displayListDataset = 0;
 
     state->skeletonState->defaultNodeRadius = 1.5;
     state->skeletonState->overrideNodeRadiusBool = false;
@@ -87,19 +77,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
     memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
 
-    /*
-    state->skeletonState->firstSerialSkeleton = (serialSkeletonListElement *)malloc(sizeof(state->skeletonState->firstSerialSkeleton));
-    state->skeletonState->firstSerialSkeleton->next = NULL;
-    state->skeletonState->firstSerialSkeleton->previous = NULL;
-    state->skeletonState->lastSerialSkeleton = (serialSkeletonListElement *)malloc(sizeof(state->skeletonState->lastSerialSkeleton));
-    state->skeletonState->lastSerialSkeleton->next = NULL;
-    state->skeletonState->lastSerialSkeleton->previous = NULL;
-    state->skeletonState->serialSkeletonCounter = 0;
-    state->skeletonState->maxUndoSteps = 16;
-    */
-
-    state->skeletonState->saveCnt = 0;
-
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
         state->skeletonState->volBoundary = state->boundary.x * 2;
     if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y))
@@ -107,11 +84,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
         state->skeletonState->volBoundary = state->boundary.x * 2;
 
-    state->skeletonState->viewChanged = true;
     state->skeletonState->skeletonChanged = true;
-    state->skeletonState->datasetChanged = true;
-    state->skeletonState->skeletonSliceVPchanged = true;
-    state->skeletonState->commentsChanged = false;
     state->skeletonState->unsavedChanges = false;
     state->skeletonState->askingPopBranchConfirmation = false;
 
@@ -1253,7 +1226,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     }
 
     state->skeletonState->activeNode = node;
-    state->skeletonState->viewChanged = true;
     state->skeletonState->skeletonChanged = true;
 
     clearNodeSelection();
@@ -1919,7 +1891,6 @@ bool Skeletonizer::genTestNodes(uint number) {
             state->skeletonState->currentComment = node->comment;
         }
     }
-    state->skeletonState->commentsChanged = true;
     return true;
 }
 

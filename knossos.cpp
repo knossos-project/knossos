@@ -606,13 +606,10 @@ bool Knossos::configDefaults() {
     state->conditionLoadSignal = new QWaitCondition();
     state->conditionLoadFinished = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
-    state->protectSkeleton = new QMutex(QMutex::Recursive);
     state->protectLoadSignal = new QMutex();
     state->protectLoaderSlots = new QMutex();
     state->protectRemoteSignal = new QMutex();
     state->protectCube2Pointer = new QMutex();
-    state->protectPeerList = new QMutex();
-    state->protectOutBuffer = new QMutex();
 
     // General stuff
     state->boergens = false;
@@ -648,8 +645,6 @@ bool Knossos::configDefaults() {
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.first, 0, 0, 0);
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.second, 0, 0, 0);
 
-    state->viewerState->screenSizeX = 1024;
-    state->viewerState->screenSizeY = 740;
     state->viewerState->filterType = GL_LINEAR;
     state->viewerState->currentPosition.x = 0;
     state->viewerState->currentPosition.y = 0;
@@ -666,7 +661,6 @@ bool Knossos::configDefaults() {
     state->viewerState->autoTracingSteps = 10;
     state->viewerState->recenteringTimeOrth = 500;
     state->viewerState->walkOrth = false;
-    state->viewerState->showPosSizButtons = true;
 
     state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
     if(state->viewerState->vpConfigs == NULL) {
@@ -723,9 +717,6 @@ bool Knossos::configDefaults() {
     state->skeletonState->skeletonTime = 0;
     state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = -1;
-
-    //This number is currently arbitrary, but high values ensure a good performance
-    state->skeletonState->skeletonDCnumber = 8000;
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;

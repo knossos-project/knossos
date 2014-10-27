@@ -631,7 +631,6 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
         state->skeletonState->rotdx += xrel(event->x());
         state->skeletonState->rotdy += yrel(event->y());
-        state->skeletonState->viewChanged = true;
     }
 }
 

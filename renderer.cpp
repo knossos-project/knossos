@@ -973,8 +973,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
         glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-        if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
-
         if (!state->viewerState->uniqueColorMode) {
             renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
         }

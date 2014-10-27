@@ -163,7 +163,6 @@ void DatasetOptionsWidget::skeletonSpinBoxChanged(double value) {
             // difference at least greater than two,
             // so user entered a number instead of clicking the up and down buttons
             state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
-            state->skeletonState->viewChanged = true;
         }
         else { // up or down button pressed, find out which.
             if(value > lastZoomSkel and value < lastZoomSkel + 2) { // user wants to zoom in

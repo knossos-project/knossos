@@ -1370,12 +1370,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     Coordinate lastPosition_dc;
     Coordinate newPosition_dc;
 
-    //The skeleton VP view has to be updated after a current pos change
-    state->skeletonState->viewChanged = true;
-    /* @todo case decision for skeletonizer */
-    if(state->skeletonState->showIntersections) {
-        state->skeletonState->skeletonSliceVPchanged = true;
-    }
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
@@ -1407,8 +1401,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
-        state->viewerState->superCubeChanged = true;
-
         state->loaderUserMoveType = userMoveType;
         Coordinate direction;
         switch (userMoveType) {
@@ -1485,10 +1477,6 @@ bool Viewer::recalcTextureOffsets() {
     uint i;
     float midX = 0.,midY = 0.;
 
-    /* Every time the texture offset coords change,
-    the skeleton VP must be updated. */
-    state->skeletonState->viewChanged = true;
-    //skeletonizer->viewChanged = true;
     calcDisplayedEdgeLength();
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
