@@ -622,37 +622,32 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
                             }
                         }
                     }
-                    else {
-                        if (LM_FTP != state->loadMode) {
-                            fullCubeName = cubeName + ".seg.sz";
-                            QFile file(fullCubeName);//snappy
-                            if (file.open(QIODevice::ReadOnly)) {
-                                auto data = file.readAll();
-                                success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
-                            }
-                        }
-                    }
-                }
-                if (!success) {
-                    if (LM_FTP != state->loadMode) {
-                        fullCubeName = cubeName + ".seg";
-                        QFile file(fullCubeName);//uncompressed
+                    else if (LM_FTP != state->loadMode) {
+                        fullCubeName = cubeName + ".seg.sz";
+                        QFile file(fullCubeName);//snappy
                         if (file.open(QIODevice::ReadOnly)) {
-                            const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
-                            const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
-                            success = actualSize == expectedSize;
-                        } else {//legacy
-                            fullCubeName = cubeName + ".raw.segmentation.raw";
-                            QFile file(fullCubeName);
+                            auto data = file.readAll();
+                            success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                        }
+                        if (!success) {
+                            fullCubeName = cubeName + ".seg";
+                            QFile file(fullCubeName);//uncompressed
                             if (file.open(QIODevice::ReadOnly)) {
                                 const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
                                 const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
                                 success = actualSize == expectedSize;
+                            } else {//legacy
+                                fullCubeName = cubeName + ".raw.segmentation.raw";
+                                QFile file(fullCubeName);
+                                if (file.open(QIODevice::ReadOnly)) {
+                                    const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
+                                    const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
+                                    success = actualSize == expectedSize;
+                                }
                             }
                         }
                     }
                 }
-
                 if (!success) {
                     std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
