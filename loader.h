@@ -58,16 +58,25 @@
 struct C_Element {
     Coordinate coordinate;
 
-    char *filename;
+    char *data_filename;
+    char *overlay_filename;
     char *path;
-    char *fullpath_filename;
-    char *local_filename;
-    CURL *curlHandle;
-    FILE *ftp_fh;
-    int hasError;
+    char *fullpath_data_filename;
+    char *fullpath_overlay_filename;
+    char *local_data_filename;
+    char *local_overlay_filename;
+    CURL *curlDataHandle;
+    CURL *curlOverlayHandle;
+    FILE *ftp_data_fh;
+    FILE *ftp_overlay_fh;
+    bool hasError;
+    bool hasDataError;
+    bool hasOverlayError;
     int retries;
-    int isFinished;
-    int isAborted;
+    bool isFinished;
+    bool isDataFinished;
+    bool isOverlayFinished;
+    bool isAborted;
     int isLoaded;
 
     //uint debugVal;

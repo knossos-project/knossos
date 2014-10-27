@@ -71,10 +71,13 @@ void lll_del(C_Element *delElement) {
     delElement->previous->next = delElement->next;
     delElement->next->previous = delElement->previous;
 
-    free(delElement->filename);
-    free(delElement->local_filename);
+    free(delElement->data_filename);
+    free(delElement->overlay_filename);
+    free(delElement->local_data_filename);
+    free(delElement->local_overlay_filename);
     free(delElement->path);
-    free(delElement->fullpath_filename);
+    free(delElement->fullpath_data_filename);
+    free(delElement->fullpath_overlay_filename);
 
     free(delElement);
 }
@@ -129,24 +132,36 @@ uint lll_calculate_filename(C_Element *elem) {
     compressionExtension[0] =  NULL;
     */
 
-    elem->filename = (char*)malloc(filenameSize);
-    if(elem->filename == NULL) {
+    elem->data_filename = (char*)malloc(filenameSize);
+    if(elem->data_filename == NULL) {
         qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
-    memset(elem->filename, '\0', filenameSize);
+    memset(elem->data_filename, '\0', filenameSize);
+    elem->overlay_filename = (char*)malloc(filenameSize);
+    if(elem->overlay_filename == NULL) {
+        qDebug() << "Out of memory.";
+        return LLL_FAILURE;
+    }
+    memset(elem->overlay_filename, '\0', filenameSize);
     elem->path = (char*)malloc(filenameSize);
     if(elem->path == NULL) {
         qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
     memset(elem->path, '\0', filenameSize);
-    elem->fullpath_filename = (char*)malloc(filenameSize);
-    if(elem->fullpath_filename == NULL) {
+    elem->fullpath_data_filename = (char*)malloc(filenameSize);
+    if(elem->fullpath_data_filename == NULL) {
         qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
-    memset(elem->fullpath_filename, '\0', filenameSize);
+    memset(elem->fullpath_data_filename, '\0', filenameSize);
+    elem->fullpath_overlay_filename = (char*)malloc(filenameSize);
+    if(elem->fullpath_overlay_filename == NULL) {
+        qDebug() << "Out of memory.";
+        return LLL_FAILURE;
+    }
+    memset(elem->fullpath_overlay_filename, '\0', filenameSize);
 
     boergens_param_2 = coordinate.y;
     boergens_param_2_name = "y";
@@ -183,7 +198,7 @@ uint lll_calculate_filename(C_Element *elem) {
              );
     free(magnificationStr);
     /* qDebug("Path: %s", elem->path); */
-    snprintf(elem->filename, filenameSize,
+    snprintf(elem->data_filename, filenameSize,
              "%s_x%.4d_y%.4d_z%.4d.%s%s",
              state->loaderName,
              coordinate.x,
@@ -191,11 +206,23 @@ uint lll_calculate_filename(C_Element *elem) {
              coordinate.z,
              compressionExtension.c_str(),
              typeExtension);
-    snprintf(elem->fullpath_filename, filenameSize,
+    snprintf(elem->overlay_filename, filenameSize,
+             "%s_x%.4d_y%.4d_z%.4d.%s",
+             state->loaderName,
+             coordinate.x,
+             coordinate.y,
+             coordinate.z,
+             "seg.sz.zip");
+    snprintf(elem->fullpath_data_filename, filenameSize,
              "%s%s%s",
              elem->path,
              dir_delim,
-             elem->filename);
+             elem->data_filename);
+    snprintf(elem->fullpath_overlay_filename, filenameSize,
+             "%s%s%s",
+             elem->path,
+             dir_delim,
+             elem->overlay_filename);
     /* qDebug("FullPath: %s", elem->fullpath_filename); */
 
     if (LM_FTP != state->loadMode) {
@@ -254,17 +281,28 @@ uint lll_calculate_filename(C_Element *elem) {
     /* qDebug("%s", local_cache_path_total); */
     free(local_cache_path_builder);
 
-    elem->local_filename = (char*)malloc(filenameSize);
-    if(elem->local_filename == NULL) {
+    elem->local_data_filename = (char*)malloc(filenameSize);
+    if(elem->local_data_filename == NULL) {
         qDebug() << "Out of memory.";
         return LLL_FAILURE;
     }
-    memset(elem->local_filename, '\0', filenameSize);
-    snprintf(elem->local_filename, filenameSize,
+    memset(elem->local_data_filename, '\0', filenameSize);
+    snprintf(elem->local_data_filename, filenameSize,
              "%s%s%s",
              local_cache_path_total,
              dir_delim,
-             elem->filename);
+             elem->data_filename);
+    elem->local_overlay_filename = (char*)malloc(filenameSize);
+    if(elem->local_overlay_filename == NULL) {
+        qDebug() << "Out of memory.";
+        return LLL_FAILURE;
+    }
+    memset(elem->local_overlay_filename, '\0', filenameSize);
+    snprintf(elem->local_overlay_filename, filenameSize,
+             "%s%s%s",
+             local_cache_path_total,
+             dir_delim,
+             elem->overlay_filename);
     free(local_cache_path_total);
 
     return LLL_SUCCESS;
@@ -305,15 +343,25 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
 
     putElement->coordinate = key;
 
-    putElement->filename = NULL;
+    putElement->data_filename = NULL;
+    putElement->overlay_filename = NULL;
     putElement->path = NULL;
-    putElement->fullpath_filename = NULL;
-    putElement->local_filename = NULL;
-    putElement->ftp_fh = NULL;
+    putElement->fullpath_data_filename = NULL;
+    putElement->fullpath_overlay_filename = NULL;
+    putElement->local_data_filename = NULL;
+    putElement->local_overlay_filename = NULL;
+    putElement->ftp_data_fh = NULL;
+    putElement->ftp_overlay_fh = NULL;
     putElement->hasError = false;
-    putElement->curlHandle = NULL;
+    putElement->hasDataError = false;
+    putElement->hasOverlayError = false;
+    putElement->curlDataHandle = NULL;
+    putElement->curlOverlayHandle = NULL;
     putElement->isFinished = false;
-    putElement->retries = FTP_RETRY_NUM;
+    putElement->isDataFinished = false;
+    putElement->isOverlayFinished = false;
+    // Retries are disabled until reimplemented for data/overlay
+    //putElement->retries = FTP_RETRY_NUM;
     putElement->isAborted = false;
     putElement->isLoaded = false;
     //putElement->debugVal = 0;
@@ -511,6 +559,26 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
 }
 
 void Loader::loadCube(loadcube_thread_struct *lts) {
+    bool retVal = true;
+    bool isPut = false;
+    char *filename;
+    FILE *cubeFile = NULL;
+    size_t readBytes = 0;
+    Byte *currentDcSlot = NULL;
+#ifdef KNOSSOS_USE_TURBOJPEG
+    tjhandle _jpegDecompressor = NULL;
+    Byte *localCompressedBuf = NULL;
+    size_t localCompressedBufSize = 0;
+    int jpegSubsamp, width, height;
+#endif
+
+    if (LM_FTP == state->loadMode) {
+        if (lts->currentCube->isAborted) {
+            retVal = false;
+            goto loadcube_ret;
+        }
+    }
+
     if (state->overlay) {
         state->protectLoaderSlots->lock();
         const bool freeOcSlotsAvailable = !lts->thisPtr->freeOcSlots.empty();
@@ -527,39 +595,60 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
                 //directly uncompress snappy cube into the OC slot
                 snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentOcSlot));
             } else {
-                auto cubeName = QString(lts->currentCube->fullpath_filename);
+                // Multiple overlay extensions are disabled until implemented for streaming
+                auto fullName = ((LM_FTP == state->loadMode) ? lts->currentCube->local_data_filename
+                                                          : lts->currentCube->fullpath_data_filename);
+                auto cubeName = QString(fullName);
                 const auto dotIndex = cubeName.lastIndexOf(".");
                 cubeName.resize(dotIndex);//remove last extension part
 
                 bool success = false;
 
-                QuaZip archive(cubeName + ".seg.sz.zip");
-                if (archive.open(QuaZip::mdUnzip)) {
-                    archive.goToFirstFile();
-                    QuaZipFile file(&archive);//zip
-                    if (file.open(QIODevice::ReadOnly)) {
-                        auto data = file.readAll();
-                        success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                if ((!lts->currentCube->hasOverlayError) || (LM_FTP != state->loadMode)) {
+                    // For FTP mode only .seg.sz.zip is currently supported
+                    auto fullCubeName = cubeName + ".seg.sz.zip";
+                    QuaZip archive(fullCubeName);
+                    if (archive.open(QuaZip::mdUnzip)) {
+                        archive.goToFirstFile();
+                        QuaZipFile file(&archive);//zip
+                        if (file.open(QIODevice::ReadOnly)) {
+                            auto data = file.readAll();
+                            success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                        }
+                        archive.close();
+                        if (LM_FTP == state->loadMode) {
+                            if (0 != remove(fullCubeName.toUtf8().constData())) {
+                                qDebug() << "Failed to delete overlay cube file " << fullCubeName;
+                            }
+                        }
                     }
-                } else {
-                    QFile file(cubeName + ".seg.sz");//snappy
-                    if (file.open(QIODevice::ReadOnly)) {
-                        auto data = file.readAll();
-                        success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                    else {
+                        if (LM_FTP != state->loadMode) {
+                            fullCubeName = cubeName + ".seg.sz";
+                            QFile file(fullCubeName);//snappy
+                            if (file.open(QIODevice::ReadOnly)) {
+                                auto data = file.readAll();
+                                success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentOcSlot));
+                            }
+                        }
                     }
                 }
                 if (!success) {
-                    QFile file(cubeName + ".seg");//uncompressed
-                    if (file.open(QIODevice::ReadOnly)) {
-                        const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
-                        const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
-                        success = actualSize == expectedSize;
-                    } else {//legacy
-                        QFile file(cubeName + ".raw.segmentation.raw");
+                    if (LM_FTP != state->loadMode) {
+                        fullCubeName = cubeName + ".seg";
+                        QFile file(fullCubeName);//uncompressed
                         if (file.open(QIODevice::ReadOnly)) {
                             const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
                             const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
                             success = actualSize == expectedSize;
+                        } else {//legacy
+                            fullCubeName = cubeName + ".raw.segmentation.raw";
+                            QFile file(fullCubeName);
+                            if (file.open(QIODevice::ReadOnly)) {
+                                const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
+                                const auto actualSize = file.read(reinterpret_cast<char*>(currentOcSlot), expectedSize);
+                                success = actualSize == expectedSize;
+                            }
                         }
                     }
                 }
@@ -582,18 +671,6 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         }
     }
 
-    bool retVal = true;
-    bool isPut = false;
-    char *filename;
-    FILE *cubeFile = NULL;
-    size_t readBytes = 0;
-    Byte *currentDcSlot = NULL;
-#ifdef KNOSSOS_USE_TURBOJPEG
-    tjhandle _jpegDecompressor = NULL;
-    Byte *localCompressedBuf = NULL;
-    size_t localCompressedBufSize = 0;
-    int jpegSubsamp, width, height;
-#endif
     //DWORD tickCount = GetTickCount();
 
     /*
@@ -623,16 +700,14 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     }
 
     if (LM_FTP == state->loadMode) {
-        if (lts->currentCube->isAborted) {
-            retVal = false;
-            goto loadcube_ret;
-        }
-        if (lts->currentCube->hasError) {
+        if (lts->currentCube->hasDataError) {
             goto loadcube_fail;
         }
+        filename = lts->currentCube->local_data_filename;
     }
-
-    filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
+    else {
+        filename = lts->currentCube->fullpath_data_filename;
+    }
 
     switch(state->compressionRatio) {
     case 0:

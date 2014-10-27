@@ -1416,7 +1416,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             SET_COORDINATE(direction, x, y, z);
             break;
         case USERMOVE_HORIZONTAL:
-            qDebug() << "UserMove: viewportType = " << viewportType;
             switch (viewportType) {
             case VIEWPORT_XZ:
                 SET_COORDINATE(direction, 0, 1, 0);

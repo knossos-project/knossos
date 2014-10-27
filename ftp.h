@@ -3,8 +3,14 @@
 
 #include <QThread>
 #include "knossos-global.h"
+#include "loader.h"
 
 int downloadFile(const char *remote_path, char *local_filename);
+
+struct FtpElement {
+    bool isOverlay;
+    C_Element *cube;
+};
 
 class FtpThread : public QThread
 {
