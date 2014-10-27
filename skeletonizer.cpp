@@ -45,8 +45,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
 
-    state->skeletonState->nodeCounter = newDynArray(1048576);
-    state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
@@ -260,10 +258,8 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
 
     setActiveNode(NULL, addedNodeID);
 
-    if((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                               state->skeletonState->activeTree->treeID) == 1) {
+    if(state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-
         pushBranchNode(true, true, NULL, addedNodeID);
         addComment("First Node", NULL, addedNodeID);
     }
@@ -296,10 +292,8 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     if(makeNodeActive) {
         setActiveNode(NULL, targetNodeID);
     }
-    if((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                               state->skeletonState->activeTree->treeID) == 1) {
+    if (state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-
         pushBranchNode(true, true, NULL, targetNodeID);
         addComment("First Node", NULL, targetNodeID);
         emit updateToolsSignal();
@@ -1050,7 +1044,7 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
     }
 
-    setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, nullptr);
+    state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
 
     auto & selectedNodes = state->skeletonState->selectedNodes;
     const auto eraseit = std::find(std::begin(selectedNodes), std::end(selectedNodes), nodeToDel);
@@ -1063,9 +1057,7 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         setActiveNode(newActiveNode, 0);
     }
 
-    const auto treeID = nodeToDel->correspondingTree->treeID;
-    const auto nodesInTree = reinterpret_cast<PTRSIZEUINT>(getDynArray(state->skeletonState->nodeCounter, treeID));
-    setDynArray(state->skeletonState->nodeCounter, treeID, reinterpret_cast<void*>(nodesInTree - 1));
+    --nodeToDel->correspondingTree->size;
 
     free(nodeToDel);
 
@@ -1347,9 +1339,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
     state->skeletonState->totalNodeElements++;
 
     // One more node in this tree.
-    setDynArray(state->skeletonState->nodeCounter,
-                treeID,
-                (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, treeID) + 1));
+    ++tempTree->size;
 
     if(nodeID == 0) {
         nodeID = state->skeletonState->totalNodeElements;
@@ -1376,7 +1366,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
 
     tempNode->timestamp = time;
 
-    setDynArray(state->skeletonState->nodesByNodeID, nodeID, (void *)tempNode);
+    state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
 
     state->skeletonState->skeletonChanged = true;
 
@@ -1476,8 +1466,7 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->activeNode = NULL;
     skeletonState->activeTree = NULL;
 
-    delDynArray(skeletonState->nodeCounter);
-    delDynArray(skeletonState->nodesByNodeID);
+    skeletonState->nodesByNodeID.clear();
     delStack(skeletonState->branchStack);
 
     //Generate empty tree structures
@@ -1489,8 +1478,6 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->activeNode = NULL;
     skeletonState->simpleTracing = false;
 
-    skeletonState->nodeCounter = newDynArray(1048576);
-    skeletonState->nodesByNodeID = newDynArray(1048576);
     skeletonState->branchStack = newStack(1048576);
 
     skeletonState->unsavedChanges = true;
@@ -1548,18 +1535,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
 
     // The new node count for tree1 is the old node count of tree1 plus the node
     // count of tree2
-    setDynArray(state->skeletonState->nodeCounter,
-                tree1->treeID,
-                (void *)
-                ((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                                        tree1->treeID) +
-               (PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                                        tree2->treeID)));
-
-    // The old tree is gone and has 0 nodes.
-    setDynArray(state->skeletonState->nodeCounter,
-                tree2->treeID,
-                (void *)0);
+    tree1->size += tree2->size;
 
     //Delete the "empty" tree 2
     if(tree2 == state->skeletonState->firstTree) {
@@ -1710,9 +1686,8 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
 }
 
 nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
-    nodeListElement *node;
-    node = (struct nodeListElement *)getDynArray(state->skeletonState->nodesByNodeID, nodeID);
-    return node;
+    const auto nodeIt = state->skeletonState->nodesByNodeID.find(nodeID);
+    return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
 }
 
 treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
@@ -2055,60 +2030,6 @@ bool Skeletonizer::delStack(stack *stack) {
     return true;
 }
 
-bool Skeletonizer::delDynArray(dynArray *array) {
-    free(array->elements);
-    free(array);
-
-    return true;
-}
-
-void* Skeletonizer::getDynArray(dynArray *array, int pos) {
-    if(pos > array->end) {
-        return nullptr;
-    }
-    return array->elements[pos];
-}
-
-bool Skeletonizer::setDynArray(dynArray *array, int pos, void *value) {
-    while(pos > array->end) {
-        array->elements = (void**)realloc(array->elements, (array->end + 1 +
-                                  array->firstSize) * sizeof(void *));
-        if(array->elements == NULL) {
-            qDebug() << "Out of memory.";
-            _Exit(false);
-        }
-        memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
-        array->end = array->end + array->firstSize;
-    }
-
-    array->elements[pos] = value;
-
-    return true;
-}
-
-dynArray* Skeletonizer::newDynArray(int size) {
-    dynArray *newArray = NULL;
-
-    newArray = (dynArray*)malloc(sizeof(struct dynArray));
-    if(newArray == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(newArray, '\0', sizeof(struct dynArray));
-
-    newArray->elements = (void**)malloc(sizeof(void *) * size);
-    if(newArray->elements == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(newArray->elements, '\0', sizeof(void *) * size);
-
-    newArray->end = size - 1;
-    newArray->firstSize = size;
-
-    return newArray;
-}
-
 int Skeletonizer::splitConnectedComponent(int nodeID) {
     //  This function takes a node and splits the connected component
     //  containing that node into a new tree, unless the connected component
@@ -2157,8 +2078,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
 
     uint nodeCountAllTrees = 0;
     for(auto tree : treesSeen) {
-        nodeCountAllTrees +=(PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                                                     tree->treeID);
+        nodeCountAllTrees += tree->size;
     }
 
     if(treesSeen.size() > 1 || connectedComponent.size() < nodeCountAllTrees) {
@@ -2171,10 +2091,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         for(auto nodePair : connectedComponent) {
             // Removing node list element from its old position
             auto n = findNodeByNodeID(nodePair.first);
-            setDynArray(state->skeletonState->nodeCounter,
-                        n->correspondingTree->treeID,
-                        (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                                                        n->correspondingTree->treeID) - 1));
+            --n->correspondingTree->size;
             if(n->previous != NULL) {
                 n->previous->next = n->next;
             }
@@ -2185,9 +2102,7 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
                 n->next->previous = n->previous;
             }
             // Inserting node list element into new list.
-            setDynArray(state->skeletonState->nodeCounter, newTree->treeID,
-                        (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter,
-                                                         newTree->treeID) + 1));
+            ++newTree->size;
             n->next = NULL;
             if(last != NULL) {
                 n->previous = last;
@@ -2863,9 +2778,7 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
             }
 
             // decrement node counter for the old tree
-            setDynArray(state->skeletonState->nodeCounter,
-                    node->correspondingTree->treeID,
-                    (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, node->correspondingTree->treeID) - 1));
+            --node->correspondingTree->size;
         }
     }
 
@@ -2889,9 +2802,7 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
     }
     node->correspondingTree = newTree;
     // increment node counter for the new tree
-    setDynArray(state->skeletonState->nodeCounter,
-            newTree->treeID,
-            (void *)((PTRSIZEUINT)getDynArray(state->skeletonState->nodeCounter, newTree->treeID) + 1));
+    ++newTree->size;
 
     return true;
 }

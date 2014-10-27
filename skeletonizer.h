@@ -56,10 +56,6 @@ public slots:
     static bool pushStack(stack *stack, void *element);
     static stack *newStack(int size);
     static bool delStack(stack *stack);
-    static bool delDynArray(dynArray *array);
-    static void *getDynArray(dynArray *array, int pos);
-    static bool setDynArray(dynArray *array, int pos, void *value);
-    static dynArray *newDynArray(int size);
 
     static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);

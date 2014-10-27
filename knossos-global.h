@@ -39,6 +39,7 @@
 
 #include <array>
 #include <cmath>
+#include <unordered_map>
 
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QElapsedTimer>
@@ -357,12 +358,6 @@ struct stack {
     void **elements;
     int stackpointer;
     int size;
-};
-
-struct dynArray {
-    void **elements;
-    int end;
-    int firstSize;
 };
 
 struct assignment {
@@ -880,6 +875,7 @@ public:
     color4F color;
     bool selected;
     int colorSetManually;
+    std::size_t size;
 
     char comment[8192];
     QList<nodeListElement *> *getNodes();
@@ -1051,8 +1047,7 @@ struct skeletonState {
 
     struct stack *branchStack;
 
-    struct dynArray *nodeCounter;
-    struct dynArray *nodesByNodeID;
+    std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
     uint skeletonDCnumber;
     uint volBoundary;
