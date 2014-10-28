@@ -110,6 +110,7 @@ public slots:
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
+    void setVPOrientation(bool arbitrary);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

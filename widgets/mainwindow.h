@@ -33,7 +33,6 @@
 #include <memory>
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
-#define LOCK_VP_ORIENTATION_DEFAULT (true)
 
 #include <QMainWindow>
 #include <QDropEvent>
@@ -93,7 +92,6 @@ public:
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
-    QCheckBox *lockVPOrientationCheckbox;
     SkeletonProxy *skeletonProxy;
 
     void createViewports();
@@ -196,8 +194,6 @@ public slots:
     void treeColorAdjustmentsChanged();
     // viewports
     void resetViewports();
-    void resetVPOrientation();
-    void lockVPOrientation(bool lock);
     void showVPDecorationClicked();
 
     // from the event handler

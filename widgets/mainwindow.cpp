@@ -220,20 +220,7 @@ void MainWindow:: createToolBar() {
     auto resetVPsButton = new QPushButton("Reset VP Positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
     toolBar->addWidget(resetVPsButton);
-
-    auto resetVPOrientButton = new QPushButton("Reset VP Orientation", this);
-    resetVPOrientButton->setToolTip("Orientate viewports along xy, xz and yz axes.");
-    toolBar->addWidget(resetVPOrientButton);
-
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
-    QObject::connect(resetVPOrientButton, &QPushButton::clicked, this, &MainWindow::resetVPOrientation);
-
-
-    lockVPOrientationCheckbox = new QCheckBox("lock VP orientation.");
-    lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
-    toolBar->addWidget(lockVPOrientationCheckbox);
-
-    QObject::connect(lockVPOrientationCheckbox, &QCheckBox::toggled, this, &MainWindow::lockVPOrientation);
 }
 
 void MainWindow::notifyUnsavedChanges() {
@@ -937,8 +924,6 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
-    settings.setValue(VP_LOCK_ORIENTATION, this->lockVPOrientationCheckbox->isChecked());
-
     settings.setValue(WORK_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
 
     int i = 0;
@@ -993,12 +978,6 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
-
-    QVariant lockVPOrientation_value = settings.value(VP_LOCK_ORIENTATION);
-    this->lockVPOrientationCheckbox->setChecked(lockVPOrientation_value.isNull() ?
-                                                    LOCK_VP_ORIENTATION_DEFAULT :
-                                                    lockVPOrientation_value.toBool());
-    emit(lockVPOrientationCheckbox->toggled(lockVPOrientationCheckbox->isChecked()));
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
     QDir().mkpath(autosaveLocation);
@@ -1204,27 +1183,6 @@ void MainWindow::taskSlot() {
 void MainWindow::resetViewports() {
     resizeViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
-}
-
-void MainWindow::resetVPOrientation() {
-    if(state->viewerState->vpOrientationLocked == false) {
-        viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
-        viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
-        viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
-        emit resetRotationSignal();
-    }
-    else {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
-        prompt.exec();
-    }
-}
-
-void MainWindow::lockVPOrientation(bool lock) {
-    state->viewerState->vpOrientationLocked = lock;
 }
 
 void MainWindow::showVPDecorationClicked() {

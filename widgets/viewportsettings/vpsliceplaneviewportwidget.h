@@ -51,6 +51,7 @@ signals:
     void updateViewerStateSignal();
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
+    void setVPOrientationSignal(bool arbitrary);
 public slots:
     void datasetLinearFilteringChecked(bool checked);
     void hightlightIntersectionsChecked(bool checked);
@@ -71,15 +72,13 @@ public slots:
     void loadTreeLUT();
 
 protected:
+    QCheckBox arbitraryModeCheckBox{"Arbitrary Viewport Orientation"};
+
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
     QCheckBox *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
     QCheckBox showNodeCommentsCheckBox{"Show node comments"};
-
-    QLabel *vpOrientationLabel;
-    QCheckBox *lockVpOrientationCheckbox;
-    QPushButton *resetVpOrientationButton;
 
     QLabel *colorLookupTablesLabel;
     QCheckBox *useOwnDatasetColorsCheckBox, *useOwnTreeColorsCheckBox;

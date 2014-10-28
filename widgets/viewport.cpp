@@ -36,6 +36,7 @@
 #include "segmentation.h"
 
 bool Viewport::showNodeComments = false;
+bool Viewport::arbitraryOrientation = false;
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
@@ -198,7 +199,7 @@ bool Viewport::setOrientation(ViewportType orientation) {
        && orientation != VIEWPORT_ARBITRARY) {
         return false;
     }
-    this->viewportType = orientation;
+    viewportType = orientation;
     state->viewerState->vpConfigs[id].type = orientation;
     return true;
 }

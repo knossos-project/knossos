@@ -629,15 +629,11 @@ struct vpConfig {
     float userMouseSlideY;
 };
 
-
 /**
   * @struct viewerState
   * @brief TODO
   */
 struct viewerState {
-    bool vpOrientationLocked;
-    int slicingMode; // MODE_ORTHO or MODE_ARBITRARY
-
     vpConfig *vpConfigs;
     Byte *texData;
     Byte *overlayData;

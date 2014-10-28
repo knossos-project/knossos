@@ -57,6 +57,7 @@ public:
     void hideButtons();
     void showButtons();
     EventModel *eventDelegate;
+    static bool arbitraryOrientation;
     static bool showNodeComments;
 
 protected:

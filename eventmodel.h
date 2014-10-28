@@ -126,7 +126,6 @@ signals:
     segmentListElement *findSegmentByNodeIDSignal(uint sourceNodeID, uint targetNodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     treeListElement *addTreeListElement(int treeID, color4F color);
-    void setViewportOrientationSignal(ViewportType orientation);
     void unselectNodesSignal();
 
     void treeAddedSignal(treeListElement *tree);

@@ -1066,57 +1066,30 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->repeatDirection[2] *= 10;
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
-    } else if(event->key() == Qt::Key_K) {
-        if(state->viewerState->vpOrientationLocked == false) {
-            emit rotationSignal(0., 0., 1., PI/180);
-            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
-        }
-        else {
+    } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L || event->key() == Qt::Key_M || event->key() == Qt::Key_Comma) {
+        if(Viewport::arbitraryOrientation == false) {
             QMessageBox prompt;
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Information);
             prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+            prompt.setText("Viewport orientation is still locked. Check 'Arbitrary Viewport Orientation' under 'Viewport Settings -> Slice Plane Viewports' first.");
             prompt.exec();
-        }
-    } else if(event->key() == Qt::Key_L) {
-        if(state->viewerState->vpOrientationLocked == false) {
-            emit rotationSignal(0., 1., 0., PI/180);
-            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
         }
         else {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
-            prompt.exec();
-        }
-    } else if(event->key() == Qt::Key_M) {
-        if(state->viewerState->vpOrientationLocked == false) {
-            emit rotationSignal(0., 0., 1., -PI/180);
-            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
-        }
-        else {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
-            prompt.exec();
-        }
-    } else if(event->key() == Qt::Key_Comma) {
-        if(state->viewerState->vpOrientationLocked == false) {
-            emit rotationSignal(0., 1., 0., -PI/180);
-            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
-        }
-        else {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
-            prompt.exec();
+            switch(event->key()) {
+            case Qt::Key_K:
+                emit rotationSignal(0., 0., 1., PI/180);
+                break;
+            case Qt::Key_L:
+                emit rotationSignal(0., 1., 0., PI/180);
+                break;
+            case Qt::Key_M:
+                emit rotationSignal(0., 0., 1., -PI/180);
+                break;
+            case Qt::Key_Comma:
+                emit rotationSignal(0., 1., 0., -PI/180);
+                break;
+            }
         }
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);

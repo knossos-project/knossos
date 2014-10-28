@@ -1895,19 +1895,12 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
                    y / state->magnification,
                    z / state->magnification);
 
-    /*
-    emit loadSignal();
-    qDebug("I send a load signal to %i, %i, %i", x, y, z);
-    */
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
     return true;
 }
-/*
-bool Viewer::moveVPonTop(uint currentVP) {
-}
-*/
+
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
@@ -1953,9 +1946,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::findSegmentByNodeIDSignal, &Skeletonizer::findSegmentByNodeIDs);
     QObject::connect(eventModel, &EventModel::updateSlicePlaneWidgetSignal, window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateIntersection);
     QObject::connect(eventModel, &EventModel::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-    QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperLeft, &Viewport::setOrientation);
-    QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpLowerLeft, &Viewport::setOrientation);
-    QObject::connect(eventModel, &EventModel::setViewportOrientationSignal, vpUpperRight, &Viewport::setOrientation);
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
@@ -2031,6 +2021,7 @@ void Viewer::rewire() {
     //  general vp settings tab signals
     QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  slice plane vps tab signals
+    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::setVPOrientationSignal, this, &Viewer::setVPOrientation);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::treeColorAdjustmentsChangedSignal, window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadTreeColorTableSignal, this, &Viewer::loadTreeColorTable);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadDataSetColortableSignal, &Viewer::loadDatasetColorTable);
@@ -2058,10 +2049,33 @@ void Viewer::setRotation(float x, float y, float z, float angle) {
     rotation = Rotation(x, y, z, alphaCache);
 }
 
+void Viewer::setVPOrientation(bool arbitrary) {
+    if(arbitrary) {
+        window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
+        window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
+        window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_ARBITRARY);
+    }
+    else {
+        window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
+        window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
+        window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
+        resetRotation();
+    }
+}
+
 void Viewer::resetRotation() {
     alphaCache = 0;
     rotation = Rotation();
     SET_COORDINATE(v1, 1, 0, 0);
     SET_COORDINATE(v2, 0, 1, 0);
     SET_COORDINATE(v3, 0, 0, 1);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v1 , v1);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v2 , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].n , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
 }
