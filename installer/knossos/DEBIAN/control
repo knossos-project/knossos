@@ -1,0 +1,9 @@
+Package: knossos
+Version: 4.0.1
+Section: misc
+Priority: extra
+Architecture: amd64
+Installed-Size: 53028
+Maintainer: Norbert Pfeiler <norbert.pfeiler@googlemail.com>
+Description: 3D image visualisation and annotation tool
+Homepage: http://www.knossostool.org
