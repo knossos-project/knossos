@@ -35,13 +35,13 @@ before_script:
   - mkdir quazip-build
   - cd quazip-build
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7"
-  - sudo ninja install -j3
+  - sudo ninja install -j2
   - cd ..
   - git clone https://github.com/Optiligence/PythonQt.git
   - mkdir PythonQt-build
   - cd PythonQt-build
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Python3=FALSE -DPythonQt_Qt5=TRUE ../PythonQt
-  - sudo ninja install -j3
+  - sudo ninja install -j2
   - cd ..
   - mkdir build_debug
   - cd build_debug
