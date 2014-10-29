@@ -124,7 +124,7 @@ uint lll_calculate_filename(C_Element *elem) {
         break;
     default:
         strncpy(typeExtension, "jp2", 4);
-        compressionExtension = std::to_string(state->compressionRatio);
+        compressionExtension = std::to_string(state->compressionRatio) + '.';
         break;
     }
     /*
