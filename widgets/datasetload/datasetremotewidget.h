@@ -16,11 +16,7 @@ class DatasetRemoteWidget : public QWidget {
     Q_OBJECT
 public:
     explicit DatasetRemoteWidget(QWidget *parent = 0);
-    void loadSettings();
-    void saveSettings();
     void changeDataset(bool isGUI);
-    void cancelButtonClicked();
-    void processButtonClicked();
     void waitForLoader();
     QLineEdit *urlField;
     QLineEdit *usernameField;
@@ -44,7 +40,12 @@ signals:
     void updateDatasetCompression();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void startLoaderSignal();
+    void setlastusedremote();
     void datasetSwitchZoomDefaults();
+public slots:
+    void adaptMemoryConsumption();
+    void cancelButtonClicked();
+    void processButtonClicked();
 };
 
 #endif // DATASETREMOTEWIDGET_H

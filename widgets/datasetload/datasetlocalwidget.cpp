@@ -313,4 +313,6 @@ void DatasetLocalWidget::changeDataset(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
+
+    emit setlastusedlocal();
 }

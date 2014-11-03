@@ -45,8 +45,7 @@ DatasetRemoteWidget::DatasetRemoteWidget(QWidget *parent) : QWidget(parent) {
     supercubeSizeLabel = new QLabel();
 
     supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
-
-    formLayout->addRow(supercubeSizeLabel, supercubeEdgeSpin);
+    formLayout->addRow(supercubeEdgeSpin, supercubeSizeLabel);
 
     formLayout->addWidget(&segmentationOverlayCheckbox);
 
@@ -60,6 +59,8 @@ DatasetRemoteWidget::DatasetRemoteWidget(QWidget *parent) : QWidget(parent) {
 
     QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetRemoteWidget::cancelButtonClicked);
     QObject::connect(processButton, &QPushButton::clicked, this, &DatasetRemoteWidget::processButtonClicked);
+    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetRemoteWidget::adaptMemoryConsumption);
+    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetRemoteWidget::adaptMemoryConsumption);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
@@ -240,6 +241,8 @@ void DatasetRemoteWidget::changeDataset(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
+
+    emit setlastusedremote();
 }
 
 void DatasetRemoteWidget::waitForLoader() {
@@ -249,4 +252,16 @@ void DatasetRemoteWidget::waitForLoader() {
         state->conditionLoadFinished->wait(state->protectLoadSignal);
     }
     state->protectLoadSignal->unlock();
+}
+
+void DatasetRemoteWidget::adaptMemoryConsumption() {
+    const auto superCubeEdge = supercubeEdgeSpin->value();
+    auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
+    mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
+    auto text = QString("Data cache cube edge length (%1 MiB RAM").arg(mibibytes);
+    if (state->M != supercubeEdgeSpin->value() || state->overlay != segmentationOverlayCheckbox.isChecked()) {
+        text.append(", restart required");
+    }
+    text.append(")");
+    supercubeSizeLabel->setText(text);
 }

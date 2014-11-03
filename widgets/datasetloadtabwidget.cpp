@@ -25,6 +25,10 @@ DatasetLoadTabWidget::DatasetLoadTabWidget(QWidget *parent)
     setWindowTitle(tr("Load Dataset"));
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+
+    QObject::connect(datasetLocalWidget, &DatasetLocalWidget::setlastusedlocal, this, &DatasetLoadTabWidget::lastusedlocal);
+    QObject::connect(datasetRemoteWidget, &DatasetRemoteWidget::setlastusedremote, this, &DatasetLoadTabWidget::lastusedremote);
+
 }
 
 void DatasetLoadTabWidget::saveSettings() {
@@ -53,6 +57,9 @@ void DatasetLoadTabWidget::saveSettings() {
 
     settings.setValue(DATASET_M, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
+
+    settings.setValue(DATASET_LASTUSED, lastused.c_str());
+
     settings.endGroup();
 
 }
@@ -78,15 +85,18 @@ void DatasetLoadTabWidget::loadSettings() {
     datasetLocalWidget->segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
     datasetLocalWidget->adaptMemoryConsumption();
 
-
     //dataset REMOTE
+    datasetRemoteWidget->supercubeEdgeSpin->setValue(state->M);
+    datasetRemoteWidget->segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
+    datasetRemoteWidget->adaptMemoryConsumption();
 
     datasetRemoteWidget->urlField->setText(settings.value(DATASET_URL).toString());
     datasetRemoteWidget->usernameField->setText(settings.value(DATASET_USER).toString());
     datasetRemoteWidget->passwordField->setText(settings.value(DATASET_PWD).toString());
 
-    settings.endGroup();
+    lastused = settings.value(DATASET_LASTUSED).toString().toStdString();
 
+    settings.endGroup();
 
     //settings depending on M
     state->cubeSetElements = state->M * state->M * state->M;
@@ -121,4 +131,15 @@ void DatasetLoadTabWidget::loadSettings() {
     }
 }
 
+void DatasetLoadTabWidget::lastusedlocal() {
+    qDebug() << "local";
+    lastused = "local";
+    return;
+}
+
+void DatasetLoadTabWidget::lastusedremote() {
+    qDebug() << "remote";
+    lastused = "remote";
+    return;
+}
 

@@ -201,9 +201,11 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    //We have to find out which one was used the last time, so atm we will use only the local dataset if available
-    viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget->changeDataset(false);
-    //viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget->changeDataset(false);
+    if(viewer.window->widgetContainer->datasetLoadTabWidget->lastused == "remote") {
+        viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget->changeDataset(false);
+    } else {
+        viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget->changeDataset(false);
+    }
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();

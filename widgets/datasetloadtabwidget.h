@@ -17,6 +17,11 @@ public:
     explicit DatasetLoadTabWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
+    std::string lastused;
+
+public slots:
+    void lastusedlocal();
+    void lastusedremote();
 
 private:
     QTabWidget *tabWidget;

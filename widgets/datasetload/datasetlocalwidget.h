@@ -36,6 +36,7 @@ signals:
     void updateDatasetCompression();
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void datasetSwitchZoomDefaults();
+    void setlastusedlocal();
     void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
