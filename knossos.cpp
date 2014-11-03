@@ -173,9 +173,12 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::userMoveSignal, &viewer, &Viewer::userMove);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::userMoveSignal, &viewer, &Viewer::userMove);
 
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
@@ -198,7 +201,10 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    viewer.window->widgetContainer->datasetLoadWidget->changeDataset(false);
+    //We have to find out which one was used the last time, so atm we will use only the local dataset if available
+    viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget->changeDataset(false);
+    //viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget->changeDataset(false);
+
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
 

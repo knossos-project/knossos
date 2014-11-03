@@ -1,4 +1,4 @@
-#include "datasetloadwidget.h"
+#include "datasetlocalwidget.h"
 
 #include <stdexcept>
 
@@ -14,14 +14,13 @@
 #include <QVBoxLayout>
 
 #include "ftp.h"
-#include "GuiConstants.h"
+#include "../GuiConstants.h"
 #include "knossos.h"
 #include "knossos-global.h"
-#include "mainwindow.h"
+#include "../mainwindow.h"
 #include "viewer.h"
 
-DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
-    localGroup = new QGroupBox("Local Dataset");
+DatasetLocalWidget::DatasetLocalWidget(QWidget *parent) : QDialog(parent) {
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
     datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -57,22 +56,22 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     localLayout->addLayout(hLayout2);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
-    localGroup->setLayout(localLayout);
+
 
     auto mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(localGroup);
+    mainLayout->addLayout(localLayout);
     setLayout(mainLayout);
 
-    QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetLoadWidget::datasetfileDialogClicked);
-    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
-    QObject::connect(processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
+    QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetLocalWidget::datasetfileDialogClicked);
+    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLocalWidget::adaptMemoryConsumption);
+    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLocalWidget::adaptMemoryConsumption);
+    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLocalWidget::cancelButtonClicked);
+    QObject::connect(processButton, &QPushButton::clicked, this, &DatasetLocalWidget::processButtonClicked);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-QStringList DatasetLoadWidget::getRecentPathItems() {
+QStringList DatasetLocalWidget::getRecentPathItems() {
     QStringList recentPaths;
     int dirCount = this->pathDropdown->count();
     for (int i = 0; i < dirCount; i++) {
@@ -81,66 +80,7 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
     return recentPaths;
 }
 
-void DatasetLoadWidget::saveSettings() {
-    QSettings settings;
-    settings.beginGroup(DATASET_WIDGET);
-    settings.setValue(DATASET_MRU, getRecentPathItems());
-    settings.setValue(DATASET_M, state->M);
-    settings.setValue(DATASET_OVERLAY, state->overlay);
-    settings.endGroup();
-}
-
-void DatasetLoadWidget::loadSettings() {
-    QSettings settings;
-    settings.beginGroup(DATASET_WIDGET);
-    pathDropdown->clear();
-    pathDropdown->insertItems(0, settings.value(DATASET_MRU).toStringList());
-    if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
-        state->M = settings.value(DATASET_M, 3).toInt();
-    }
-    if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        state->overlay = settings.value(DATASET_OVERLAY, true).toBool();
-    }
-    settings.endGroup();
-
-    supercubeEdgeSpin->setValue(state->M);
-    segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
-    adaptMemoryConsumption();
-
-    //settings depending on M
-    state->cubeSetElements = state->M * state->M * state->M;
-    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-    }
-
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-    }
-
-    // We're not doing stuff in parallel, yet. So we skip the locking
-    // part.
-    // This *10 thing is completely arbitrary. The larger the table size,
-    // the lower the chance of getting collisions and the better the loading
-    // order will be respected. *10 doesn't seem to have much of an effect
-    // on performance but we should try to find the optimal value some day.
-    // Btw: A more clever implementation would be to use an array exactly the
-    // size of the supercube and index using the modulo operator.
-    // sadly, that realization came rather late. ;)
-
-    // creating the hashtables is cheap, keeping the datacubes is
-    // memory expensive..
-    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-        state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        if(i == 0) i = 1;
-    }
-}
-
-void DatasetLoadWidget::datasetfileDialogClicked() {
+void DatasetLocalWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
     QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
@@ -150,7 +90,7 @@ void DatasetLoadWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = FAST;
 }
 
-void DatasetLoadWidget::adaptMemoryConsumption() {
+void DatasetLocalWidget::adaptMemoryConsumption() {
     const auto superCubeEdge = supercubeEdgeSpin->value();
     auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
@@ -162,11 +102,7 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     supercubeSizeLabel->setText(text);
 }
 
-void DatasetLoadWidget::closeEvent(QCloseEvent *) {
-    this->hide();
-}
-
-void DatasetLoadWidget::waitForLoader() {
+void DatasetLocalWidget::waitForLoader() {
     emit startLoaderSignal();
     state->protectLoadSignal->lock();
     while (state->loaderBusy) {
@@ -175,12 +111,14 @@ void DatasetLoadWidget::waitForLoader() {
     state->protectLoadSignal->unlock();
 }
 
-void DatasetLoadWidget::cancelButtonClicked() {
-    this->hide();
+void DatasetLocalWidget::cancelButtonClicked() {
+    this->parentWidget()->parentWidget()->parentWidget()->hide();
 }
 
-void DatasetLoadWidget::processButtonClicked() {
+void DatasetLocalWidget::processButtonClicked() {
     changeDataset(true);
+
+    this->parentWidget()->parentWidget()->parentWidget()->hide();
 }
 
 /* dataset can be selected in three ways:
@@ -188,7 +126,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-void DatasetLoadWidget::changeDataset(bool isGUI) {
+void DatasetLocalWidget::changeDataset(bool isGUI) {
     QString path = pathDropdown->currentText();
     if(path.isNull() || path.isEmpty()) {
         if (isGUI) {
@@ -375,6 +313,4 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
-
-    this->hide();
 }

@@ -1,5 +1,5 @@
-#ifndef DATASETLOADWIDGET_H
-#define DATASETLOADWIDGET_H
+#ifndef DATASETLOCALWIDGET_H
+#define DATASETLOCALWIDGET_H
 
 #include "knossos-global.h"
 
@@ -13,26 +13,22 @@ class QLineEdit;
 class QPushButton;
 class QSpinBox;
 
-class DatasetLoadWidget : public QDialog {
+class DatasetLocalWidget : public QDialog {
     Q_OBJECT
 public:
-    explicit DatasetLoadWidget(QWidget *parent = 0);
-    void loadSettings();
-    void saveSettings();
+    explicit DatasetLocalWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-
-protected:
-    QGroupBox *localGroup;
+    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QComboBox *pathDropdown;
     QPushButton *datasetfileDialog;
+    QStringList getRecentPathItems();
     QSpinBox *supercubeEdgeSpin;
+protected:
     QLabel *supercubeSizeLabel;
-    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QPushButton *cancelButton;
     QPushButton *processButton;
-    void closeEvent(QCloseEvent *event);
     void waitForLoader();
-    QStringList getRecentPathItems();
+
 signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
@@ -48,4 +44,4 @@ public slots:
     void processButtonClicked();
 };
 
-#endif // DATASETLOADWIDGET_H
+#endif // DATASETLOCALWIDGET_H

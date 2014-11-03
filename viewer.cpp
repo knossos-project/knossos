@@ -2033,9 +2033,12 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     //  -- end dataset options signals
     // dataset load signals --
-    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
-    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
-    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     // -- end dataset load signals
     // task management signals --
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);

@@ -1,4 +1,4 @@
-#include <QSemaphore>
+﻿#include <QSemaphore>
 #include "ftp.h"
 #include "knossos-global.h"
 #include "loader.h"
@@ -30,8 +30,81 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
       return -1; /* failure, can't open file to write */
     }
   }
-
   return fwrite(buffer, size, nmemb, *ftp_fh_ptr);
+}
+
+static size_t mag1conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream) {
+    FtpElement *elem = (FtpElement *)stream;
+    FILE **ftp_fh_ptr = &elem->cube->ftp_data_fh;
+
+    *ftp_fh_ptr = fopen(elem->cube->local_data_filename, "wb");
+
+    if(NULL == *ftp_fh_ptr) {
+      return -1; /* failure, can't open file to write */
+    }
+
+    return fwrite(buffer, size, nmemb, *ftp_fh_ptr);
+}
+
+int downloadMag1ConfFile() {
+    CURL *eh = NULL;
+    FtpElement *elem = new FtpElement;
+    elem->cube = new C_Element;
+    elem->isOverlay = false;
+
+    QString currentPath = QString("%1mag1/knossos.conf").arg(state->ftpBasePath);
+
+    elem->cube->fullpath_data_filename = new char[currentPath.length() + 1];
+    strcpy(elem->cube->fullpath_data_filename, currentPath.toStdString().c_str());
+
+    char remoteURL[MAX_PATH];
+
+    snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, elem->cube->fullpath_data_filename);
+
+    char *lpath = (char*)malloc(MAX_PATH);
+    snprintf(lpath, MAX_PATH, "%smag1/knossos.conf", state->loadFtpCachePath);
+    elem->cube->local_data_filename = lpath;
+
+    eh = curl_easy_init();
+
+    curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
+    curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, mag1conf_fwrite);
+    curl_easy_setopt(eh, CURLOPT_WRITEDATA, elem);
+    curl_easy_setopt(eh, CURLOPT_PRIVATE, elem);
+    curl_easy_setopt(eh, CURLOPT_TIMEOUT, 10);
+    curl_easy_setopt(eh, CURLOPT_CONNECTTIMEOUT, 10);
+
+    curl_easy_perform(eh);
+    curl_easy_cleanup(eh);
+
+    long httpCode;
+    curl_easy_getinfo(eh, CURLINFO_HTTP_CODE , &httpCode);
+
+    if(elem->cube->ftp_data_fh != NULL) {
+        fclose(elem->cube->ftp_data_fh);
+        elem->cube->ftp_data_fh = NULL;
+    }
+    else {
+        free(elem->cube);
+        free(elem);
+        free(lpath);
+
+        return EXIT_FAILURE;
+    }
+
+    if(httpCode != 200) {
+        free(elem->cube);
+        free(elem);
+        free(lpath);
+
+        return EXIT_FAILURE;
+    }
+
+    free(elem->cube);
+    free(elem);
+    free(lpath);
+
+    return EXIT_SUCCESS;
 }
 
 CURLM *curlm = NULL;
@@ -45,6 +118,7 @@ void fill_curl_eh(CURL *eh, C_Element *cube, bool isOverlay, FtpElement *elem) {
     *eh_ptr = eh;
     snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName,
              isOverlay ? cube->fullpath_overlay_filename : cube->fullpath_data_filename);
+
     curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
     curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
     curl_easy_setopt(eh, CURLOPT_WRITEDATA, elem);
