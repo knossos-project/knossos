@@ -21,22 +21,15 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
 #include "splashscreenwidget.h"
+
 #include <QPixmap>
-#include <QVBoxLayout>
-#include <QLabel>
 
-SplashScreenWidget::SplashScreenWidget(QWidget *parent) :
-    QDialog(parent)
-{
-    QVBoxLayout *mainLayout = new QVBoxLayout();
+SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint) {
+    splash.setPixmap(QPixmap(":/images/splash"));
 
-    trick = new QLabel();
-    trick->setPixmap(QPixmap(":/images/splash"));
-
-    mainLayout->addWidget(trick);
-    setLayout(mainLayout);
-
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    mainLayout.addRow(QString("Knossos Version: "), &versionLabel);
+    mainLayout.addRow(QString("Revision: "), &revisionLabel);
+    mainLayout.addRow(&splash);
+    setLayout(&mainLayout);
 }

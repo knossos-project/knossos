@@ -53,6 +53,7 @@
 #include "knossos-global.h"
 #include "mainwindow.h"
 #include "skeletonizer.h"
+#include "version.h"
 #include "viewer.h"
 #include "viewport.h"
 #include "scriptengine/scripting.h"
@@ -229,7 +230,7 @@ void MainWindow::notifyUnsavedChanges() {
 }
 
 void MainWindow::updateTitlebar() {
-    QString title = qApp->applicationDisplayName() + " showing ";
+    QString title = qApp->applicationDisplayName() + " (" + KREVISION + ")" + " showing ";
     if (!annotationFilename.isEmpty()) {
         title.append(annotationFilename);
     } else {

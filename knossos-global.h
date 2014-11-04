@@ -51,8 +51,6 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.1 Pre Alpha"
-
 #ifndef MAX_PATH
 #define MAX_PATH 256
 #endif

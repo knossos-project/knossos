@@ -34,6 +34,7 @@
 #include "functions.h"
 #include "knossos-global.h"
 #include "knossos.h"
+#include "version.h"
 #include "viewer.h"
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {

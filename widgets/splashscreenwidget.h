@@ -1,6 +1,5 @@
 #ifndef SPLASHSCREENWIDGET_H
 #define SPLASHSCREENWIDGET_H
-
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -24,23 +23,21 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "version.h"
 
 #include <QDialog>
-class QPixmap;
-class QLabel;
-class SplashScreenWidget : public QDialog
-{
+#include <QFormLayout>
+#include <QLabel>
+
+class SplashScreenWidget : public QDialog {
     Q_OBJECT
 public:
     explicit SplashScreenWidget(QWidget *parent = 0);
-
-signals:
-
-public slots:
-protected:
-    QPixmap *image;
-    QLabel *trick;
-
+private:
+    QFormLayout mainLayout;
+    QLabel versionLabel{QString(KVERSION)};
+    QLabel revisionLabel{QString(KREVISION)};
+    QLabel splash;
 };
 
 #endif // SPLASHSCREENWIDGET_H

@@ -31,6 +31,7 @@
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "scriptengine/scripting.h"
 #include "skeletonizer.h"
+#include "version.h"
 #include "viewer.h"
 #include "widgets/tracingtimewidget.h"
 #include "widgets/widgetcontainer.h"

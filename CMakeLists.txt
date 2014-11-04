@@ -56,8 +56,19 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.html"
 )
 
+add_custom_target(version DEPENDS versioncreator)#forces the pseudo target to be generated
+#is always triggered by the pseudo target which is never actually created, creates version.h instead
+add_custom_command(OUTPUT versioncreator ${CMAKE_CURRENT_BINARY_DIR}/version.h
+    COMMAND
+    ${CMAKE_COMMAND} -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/version.h.in
+                     -D DST=${CMAKE_CURRENT_BINARY_DIR}/version.h
+                     -D GIT=${CMAKE_CURRENT_SOURCE_DIR}
+                     -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+
+add_executable(${PROJECT_NAME} ${SRC_LIST} version.h)
+add_dependencies(${PROJECT_NAME} version)#main target needs version
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch")
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
