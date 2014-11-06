@@ -25,11 +25,14 @@
 
 #include <QPixmap>
 
-SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint) {
+SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
     splash.setPixmap(QPixmap(":/images/splash"));
 
     mainLayout.addRow(QString("Knossos Version: "), &versionLabel);
     mainLayout.addRow(QString("Revision: "), &revisionLabel);
     mainLayout.addRow(&splash);
+    mainLayout.setSizeConstraint(QLayout::SetFixedSize);
     setLayout(&mainLayout);
 }
