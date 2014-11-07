@@ -67,11 +67,19 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     auto hLayout0 = new QHBoxLayout;
     hLayout0->addWidget(local);
-    hLayout0->addWidget(remote);
 
     auto hLayout = new QHBoxLayout;
     hLayout->addWidget(pathDropdown);
     hLayout->addWidget(datasetfileDialog);
+
+    QFrame* line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    auto hLayoutR00 = new QHBoxLayout;
+    hLayoutR00->addWidget(line);
+
+    auto hLayoutR0 = new QHBoxLayout;
+    hLayoutR0->addWidget(remote);
 
     auto hLayoutR1 = new QGridLayout;
     hLayoutR1->addWidget(host);
@@ -83,6 +91,12 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     hLayoutR3->addWidget(passwd);
     hLayoutR3->addWidget(passwordField);
 
+    QFrame* line0 = new QFrame();
+    line0->setFrameShape(QFrame::HLine);
+    line0->setFrameShadow(QFrame::Sunken);
+    auto hLayoutR4 = new QHBoxLayout;
+    hLayoutR4->addWidget(line0);
+
     auto hLayout2 = new QHBoxLayout;
     hLayout2->addWidget(supercubeEdgeSpin);
     supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
@@ -92,11 +106,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     hLayout3->addWidget(cancelButton);
 
     auto localLayout = new QVBoxLayout();
+
     localLayout->addLayout(hLayout0);
     localLayout->addLayout(hLayout);
+    localLayout->addLayout(hLayoutR00);
+    localLayout->addLayout(hLayoutR0);
     localLayout->addLayout(hLayoutR1);
     localLayout->addLayout(hLayoutR2);
     localLayout->addLayout(hLayoutR3);
+    localLayout->addLayout(hLayoutR4);
     localLayout->addLayout(hLayout2);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
