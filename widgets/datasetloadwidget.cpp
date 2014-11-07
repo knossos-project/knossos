@@ -124,15 +124,22 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 }
 
 void DatasetLoadWidget::updateUsername() {
-    usernameList[urlCombo->currentIndex()] = usernameField->text();
+    if(urlCombo->currentIndex() >= 0) {
+        usernameList[urlCombo->currentIndex()] = usernameField->text();
+    } else {
+        usernameList.append(usernameField->text());
+    }
 }
 
 void DatasetLoadWidget::updatePassword() {
-    passwordList[urlCombo->currentIndex()] = passwordField->text();
+    if(urlCombo->currentIndex() >= 0) {
+        passwordList[urlCombo->currentIndex()] = passwordField->text();
+    } else {
+        passwordList.append(passwordField->text());
+    }
 }
 
 void DatasetLoadWidget::onUrlAdd() {
-
     if(urlCombo->count() > usernameList.count()) { //did we add an item?
         usernameField->clear();
         passwordField->clear();
@@ -555,9 +562,17 @@ void DatasetLoadWidget::saveSettings() {
         url.erase(url.find("/n"), 2);
     }
 
-    settings.setValue(DATASET_URL, getRecentHosts());
-    settings.setValue(DATASET_USER, getRecentUsernames());
-    settings.setValue(DATASET_PWD, getRecentPasswords());
+    if(urlCombo->currentIndex() < 0 && !urlCombo->currentText().isEmpty() ) {
+       if(!usernameField->text().isEmpty() && !passwordField->text().isEmpty()) { //we save the input
+           settings.setValue(DATASET_URL, urlCombo->currentText());
+           settings.setValue(DATASET_USER, usernameField->text());
+           settings.setValue(DATASET_PWD, passwordField->text());
+       }
+    } else if(urlCombo->currentIndex() >= 0) { //everything is there
+        settings.setValue(DATASET_URL, getRecentHosts());
+        settings.setValue(DATASET_USER, getRecentUsernames());
+        settings.setValue(DATASET_PWD, getRecentPasswords());
+    }
 
     settings.setValue(DATASET_M, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
@@ -601,22 +616,24 @@ void DatasetLoadWidget::loadSettings() {
     urlCombo->clear();
     urlCombo->insertItems(0, settings.value(DATASET_URL).toStringList());
 
-    usernameList = settings.value(DATASET_USER).toStringList();
-    passwordList = settings.value(DATASET_PWD).toStringList();
+    if(!settings.value(DATASET_USER).toStringList().isEmpty()) {
 
-    onUrlChange();
+        usernameList = settings.value(DATASET_USER).toStringList();
+        passwordList = settings.value(DATASET_PWD).toStringList();
+        onUrlChange();
+    }
 
     lastused = settings.value(DATASET_LASTUSED).toString().toStdString();
 
     settings.endGroup();
 
-    if(lastused=="local") {
-        local->setChecked(true);
-        remote->setChecked(false);
-
-    } else {
+    if(lastused=="remote") {
         local->setChecked(false);
         remote->setChecked(true);
+
+    } else {
+        local->setChecked(true);
+        remote->setChecked(false);
     }
 
     onRadiobutton();
