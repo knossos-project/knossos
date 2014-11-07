@@ -598,15 +598,17 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
     switch(item->column()) {
     case NodeTable::NODE_COMMENT: {
         auto matches = nodeSearchField->text().isEmpty() || matchesSearchString(nodeSearchField->text(), item->text(), nodeRegExCheck->isChecked());
-        if (item->text().isEmpty()) {
-            if (activeNode->comment) {
+        if(activeNode->comment) {
+            if(item->text().isEmpty()) {
                 Skeletonizer::delComment(activeNode->comment, 0);
                 matches &= !commentNodesChckBx->isChecked();//no cmt anymore but cmts wanted
-            } else {
-                Skeletonizer::addComment(item->text(), activeNode, 0);
             }
-        } else {
-            Skeletonizer::editComment(activeNode->comment, 0, item->text(), activeNode, 0);
+            else {
+                Skeletonizer::editComment(activeNode->comment, 0, item->text(), activeNode, 0);
+            }
+        }
+        else if(item->text().isEmpty() == false) {
+            Skeletonizer::addComment(item->text(), activeNode, 0);
         }
         if (activeRow != -1) {//remove not matching
             if (matches) {
