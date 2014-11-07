@@ -383,7 +383,7 @@ void MainWindow::recentFileSelected() {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", widgetContainer->datasetLoadTabWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
     fileMenu.addAction(QIcon(":/images/icons/open-skeleton.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
@@ -938,7 +938,7 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    widgetContainer->datasetLoadTabWidget->saveSettings();
+    widgetContainer->datasetLoadWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->datasetOptionsWidget->saveSettings();
@@ -1005,7 +1005,7 @@ void MainWindow::loadSettings() {
     this->setGeometry(x, y, width, height);
 
 
-    widgetContainer->datasetLoadTabWidget->loadSettings();
+    widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->datasetOptionsWidget->loadSettings();

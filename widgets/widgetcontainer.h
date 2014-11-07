@@ -3,7 +3,7 @@
 
 #include "annotationwidget.h"
 #include "commentswidget.h"
-#include "datasetloadtabwidget.h"
+#include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
 #include "datasavingwidget.h"
 #include "documentationwidget.h"
@@ -17,28 +17,26 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidgetObject(parent), commentsWidgetObject(parent), datasetLoadTabWidgetObject(parent)
+        : annotationWidgetObject(parent), commentsWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
         , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
         , taskManagementWidgetObject(&taskLoginWidgetObject, parent), tracingTimeWidgetObject(parent)
         , viewportSettingsWidgetObject(parent)
 
         , annotationWidget(&annotationWidgetObject), commentsWidget(&commentsWidgetObject)
-        , datasetLoadTabWidget(&datasetLoadTabWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
+        , datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
         , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
         , tracingTimeWidget(&tracingTimeWidgetObject), viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         taskLoginWidgetObject.setTaskManagementWidget(&taskManagementWidgetObject);
-        QObject::connect(this->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::datasetSwitchZoomDefaults
-        , &this->datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
-        QObject::connect(this->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::datasetSwitchZoomDefaults
+        QObject::connect(this->datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults
         , &this->datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
     }
 
     AnnotationWidget annotationWidgetObject;
     CommentsWidget commentsWidgetObject;
-    DatasetLoadTabWidget datasetLoadTabWidgetObject;
+    DatasetLoadWidget datasetLoadWidgetObject;
     DatasetOptionsWidget datasetOptionsWidgetObject;
     DataSavingWidget dataSavingWidgetObject;
     DocumentationWidget docWidgetObject;
@@ -54,7 +52,7 @@ struct WidgetContainer {
     //one may replace all -> with . in the project and remove these
     AnnotationWidget * const annotationWidget;
     CommentsWidget * const commentsWidget;
-    DatasetLoadTabWidget * const datasetLoadTabWidget;
+    DatasetLoadWidget * const datasetLoadWidget;
     DatasetOptionsWidget * const datasetOptionsWidget;
     DataSavingWidget * const dataSavingWidget;
     DocumentationWidget * const docWidget;

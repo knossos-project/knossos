@@ -1,4 +1,6 @@
 ﻿#include <QSemaphore>
+#include <QDir>
+
 #include "ftp.h"
 #include "knossos-global.h"
 #include "loader.h"
@@ -63,6 +65,14 @@ int downloadMag1ConfFile() {
 
     char *lpath = (char*)malloc(MAX_PATH);
     snprintf(lpath, MAX_PATH, "%smag1/knossos.conf", state->loadFtpCachePath);
+
+    //libcurl can't create the folder if it does not exist
+    QString qpath(state->loadFtpCachePath);
+    qpath.append("mag1/");
+
+    QDir tmppath(qpath);
+    if(!tmppath.exists()) tmppath.mkdir(qpath);
+
     elem->cube->local_data_filename = lpath;
 
     eh = curl_easy_init();

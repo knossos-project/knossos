@@ -174,13 +174,9 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget, &DatasetLocalWidget::userMoveSignal, &viewer, &Viewer::userMove);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget, &DatasetRemoteWidget::userMoveSignal, &viewer, &Viewer::userMove);
-
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
@@ -202,11 +198,9 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    if(viewer.window->widgetContainer->datasetLoadTabWidget->lastused == "remote") {
-        viewer.window->widgetContainer->datasetLoadTabWidget->datasetRemoteWidget->changeDataset(false);
-    } else {
-        viewer.window->widgetContainer->datasetLoadTabWidget->datasetLocalWidget->changeDataset(false);
-    }
+    //TODO
+    //AL3XST REMOTE/LOCAL DATASETCHANGE
+    viewer.window->widgetContainer->datasetLoadWidget->changeDataset(false);
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
@@ -595,6 +589,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
         state->skeletonState->volBoundary = state->boundary.x * 2;
     }
+
     return true;
 }
 
