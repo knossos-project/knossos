@@ -123,7 +123,9 @@ void fill_curl_eh(CURL *eh, C_Element *cube, bool isOverlay, FtpElement *elem) {
     curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
     curl_easy_setopt(eh, CURLOPT_WRITEDATA, elem);
     curl_easy_setopt(eh, CURLOPT_PRIVATE, elem);
-    curl_easy_setopt(eh, CURLOPT_TIMEOUT, 10);
+    //curl_easy_setopt(eh, CURLOPT_TIMEOUT, 10);
+    curl_easy_setopt(eh, CURLOPT_LOW_SPEED_LIMIT, 1);
+    curl_easy_setopt(eh, CURLOPT_LOW_SPEED_TIME, 10);
     curl_easy_setopt(eh, CURLOPT_CONNECTTIMEOUT, 10);
     curl_multi_add_handle(curlm, eh);
 }
