@@ -365,6 +365,9 @@ int downloadFiles(CURL **data_eh_array, CURL **overlay_eh_array, int /*totalCube
         }
     }
 
+    free(ftpElementDataArray);
+    free(ftpElementOverlayArray);
+
     return retVal;
 }
 
