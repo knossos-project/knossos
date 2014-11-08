@@ -1145,12 +1145,12 @@ void MainWindow::taskSlot() {
         QString attribute = attributes.value("username").toString();
         if(attribute.isNull() == false) {
             activeUser = true;
-            widgetContainer->taskManagementWidget->mainTab->setActiveUser(attribute);
-            widgetContainer->taskManagementWidget->mainTab->setResponse("Hello " + attribute + "!");
+            widgetContainer->taskManagementWidget->setActiveUser(attribute);
+            widgetContainer->taskManagementWidget->setResponse("Hello " + attribute + "!");
         }
         attribute = attributes.value("task").toString();
         if(attribute.isNull() == false) {
-            widgetContainer->taskManagementWidget->mainTab->setTask(attribute);
+            widgetContainer->taskManagementWidget->setTask(attribute);
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {

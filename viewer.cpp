@@ -1975,8 +1975,8 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::moveToNextTreeSignal, skeletonizer, &Skeletonizer::moveToNextTree);
     QObject::connect(window, &MainWindow::addCommentSignal, &Skeletonizer::addComment);
     QObject::connect(window, &MainWindow::editCommentSignal, &Skeletonizer::editComment);
-    QObject::connect(window, &MainWindow::updateTaskDescriptionSignal, window->widgetContainer->taskManagementWidget->detailsTab, &TaskManagementDetailsTab::setDescription);
-    QObject::connect(window, &MainWindow::updateTaskCommentSignal, window->widgetContainer->taskManagementWidget->detailsTab, &TaskManagementDetailsTab::setComment);
+    QObject::connect(window, &MainWindow::updateTaskDescriptionSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setDescription);
+    QObject::connect(window, &MainWindow::updateTaskCommentSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setComment);
     QObject::connect(window, &MainWindow::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
     //end mainwindow signals
     //viewport signals
@@ -2038,8 +2038,8 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
      // -- end dataset load signals
     // task management signals --
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::openFileDispatch);
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::autosaveSignal, window, &MainWindow::autosaveSlot);
+    QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::loadAnnotationFiles, window, &MainWindow::openFileDispatch);
+    QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
     // --- end widget signals
 }

@@ -53,9 +53,8 @@ class QFile;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
-    friend class TaskManagementMainTab;
+    friend TaskManagementWidget;
     friend SkeletonProxy;
-
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);

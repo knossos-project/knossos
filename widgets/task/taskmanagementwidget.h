@@ -1,46 +1,66 @@
 #ifndef TASKMANAGEMENTWIDGET_H
 #define TASKMANAGEMENTWIDGET_H
 
-#include <QDialog>
-#include <QTabWidget>
-
-#include "taskmanagementmaintab.h"
-#include "taskmanagementdetailstab.h"
 #include "taskloginwidget.h"
 
+#include <QDialog>
+#include <QLabel>
+#include <QWidget>
+
+#include <curl/curl.h>
+
 class QPushButton;
-class QLabel;
 class QCheckBox;
+class QLineEdit;
+struct httpResponse;
 class TaskManagementWidget : public QDialog
 {
     Q_OBJECT
-    friend class Viewer;
-    friend class MainWindow;
     friend class TaskLoginWidget;
+    void handleError(bool, CURLcode, long, const char * const response);
+    void saveAndLoadFile(httpResponse &, httpResponse &);
 public:
-    explicit TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget *parent = 0);
+    explicit TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent = 0);
     void setResponse(QString message);
     void setActiveUser(QString username);
     void setTask(QString task);
 
 protected:
-    QTabWidget *tabs;
-    TaskManagementMainTab *mainTab;
-    TaskManagementDetailsTab *detailsTab;
     QLabel *statusLabel;
     QLabel *loggedAsLabel;
     QLabel *currentTaskLabel;
-    QCheckBox *finalCheckbox;
     QPushButton *logoutButton;
     QPushButton *loadLastSubmitButton;
     QPushButton *startNewTaskButton;
     QPushButton *submitButton;
+    TaskLoginWidget *taskLoginWidget;
 
-    void closeEvent(QCloseEvent *);
+    QDialog *submitDialog;
+    QLineEdit *submitDialogCommentField;
+    QCheckBox *submitDialogFinalCheckbox;
+    QPushButton *submitDialogCancelButton;
+    QPushButton *submitDialogOkButton;
+
+    QLabel categoryDescriptionLabel;
+    QLabel taskCommentLabel;
+
+    void resetSession(QString message);
 
 signals:
+    void autosaveSignal();
+    bool loadAnnotationFiles(QStringList fileNames);
 
 public slots:
+    void setDescription(QString description);
+    void setComment(QString comment);
+
+    void submitButtonClicked();
+    void submitDialogCanceled();
+    void submitDialogOk();
+
+    void startNewTaskButtonClicked();
+    void loadLastSubmitButtonClicked();
+    void logoutButtonClicked();
 };
 
-#endif // TASKMANAGEMENTWIDGET_H
+#endif//TASKMANAGEMENTWIDGET_H

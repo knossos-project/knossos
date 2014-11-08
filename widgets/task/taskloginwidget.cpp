@@ -13,12 +13,10 @@
 #include "taskmanagementwidget.h"
 #include "knossos-global.h"
 
-TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
-    QDialog(parent), taskManagementWidget(NULL)
-{
+TaskLoginWidget::TaskLoginWidget(QWidget *parent) : QDialog(parent), taskManagementWidget(NULL) {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/images/icons/task.png"));
     setWindowTitle("Task Login");
-    setMinimumSize(308, 151);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     QFormLayout *formLayout = new QFormLayout();
@@ -113,7 +111,7 @@ void TaskLoginWidget::loginButtonClicked() {
                 QXmlStreamAttributes attributes = xml.attributes();
                 attribute = attributes.value("taskname").toString();
                 if(attribute.isNull() == false) {
-                    taskManagementWidget->mainTab->setTask(attribute);
+                    taskManagementWidget->setTask(attribute);
                 }
                 attribute = attributes.value("taskfile").toString();
                 if(attribute.isNull() == false) {
@@ -121,16 +119,16 @@ void TaskLoginWidget::loginButtonClicked() {
                 }
                 attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
                 if(attribute.isNull() == false) {
-                    taskManagementWidget->detailsTab->setDescription(attribute);
+                    taskManagementWidget->setDescription(attribute);
                 }
                 attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
                 if(attribute.isNull() == false) {
-                    taskManagementWidget->detailsTab->setComment(attribute);
+                    taskManagementWidget->setComment(attribute);
                 }
             }
             this->hide();
-            taskManagementWidget->mainTab->setResponse(QString("Hello %1!").arg(username));
-            taskManagementWidget->mainTab->setActiveUser(username);
+            taskManagementWidget->setResponse(QString("Hello %1!").arg(username));
+            taskManagementWidget->setActiveUser(username);
             taskManagementWidget->show();
             return;
         } else {
