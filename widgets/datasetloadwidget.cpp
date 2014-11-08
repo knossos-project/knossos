@@ -561,24 +561,10 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
 }
 
 void DatasetLoadWidget::saveSettings() {
-
-    QSettings settings;\
-    //Dataset LOCAL
+    QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
+
     settings.setValue(DATASET_MRU, getRecentPathItems());
-
-    //Dataset REMOTE
-
-    std::string url{std::string(state->ftpHostName) + std::string(state->ftpBasePath)};
-
-    if(url.empty()) {
-        settings.endGroup();
-        return;
-    }
-
-    if(url.find("/n") != std::string::npos) {
-        url.erase(url.find("/n"), 2);
-    }
 
     if(urlCombo->currentIndex() < 0 && !urlCombo->currentText().isEmpty() ) {
        if(!usernameField->text().isEmpty() && !passwordField->text().isEmpty()) { //we save the input
@@ -592,27 +578,34 @@ void DatasetLoadWidget::saveSettings() {
         settings.setValue(DATASET_PWD, getRecentPasswords());
     }
 
+    settings.setValue(DATASET_LASTUSED, local->isChecked() ? "local" : "remote");
+
     settings.setValue(DATASET_M, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
 
-
-    if(local->isChecked()) lastused="local";
-    else lastused="remote";
-
-    settings.setValue(DATASET_LASTUSED, lastused.c_str());
-
     settings.endGroup();
-
 }
-
 
 void DatasetLoadWidget::loadSettings() {
     QSettings settings;
-    //dataset LOCAL
     settings.beginGroup(DATASET_WIDGET);
 
     pathDropdown->clear();
     pathDropdown->insertItems(0, settings.value(DATASET_MRU).toStringList());
+
+    urlCombo->clear();
+    urlCombo->insertItems(0, settings.value(DATASET_URL).toStringList());
+    if(!settings.value(DATASET_USER).toStringList().isEmpty()) {
+        usernameList = settings.value(DATASET_USER).toStringList();
+        passwordList = settings.value(DATASET_PWD).toStringList();
+        onUrlChange();
+    }
+
+    lastused = settings.value(DATASET_LASTUSED).toString().toStdString();
+
+    local->setChecked(lastused == "local");
+    remote->setChecked(lastused == "remote");
+    onRadiobutton();
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_M, 3).toInt();
@@ -621,40 +614,12 @@ void DatasetLoadWidget::loadSettings() {
         state->overlay = settings.value(DATASET_OVERLAY, true).toBool();
     }
 
-
     supercubeEdgeSpin->setValue(state->M);
     segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
     adaptMemoryConsumption();
-
-    //dataset REMOTE
-    supercubeEdgeSpin->setValue(state->M);
-    segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
-    adaptMemoryConsumption();
-
-    urlCombo->clear();
-    urlCombo->insertItems(0, settings.value(DATASET_URL).toStringList());
-
-    if(!settings.value(DATASET_USER).toStringList().isEmpty()) {
-
-        usernameList = settings.value(DATASET_USER).toStringList();
-        passwordList = settings.value(DATASET_PWD).toStringList();
-        onUrlChange();
-    }
-
-    lastused = settings.value(DATASET_LASTUSED).toString().toStdString();
 
     settings.endGroup();
 
-    if(lastused=="remote") {
-        local->setChecked(false);
-        remote->setChecked(true);
-
-    } else {
-        local->setChecked(true);
-        remote->setChecked(false);
-    }
-
-    onRadiobutton();
 
     //settings depending on M
     state->cubeSetElements = state->M * state->M * state->M;
