@@ -17,11 +17,11 @@ QString annotationFileDefaultName() {
     // Generate a default file name based on date and time.
     auto currentTime = time(nullptr);
     auto localTime = localtime(&currentTime);
-    return QString("annotation-%1%2%3-%4%5.000.k.zip")
+    return QString("annotation-%1%2%3T%4%5.000.k.zip")
             //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_year % 100, 2, 10, QLatin1Char('0'))//years from 1900 % 100 = years from 2000
             .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
             .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
             .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
 }
