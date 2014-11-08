@@ -131,11 +131,11 @@ void TaskManagementWidget::saveAndLoadFile(httpResponse & header, httpResponse &
     tmpFile.close();
 
     //Retrieve the filename from response header and rename the previously created tmp.nml
-    char filename[1024];
-    if (taskState::copyInfoFromHeader(filename, &header, "filename")) {
+    const auto filename = header.copyInfoFromHeader("filename");
+    if (!filename.isEmpty()) {
         QString actualFilename = taskDir.absolutePath() + "/" + filename;
         QFile::remove(actualFilename);//rename does not overwrite
-        QFile::rename(tmpFilename, actualFilename);
+        qDebug() << "temp rename" << tmpFilename << actualFilename << QFile::rename(tmpFilename, actualFilename);
         if (loadAnnotationFiles(QStringList(actualFilename))) {//BUG signals shall not be used to return something
             state->taskState->taskFile = actualFilename;
             statusLabel->setText("<font color='green'>Loaded annotation successfully.</font>");
@@ -195,18 +195,15 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
         saveAndLoadFile(header, response);
 
         // get task name
-        char taskname[1024] = {};
-        taskState::copyInfoFromHeader(taskname, &header, "taskname");
+        const auto taskname = header.copyInfoFromHeader("taskname");
         state->taskState->taskName = taskname;
         setTask(state->taskState->taskName);
 
         // get task category description and task comment
-        QByteArray descriptionBuffer(8192, '\0');
-        QByteArray commentBuffer(8192, '\0');
-        taskState::copyInfoFromHeader(descriptionBuffer.data(), &header, "description");
-        taskState::copyInfoFromHeader(commentBuffer.data(), &header, "comment");
-        QString description = QByteArray::fromBase64(descriptionBuffer);
-        QString comment = QByteArray::fromBase64(commentBuffer);
+        const auto descriptionBuffer = header.copyInfoFromHeader("description");
+        const auto commentBuffer = header.copyInfoFromHeader("comment");
+        QString description = QByteArray::fromBase64(descriptionBuffer.toUtf8());
+        QString comment = QByteArray::fromBase64(commentBuffer.toUtf8());
 
         QMessageBox::information(this, state->taskState->taskName,
             QString("<p style='width:200px;'><b>Category %1:</b> %2<br><br><b>Task %3:</b> %4</p>")

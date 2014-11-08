@@ -186,26 +186,6 @@ size_t taskState::readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
     return fread(ptr, size, nmemb, (FILE*)stream);
 }
 
-// for retrieving information from response headers. Useful for responses with file content
-// the information should be terminated with a ';' for sucessful parsing
-int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info) {
-    int numChars = 0;
-    char *pos = strstr(header->content, info);
-    if(pos == NULL) {
-        return false;
-    }
-
-    for (std::size_t i = 0; i <= strlen(pos + strlen(info)+1); i++) { // +1 for "="
-        if((pos + strlen(info)+1)[i] == ';') {
-            numChars = i;
-            break;
-        }
-    }
-
-    strncpy(dest, pos + strlen(info)+1, numChars);
-    return true;
-}
-
 void taskState::removeCookie() {
     if(QFile(state->taskState->cookieFile).remove()) {
         perror("Failed to delete file.");

@@ -381,6 +381,14 @@ public:
 struct httpResponse {
     char *content;
     size_t length;
+    // for retrieving information from response headers. Useful for responses with file content
+    // the information should be terminated with a ';' for sucessful parsing
+    QString copyInfoFromHeader(const QString & info) const {
+        QString value(value);
+        value.remove(0, value.indexOf(info));//remove everything before the key
+        value.remove(0, value.indexOf('=')+1);//remove key and equals sign
+        return value.mid(0, value.indexOf(';'));//return everythin before the semicolon
+    }
 };
 
 struct taskState {
@@ -395,7 +403,6 @@ struct taskState {
     static bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
-    static int copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info);
     static void removeCookie();
     static QString CSRFToken();
     static QString getCategory();
