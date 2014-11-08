@@ -76,11 +76,13 @@ if(NOT BUILD_SHARED_LIBS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
     if(UNIX AND NOT "${CURL_LIBRARIES}" MATCHES ".so")
-        execute_process(COMMAND curl-config --static-libs
-            OUTPUT_VARIABLE CURL_LIBRARIES
+        find_program(CURL_CONFIG curl-config)
+        execute_process(COMMAND ${CURL_CONFIG} --static-libs
+            OUTPUT_VARIABLE CURL_CONFIG_OUTPUT
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        separate_arguments(CURL_LIBRARIES)
+        set(CURL_LIBRARIES "")
+        message(curl-config: "${CURL_CONFIG} --static-libs = ${CURL_CONFIG_OUTPUT}")
     endif()
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
@@ -116,6 +118,7 @@ target_link_libraries(${PROJECT_NAME}
     QuaZip::QuaZip
     Snappy::Snappy
 )
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${CURL_CONFIG_OUTPUT}")
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "$ORIGIN")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -137,7 +140,8 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
-elseif(NOT CMAKE_CXX_COMPILER MATCHES "clang" AND CMAKE_BUILD_TYPE MATCHES "RELEASE")#no openmp for clang
+elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "RELEASE")#no openmp for clang
+    message("${CMAKE_CXX_COMPILER_ID}, ${CMAKE_BUILD_TYPE}")
     find_package(OpenMP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
