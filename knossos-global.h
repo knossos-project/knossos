@@ -74,7 +74,6 @@
 #define OBJID_BYTES sizeof(uint64_t)
 
 //	For the hashtable.
-#define HT_SUCCESS  1
 #define HT_FAILURE  0
 #define LL_SUCCESS  1
 #define LL_FAILURE  0
@@ -170,6 +169,13 @@ class mesh;
 //Structures and custom types
 typedef uint8_t Byte;
 
+typedef std::unordered_map<Coordinate,Byte*> coord2bytep_map_t;
+bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const Coordinate &c);
+Byte* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c
+                                          );
+void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, const coord2bytep_map_t &source, Byte *v);
+void Coordinate2BytePtr_hash_union_keys_default_value(coord2bytep_map_t &m, const coord2bytep_map_t &a, const coord2bytep_map_t &b, Byte *v);
+
 //custom tail recursive constexpr log implementation
 //required for the following array declarations/accesses: (because std::log2 isn’t required to be constexpr yet)
 //  magPaths, magNames, magBoundaries, Dc2Pointer, Oc2Pointer
@@ -189,81 +195,6 @@ public:
         GLfloat b;
         GLfloat a;
 };
-
-// This structure makes up the linked list that is used to store the data for
-// the hash table. The linked is circular, but has one entry element that is
-// defined by the pointer in the hash table structure below.
-//
-// * coordinate is of type coordinate (as defined in coordinate.h) and i used
-//   as the key in the hash table.
-// * datacube is a pointer to the datacube that is to be associated with the
-//   coordinate coordinate.
-// * next is a pointer to another structure of the same type.
-//   someElement->next->previous = someElement should always hold true.
-// * previous should behave in analogy to next
-// * ht_next either is the same as next or is NULL. It is used to manage the
-//   chains to resolve collisions in the hash table. ht_next only points to the
-//   next element if that element has the same key as the current element and is
-//   NULL else.
-
-struct C2D_Element {
-        Coordinate coordinate;
-        Byte *datacube;
-        C2D_Element *previous;
-        C2D_Element *next;
-        C2D_Element *ht_next;
-};
-
-// This structure defines a hash table. It is passed to various functions
-// along with some other parameters to perform actions on a specific hash
-// table.
-// The structure is generated and filled by the function ht_new (see below).
-//
-// * listEntry is a dummy element in the list that is used only to enter the
-//   list. Its Datacube-pointer is set to NULL and its Coordinates to (-1, -1,
-//   -1). As the coordinate system begins at (0, 0, 0), that's invalid.
-// * tablesize stores the size of the table and is always a power of two.
-// * table is a pointer to a table of pointers to elements in the linked list
-//   (of which listEntry is one).
-
-typedef struct Hashtable{
-    C2D_Element *listEntry;
-    uint tablesize;
-    C2D_Element **table;
-
-    // Create a new hashtable.
-    // tablesize specifies the size of the hash-to-data-table and should be 1.25
-    // to 1.5 times the number of elements the table is expected to store.
-    // If successful, the function returns a pointer to a Hashtable structure.
-    static Hashtable *ht_new(uint tablesize);
-
-    // Delete the whole hashtable and linked list and release all the memory
-    // hashtable specifies which hashtable to delete.
-    // The return value is LL_SUCCESS or LL_FAILURE
-    static uint ht_rmtable(Hashtable *hashtable);
-
-    // Return the value associated with a key.
-    // key is the key to look for.
-    // hashtable is the hashtable to look in.
-    // On success, a pointer to Byte (a Datacube) is returned, HT_FAILURE else.
-    static Byte *ht_get(Hashtable *hashtable, Coordinate key);
-    // Internal implementation of ht_get, only return the hash element where data is stored.
-    // This should also be used when you actually want to change something in the element
-    // if it exists.
-    static C2D_Element *ht_get_element(Hashtable *hashtable, Coordinate key);
-
-    // Insert an element.
-    static uint ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
-
-    // Delete an element
-    static uint ht_del(Hashtable *hashtable, Coordinate key);
-    // Compute the union of h1 and h2 and put it in target.
-    static uint ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2);
-
-    static uint nextpow2(uint a);
-    static uint lastpow2(uint a);
-
-} Hashtable;
 
 struct stack {
     uint elementsOnStack;
@@ -435,8 +366,8 @@ public:
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    Hashtable *Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
-    Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
+    coord2bytep_map_t Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
+    coord2bytep_map_t Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
     class Viewer *viewer;

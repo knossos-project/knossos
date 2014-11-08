@@ -10,7 +10,7 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
     const auto posDc = Coordinate::Px2DcCoord(pos, state->cubeEdgeLength);
 
     state->protectCube2Pointer->lock();
-    auto rawcube = Hashtable::ht_get(state->Oc2Pointer[int_log(state->magnification)], posDc);
+    auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
     state->protectCube2Pointer->unlock();
 
     if (rawcube == HT_FAILURE) {

@@ -25,6 +25,7 @@
 
 #include "ftp.h"
 #include "knossos.h"
+#include "knossos-global.h"
 #include "segmentation.h"
 
 #include <quazip/quazip.h>
@@ -308,7 +309,7 @@ uint lll_calculate_filename(C_Element *elem) {
     return LLL_SUCCESS;
 }
 
-uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate key) {
+uint lll_put(C_Element *destElement, coord2bytep_map_t *currentLoadedHash, Coordinate key) {
     if((key.x > 9999) ||
             (key.y > 9999) ||
             (key.z > 9999) ||
@@ -328,9 +329,8 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     just mark this element as required, so we don't delete it later.
     */
     if (NULL != currentLoadedHash) {
-        C2D_Element * const loadedCubePtr = Hashtable::ht_get_element(currentLoadedHash, key);
-        if (HT_FAILURE != loadedCubePtr) {
-            loadedCubePtr->datacube = (Byte*)(!NULL);
+        if (Coordinate2BytePtr_hash_get_has_key(*currentLoadedHash, key)) {
+            (*currentLoadedHash)[key] = (Byte*)(!NULL);
             return LLL_SUCCESS;
         }
     }
@@ -484,7 +484,7 @@ floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
 
 }
 
-uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
+uint Loader::DcoiFromPos(C_Element *Dcoi, coord2bytep_map_t *currentLoadedHash) {
     Coordinate currentOrigin;
     floatCoordinate currentMetricPos, direction;
     LO_Element *DcArray;
@@ -654,14 +654,10 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             }
 
             state->protectCube2Pointer->lock();
-            if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
-                state->protectLoaderSlots->lock();
-                lts->thisPtr->freeOcSlots.remove(currentOcSlot);
-                state->protectLoaderSlots->unlock();
-            } else {
-                qDebug("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d]."
-                       , lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
-            }
+            state->Oc2Pointer[state->loaderMagnification][lts->currentCube->coordinate] = currentOcSlot;
+            state->protectLoaderSlots->lock();
+            lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+            state->protectLoaderSlots->unlock();
             state->protectCube2Pointer->unlock();
         }
     }
@@ -818,17 +814,8 @@ loadcube_manage:
         goto loadcube_ret;
     }
     state->protectCube2Pointer->lock();
-    if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot) != HT_SUCCESS) {
-        qDebug("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-            lts->currentCube->coordinate.x,
-            lts->currentCube->coordinate.y,
-            lts->currentCube->coordinate.z,
-            currentDcSlot,
-            state->loaderMagnification);
-        retVal = false;
-    } else {
-        isPut = true;
-    }
+    state->Dc2Pointer[state->loaderMagnification][lts->currentCube->coordinate] = currentDcSlot;
+    isPut = true;
     state->protectCube2Pointer->unlock();
     if (!retVal) {
         goto loadcube_ret;
@@ -933,7 +920,6 @@ bool Loader::initLoader() {
     prevLoaderMagnification = state->loaderMagnification;
 
     magChange = false;
-    mergeCube2Pointer = NULL;
 
     return true;
 }
@@ -953,7 +939,7 @@ void Loader::snappyCacheClear() {
 void Loader::snappyCacheFlush() {
     state->protectCube2Pointer->lock();
     for (const auto & cubeCoord : OcModifiedCacheQueue) {
-        auto cube = Hashtable::ht_get(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+        auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
         if (cube != HT_FAILURE) {
             snappyCacheAdd(cubeCoord, cube);
         }
@@ -963,14 +949,14 @@ void Loader::snappyCacheFlush() {
     state->protectCube2Pointer->unlock();
 }
 
-uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification) {
-    for (C2D_Element *currentCube = currentLoadedHash->listEntry->next;
-            currentCube != currentLoadedHash->listEntry;
-            currentCube = currentCube->next) {
-        const auto cubeCoord = CoordOfCube(currentCube->coordinate.x, currentCube->coordinate.y, currentCube->coordinate.z);
-        if (NULL != currentCube->datacube) {
+uint Loader::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification) {
+    for (auto kv : currentLoadedHash) {
+        const auto coord = kv.first;
+        if (NULL != kv.second) {
             continue;
         }
+        const auto cubeCoord = CoordOfCube(coord.x, coord.y, coord.z);
+
         /*
          * This element is not required, which means we can reuse its
          * slots for new DCs / OCs.
@@ -987,15 +973,8 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          * Process Dc2Pointer if the current cube is in Dc2Pointer.
          *
          */
-        if((delCubePtr = Hashtable::ht_get(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
-            if(Hashtable::ht_del(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                qDebug("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    prevLoaderMagnification);
-                return false;
-            }
+        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[prevLoaderMagnification], coord)) != HT_FAILURE) {
+            state->Dc2Pointer[prevLoaderMagnification].erase(coord);
             freeDcSlots.emplace_back(delCubePtr);
             /*
             qDebug("Added %d, %d, %d => %d available",
@@ -1010,19 +989,13 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          *
          */
 
-        if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[prevLoaderMagnification], coord)) != HT_FAILURE) {
             if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
                 snappyCacheAdd(cubeCoord, delCubePtr);
                 //remove from work queue
                 OcModifiedCacheQueue.erase(cubeCoord);
             }
-            if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                qDebug("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z);
-                return false;
-            }
+            state->Oc2Pointer[prevLoaderMagnification].erase(coord);
             freeOcSlots.emplace_back(delCubePtr);
         }
 
@@ -1233,30 +1206,13 @@ bool Loader::load() {
         return true;
     }
 
-    /*
-    We create a hash that would later be assigned the union of Dc and Oc cubes already loaded by now.
-    For each cube element in the hash, the datacube field is automatically initialized to NULL
-    upon creation by ht_union.
-    When we finished calculating the cubes that need to be loaded now, their datacube field would
-    be different than NULL.
-    */
-
-    mergeCube2Pointer = Hashtable::ht_new(state->cubeSetElements * 20);
-    if(mergeCube2Pointer == HT_FAILURE) {
-        qDebug() << "Unable to create the temporary cube2pointer table.";
-        state->protectLoadSignal->unlock();
-        return true;
-    }
     state->protectCube2Pointer->lock();
-    funcRetVal = Hashtable::ht_union(mergeCube2Pointer,
-                                     state->Dc2Pointer[state->loaderMagnification],
-            state->Oc2Pointer[state->loaderMagnification]);
+    Coordinate2BytePtr_hash_union_keys_default_value(
+                mergeCube2Pointer,
+                state->Dc2Pointer[state->loaderMagnification],
+                state->Oc2Pointer[state->loaderMagnification],
+                NULL);
     state->protectCube2Pointer->unlock();
-    if (HT_SUCCESS != funcRetVal) {
-        qDebug("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
-        state->protectLoadSignal->unlock();
-        return true;
-    }
 
     prevLoaderMagnification = state->loaderMagnification;
     state->loaderMagnification = std::log(state->magnification)/std::log(2);
@@ -1270,13 +1226,11 @@ bool Loader::load() {
     // we want to be in memory, given our current position.
 
 
-    if(DcoiFromPos(this->Dcoi, magChange ? NULL : mergeCube2Pointer) != true) {
+    if(DcoiFromPos(this->Dcoi, magChange ? NULL : &mergeCube2Pointer) != true) {
         qDebug() << "Error computing DCOI from position.";
         state->protectLoadSignal->unlock();
         return true;
     }
-
-
 
     /*
     We shall now remove from current loaded cubes those cubes that are not required by new coordinate,
@@ -1287,9 +1241,7 @@ bool Loader::load() {
         state->protectLoadSignal->unlock();
         return true;
     }
-    if (Hashtable::ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
-        qDebug() << "Error removing temporary cube to pointer table. This is a memory leak.";
-    }
+    mergeCube2Pointer.clear();
 
     state->protectLoadSignal->unlock();
 

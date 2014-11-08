@@ -320,7 +320,7 @@ bool SkeletonProxy::set_branch_node(int node_id) {
 
 QByteArray SkeletonProxy::readDc2Pointer(int x, int y, int z) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return QByteArray();
@@ -331,7 +331,7 @@ QByteArray SkeletonProxy::readDc2Pointer(int x, int y, int z) {
 
 int SkeletonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
@@ -342,7 +342,7 @@ int SkeletonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
 
 bool SkeletonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -354,7 +354,7 @@ bool SkeletonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
 
 bool SkeletonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -366,7 +366,7 @@ bool SkeletonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
 
 QByteArray SkeletonProxy::readOc2Pointer(int x, int y, int z) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return QByteArray();
@@ -377,7 +377,7 @@ QByteArray SkeletonProxy::readOc2Pointer(int x, int y, int z) {
 
 quint64 SkeletonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
     Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
@@ -388,7 +388,7 @@ quint64 SkeletonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
 
 bool SkeletonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
     Coordinate position(x, y, z);
-    Byte *data = Hashtable::ht_get(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    Byte *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -400,7 +400,7 @@ bool SkeletonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
 
 bool SkeletonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) {
     Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Hashtable::ht_get(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;

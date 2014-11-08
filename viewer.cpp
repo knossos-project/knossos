@@ -552,8 +552,8 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             }
 
             state->protectCube2Pointer->lock();
-            datacube = Hashtable::ht_get(state->Dc2Pointer[int_log(state->magnification)], currentDc);
-            overlayCube = Hashtable::ht_get(state->Oc2Pointer[int_log(state->magnification)], currentDc);
+            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
 
@@ -671,7 +671,7 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer->lock();
-            datacube = Hashtable::ht_get(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            datacube = state->Dc2Pointer[int_log(state->magnification)][currentDc];
             state->protectCube2Pointer->unlock();
 
             SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,

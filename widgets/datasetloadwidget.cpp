@@ -669,22 +669,4 @@ void DatasetLoadWidget::loadSettings() {
         qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
         throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
     }
-
-    // We're not doing stuff in parallel, yet. So we skip the locking
-    // part.
-    // This *10 thing is completely arbitrary. The larger the table size,
-    // the lower the chance of getting collisions and the better the loading
-    // order will be respected. *10 doesn't seem to have much of an effect
-    // on performance but we should try to find the optimal value some day.
-    // Btw: A more clever implementation would be to use an array exactly the
-    // size of the supercube and index using the modulo operator.
-    // sadly, that realization came rather late. ;)
-
-    // creating the hashtables is cheap, keeping the datacubes is
-    // memory expensive..
-    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-        state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        if(i == 0) i = 1;
-    }
 }
