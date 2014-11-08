@@ -855,6 +855,9 @@ struct skeletonState {
     int skeletonTime;
     int skeletonTimeCorrection;
 
+    int tracingTime;
+    bool traceractive;
+
     int idleTimeSession;
     int idleTime;
     int idleTimeNow;

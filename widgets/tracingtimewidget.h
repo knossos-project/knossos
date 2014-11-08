@@ -29,11 +29,14 @@
 
 class QLabel;
 class QTableWidgetItem;
+class QTimer;
+
 class TracingTimeWidget : public QDialog
 {
     Q_OBJECT
 public:
     explicit TracingTimeWidget(QWidget *parent = 0);
+
 signals:
     void visibilityChanged(bool);
 private:
@@ -43,19 +46,14 @@ private:
     void hideEvent(QHideEvent *) override {
         emit visibilityChanged(false);
     }
+    QTimer *tracingtimer;
 public slots:
     void refreshTime();
-    void checkIdleTime();
+    static void addTracingTime();
 
 protected:
-    QTableWidgetItem *runningLabelItem;
-    QTableWidgetItem *runningTimeItem;
-
-    QTableWidgetItem *tracingLabelItem;
-    QTableWidgetItem *tracingTimeItem;
-
-    QTableWidgetItem *idleLabelItem;
-    QTableWidgetItem *idleTimeItem;
+    QTableWidgetItem *tracingtimeLabelItem;
+    QTableWidgetItem *tracingtimeItem;
 
     QTimer *timer;
 };

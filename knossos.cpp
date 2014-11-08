@@ -72,7 +72,7 @@ public:
                     && state->viewer->window != NULL
                     && state->viewer->window->widgetContainer != NULL
                     && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
-                state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
+                state->skeletonState->traceractive = true;
             }
         }
         return QObject::eventFilter(object,event);
@@ -258,7 +258,6 @@ bool Knossos::commonInitStates() {
  * Beyond it allocates the dynamic data structures
  */
 bool Knossos::initStates() {
-   state->time.start();
 
    // For the viewer
    state->viewerState->autoTracingMode = navigationMode::recenter;
@@ -282,6 +281,8 @@ bool Knossos::initStates() {
    state->skeletonState->idleTime = 0;
    state->skeletonState->idleTimeNow = 0;
    state->skeletonState->idleTimeLast = 0;
+
+   state->time.start();
 
    // Those values can be calculated from given parameters
    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
@@ -721,6 +722,8 @@ bool Knossos::configDefaults() {
     state->skeletonState->skeletonTime = 0;
     state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = -1;
+    state->skeletonState->tracingTime = 0;
+    state->skeletonState->traceractive = false;
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;

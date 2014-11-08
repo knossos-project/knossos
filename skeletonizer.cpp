@@ -349,8 +349,8 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    const int time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
-    xml.writeAttribute("ms", QString::number(time));
+    const int time = state->skeletonState->tracingTime;
+    xml.writeAttribute("min", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
     xml.writeAttribute("checksum", timeChecksum);
@@ -381,13 +381,6 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("XZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
     xml.writeAttribute("YZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
     xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
-    xml.writeEndElement();
-
-    xml.writeStartElement("idleTime");
-    xml.writeAttribute("ms", QString::number(state->skeletonState->idleTime));
-    const auto idleTimeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&state->skeletonState->idleTime), sizeof(state->skeletonState->idleTime));
-    const QString idleTimeChecksum = QCryptographicHash::hash(idleTimeData, QCryptographicHash::Sha256).toHex().constData();
-    xml.writeAttribute("checksum", idleTimeChecksum);
     xml.writeEndElement();
 
     xml.writeEndElement(); // end parameters
@@ -560,6 +553,13 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         if(Skeletonizer::isObfuscatedTime(state->skeletonState->skeletonTime)) {
                             state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
+                        //convert to minutes, at idletime we are substracting the idletime
+                        state->skeletonState->tracingTime = state->skeletonState->skeletonTime / 1000.0 / 60.0;
+                    } else { //minutes?
+                        attribute = attributes.value("min");
+                        if(attribute.isNull() == false) {
+                            state->skeletonState->tracingTime = attribute.toLocal8Bit().toInt();
+                        }
                     }
                 } else if(xml.name() == "activeNode" && !merge) {
                     QStringRef attribute = attributes.value("id");
@@ -646,6 +646,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         if(Skeletonizer::isObfuscatedTime(state->skeletonState->idleTime)) {
                             state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
                         }
+                        //convert to minutes and subract it from the tracingtime
+                        state->skeletonState->tracingTime -= state->skeletonState->idleTime / 1000.0 / 60.0;
                     }
                 }
                 xml.skipCurrentElement();
@@ -816,6 +818,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             int time = state->skeletonState->skeletonTime;// for legacy skeleton files
                             if(attribute.isNull() == false) {
                                 time = attribute.toLocal8Bit().toInt();
+                                if(state->skeletonState->skeletonTime != 0) { //skeletonTime exists, so an old NML file was loaded
+                                    time = time / 1000.0;
+                                }
                             }
 
                             if(merge == false) {
@@ -1334,7 +1339,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
     updateCircRadius(tempNode);
 
     if(time == -1) {
-        time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
+        time = state->skeletonState->tracingTime*60 + (state->time.elapsed()/1000);
     }
 
     tempNode->timestamp = time;
@@ -2905,10 +2910,7 @@ void Skeletonizer::resetSkeletonMeta() {
     // skeleton meta information that is either set during
     // tracing or loaded with the skeleton should be reset.
 
-    state->skeletonState->skeletonTime = 0;
-    state->skeletonState->idleTime = 0;
-    state->skeletonState->idleTimeLast = state->time.elapsed(); // there is no last idle time when resetting
-    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+    state->skeletonState->tracingTime = 0;
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
 }
 
