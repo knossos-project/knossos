@@ -86,6 +86,66 @@ void Remote::msleep(unsigned long msec) {
     QThread::msleep(msec);
 }
 
+std::deque<floatCoordinate> Remote::getLastNodes() {
+
+    std::deque<floatCoordinate> nodelist;
+    nodelist.clear();
+    floatCoordinate pos;
+
+    nodeListElement *node = state->skeletonState->activeNode;
+    nodeListElement *lastnode=NULL;
+
+    if(node->firstSegment == NULL || node->getSegments()->size() > 1) { //we are in the middle of our skeleton or we don't have a skeleton
+        return nodelist;
+    }
+
+    for(int i = 0; i < 10; ++i) {
+        qDebug() << node->nodeID;
+
+        if(node->getSegments()->size() == 1) {
+            if(node->firstSegment->source == lastnode || node->firstSegment->target == lastnode) break;
+            if(node->firstSegment->source == node) {
+                lastnode = node;
+                node = node->firstSegment->target;
+            } else {
+                lastnode = node;
+                node= node->firstSegment->source;
+            }
+        } else if(node->getSegments()->size() == 0) {
+            break;
+        } else {
+            if(node->firstSegment->next->source == lastnode || node->firstSegment->next->target == lastnode) {
+                //user firstSegment
+                if(node->firstSegment->source == node) {
+                    lastnode = node;
+                    node = node->firstSegment->target;
+                } else {
+                    lastnode = node;
+                    node = node->firstSegment->source;
+                }
+            } else {
+                if(node->firstSegment->next->source == node) {
+                    lastnode = node;
+                    node = node->firstSegment->next->target;
+                } else {
+                    lastnode = node;
+                    node = node->firstSegment->next->source;
+                }
+            }
+        }
+
+        pos.x = node->position.x;
+        pos.y = node->position.y;
+        pos.z = node->position.z;
+
+        nodelist.push_back(pos);
+    }
+
+    qDebug() << nodelist.size();
+
+    return nodelist;
+}
+
 bool Remote::remoteWalk(int x, int y, int z) {
 
     /*
@@ -102,6 +162,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
     * singleMove to match mag, not the length of the movement on one axis.
     *
     */
+
+    std::deque<floatCoordinate> lastRecenterings;
+    lastRecenterings = getLastNodes();
 
     Rotation rotation = Rotation(); // initially no rotation
     if(rotate && lastRecenterings.empty() == false) {
@@ -123,10 +186,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
         rotation.axis = crossProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
         normalizeVector(&rotation.axis);
     }
-    if(lastRecenterings.size() == 10) {
-        lastRecenterings.pop_front();
-    }
-    lastRecenterings.push_back(recenteringPosition);
 
     floatCoordinate walkVector;
     SET_COORDINATE(walkVector, x, y, z);

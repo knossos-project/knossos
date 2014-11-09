@@ -35,7 +35,6 @@ private:
     bool rotate;
     uint activeVP;
 
-    std::deque<floatCoordinate> lastRecenterings;
 public:
     explicit Remote(QObject *parent = 0);
     void msleep(unsigned long msec);
@@ -44,6 +43,7 @@ public:
     void run();
 
     floatCoordinate recenteringPosition;
+    std::deque<floatCoordinate> getLastNodes();
 
 signals:
     void finished();
