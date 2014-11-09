@@ -46,6 +46,8 @@
 #define WINAPI
 #include <GL/glx.h>
 #include <GL/glxext.h>
+#else
+#define WINAPI
 #endif
 
 static WINAPI int dummy(int) {
