@@ -46,7 +46,7 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event);
 }
 
-QGLContext * newFavoriteQGLContext() {
+QGLContext * newFavoriteQGLContext(QGLWidget * shared) {
     auto * context = new QOpenGLContext();//context is freed by QGLWidget
 
     QSurfaceFormat format;
@@ -59,12 +59,15 @@ QGLContext * newFavoriteQGLContext() {
         format.setOption(QSurfaceFormat::DebugContext);
     }
     context->setFormat(format);
+    if (shared != nullptr) {
+        context->setShareContext(shared->context()->contextHandle());
+    }
     context->create();
     return QGLContext::fromOpenGLContext(context);
 }
 
 Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
-        QGLWidget(newFavoriteQGLContext(), parent, shared), id(newId), viewportType(viewportType), resizeButtonHold(false) {
+        QGLWidget(newFavoriteQGLContext(shared), parent, shared), id(newId), viewportType(viewportType), resizeButtonHold(false) {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
