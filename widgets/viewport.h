@@ -27,12 +27,13 @@
 
 #include "eventmodel.h"
 
-#include <QWidget>
-#include <QtOpenGL/QGLWidget>
-#include <QtOpenGL>
 #include <QDebug>
 #include <QFont>
+#include <QOpenGLDebugLogger>
 #include <QPushButton>
+#include <QtOpenGL/QGLWidget>
+#include <QtOpenGL>
+#include <QWidget>
 
 class Viewport;
 
@@ -50,6 +51,7 @@ signals:
 class Viewport : public QGLWidget
 {
     Q_OBJECT
+    QOpenGLDebugLogger oglLogger;
 public:
     explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);
     void drawViewport(int vpID);

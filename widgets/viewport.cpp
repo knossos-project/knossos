@@ -38,6 +38,8 @@
 bool Viewport::showNodeComments = false;
 bool Viewport::arbitraryOrientation = false;
 
+const bool oglDebug = false;
+
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
@@ -55,7 +57,9 @@ QGLContext * newFavoriteQGLContext() {
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
 //    format.setProfile(QSurfaceFormat::NoProfile);
-//    format.setOption(QSurfaceFormat::DebugContext);
+    if (oglDebug) {
+        format.setOption(QSurfaceFormat::DebugContext);
+    }
     context->setFormat(format);
     context->create();
     return QGLContext::fromOpenGLContext(context.get());
@@ -134,6 +138,16 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 }
 
 void Viewport::initializeGL() {
+    oglLogger.initialize();
+    QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
+        qDebug() << msg;
+    });
+    if (oglDebug) {
+        oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
+    } else {
+        oglLogger.startLogging();
+    }
+
     if(viewportType != VIEWPORT_SKELETON) {
         glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
 
