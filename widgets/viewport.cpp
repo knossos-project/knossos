@@ -47,9 +47,7 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
 }
 
 QGLContext * newFavoriteQGLContext() {
-    static std::vector<std::unique_ptr<QOpenGLContext>> contexts;
-    contexts.emplace_back(new QOpenGLContext());
-    auto & context = contexts.back();
+    auto * context = new QOpenGLContext();//context is freed by QGLWidget
 
     QSurfaceFormat format;
     format.setMajorVersion(2);
@@ -62,7 +60,7 @@ QGLContext * newFavoriteQGLContext() {
     }
     context->setFormat(format);
     context->create();
-    return QGLContext::fromOpenGLContext(context.get());
+    return QGLContext::fromOpenGLContext(context);
 }
 
 Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
@@ -209,10 +207,8 @@ void Viewport::initializeGL() {
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
     glShadeModel(GL_FLAT);
     glDisable(GL_DITHER);
-    glDisable(GL_STENCIL);
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
     if (state->overlay && viewportType != VIEWPORT_SKELETON) {
         createOverlayTextures();
