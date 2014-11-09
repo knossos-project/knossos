@@ -1331,7 +1331,11 @@ void EventModel::nodeSelection(int x, int y, int vpId) {
     for (auto & elem : state->skeletonState->selectedNodes) {
         elem->selected = false;
     }
-    state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, minX, minY, maxX - minX, maxY - minY);
+    const auto width = std::abs(maxX - minX);
+    const auto height = std::abs(maxY - minY);
+    const auto centerX = minX + width / 2;
+    const auto centerY = minY + height / 2;
+    state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
     //mark all found nodes as selected
     for (auto & elem : state->skeletonState->selectedNodes) {
         elem->selected = true;
