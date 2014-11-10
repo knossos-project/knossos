@@ -52,14 +52,16 @@ QGLContext * newFavoriteQGLContext(QGLWidget * shared) {
     QSurfaceFormat format;
     format.setMajorVersion(2);
     format.setMinorVersion(0);
+    format.setDepthBufferSize(24);
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-//    format.setProfile(QSurfaceFormat::NoProfile);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
     }
     context->setFormat(format);
-    if (shared != nullptr) {
+    if (shared != nullptr) {//share textures for rendering in skeleton vp
         context->setShareContext(shared->context()->contextHandle());
     }
     context->create();
