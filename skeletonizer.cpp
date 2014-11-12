@@ -349,8 +349,8 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    const int time = state->skeletonState->tracingTime;
-    xml.writeAttribute("min", QString::number(time));
+    const int time = state->skeletonState->tracingTime * 60 * 1000; //convert minutes to ms
+    xml.writeAttribute("ms", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
     xml.writeAttribute("checksum", timeChecksum);
@@ -415,7 +415,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("z", QString::number(currentNode->position.z + 1));
             xml.writeAttribute("inVp", QString::number(currentNode->createdInVp));
             xml.writeAttribute("inMag", QString::number(currentNode->createdInMag));
-            xml.writeAttribute("time", QString::number(currentNode->timestamp));
+            xml.writeAttribute("time", QString::number(currentNode->timestamp * 1000)); //convert seconds to ms
             xml.writeEndElement(); // end node
         }
         xml.writeEndElement(); // end nodes
@@ -549,15 +549,17 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->skeletonTime = attribute.toLocal8Bit().toInt();
-                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->skeletonTime)) {
-                            state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
+                        state->skeletonState->tracingTimeMin = false;
+                        state->skeletonState->tracingTime = attribute.toLocal8Bit().toInt();
+                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->tracingTime)) {
+                            state->skeletonState->tracingTime = xorInt(state->skeletonState->tracingTime);
                         }
                         //convert to minutes, at idletime we are substracting the idletime
-                        state->skeletonState->tracingTime = state->skeletonState->skeletonTime / 1000.0 / 60.0;
-                    } else { //minutes?
+                        state->skeletonState->tracingTime = state->skeletonState->tracingTime / 1000.0 / 60.0;
+                    } else { // support for the few minutes files
                         attribute = attributes.value("min");
                         if(attribute.isNull() == false) {
+                            state->skeletonState->tracingTimeMin = true;
                             state->skeletonState->tracingTime = attribute.toLocal8Bit().toInt();
                         }
                     }
@@ -818,8 +820,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             int time = state->skeletonState->skeletonTime;// for legacy skeleton files
                             if(attribute.isNull() == false) {
                                 time = attribute.toLocal8Bit().toInt();
-                                if(state->skeletonState->skeletonTime != 0) { //skeletonTime exists, so an old NML file was loaded
-                                    time = time / 1000.0;
+                                if(state->skeletonState->tracingTimeMin) { //nml with minutes in it?
+                                    time = time; //node time was saved in seconds
+                                } else {
+                                    time = time / 1000; //convert ms to s
                                 }
                             }
 
