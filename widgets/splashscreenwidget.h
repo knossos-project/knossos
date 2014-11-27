@@ -23,7 +23,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "version.h"
 
 #include <QDialog>
 #include <QFormLayout>
@@ -35,8 +34,8 @@ public:
     explicit SplashScreenWidget(QWidget *parent = 0);
 private:
     QFormLayout mainLayout;
-    QLabel versionLabel{QString(KVERSION)};
-    QLabel revisionLabel{QString(KREVISION)};
+    QLabel versionLabel;
+    QLabel revisionLabel;
     QLabel splash;
 };
 

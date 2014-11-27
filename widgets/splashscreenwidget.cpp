@@ -21,12 +21,18 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+
 #include "splashscreenwidget.h"
+
+#include "version.h"
 
 #include <QPixmap>
 
 SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+    versionLabel.setText(KVERSION);
+    revisionLabel.setText(KREVISION);
 
     splash.setPixmap(QPixmap(":/images/splash"));
 
