@@ -387,6 +387,7 @@ void TaskManagementWidget::submitDialogOk() {
     free(response.content);
 
     submitDialog->hide();
+    submitDialogCommentField->clear();
 }
 
 void TaskManagementWidget::resetSession(QString message) {
