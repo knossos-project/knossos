@@ -54,8 +54,6 @@ public slots:
     void setDescription(QString description);
     void setComment(QString comment);
 
-    void submitButtonClicked();
-    void submitDialogCanceled();
     void submitDialogOk();
 
     void startNewTaskButtonClicked();

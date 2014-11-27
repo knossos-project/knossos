@@ -53,7 +53,7 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
     setLayout(formLayout);
 
     // prepare the work submission dialog
-    submitDialog = new QDialog();
+    submitDialog = new QDialog(this);
     submitDialog->setWindowTitle("Submit Your Work");
     submitDialogCommentField = new QLineEdit();
     submitDialogCommentField->setPlaceholderText("submission comment (optional)");
@@ -68,13 +68,12 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
     formLayout->addRow(submitDialogCancelButton, submitDialogOkButton);
     submitDialog->setLayout(formLayout);
 
-    connect(submitDialogCancelButton, SIGNAL(clicked()), this, SLOT(submitDialogCanceled()));
     connect(submitDialogOkButton, SIGNAL(clicked()), this, SLOT(submitDialogOk()));
 
     connect(logoutButton, SIGNAL(clicked()), this, SLOT(logoutButtonClicked()));
     connect(loadLastSubmitButton, SIGNAL(clicked()), this, SLOT(loadLastSubmitButtonClicked()));
     connect(startNewTaskButton, SIGNAL(clicked()), this, SLOT(startNewTaskButtonClicked()));
-    connect(submitButton, SIGNAL(clicked()), this, SLOT(submitButtonClicked()));
+    QObject::connect(submitButton, &QPushButton::clicked, submitDialog, &QDialog::exec);
 }
 
 
@@ -228,14 +227,6 @@ void TaskManagementWidget::setDescription(QString description) {
 
 void TaskManagementWidget::setComment(QString comment) {
     taskCommentLabel.setText(QString("<b>Task</b> <i>%1</i>: %2").arg(taskState::getTask()).arg(comment));
-}
-
-void TaskManagementWidget::submitButtonClicked() {
-    submitDialog->show();
-}
-
-void TaskManagementWidget::submitDialogCanceled() {
-    submitDialog->hide();
 }
 
 void TaskManagementWidget::submitDialogOk() {
