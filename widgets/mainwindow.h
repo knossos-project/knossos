@@ -93,7 +93,6 @@ public:
 
     SkeletonProxy *skeletonProxy;
 
-    QLabel statusLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
 

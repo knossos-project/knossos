@@ -123,9 +123,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     setAcceptDrops(true);
 
     statusBar()->setSizeGripEnabled(false);
-    statusBar()->addPermanentWidget(&statusLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
+
+#ifdef Q_OS_WIN
+    //manually tweak padding between widgets and both window borders and statusbar seperators
+    unsavedChangesLabel.setContentsMargins(0, 0, 3, 0);
+    annotationTimeLabel.setContentsMargins(0, 0, 4, 0);
+#endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 }
@@ -249,8 +254,10 @@ void MainWindow::updateTitlebar() {
     //don’t display if there are no changes and no file is loaded
     if (!state->skeletonState->unsavedChanges && annotationFilename.isEmpty()) {
         unsavedChangesLabel.hide();
+        annotationTimeLabel.hide();
     } else {
         unsavedChangesLabel.show();
+        annotationTimeLabel.show();
     }
     setWindowTitle(title);
 }

@@ -61,7 +61,7 @@ void Session::annotationTime(const decltype(annotationTimeMilliseconds) & ms) {
     const auto hours = absoluteMinutes / 60;
     const auto minutes = absoluteMinutes % 60;
 
-    emit annotationTimeChanged(QString("%1:%2h").arg(hours).arg(minutes, 2, 10, QChar('0')));
+    emit annotationTimeChanged(QString("%1:%2h annotation time").arg(hours).arg(minutes, 2, 10, QChar('0')));
 }
 
 decltype(Session::annotationTimeMilliseconds) Session::currentTimeSliceMs() const {
