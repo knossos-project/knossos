@@ -1264,27 +1264,9 @@ void Viewer::run() {
             vpLowerRight->updateGL();
             disableVsync();
 
-            static uint call = 0;
-            if (++call % 1000 == 0) {
-                if(idlingExceeds(60000)) {
-                    state->viewerState->renderInterval = SLOW;
-                }
-            }
             state->viewerState->userMove = false;
         }
     }
-}
-
-/** this method checks if the last call of the method checkIdleTime is longer than <treshold> msec ago.
- *  In this case, the render loop is slowed down to 1 calls per second (see timer->setSingleShot).
- *  Otherwise it stays in / switches to normal mode
-*/
-bool Viewer::idlingExceeds(uint msec) {
-    QDateTime now = QDateTime::currentDateTimeUtc();
-    if(state->viewerState->lastIdleTimeCall.msecsTo(now) >= msec) {
-        return true;
-    }
-    return false;
 }
 
 bool Viewer::updateViewerState() {

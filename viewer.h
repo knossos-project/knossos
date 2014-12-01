@@ -114,7 +114,6 @@ public slots:
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
-    bool idlingExceeds(uint msec);
 };
 
 #endif // VIEWER_H

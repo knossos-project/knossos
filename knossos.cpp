@@ -263,7 +263,6 @@ bool Knossos::initStates() {
    state->viewerState->autoTracingMode = navigationMode::recenter;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;
-   state->skeletonState->idleTimeSession = 0;
 
    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
@@ -279,8 +278,6 @@ bool Knossos::initStates() {
    // For the skeletonizer
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
    state->skeletonState->idleTime = 0;
-   state->skeletonState->idleTimeNow = 0;
-   state->skeletonState->idleTimeLast = 0;
 
    state->time.start();
 

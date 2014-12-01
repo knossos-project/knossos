@@ -661,7 +661,6 @@ struct viewerState {
     float cumDistRenderThres;
 
     bool defaultVPSizeAndPos;
-    QDateTime lastIdleTimeCall;
     uint renderInterval;
 };
 
@@ -797,10 +796,7 @@ struct skeletonState {
     bool tracingTimeMin;
     bool traceractive;
 
-    int idleTimeSession;
     int idleTime;
-    int idleTimeNow;
-    int idleTimeLast;
 
     bool simpleTracing;
     struct treeListElement *firstTree;
