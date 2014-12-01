@@ -33,7 +33,6 @@
 #include "skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
-#include "widgets/tracingtimewidget.h"
 #include "widgets/widgetcontainer.h"
 
 #include <QApplication>
@@ -55,29 +54,6 @@ std::unique_ptr<Knossos> knossos;
 std::unique_ptr<Loader> loader;
 
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
-
-class myEventFilter: public QObject {
-public:
-    myEventFilter() : QObject() {};
-    ~myEventFilter() {};
-
-    bool eventFilter(QObject* object,QEvent* event) {
-        // update idle time to current time on any user actions except just moving the mouse
-        int type = event->type();
-        if (type == QEvent::MouseButtonPress
-                || type == QEvent::KeyPress
-                || type == QEvent::Wheel) {
-            if (state != NULL
-                    && state->viewer != NULL
-                    && state->viewer->window != NULL
-                    && state->viewer->window->widgetContainer != NULL
-                    && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
-                state->skeletonState->traceractive = true;
-            }
-        }
-        return QObject::eventFilter(object,event);
-    }
-};
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
@@ -205,8 +181,6 @@ int main(int argc, char *argv[]) {
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
 
-    a.installEventFilter(new myEventFilter());
-
     QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
 
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::treeAddedSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
@@ -277,7 +251,6 @@ bool Knossos::initStates() {
 
    // For the skeletonizer
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
-   state->skeletonState->idleTime = 0;
 
    state->time.start();
 
@@ -719,8 +692,6 @@ bool Knossos::configDefaults() {
     state->skeletonState->skeletonTime = 0;
     state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = -1;
-    state->skeletonState->tracingTime = 0;
-    state->skeletonState->traceractive = false;
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;

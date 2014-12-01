@@ -11,7 +11,6 @@
 #include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
-#include "tracingtimewidget.h"
 #include "viewportsettingswidget.h"
 #include "pythonpropertywidget.h"
 
@@ -20,14 +19,13 @@ struct WidgetContainer {
         : annotationWidgetObject(parent), commentsWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
         , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
-        , taskManagementWidgetObject(&taskLoginWidgetObject, parent), tracingTimeWidgetObject(parent)
-        , viewportSettingsWidgetObject(parent)
+        , taskManagementWidgetObject(&taskLoginWidgetObject, parent), viewportSettingsWidgetObject(parent)
 
         , annotationWidget(&annotationWidgetObject), commentsWidget(&commentsWidgetObject)
         , datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
         , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
-        , tracingTimeWidget(&tracingTimeWidgetObject), viewportSettingsWidget(&viewportSettingsWidgetObject)
+        , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         taskLoginWidgetObject.setTaskManagementWidget(&taskManagementWidgetObject);
         QObject::connect(this->datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults
@@ -45,7 +43,6 @@ struct WidgetContainer {
     SplashScreenWidget splashWidgetObject;
     TaskLoginWidget taskLoginWidgetObject;
     TaskManagementWidget taskManagementWidgetObject;
-    TracingTimeWidget tracingTimeWidgetObject;
     ViewportSettingsWidget viewportSettingsWidgetObject;
 
     //FIXME these pointers just point to the objects above
@@ -61,7 +58,6 @@ struct WidgetContainer {
     SplashScreenWidget * const splashWidget;
     TaskLoginWidget * const taskLoginWidget;
     TaskManagementWidget * const taskManagementWidget;
-    TracingTimeWidget * const tracingTimeWidget;
     ViewportSettingsWidget * const viewportSettingsWidget;
 };
 

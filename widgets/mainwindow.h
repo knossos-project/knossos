@@ -93,6 +93,10 @@ public:
 
     SkeletonProxy *skeletonProxy;
 
+    QLabel statusLabel;
+    QLabel unsavedChangesLabel;
+    QLabel annotationTimeLabel;
+
     void createViewports();
 
     // for creating action, menus and the toolbar

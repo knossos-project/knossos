@@ -23,19 +23,18 @@
  */
 #include "skeletonizer.h"
 
-#include <cstring>
-#include <vector>
-#include <queue>
-#include <set>
-
-#include <QProgressDialog>
-
 #include "file_io.h"
 #include "functions.h"
 #include "knossos-global.h"
 #include "knossos.h"
+#include "session.h"
 #include "version.h"
 #include "viewer.h"
+
+#include <cstring>
+#include <vector>
+#include <queue>
+#include <set>
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->simpleTracing = false;
@@ -349,7 +348,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    const int time = state->skeletonState->tracingTime * 60 * 1000; //convert minutes to ms
+    const auto time = Session::singleton().annotationTime();
     xml.writeAttribute("ms", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
@@ -415,7 +414,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("z", QString::number(currentNode->position.z + 1));
             xml.writeAttribute("inVp", QString::number(currentNode->createdInVp));
             xml.writeAttribute("inMag", QString::number(currentNode->createdInMag));
-            xml.writeAttribute("time", QString::number(currentNode->timestamp * 1000)); //convert seconds to ms
+            xml.writeAttribute("time", QString::number(currentNode->timestamp));
             xml.writeEndElement(); // end node
         }
         xml.writeEndElement(); // end nodes
@@ -502,6 +501,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
     QTime bench;
     QXmlStreamReader xml(&file);
+    bool minuteFile = false;//skeleton time in minutes and node time in seconds, TODO remove after transition time
 
     std::vector<uint> branchVector;
     std::vector<std::pair<uint, QString>> commentsVector;
@@ -548,19 +548,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->tracingTimeMin = false;
-                        state->skeletonState->tracingTime = attribute.toLocal8Bit().toInt();
-                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->tracingTime)) {
-                            state->skeletonState->tracingTime = xorInt(state->skeletonState->tracingTime);
-                        }
-                        //convert to minutes, at idletime we are substracting the idletime
-                        state->skeletonState->tracingTime = state->skeletonState->tracingTime / 1000.0 / 60.0;
+                    if (attribute.isNull() == false) {
+                        const auto ms = attribute.toInt();
+                        Session::singleton().annotationTime(ms);
                     } else { // support for the few minutes files
                         attribute = attributes.value("min");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->tracingTimeMin = true;
-                            state->skeletonState->tracingTime = attribute.toLocal8Bit().toInt();
+                        if (attribute.isNull() == false) {
+                            minuteFile = true;
+                            const auto ms = attribute.toInt() * 60 * 1000;
+                            Session::singleton().annotationTime(ms);
                         }
                     }
                 } else if(xml.name() == "activeNode" && !merge) {
@@ -643,13 +639,11 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 } else if(merge == false && xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
                     QStringRef attribute = attributes.value("ms");
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->idleTime = attribute.toString().toInt();
-                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->idleTime)) {
-                            state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
-                        }
-                        //convert to minutes and subract it from the tracingtime
-                        state->skeletonState->tracingTime -= state->skeletonState->idleTime / 1000.0 / 60.0;
+                    if (attribute.isNull() == false) {
+                        const auto annotationTime = Session::singleton().annotationTime();
+                        const auto idleTime = attribute.toString().toInt();
+                        //subract from annotationTime
+                        Session::singleton().annotationTime(annotationTime - idleTime);
                     }
                 }
                 xml.skipCurrentElement();
@@ -817,22 +811,20 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             }
 
                             attribute = attributes.value("time");
-                            int time = state->skeletonState->skeletonTime;// for legacy skeleton files
+                            auto ms = Session::singleton().annotationTime();// for legacy skeleton files (without time) add current runtime
                             if(attribute.isNull() == false) {
-                                time = attribute.toLocal8Bit().toInt();
-                                if(state->skeletonState->tracingTimeMin) { //nml with minutes in it?
-                                    time = time; //node time was saved in seconds
-                                } else {
-                                    time = time / 1000; //convert ms to s
+                                auto ms = attribute.toInt();
+                                if (minuteFile) {// nml with minutes in it?
+                                    ms = ms * 1000;//node time was saved in seconds → ms
                                 }
                             }
 
                             if(merge == false) {
-                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, time, false);
+                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, ms, false);
                             }
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, time, false);
+                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, ms, false);
                             }
                         }
                         xml.skipCurrentElement();
@@ -1342,10 +1334,9 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
 
     updateCircRadius(tempNode);
 
-    if(time == -1) {
-        time = state->skeletonState->tracingTime*60 + (state->time.elapsed()/1000);
+    if (time == -1) {//time was not provided
+        time = Session::singleton().annotationTime() + Session::singleton().currentTimeSliceMs();
     }
-
     tempNode->timestamp = time;
 
     state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
@@ -1462,8 +1453,8 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 
     skeletonState->branchStack = newStack(1048576);
 
-    skeletonState->unsavedChanges = true;
-    resetSkeletonMeta();
+    Session::singleton().annotationTime(0);
+    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
     skeletonState->unsavedChanges = false;
 
     return true;
@@ -2555,10 +2546,6 @@ bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     return true;
 }
 
-int Skeletonizer::xorInt(int xorMe) {
-    return xorMe ^ (int) 5642179165;
-}
-
 void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
     int nr;
 
@@ -2890,32 +2877,6 @@ std::unordered_map<uint, uint> Skeletonizer::dijkstraGraphSearch(struct nodeList
         }
     }
     return result;
-}
-
-bool Skeletonizer::isObfuscatedTime(int time) {
-    /* Sad detour in version 3.4 */
-
-    /* The check for whether skeletonTime is bigger than some magic
-       number is a workaround for the bug where skeletons saved in
-       a version prior to 3.4 and edited in 3.4 sometimes had
-       un-obfuscated times. Assuming the time is below ca. 15 days,
-       this successfully checks for obfuscation. */
-
-    if((strcmp(state->skeletonState->skeletonLastSavedInVersion, "3.4") == 0) &&
-              (time > 1300000000)) {
-        return true;
-    }
-    return false;
-}
-
-void Skeletonizer::resetSkeletonMeta() {
-    // Whenever the user arrives at a 'clean slate',
-    // by clearing the skeleton or by deleting all nodes,
-    // skeleton meta information that is either set during
-    // tracing or loaded with the skeleton should be reset.
-
-    state->skeletonState->tracingTime = 0;
-    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
 }
 
 Skeletonizer::TracingMode Skeletonizer::getTracingMode() const {

@@ -68,10 +68,6 @@ public slots:
     void deleteSelectedTrees();
     void deleteSelectedNodes();
 
-    static bool isObfuscatedTime(int time);
-
-    static void resetSkeletonMeta();
-
     void UI_popBranchNode();
     static bool delTree(int treeID);
     static void clearTreeSelection();
@@ -122,7 +118,6 @@ public slots:
     void popBranchNodeCanceled();
     bool popBranchNode();
     static bool updateCircRadius(struct nodeListElement *node);
-    static int xorInt(int xorMe);
 
 public:
     enum TracingMode {

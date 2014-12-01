@@ -24,6 +24,20 @@
 
 #include <curl/curl.h>
 
+#include "file_io.h"
+#include "GuiConstants.h"
+#include "knossos.h"
+#include "knossos-global.h"
+#include "mainwindow.h"
+#include "skeletonizer.h"
+#include "version.h"
+#include "viewer.h"
+#include "viewport.h"
+#include "session.h"
+#include "scriptengine/scripting.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgetcontainer.h"
+
 #include <QAction>
 #include <QCheckBox>
 #include <QDebug>
@@ -46,19 +60,6 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QQueue>
-
-#include "file_io.h"
-#include "GuiConstants.h"
-#include "knossos.h"
-#include "knossos-global.h"
-#include "mainwindow.h"
-#include "skeletonizer.h"
-#include "version.h"
-#include "viewer.h"
-#include "viewport.h"
-#include "scriptengine/scripting.h"
-#include "widgets/viewportsettings/vpgeneraltabwidget.h"
-#include "widgetcontainer.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
@@ -116,11 +117,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     createToolBar();
     createMenus();
     setCentralWidget(new QWidget(this));
-    setStatusBar(nullptr);
     setGeometry(0, 0, width(), height());
 
     createViewports();
     setAcceptDrops(true);
+
+    statusBar()->setSizeGripEnabled(false);
+    statusBar()->addPermanentWidget(&statusLabel);
+    statusBar()->addPermanentWidget(&unsavedChangesLabel);
+    statusBar()->addPermanentWidget(&annotationTimeLabel);
+
+    QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 }
 
 void MainWindow::createViewports() {
@@ -186,21 +193,18 @@ void MainWindow:: createToolBar() {
         toolBar->addWidget(button);
         return button;
     };
-    auto tracingTimeButton = createToolToogleButton(":/images/icons/appointment.png", "Tracing Time");
     auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Dataset Options");
     auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
     auto commentShortcutsButton = createToolToogleButton(":/images/icons/insert-text.png", "Comment Shortcuts");
     auto annotationButton = createToolToogleButton(":/images/icons/graph.png", "Annotation");
 
     //button → visibility
-    QObject::connect(tracingTimeButton, &QToolButton::toggled, widgetContainer->tracingTimeWidget, &TracingTimeWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     QObject::connect(commentShortcutsButton, &QToolButton::toggled, widgetContainer->commentsWidget, &CommentsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->tracingTimeWidget, &TracingTimeWidget::visibilityChanged, tracingTimeButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->commentsWidget, &CommentsWidget::visibilityChanged, commentShortcutsButton, &QToolButton::setChecked);
@@ -238,6 +242,15 @@ void MainWindow::updateTitlebar() {
     }
     if (state->skeletonState->unsavedChanges) {
         title.append("*");
+        unsavedChangesLabel.setText("unsaved changes");
+    } else {
+        unsavedChangesLabel.setText("saved");
+    }
+    //don’t display if there are no changes and no file is loaded
+    if (!state->skeletonState->unsavedChanges && annotationFilename.isEmpty()) {
+        unsavedChangesLabel.hide();
+    } else {
+        unsavedChangesLabel.show();
     }
     setWindowTitle(title);
 }
@@ -538,7 +551,6 @@ void MainWindow::createMenus() {
 
     commentsMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", widgetContainer->commentsWidget, SLOT(show()));
 
-
     auto preferenceMenu = menuBar()->addMenu("Preferences");
     preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
@@ -547,13 +559,10 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Data Saving Options"), widgetContainer->dataSavingWidget, SLOT(show()));
     preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
 
-
     auto windowMenu = menuBar()->addMenu("Windows");
     windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
     windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", widgetContainer->tracingTimeWidget, SLOT(show()));
-
 
     auto helpMenu = menuBar()->addMenu("Help");
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));

@@ -792,12 +792,6 @@ struct skeletonState {
     int skeletonTime;
     int skeletonTimeCorrection;
 
-    int tracingTime;
-    bool tracingTimeMin;
-    bool traceractive;
-
-    int idleTime;
-
     bool simpleTracing;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;

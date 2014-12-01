@@ -1,5 +1,5 @@
-#ifndef TRACINGTIMEWIDGET_H
-#define TRACINGTIMEWIDGET_H
+#ifndef SESSION_H
+#define SESSION_H
 
 /*
  *  This file is a part of KNOSSOS.
@@ -25,39 +25,37 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <QDialog>
+#include <QElapsedTimer>
+#include <QLabel>
+#include <QObject>
+#include <QString>
+#include <QTimer>
 
-class QLabel;
-class QTableWidgetItem;
-class QTimer;
-
-class TracingTimeWidget : public QDialog
-{
+class Session : public QObject {
     Q_OBJECT
+    class ActivityEventFilter;
+
+    static const int TIME_SLICE_MS = 60 * 1000;
+
+    int annotationTimeMilliseconds = 0;
+    bool timeSliceActivity = false;
+    QTimer annotationTimer;
+    QElapsedTimer lastTimeSlice;
+
+    void handleTimeSlice();
+
 public:
-    explicit TracingTimeWidget(QWidget *parent = 0);
+    Session();
+    static Session & singleton() {
+        static Session session;
+        return session;
+    }
+    decltype(annotationTimeMilliseconds) annotationTime() const;
+    void annotationTime(const decltype(annotationTimeMilliseconds) & ms);
+    decltype(annotationTimeMilliseconds) currentTimeSliceMs() const;
 
 signals:
-    void visibilityChanged(bool);
-private:
-    void showEvent(QShowEvent *) override {
-        emit visibilityChanged(true);
-    }
-    void hideEvent(QHideEvent *) override {
-        emit visibilityChanged(false);
-    }
-    QTimer *tracingtimer;
-public slots:
-    void refreshTime();
-    static void addTracingTime();
-
-protected:
-    QTableWidgetItem *tracingtimeLabelItem;
-    QTableWidgetItem *tracingtimeItem;
-
-    QTimer *timer;
+    void annotationTimeChanged(const QString & timeString);
 };
 
-
-
-#endif // TRACINGTIMEWIDGET_H
+#endif//SESSION_H
