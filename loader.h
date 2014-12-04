@@ -151,7 +151,7 @@ private:
     coord2bytep_map_t mergeCube2Pointer;
     void run();
     bool initLoader();
-    bool initialized;
+    bool uninitLoader();
     uint prevLoaderMagnification;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);

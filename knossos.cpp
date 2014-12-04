@@ -81,6 +81,52 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     }
 }
 
+int global_argc;
+char **global_argv;
+
+void Knossos::applyDefaultConfig() {
+    // The idea behind all this is that we have four sources of
+    // configuration data:
+    //
+    //  * Arguments passed by KUKU
+    //  * Local knossos.conf
+    //  * knossos.conf that comes with the data
+    //  * Default parameters
+    //
+    // All this config data should be used. Command line overrides
+    // local knossos.conf and local knossos.conf overrides knossos.conf
+    // from data and knossos.conf from data overrides defaults.
+
+    if(Knossos::configDefaults() != true) {
+        qDebug() << "Error loading default parameters.";
+        _Exit(false);
+    }
+
+    if(global_argc >= 2) {
+        Knossos::configFromCli(global_argc, global_argv);
+    }
+
+    if(state->path[0] != '\0') {
+        // Got a path from cli.
+        Knossos::readDataConfAndLocalConf();
+        // We need to read the specified config file again because it should
+        // override all parameters from other config files.
+        Knossos::configFromCli(global_argc, global_argv);
+    }
+    else {
+        Knossos::readConfigFile("knossos.conf");
+    }
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+
+    if(global_argc >= 2) {
+        if(Knossos::configFromCli(global_argc, global_argv) == false) {
+            qDebug() << "Error reading configuration from command line.";
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     QApplication a(argc, argv);
@@ -99,46 +145,11 @@ int main(int argc, char *argv[]) {
 
     knossos.reset(new Knossos);
 
-    // The idea behind all this is that we have four sources of
-    // configuration data:
-    //
-    //  * Arguments passed by KUKU
-    //  * Local knossos.conf
-    //  * knossos.conf that comes with the data
-    //  * Default parameters
-    //
-    // All this config data should be used. Command line overrides
-    // local knossos.conf and local knossos.conf overrides knossos.conf
-    // from data and knossos.conf from data overrides defaults.
+    global_argc = argc;
+    global_argv = argv;
 
-    if(Knossos::configDefaults() != true) {
-        qDebug() << "Error loading default parameters.";
-        _Exit(false);
-    }
+    knossos->applyDefaultConfig();
 
-    if(argc >= 2) {
-        Knossos::configFromCli(argc, argv);
-    }
-
-    if(state->path[0] != '\0') {
-        // Got a path from cli.
-        Knossos::readDataConfAndLocalConf();
-        // We need to read the specified config file again because it should
-        // override all parameters from other config files.
-        Knossos::configFromCli(argc, argv);
-    }
-    else {
-        Knossos::readConfigFile("knossos.conf");
-    }
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-
-    if(argc >= 2) {
-        if(Knossos::configFromCli(argc, argv) == false) {
-            qDebug() << "Error reading configuration from command line.";
-        }
-    }
     bool datasetLoaded = knossos->initStates();
 
     Viewer viewer;
@@ -152,6 +163,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::breakLoaderSignal, knossos.get(), &Knossos::breakLoader);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
@@ -198,10 +210,25 @@ int main(int argc, char *argv[]) {
     return a.exec();
 }
 
+void Knossos::breakLoader() {
+    state->protectLoadSignal->lock();
+    if (state->loaderInitialized) {
+        state->loadSignal = true;
+        state->breakLoaderSignal = true;
+        state->conditionLoadSignal->wakeOne();
+    }
+    state->protectLoadSignal->unlock();
+    loader->wait();
+}
+
 void Knossos::startLoader() {
+    state->protectLoadSignal->lock();
+    state->breakLoaderSignal = false;
     if(loader->isRunning() == false) {
         loader->start();
+        state->conditionLoaderInitialized->wait(state->protectLoadSignal);
     }
+    state->protectLoadSignal->unlock();
 }
 
 /**
@@ -223,6 +250,9 @@ bool Knossos::commonInitStates() {
     if(state->path[0] == '\0') {
         return false;//no dataset loaded
     }
+
+    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
+    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
 
     return findAndRegisterAvailableDatasets();
 }
@@ -255,8 +285,6 @@ bool Knossos::initStates() {
    state->time.start();
 
    // Those values can be calculated from given parameters
-   state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-   state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
    state->magnification = 1;
    state->lowestAvailableMag = 1;
    state->highestAvailableMag = 1;
@@ -296,12 +324,8 @@ bool Knossos::sendQuitSignal() {
     state->quitSignal = true;
     QApplication::processEvents(); //ensure everything’s done
 
-    state->protectLoadSignal->lock();
-    state->loadSignal = true;
-    state->protectLoadSignal->unlock();
-
-    state->conditionLoadSignal->wakeOne();
-    loader->wait();//wait for the loader to terminate
+    knossos.get()->breakLoader();
+    loader->wait();
 
     Knossos::sendRemoteSignal();
 
@@ -373,6 +397,8 @@ bool Knossos::readConfigFile(const char *path) {
             state->magnification = tokenList.at(1).toInt();
             state->lowestAvailableMag = state->magnification;
             state->highestAvailableMag = state->magnification;
+        } else if(token == "cube_edge_length") {
+            state->cubeEdgeLength = tokenList.at(1).toInt();
         } else if(token == "ftp_mode") {
             state->loadMode = LM_FTP;
             int ti;
@@ -565,26 +591,33 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 }
 
 bool Knossos::configDefaults() {
-    state = Knossos::emptyState();
+    bool firstRun = false;
+    if (nullptr == state) {
+        firstRun = true;
+    }
+
+    if (firstRun) {
+        state = Knossos::emptyState();
+
+        state->loadSignal = false;
+        state->loaderInitialized = false;
+        state->loaderUserMoveType = USERMOVE_NEUTRAL;
+        SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
+        state->loaderDecompThreadsNumber = QThread::idealThreadCount();
+        state->remoteSignal = false;
+        state->quitSignal = false;
+        state->breakLoaderSignal = false;
+        state->conditionLoadSignal = new QWaitCondition();
+        state->conditionLoaderInitialized = new QWaitCondition();
+        state->conditionRemoteSignal = new QWaitCondition();
+        state->protectLoadSignal = new QMutex();
+        state->protectLoaderSlots = new QMutex();
+        state->protectRemoteSignal = new QMutex();
+        state->protectCube2Pointer = new QMutex();
+    }
 
     state->path[0] = '\0';
     state->name[0] = '\0';
-
-    state->loadSignal = false;
-    state->loaderBusy = false;
-    state->loaderUserMoveType = USERMOVE_NEUTRAL;
-    SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
-    state->loaderDummy = false;
-    state->loaderDecompThreadsNumber = QThread::idealThreadCount();
-    state->remoteSignal = false;
-    state->quitSignal = false;
-    state->conditionLoadSignal = new QWaitCondition();
-    state->conditionLoadFinished = new QWaitCondition();
-    state->conditionRemoteSignal = new QWaitCondition();
-    state->protectLoadSignal = new QMutex();
-    state->protectLoaderSlots = new QMutex();
-    state->protectRemoteSignal = new QMutex();
-    state->protectCube2Pointer = new QMutex();
 
     // General stuff
     state->boergens = false;
@@ -637,48 +670,51 @@ bool Knossos::configDefaults() {
     state->viewerState->recenteringTimeOrth = 500;
     state->viewerState->walkOrth = false;
 
-    state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
-    if(state->viewerState->vpConfigs == NULL) {
-        qDebug() << "Out of memory.";
-        return false;
-    }
-    memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
-
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-        switch(i) {
-        case VP_UPPERLEFT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
-            state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
-            break;
-        case VP_LOWERLEFT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
-            state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
-            break;
-        case VP_UPPERRIGHT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
-            state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
-            break;
-        case VP_LOWERRIGHT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
-            state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
-            break;
+    if (firstRun) {
+        state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
+        if(state->viewerState->vpConfigs == NULL) {
+            qDebug() << "Out of memory.";
+            return false;
         }
-        state->viewerState->vpConfigs[i].draggedNode = NULL;
-        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-        state->viewerState->vpConfigs[i].edgeLength = 350;
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
+        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+            switch(i) {
+            case VP_UPPERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+                state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
+                break;
+            case VP_LOWERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
+                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+                state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
+                break;
+            case VP_UPPERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
+                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+                state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
+                break;
+            case VP_LOWERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
+                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+                state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
+                break;
+            }
+            state->viewerState->vpConfigs[i].draggedNode = NULL;
+            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+            state->viewerState->vpConfigs[i].edgeLength = 350;
 
-        //This variable indicates the current zoom value for a viewport.
-        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+            state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+            state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+
+            //This variable indicates the current zoom value for a viewport.
+            //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+        }
     }
+
 
     // For the skeletonizer
     state->skeletonState->lockRadius = 100;

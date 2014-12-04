@@ -843,6 +843,7 @@ loadcube_ret:
     lts->isBusy = false;
     lts->loadCubeThreadSem->release();
     lts->retVal = retVal;
+
     return;
 }
 
@@ -855,7 +856,32 @@ LoadCubeThread::LoadCubeThread(void *ctx) {
     this->ctx = ctx;
 }
 
+bool Loader::uninitLoader() {
+    state->loaderInitialized = false;
+
+    free(this->Dcoi);
+    this->Dcoi = NULL;
+
+    state->protectCube2Pointer->lock();
+    for (auto &elem : state->Dc2Pointer) { elem.clear(); }
+    for (auto &elem : state->Oc2Pointer) { elem.clear(); }
+    state->protectCube2Pointer->unlock();
+    DcSetChunk.clear();
+    OcSetChunk.clear();
+    freeDcSlots.clear();
+    freeOcSlots.clear();
+    if (NULL != bogusDc) { free(bogusDc); bogusDc = nullptr; };
+    if (NULL != bogusOc) { free(bogusOc); bogusOc = nullptr; };
+    state->loaderName[0] = '\0';
+    state->loaderPath[0] = '\0';
+
+    return true;
+}
+
 bool Loader::initLoader() {
+    this->bogusDc = nullptr;
+    this->bogusOc = nullptr;
+
     // DCOI, ie. Datacubes of interest, is a hashtable that will contain
     // the coordinates of the datacubes and overlay cubes we need to
     // load given our current position.
@@ -920,6 +946,9 @@ bool Loader::initLoader() {
     prevLoaderMagnification = state->loaderMagnification;
 
     magChange = false;
+
+    state->loaderInitialized = true;
+    state->conditionLoaderInitialized->wakeOne();
 
     return true;
 }
@@ -1153,27 +1182,18 @@ uint Loader::loadCubes() {
 
 void Loader::run() {
     state->protectLoadSignal->lock();
-
-    // Set up DCOI and freeDcSlots / freeOcSlots.
-    if(initLoader() == false) {
+    if(false == initLoader()) {
         throw std::runtime_error("initLoader failed");
     }
-    initialized = true;
+    do {
+        state->conditionLoadSignal->wait(state->protectLoadSignal);
+    } while ((!state->breakLoaderSignal) && (!state->quitSignal) && (!load()));
+    state->breakLoaderSignal = false;
 
-    // Start "signal wait" loop.
-    while(true)  {
-        // as long the loadSignal is false, the loops waits
-        while(state->loadSignal == false) {
-            state->loaderBusy = false;
-            state->conditionLoadFinished->wakeOne();
-            state->conditionLoadSignal->wait(state->protectLoadSignal);
-            state->loaderBusy = true;
-        }
-
-        if (true == load()) {
-            break;
-        }
+    if(uninitLoader() == false) {
+        throw std::runtime_error("uninitLoader failed");
     }
+    state->protectLoadSignal->unlock();
 }
 
 /**
@@ -1187,7 +1207,7 @@ void Loader::run() {
 bool Loader::load() {
     uint funcRetVal;
 
-    if(!initialized) {
+    if(!state->loaderInitialized) {
         qDebug() << "Warning, Loader was not initialized";
         qDebug() << "Load: begin ended";
         return false;
@@ -1198,12 +1218,6 @@ bool Loader::load() {
     if(state->datasetChangeSignal) {
         state->datasetChangeSignal = NO_MAG_CHANGE;
         magChange = true;
-    }
-
-    if(state->quitSignal == true) {
-        qDebug() << "Loader quitting.";
-        state->protectLoadSignal->unlock();
-        return true;
     }
 
     state->protectCube2Pointer->lock();
@@ -1245,14 +1259,12 @@ bool Loader::load() {
 
     state->protectLoadSignal->unlock();
 
-    if (!state->loaderDummy) {
-        if(loadCubes() == false) {
-            //qDebug() << "Loading of all DCOI did not complete.";
-        }
+    if(false == loadCubes()) {
+        //qDebug() << "Loading of all DCOI did not complete.";
     }
+
     lll_rmlist(this->Dcoi);
 
     state->protectLoadSignal->lock();
-
     return false;
 }

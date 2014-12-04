@@ -673,7 +673,7 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer->lock();
-            datacube = state->Dc2Pointer[int_log(state->magnification)][currentDc];
+            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
             SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,
@@ -852,9 +852,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
 bool Viewer::initViewer() {
     calcLeftUpperTexAbsPx();
 
-    if (state->overlay) {
-        Segmentation::singleton().loadOverlayLutFromFile();
-    }
+    Segmentation::singleton().loadOverlayLutFromFile();
 
     // This is the buffer that holds the actual texture data (for _all_ textures)
 
@@ -1871,6 +1869,10 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
 
     state->previousPositionX = state->currentPositionX;
 
+    if (0 == x) {
+        qDebug() << "HERE";
+    }
+
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
     // The int division is hopefully not too much of an issue here
@@ -1879,9 +1881,9 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
                    y / state->magnification,
                    z / state->magnification);
 
+    state->conditionLoadSignal->wakeOne();
     state->protectLoadSignal->unlock();
 
-    state->conditionLoadSignal->wakeOne();
     return true;
 }
 

@@ -215,7 +215,7 @@ void Viewport::initializeGL() {
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_COLOR_MATERIAL);
 
-    if (state->overlay && viewportType != VIEWPORT_SKELETON) {
+    if (viewportType != VIEWPORT_SKELETON) {
         createOverlayTextures();
     }
 

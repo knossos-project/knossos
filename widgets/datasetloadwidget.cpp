@@ -17,6 +17,7 @@
 #include "GuiConstants.h"
 #include "knossos.h"
 #include "knossos-global.h"
+#include "loader.h"
 #include "mainwindow.h"
 #include "viewer.h"
 
@@ -53,11 +54,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     passwd->setEnabled(false);
 
     supercubeEdgeSpin = new QSpinBox;
-    int maxM = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-    if (maxM % 2 == 0) {
-        maxM -= 1;//set maxM to the next odd value
-    }
-    supercubeEdgeSpin->setRange(3, maxM);
+    supercubeEdgeSpin->setMinimum(3);
     supercubeEdgeSpin->setSingleStep(2);
     supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     supercubeSizeLabel = new QLabel();
@@ -249,21 +246,8 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto superCubeEdge = supercubeEdgeSpin->value();
     auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
-    auto text = QString("Data cache cube edge length (%1 MiB RAM").arg(mibibytes);
-    if (state->M != supercubeEdgeSpin->value() || state->overlay != segmentationOverlayCheckbox.isChecked()) {
-        text.append(", restart required");
-    }
-    text.append(")");
+    auto text = QString("Data cache cube edge length (%1 MiB RAM)").arg(mibibytes);
     supercubeSizeLabel->setText(text);
-}
-
-void DatasetLoadWidget::waitForLoader() {
-    emit startLoaderSignal();
-    state->protectLoadSignal->lock();
-    while (state->loaderBusy) {
-        state->conditionLoadFinished->wait(state->protectLoadSignal);
-    }
-    state->protectLoadSignal->unlock();
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
@@ -399,39 +383,6 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
         url.erase(i, std::string::npos); //hostname
     }
 
-    // check if user changed the supercube size. If so, KNOSSOS needs to restart
-    const auto superCubeChange = state->M != supercubeEdgeSpin->value();
-    const auto segmentationOverlayChange = state->overlay != segmentationOverlayCheckbox.isChecked();
-    if (isGUI && (superCubeChange || segmentationOverlayChange)) {
-        auto text = QString("You chose to:\n");
-        if (superCubeChange) {
-            text += "• change the data cache cube edge length\n";
-        }
-        if (segmentationOverlayChange) {
-            text += "• change the display of the segmentation data\n";
-        }
-        text += QString("\nKnossos needs to restart to apply this.\
-                        You will loose your annotation if you didn’t save or already cleared it.");
-        if (QMessageBox::question(this, "Knossos restart – loss of unsaved annotation",
-                                  text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
-            auto args = QApplication::arguments(); //append to previous args, newer values will overwrite previous ones
-            //change via cmdline so it is not saved on a crash/kill
-            if (superCubeChange) {
-                args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));
-            }
-            if (segmentationOverlayChange) {
-                args.append(QString("--overlay=%0").arg(segmentationOverlayCheckbox.isChecked()));
-            }
-            qDebug() << args;
-            QApplication::closeAllWindows();//stop loader, and queue application closing
-            loader.reset();//free cubes before loading the new knossos instance
-            const auto program = args[0];
-            args.pop_front();//remove program path from args
-            QProcess::startDetached(program, args);
-            return;
-        }
-    }
-
     if(local->isChecked()) { //only for local dataset
         pathRecentIndex = this->getRecentPathItems().indexOf(path);
         if (-1 != pathRecentIndex) {
@@ -449,22 +400,9 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
         emit clearSkeletonSignalNoGUI();
     }
 
-    // BUG BUG BUG
-    // The following code, combined with the way loader::run in currently implemented
-    // (revision 966) contains a minor timing    issue that may result in a crash, namely
-    // since loader::loadCubes begins executing in LM_LOCAL mode and ends in LM_FTP,
-    // if at this point in the code we're in LM_LOCAL, and are about an FTP dataset
-    // BUG BUG BUG
+    emit (breakLoaderSignal());
 
-    state->loaderDummy = true;
-
-    // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
-    state->viewerState->currentPosition.x =
-            state->viewerState->currentPosition.y =
-            state->viewerState->currentPosition.z = 0;
-    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength,
-                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
-
+    Knossos::applyDefaultConfig();
 
     if(remote->isChecked()) { //only for remote dataset
         strncpy(state->ftpHostName, url.c_str(), MAX_PATH);
@@ -500,8 +438,6 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
         state->loadMode = LM_FTP;
     }
 
-    this->waitForLoader();
-
     if(local->isChecked()) {
         if(false == Knossos::readConfigFile(filePath.toStdString().c_str())) {
             QMessageBox info;
@@ -525,15 +461,29 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
 
     knossos->commonInitStates();
 
-    this->waitForLoader();
+    // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
+    state->M = supercubeEdgeSpin->value();
+    state->overlay = segmentationOverlayCheckbox.isChecked();
 
-    emit changeDatasetMagSignal(DATA_SET);
+    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
+        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+    }
+
+    applyGeometrySettings();
+
+    emit datasetSwitchZoomDefaults();
+
+    // reset skeleton viewport
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+    }
+
+    emit (startLoaderSignal());
+
     emit updateDatasetCompression();
 
-    // Back to usual...
-    state->loaderDummy = false;
-
-    // ...beginning with loading the middle of dataset, as upon startup
+    // ...beginning with loading the middle of dataset
     SET_COORDINATE(state->viewerState->currentPosition,
                    state->boundary.x / 2 - state->cubeEdgeLength,
                    state->boundary.y / 2 - state->cubeEdgeLength,
@@ -543,21 +493,6 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
                 state->cubeEdgeLength,
                 state->cubeEdgeLength,
                 USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
-    // reset skeleton viewport
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
-    }
-
-    //Viewer::changeDatasetMag cannot be used when ther’re no other mags available
-    //sets viewport settings according to current mag
-    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN / state->magnification;
-        }
-    }
-
-    emit datasetSwitchZoomDefaults();
 }
 
 void DatasetLoadWidget::saveSettings() {
@@ -584,6 +519,22 @@ void DatasetLoadWidget::saveSettings() {
     settings.setValue(DATASET_OVERLAY, state->overlay);
 
     settings.endGroup();
+}
+
+void DatasetLoadWidget::applyGeometrySettings() {
+    //settings depending on M
+    state->cubeSetElements = state->M * state->M * state->M;
+    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
+
+    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
+    }
+
+    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
+        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+    }
 }
 
 void DatasetLoadWidget::loadSettings() {
@@ -621,17 +572,5 @@ void DatasetLoadWidget::loadSettings() {
     settings.endGroup();
 
 
-    //settings depending on M
-    state->cubeSetElements = state->M * state->M * state->M;
-    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-    }
-
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-    }
+    applyGeometrySettings();
 }

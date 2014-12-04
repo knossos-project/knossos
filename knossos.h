@@ -44,6 +44,7 @@ class Knossos : public QObject {
 public:
     explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
+    static void applyDefaultConfig();
     static bool readConfigFile(const char *path);
     static bool printConfigValues();
     static bool loadNeutralDatasetLUT(GLuint *datasetLut);
@@ -70,6 +71,7 @@ signals:
 public slots:
     void loadTreeLUTFallback();
     void startLoader();
+    void breakLoader();
 };
 
 extern std::unique_ptr<Knossos> knossos;

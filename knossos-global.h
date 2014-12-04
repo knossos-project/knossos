@@ -156,6 +156,8 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define SLOW 1000
 #define FAST 10
 
+extern DWORD initTickCount;
+
 class stateInfo;
 extern stateInfo * state;
 
@@ -219,23 +221,25 @@ public:
     // Tell the loading thread that it should interrupt its work /
     // its sleep and do something new.
     bool loadSignal;
-    // Is loader currently busy
-    bool loaderBusy;
+    // Is loader initialized
+    bool loaderInitialized;
     // How user movement was generated
     Byte loaderUserMoveType;
     // Direction of user movement in case of drilling,
     // or normal to viewport plane in case of horizontal movement.
     // Left unset in neutral movement.
     Coordinate loaderUserMoveViewportDirection;
-    // Should loader load real data or just dummy do-nothing
-    bool loaderDummy;
     int loaderDecompThreadsNumber;
 
-    // If loadSignal is true and quitSignal is true, make the
-    // loading thread quit. loadSignal == true means the loader
-    // has been signalled. If quitSignal != true, it will go on
-    // loading its stuff.
     bool quitSignal;
+
+    // If loadSignal is true and breakLoaderSignal is true, make the
+    // loading loop break. If quitSignal is also true, the loader thread
+    // would quit. Otherwise it would reinitialize.
+    // loadSignal == true means the loader
+    // has been signalled. If breakLoaderSignal != true, it will go on
+    // loading its stuff.
+    bool breakLoaderSignal;
 
     // These signals are used to communicate with the remote.
     bool remoteSignal;
@@ -308,11 +312,10 @@ public:
     int datasetChangeSignal;
 
     // Tell the loading thread to wake up.
-
     QWaitCondition *conditionLoadSignal;
 
     // Tells another thread that loader has finished
-    QWaitCondition *conditionLoadFinished;
+    QWaitCondition *conditionLoaderInitialized;
 
     // Tell the remote to wake up.
     QWaitCondition *conditionRemoteSignal;

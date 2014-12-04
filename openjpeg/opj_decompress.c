@@ -249,7 +249,6 @@ static int infile_format(const char *fname)
 	else
     {
         // TODO GetCurrentThreadId() and GetTickCount() prevent compilation on linux (and possibly other platforms?)
-        //fprintf(stderr, "DEBUG DEBUG DEBUG infile_format: file magic error %s, TID %d @ %d\n", fname, GetCurrentThreadId(), GetTickCount());
         for (i = 0; i < l_nb_read; i++) {
             fprintf(stderr, "%02X", buf[i]);
         }

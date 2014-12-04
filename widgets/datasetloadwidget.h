@@ -25,6 +25,7 @@ public:
     void updatePassword();
     void saveSettings();
     void loadSettings();
+    void applyGeometrySettings();
     std::string lastused;
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QComboBox *pathDropdown;
@@ -48,7 +49,6 @@ protected:
     QLabel *host;
     QLabel *username;
     QLabel *passwd;
-    void waitForLoader();
 
 signals:
     void clearSkeletonSignalGUI();
@@ -59,6 +59,7 @@ signals:
     void datasetSwitchZoomDefaults();
     void setlastusedlocal();
     void startLoaderSignal();
+    void breakLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
     void adaptMemoryConsumption();
