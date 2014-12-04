@@ -1881,7 +1881,7 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
                    y / state->magnification,
                    z / state->magnification);
 
-    state->conditionLoadSignal->wakeOne();
+    state->conditionLoadSignal->wakeOne();//wake up loader if it’s sleeping
     state->protectLoadSignal->unlock();
 
     return true;

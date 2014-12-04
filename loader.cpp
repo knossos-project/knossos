@@ -1186,7 +1186,9 @@ void Loader::run() {
         throw std::runtime_error("initLoader failed");
     }
     do {
-        state->conditionLoadSignal->wait(state->protectLoadSignal);
+        if (!state->loadSignal) {//go to sleep if we have nothing to do
+            state->conditionLoadSignal->wait(state->protectLoadSignal);
+        }
     } while ((!state->breakLoaderSignal) && (!state->quitSignal) && (!load()));
     state->breakLoaderSignal = false;
 
