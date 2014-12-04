@@ -156,8 +156,6 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define SLOW 1000
 #define FAST 10
 
-extern DWORD initTickCount;
-
 class stateInfo;
 extern stateInfo * state;
 
