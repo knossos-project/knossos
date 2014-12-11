@@ -104,7 +104,7 @@ public slots:
     bool calcDisplayedEdgeLength();
     bool updateViewerState();
     void run();
-    bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
+    bool sendLoadSignal(int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);
     bool vpGenerateTexture(vpConfig &currentVp);

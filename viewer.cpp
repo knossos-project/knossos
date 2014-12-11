@@ -1127,10 +1127,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
         }
     }*/
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                            state->viewerState->currentPosition.y,
-                            state->viewerState->currentPosition.z,
-                            upOrDownFlag);
+    sendLoadSignal(upOrDownFlag);
 
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
@@ -1410,10 +1407,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             break;
         }
         CPY_COORDINATE(state->loaderUserMoveViewportDirection, direction);
-        sendLoadSignal(viewerState->currentPosition.x,
-                       viewerState->currentPosition.y,
-                       viewerState->currentPosition.z,
-                       NO_MAG_CHANGE);
+        sendLoadSignal(NO_MAG_CHANGE);
     }
 
     QtConcurrent::run(this, &Viewer::updateCoordinatesSignal,
@@ -1862,14 +1856,14 @@ bool Viewer::recalcTextureOffsets() {
     return true;
 }
 
-bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
+bool Viewer::sendLoadSignal(int magChanged) {
     state->protectLoadSignal->lock();
     state->loadSignal = true;
     state->datasetChangeSignal = magChanged;
 
     state->previousPositionX = state->currentPositionX;
 
-    if (0 == x) {
+    if (0 == state->viewerState->currentPosition.x) {
         qDebug() << "HERE";
     }
 
@@ -1877,9 +1871,9 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     // is agnostic to the different dataset magnifications.
     // The int division is hopefully not too much of an issue here
     SET_COORDINATE(state->currentPositionX,
-                   x / state->magnification,
-                   y / state->magnification,
-                   z / state->magnification);
+                   state->viewerState->currentPosition.x / state->magnification,
+                   state->viewerState->currentPosition.y / state->magnification,
+                   state->viewerState->currentPosition.z / state->magnification);
 
     state->conditionLoadSignal->wakeOne();//wake up loader if it’s sleeping
     state->protectLoadSignal->unlock();
