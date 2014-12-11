@@ -26,6 +26,7 @@
 #include "functions.h"
 #include "knossos-global.h"
 #include "widgets/navigationwidget.h"
+#include "widgets/viewport.h"
 
 #include <QDebug>
 
@@ -95,6 +96,9 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
     nodeListElement *node = state->skeletonState->activeNode;
     nodeListElement *lastnode=NULL;
 
+    if(node == NULL) {
+        return nodelist;
+    }
     if(node->firstSegment == NULL || node->getSegments()->size() > 1) { //we are in the middle of our skeleton or we don't have a skeleton
         return nodelist;
     }
@@ -162,29 +166,29 @@ bool Remote::remoteWalk(int x, int y, int z) {
     * singleMove to match mag, not the length of the movement on one axis.
     *
     */
+    auto rotation = Rotation(); // initially no rotation
+    if(Viewport::arbitraryOrientation) {
+        std::deque<floatCoordinate> lastRecenterings;
+        lastRecenterings = getLastNodes();
+        if(rotate && lastRecenterings.empty() == false) {
+            // calculate avg of last x recentering positions
+            floatCoordinate avg;
+            SET_COORDINATE(avg, 0, 0, 0);
+            for(const auto coord : lastRecenterings) {
+                ADD_COORDINATE(avg, coord);
+            }
+            DIV_COORDINATE(avg, lastRecenterings.size());
 
-    std::deque<floatCoordinate> lastRecenterings;
-    lastRecenterings = getLastNodes();
-
-    Rotation rotation = Rotation(); // initially no rotation
-    if(rotate && lastRecenterings.empty() == false) {
-        // calculate avg of last x recentering positions
-        floatCoordinate avg;
-        SET_COORDINATE(avg, 0, 0, 0);
-        for(const auto coord : lastRecenterings) {
-            ADD_COORDINATE(avg, coord);
+            floatCoordinate delta;
+            delta.x = recenteringPosition.x - avg.x;
+            delta.y = recenteringPosition.y - avg.y;
+            delta.z = recenteringPosition.z - avg.z;
+            normalizeVector(&delta);
+            float scalar = scalarProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
+            rotation.alpha = acosf(std::min(1.f, std::max(-1.f, scalar)));
+            rotation.axis = crossProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
+            normalizeVector(&rotation.axis);
         }
-        DIV_COORDINATE(avg, lastRecenterings.size());
-
-        floatCoordinate delta;
-        delta.x = recenteringPosition.x - avg.x;
-        delta.y = recenteringPosition.y - avg.y;
-        delta.z = recenteringPosition.z - avg.z;
-        normalizeVector(&delta);
-        float scalar = scalarProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
-        rotation.alpha = acosf(std::min(1.f, std::max(-1.f, scalar)));
-        rotation.axis = crossProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
-        normalizeVector(&rotation.axis);
     }
 
     floatCoordinate walkVector;
@@ -223,10 +227,14 @@ bool Remote::remoteWalk(int x, int y, int z) {
     singleMove.z = walkVector.z / (float)totalMoves;
     floatCoordinate residuals;
     SET_COORDINATE(residuals, 0, 0, 0);
-    float anglesPerStep = rotation.alpha/totalMoves;
+    float anglesPerStep;
+    if(Viewport::arbitraryOrientation) {
+        anglesPerStep = rotation.alpha/totalMoves;
+    }
     for(int i = 0; i < totalMoves; i++) {
-        emit rotationSignal(rotation.axis.x, rotation.axis.y, rotation.axis.z, anglesPerStep);
-
+        if(Viewport::arbitraryOrientation) {
+            emit rotationSignal(rotation.axis.x, rotation.axis.y, rotation.axis.z, anglesPerStep);
+        }
         Coordinate doMove;
         SET_COORDINATE(doMove, 0, 0, 0);
         ADD_COORDINATE(residuals, singleMove);
