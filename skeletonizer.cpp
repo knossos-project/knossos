@@ -1205,8 +1205,21 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         currentTree->selected = true;
         state->skeletonState->selectedTrees.push_back(currentTree);
     }
+
+    //switch to nearby node of new tree
+    if (state->skeletonState->activeNode->correspondingTree != currentTree) {
+        //prevent ping pong if tree was activated from setActiveNode
+        auto * node = findNearbyNode(currentTree, state->skeletonState->activeNode->position);
+        if (node->correspondingTree != currentTree) {
+            setActiveNode(currentTree->firstNode, 0);
+        } else {
+            setActiveNode(node, 0);
+        }
+    }
+
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
+
     return true;
 }
 
