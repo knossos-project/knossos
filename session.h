@@ -25,6 +25,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "coordinate.h"
+
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QObject>
@@ -45,6 +47,11 @@ class Session : public QObject {
     void handleTimeSlice();
 
 public:
+    Coordinate movementCenter; // Center of movement area
+    Coordinate movementRange; // Range around movement center for every dimension
+    bool outsideMovementArea(Coordinate pos);
+    void updateMovementArea(Coordinate center, Coordinate range);
+
     Session();
     static Session & singleton() {
         static Session session;
@@ -56,6 +63,7 @@ public:
 
 signals:
     void annotationTimeChanged(const QString & timeString);
+    void movementAreaChanged();
 };
 
 #endif//SESSION_H

@@ -546,6 +546,35 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     } else {
                         magnification = 0;
                     }
+                } else if(xml.name() == "movementArea") {
+                    auto & session = Session::singleton();
+                    Coordinate center = session.movementCenter;
+                    Coordinate range = session.movementRange;
+                    QStringRef attribute = attributes.value("center.x");
+                    if(attribute.isNull() == false) {
+                        center.x = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.x);
+                    }
+                    attribute = attributes.value("center.y");
+                    if(attribute.isNull() == false) {
+                        center.y = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.y);
+                    }
+                    attribute = attributes.value("center.z");
+                    if(attribute.isNull() == false) {
+                        center.z = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.z);
+                    }
+                    attribute = attributes.value("range.x");
+                    if(attribute.isNull() == false) {
+                        range.x = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.x);
+                    }
+                    attribute = attributes.value("range.y");
+                    if(attribute.isNull() == false) {
+                        range.y = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.y);
+                    }
+                    attribute = attributes.value("range.z");
+                    if(attribute.isNull() == false) {
+                        range.z = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.z);
+                    }
+                    session.updateMovementArea(center, range);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if (attribute.isNull() == false) {
@@ -728,11 +757,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             if(merge) {
                 neuronID += greatestTreeIDbeforeLoading;
                 currentTree = addTreeListElement(neuronID, neuronColor);
-                setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             } else {
                 currentTree = addTreeListElement(neuronID, neuronColor);
-                setActiveTreeByID(neuronID);
             }
 
             attribute = attributes.value("comment"); // the tree comment
@@ -1207,7 +1234,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     }
 
     //switch to nearby node of new tree
-    if (state->skeletonState->activeNode->correspondingTree != currentTree) {
+    if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->correspondingTree != currentTree) {
         //prevent ping pong if tree was activated from setActiveNode
         auto * node = findNearbyNode(currentTree, state->skeletonState->activeNode->position);
         if (node->correspondingTree != currentTree) {

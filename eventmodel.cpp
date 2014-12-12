@@ -964,7 +964,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         case VIEWPORT_XY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
                                               state->viewerState->currentPosition.y,
-                                              state->viewerState->currentPosition.z+ state->viewerState->walkFrames
+                                              state->viewerState->currentPosition.z + state->viewerState->walkFrames
                                               * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
             emit updateViewerStateSignal();
             Knossos::sendRemoteSignal();
@@ -979,8 +979,8 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         case VIEWPORT_YZ:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames
                                               * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
-                           state->viewerState->currentPosition.y,
-                           state->viewerState->currentPosition.z);
+                                              state->viewerState->currentPosition.y,
+                                              state->viewerState->currentPosition.z);
             Knossos::sendRemoteSignal();
             break;
         case VIEWPORT_ARBITRARY:

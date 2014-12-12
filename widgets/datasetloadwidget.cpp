@@ -488,6 +488,8 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
                    state->boundary.x / 2 - state->cubeEdgeLength,
                    state->boundary.y / 2 - state->cubeEdgeLength,
                    state->boundary.z / 2 - state->cubeEdgeLength);
+    Coordinate range = { state->boundary.x/2, state->boundary.y/2, state->boundary.z/2 };
+    emit datasetChanged(range, range);
     emit userMoveSignal(
                 state->cubeEdgeLength,
                 state->cubeEdgeLength,

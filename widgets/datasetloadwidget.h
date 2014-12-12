@@ -55,6 +55,7 @@ signals:
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetCompression();
+    void datasetChanged(Coordinate center, Coordinate range);
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void datasetSwitchZoomDefaults();
     void setlastusedlocal();

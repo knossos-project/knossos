@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <QLabel>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
@@ -38,12 +37,39 @@
 #include "GuiConstants.h"
 #include "knossos-global.h"
 #include "navigationwidget.h"
+#include "session.h"
 
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Dataset Navigation");
     QVBoxLayout *mainLayout = new QVBoxLayout();
+
+    QGroupBox *movementAreaGroup = new QGroupBox("Movement Area");
+    QVBoxLayout *movementAreaLayout = new QVBoxLayout();
+    QHBoxLayout *centerLayout = new QHBoxLayout();
+    QHBoxLayout *rangeLayout = new QHBoxLayout();
+
+    xCenterField.setRange(0, 1000000); yCenterField.setRange(0, 1000000); zCenterField.setRange(0, 1000000);
+    xRangeField.setRange(0, 1000000); yRangeField.setRange(0, 1000000); zRangeField.setRange(0, 1000000);
+    centerLayout->addWidget(new QLabel("Movement center:"));
+    centerLayout->addWidget(new QLabel("x"));
+    centerLayout->addWidget(&xCenterField);
+    centerLayout->addWidget(new QLabel("y"));
+    centerLayout->addWidget(&yCenterField);
+    centerLayout->addWidget(new QLabel("z"));
+    centerLayout->addWidget(&zCenterField);
+    rangeLayout->addWidget(new QLabel("Movement range:"));
+    rangeLayout->addWidget(new QLabel("x"));
+    rangeLayout->addWidget(&xRangeField);
+    rangeLayout->addWidget(new QLabel("y"));
+    rangeLayout->addWidget(&yRangeField);
+    rangeLayout->addWidget(new QLabel("z"));
+    rangeLayout->addWidget(&zRangeField);
+    movementAreaLayout->addLayout(centerLayout);
+    movementAreaLayout->addLayout(rangeLayout);
+    movementAreaGroup->setLayout(movementAreaLayout);
+    mainLayout->addWidget(movementAreaGroup);
 
     QGroupBox *generalGroup = new QGroupBox("General");
     QFormLayout *formLayout = new QFormLayout();
@@ -111,6 +137,38 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     mainLayout->addWidget(advanceGroup);
     setLayout(mainLayout);
 
+    QObject::connect(&xCenterField, &QSpinBox::editingFinished, [this]() {
+        xCenterField.setValue(std::min(xCenterField.value(), state->boundary.x + 1));
+        Session::singleton().movementCenter.x = xCenterField.value() - 1;
+        updateRangeField(xRangeField);
+        emit movementAreaChanged();
+    });
+    QObject::connect(&yCenterField, &QSpinBox::editingFinished, [this]() {
+        yCenterField.setValue(std::min(yCenterField.value(), state->boundary.y + 1));
+        Session::singleton().movementCenter.y = yCenterField.value() - 1;
+        updateRangeField(yRangeField);
+        emit movementAreaChanged();
+    });
+    QObject::connect(&zCenterField, &QSpinBox::editingFinished, [this]() {
+        zCenterField.setValue(std::min(zCenterField.value(), state->boundary.z + 1));
+        Session::singleton().movementCenter.z = zCenterField.value() - 1;
+        updateRangeField(zRangeField);
+        emit movementAreaChanged();
+    });
+    QObject::connect(&xRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(xRangeField); });
+    QObject::connect(&yRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(yRangeField); });
+    QObject::connect(&zRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(zRangeField); });
+    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
+        auto & session = Session::singleton();
+        xCenterField.setValue(session.movementCenter.x + 1);
+        yCenterField.setValue(session.movementCenter.y + 1);
+        zCenterField.setValue(session.movementCenter.z + 1);
+        xRangeField.setValue(session.movementRange.x);
+        yRangeField.setValue(session.movementRange.y);
+        zRangeField.setValue(session.movementRange.z);
+        emit sendLoadSignal(0);
+    });
+
     connect(movementSpeedSpinBox, SIGNAL(valueChanged(int)), this, SLOT(movementSpeedChanged(int)));
     connect(jumpFramesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(jumpFramesChanged(int)));
     connect(this->walkFramesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(walkFramesChanged(int)));
@@ -131,7 +189,40 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     connect(this->numberOfStepsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(numberOfStepsChanged(int)));
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
 
+void NavigationWidget::updateRangeField(QSpinBox &box) {
+    auto & session = Session::singleton();
+    int *boundary, *movementCenter, *movementRange;
+    if(&box == &xRangeField) {
+        boundary = &state->boundary.x;
+        movementCenter = &session.movementCenter.x;
+        movementRange = &session.movementRange.x;
+    }
+    else if(&box == &yRangeField) {
+        boundary = &state->boundary.y;
+        movementCenter = &session.movementCenter.y;
+        movementRange = &session.movementRange.y;
+    }
+    else if(&box == &zRangeField) {
+        boundary = &state->boundary.z;
+        movementCenter = &session.movementCenter.z;
+        movementRange = &session.movementRange.z;
+    }
+    else {
+        return;
+    }
+    box.setValue(std::min(box.value(), *boundary));
+    *movementRange = box.value();
+    emit sendLoadSignal(0);
+    emit movementAreaChanged();
+}
+
+void NavigationWidget::resetMovementArea() {
+    xCenterField.setValue(state->boundary.x/2 + 1); yCenterField.setValue(state->boundary.y/2 + 1); zCenterField.setValue(state->boundary.z/2 + 1);
+    xRangeField.setValue(state->boundary.x/2); yRangeField.setValue(state->boundary.y/2); zRangeField.setValue(state->boundary.z/2);
+    Session::singleton().movementCenter = { xCenterField.value() - 1, yCenterField.value() - 1, zCenterField.value() - 1 };
+    Session::singleton().movementRange = { xRangeField.value(), yRangeField.value(), zRangeField.value() };
 }
 
 void NavigationWidget::movementSpeedChanged(int value) {
@@ -217,6 +308,8 @@ void NavigationWidget::loadSettings() {
         hide();
     }
     setGeometry(x, y, width, height);
+
+    resetMovementArea();
 
     if(!settings.value(MOVEMENT_SPEED).isNull()) {
         this->movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED).toInt());

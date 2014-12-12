@@ -56,7 +56,7 @@
 #define FTP_RETRY_NUM 3
 
 struct C_Element {
-    Coordinate coordinate;
+    Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
 
     char *data_filename;
     char *overlay_filename;

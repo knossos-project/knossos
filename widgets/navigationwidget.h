@@ -27,6 +27,8 @@
 
 #include <QDialog>
 #include <QRadioButton>
+#include <QLabel>
+#include <QSpinBox>
 
 enum class navigationMode {
     recenter
@@ -36,9 +38,7 @@ enum class navigationMode {
     , additionalMirroredMove
 };
 
-class QSpinBox;
 class QRadioButton;
-class QLabel;
 class NavigationWidget : public QDialog {
     Q_OBJECT
 public:
@@ -48,7 +48,11 @@ public:
 
 signals:
     void uncheckSignal();
+    void movementAreaChanged();
+    void sendLoadSignal(int magChanged);
 public slots:
+    void updateRangeField(QSpinBox &box);
+    void resetMovementArea();
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
     void walkFramesChanged(int value);
@@ -62,6 +66,8 @@ public slots:
     void numberOfStepsChanged(int value);
 protected:
     void closeEvent(QCloseEvent *event);
+
+    QSpinBox xCenterField, yCenterField, zCenterField, xRangeField, yRangeField, zRangeField;
 
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;

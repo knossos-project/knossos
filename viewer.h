@@ -55,6 +55,7 @@ private:
     float alphaCache;
     Rotation rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
+    bool outOfWalkRange(Coordinate pos);
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
@@ -97,6 +98,7 @@ protected:
 
     void rewire();
 public slots:
+    void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
     bool userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     bool userMove_arb(float x, float y, float z);

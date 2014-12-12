@@ -50,6 +50,18 @@ Session::Session() {
     lastTimeSlice.start();
 }
 
+bool Session::outsideMovementArea(Coordinate pos) {
+    return pos.x < movementCenter.x - movementRange.x || pos.x > movementCenter.x + movementRange.x ||
+           pos.y < movementCenter.y - movementRange.y || pos.y > movementCenter.y + movementRange.y ||
+           pos.z < movementCenter.z - movementRange.z || pos.z > movementCenter.z + movementRange.z;
+}
+
+void Session::updateMovementArea(Coordinate center, Coordinate range) {
+    movementCenter = center;
+    movementRange = range;
+    emit movementAreaChanged();
+}
+
 decltype(Session::annotationTimeMilliseconds) Session::annotationTime() const {
     return annotationTimeMilliseconds;
 }

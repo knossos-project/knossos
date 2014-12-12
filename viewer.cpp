@@ -32,6 +32,7 @@
 #include "knossos.h"
 #include "renderer.h"
 #include "segmentation.h"
+#include "session.h"
 #include "skeletonizer.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
@@ -122,6 +123,8 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
+
+    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -1343,6 +1346,15 @@ bool Viewer::updateZoomCube() {
     return true;
 }
 
+void Viewer::updateCurrentPosition() {
+    auto & session = Session::singleton();
+    if(session.outsideMovementArea(state->viewerState->currentPosition)) {
+        Coordinate currPos = state->viewerState->currentPosition;
+        userMove(session.movementCenter.x - currPos.x, session.movementCenter.y - currPos.y, session.movementCenter.z - currPos.z,
+                 USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    }
+}
+
 bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
     struct viewerState *viewerState = state->viewerState;
 
@@ -1355,13 +1367,8 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     viewerState->userMove = true;
-
-    if ((viewerState->currentPosition.x + x) >= 0 &&
-        (viewerState->currentPosition.x + x) <= state->boundary.x &&
-        (viewerState->currentPosition.y + y) >= 0 &&
-        (viewerState->currentPosition.y + y) <= state->boundary.y &&
-        (viewerState->currentPosition.z + z) >= 0 &&
-        (viewerState->currentPosition.z + z) <= state->boundary.z) {
+    auto newPos = Coordinate(viewerState->currentPosition.x + x, viewerState->currentPosition.y + y, viewerState->currentPosition.z + z);
+    if (Session::singleton().outsideMovementArea(newPos) == false) {
             viewerState->currentPosition.x += x;
             viewerState->currentPosition.y += y;
             viewerState->currentPosition.z += z;
@@ -2013,6 +2020,7 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     //  -- end dataset options signals
     // dataset load signals --
+    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, &Session::singleton(), &Session::updateMovementArea);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
@@ -2021,7 +2029,10 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::loadAnnotationFiles, window, &MainWindow::openFileDispatch);
     QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
-    // --- end widget signals
+    // navigation widget signals --
+    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::sendLoadSignal, this, &Viewer::sendLoadSignal);
+    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::movementAreaChanged, this, &Viewer::updateCurrentPosition);
+    // --- end widget signals 
 }
 
 void Viewer::setRotation(float x, float y, float z, float angle) {
