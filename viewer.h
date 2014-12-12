@@ -55,7 +55,7 @@ private:
     float alphaCache;
     Rotation rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
-    bool outOfWalkRange(Coordinate pos);
+
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
