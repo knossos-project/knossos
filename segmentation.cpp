@@ -20,14 +20,14 @@ Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const bool & immutable, Segmentation::SubObject & initialVolume)
-    : immutable(immutable)
+Segmentation::Object::Object(const bool & todo, const bool & immutable, Segmentation::SubObject & initialVolume)
+    : todo(todo), immutable(immutable)
 {
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
-    : immutable(immutable)
+Segmentation::Object::Object(const bool & todo, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
+    : todo(todo), immutable(immutable)
 {
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
@@ -139,12 +139,12 @@ void Segmentation::createAndSelectObject() {
     selectObject(newObject);
 }
 
-Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & immutable) {
+Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & todo, const bool & immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
     auto & subobject = subobjectIt->second;
     emit beforeAppendRow();
-    objects.emplace_back(immutable, subobject);//create object from supervoxel
+    objects.emplace_back(todo, immutable, subobject); //create object from supervoxel
     emit appendedRow();
     return objects.back();
 }
@@ -350,7 +350,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
         if (object.immutable) {
             unselectObject(object);
             emit beforeAppendRow();
-            objects.emplace_back(false, tmp);
+            objects.emplace_back(false, false, tmp);
             emit appendedRow();
             selectObject(objects.back());
         } else {
@@ -374,7 +374,7 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
     });
     if (other == std::end(subobject.objects)) {
         emit beforeAppendRow();
-        objects.emplace_back(false, subobject);
+        objects.emplace_back(false, false, subobject);
         emit appendedRow();
         auto & newObject = objects.back();
         selectObject(newObject);
@@ -396,7 +396,7 @@ std::size_t Segmentation::selectedObjectsCount() const {
 void Segmentation::mergelistSave(QIODevice & file) const {
     QTextStream stream(&file);
     for (const auto & obj : objects) {
-        stream << obj.id << ' ' << obj.immutable;
+        stream << obj.id << ' ' << obj.todo << ' ' << obj.immutable;
         for (const auto & subObj : obj.subobjects) {
             stream << ' ' << subObj.get().id;
         }
@@ -414,17 +414,18 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
         uint64_t objID;
+        bool todo;
         bool immutable;
         uint64_t initialVolume;
         QString category;
         QString comment;
 
-        bool valid0 = (lineStream >> objID) && (lineStream >> immutable) && (lineStream >> initialVolume);
+        bool valid0 = (lineStream >> objID) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
         bool valid1 = !(category = stream.readLine()).isNull();
         bool valid2 = !(comment = stream.readLine()).isNull();
 
         if (valid0 && valid1 && valid2) {
-            auto & obj = createObject(initialVolume, immutable);
+            auto & obj = createObject(initialVolume, todo, immutable);
             while (lineStream >> objID) {
                 newSubObject(obj, objID);
             }

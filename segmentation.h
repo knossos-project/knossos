@@ -68,14 +68,15 @@ Q_OBJECT
         std::vector<std::reference_wrapper<SubObject>> subobjects;
     public:
         uint64_t id = ++highestId;
+        bool todo;
         bool immutable;
         QString category;
         QString comment;
         bool selected = false;
 
         explicit Object(SubObject & initialVolume);
-        explicit Object(const bool & immutable, SubObject & initialVolume);
-        explicit Object(const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
+        explicit Object(const bool & todo, const bool & immutable, SubObject & initialVolume);
+        explicit Object(const bool & todo, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
         explicit Object(Object &first, Object &second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
@@ -124,7 +125,7 @@ Q_OBJECT
         return lut;
     }();
 
-    Object & createObject(const uint64_t initialSubobjectId, const bool & immutable = false);
+    Object & createObject(const uint64_t initialSubobjectId, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
 
