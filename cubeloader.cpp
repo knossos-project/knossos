@@ -62,7 +62,7 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
                 if (!shouldErase) {
                     const auto soid = readVoxel({x, y, z});
                     if (Segmentation::singleton().subobjectExists(soid)) {
-                        const auto & subobject = Segmentation::singleton().subobjectFromId(soid);
+                        const auto & subobject = Segmentation::singleton().subobjectFromId(soid, pos);
                         shouldErase = Segmentation::singleton().isSelected(subobject);
                     }
                 }

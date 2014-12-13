@@ -15,19 +15,19 @@ uint64_t Segmentation::SubObject::highestId = 0;
 uint64_t Segmentation::Object::highestId = -1;
 
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
-    : immutable(false)
+    : todo(false), immutable(false), location(Coordinate(0, 0, 0))
 {
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const bool & todo, const bool & immutable, Segmentation::SubObject & initialVolume)
-    : todo(todo), immutable(immutable)
+Segmentation::Object::Object(const bool & todo, const bool & immutable, const Coordinate & location, Segmentation::SubObject & initialVolume)
+    : todo(todo), immutable(immutable), location(location)
 {
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const bool & todo, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
-    : todo(todo), immutable(immutable)
+Segmentation::Object::Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
+    : todo(todo), immutable(immutable), location(location)
 {
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
@@ -36,7 +36,7 @@ Segmentation::Object::Object(const bool & todo, const bool & immutable, std::vec
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : immutable(false), selected{true}//merge is selected
+    : immutable(false), selected{true}, location(second.location) //merge is selected
 {
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
@@ -133,18 +133,18 @@ bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
-void Segmentation::createAndSelectObject() {
+void Segmentation::createAndSelectObject(const Coordinate & position) {
     clearObjectSelection();
-    auto & newObject = createObject(SubObject::highestId+1);
+    auto & newObject = createObject(SubObject::highestId+1, position);
     selectObject(newObject);
 }
 
-Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const bool & todo, const bool & immutable) {
+Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const Coordinate & location, const bool & todo, const bool & immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
     auto & subobject = subobjectIt->second;
     emit beforeAppendRow();
-    objects.emplace_back(todo, immutable, subobject); //create object from supervoxel
+    objects.emplace_back(todo, immutable, location, subobject); //create object from supervoxel
     emit appendedRow();
     return objects.back();
 }
@@ -243,10 +243,10 @@ uint64_t Segmentation::subobjectIdOfFirstSelectedObject() {
     return objects[selectedObjectIds.front()].subobjects.front().get().id;
 }
 
-Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId) {
+Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId, const Coordinate & location) {
     auto it = subobjects.find(subobjectId);//check if subobject exists
     if (it == std::end(subobjects)) {
-        createObject(subobjectId);//create an object for the selected subobject
+        createObject(subobjectId, location);//create an object for the selected subobject
         it = subobjects.find(subobjectId);
     }
     return it->second;
@@ -261,7 +261,7 @@ bool Segmentation::objectOrder(const uint64_t & lhsId, const uint64_t & rhsId) c
 
 uint64_t Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
     //same comparitor for both functions, it seems to work as it is, so i don’t waste my head now to find out why
-    //there may have been some reasoning… (at first glance it seems to restrictive for the largest object)
+    //there may have been some reasoning… (at first glance it seems too restrictive for the largest object)
     auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
     const auto objectId = *std::max_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
     return objectId;
@@ -343,14 +343,14 @@ void Segmentation::unselectObject(Object & object) {
     emit changedRow(object.id);
 }
 
-void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {
+void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other, const Coordinate & position) {
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
     if (!tmp.empty()) {//only unmerge if subobjects remain
         if (object.immutable) {
             unselectObject(object);
             emit beforeAppendRow();
-            objects.emplace_back(false, false, tmp);
+            objects.emplace_back(false, false, position, tmp);
             emit appendedRow();
             selectObject(objects.back());
         } else {
@@ -366,7 +366,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
     }
 }
 
-void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject) {
+void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
     const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
     , [&](const uint64_t elemId){
         const auto & elem = objects[elemId];
@@ -374,7 +374,7 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
     });
     if (other == std::end(subobject.objects)) {
         emit beforeAppendRow();
-        objects.emplace_back(false, false, subobject);
+        objects.emplace_back(false, false, position, subobject);
         emit appendedRow();
         auto & newObject = objects.back();
         selectObject(newObject);
@@ -387,6 +387,19 @@ void Segmentation::selectObject(const uint64_t & objectId) {
     if (objectId < objects.size()) {
         selectObject(objects[objectId]);
     }
+}
+
+void Segmentation::jumpToObject(const uint64_t & objectId) {
+    if(objectId < objects.size()) {
+        state->viewer->userMove(objects[objectId].location.x - state->viewerState->currentPosition.x,
+                            objects[objectId].location.y - state->viewerState->currentPosition.y,
+                            objects[objectId].location.z - state->viewerState->currentPosition.z,
+                            USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    }
+}
+
+void Segmentation::updateLocationForFirstSelectedObject(const Coordinate & newLocation) {
+    objects[selectedObjectIds.front()].location = newLocation;
 }
 
 std::size_t Segmentation::selectedObjectsCount() const {
@@ -416,16 +429,23 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         uint64_t objID;
         bool todo;
         bool immutable;
+        Coordinate location;
         uint64_t initialVolume;
         QString category;
         QString comment;
 
         bool valid0 = (lineStream >> objID) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
-        bool valid1 = !(category = stream.readLine()).isNull();
-        bool valid2 = !(comment = stream.readLine()).isNull();
+        auto coordLine = stream.readLine();
+        bool valid1 = false;
+        if(coordLine.isNull() == false) {
+            std::istringstream coordLineStream(coordLine.toStdString());
+            valid1 = (coordLineStream >> location.x) && (coordLineStream >> location.y) && (coordLineStream >> location.z);
+        }
+        bool valid2 = !(category = stream.readLine()).isNull();
+        bool valid3 = !(comment = stream.readLine()).isNull();
 
-        if (valid0 && valid1 && valid2) {
-            auto & obj = createObject(initialVolume, todo, immutable);
+        if (valid0 && valid1 && valid2 && valid3) {
+            auto & obj = createObject(initialVolume, location, todo, immutable);
             while (lineStream >> objID) {
                 newSubObject(obj, objID);
             }
@@ -496,10 +516,10 @@ void Segmentation::mergeSelectedObjects() {
     }
 }
 
-void Segmentation::unmergeSelectedObjects() {
+void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
     while (selectedObjectIds.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIds.back()];
-        unmergeObject(objects[selectedObjectIds.front()], objectToUnmerge);
+        unmergeObject(objects[selectedObjectIds.front()], objectToUnmerge, clickPos);
         unselectObject(objectToUnmerge);
     }
 }

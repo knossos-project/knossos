@@ -16,7 +16,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
 
         auto subobjectId = readVoxel(pos);
         if (subobjectId != 0 && subobjectId != newSubObjId) {
-            auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId);
+            auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
             auto objId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objId == objIdToSplit) {
                 if (subObjectsToFill.find(subobjectId) != std::end(subObjectsToFill)) {
@@ -47,10 +47,10 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
 void connectedComponent(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
     if (subobjectId != 0) {
-        auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId);
+        auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectId = Segmentation::singleton().createObject(newSubObjId).id;
+        auto newObjectId = Segmentation::singleton().createObject(newSubObjId, seed).id;
 
         std::unordered_set<uint64_t> subObjectsToFill = {subobjectId};
 
@@ -59,7 +59,7 @@ void connectedComponent(const Coordinate & seed) {
         //merge all traversed but unchanged supervoxel into the new object
         auto & newObject = Segmentation::singleton().objects[newObjectId];
         for (auto && id : visitedSubObjects) {
-            auto & subobject = Segmentation::singleton().subobjectFromId(id);
+            auto & subobject = Segmentation::singleton().subobjectFromId(id, seed);
             newObject.addExistingSubObject(subobject);
         }
         std::sort(std::begin(newObject.subobjects), std::end(newObject.subobjects));
@@ -67,7 +67,7 @@ void connectedComponent(const Coordinate & seed) {
         //remove the newly created area from the object to split
         Segmentation::singleton().selectObject(splitId);
         Segmentation::singleton().selectObject(newObjectId);
-        Segmentation::singleton().unmergeSelectedObjects();
+        Segmentation::singleton().unmergeSelectedObjects(seed);
     }
 }
 
@@ -81,7 +81,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
 
         auto subobjectId = readVoxel(pos);
         if (subobjectId != 0 && subobjectId != newSubObjId) {
-            auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId);
+            auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, pos);
             auto objId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objId == objIdToSplit) {
                 writeVoxel(pos, newSubObjId);//write to cube
@@ -106,10 +106,10 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
 void verticalSplittingPlane(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
     if (subobjectId != 0) {
-        auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId);
+        auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectId = Segmentation::singleton().createObject(newSubObjId).id;
+        auto newObjectId = Segmentation::singleton().createObject(newSubObjId, seed).id;
 
         std::unordered_set<uint64_t> subObjectsToFill = verticalSplittingPlane({seed.x, seed.y, seed.z}, splitId, newSubObjId);
 
@@ -117,11 +117,11 @@ void verticalSplittingPlane(const Coordinate & seed) {
 
         //add the newly created subobject to all non-splitted objects
         for (auto && id : subObjectsToFill) {
-            auto & subobject = Segmentation::singleton().subobjectFromId(id);
+            auto & subobject = Segmentation::singleton().subobjectFromId(id, seed);
             for (auto && objId : subobject.objects) {
                 if (objId != splitId) {
                     auto && object = Segmentation::singleton().objects[objId];
-                    auto & newSubobject = Segmentation::singleton().subobjectFromId(newSubObjId);
+                    auto & newSubobject = Segmentation::singleton().subobjectFromId(newSubObjId, seed);
                     object.addExistingSubObject(newSubobject);
                     std::sort(std::begin(object.subobjects), std::end(object.subobjects));
                 }
@@ -131,7 +131,7 @@ void verticalSplittingPlane(const Coordinate & seed) {
         //merge all traversed but unchanged supervoxel into the new object
         auto & newObject = Segmentation::singleton().objects[newObjectId];
         for (auto && id : visitedSubObjects) {
-            auto & subobject = Segmentation::singleton().subobjectFromId(id);
+            auto & subobject = Segmentation::singleton().subobjectFromId(id, seed);
             newObject.addExistingSubObject(subobject);
         }
         std::sort(std::begin(newObject.subobjects), std::end(newObject.subobjects));
@@ -139,6 +139,6 @@ void verticalSplittingPlane(const Coordinate & seed) {
         //remove the newly created area from the object to split
         Segmentation::singleton().selectObject(splitId);
         Segmentation::singleton().selectObject(newObjectId);
-        Segmentation::singleton().unmergeSelectedObjects();
+        Segmentation::singleton().unmergeSelectedObjects(seed);
     }
 }

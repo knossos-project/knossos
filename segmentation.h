@@ -70,13 +70,14 @@ Q_OBJECT
         uint64_t id = ++highestId;
         bool todo;
         bool immutable;
+        Coordinate location;
         QString category;
         QString comment;
         bool selected = false;
 
         explicit Object(SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
+        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
+        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
         explicit Object(Object &first, Object &second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
@@ -125,14 +126,14 @@ Q_OBJECT
         return lut;
     }();
 
-    Object & createObject(const uint64_t initialSubobjectId, const bool & todo = false, const bool & immutable = false);
+    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
 
     Object & const_merge(Object & one, Object & other);
-    void unmergeObject(Object & object, Object & other);
+    void unmergeObject(Object & object, Object & other, const Coordinate & position);
 public:
     uint8_t alpha;
     bool segmentationMode;
@@ -150,8 +151,8 @@ public:
     bool hasObjects() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
-    void createAndSelectObject();
-    SubObject & subobjectFromId(const uint64_t & subobjectId);
+    void createAndSelectObject(const Coordinate & position);
+    SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
     uint64_t subobjectIdOfFirstSelectedObject();
     bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
@@ -164,10 +165,13 @@ public:
     //selection modification
     void selectObject(const uint64_t & objectId);
     void selectObject(Object & object);
-    void selectObjectFromSubObject(SubObject &subobject);
+    void selectObjectFromSubObject(SubObject &subobject, const Coordinate & position);
     void unselectObject(const uint64_t & objectId);
     void unselectObject(Object & object);
     void clearObjectSelection();
+
+    void jumpToObject(const uint64_t & objectId);
+    void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
@@ -189,7 +193,7 @@ public slots:
     void clear();
     void deleteSelectedObjects();
     void mergeSelectedObjects();
-    void unmergeSelectedObjects();
+    void unmergeSelectedObjects(const Coordinate & clickPos);
 };
 
 #endif // SEGMENTATION_H

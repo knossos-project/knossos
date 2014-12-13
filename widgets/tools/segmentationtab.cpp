@@ -366,7 +366,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
         Segmentation::singleton().renderAllObjs = value;
     });
 
-    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject();});
+    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);});
 
     touchedObjectModel.recreate();
     objectModel.recreate();
@@ -400,6 +400,13 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     commitSelection(selected, deselected);
     Segmentation::singleton().blockSignals(false);
     updateSelection();
+    if(selected.length() == 1) {
+        for(const auto & index : selected.indexes()) {
+            if(index.column() == 1) {
+                Segmentation::singleton().jumpToObject(index.data().toInt());
+            }
+        }
+    }
 }
 
 void SegmentationTab::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
@@ -410,6 +417,13 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     commitSelection(selected, deselected);
     Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
+    if(selected.length() == 1) {
+        for(const auto & index : selected.indexes()) {
+            if(index.column() == 1) {
+                Segmentation::singleton().jumpToObject(index.data().toInt());
+            }
+        }
+    }
 }
 
 template<typename Elem>

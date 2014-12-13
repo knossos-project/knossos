@@ -92,9 +92,10 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         merging(event, vp);
     } else {//add, erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
-            seg.createAndSelectObject();
+            seg.createAndSelectObject(coord);
         }
         const auto soid = seg.subobjectIdOfFirstSelectedObject();
+        seg.updateLocationForFirstSelectedObject(coord);
         writeVoxels(coord, soid, seg.brush);
         state->viewer->window->notifyUnsavedChanges();
         state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
@@ -104,25 +105,26 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
     const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush.getRadius(), seg.brush.getRadius(), vp);
+    Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
-            auto & subobject = seg.subobjectFromId(subobjectId);
+            auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
             const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
             //select if not selected and merge
             if (seg.isSelected(subobject)) {
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        seg.selectObjectFromSubObject(subobject);
-                        seg.unmergeSelectedObjects();
+                        seg.selectObjectFromSubObject(subobject, clickPos);
+                        seg.unmergeSelectedObjects(clickPos);
                     } else {
                         seg.selectObject(objectToMergeId);
-                        seg.unmergeSelectedObjects();
+                        seg.unmergeSelectedObjects(clickPos);
                     }
                 }
             } else {
                 if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        seg.selectObjectFromSubObject(subobject);
+                        seg.selectObjectFromSubObject(subobject, clickPos);
                     } else {
                         seg.selectObject(objectToMergeId);//select largest object
                     }
@@ -637,10 +639,11 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if (Segmentation::singleton().segmentationMode) {
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
+            const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             auto & segmentation = Segmentation::singleton();
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
-                auto & subobject = segmentation.subobjectFromId(subobjectId);
+                auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objId = segmentation.largestObjectContainingSubobject(subobject);
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
                     segmentation.clearObjectSelection();
