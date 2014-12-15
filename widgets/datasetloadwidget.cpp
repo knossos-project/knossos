@@ -479,22 +479,15 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    emit (startLoaderSignal());
+    emit startLoaderSignal();
 
     emit updateDatasetCompression();
 
     // ...beginning with loading the middle of dataset
-    SET_COORDINATE(state->viewerState->currentPosition,
-                   state->boundary.x / 2 - state->cubeEdgeLength,
-                   state->boundary.y / 2 - state->cubeEdgeLength,
-                   state->boundary.z / 2 - state->cubeEdgeLength);
-    Coordinate range = { state->boundary.x/2, state->boundary.y/2, state->boundary.z/2 };
+    Coordinate range(state->boundary.x/2, state->boundary.y/2, state->boundary.z/2);
+    state->viewerState->currentPosition = range;
     emit datasetChanged(range, range);
-    emit userMoveSignal(
-                state->cubeEdgeLength,
-                state->cubeEdgeLength,
-                state->cubeEdgeLength,
-                USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    emit userMoveSignal(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 void DatasetLoadWidget::saveSettings() {

@@ -1417,8 +1417,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
         sendLoadSignal(NO_MAG_CHANGE);
     }
 
-    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal,
-                      viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
+    emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
 
     return true;
 }
@@ -1892,7 +1891,7 @@ bool Viewer::sendLoadSignal(int magChanged) {
 void Viewer::rewire() {
     // viewer signals
     connect(this, &Viewer::updateDatasetOptionsWidgetSignal,window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(this, &Viewer::updateCoordinatesSignal, window, &MainWindow::updateCoordinateBar);
+    QObject::connect(this, &Viewer::coordinateChangedSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
     QObject::connect(skeletonizer, &Skeletonizer::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
@@ -2032,7 +2031,7 @@ void Viewer::rewire() {
     // navigation widget signals --
     QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::sendLoadSignal, this, &Viewer::sendLoadSignal);
     QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::movementAreaChanged, this, &Viewer::updateCurrentPosition);
-    // --- end widget signals 
+    // --- end widget signals
 }
 
 void Viewer::setRotation(float x, float y, float z, float angle) {
