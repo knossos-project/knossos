@@ -414,6 +414,7 @@ void Segmentation::mergelistSave(QIODevice & file) const {
             stream << ' ' << subObj.get().id;
         }
         stream << '\n';
+        stream << obj.location.x << ' ' << obj.location.y << ' ' << obj.location.z << '\n';
         stream << obj.category << '\n';
         stream << obj.comment << '\n';
     }
