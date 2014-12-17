@@ -546,33 +546,39 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     } else {
                         magnification = 0;
                     }
-                } else if(xml.name() == "movementArea") {
+                } else if(xml.name() == "segmentationJobMode") {
                     auto & session = Session::singleton();
                     Coordinate center = session.movementCenter;
                     Coordinate range = session.movementRange;
-                    QStringRef attribute = attributes.value("center.x");
+
+                    QStringRef attribute = attributes.value("enabled");
                     if(attribute.isNull() == false) {
-                        center.x = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.x);
+                        Segmentation::singleton().jobMode = true;
+                        emit segmentationJobModeChanged(static_cast<bool>(attribute.toInt()));
+                    }
+                    attribute = attributes.value("center.x");
+                    if(attribute.isNull() == false) {
+                        center.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
                     }
                     attribute = attributes.value("center.y");
                     if(attribute.isNull() == false) {
-                        center.y = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.y);
+                        center.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
                     }
                     attribute = attributes.value("center.z");
                     if(attribute.isNull() == false) {
-                        center.z = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.z);
+                        center.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
                     }
                     attribute = attributes.value("range.x");
                     if(attribute.isNull() == false) {
-                        range.x = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.x);
+                        range.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
                     }
                     attribute = attributes.value("range.y");
                     if(attribute.isNull() == false) {
-                        range.y = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.y);
+                        range.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
                     }
                     attribute = attributes.value("range.z");
                     if(attribute.isNull() == false) {
-                        range.z = std::min(std::max(0, attribute.toLocal8Bit().toInt()), state->boundary.z);
+                        range.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
                     }
                     session.updateMovementArea(center, range);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.

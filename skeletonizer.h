@@ -43,7 +43,7 @@ signals:
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void setRecenteringPositionSignal(int x, int y, int z);
     void setSimpleTracing(bool active);
-
+    void segmentationJobModeChanged(bool enabled);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
