@@ -170,6 +170,8 @@ int main(int argc, char *argv[]) {
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
 
+    QObject::connect(&Segmentation::singleton(), &Segmentation::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
+
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);

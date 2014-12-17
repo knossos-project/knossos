@@ -36,7 +36,7 @@ Segmentation::Object::Object(const bool & todo, const bool & immutable, const Co
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : immutable(false), selected{true}, location(second.location) //merge is selected
+    : immutable(false), location(second.location), selected{true} //merge is selected
 {
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
@@ -78,7 +78,7 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true) {
+Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true), jobMode(false) {
     loadOverlayLutFromFile();
 }
 
@@ -343,6 +343,70 @@ void Segmentation::unselectObject(Object & object) {
     emit changedRow(object.id);
 }
 
+void Segmentation::jumpToObject(Object & object) {
+    emit setRecenteringPositionSignal(object.location.x, object.location.y, object.location.z);
+    Knossos::sendRemoteSignal();
+}
+
+void Segmentation::jumpToObject(const uint64_t & objectId) {
+    if(objectId < objects.size()) {
+        jumpToObject(objects[objectId]);
+    }
+}
+
+void Segmentation::selectNextTodoObject() {
+    if(selectedObjectIds.empty() == false) {
+        lastTodoObject_id = selectedObjectIds.front();
+        auto & obj = objects[lastTodoObject_id];
+        obj.todo = false;
+        unselectObject(obj);
+    }
+    float minDist = INT_MAX;
+    Object *closestObj = nullptr;
+    floatCoordinate distVec;
+    for(auto & obj : todoList()) {
+        distVec = {
+            (float)state->viewerState->currentPosition.x - obj.get().location.x,
+            (float)state->viewerState->currentPosition.y - obj.get().location.y,
+            (float)state->viewerState->currentPosition.z - obj.get().location.z,
+        };
+        float dist = euclidicNorm(&distVec);
+        if(dist < minDist) {
+            minDist = dist;
+            closestObj = &(obj.get());
+        }
+    }
+    if(closestObj) {
+        selectObject(*closestObj);
+        jumpToObject(*closestObj);
+    }
+    emit todosLeftChanged();
+}
+
+void Segmentation::selectPrevTodoObject() {
+    if(selectedObjectIds.empty() == false) {
+        auto & obj = objects[selectedObjectIds.front()];
+        unselectObject(obj);
+    }
+    auto & obj = objects[lastTodoObject_id];
+    obj.todo = true;
+    selectObject(obj);
+    jumpToObject(obj);
+    emit todosLeftChanged();
+    return;
+}
+
+std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todoList() {
+    std::vector<std::reference_wrapper<Segmentation::Object>> todolist;
+    for (auto & obj : objects) {
+        if(obj.todo) {
+            todolist.push_back(obj);
+        }
+    }
+    return todolist;
+}
+
+
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other, const Coordinate & position) {
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
@@ -386,15 +450,6 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
 void Segmentation::selectObject(const uint64_t & objectId) {
     if (objectId < objects.size()) {
         selectObject(objects[objectId]);
-    }
-}
-
-void Segmentation::jumpToObject(const uint64_t & objectId) {
-    if(objectId < objects.size()) {
-        state->viewer->userMove(objects[objectId].location.x - state->viewerState->currentPosition.x,
-                            objects[objectId].location.y - state->viewerState->currentPosition.y,
-                            objects[objectId].location.z - state->viewerState->currentPosition.z,
-                            USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }
 
@@ -460,6 +515,12 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     }
     blockSignals(false);
     emit resetData();
+    if(Segmentation::jobMode) {
+        selectNextTodoObject();
+        jumpToObject(objects[selectedObjectIds.front()]);
+        renderAllObjs = false;
+        emit renderAllObjsChanged(renderAllObjs);
+    }
 }
 
 void Segmentation::deleteSelectedObjects() {

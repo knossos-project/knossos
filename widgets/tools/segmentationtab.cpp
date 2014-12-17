@@ -357,6 +357,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateTouchedObjSelection);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
 
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(objectsTable, point);});
     QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});
@@ -514,4 +515,3 @@ void SegmentationTab::contextMenu(const QAbstractScrollArea & widget, const QPoi
     QObject::connect(contextMenu.addAction("delete"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
     contextMenu.exec(widget.viewport()->mapToGlobal(pos));
 }
-

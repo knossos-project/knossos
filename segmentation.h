@@ -90,6 +90,9 @@ Q_OBJECT
     std::set<QString> categories = {"mito", "myelin", "neuron", "synapse", "ecs"};
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
+    // For segmentation job mode
+    uint64_t lastTodoObject_id = 0;
+
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
@@ -137,6 +140,7 @@ Q_OBJECT
 public:
     uint8_t alpha;
     bool segmentationMode;
+    bool jobMode;
     brush_t brush;
 
     static Segmentation & singleton();
@@ -171,6 +175,9 @@ public:
     void clearObjectSelection();
 
     void jumpToObject(const uint64_t & objectId);
+    void jumpToObject(Object & object);
+    std::vector<std::reference_wrapper<Segmentation::Object>> todoList();
+
     void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
     void touchObjects(const uint64_t subobject_id);
@@ -189,11 +196,16 @@ signals:
     void resetData();
     void resetSelection();
     void resetTouchedObjects();
+    void renderAllObjsChanged(bool all);
+    void todosLeftChanged();
+    void setRecenteringPositionSignal(float x, float y, float z);
 public slots:
     void clear();
     void deleteSelectedObjects();
     void mergeSelectedObjects();
     void unmergeSelectedObjects(const Coordinate & clickPos);
+    void selectNextTodoObject();
+    void selectPrevTodoObject();
 };
 
 #endif // SEGMENTATION_H
