@@ -146,7 +146,6 @@ Q_DECLARE_METATYPE(UserMoveType)
 #define DSP_LINES_POINTS        32
 
 #define CATCH_RADIUS            10
-#define JMP_THRESHOLD           500 //for moving to next/prev node
 
 #define ROTATIONSTATEXY    0
 #define ROTATIONSTATEXZ    1

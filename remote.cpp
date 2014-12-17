@@ -60,7 +60,7 @@ void Remote::run() {
         SET_COORDINATE (currToNext, recenteringPosition.x - state->viewerState->currentPosition.x,
                                     recenteringPosition.y - state->viewerState->currentPosition.y,
                                     recenteringPosition.z - state->viewerState->currentPosition.z);
-        if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
+        if(euclidicNorm(&currToNext) > jumpThreshold) {
             remoteJump(recenteringPosition.x, recenteringPosition.y, recenteringPosition.z);
         } else {
             remoteWalk(round(currToNext.x), round(currToNext.y), round(currToNext.z));
@@ -227,7 +227,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
     singleMove.z = walkVector.z / (float)totalMoves;
     floatCoordinate residuals;
     SET_COORDINATE(residuals, 0, 0, 0);
-    float anglesPerStep;
+    float anglesPerStep = 0;
     if(Viewport::arbitraryOrientation) {
         anglesPerStep = rotation.alpha/totalMoves;
     }
