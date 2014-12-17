@@ -57,7 +57,6 @@
 #include <QSpinBox>
 #include <QStringList>
 #include <QThread>
-#include <QToolBar>
 #include <QToolButton>
 #include <QQueue>
 
@@ -110,11 +109,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
+    QObject::connect(state->viewer->skeletonizer, &Skeletonizer::segmentationJobModeChanged, this, &MainWindow::setSegmentationJobMode);
+
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
-    createToolBar();
+    createToolbars();
     createMenus();
     setCentralWidget(new QWidget(this));
     setGeometry(0, 0, width(), height());
@@ -147,18 +149,17 @@ void MainWindow::createViewports() {
     viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
 }
 
-void MainWindow:: createToolBar() {
-    auto toolBar = new QToolBar();
-    toolBar->setMovable(false);
-    toolBar->setFloatable(false);
-    toolBar->setMaximumHeight(45);
-    addToolBar(toolBar);
+void MainWindow::createToolbars() {
+    auto basicToolbar = new QToolBar();
+    basicToolbar->setMovable(false);
+    basicToolbar->setFloatable(false);
+    basicToolbar->setMaximumHeight(45);
 
-    toolBar->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton", this, SLOT(openSlot()));
-    toolBar->addAction(QIcon(":/images/icons/document-save.png"), "Save Skeleton", this, SLOT(saveSlot()));
-    toolBar->addSeparator();
-    toolBar->addAction(QIcon(":/images/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
-    toolBar->addAction(QIcon(":/images/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
+    basicToolbar->addAction(QIcon(":/images/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
+    basicToolbar->addAction(QIcon(":/images/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar->addSeparator();
+    basicToolbar->addAction(QIcon(":/images/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
+    basicToolbar->addAction(QIcon(":/images/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
     xField->setRange(1, 1000000);
@@ -179,23 +180,24 @@ void MainWindow:: createToolBar() {
     QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
     QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
 
-    toolBar->addWidget(new QLabel("<font color='black'>x</font>"));
-    toolBar->addWidget(xField);
-    toolBar->addWidget(new QLabel("<font color='black'>y</font>"));
-    toolBar->addWidget(yField);
-    toolBar->addWidget(new QLabel("<font color='black'>z</font>"));
-    toolBar->addWidget(zField);
-    toolBar->addSeparator();
+    basicToolbar->addWidget(new QLabel("<font color='black'>x</font>"));
+    basicToolbar->addWidget(xField);
+    basicToolbar->addWidget(new QLabel("<font color='black'>y</font>"));
+    basicToolbar->addWidget(yField);
+    basicToolbar->addWidget(new QLabel("<font color='black'>z</font>"));
+    basicToolbar->addWidget(zField);
 
+    addToolBar(basicToolbar);
+    addToolBar(&defaultToolbar);
 
-    toolBar->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    defaultToolbar.addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
         button->setToolTip(tooltip);
         button->setCheckable(true);
-        toolBar->addWidget(button);
+        defaultToolbar.addWidget(button);
         return button;
     };
     auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Dataset Options");
@@ -214,7 +216,7 @@ void MainWindow:: createToolBar() {
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->commentsWidget, &CommentsWidget::visibilityChanged, commentShortcutsButton, &QToolButton::setChecked);
 
-    toolBar->addSeparator();
+    defaultToolbar.addSeparator();
 
     auto * const pythonButton = new QToolButton();
     pythonButton->setMenu(new QMenu());
@@ -223,14 +225,58 @@ void MainWindow:: createToolBar() {
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
     pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
     pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python File", this, SLOT(pythonFileSlot()));
-    toolBar->addWidget(pythonButton);
+    defaultToolbar.addWidget(pythonButton);
 
-    toolBar->addSeparator();
+    defaultToolbar.addSeparator();
 
     auto resetVPsButton = new QPushButton("Reset VP Positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
-    toolBar->addWidget(resetVPsButton);
+    defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
+
+    // segmentation task mode toolbar
+    auto prevBtn = new QPushButton("< Last");
+    auto nextBtn = new QPushButton("Next >");
+    auto exitButton = new QPushButton("Exit Job mode");
+    prevBtn->setToolTip("Go back to last task.");
+    nextBtn->setToolTip("Mark current task as finished and go to next one.");
+    QObject::connect(prevBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectPrevTodoObject(); });
+    QObject::connect(nextBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectNextTodoObject(); });
+    QObject::connect(exitButton, &QPushButton::clicked, [this](bool) { setSegmentationJobMode(false); });
+
+    segJobModeToolbar.addWidget(prevBtn);
+    segJobModeToolbar.addWidget(nextBtn);
+    segJobModeToolbar.addSeparator();
+    segJobModeToolbar.addWidget(&todosLeftLabel);
+    auto spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    segJobModeToolbar.addWidget(spacer);
+    segJobModeToolbar.addWidget(exitButton);
+}
+
+void MainWindow::setSegmentationJobMode(bool enabled) {
+    if(enabled) {
+        menuBar()->hide();
+        removeToolBar(&defaultToolbar);
+        addToolBar(&segJobModeToolbar);
+        segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
+    } else {
+        menuBar()->show();
+        removeToolBar(&segJobModeToolbar);
+        addToolBar(&defaultToolbar);
+        defaultToolbar.show();
+    }
+}
+
+void MainWindow::updateTodosLeft() {
+    int todosLeft = Segmentation::singleton().todoList().size();
+    if(todosLeft > 0) {
+        todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
+    }
+    else {
+        todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
+        QMessageBox::information(this, "Good Job!", "You're done, now save your work and upload it under ...");
+    }
 }
 
 void MainWindow::notifyUnsavedChanges() {
@@ -417,8 +463,6 @@ void MainWindow::createMenus() {
     fileMenu.addSeparator();
     fileMenu.addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
-    menuBar()->addMenu(&fileMenu);
-
     segEditMenu = new QMenu("Edit Segmentation");
     auto segAnnotationModeGroup = new QActionGroup(this);
     segEditSegModeAction = segAnnotationModeGroup->addAction(tr("Segmentation Mode"));
@@ -431,7 +475,6 @@ void MainWindow::createMenus() {
     segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
     segEditMenu->addSeparator();
     segEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
-
 
     skelEditMenu = new QMenu("Edit Skeleton");
     auto skelAnnotationModeGroup = new QActionGroup(this);
@@ -450,6 +493,13 @@ void MainWindow::createMenus() {
     addNodeAction->setCheckable(true);
     addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
     addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    if(Segmentation::singleton().segmentationMode) {
+        menuBar()->addMenu(segEditMenu);
+    }
+    else {
+        menuBar()->addMenu(skelEditMenu);
+    }
 
     linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
     linkWithActiveNodeAction->setCheckable(true);
@@ -481,13 +531,6 @@ void MainWindow::createMenus() {
 
     skelEditMenu->addSeparator();
     skelEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
-
-    if(Segmentation::singleton().segmentationMode) {
-        menuBar()->addMenu(segEditMenu);
-    }
-    else {
-        menuBar()->addMenu(skelEditMenu);
-    }
 
     auto viewMenu = menuBar()->addMenu("Navigation");
 
@@ -529,7 +572,6 @@ void MainWindow::createMenus() {
     viewMenu->addSeparator();
 
     viewMenu->addAction(tr("Dataset Navigation Options"), widgetContainer->navigationWidget, SLOT(show()));
-
 
     auto commentsMenu = menuBar()->addMenu("Comments");
 

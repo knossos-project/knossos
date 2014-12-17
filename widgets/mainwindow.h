@@ -38,11 +38,11 @@
 #include <QDropEvent>
 #include <QQueue>
 #include <QComboBox>
+#include <QToolBar>
 #include <QUndoStack>
 #include "scriptengine/proxies/skeletonproxy.h"
 
 class QLabel;
-class QToolBar;
 class QToolButton;
 class QPushButton;
 class QSpinBox;
@@ -55,25 +55,32 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
     friend TaskManagementWidget;
     friend SkeletonProxy;
-protected:
+
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
+
+    QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"File"};
     QMenu *skelEditMenu;
     QMenu *segEditMenu;
     QString annotationFilename;
     QString openFileDirectory;
     QString saveFileDirectory;
+
+    QToolBar defaultToolbar;
+    QToolBar segJobModeToolbar;
+    QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
+    void updateTodosLeft();
+
 public:
-    QSpinBox *xField, *yField, *zField;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
     WidgetContainer widgetContainerObject;
-    WidgetContainer * widgetContainer;
+    WidgetContainer *widgetContainer;
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
@@ -100,7 +107,7 @@ public:
 
     // for creating action, menus and the toolbar
     void createMenus();
-    void createToolBar();
+    void createToolbars();
 
     // for save, load and clear settings
     void saveSettings();
@@ -155,6 +162,8 @@ signals:
     void nodeCommentChangedSignal(nodeListElement *node);
     void resetRotationSignal();
 public slots:
+    void setSegmentationJobMode(bool enabled);
+
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);
     void updateRecentFile(const QString &fileName);
