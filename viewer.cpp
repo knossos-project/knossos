@@ -56,6 +56,8 @@ static WINAPI int dummy(int) {
 }
 
 Viewer::Viewer(QObject *parent) : QThread(parent) {
+    state->viewer = this;
+    skeletonizer = new Skeletonizer();
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
@@ -75,12 +77,10 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     */
 
     initViewer();
-    skeletonizer = new Skeletonizer();
     renderer = new Renderer();
 
     QDesktopWidget *desktop = QApplication::desktop();
 
-    state->viewer = this;
     rewire();
     window->show();
     window->loadSettings();
@@ -1868,10 +1868,6 @@ bool Viewer::sendLoadSignal(int magChanged) {
     state->datasetChangeSignal = magChanged;
 
     state->previousPositionX = state->currentPositionX;
-
-    if (0 == state->viewerState->currentPosition.x) {
-        qDebug() << "HERE";
-    }
 
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
