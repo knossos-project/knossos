@@ -189,8 +189,12 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto superCubeEdge = supercubeEdgeSpin->value();
     auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
-    auto text = QString("Data cache cube edge length (%1 MiB RAM)").arg(mibibytes);
+    const auto fov = state->cubeEdgeLength * superCubeEdge - 1;
+    auto text = QString("Data cache cube edge length (%1 MiB RAM) – FOV %2 pixel per demension").arg(mibibytes).arg(fov);
     supercubeSizeLabel->setText(text);
+    const auto maxsupercubeedge = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+    //make sure it’s an odd number
+    supercubeEdgeSpin->setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
