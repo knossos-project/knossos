@@ -460,7 +460,7 @@ void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/images/icons/open-skeleton.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    fileMenu.addAction(QIcon(":/images/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/images/icons/document-open-recent.png"), "");
