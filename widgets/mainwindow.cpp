@@ -261,11 +261,19 @@ void MainWindow::setSegmentationJobMode(bool enabled) {
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
+        for(int i = 1; i < Viewport::numberViewports; ++i) {
+            viewports[i].get()->hide();
+        }
+        viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
     } else {
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
+        for(int i = 1; i < Viewport::numberViewports; ++i) {
+            viewports[i].get()->show();
+        }
+        resetViewports();
     }
 }
 
