@@ -1294,7 +1294,9 @@ Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, 
 }
 
 bool EventModel::validPosition(QMouseEvent *event, int VPfound) {
-    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)) {
+    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) ||
+        event->x() < 0 || event->x() > (int)state->viewerState->vpConfigs[VPfound].edgeLength ||
+        event->y() < 0 || event->y() > (int)state->viewerState->vpConfigs[VPfound].edgeLength) {
             return false;
     }
 
