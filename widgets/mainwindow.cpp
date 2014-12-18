@@ -236,10 +236,11 @@ void MainWindow::createToolbars() {
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
-    auto nextBtn = new QPushButton("Next >");
+    auto nextBtn = new QPushButton("(N)ext >");
     auto exitButton = new QPushButton("Exit Job mode");
     prevBtn->setToolTip("Go back to last task.");
     nextBtn->setToolTip("Mark current task as finished and go to next one.");
+    nextBtn->setShortcut(QKeySequence(Qt::Key_N));
     QObject::connect(prevBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectPrevTodoObject(); });
     QObject::connect(nextBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectNextTodoObject(); });
     QObject::connect(exitButton, &QPushButton::clicked, [this](bool) { setSegmentationJobMode(false); });
@@ -248,7 +249,7 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(nextBtn);
     segJobModeToolbar.addSeparator();
     segJobModeToolbar.addWidget(&todosLeftLabel);
-    auto spacer = new QWidget();
+    auto spacer = new QWidget(); // for right alignment of following widgets
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     segJobModeToolbar.addWidget(spacer);
     segJobModeToolbar.addWidget(exitButton);
