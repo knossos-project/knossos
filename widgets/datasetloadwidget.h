@@ -2,9 +2,12 @@
 #define DATASETLOADWIDGET_H
 
 #include "knossos-global.h"
+#include "coordinate.h"
 
 #include <QCheckBox>
 #include <QDialog>
+#include <QTextDocument>
+#include <QListWidget>
 
 class QComboBox;
 class QGroupBox;
@@ -12,43 +15,44 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 class QSpinBox;
+class QTextDocument;
 class QRadioBox;
+class QListWidget;
+class QScrollArea;
 
 class DatasetLoadWidget : public QDialog {
     Q_OBJECT
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    void onRadiobutton();
-    void onUrlAdd();
-    void updateUsername();
-    void updatePassword();
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
+    void processListWidgetClicked(QListWidgetItem * itemClicked);
+    struct Datasetinfo{
+        Coord<> boundary;
+        floatCoordinate scale{0,0,0};
+        int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
+        bool remote = false;
+        std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
+    };
+    Datasetinfo datasetinfo;
+    Datasetinfo getConfigFileInfo(const char *path);
     std::string lastused;
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
-    QComboBox *pathDropdown;
-    QRadioButton *local;
-    QRadioButton *remote;
+    QLineEdit *pathLineEdit;
     QPushButton *datasetfileDialog;
+    QPushButton *fileDialogButton;
+    QPushButton *deleteButton;
     QStringList getRecentPathItems();
-    QStringList getRecentUsernames();
-    QStringList getRecentPasswords();
-    QStringList getRecentHosts();
     QSpinBox *supercubeEdgeSpin;
-    QComboBox *urlCombo;
-    QStringList usernameList;
-    QStringList passwordList;
-    QLineEdit *usernameField;
-    QLineEdit *passwordField;
+    QLabel *infolabel;
+    QListWidget *datasetlistwidget;
+    QScrollArea *scrollarea;
 protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
-    QLabel *host;
-    QLabel *username;
-    QLabel *passwd;
 
 signals:
     void clearSkeletonSignalGUI();
@@ -65,8 +69,9 @@ public slots:
     void datasetfileDialogClicked();
     void adaptMemoryConsumption();
     void cancelButtonClicked();
-    void onUrlChange();
     void processButtonClicked();
+    void addDatasetClicked();
+    void deleteDataset();
 };
 
 #endif // DATASETLOADWIDGET_H

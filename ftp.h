@@ -6,7 +6,7 @@
 #include "loader.h"
 
 int downloadFile(const char *remote_path, char *local_filename);
-int downloadMag1ConfFile();
+std::string downloadRemoteConfFile(std::string url);
 
 struct FtpElement {
     bool isOverlay;

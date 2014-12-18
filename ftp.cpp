@@ -35,7 +35,7 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
   return fwrite(buffer, size, nmemb, *ftp_fh_ptr);
 }
 
-static size_t mag1conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream) {
+static size_t conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream) {
     FtpElement *elem = (FtpElement *)stream;
     FILE **ftp_fh_ptr = &elem->cube->ftp_data_fh;
 
@@ -48,27 +48,24 @@ static size_t mag1conf_fwrite(void *buffer, size_t size, size_t nmemb, void *str
     return fwrite(buffer, size, nmemb, *ftp_fh_ptr);
 }
 
-int downloadMag1ConfFile() {
+std::string downloadRemoteConfFile(std::string url) {
     CURL *eh = NULL;
     FtpElement *elem = new FtpElement;
     elem->cube = new C_Element;
     elem->isOverlay = false;
 
-    QString currentPath = QString("%1mag1/knossos.conf").arg(state->ftpBasePath);
-
-    elem->cube->fullpath_data_filename = new char[currentPath.length() + 1];
-    strcpy(elem->cube->fullpath_data_filename, currentPath.toStdString().c_str());
+    elem->cube->fullpath_data_filename = new char[url.length() + 1];
+    strcpy(elem->cube->fullpath_data_filename, url.c_str());
 
     char remoteURL[MAX_PATH];
 
-    snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, elem->cube->fullpath_data_filename);
+    snprintf(remoteURL, MAX_PATH, "http://%s", url.c_str());
 
     char *lpath = (char*)malloc(MAX_PATH);
-    snprintf(lpath, MAX_PATH, "%smag1/knossos.conf", state->loadFtpCachePath);
+    snprintf(lpath, MAX_PATH, "%s/knossos.conf", state->loadFtpCachePath);
 
     //libcurl can't create the folder if it does not exist
     QString qpath(state->loadFtpCachePath);
-    qpath.append("mag1/");
 
     QDir tmppath(qpath);
     if(!tmppath.exists()) tmppath.mkdir(qpath);
@@ -78,7 +75,7 @@ int downloadMag1ConfFile() {
     eh = curl_easy_init();
 
     curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
-    curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, mag1conf_fwrite);
+    curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, conf_fwrite);
     curl_easy_setopt(eh, CURLOPT_WRITEDATA, elem);
     curl_easy_setopt(eh, CURLOPT_PRIVATE, elem);
     curl_easy_setopt(eh, CURLOPT_TIMEOUT, 10);
@@ -99,7 +96,7 @@ int downloadMag1ConfFile() {
         free(elem);
         free(lpath);
 
-        return EXIT_FAILURE;
+        return "";
     }
 
     if(httpCode != 200) {
@@ -107,14 +104,17 @@ int downloadMag1ConfFile() {
         free(elem);
         free(lpath);
 
-        return EXIT_FAILURE;
+        return "";
     }
 
     free(elem->cube);
     free(elem);
     free(lpath);
 
-    return EXIT_SUCCESS;
+    std::string ret{state->loadFtpCachePath};
+    ret.append("/knossos.conf");
+
+    return ret;
 }
 
 CURLM *curlm = NULL;
