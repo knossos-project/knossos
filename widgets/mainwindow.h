@@ -76,7 +76,7 @@ class MainWindow : public QMainWindow {
     void updateTodosLeft();
 
 public:
-    std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
+    std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
 
     // contains all widgets
     WidgetContainer widgetContainerObject;

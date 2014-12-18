@@ -85,7 +85,6 @@
 #define SLICE_XZ	1
 #define	SLICE_YZ	2
 
-#define NUM_VP 4 //number of viewports
 enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED, VIEWPORT_ARBITRARY};
 Q_DECLARE_METATYPE(ViewportType)
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
@@ -575,7 +574,6 @@ struct viewerState {
     Byte *overlayData;
     Byte *defaultTexData;
     Byte *defaultOverlayData;
-    uint numberViewports;
     uint splash;
     bool viewerReady;
     GLuint splashTexture;

@@ -101,7 +101,7 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewerState->renderInterval = FAST;
 
     // for arbitrary viewport orientation
-    for (uint i = 0; i < state->viewerState->numberViewports; i++){
+    for (uint i = 0; i < Viewport::numberViewports; i++){
         state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max =
                 (
                     (
@@ -727,7 +727,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
-    for (i = 0; i < viewerState->numberViewports; i++) {
+    for (i = 0; i < Viewport::numberViewports; i++) {
         floatCoordinate v1, v2;
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
@@ -908,7 +908,7 @@ bool Viewer::initViewer() {
                                                      * 3);
 
     /* @arb */
-    for (std::size_t i = 0; i < state->viewerState->numberViewports; ++i){
+    for (std::size_t i = 0; i < Viewport::numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             qDebug() << "Out of memory.";
@@ -1059,7 +1059,7 @@ bool Viewer::calcDisplayedEdgeLength() {
     FOVinDCs = ((float)state->M) - 1.f;
 
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
         if (state->viewerState->vpConfigs[i].type==VIEWPORT_ARBITRARY){
             state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
                 state->viewerState->vpConfigs[i].s_max / (float) state->viewerState->vpConfigs[i].texture.edgeLengthPx;
@@ -1093,7 +1093,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         case MAG_DOWN:
             if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
                 state->magnification /= 2;
-                for(i = 0; i < state->viewerState->numberViewports; i++) {
+                for(i = 0; i < Viewport::numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
@@ -1106,7 +1106,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         case MAG_UP:
             if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
                 state->magnification *= 2;
-                for(i = 0; i < state->viewerState->numberViewports; i++) {
+                for(i = 0; i < Viewport::numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
@@ -1122,7 +1122,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     state->viewerState->userMove = true;
     recalcTextureOffsets();
 
-    /*for(i = 0; i < state->viewerState->numberViewports; i++) {
+    /*for(i = 0; i < Viewport::numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
             qDebug("left upper tex px of VP %d is: %d, %d, %d",i,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
@@ -1270,7 +1270,7 @@ void Viewer::run() {
 bool Viewer::updateViewerState() {
    uint i;
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
 
         if(i == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
@@ -1305,7 +1305,7 @@ bool Viewer::updateZoomCube() {
     oldZoomCube = state->viewerState->zoomCube;
     state->viewerState->zoomCube = 0;
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
             residue = ((max*state->cubeEdgeLength)
             - ((int)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
@@ -1442,7 +1442,7 @@ bool Viewer::recalcTextureOffsets() {
 
     calcDisplayedEdgeLength();
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
         /* Do this only for orthogonal VPs... */
         if (state->viewerState->vpConfigs[i].type == VIEWPORT_XY
             || state->viewerState->vpConfigs[i].type == VIEWPORT_XZ

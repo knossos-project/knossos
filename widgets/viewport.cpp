@@ -394,7 +394,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
-    for (std::size_t i = 0; i < state->viewerState->numberViewports; i++) {
+    for (std::size_t i = 0; i < Viewport::numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
         state->viewerState->vpConfigs[i].motionTracking = false;
         state->viewerState->vpConfigs[i].VPmoves = false;
@@ -492,7 +492,7 @@ void Viewport::drawSkeletonViewport() {
 
 void Viewport::zoomOrthogonals(float step){
     int triggerMagChange = false;
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
             /* check if mag is locked */
             if(state->viewerState->datasetMagLock) {

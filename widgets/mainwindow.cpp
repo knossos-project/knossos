@@ -1247,12 +1247,12 @@ void MainWindow::resetViewports() {
 
 void MainWindow::showVPDecorationClicked() {
     if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
-        for(int i = 0; i < NUM_VP; i++) {
+        for(int i = 0; i < Viewport::numberViewports; i++) {
             viewports[i]->showButtons();
         }
     }
     else {
-        for(int i = 0; i < NUM_VP; i++) {
+        for(int i = 0; i < Viewport::numberViewports; i++) {
             viewports[i]->hideButtons();
         }
     }

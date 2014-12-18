@@ -70,7 +70,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     glLoadIdentity();
 
     // get a unique display list identifier for each viewport
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
         state->viewerState->vpConfigs[i].displayList = glGenLists(1);
     }
 
@@ -1291,7 +1291,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor4f(1., 1., 1., 1.);
 
-    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+    for(size_t i = 0; i < Viewport::numberViewports; i++) {
         // Used for calculation of slice pane length inside the 3d view
         float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
@@ -1368,7 +1368,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         }
     }
 
-    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+    for(size_t i = 0; i < Viewport::numberViewports; i++) {
         const auto & viewport = state->viewerState->vpConfigs[i];
         if (viewport.type == VIEWPORT_ARBITRARY) {
             if ( (viewport.id == VP_UPPERLEFT && state->skeletonState->showXYplane)
@@ -1382,7 +1382,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
     glDisable(GL_TEXTURE_2D);
 
-    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+    for(size_t i = 0; i < Viewport::numberViewports; i++) {
         GLUquadricObj * gluCylObj;
         float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx

@@ -648,7 +648,6 @@ bool Knossos::configDefaults() {
     state->viewerState->drawVPCrosshairs = true;
     state->viewerState->showVPLabels = false;
     state->viewerState->stepsPerSec = 40;
-    state->viewerState->numberViewports = 4;
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;
     state->viewerState->nodeSelectSquareVpId = -1;
@@ -673,13 +672,13 @@ bool Knossos::configDefaults() {
     state->viewerState->walkOrth = false;
 
     if (firstRun) {
-        state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
+        state->viewerState->vpConfigs = (vpConfig *) malloc(Viewport::numberViewports * sizeof(struct vpConfig));
         if(state->viewerState->vpConfigs == NULL) {
             qDebug() << "Out of memory.";
             return false;
         }
-        memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
-        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+        memset(state->viewerState->vpConfigs, '\0', Viewport::numberViewports * sizeof(struct vpConfig));
+        for(uint i = 0; i < Viewport::numberViewports; i++) {
             switch(i) {
             case VP_UPPERLEFT:
                 state->viewerState->vpConfigs[i].type = VIEWPORT_XY;

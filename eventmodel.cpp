@@ -401,7 +401,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
     }
 
     uint i;
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(i = 0; i < Viewport::numberViewports; i++) {
         // motion tracking mode is active for viewport i
         if(state->viewerState->vpConfigs[i].motionTracking == true) {
             switch(state->viewerState->vpConfigs[i].type) {
@@ -507,7 +507,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 
     Coordinate newDraggedNodePos;
 
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
         switch(state->viewerState->vpConfigs[i].type) {
             case VIEWPORT_XY:
                 if(!state->viewerState->vpConfigs[i].draggedNode) break;

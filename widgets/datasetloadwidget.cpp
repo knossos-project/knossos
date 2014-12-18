@@ -521,7 +521,7 @@ void DatasetLoadWidget::applyGeometrySettings() {
     state->cubeSetElements = state->M * state->M * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
-    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
         state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
     }
