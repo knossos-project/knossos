@@ -1436,25 +1436,6 @@ bool Viewer::userMove_arb(float x, float y, float z) {
     return userMove(step.x, step.y, step.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
-
-int Viewer::findVPnumByWindowCoordinate(uint, uint) {
-    uint tempNum;
-
-    tempNum = -1;
-   /* TDitem
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        if((xScreen >= state->viewerState->vpConfigs[i].lowerLeftCorner.x) && (xScreen <= (state->viewerState->vpConfigs[i].lowerLeftCorner.x + state->viewerState->vpConfigs[i].edgeLength))) {
-            if((yScreen >= (((state->viewerState->vpConfigs[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1) - state->viewerState->vpConfigs[i].edgeLength)) && (yScreen <= ((state->viewerState->vpConfigs[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1))) {
-                //Window coordinate lies in that VP
-                tempNum = i;
-            }
-        }
-    }
-    //The VP on top (if there are multiple VPs on this coordinate) or -1 is returned.
-    */
-    return tempNum;
-}
-
 bool Viewer::recalcTextureOffsets() {
     uint i;
     float midX = 0.,midY = 0.;

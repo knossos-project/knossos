@@ -69,7 +69,6 @@ public:
     int frames;
 
     bool updateZoomCube();
-    static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
