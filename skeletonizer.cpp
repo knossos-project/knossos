@@ -1044,10 +1044,12 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
 
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
 
-    auto & selectedNodes = state->skeletonState->selectedNodes;
-    const auto eraseit = std::find(std::begin(selectedNodes), std::end(selectedNodes), nodeToDel);
-    if (eraseit != std::end(selectedNodes)) {
-        selectedNodes.erase(eraseit);
+    if (nodeToDel->selected) {
+        auto & selectedNodes = state->skeletonState->selectedNodes;
+        const auto eraseit = std::find(std::begin(selectedNodes), std::end(selectedNodes), nodeToDel);
+        if (eraseit != std::end(selectedNodes)) {
+            selectedNodes.erase(eraseit);
+        }
     }
 
     emit nodeRemovedSignal(nodeID);
@@ -1096,10 +1098,12 @@ bool Skeletonizer::delTree(int treeID) {
         state->skeletonState->firstTree = treeToDel->next;
     }
 
-    auto & selectedTrees = state->skeletonState->selectedTrees;
-    const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
-    if (eraseit != std::end(selectedTrees)) {
-        selectedTrees.erase(eraseit);
+    if (treeToDel->selected) {
+        auto & selectedTrees = state->skeletonState->selectedTrees;
+        const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
+        if (eraseit != std::end(selectedTrees)) {
+            selectedTrees.erase(eraseit);
+        }
     }
 
     emit treeRemovedSignal(treeID);
