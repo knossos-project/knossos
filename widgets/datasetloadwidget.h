@@ -38,7 +38,6 @@ public:
     };
     Datasetinfo datasetinfo;
     Datasetinfo getConfigFileInfo(const char *path);
-    std::string lastused;
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QLineEdit *pathLineEdit;
     QPushButton *datasetfileDialog;
@@ -49,6 +48,7 @@ public:
     QLabel *infolabel;
     QListWidget *datasetlistwidget;
     QScrollArea *scrollarea;
+    QString lastused;
 protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
@@ -62,7 +62,6 @@ signals:
     void datasetChanged(Coordinate center, Coordinate range);
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void datasetSwitchZoomDefaults();
-    void setlastusedlocal();
     void startLoaderSignal();
     void breakLoaderSignal();
 public slots:

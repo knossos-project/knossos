@@ -230,11 +230,12 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     QFileInfo pathInfo;
     QString path;
 
-    if(datasetlistwidget->selectedItems().size() == 0) {
-        return;
+    if(datasetlistwidget->currentRow() == -1) {
+        path = lastused;
+    } else {
+        path = datasetlistwidget->currentItem()->text();
+        lastused = path;
     }
-
-    path = datasetlistwidget->currentItem()->text();
 
     //check if we have a remote conf
     if(path.startsWith("http", Qt::CaseInsensitive)) {
@@ -458,6 +459,8 @@ void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
+    settings.setValue(DATASET_LAST_USED, lastused);
+
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
     settings.setValue(DATASET_M, state->M);
@@ -485,6 +488,8 @@ void DatasetLoadWidget::applyGeometrySettings() {
 void DatasetLoadWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
+
+    lastused = settings.value(DATASET_LAST_USED).toString();
 
     QStringList a;
     a = settings.value(DATASET_MRU).toStringList();

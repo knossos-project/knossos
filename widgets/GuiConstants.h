@@ -38,10 +38,7 @@ const QString AUTOINC_FILENAME = "autoinc_filename";
 const QString DATASET_MRU = "dataset_mru";
 const QString DATASET_M = "supercube_edge";
 const QString DATASET_OVERLAY = "overlay";
-const QString DATASET_USER = "username";
-const QString DATASET_PWD = "password";
-const QString DATASET_URL = "dataseturl";
-const QString DATASET_LASTUSED = "lastusedmethod";
+const QString DATASET_LAST_USED = "dataset_last_used";
 
 /* Zoom and Multires */
 const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";
