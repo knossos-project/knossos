@@ -265,7 +265,7 @@ void MainWindow::setSegmentationJobMode(bool enabled) {
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
-        for(int i = 1; i < Viewport::numberViewports; ++i) {
+        for(uint i = 1; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->hide();
         }
         viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
@@ -274,7 +274,7 @@ void MainWindow::setSegmentationJobMode(bool enabled) {
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
-        for(int i = 1; i < Viewport::numberViewports; ++i) {
+        for(uint i = 1; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->show();
         }
         resetViewports();
@@ -282,7 +282,7 @@ void MainWindow::setSegmentationJobMode(bool enabled) {
 }
 
 void MainWindow::updateTodosLeft() {
-    int todosLeft = Segmentation::singleton().todoList().size();
+    int todosLeft = Segmentation::singleton().todolist().size();
     if(todosLeft > 0) {
         todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
     }
@@ -1256,12 +1256,12 @@ void MainWindow::resetViewports() {
 
 void MainWindow::showVPDecorationClicked() {
     if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
-        for(int i = 0; i < Viewport::numberViewports; i++) {
+        for(uint i = 0; i < Viewport::numberViewports; i++) {
             viewports[i]->showButtons();
         }
     }
     else {
-        for(int i = 0; i < Viewport::numberViewports; i++) {
+        for(uint i = 0; i < Viewport::numberViewports; i++) {
             viewports[i]->hideButtons();
         }
     }

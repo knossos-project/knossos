@@ -63,11 +63,13 @@ Q_OBJECT
         friend class Segmentation;
 
         static uint64_t highestId;
+        static uint64_t highestIndex;
 
         //see http://coliru.stacked-crooked.com/a/aba85777991b4425
         std::vector<std::reference_wrapper<SubObject>> subobjects;
     public:
-        uint64_t id = ++highestId;
+        uint64_t id;
+        uint64_t index = ++highestIndex;
         bool todo;
         bool immutable;
         Coordinate location;
@@ -76,7 +78,7 @@ Q_OBJECT
         bool selected = false;
 
         explicit Object(SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
+        explicit Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
         explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
         explicit Object(Object &first, Object &second);
         bool operator==(const Object & other) const;
@@ -86,7 +88,7 @@ Q_OBJECT
 
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::vector<Object> objects;
-    hash_list<uint64_t> selectedObjectIds;
+    hash_list<uint64_t> selectedObjectIndices;
     std::set<QString> categories = {"mito", "myelin", "neuron", "synapse", "ecs"};
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
@@ -129,7 +131,7 @@ Q_OBJECT
         return lut;
     }();
 
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const bool & todo = false, const bool & immutable = false);
+    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id = 0, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
 
@@ -158,25 +160,25 @@ public:
     void createAndSelectObject(const Coordinate & position);
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
     uint64_t subobjectIdOfFirstSelectedObject();
-    bool objectOrder(const uint64_t &lhsId, const uint64_t &rhsId) const;
+    bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     //selection query
     bool isSelected(const SubObject & rhs) const;
-    bool isSelected(const uint64_t &objectId) const;
+    bool isSelected(const uint64_t &objectIndex) const;
     bool isSubObjectIdSelected(const uint64_t & subobjectId) const;
     std::size_t selectedObjectsCount() const;
     //selection modification
-    void selectObject(const uint64_t & objectId);
+    void selectObject(const uint64_t & objectIndex);
     void selectObject(Object & object);
     void selectObjectFromSubObject(SubObject &subobject, const Coordinate & position);
-    void unselectObject(const uint64_t & objectId);
+    void unselectObject(const uint64_t & objectIndex);
     void unselectObject(Object & object);
     void clearObjectSelection();
 
-    void jumpToObject(const uint64_t & objectId);
+    void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
-    std::vector<std::reference_wrapper<Segmentation::Object>> todoList();
+    std::vector<std::reference_wrapper<Segmentation::Object>> todolist();
 
     void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
@@ -192,7 +194,7 @@ signals:
     void beforeRemoveRow();
     void appendedRow();
     void removedRow();
-    void changedRow(int id);
+    void changedRow(int index);
     void resetData();
     void resetSelection();
     void resetTouchedObjects();

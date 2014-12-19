@@ -630,14 +630,14 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
-                auto objId = segmentation.largestObjectContainingSubobject(subobject);
+                auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
                     segmentation.clearObjectSelection();
-                    segmentation.selectObject(objId);
-                } else if (segmentation.isSelected(objId)) {// unselect if selected
-                    segmentation.unselectObject(objId);
+                    segmentation.selectObject(objIndex);
+                } else if (segmentation.isSelected(objIndex)) {// unselect if selected
+                    segmentation.unselectObject(objIndex);
                 } else { // select largest object
-                    segmentation.selectObject(objId);
+                    segmentation.selectObject(objIndex);
                 }
                 if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
                     segmentation.touchObjects(subobjectId);

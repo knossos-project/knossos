@@ -57,7 +57,7 @@ QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orient
 
 QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, const QModelIndex & index, int role) const {
     if (index.column() == 0 && role == Qt::BackgroundRole) {
-        const auto colorIndex = obj.id % 256;
+        const auto colorIndex = obj.index % 256;
         const auto red = Segmentation::singleton().overlayColorMap[0][colorIndex];
         const auto green = Segmentation::singleton().overlayColorMap[1][colorIndex];
         const auto blue = Segmentation::singleton().overlayColorMap[2][colorIndex];
@@ -101,7 +101,7 @@ bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModel
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Question);
             prompt.setWindowTitle(tr("Lock Object"));
-            prompt.setText(tr("Lock the object with id %0?").arg(obj.id));
+            prompt.setText(tr("Lock the object with id %0?").arg(obj.index));
             const auto & lockButton = prompt.addButton(tr("Lock"), QMessageBox::YesRole);
             prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
             prompt.exec();
@@ -302,8 +302,8 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
         objectSelectionProtection = true;
         objectModel.popRowBegin();
         if (Segmentation::singleton().objects.back().selected) {
-            const auto id = Segmentation::singleton().objects.back().id;
-            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            const auto index = Segmentation::singleton().objects.back().index;
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(index, 0)));
             objectsTable.selectionModel()->select(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
@@ -315,8 +315,8 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
         objectSelectionProtection = true;
         objectModel.appendRow();
         if (Segmentation::singleton().objects.back().selected) {
-            const auto id = Segmentation::singleton().objects.back().id;
-            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            const auto index = Segmentation::singleton().objects.back().index;
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(index, 0)));
             objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
@@ -378,12 +378,12 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
 void SegmentationTab::commitSelection(const QItemSelection & selected, const QItemSelection & deselected) {
     for (const auto & index : deselected.indexes()) {
         if (index.column() == 1) {//only evaluate id cell
-            Segmentation::singleton().unselectObject(index.data().toInt());
+            Segmentation::singleton().unselectObject(index.row());
         }
     }
     for (const auto & index : selected.indexes()) {
         if (index.column() == 1) {//only evaluate id cell
-            Segmentation::singleton().selectObject(index.data().toInt());
+            Segmentation::singleton().selectObject(index.row());
         }
     }
 }
@@ -404,7 +404,7 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     if(selected.length() == 1) {
         for(const auto & index : selected.indexes()) {
             if(index.column() == 1) {
-                Segmentation::singleton().jumpToObject(index.data().toInt());
+                Segmentation::singleton().jumpToObject(index.row());
             }
         }
     }
@@ -421,7 +421,7 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     if(selected.length() == 1) {
         for(const auto & index : selected.indexes()) {
             if(index.column() == 1) {
-                Segmentation::singleton().jumpToObject(index.data().toInt());
+                Segmentation::singleton().jumpToObject(index.row());
             }
         }
     }
