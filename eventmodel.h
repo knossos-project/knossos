@@ -100,40 +100,14 @@ signals:
     void updateWidgetSignal();
 
     void genTestNodesSignal(uint number);
-    bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
-    void setActiveNodeSignal(nodeListElement *node, uint nodeID);
     void setRecenteringPositionSignal(float x, float y, float z);
     void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
     void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
-    void editNodeSignal(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     void addCommentSignal(const char *content, nodeListElement *node, uint nodeID);
     bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
     void addSegmentSignal(uint sourceNodeID, uint targetNodeID);
-    void jumpToActiveNodeSignal();
-    void updateTreeviewSignal();
-    void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
-    void pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    void popBranchNodeSignal();
-
-    void moveToNextTreeSignal();
-    void moveToPrevTreeSignal(bool *isSuccess = NULL);
-    void moveToPrevNodeSignal();
-    void moveToNextNodeSignal();
-
-    nodeListElement *findNodeInRadiusSignal(Coordinate searchPosition);
-    segmentListElement *findSegmentByNodeIDSignal(uint sourceNodeID, uint targetNodeID);
-    uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
-    treeListElement *addTreeListElement(int treeID, color4F color);
-    void unselectNodesSignal();
-
-    void treeAddedSignal(treeListElement *tree);
-    void nodeAddedSignal();
-    void deleteSelectedNodesSignal();
-    void nodeActivatedSignal();
-    void nodeRadiusChangedSignal(nodeListElement *node);
-    void nodePositionChangedSignal(nodeListElement *node);
 
     void compressionRatioToggled();
 };

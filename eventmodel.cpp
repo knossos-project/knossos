@@ -147,8 +147,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
-            emit setActiveNodeSignal(NULL, clickedNode);
-            emit nodeActivatedSignal();
+            Skeletonizer::singleton().setActiveNode(NULL, clickedNode);
             return true;
         }
 
@@ -182,9 +181,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         if(clickedNode) {
             auto activeNode = state->skeletonState->activeNode;
             if(activeNode) {
-                if(findSegmentByNodeIDSignal(activeNode->nodeID, clickedNode)) {
+                if (Skeletonizer::singleton().findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
-                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                } else if (Skeletonizer::singleton().findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNode, activeNode->nodeID, NULL);
                 } else{
                     if(state->skeletonState->simpleTracing
@@ -209,10 +208,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             // Delete segment between clicked and active node
             if(activeNode) {
-                if(findSegmentByNodeIDSignal(activeNode->nodeID,
-                                        clickedNode)) {
+                if(Skeletonizer::singleton().findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(activeNode->nodeID, clickedNode, 0);
-                } else if(findSegmentByNodeIDSignal(clickedNode, activeNode->nodeID)) {
+                } else if (Skeletonizer::singleton().findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNode, activeNode->nodeID, 0);
                 } else {
                     if(state->skeletonState->simpleTracing
@@ -258,39 +256,31 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
-        newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
-        newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNode = addSkeletonNodeSignal(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
-            emit unselectNodesSignal();
             uint newNodeID;
-            if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(&clickedCoordinate,
+            if((newNodeID = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(&clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
-                emit pushBranchNodeSignal(true, true, NULL, newNodeID);
-                if(state->skeletonState->activeNode) {
-                    if(state->skeletonState->activeNode->selected == false) {
-                        state->skeletonState->activeNode->selected = true;
-                        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
-                        emit updateTreeviewSignal();
-                    }
-                }
+                Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeID);
+                Skeletonizer::singleton().setActiveNode(nullptr, newNodeID);
             }
             break;
         }
         //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
-        emit unselectNodesSignal();
-        newNode = addSkeletonNodeAndLinkWithActiveSignal(&clickedCoordinate,
+        newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(&clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
         if(newNode == false) { //could not add node
@@ -381,10 +371,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
         } else {
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
-        }
-        emit nodeAddedSignal();
-        if (newTree) {
-            emit treeAddedSignal(state->skeletonState->activeTree);
         }
     }
     emit updateViewerStateSignal();
@@ -536,7 +522,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                             - newDraggedNodePos.z;
 
-                    emit editNodeSignal(
+                    Skeletonizer::singleton().editNode(
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -571,7 +557,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                     newDraggedNodePos.z =
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
-                    emit editNodeSignal(
+                    Skeletonizer::singleton().editNode(
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -606,7 +592,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                     newDraggedNodePos.z =
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
-                    emit editNodeSignal(
+                    Skeletonizer::singleton().editNode(
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -671,27 +657,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         if (nodeID != 0) {
             nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
             if (selectedNode != nullptr) {
-                //check if already in buffer
-                auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
-                if (iter == std::end(state->skeletonState->selectedNodes)) {//clicked node was not selected
-                    selectedNode->selected = true;
-                    state->skeletonState->selectedNodes.emplace_back(selectedNode);
-                    if(state->skeletonState->selectedNodes.size() == 1) {
-                        emit setActiveNodeSignal(state->skeletonState->selectedNodes[0],
-                                                 state->skeletonState->selectedNodes[0]->nodeID);
-                    }
-                    emit updateTreeviewSignal();
-                } else if (state->skeletonState->selectedNodes.size() != 1) {
-                    //clicked node was selected → unselect, but one shall not unselect the active node
-                    selectedNode->selected = false;
-                    state->skeletonState->selectedNodes.erase(iter);
-                    // whenever exactly one node is selected, it is the active node
-                    if(state->skeletonState->selectedNodes.size() == 1) {
-                        emit setActiveNodeSignal(state->skeletonState->selectedNodes[0],
-                                                           state->skeletonState->selectedNodes[0]->nodeID);
-                    }
-                    emit updateTreeviewSignal();
-                }
+                Skeletonizer::singleton().toggleNodeSelection({selectedNode});
             }
         }
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
@@ -715,10 +681,6 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         connectedComponent(clickedCoordinate);
     }
-    // a node was dragged to a new position
-    if(state->skeletonState->activeNode) {
-        emit nodePositionChangedSignal(state->skeletonState->activeNode);
-    }
 }
 
 void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
@@ -728,13 +690,11 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     if((state->skeletonState->activeNode) and (event->modifiers() == Qt::SHIFT)) {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
 
-        emit editNodeSignal(0, state->skeletonState->activeNode, radius
+        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius
                  , state->skeletonState->activeNode->position.x
                  , state->skeletonState->activeNode->position.y
                  , state->skeletonState->activeNode->position.z
                  , state->magnification);
-
-        emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
 
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
            state->skeletonState->defaultNodeRadius = radius;
@@ -1167,8 +1127,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Delete) {
         if(control) {
             if(state->skeletonState->activeTree) {
-                Skeletonizer::delTree(state->skeletonState->activeTree->treeID);
-                emit updateTreeviewSignal();
+                Skeletonizer::singleton().delTree(state->skeletonState->activeTree->treeID);
             }
         }
         else if(state->skeletonState->selectedNodes.size() > 0) {
@@ -1185,8 +1144,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 deleteNodes = prompt.clickedButton() == confirmButton;
             }
             if(deleteNodes) {
-                emit deleteSelectedNodesSignal();//skeletonizer
-                emit updateTreeviewSignal();//annotation->treeview
+                Skeletonizer::singleton().deleteSelectedNodes();
             }
         }
     }
@@ -1206,7 +1164,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             prompt.addButton("No", QMessageBox::ActionRole);
             prompt.exec();
             if(prompt.clickedButton() == confirmButton) {
-                emit unselectNodesSignal();
+                Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode, 0);
             }
         }
     }
@@ -1332,29 +1290,12 @@ void EventModel::nodeSelection(int x, int y, int vpId) {
     maxX = std::max(first.x, second.x);
     minY = std::min(first.y, second.y);
     maxY = std::max(first.y, second.y);
-    //unselect all nodes before retrieving new selection
-    for (auto & elem : state->skeletonState->selectedNodes) {
-        elem->selected = false;
-    }
     const auto width = std::abs(maxX - minX);
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
-    //mark all found nodes as selected
-    for (auto & elem : state->skeletonState->selectedNodes) {
-        elem->selected = true;
-    }
-    if(state->skeletonState->selectedNodes.size() == 1) {
-        setActiveNodeSignal(state->skeletonState->selectedNodes[0],
-                                           state->skeletonState->selectedNodes[0]->nodeID);
-    }
-    else if (state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
-        // at least one must always be selected
-        state->skeletonState->activeNode->selected = true;
-        state->skeletonState->selectedNodes.emplace_back(state->skeletonState->activeNode);
-    }
-    emit updateTreeviewSignal();
+    auto nodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
+    Skeletonizer::singleton().selectNodes(nodes);
     state->viewerState->nodeSelectSquareVpId = -1;
 }
 

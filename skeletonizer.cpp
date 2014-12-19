@@ -86,7 +86,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = false;
-    state->skeletonState->askingPopBranchConfirmation = false;
 
 }
 
@@ -193,16 +192,6 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return NULL;
 }
 
-/** @todo cleanup */
-void Skeletonizer::WRAP_popBranchNode() {
-    popBranchNode();
-    state->skeletonState->askingPopBranchConfirmation = false;
-}
-
-void Skeletonizer::popBranchNodeCanceled() {
-    state->skeletonState->askingPopBranchConfirmation = false;
-}
-
 bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     color4F treeCol;
     /* -1 causes new color assignment */
@@ -269,8 +258,6 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
         /* First node in this tree */
         pushBranchNode(true, true, NULL, targetNodeID);
         addComment("First Node", NULL, targetNodeID);
-        emit updateToolsSignal();
-        emit updateTreeviewSignal();
     }
 
     return targetNodeID;
@@ -308,7 +295,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     while (const auto currentBranchPointID = (ptrdiff_t)popStack(tempReverseStack)) {
         auto currentNode = findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(false, false, currentNode, 0);
+        state->viewer->skeletonizer->pushBranchNode(false, false, currentNode, 0);
     }
 
     QXmlStreamWriter xml(&file);
@@ -508,6 +495,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<std::pair<uint, uint>> edgeVector;
 
     bench.start();
+    const auto blockState = this->signalsBlocked();
+    blockSignals(true);
     emit setSimpleTracing(false);
     if (!xml.readNextStartElement() || xml.name() != "things") {
         qDebug() << "invalid xml token: " << xml.name();
@@ -922,6 +911,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         }
     }
 
+    blockSignals(blockState);
+    emit resetData();
+
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if(!merge) {
@@ -934,7 +926,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             }
         }
 
-
         if((loadedPosition.x != 0) &&
            (loadedPosition.y != 0) &&
            (loadedPosition.z != 0)) {
@@ -944,7 +935,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                  loadedPosition.z - 1 - state->viewerState->currentPosition.z);
             emit userMoveSignal(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
         }
-
     }
     if(merge == false) {
         // when a skeleton is *not* merged on loading, it overrides the current annotation.
@@ -1060,9 +1050,11 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         selectedNodes.erase(eraseit);
     }
 
+    emit nodeRemovedSignal(nodeID);
+
     if (state->skeletonState->activeNode == nodeToDel) {
         auto * newActiveNode = findNearbyNode(nodeToDel->correspondingTree, nodeToDel->position);
-        setActiveNode(newActiveNode, 0);
+        state->viewer->skeletonizer->setActiveNode(newActiveNode, 0);
     }
 
     --nodeToDel->correspondingTree->size;
@@ -1084,12 +1076,15 @@ bool Skeletonizer::delTree(int treeID) {
         return false;
     }
 
+    const auto blockState = this->signalsBlocked();
+    blockSignals(true);//chunk operation
     for (auto * currentNode = treeToDel->firstNode; currentNode != nullptr;) {
         auto * const nextNode = currentNode->next;
         delNode(0, currentNode);
         currentNode = nextNode;//currentNode got invalidated
     }
     treeToDel->firstNode = nullptr;
+    blockSignals(blockState);
 
     if (treeToDel->previous != nullptr) {
         treeToDel->previous->next = treeToDel->next;
@@ -1107,7 +1102,9 @@ bool Skeletonizer::delTree(int treeID) {
         selectedTrees.erase(eraseit);
     }
 
-    setActiveNode(state->skeletonState->activeNode, 0);//set active tree through node
+    emit treeRemovedSignal(treeID);
+
+    state->viewer->skeletonizer->setActiveNode(state->skeletonState->activeNode, 0);//set active tree through node
     if (treeToDel == state->skeletonState->activeTree && state->skeletonState->firstTree != nullptr) {
         setActiveTreeByID(state->skeletonState->firstTree->treeID);//if there is no node but a tree
     }
@@ -1230,7 +1227,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         return false;
     }
 
-
     state->skeletonState->activeTree = currentTree;
 
     clearTreeSelection();
@@ -1243,15 +1239,19 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->correspondingTree != currentTree) {
         //prevent ping pong if tree was activated from setActiveNode
         auto * node = findNearbyNode(currentTree, state->skeletonState->activeNode->position);
-        if (node->correspondingTree != currentTree) {
-            setActiveNode(currentTree->firstNode, 0);
-        } else {
+        if (node->correspondingTree == currentTree) {
             setActiveNode(node, 0);
+        } else {
+            setActiveNode(currentTree->firstNode, 0);
         }
+    } else if (state->skeletonState->activeNode == nullptr) {
+        setActiveNode(currentTree->firstNode, 0);
     }
 
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
+
+    emit treeSelectionChangedSignal();
 
     return true;
 }
@@ -1301,6 +1301,8 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     }
 
     state->skeletonState->unsavedChanges = true;
+
+    emit nodeSelectionChangedSignal();
 
     return true;
 }
@@ -1394,6 +1396,8 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
     }
     state->skeletonState->unsavedChanges = true;
 
+    emit nodeAddedSignal(*tempNode);
+
     return nodeID;
 }
 
@@ -1475,12 +1479,16 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     treeListElement *currentTree, *treeToDel;
     auto skeletonState = state->skeletonState;
 
+    const auto blockState = this->signalsBlocked();
+    blockSignals(true);
     currentTree = skeletonState->firstTree;
     while(currentTree) {
         treeToDel = currentTree;
         currentTree = treeToDel->next;
         delTree(treeToDel->treeID);
     }
+    blockSignals(blockState);
+    emit resetData();
 
     skeletonState->activeNode = NULL;
     skeletonState->activeTree = NULL;
@@ -1507,24 +1515,20 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 }
 
 bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
-    treeListElement *tree1, *tree2;
-    nodeListElement *currentNode;
-    nodeListElement *firstNode, *lastNode;
-
     if(treeID1 == treeID2) {
         qDebug() << "Could not merge trees. Provided IDs are the same!";
         return false;
     }
 
-    tree1 = findTreeByTreeID(treeID1);
-    tree2 = findTreeByTreeID(treeID2);
+    treeListElement * const tree1 = findTreeByTreeID(treeID1);
+    treeListElement * const tree2 = findTreeByTreeID(treeID2);
 
     if(!(tree1) || !(tree2)) {
         qDebug() << "Could not merge trees, provided IDs are not valid!";
         return false;
     }
 
-    currentNode = tree2->firstNode;
+    nodeListElement * currentNode = tree2->firstNode;
 
     while(currentNode) {
         //Change the corresponding tree
@@ -1537,8 +1541,8 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     if(tree1->firstNode && tree2->firstNode) {
         //First, we have to find the last node of tree2 (this node has to be connected
         //to the first node inside of tree1)
-        firstNode = tree2->firstNode;
-        lastNode = firstNode;
+        nodeListElement * firstNode = tree2->firstNode;
+        nodeListElement * lastNode = firstNode;
         while(lastNode->next) {
             lastNode = lastNode->next;
         }
@@ -1546,9 +1550,7 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
         tree1->firstNode->previous = lastNode;
         lastNode->next = tree1->firstNode;
         tree1->firstNode = firstNode;
-
-    }
-    else if(tree2->firstNode) {
+    } else if(tree2->firstNode) {
         tree1->firstNode = tree2->firstNode;
     }
 
@@ -1556,24 +1558,13 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
     // count of tree2
     tree1->size += tree2->size;
 
-    //Delete the "empty" tree 2
-    if(tree2 == state->skeletonState->firstTree) {
-        state->skeletonState->firstTree = tree2->next;
-        tree2->next->previous = NULL;
-    }
-    else {
-        tree2->previous->next = tree2->next;
-        if(tree2->next)
-            tree2->next->previous = tree2->previous;
-    }
-    if(state->skeletonState->activeTree->treeID == tree2->treeID) {
-       setActiveTreeByID(tree1->treeID);
-    }
-    free(tree2);
+    tree2->size = 0;
+    tree2->firstNode = nullptr;
+    delTree(tree2->treeID);
 
-    state->skeletonState->treeElements--;
-    state->skeletonState->skeletonChanged = true;
-    state->skeletonState->unsavedChanges = true;
+    setActiveTreeByID(tree1->treeID);
+
+    emit treesMerged(treeID1, treeID2);//update nodes
 
     return true;
 }
@@ -1784,9 +1775,9 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
-    if(treeID == 1) {
-        Skeletonizer::setActiveTreeByID(1);
-    }
+    emit treeAddedSignal(*newElement);
+
+    setActiveTreeByID(newElement->treeID);
 
     return newElement;
 }
@@ -1870,6 +1861,8 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     }
 
     state->skeletonState->unsavedChanges = true;
+
+    emit treeChangedSignal(*tree);
 
     return true;
 }
@@ -1968,6 +1961,8 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
     updateCircRadius(node);
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
+
+    emit nodeChangedSignal(*node);
 
     return true;
 }
@@ -2193,6 +2188,9 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeI
     state->skeletonState->unsavedChanges = true;
 
     state->skeletonState->totalComments++;
+
+    emit nodeChangedSignal(*node);
+
     return true;
 }
 
@@ -2240,6 +2238,9 @@ bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNo
     state->skeletonState->unsavedChanges = true;
 
     state->skeletonState->totalComments--;
+
+    emit nodeChangedSignal(*currentComment->node);
+
     return true;
 }
 
@@ -2282,6 +2283,8 @@ bool Skeletonizer::editComment(commentListElement *currentComment, uint nodeID, 
     }
 
     state->skeletonState->unsavedChanges = true;
+
+    emit nodeChangedSignal(*currentComment->node);
 
     return true;
 }
@@ -2334,8 +2337,6 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
         }
 
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
     return state->skeletonState->currentComment;
 }
 
@@ -2387,8 +2388,6 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
             }
         }
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
     return state->skeletonState->currentComment;
 }
 
@@ -2457,6 +2456,7 @@ bool Skeletonizer::popBranchNode() {
                             USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 
         state->skeletonState->branchpointUnresolved = true;
+        emit branchPoppedSignal();
     }
 
 exit_popbranchnode:
@@ -2478,6 +2478,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
 
                 state->skeletonState->skeletonChanged = true;
                 qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
+                emit branchPushedSignal();
             }
 
         }
@@ -2509,32 +2510,22 @@ void Skeletonizer::jumpToActiveNode(bool *isSuccess) {
     }
 }
 
-void Skeletonizer::UI_popBranchNode() {
-    if(state->skeletonState->askingPopBranchConfirmation == false) {
-        state->skeletonState->askingPopBranchConfirmation = true;
+void Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
+    if (state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
+        QMessageBox prompt(parent);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText("No node was added after jumping to the last branch point.");
+        prompt.setInformativeText("Do you really want to jump?");
+        prompt.addButton("Jump", QMessageBox::AcceptRole);
+        auto * cancel = prompt.addButton("Cancel", QMessageBox::RejectRole);
 
-        if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Question);
-            prompt.setWindowTitle("Cofirmation required");
-            prompt.setText("No node was added after jumping to the last branch point. Do you really want to jump?");
-            QPushButton *jump = prompt.addButton("Jump", QMessageBox::ActionRole);
-            QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
-            prompt.exec();
-
-            if(prompt.clickedButton() == jump) {
-                WRAP_popBranchNode();
-            } else if(prompt.clickedButton() == cancel) {
-                popBranchNodeCanceled();
-            } else {
-                return;
-            }
-        }
-        else {
-            WRAP_popBranchNode();
+        prompt.exec();
+        if (prompt.clickedButton() == cancel) {
+            return;
         }
     }
+
+    popBranchNode();
 }
 
 void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
@@ -2670,8 +2661,6 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
                                          node->position.z);
 
             Knossos::sendRemoteSignal();
-            emit updateToolsSignal();
-            emit updateTreeviewSignal();
         }
         RETVAL_MACRO(true, isSuccess);
     }
@@ -2708,8 +2697,6 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
                                              node->position.y,
                                              node->position.z);
                 Knossos::sendRemoteSignal();
-                emit updateToolsSignal();
-                emit updateTreeviewSignal();
         }
         RETVAL_MACRO(true, isSuccess);
     }
@@ -2731,8 +2718,6 @@ bool Skeletonizer::moveToPrevNode() {
                                      prevNode->position.y,
                                      prevNode->position.z);
         Knossos::sendRemoteSignal();
-        emit updateToolsSignal();
-        emit updateTreeviewSignal();
         return true;
     }
     return false;
@@ -2746,95 +2731,150 @@ bool Skeletonizer::moveToNextNode() {
                                      nextNode->position.y,
                                      nextNode->position.z);
         Knossos::sendRemoteSignal();
-        emit updateToolsSignal();
-        emit updateTreeviewSignal();
         return true;
     }
     return false;
 }
 
-bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
+bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
     treeListElement *newTree = findTreeByTreeID(treeID);
-    if(node == NULL or newTree == NULL) {
-        return false;
-    }
-
-    nodeListElement *tmpNode, *lastNode;
-    if(node->correspondingTree != NULL) {
-
-        if(node->correspondingTree->treeID == newTree->treeID) {
+    for (auto * const node : state->skeletonState->selectedNodes) {
+        if(node == NULL or newTree == NULL) {
             return false;
         }
 
-        // remove node from old tree
-        nodeListElement *lastNode = NULL; // the previous node in the current tree
-        tmpNode = node->correspondingTree->firstNode;
-        while(tmpNode) {
-            if(tmpNode->nodeID == node->nodeID) {
-                break;
+        nodeListElement *tmpNode, *lastNode;
+        if(node->correspondingTree != NULL) {
+
+            if(node->correspondingTree->treeID == newTree->treeID) {
+                return false;
             }
+
+            // remove node from old tree
+            nodeListElement *lastNode = NULL; // the previous node in the current tree
+            tmpNode = node->correspondingTree->firstNode;
+            while(tmpNode) {
+                if(tmpNode->nodeID == node->nodeID) {
+                    break;
+                }
+                lastNode = tmpNode;
+                tmpNode = tmpNode->next;
+            }
+            if(lastNode == NULL) { // node is the first node in its current tree
+                if(node->next) {
+                    node->correspondingTree->firstNode = node->next;
+                    node->next->previous = NULL;
+                }
+                else {
+                    node->correspondingTree->firstNode = NULL;
+                }
+            }
+            else {
+                lastNode->next = node->next;
+                if(node->next) {
+                    node->next->previous = lastNode;
+                }
+
+                // decrement node counter for the old tree
+                --node->correspondingTree->size;
+            }
+        }
+
+        // add node to new tree
+        tmpNode = newTree->firstNode;
+        lastNode = NULL;
+        while(tmpNode) {
             lastNode = tmpNode;
             tmpNode = tmpNode->next;
         }
-        if(lastNode == NULL) { // node is the first node in its current tree
-            if(node->next) {
-                node->correspondingTree->firstNode = node->next;
-                node->next->previous = NULL;
-            }
-            else {
-                node->correspondingTree->firstNode = NULL;
-            }
+        if(lastNode == NULL) { // the moved node will be the first one in the new tree
+            newTree->firstNode = node;
+            node->next = NULL;
+            node->previous = NULL;
+
         }
         else {
-            lastNode->next = node->next;
-            if(node->next) {
-                node->next->previous = lastNode;
-            }
+            lastNode->next = node;
+            node->previous = lastNode;
+            node->next = NULL;
+        }
+        node->correspondingTree = newTree;
+        // increment node counter for the new tree
+        ++newTree->size;
+    }
 
-            // decrement node counter for the old tree
-            --node->correspondingTree->size;
+    emit resetData();
+    emit setActiveTreeByID(treeID);
+
+    return true;
+}
+
+void Skeletonizer::selectNodes(const std::vector<nodeListElement*> & nodes) {
+    clearNodeSelection();
+    toggleNodeSelection(nodes);
+}
+
+void Skeletonizer::toggleNodeSelection(const std::vector<nodeListElement*> & nodes) {
+    auto & selectedNodes = state->skeletonState->selectedNodes;
+    selectedNodes.clear();
+    //mark all found nodes as selected
+    for (auto & elem : nodes) {
+        elem->selected = !elem->selected;
+        if (elem->selected) {
+            selectedNodes.emplace_back(elem);
         }
     }
 
-    // add node to new tree
-    tmpNode = newTree->firstNode;
-    lastNode = NULL;
-    while(tmpNode) {
-        lastNode = tmpNode;
-        tmpNode = tmpNode->next;
+    if (selectedNodes.size() == 1) {
+        setActiveNode(selectedNodes.front(), 0);
+    } else if (selectedNodes.empty() && state->skeletonState->activeNode != nullptr) {
+        // at least one must always be selected
+        setActiveNode(state->skeletonState->activeNode, 0);
+    } else {
+        emit nodeSelectionChangedSignal();
     }
-    if(lastNode == NULL) { // the moved node will be the first one in the new tree
-        newTree->firstNode = node;
-        node->next = NULL;
-        node->previous = NULL;
+}
 
+void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
+    clearTreeSelection();
+    for (auto & elem : trees) {
+        elem->selected = true;
     }
-    else {
-        lastNode->next = node;
-        node->previous = lastNode;
-        node->next = NULL;
-    }
-    node->correspondingTree = newTree;
-    // increment node counter for the new tree
-    ++newTree->size;
+    auto & selectedTrees = state->skeletonState->selectedTrees;
+    selectedTrees = trees;
 
-    return true;
+    if (selectedTrees.size() == 1) {
+        setActiveTreeByID(selectedTrees.front()->treeID);
+    } else if (selectedTrees.empty() && state->skeletonState->activeTree != nullptr) {
+        // at least one must always be selected
+        setActiveTreeByID(state->skeletonState->activeTree->treeID);
+    } else {
+        emit treeSelectionChangedSignal();
+    }
 }
 
 void Skeletonizer::deleteSelectedTrees() {
     //make a copy because the selected objects can change
     const auto treesToDelete = state->skeletonState->selectedTrees;
+    const auto blockstate = signalsBlocked();
+    blockSignals(true);
     for (const auto & elem : treesToDelete) {
         delTree(elem->treeID);
     }
+    blockSignals(blockstate);
+    emit resetData();
 }
 
 void Skeletonizer::deleteSelectedNodes() {
     //make a copy because the selected objects can change
     const auto nodesToDelete = state->skeletonState->selectedNodes;
+    const auto blockstate = signalsBlocked();
+    blockSignals(true);
     for (auto & elem : nodesToDelete) {
         delNode(0, elem);
     }
+    blockSignals(blockstate);
+    emit resetData();
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].

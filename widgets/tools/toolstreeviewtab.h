@@ -1,12 +1,14 @@
 #ifndef TREEVIEWTAB_H
 #define TREEVIEWTAB_H
 
-#include <QWidget>
-#include <QRadioButton>
-#include <QTableWidget>
-
 #include "widgets/tools/nodetable.h"
 #include "widgets/tools/treetable.h"
+
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QRadioButton>
+#include <QTableWidget>
+#include <QWidget>
 
 class QTableWidgetItem;
 class QHBoxLayout;
@@ -54,6 +56,11 @@ public:
     QSplitter *splitter;
     QWidget *treeSide;
     QWidget *nodeSide;
+
+    QLabel treeCountLabel;
+    QLabel nodeCountLabel;
+    QHBoxLayout bottomHLayout;
+
     QVBoxLayout *mainLayout;
 
     //edit dialogs values
@@ -72,36 +79,26 @@ public:
 
 protected:
     void insertTree(treeListElement *tree, TreeTable *table);
-    void insertNode(nodeListElement *node, NodeTable *table);
+    void insertNode(const nodeListElement * node, NodeTable * table);
     void setText(TreeTable *table, QTableWidgetItem *item, QString text);
     void setText(NodeTable *table, QTableWidgetItem *item, QString text);
     int getActiveTreeRow();
     int getActiveNodeRow();
-signals:
-    void updateAnnotationLabelsSignal();
-    void deleteSelectedTreesSignal();
-    void deleteSelectedNodesSignal();
-    void clearTreeSelectionSignal();
-    void clearNodeSelectionSignal();
-    void setActiveNodeSignal(nodeListElement *node, uint nodeID);
-    void JumpToActiveNodeSignal(bool *isSuccess = NULL);
-    bool addSegmentSignal(int sourceNodeID, int targetNodeID);
-    void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
 
     void displayedNodesChanged(int index);
     void actTreeItemChanged(QTableWidgetItem *item);
-    void activeTreeSelectionChanged();
+    void activeTreeTableSelectionChanged();
     void treeItemChanged(QTableWidgetItem* item);
-    void treeSelectionChanged();
+    void treeTableSelectionChanged();
     void treeItemDoubleClicked(QTableWidgetItem* item);
 
     void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
-    void activeNodeSelectionChanged();
-    void nodeSelectionChanged();
+    void activeNodeTableSelectionChanged();
+    void nodeTableSelectionChanged();
     void nodeItemDoubleClicked(QTableWidgetItem*);
     void sortComments(const int);
 
@@ -125,23 +122,22 @@ public slots:
 
     // update tree table
     void recreateTreesTable();
+    void applyTreeSelection();
     void treeActivated();
-    void treeAdded(treeListElement *tree);
-    void treesDeleted();
+    void treeAddedOrChanged();
     void treesMerged(int treeID1, int treeID2);
 
     // update node table
-    void clearNodeTableSelection();
     void recreateNodesTable();
+    void applyNodeSelection();
     void nodeActivated();
-    void nodeAdded();
+    void nodeAdded(const nodeListElement &node);
     void branchPushed();
     void branchPopped();
-    void nodeCommentChanged(nodeListElement *node);
-    void nodeRadiusChanged(nodeListElement *node);
-    void nodePositionChanged(nodeListElement *node);
+    void nodeEdited(const nodeListElement &node);
 
-    void update();
+    void updateLabels();
+    void resetData();
 };
 
 #endif // TREEVIEWTAB_H

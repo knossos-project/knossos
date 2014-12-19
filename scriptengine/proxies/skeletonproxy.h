@@ -13,17 +13,10 @@ class QToolBar;
 class SkeletonProxySignalDelegate : public QObject  {
     Q_OBJECT
 signals:
-    void moveToNextTreeSignal(bool *isSuccess = NULL);
-    void moveToPreviousTreeSignal(bool *isSuccess = NULL);
-    void treeAddedSignal(treeListElement *tree);
-    void nodeAddedSignal();
-    void updateToolsSignal();
-    void jumpToActiveNodeSignal(bool *isSuccess = NULL);
     void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
     void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
     void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
-    void updateTreeViewSignal();
 };
 
 extern SkeletonProxySignalDelegate *signalDelegate;

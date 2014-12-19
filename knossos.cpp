@@ -197,17 +197,10 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
 
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::treeAddedSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::nodeAddedSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeAdded);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::updateTreeViewSignal, viewer.window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::moveToNextTreeSignal, viewer.skeletonizer, &Skeletonizer::moveToNextTree);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::moveToPreviousTreeSignal, viewer.skeletonizer, &Skeletonizer::moveToPrevTree);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::jumpToActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::jumpToActiveNode);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::updateToolsSignal, viewer.window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
 
     return a.exec();
 }

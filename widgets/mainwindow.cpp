@@ -116,6 +116,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::autosaveSignal, this, &MainWindow::autosaveSlot);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::setSimpleTracing, this, &MainWindow::setSimpleTracing);
+
     createToolbars();
     createMenus();
     setCentralWidget(new QWidget(this));
@@ -563,19 +567,19 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    auto jumpToActiveNodeAction = viewMenu->addAction(QIcon(""), "Jump To Active Node", this, SLOT(jumpToActiveNodeSlot()), QKeySequence(tr("S")));
+    auto jumpToActiveNodeAction = viewMenu->addAction(QIcon(""), "Jump To Active Node", &Skeletonizer::singleton(), SLOT(jumpToActiveNode()), QKeySequence(tr("S")));
     jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto moveToNextNodeAction = viewMenu->addAction(QIcon(""), "Move To Next Node", this, SLOT(moveToNextNodeSlot()), QKeySequence(tr("X")));
+    auto moveToNextNodeAction = viewMenu->addAction(QIcon(""), "Move To Next Node", &Skeletonizer::singleton(), SLOT(moveToNextNode()), QKeySequence(tr("X")));
     moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto moveToPrevNodeAction = viewMenu->addAction(QIcon(""), "Move To Previous Node", this, SLOT(moveToPrevNodeSlot()), QKeySequence(tr("SHIFT+X")));
+    auto moveToPrevNodeAction = viewMenu->addAction(QIcon(""), "Move To Previous Node", &Skeletonizer::singleton(), SLOT(moveToPrevNode()), QKeySequence(tr("SHIFT+X")));
     moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto moveToNextTreeAction = viewMenu->addAction(QIcon(""), "Move To Next Tree", this, SLOT(moveToNextTreeSlot()), QKeySequence(tr("Z")));
+    auto moveToNextTreeAction = viewMenu->addAction(QIcon(""), "Move To Next Tree", &Skeletonizer::singleton(), SLOT(moveToNextTree()), QKeySequence(tr("Z")));
     moveToNextTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto moveToPrevTreeAction = viewMenu->addAction(QIcon(""), "Move To Previous Tree", this, SLOT(moveToPrevTreeSlot()), QKeySequence(tr("SHIFT+Z")));
+    auto moveToPrevTreeAction = viewMenu->addAction(QIcon(""), "Move To Previous Tree", &Skeletonizer::singleton(), SLOT(moveToPrevTree()), QKeySequence(tr("SHIFT+Z")));
     moveToPrevTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
     viewMenu->addSeparator();
@@ -719,8 +723,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         state->skeletonState->mergeOnLoadFlag = true;//merge next file
     }
 
-    emit updateTreeviewSignal();
-
     annotationFilename = "";
     if (success) {
         if (!multipleFiles && !zips.empty()) {
@@ -842,6 +844,8 @@ void MainWindow::skeletonStatisticsSlot()
 
 void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
     clearSkeletonSlotNoGUI();
+    annotationFilename.clear();//unload skeleton file
+    updateTitlebar();
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
@@ -861,12 +865,9 @@ void MainWindow::clearSkeletonSlotGUI() {
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
-    emit clearSkeletonSignal(false);
+    Skeletonizer::singleton().clearSkeleton(false);
     annotationFilename.clear();//unload skeleton file
     updateTitlebar();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
 }
 
 /* view menu functionality */
@@ -1269,59 +1270,23 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
-    treeListElement *tree = addTreeListElementSignal(0, treeCol);
-    emit updateToolsSignal();
-    treeAddedSignal(tree);
+    Skeletonizer::singleton().addTreeListElement(0, treeCol);
 }
 
 void MainWindow::nextCommentNodeSlot() {
-    emit nextCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
+    Skeletonizer::singleton().nextComment(state->viewerState->gui->commentSearchBuffer);
 }
 
 void MainWindow::previousCommentNodeSlot() {
-    emit previousCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
+    Skeletonizer::singleton().previousComment(state->viewerState->gui->commentSearchBuffer);
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    emit pushBranchNodeSignal(true, true, state->skeletonState->activeNode, 0);
-    if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->isBranchNode) {//active node was successfully marked as branch
-        emit branchPushedSignal();
-    }
+    Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
 }
 
 void MainWindow::popBranchNodeSlot() {
-    emit popBranchNodeSignal();
-    if (state->skeletonState->activeNode != nullptr && !state->skeletonState->activeNode->isBranchNode) {//active node was successfully unmarked as branch
-        emit branchPoppedSignal();
-    }
-}
-
-void MainWindow::moveToNextNodeSlot() {
-    emit moveToNextNodeSignal();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-}
-
-void MainWindow::moveToPrevNodeSlot() {
-    emit moveToPrevNodeSignal();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-}
-
-void MainWindow::moveToPrevTreeSlot() {
-    emit moveToPrevTreeSignal();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-}
-
-void MainWindow::moveToNextTreeSlot() {
-    emit moveToNextTreeSignal();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-}
-
-void MainWindow::jumpToActiveNodeSlot() {
-    emit jumpToActiveNodeSignal();
+    Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
 }
 
 void MainWindow::F1Slot() {
@@ -1331,15 +1296,10 @@ void MainWindow::F1Slot() {
     QString comment(state->viewerState->gui->comment1);
 
     if((!state->skeletonState->activeNode->comment) && (!comment.isEmpty())) {
-        emit addCommentSignal(QString(state->viewerState->gui->comment1),
-                              state->skeletonState->activeNode, 0);
-    } else{
-        if (!comment.isEmpty()) {
-            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment1), state->skeletonState->activeNode, 0);
-        }
+        Skeletonizer::singleton().addComment(state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+    } else if (!comment.isEmpty()) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
     }
-    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F2Slot() {
@@ -1347,31 +1307,21 @@ void MainWindow::F2Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-        emit addCommentSignal(QString(state->viewerState->gui->comment2),
-                              state->skeletonState->activeNode, 0);
+        Skeletonizer::singleton().addComment(state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+    } else if(strncmp(state->viewerState->gui->comment2, "", 1) != 0) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
     }
-    else{
-        if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
-            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment2), state->skeletonState->activeNode, 0);
-    }
-    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F3Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-        emit addCommentSignal(QString(state->viewerState->gui->comment3),
-                              state->skeletonState->activeNode, 0);
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)) {
+        Skeletonizer::singleton().addComment(state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+    } else if(strncmp(state->viewerState->gui->comment3, "", 1) != 0) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
     }
-    else{
-       if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
-            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment3), state->skeletonState->activeNode, 0);
-    }
-    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F4Slot() {
@@ -1379,15 +1329,10 @@ void MainWindow::F4Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-        emit addCommentSignal(QString(state->viewerState->gui->comment4),
-                              state->skeletonState->activeNode, 0);
+        Skeletonizer::singleton().addComment(state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
+    } else if (strncmp(state->viewerState->gui->comment4, "", 1) != 0) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
     }
-    else{
-       if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
-        emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
-                               QString(state->viewerState->gui->comment4), state->skeletonState->activeNode, 0);
-    }
-    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F5Slot() {
@@ -1395,15 +1340,10 @@ void MainWindow::F5Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-        emit addCommentSignal(QString(state->viewerState->gui->comment5),
-                              state->skeletonState->activeNode, 0);
+        Skeletonizer::singleton().addComment(state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+    } else  if (strncmp(state->viewerState->gui->comment5, "", 1) != 0) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
     }
-    else {
-        if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
-        emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
-                               QString(state->viewerState->gui->comment5), state->skeletonState->activeNode, 0);
-    }
-    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::resizeViewports(int width, int height) {

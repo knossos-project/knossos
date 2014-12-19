@@ -57,7 +57,7 @@ static WINAPI int dummy(int) {
 
 Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewer = this;
-    skeletonizer = new Skeletonizer();
+    skeletonizer = &Skeletonizer::singleton();
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
@@ -1871,23 +1871,9 @@ void Viewer::rewire() {
     QObject::connect(this, &Viewer::coordinateChangedSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
-    QObject::connect(skeletonizer, &Skeletonizer::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
-    QObject::connect(skeletonizer, &Skeletonizer::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(skeletonizer, &Skeletonizer::autosaveSignal, window, &MainWindow::autosaveSlot);
-    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing, window, &MainWindow::setSimpleTracing);
-    QObject::connect(skeletonizer, &Skeletonizer::setSimpleTracing,
-                     window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setSimpleTracing);
     // end skeletonizer signals
     //event model signals
-    QObject::connect(eventModel, &EventModel::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
-    QObject::connect(eventModel, &EventModel::nodeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeAdded);
-    QObject::connect(eventModel, &EventModel::nodeActivatedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeActivated);
-    QObject::connect(eventModel, &EventModel::deleteSelectedNodesSignal, skeletonizer, &Skeletonizer::deleteSelectedNodes);
-    QObject::connect(eventModel, &EventModel::nodeRadiusChangedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeRadiusChanged);
-    QObject::connect(eventModel, &EventModel::nodePositionChangedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodePositionChanged);
-    QObject::connect(eventModel, &EventModel::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
-    QObject::connect(eventModel, &EventModel::unselectNodesSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearNodeTableSelection);
     QObject::connect(eventModel, &EventModel::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
     QObject::connect(eventModel, &EventModel::zoomReset, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
@@ -1899,26 +1885,14 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
-    QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
-    QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
-    QObject::connect(eventModel, &EventModel::setActiveNodeSignal, &Skeletonizer::setActiveNode);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
-    QObject::connect(eventModel, &EventModel::editNodeSignal, &Skeletonizer::editNode);
-    QObject::connect(eventModel, &EventModel::findNodeInRadiusSignal, &Skeletonizer::findNodeInRadius);
-    QObject::connect(eventModel, &EventModel::findSegmentByNodeIDSignal, &Skeletonizer::findSegmentByNodeIDs);
     QObject::connect(eventModel, &EventModel::updateSlicePlaneWidgetSignal, window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateIntersection);
-    QObject::connect(eventModel, &EventModel::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
     // mainwindow signals
     QObject::connect(window, &MainWindow::resetRotationSignal, this, &Viewer::resetRotation);
-    QObject::connect(window, &MainWindow::branchPushedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPushed);
-    QObject::connect(window, &MainWindow::branchPoppedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::branchPopped);
-    QObject::connect(window, &MainWindow::nodeCommentChangedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::nodeCommentChanged);
-    QObject::connect(window, &MainWindow::updateToolsSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
-    QObject::connect(window, &MainWindow::updateTreeviewSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::update);
     QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
     QObject::connect(window, &MainWindow::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
@@ -1926,21 +1900,8 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
     QObject::connect(window, &MainWindow::startRenderTimerSignal, timer, static_cast<void(QTimer::*)(int)>(&QTimer::start));
-    QObject::connect(window, &MainWindow::nextCommentSignal, skeletonizer, &Skeletonizer::nextComment);
-    QObject::connect(window, &MainWindow::previousCommentSignal, skeletonizer, &Skeletonizer::previousComment);
-    QObject::connect(window, &MainWindow::clearSkeletonSignal, &Skeletonizer::clearSkeleton);
-    QObject::connect(window, &MainWindow::moveToNextNodeSignal, skeletonizer, &Skeletonizer::moveToNextNode);
-    QObject::connect(window, &MainWindow::moveToPrevNodeSignal, skeletonizer, &Skeletonizer::moveToPrevNode);
-    QObject::connect(window, &MainWindow::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-    QObject::connect(window, &MainWindow::popBranchNodeSignal, skeletonizer, &Skeletonizer::UI_popBranchNode);
-    QObject::connect(window, &MainWindow::jumpToActiveNodeSignal, skeletonizer, &Skeletonizer::jumpToActiveNode);
-    QObject::connect(window, &MainWindow::moveToPrevTreeSignal, skeletonizer, &Skeletonizer::moveToPrevTree);
-    QObject::connect(window, &MainWindow::moveToNextTreeSignal, skeletonizer, &Skeletonizer::moveToNextTree);
-    QObject::connect(window, &MainWindow::addCommentSignal, &Skeletonizer::addComment);
-    QObject::connect(window, &MainWindow::editCommentSignal, &Skeletonizer::editComment);
     QObject::connect(window, &MainWindow::updateTaskDescriptionSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setDescription);
     QObject::connect(window, &MainWindow::updateTaskCommentSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setComment);
-    QObject::connect(window, &MainWindow::treeAddedSignal, window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::treeAdded);
     //end mainwindow signals
     //viewport signals
     QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
@@ -1960,26 +1921,6 @@ void Viewer::rewire() {
     // end viewport signals
 
     // --- widget signals ---
-    //  treeview tab signals
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearTreeSelectionSignal, &Skeletonizer::clearTreeSelection);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::clearNodeSelectionSignal, &Skeletonizer::clearNodeSelection);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::deleteSelectedNodesSignal, skeletonizer, &Skeletonizer::deleteSelectedNodes);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::JumpToActiveNodeSignal, skeletonizer, &Skeletonizer::jumpToActiveNode);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::addSegmentSignal, &Skeletonizer::addSegment);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::delSegmentSignal, &Skeletonizer::delSegment);
-    QObject::connect(window->widgetContainer->annotationWidget->treeviewTab, &ToolsTreeviewTab::deleteSelectedTreesSignal, skeletonizer, &Skeletonizer::deleteSelectedTrees);
-    // commands tab signals
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::findTreeByTreeIDSignal, &Skeletonizer::findTreeByTreeID);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setActiveTreeSignal, &Skeletonizer::setActiveTreeByID);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::jumpToNodeSignal, skeletonizer, &Skeletonizer::jumpToActiveNode);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::addTreeListElement, skeletonizer, &Skeletonizer::addTreeListElement);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::popBranchNodeSignal, skeletonizer, &Skeletonizer::UI_popBranchNode);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::lockPositionSignal, &Skeletonizer::lockPosition);
-    QObject::connect(window->widgetContainer->annotationWidget->commandsTab, &ToolsCommandsTab::unlockPositionSignal, &Skeletonizer::unlockPosition);
-    //  -- end tools widget signals
     //  viewport settings widget signals --
     //  general vp settings tab signals
     QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
@@ -1989,7 +1930,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadTreeColorTableSignal, this, &Viewer::loadTreeColorTable);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadDataSetColortableSignal, &Viewer::loadDatasetColorTable);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
-
     //  -- end viewport settings widget signals
     //  dataset options signals --
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);

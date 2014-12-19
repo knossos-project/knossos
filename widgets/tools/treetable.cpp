@@ -42,11 +42,8 @@ void TreeTable::dropEvent(QDropEvent * event) {
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
     if(prompt.clickedButton() == confirmButton) {
-        for (auto * const node : ::state->skeletonState->selectedNodes) {
-            Skeletonizer::moveNodeToTree(node, droppedOnTreeID);
-        }
+        Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);
     }
-    emit nodesUpdateSignal();
     event->accept();
     //this prevents the items in the table from being draggable after the drop
     //setState(DraggingState) is set in the default dragEnterEvent

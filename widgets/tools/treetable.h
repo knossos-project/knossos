@@ -20,7 +20,6 @@ protected:
 signals:
     void deleteTreesSignal();
     void focused(TreeTable *table);
-    void nodesUpdateSignal();
 };
 
 #endif // TREETABLE_H

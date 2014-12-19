@@ -1,32 +1,30 @@
 #ifndef ANNOTATIONWIDGET_H
 #define ANNOTATIONWIDGET_H
 
-#include <QDialog>
-#include <QShowEvent>
-#include <QTabWidget>
-
 #include "tools/segmentationtab.h"
 #include "tools/toolstreeviewtab.h"
 #include "tools/toolscommandstab.h"
 
-class QVBoxLayout;
-class QLabel;
+#include <QDialog>
+#include <QShowEvent>
+#include <QTabWidget>
+
 class AnnotationWidget : public QDialog
 {
     Q_OBJECT
 public:
-    ToolsTreeviewTab *treeviewTab;
+    QTabWidget tabs;
+    QVBoxLayout mainLayout;
+    ToolsTreeviewTab treeviewTab;
     SegmentationTab segmentationTab{this};
-    ToolsCommandsTab *commandsTab;
-    QVBoxLayout *mainLayout;
+    ToolsCommandsTab commandsTab;
     explicit AnnotationWidget(QWidget *parent = 0);
-protected:
-    QTabWidget *tabs;
-    QLabel *treeCountLabel;
-    QLabel *nodeCountLabel;
-    QLabel *listedNodesLabel;
+    void saveSettings();
+    void loadSettings();
+
 signals:
     void visibilityChanged(bool);
+
 private:
     void showEvent(QShowEvent *) override {
         emit visibilityChanged(true);
@@ -34,10 +32,6 @@ private:
     void hideEvent(QHideEvent *) override {
         emit visibilityChanged(false);
     }
-public slots:
-    void updateLabels();
-    void saveSettings();
-    void loadSettings();
 };
 
 #endif // ANNOTATIONWIDGET_H

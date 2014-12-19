@@ -883,8 +883,6 @@ struct skeletonState {
 
     bool branchpointUnresolved;
 
-    // This is for a workaround around agar bug #171
-    bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
     char skeletonLastSavedInVersion[32];
 };

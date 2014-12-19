@@ -126,11 +126,7 @@ public:
 signals:
     bool changeDatasetMagSignal(uint upOrDownFlag);
     void recalcTextureOffsetsSignal();
-    void clearSkeletonSignal(int loadingSkeleton);
     void recentFileSelectSignal(int index);
-    void updateToolsSignal();
-    void updateTreeviewSignal();
-    void updateCommentsTableSignal();
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
 
     void stopRenderTimerSignal();
@@ -139,27 +135,10 @@ signals:
     void loadTreeLUTFallback();
 
     treeListElement *addTreeListElementSignal(int treeID, color4F color);
-    void nextCommentSignal(QString searchString);
-    void previousCommentSignal(QString searchString);
-    /* */
-    void moveToPrevNodeSignal();
-    void moveToNextNodeSignal();
-    void moveToPrevTreeSignal(bool *isSuccess = NULL);
-    void moveToNextTreeSignal(bool *isSuccess = NULL);
-    bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    void jumpToActiveNodeSignal(bool *isSuccess = NULL);
-
-    bool addCommentSignal(QString content, nodeListElement *node, uint nodeID);
-    bool editCommentSignal(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
 
-    void treeAddedSignal(treeListElement *tree);
-    void branchPushedSignal();
-    void branchPoppedSignal();
-    void nodeCommentChangedSignal(nodeListElement *node);
     void resetRotationSignal();
 public slots:
     void setSegmentationJobMode(bool enabled);
@@ -213,11 +192,6 @@ public slots:
     void previousCommentNodeSlot();
     void pushBranchNodeSlot();
     void popBranchNodeSlot();
-    void moveToPrevNodeSlot();
-    void moveToNextNodeSlot();
-    void moveToPrevTreeSlot();
-    void moveToNextTreeSlot();
-    void jumpToActiveNodeSlot();
     void F1Slot();
     void F2Slot();
     void F3Slot();

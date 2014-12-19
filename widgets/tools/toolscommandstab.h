@@ -53,25 +53,6 @@ protected:
 
     QVBoxLayout *mainLayout;
 
-signals:
-    treeListElement *findTreeByTreeIDSignal(int value);
-    void setActiveTreeSignal(int id);
-    void setActiveNodeSignal(nodeListElement *node, uint id);
-
-    void jumpToNodeSignal(bool *isSuccess = NULL);
-    treeListElement *addTreeListElement(int treeID, color4F color);
-    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint,
-                              nodeListElement *branchNode, uint branchNodeID);
-    bool popBranchNodeSignal();
-    void lockPositionSignal(Coordinate coordinate);
-    void unlockPositionSignal();
-
-    void treeActivatedSignal();
-    void treeAddedSignal(treeListElement *tree);
-    void nodeActivatedSignal();
-    void branchPushedSignal();
-    void branchPoppedSignal();
-
 public slots:
     void activeTreeIDSpinChanged(int value);
     void activeNodeIDSpinChanged(int value);
@@ -88,7 +69,9 @@ public slots:
     void disableCurrentLockButtonClicked();
     void setSimpleTracing(bool simple);
 
-    void update();
+    void updateBranchCount();
+    void updateNodeCount();
+    void updateTreeCount();
 };
 
 #endif // TOOLSCOMMANDSTAB_H
