@@ -454,7 +454,7 @@ std::size_t Segmentation::selectedObjectsCount() const {
 void Segmentation::mergelistSave(QIODevice & file) const {
     QTextStream stream(&file);
     for (const auto & obj : objects) {
-        stream << obj.index << ' ' << obj.todo << ' ' << obj.immutable;
+        stream << obj.id << ' ' << obj.todo << ' ' << obj.immutable;
         for (const auto & subObj : obj.subobjects) {
             stream << ' ' << subObj.get().id;
         }
