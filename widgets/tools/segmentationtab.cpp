@@ -101,7 +101,7 @@ bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModel
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Question);
             prompt.setWindowTitle(tr("Lock Object"));
-            prompt.setText(tr("Lock the object with id %0?").arg(obj.index));
+            prompt.setText(tr("Lock the object with id %0?").arg(obj.id));
             const auto & lockButton = prompt.addButton(tr("Lock"), QMessageBox::YesRole);
             prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
             prompt.exec();

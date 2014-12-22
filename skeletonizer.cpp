@@ -495,9 +495,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<std::pair<uint, uint>> edgeVector;
 
     bench.start();
+    emit setSimpleTracing(false);
     const auto blockState = this->signalsBlocked();
     blockSignals(true);
-    emit setSimpleTracing(false);
     if (!xml.readNextStartElement() || xml.name() != "things") {
         qDebug() << "invalid xml token: " << xml.name();
         return false;
@@ -543,7 +543,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     QStringRef attribute = attributes.value("enabled");
                     if(attribute.isNull() == false) {
                         Segmentation::singleton().jobMode = true;
+                        blockSignals(false);
                         emit segmentationJobModeChanged(static_cast<bool>(attribute.toInt()));
+                        blockSignals(true);
                     }
                     attribute = attributes.value("center.x");
                     if(attribute.isNull() == false) {

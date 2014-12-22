@@ -109,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
-    QObject::connect(state->viewer->skeletonizer, &Skeletonizer::segmentationJobModeChanged, this, &MainWindow::setSegmentationJobMode);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::segmentationJobModeChanged, this, &MainWindow::setSegmentationJobMode);
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -261,6 +261,7 @@ void MainWindow::createToolbars() {
 
 void MainWindow::setSegmentationJobMode(bool enabled) {
     if(enabled) {
+        Segmentation::singleton().jobMode = true;
         menuBar()->hide();
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
@@ -270,6 +271,7 @@ void MainWindow::setSegmentationJobMode(bool enabled) {
         }
         viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
     } else {
+        Segmentation::singleton().jobMode = false;
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
