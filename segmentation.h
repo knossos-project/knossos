@@ -131,7 +131,8 @@ Q_OBJECT
         return lut;
     }();
 
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id = 0, const bool & todo = false, const bool & immutable = false);
+    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
+    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
     void newSubObject(Object & obj, uint64_t subObjID);
 

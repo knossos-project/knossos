@@ -142,12 +142,16 @@ void Segmentation::createAndSelectObject(const Coordinate & position) {
     selectObject(newObject);
 }
 
+Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const Coordinate & location) {
+    return createObject(initialSubobjectId, location, ++Object::highestId);
+}
+
 Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo, const bool & immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
     auto & subobject = subobjectIt->second;
     emit beforeAppendRow();
-    objects.emplace_back((id == 0) ? ++Object::highestId : id, todo, immutable, location, subobject); //create object from supervoxel
+    objects.emplace_back(id, todo, immutable, location, subobject); //create object from supervoxel
     emit appendedRow();
     return objects.back();
 }
@@ -463,6 +467,9 @@ void Segmentation::mergelistSave(QIODevice & file) const {
         stream << obj.category << '\n';
         stream << obj.comment << '\n';
     }
+    if (stream.status() != QTextStream::Ok) {
+        qDebug() << "mergelistSave fail";
+    }
 }
 
 void Segmentation::mergelistLoad(QIODevice & file) {
@@ -472,6 +479,8 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     blockSignals(true);
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
+        std::istringstream coordLineStream(stream.readLine().toStdString());
+
         uint64_t objId;
         bool todo;
         bool immutable;
@@ -481,12 +490,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         QString comment;
 
         bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
-        auto coordLine = stream.readLine();
-        bool valid1 = false;
-        if(coordLine.isNull() == false) {
-            std::istringstream coordLineStream(coordLine.toStdString());
-            valid1 = (coordLineStream >> location.x) && (coordLineStream >> location.y) && (coordLineStream >> location.z);
-        }
+        bool valid1 = (coordLineStream >> location.x) && (coordLineStream >> location.y) && (coordLineStream >> location.z);
         bool valid2 = !(category = stream.readLine()).isNull();
         bool valid3 = !(comment = stream.readLine()).isNull();
 
@@ -499,7 +503,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             obj.category = category;
             obj.comment = comment;
         } else {
-            qDebug() << "loadMergelist fail";
+            qDebug() << "mergelistLoad fail";
             break;
         }
     }
