@@ -557,7 +557,7 @@ void Segmentation::mergeSelectedObjects() {
             secondObj.merge(firstObj);
             emit changedRow(secondObj.index);
         } else {//if both are mutable we can choose the merge order
-            if (firstObj.subobjects.size() > secondObj.subobjects.size()) {
+            if (firstObj.subobjects.size() >= secondObj.subobjects.size()) {
                 flat_deselect(secondObj);
                 firstObj.merge(secondObj);
                 emit changedRow(firstObj.index);
