@@ -52,6 +52,8 @@ class Viewport : public QGLWidget
 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
+    QElapsedTimer timeDBase;
+    QElapsedTimer timeFBase;
 public:
     const static uint numberViewports = 4;
     explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);

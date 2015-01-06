@@ -138,6 +138,9 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
         this->setToolTip(QString("Viewport %1").arg("Arbitrary"));
     else if(viewportType == VIEWPORT_SKELETON)
         this->setToolTip(QString("Skeleton Viewport"));
+
+    timeDBase.start();
+    timeFBase.start();
 }
 
 void Viewport::initializeGL() {
@@ -430,6 +433,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     //^ os delay ^       ^-^ knossos specified interval
 
     //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
+
     //›#‹ events are marked isAutoRepeat correctly on Windows
     //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
     //to emulate this the time to the previous time the same event occured is measured
@@ -440,15 +444,13 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
         state->viewerKeyRepeat = event->isAutoRepeat();
     }
-    if (!event->isAutoRepeat()) {//maybe we need to set it ourselves*/
+    if (!event->isAutoRepeat()) {
         //autorepeat emulation for systems where isAutoRepeat() does not work as expected
         //seperate timer for each key, but only one across all vps
         if (event->key() == Qt::Key_D) {
-            static QElapsedTimer timeBase;
-            state->viewerKeyRepeat = timeBase.restart() < 150;
+            state->viewerKeyRepeat = timeDBase.restart() < 150;
         } else if (event->key() == Qt::Key_F) {
-            static QElapsedTimer timeBase;
-            state->viewerKeyRepeat = timeBase.restart() < 150;
+            state->viewerKeyRepeat = timeFBase.restart() < 150;
         }
     }
     eventDelegate->handleKeyPress(event, id);

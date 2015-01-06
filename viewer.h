@@ -52,6 +52,7 @@ class MainWindow;
 class Viewer : public QThread {
     Q_OBJECT
 private:
+    QElapsedTimer baseTime;
     float alphaCache;
     Rotation rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate

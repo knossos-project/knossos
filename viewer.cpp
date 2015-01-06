@@ -125,6 +125,8 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
+
+    baseTime.start();//keyRepeat timer
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -1164,7 +1166,6 @@ void Viewer::run() {
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
     timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
 
-    static QElapsedTimer baseTime;
     if (state->viewerKeyRepeat && (state->keyF || state->keyD)) {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;
         if (baseTime.elapsed() >= interval) {
