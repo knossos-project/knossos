@@ -376,12 +376,16 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
  * @brief Viewer::ocSliceExtract extracts subObject IDs from datacube
  *      and paints slice at the corresponding position with a color depending on the ID.
  * @param datacube pointer to the datacube for data extraction
+ * @param cubePosInAbsPx smallest coordinates inside the datacube in dataset pixels
  * @param slice pointer to a slice in which to draw the overlay
  *
  * In the first pass all pixels are filled with the color corresponding the subObject-ID.
  * In the second pass the datacube is traversed again to find edge voxels, i.e. all voxels
  * where at least one of their neighbors (left, right, top, bot) have a different ID than their own.
  * The opacity of these voxels is slightly increased to highlight the edges.
+ *
+ * Before extraction we determine if the cube is partly outside of the movement area in which case
+ * each pixel is tested for its position and is omitted if outside of the area.
  *
  */
 void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
