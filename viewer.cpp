@@ -384,12 +384,26 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
  * The opacity of these voxels is slightly increased to highlight the edges.
  *
  */
-void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
+
+    const auto & session = Session::singleton();
+    const Coordinate areaMinCoord = {session.movementCenter.x - session.movementRange.x,
+                                     session.movementCenter.y - session.movementRange.y,
+                                     session.movementCenter.z - session.movementRange.z};
+    const Coordinate areaMaxCoord = {session.movementCenter.x + session.movementRange.x,
+                                     session.movementCenter.y + session.movementRange.y,
+                                     session.movementCenter.z + session.movementRange.z};
+
+    const auto partlyInMovementArea =
+       areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + state->cubeEdgeLength * state->magnification ||
+       areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
+       areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
+
     const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
     const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
     const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
-    const std::size_t sliceIncrement = vpConfig->type != SLICE_XY ? state->cubeSliceArea * OBJID_BYTES : state->cubeEdgeLength * OBJID_BYTES;
+    const std::size_t sliceIncrement = vpConfig->type == SLICE_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
     const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
 
     auto & seg = Segmentation::singleton();
@@ -401,41 +415,61 @@ void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
     const std::size_t min = state->cubeEdgeLength;
     const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);
     std::size_t counter = 0;//slice position
+    int offsetX = 0, offsetY = 0; // current texel's horizontal and vertical dataset pixel offset inside cube
+    int pixelsPerLine = state->cubeEdgeLength*state->magnification;
     for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
         for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
-            uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
-
-            auto color = (idCache == subObjectID) ? colorCache : seg.colorObjectFromId(subObjectID);
-            slice[0] = std::get<0>(color);
-            slice[1] = std::get<1>(color);
-            slice[2] = std::get<2>(color);
-            slice[3] = std::get<3>(color);
-
-            const bool selected = (idCache == subObjectID) ? selectedCache : seg.isSubObjectIdSelected(subObjectID);
-            const bool isPastFirstRow = counter >= min;
-            const bool isBeforeLastRow = counter < max;
-            const bool isNotFirstColumn = counter % state->cubeEdgeLength != 0;
-            const bool isNotLastColumn = (counter + 1) % state->cubeEdgeLength != 0;
-            if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
-                const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
-                const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
-                const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
-                //enhance alpha of subobject if any of the surrounding voxels belong to another object
-                if (subObjectID != left || subObjectID != right || subObjectID != top || subObjectID != bottom) {
-                    slice[3] = std::min(255, slice[3]*4);
+            bool hide = false;
+            if(partlyInMovementArea) {
+                if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
+                    ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                    // vertically out of movement area
+                    slice[3] = 0;
+                    hide = true;
+                }
+                else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
+                        (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                    // horizontally out of movement area
+                    slice[3] = 0;
+                    hide = true;
                 }
             }
 
-            //fill cache
-            idCache = subObjectID;
-            colorCache = color;
-            selectedCache = selected;
+            if(hide == false) {
+                uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
 
+                auto color = (idCache == subObjectID) ? colorCache : seg.colorObjectFromId(subObjectID);
+                slice[0] = std::get<0>(color);
+                slice[1] = std::get<1>(color);
+                slice[2] = std::get<2>(color);
+                slice[3] = std::get<3>(color);
+
+                const bool selected = (idCache == subObjectID) ? selectedCache : seg.isSubObjectIdSelected(subObjectID);
+                const bool isPastFirstRow = counter >= min;
+                const bool isBeforeLastRow = counter < max;
+                const bool isNotFirstColumn = counter % state->cubeEdgeLength != 0;
+                const bool isNotLastColumn = (counter + 1) % state->cubeEdgeLength != 0;
+                if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                    const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
+                    const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
+                    const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
+                    const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
+                    //enhance alpha of subobject if any of the surrounding voxels belong to another object
+                    if (subObjectID != left || subObjectID != right || subObjectID != top || subObjectID != bottom) {
+                        slice[3] = std::min(255, slice[3]*4);
+                    }
+                }
+
+                //fill cache
+                idCache = subObjectID;
+                colorCache = color;
+                selectedCache = selected;
+            }
             ++counter;
-
             slice += 4;//RGBA per pixel
             datacube += voxelIncrement;
+            offsetX = (offsetX + state->magnification) % pixelsPerLine;
+            offsetY += (offsetX == 0)? state->magnification : 0; // at end of line increment to next line
         }
         datacube += sliceSubLineIncrement;
     }
@@ -623,7 +657,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                              dcOffset * OBJID_BYTES,
                                              &currentVp);
                     } else {
+                        Coordinate cubePosInAbsPx = {currentDc.x * state->magnification * state->cubeEdgeLength,
+                                                     currentDc.y * state->magnification * state->cubeEdgeLength,
+                                                     currentDc.z * state->magnification * state->cubeEdgeLength};
                         ocSliceExtract(overlayCube,
+                                       cubePosInAbsPx,
                                        state->viewerState->overlayData + index,
                                        dcOffset * OBJID_BYTES,
                                        &currentVp);
