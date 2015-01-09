@@ -111,7 +111,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     QObject::connect(fileDialogButton, &QPushButton::clicked, this, &DatasetLoadWidget::addDatasetClicked);
     QObject::connect(deleteButton, &QPushButton::clicked, this, &DatasetLoadWidget::deleteDataset);
 
-    QObject::connect(datasetlistwidget, &QListWidget::itemClicked, this, &DatasetLoadWidget::processListWidgetClicked);
+    QObject::connect(datasetlistwidget, &QListWidget::itemSelectionChanged, this, &DatasetLoadWidget::processListWidgetClicked);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
@@ -120,7 +120,8 @@ void DatasetLoadWidget::deleteDataset() {
     datasetlistwidget->takeItem(datasetlistwidget->currentRow());
 }
 
-void DatasetLoadWidget::processListWidgetClicked(QListWidgetItem * itemClicked) {
+void DatasetLoadWidget::processListWidgetClicked() {
+    QListWidgetItem * itemClicked = datasetlistwidget->selectedItems().front();
 
     datasetinfo = getConfigFileInfo(itemClicked->text().toStdString().c_str());
 
@@ -148,7 +149,7 @@ void DatasetLoadWidget::processListWidgetClicked(QListWidgetItem * itemClicked) 
                 .arg(datasetinfo.scale.z);
     }
 
-    infolabel->setText( infotext );
+    infolabel->setText(infotext);
 }
 
 QStringList DatasetLoadWidget::getRecentPathItems() {
@@ -322,7 +323,7 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
         emit clearSkeletonSignalNoGUI();
     }
 
-    emit (breakLoaderSignal());
+    emit breakLoaderSignal();
 
     Knossos::applyDefaultConfig();
 

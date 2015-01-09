@@ -28,9 +28,9 @@ public:
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
-    void processListWidgetClicked(QListWidgetItem * itemClicked);
+    void processListWidgetClicked();
     struct Datasetinfo{
-        Coord<> boundary;
+        Coordinate boundary;
         floatCoordinate scale{0,0,0};
         int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
         bool remote = false;
