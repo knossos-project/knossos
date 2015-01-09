@@ -246,9 +246,6 @@ bool Knossos::commonInitStates() {
         return false;//no dataset loaded
     }
 
-    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-
     return findAndRegisterAvailableDatasets();
 }
 

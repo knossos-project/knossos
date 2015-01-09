@@ -28,6 +28,9 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     pathLineEdit = new QLineEdit();
 
+    cubeEdgeSpin.setRange(1, 256);
+    cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
     supercubeEdgeSpin = new QSpinBox;
     supercubeEdgeSpin->setMinimum(3);
     supercubeEdgeSpin->setSingleStep(2);
@@ -84,6 +87,11 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     hLayout2->addWidget(supercubeEdgeSpin);
     supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
     hLayout2->addWidget(supercubeSizeLabel);
+
+    auto hLayoutCubeSize = new QHBoxLayout;
+    hLayoutCubeSize->addWidget(&cubeEdgeSpin);
+    hLayoutCubeSize->addWidget(&cubeEdgeLabel);
+
     auto hLayout3 = new QHBoxLayout;
     hLayout3->addWidget(processButton);
     hLayout3->addWidget(cancelButton);
@@ -96,6 +104,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     localLayout->addLayout(hLayoutDelDataset);
     localLayout->addLayout(hLayoutLine1);
     localLayout->addLayout(hLayout2);
+    localLayout->addLayout(hLayoutCubeSize);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
 
@@ -104,6 +113,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     setLayout(mainLayout);
 
     QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetLoadWidget::datasetfileDialogClicked);
+    QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
@@ -187,13 +197,14 @@ void DatasetLoadWidget::datasetfileDialogClicked() {
 }
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
+    const auto cubeEdge = cubeEdgeSpin.value();
     const auto superCubeEdge = supercubeEdgeSpin->value();
-    auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
+    auto mibibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
-    const auto fov = state->cubeEdgeLength * superCubeEdge - 1;
+    const auto fov = cubeEdge * superCubeEdge - 1;
     auto text = QString("Data cache cube edge length (%1 MiB RAM) – FOV %2 pixel per demension").arg(mibibytes).arg(fov);
     supercubeSizeLabel->setText(text);
-    const auto maxsupercubeedge = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+    const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
     //make sure it’s an odd number
     supercubeEdgeSpin->setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
 }
@@ -349,6 +360,7 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     knossos->commonInitStates();
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
+    state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = supercubeEdgeSpin->value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
 
@@ -464,14 +476,16 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
-    settings.setValue(DATASET_M, state->M);
+    settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
 
     settings.endGroup();
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
-    //settings depending on M
+    //settings depending on supercube and cube size
+    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
+    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
     state->cubeSetElements = state->M * state->M * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
@@ -499,12 +513,13 @@ void DatasetLoadWidget::loadSettings() {
         datasetlistwidget->addItem(i);
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
-        state->M = settings.value(DATASET_M, 3).toInt();
+        state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     }
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
         state->overlay = settings.value(DATASET_OVERLAY, true).toBool();
     }
 
+    cubeEdgeSpin.setValue(state->cubeEdgeLength);
     supercubeEdgeSpin->setValue(state->M);
     segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
     adaptMemoryConsumption();

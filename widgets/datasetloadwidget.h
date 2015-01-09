@@ -22,6 +22,8 @@ class QScrollArea;
 
 class DatasetLoadWidget : public QDialog {
     Q_OBJECT
+    QLabel cubeEdgeLabel{"Cubesize"};
+    QSpinBox cubeEdgeSpin;
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);

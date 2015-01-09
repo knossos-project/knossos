@@ -36,7 +36,7 @@ const QString AUTOINC_FILENAME = "autoinc_filename";
 
 /* DataSet Switch */
 const QString DATASET_MRU = "dataset_mru";
-const QString DATASET_M = "supercube_edge";
+const QString DATASET_SUPERCUBE_EDGE = "supercube_edge";
 const QString DATASET_OVERLAY = "overlay";
 const QString DATASET_LAST_USED = "dataset_last_used";
 
