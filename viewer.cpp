@@ -295,7 +295,7 @@ void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
 
     auto & seg = Segmentation::singleton();
     //cache
-    uint64_t idCache = 0;
+    uint64_t subobjectIdCache = 0;
     bool selectedCache = false;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
     //first and last row boundaries
@@ -323,32 +323,49 @@ void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
             }
 
             if(hide == false) {
-                uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
+                uint64_t subobjectId = *reinterpret_cast<uint64_t*>(datacube);
 
-                auto color = (idCache == subObjectID) ? colorCache : seg.colorObjectFromId(subObjectID);
+                auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromId(subobjectId);
                 slice[0] = std::get<0>(color);
                 slice[1] = std::get<1>(color);
                 slice[2] = std::get<2>(color);
                 slice[3] = std::get<3>(color);
 
-                const bool selected = (idCache == subObjectID) ? selectedCache : seg.isSubObjectIdSelected(subObjectID);
+                const bool selected = (subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId);
                 const bool isPastFirstRow = counter >= min;
                 const bool isBeforeLastRow = counter < max;
                 const bool isNotFirstColumn = counter % state->cubeEdgeLength != 0;
                 const bool isNotLastColumn = (counter + 1) % state->cubeEdgeLength != 0;
-                if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+
+                // highlight edges where needed
+                if(seg.hoverVersion) {
+                    uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
+                    if (selected && (seg.renderAllObjs || (!seg.renderAllObjs && seg.mouseFocusedObjectId == objectId))) {
+                        if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                            const uint64_t left = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
+                            const uint64_t right = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
+                            const uint64_t top = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
+                            const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
+                            //enhance alpha of this voxel if any of the surrounding voxels belong to another object
+                            if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
+                                slice[3] = std::min(255, slice[3]*4);
+                            }
+                        }
+                    }
+                }
+                else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
                     const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
                     const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
                     const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
                     const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
-                    //enhance alpha of subobject if any of the surrounding voxels belong to another object
-                    if (subObjectID != left || subObjectID != right || subObjectID != top || subObjectID != bottom) {
+                    //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
+                    if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
                         slice[3] = std::min(255, slice[3]*4);
                     }
                 }
 
                 //fill cache
-                idCache = subObjectID;
+                subobjectIdCache = subobjectId;
                 colorCache = color;
                 selectedCache = selected;
             }

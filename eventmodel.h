@@ -58,6 +58,7 @@ class EventModel : public QObject
 
 public:
     explicit EventModel(QObject *parent = 0);
+    void handleMouseHover(QMouseEvent *event, int VPfound);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
     void handleMouseButtonRight(QMouseEvent *event, int VPfound);

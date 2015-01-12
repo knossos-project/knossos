@@ -138,6 +138,11 @@ void merging(QMouseEvent *event, const int vp) {
     }
 }
 
+void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
+    auto subObjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+    Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
+}
+
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     mouseDownX = event->x();
     mouseDownY = event->y();

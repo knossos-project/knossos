@@ -95,7 +95,6 @@ Q_OBJECT
     // For segmentation job mode
     uint64_t lastTodoObject_id = 0;
 
-    bool renderAllObjs; // show all segmentations as opposed to only a selected one
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
     std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
@@ -141,10 +140,14 @@ Q_OBJECT
     Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
 public:
+    bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
     bool segmentationMode;
     bool jobMode;
     brush_t brush;
+    // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
+    bool hoverVersion;
+    uint64_t mouseFocusedObjectId;
 
     static Segmentation & singleton();
     Segmentation();
@@ -163,6 +166,7 @@ public:
     uint64_t subobjectIdOfFirstSelectedObject();
     bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
+    uint64_t tryLargestObjectContainingSubobject(const uint64_t subObjectId) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     //selection query
     bool isSelected(const SubObject & rhs) const;

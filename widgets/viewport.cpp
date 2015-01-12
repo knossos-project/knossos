@@ -338,6 +338,9 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         eventDelegate->handleMouseMotionRightHold(event, id);
         clickEvent = true;
     }
+    else if(Segmentation::singleton().hoverVersion){
+        eventDelegate->handleMouseHover(event, id);
+    }
 
     if(clickEvent) {
         eventDelegate->mouseX = event->x();
@@ -399,7 +402,6 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 
     for (std::size_t i = 0; i < Viewport::numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
-        state->viewerState->vpConfigs[i].motionTracking = false;
         state->viewerState->vpConfigs[i].VPmoves = false;
         state->viewerState->vpConfigs[i].VPresizes = false;
         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;

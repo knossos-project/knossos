@@ -80,7 +80,7 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true), jobMode(false) {
+Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true), jobMode(false), hoverVersion(false), mouseFocusedObjectId(0) {
     loadOverlayLutFromFile();
 }
 
@@ -267,11 +267,19 @@ bool Segmentation::objectOrder(const uint64_t & lhsIndex, const uint64_t & rhsIn
 }
 
 uint64_t Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
-    //same comparitor for both functions, it seems to work as it is, so i don’t waste my head now to find out why
+    //same comparator for both functions, it seems to work as it is, so i don’t waste my head now to find out why
     //there may have been some reasoning… (at first glance it seems too restrictive for the largest object)
-    auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
-    const auto objectIndex = *std::max_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
+    auto comparator = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
+    const auto objectIndex = *std::max_element(std::begin(subobject.objects), std::end(subobject.objects), comparator);
     return objectIndex;
+}
+
+uint64_t Segmentation::tryLargestObjectContainingSubobject(const uint64_t subObjectId) const {
+    auto it = subobjects.find(subObjectId);
+    if(it == std::end(subobjects)) {
+        return 0;
+    }
+    return largestObjectContainingSubobject(it->second);
 }
 
 uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
