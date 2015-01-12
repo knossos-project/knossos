@@ -572,10 +572,6 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     size_t localCompressedBufSize = 0;
     int jpegSubsamp, width, height;
 #endif
-    auto & session = Session::singleton();
-    Coordinate min;
-    Coordinate max;
-    bool zOut = false, yOut = false;
 
     if (LM_FTP == state->loadMode) {
         if (lts->currentCube->isAborted) {
@@ -804,36 +800,6 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             remove(filename);
         }
         break;
-    }
-
-    // darken areas outside of movement area
-    min = { lts->currentCube->coordinate.x * state->cubeEdgeLength*state->magnification,
-            lts->currentCube->coordinate.y * state->cubeEdgeLength*state->magnification,
-            lts->currentCube->coordinate.z * state->cubeEdgeLength*state->magnification };
-    max = { lts->currentCube->coordinate.x * state->cubeEdgeLength*state->magnification + state->cubeEdgeLength*state->magnification,
-            lts->currentCube->coordinate.y * state->cubeEdgeLength*state->magnification + state->cubeEdgeLength*state->magnification,
-            lts->currentCube->coordinate.z * state->cubeEdgeLength*state->magnification + state->cubeEdgeLength*state->magnification };
-
-    if(session.movementCenter.x - session.movementRange.x > min.x || session.movementCenter.x + session.movementRange.x < max.x
-            || session.movementCenter.y - session.movementRange.y > min.y || session.movementCenter.y + session.movementRange.y < max.y
-            || session.movementCenter.z - session.movementRange.z > min.z || session.movementCenter.z + session.movementRange.z < max.z) {
-        // at least part of cube is outside of range. Check position for every voxel
-        for(int z = 0; z < state->cubeEdgeLength; z++) {
-            zOut = min.z + z*state->magnification > session.movementCenter.z + session.movementRange.z ||
-                   min.z + z*state->magnification < session.movementCenter.z - session.movementRange.z;
-
-            for(int y = 0; y < state->cubeEdgeLength; y++) {
-                yOut = min.y + y*state->magnification > session.movementCenter.y + session.movementRange.y ||
-                       min.y + y*state->magnification < session.movementCenter.y - session.movementRange.y;
-
-                for(int x = 0; x < state->cubeEdgeLength; x++) {
-                    if(zOut || yOut || min.x + x*state->magnification > session.movementCenter.x + session.movementRange.x
-                                    || min.x + x*state->magnification < session.movementCenter.x - session.movementRange.x) {
-                        *(currentDcSlot + z*state->cubeEdgeLength*state->cubeEdgeLength + y*state->cubeEdgeLength + x) /= 2; // decrease brightness by 50%
-                    }
-                }
-            }
-        }
     }
 
     goto loadcube_manage;

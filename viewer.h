@@ -84,14 +84,8 @@ protected:
 
     bool vpGenerateTexture_arb(vpConfig &currentVp);
 
-    bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-    bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-
-    bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-    bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-
-    bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
-    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
+    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
 
     void ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     void ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);

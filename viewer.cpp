@@ -138,41 +138,66 @@ bool Viewer::resetViewPortData(vpConfig *viewport) {
     return true;
 }
 
-bool Viewer::sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig) {
-    int i, j;
-    switch(vpConfig->type) {
-    case SLICE_XY:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            slice[0] = slice[1] = slice[2] = *datacube;
-            datacube++;
-            slice += 3;
-        }
-        break;
-    case SLICE_XZ:
-        for(j = 0; j < state->cubeEdgeLength; j++) {
-            for(i = 0; i < state->cubeEdgeLength; i++) {
-                slice[0] = slice[1] = slice[2] = *datacube;
-                datacube++;
-                slice += 3;
+bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
+    datacube += dcOffset;
+    const auto & session = Session::singleton();
+    const Coordinate areaMinCoord = {session.movementCenter.x - session.movementRange.x,
+                                     session.movementCenter.y - session.movementRange.y,
+                                     session.movementCenter.z - session.movementRange.z};
+    const Coordinate areaMaxCoord = {session.movementCenter.x + session.movementRange.x,
+                                     session.movementCenter.y + session.movementRange.y,
+                                     session.movementCenter.z + session.movementRange.z};
+
+    const auto partlyInMovementArea =
+       areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + state->cubeEdgeLength * state->magnification ||
+       areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
+       areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
+
+    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength : 1;
+    const std::size_t sliceIncrement = vpConfig->type == SLICE_XY ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength;
+
+    int offsetX = 0, offsetY = 0;
+    int pixelsPerLine = state->cubeEdgeLength*state->magnification;
+    for(std::size_t y = 0; y < outerLoopBoundary; y++) {
+        for(std::size_t x = 0; x < innerLoopBoundary; x++) {
+            Byte r, g, b;
+            if(useCustomLUT) {
+                r = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                g = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                b = state->viewerState->datasetAdjustmentTable[2][*datacube];
             }
-            datacube = datacube + state->cubeSliceArea - state->cubeEdgeLength;
-        }
-        break;
-    case SLICE_YZ:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            slice[0] = slice[1] = slice[2] = *datacube;
-            datacube += state->cubeEdgeLength;
+            else {
+                r = g = b = *datacube;
+            }
+            if(partlyInMovementArea) {
+                if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
+                    ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                    // vertically out of movement area
+                    r /= 2, g /= 2, b /= 2;
+                }
+                else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
+                        (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                    // horizontally out of movement area
+                    r /= 2, g /= 2, b /= 2;
+                }
+            }
+            slice[0] = r, slice[1] = g, slice[2] = b;
+
+            datacube += voxelIncrement;
             slice += 3;
+            offsetX = (offsetX + state->magnification) % pixelsPerLine;
+            offsetY += (offsetX == 0)? state->magnification : 0; // at end of line increment to next line
         }
-        break;
-    default:
-        return false;
+        datacube += sliceSubLineIncrement;
     }
+
     return true;
 }
 
-bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
-                                       int s, int *t) {
+bool Viewer::dcSliceExtract_arb(Byte *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
@@ -182,15 +207,8 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
                                   roundFloat(currentPxInDc_float->y),
                                   roundFloat(currentPxInDc_float->z));
 
-    if (
-            (currentPxInDc.x < 0) ||
-            (currentPxInDc.y < 0) ||
-            (currentPxInDc.z < 0) ||
-            (currentPxInDc.x >= state->cubeEdgeLength) ||
-            (currentPxInDc.y >= state->cubeEdgeLength) ||
-            (currentPxInDc.z >= state->cubeEdgeLength)
-            )
-    {
+    if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
+       (currentPxInDc.x >= state->cubeEdgeLength) || (currentPxInDc.y >= state->cubeEdgeLength) || (currentPxInDc.z >= state->cubeEdgeLength)) {
         sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1]
                           = slice[sliceIndex + 2]
@@ -213,123 +231,18 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
         sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == NULL) {
-            slice[sliceIndex] = slice[sliceIndex + 1]
-                              = slice[sliceIndex + 2]
-                              = state->viewerState->defaultTexData[dcIndex];
+            slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = state->viewerState->defaultTexData[dcIndex];
         }
         else {
-            slice[sliceIndex] = slice[sliceIndex + 1]
-                              = slice[sliceIndex + 2]
-                              = datacube[dcIndex];
-        }
-        (*t)++;
-        if(*t >= viewPort->t_max) {
-            break;
-        }
-        ADD_COORDINATE(*currentPxInDc_float, *v2);
-        SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
-                                      roundFloat(currentPxInDc_float->y),
-                                      roundFloat(currentPxInDc_float->z));
-    }
-    return true;
-}
-
-
-bool Viewer::sliceExtract_adjust(Byte *datacube,
-                                     Byte *slice,
-                                     vpConfig *vpConfig) {
-    int i, j;
-    switch(vpConfig->type) {
-    case SLICE_XY:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-            slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-            slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-            datacube++;
-            slice += 3;
-        }
-        break;
-    case SLICE_XZ:
-        for(j = 0; j < state->cubeEdgeLength; j++) {
-            for(i = 0; i < state->cubeEdgeLength; i++) {
-                slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-                slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-                slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-                datacube++;
-                slice += 3;
+            if(useCustomLUT) {
+                slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
+                slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
+                slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
             }
-            datacube  = datacube + state->cubeSliceArea - state->cubeEdgeLength;
+            else {
+                slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
+            }
         }
-        break;
-    case SLICE_YZ:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-            slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-            slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-            datacube += state->cubeEdgeLength;
-            slice += 3;
-        }
-        break;
-    }
-    return true;
-}
-
-bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
-                                     int s, int *t) {
-    Byte *slice = viewPort->viewPortData;
-    Coordinate currentPxInDc;
-    int sliceIndex = 0, dcIndex = 0;
-    floatCoordinate *v2 = &(viewPort->v2);
-
-    SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
-                                  (roundFloat(currentPxInDc_float->y)),
-                                  (roundFloat(currentPxInDc_float->z)));
-
-    if (
-            (currentPxInDc.x < 0) ||
-            (currentPxInDc.y < 0) ||
-            (currentPxInDc.z < 0) ||
-            (currentPxInDc.x >= state->cubeEdgeLength) ||
-            (currentPxInDc.y >= state->cubeEdgeLength) ||
-            (currentPxInDc.z >= state->cubeEdgeLength)
-            )
-    {
-        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
-        slice[sliceIndex] = slice[sliceIndex + 1]
-                          = slice[sliceIndex + 2]
-                          = state->viewerState->defaultTexData[0];
-        (*t)++;
-        if(*t < viewPort->t_max) {
-            // Actually, although currentPxInDc_float is passed by reference and updated here,
-            // it is totally ignored (i.e. not read, then overwritten) by the calling function.
-            // But to keep the functionality here compatible after this bugfix, we also replicate
-            // this update here - from the originial below
-            ADD_COORDINATE(*currentPxInDc_float, *v2);
-        }
-        return true;
-    }
-
-    while((0 <= currentPxInDc.x && currentPxInDc.x < state->cubeEdgeLength)
-          && (0 <= currentPxInDc.y && currentPxInDc.y < state->cubeEdgeLength)
-          && (0 <= currentPxInDc.z && currentPxInDc.z < state->cubeEdgeLength)) {
-
-        sliceIndex = 3 * ( s + *t  * state->cubeEdgeLength * state->M);
-
-        dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
-        if(datacube == NULL) {
-            slice[sliceIndex] = slice[sliceIndex + 1]
-                              = slice[sliceIndex + 2]
-                              = state->viewerState->defaultTexData[dcIndex];
-        }
-        else {
-            slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
-            slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
-            slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
-        }
-
         (*t)++;
         if(*t >= viewPort->t_max) {
             break;
@@ -341,36 +254,6 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
     }
     return true;
 }
-
-bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    datacube += dcOffset;
-
-    if(state->viewerState->datasetAdjustmentOn) {
-        /* Texture type GL_RGB and we need to adjust coloring */
-        //QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
-        //future.waitForFinished();
-        sliceExtract_adjust(datacube, slice, vpConfig);
-    }
-    else {
-        /* Texture type GL_RGB and we don't need to adjust anything*/
-       //QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
-       //future.waitForFinished();
-       sliceExtract_standard(datacube, slice, vpConfig);
-    }
-    return true;
-}
-
-bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t) {
-    if(state->viewerState->datasetAdjustmentOn) {
-        // Texture type GL_RGB and we need to adjust coloring
-        sliceExtract_adjust_arb(datacube, viewPort, currentPxInDc_float, s, t);
-    } else {
-        // Texture type GL_RGB and we don't need to adjust anything
-        sliceExtract_standard_arb(datacube, viewPort, currentPxInDc_float, s, t);
-    }
-    return true;
-}
-
 
 /**
  * @brief Viewer::ocSliceExtract extracts subObject IDs from datacube
@@ -610,6 +493,9 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
+            Coordinate cubePosInAbsPx = {currentDc.x * state->magnification * state->cubeEdgeLength,
+                                         currentDc.y * state->magnification * state->cubeEdgeLength,
+                                         currentDc.z * state->magnification * state->cubeEdgeLength};
 
             if(datacube == HT_FAILURE || state->viewerState->uniqueColorMode) {
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -623,9 +509,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                 state->viewerState->defaultTexData);
             } else {
                 dcSliceExtract(datacube,
+                               cubePosInAbsPx,
                                state->viewerState->texData + index,
                                dcOffset,
-                               &currentVp);
+                               &currentVp,
+                               state->viewerState->datasetAdjustmentOn);
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -661,9 +549,6 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                              dcOffset * OBJID_BYTES,
                                              &currentVp);
                     } else {
-                        Coordinate cubePosInAbsPx = {currentDc.x * state->magnification * state->cubeEdgeLength,
-                                                     currentDc.y * state->magnification * state->cubeEdgeLength,
-                                                     currentDc.z * state->magnification * state->cubeEdgeLength};
                         ocSliceExtract(overlayCube,
                                        cubePosInAbsPx,
                                        state->viewerState->overlayData + index,
@@ -730,7 +615,8 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             dcSliceExtract_arb(datacube,
                                &currentVp,
                                &currentPxInDc_float,
-                               s, &t);
+                               s, &t,
+                               state->viewerState->datasetAdjustmentOn);
             SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
                                             currentPx_float.y + v2->y * (t - t_old),
                                             currentPx_float.z + v2->z * (t - t_old));
