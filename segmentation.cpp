@@ -510,6 +510,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     blockSignals(false);
     emit resetData();
     if(Segmentation::jobMode) {
+        alpha = 37;
         selectNextTodoObject();
         jumpToObject(objects[selectedObjectIndices.front()]);
         renderAllObjs = false;
