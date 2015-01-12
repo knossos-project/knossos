@@ -519,6 +519,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
                     }
+                } else if(xml.name() == "dataset") {
+                    QStringRef attribute = attributes.value("path");
+                    QString path = attribute.isNull() ? "" : attribute.toString();
+                    state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(true, path);
                 } else if(xml.name() == "tracing") {
                     QStringRef attribute = attributes.value("simple");
                     state->skeletonState->simpleTracing = attribute.isNull() ? false : static_cast<bool>(attribute.toInt());

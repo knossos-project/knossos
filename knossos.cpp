@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 
     //TODO
     //AL3XST REMOTE/LOCAL DATASETCHANGE
-    viewer.window->widgetContainer->datasetLoadWidget->changeDataset(false);
+    viewer.window->widgetContainer->datasetLoadWidget->loadDataset(false);
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();

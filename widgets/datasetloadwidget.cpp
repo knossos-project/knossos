@@ -226,7 +226,7 @@ void DatasetLoadWidget::processButtonClicked() {
         return;
     }
 
-    changeDataset(true);
+    loadDataset(true, datasetlistwidget->currentItem()->text());
 
     this->hide();
 }
@@ -236,16 +236,14 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-void DatasetLoadWidget::changeDataset(bool isGUI) {
+void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     QFile confFile;
     QString filePath; // for holding the whole path to a .conf file
     QFileInfo pathInfo;
-    QString path;
 
-    if(datasetlistwidget->currentRow() == -1) {
+    if(path.isEmpty()) {
         path = lastused;
     } else {
-        path = datasetlistwidget->currentItem()->text();
         lastused = path;
     }
 
@@ -261,19 +259,6 @@ void DatasetLoadWidget::changeDataset(bool isGUI) {
     }
 
     pathInfo.setFile(path);
-
-    if(path.isNull() || path.isEmpty()) {
-        if (isGUI) {
-            QMessageBox info;
-            info.setWindowFlags(Qt::WindowStaysOnTopHint);
-            info.setIcon(QMessageBox::Information);
-            info.setWindowTitle("Information");
-            info.setText("No path selected!");
-            info.addButton(QMessageBox::Ok);
-            info.exec();
-        }
-        return;
-    }
 
     if(pathInfo.isFile()) { // .conf file selected (case 3)
         filePath = path;
