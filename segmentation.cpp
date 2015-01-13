@@ -547,10 +547,12 @@ void Segmentation::mergeSelectedObjects() {
             flat_deselect(secondObj);
 
             uint64_t newid;
-            if (firstObj.subobjects.size() < secondObj.subobjects.size()) {
+            if (firstObj.subobjects.size() <= secondObj.subobjects.size()) {
                 newid = const_merge(firstObj, secondObj).index;
+                firstObj.todo = false;
             } else {
                 newid = const_merge(secondObj, firstObj).index;
+                secondObj.todo = false;
             }
             selectedObjectIndices.emplace_back(newid);
             //move new index to front, so it gets the new merge origin
@@ -560,25 +562,30 @@ void Segmentation::mergeSelectedObjects() {
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
+            secondObj.todo = false;
             emit changedRow(firstObj.index);
         } else if (firstObj.immutable) {
             flat_deselect(firstObj);
             secondObj.merge(firstObj);
+            firstObj.todo = false;
             emit changedRow(secondObj.index);
         } else {//if both are mutable we can choose the merge order
             if (firstObj.subobjects.size() >= secondObj.subobjects.size()) {
                 flat_deselect(secondObj);
                 firstObj.merge(secondObj);
+                secondObj.todo = false;
                 emit changedRow(firstObj.index);
                 removeObject(secondObj);
             } else {
                 flat_deselect(firstObj);
                 secondObj.merge(firstObj);
+                firstObj.todo = false;
                 emit changedRow(secondObj.index);
                 removeObject(firstObj);
             }
         }
     }
+    emit todosLeftChanged();
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
@@ -586,5 +593,7 @@ void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);
         unselectObject(objectToUnmerge);
+        objectToUnmerge.todo = true;
     }
+    emit todosLeftChanged();
 }
