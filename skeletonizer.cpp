@@ -544,14 +544,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     Coordinate center = session.movementCenter;
                     Coordinate range = session.movementRange;
 
-                    QStringRef attribute = attributes.value("enabled");
-                    if(attribute.isNull() == false) {
-                        Segmentation::singleton().jobMode = true;
-                        blockSignals(false);
-                        emit segmentationJobModeChanged(static_cast<bool>(attribute.toInt()));
-                        blockSignals(true);
-                    }
-                    attribute = attributes.value("center.x");
+                    QStringRef attribute = attributes.value("center.x");
                     if(attribute.isNull() == false) {
                         center.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
                     }
@@ -574,6 +567,13 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     attribute = attributes.value("range.z");
                     if(attribute.isNull() == false) {
                         range.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
+                    }
+                    attribute = attributes.value("enabled");
+                    if(attribute.isNull() == false) {
+                        Segmentation::singleton().jobMode = true;
+                        blockSignals(false);
+                        emit segmentationJobModeChanged(static_cast<bool>(attribute.toInt()));
+                        blockSignals(true);
                     }
                     session.updateMovementArea(center, range);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
