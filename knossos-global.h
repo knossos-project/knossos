@@ -500,8 +500,6 @@ struct vpConfig {
     floatCoordinate leftUpperDataPxOnScreen_float;
     int s_max;
     int t_max;
-    int x_offset;
-    int y_offset;
 
     Byte* viewPortData;
 
@@ -518,14 +516,6 @@ struct vpConfig {
     float screenPxXPerDataPx;
     float screenPxYPerDataPx;
 
-    // These are computed from screenPxPerDataPx and are used to convert
-    // screen coordinates into coordinates in the system of the data at the
-    // original magnification. Node coordinates are stored that way to make
-    // knossos instances working with different magnifications of the same data
-    // work together well.
-    float screenPxXPerOrigMagUnit; //unused? jk 14.5.12
-    float screenPxYPerOrigMagUnit; //unused? jk 14.5.12
-
     float displayedlengthInNmX;
     float displayedlengthInNmY;
 
@@ -541,19 +531,10 @@ struct vpConfig {
 
     uint edgeLength;
 
-    //Flag that indicates that the user is moving the VP inside the window. 0: off, 1: moving
-    Byte VPmoves;
-    //Flag that indicates that the user is resizing the VP inside the window. 0: off, 1: resizing
-    Byte VPresizes;
-    //Flag that indicates that another VP is covering this VP
-    Byte covered;
-
     struct nodeListElement *draggedNode;
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
-
-    GLuint displayList;
 
     //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
     //would result in a data pixel movement

@@ -1440,16 +1440,6 @@ bool Viewer::recalcTextureOffsets() {
                     / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                // Pixels on the screen per 1 unit in the data coordinate system at the
-                // original magnification. These guys appear to be unused!!! jk 14.5.12
-                //state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
-                //    state->viewerState->vpConfigs[i].screenPxXPerDataPx *
-                //    state->magnification;
-
-                //state->viewerState->vpConfigs[i].screenPxYPerOrigMagUnit =
-                //    state->viewerState->vpConfigs[i].screenPxYPerDataPx *
-                //    state->magnification;
-
                 state->viewerState->vpConfigs[i].displayedlengthInNmX =
                     state->viewerState->voxelDimX
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
@@ -1523,16 +1513,6 @@ bool Viewer::recalcTextureOffsets() {
                     / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                // Pixels on the screen per 1 unit in the data coordinate system at the
-                // original magnification.
-                state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
-                    state->viewerState->vpConfigs[i].screenPxXPerDataPx
-                    * state->magnification;
-
-                state->viewerState->vpConfigs[i].screenPxYPerOrigMagUnit =
-                    state->viewerState->vpConfigs[i].screenPxYPerDataPx
-                    * state->magnification;
-
                 state->viewerState->vpConfigs[i].displayedlengthInNmX =
                     state->viewerState->voxelDimX
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
@@ -1601,16 +1581,6 @@ bool Viewer::recalcTextureOffsets() {
                         (float)state->viewerState->vpConfigs[i].edgeLength
                         / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                         / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
-
-                        // Pixels on the screen per 1 unit in the data coordinate system at the
-                        // original magnification.
-                state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
-                        state->viewerState->vpConfigs[i].screenPxXPerDataPx
-                        * state->magnification;
-
-                state->viewerState->vpConfigs[i].screenPxYPerOrigMagUnit =
-                        state->viewerState->vpConfigs[i].screenPxYPerDataPx
-                        * state->magnification;
 
                 state->viewerState->vpConfigs[i].displayedlengthInNmX =
                         state->viewerState->voxelDimZ
@@ -1718,16 +1688,6 @@ bool Viewer::recalcTextureOffsets() {
                     (float)state->viewerState->vpConfigs[i].edgeLength /
                     (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY /
                      state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
-
-                // Pixels on the screen per 1 unit in the data coordinate system at the
-                // original magnification. These guys appear to be unused!!! jk 14.5.12
-                state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
-                    state->viewerState->vpConfigs[i].screenPxXPerDataPx *
-                    state->magnification;
-
-                state->viewerState->vpConfigs[i].screenPxYPerOrigMagUnit =
-                    state->viewerState->vpConfigs[i].screenPxYPerDataPx *
-                    state->magnification;
 
                 state->viewerState->vpConfigs[i].displayedlengthInNmX =
                     sqrtf(powf(state->viewerState->voxelDimX * v1->x,2.)

@@ -402,8 +402,6 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 
     for (std::size_t i = 0; i < Viewport::numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
-        state->viewerState->vpConfigs[i].VPmoves = false;
-        state->viewerState->vpConfigs[i].VPresizes = false;
         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
     }

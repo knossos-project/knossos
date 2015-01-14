@@ -69,11 +69,6 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 
     glLoadIdentity();
 
-    // get a unique display list identifier for each viewport
-    for(i = 0; i < Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].displayList = glGenLists(1);
-    }
-
     initMesh(&(state->skeletonState->lineVertBuffer), 1024);
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 }
