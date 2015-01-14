@@ -547,9 +547,6 @@ struct vpConfig {
     Byte VPresizes;
     //Flag that indicates that another VP is covering this VP
     Byte covered;
-    //Flag that indicates that the user utilizes the mouse for operations inside this VP
-    //necessary because the mouse can be outside the VP while the user still wants e.g. to drag the panel
-    Byte motionTracking;
 
     struct nodeListElement *draggedNode;
 

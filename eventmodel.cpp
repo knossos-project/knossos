@@ -162,10 +162,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         return false;
     } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && !Segmentation::singleton().segmentationMode) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
-    } else if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
-        // always drag in skeleton vp
-        state->viewerState->vpConfigs[VPfound].motionTracking = 1;
-    } else {
+    } else if(state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
         // check click mode of orthogonal viewports
         if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
             if(validPosition(event, VPfound) == false) {
@@ -174,8 +171,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
             Knossos::sendRemoteSignal();
-        } else {// Activate motion tracking for this VP
-            state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
 
@@ -228,7 +223,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
         } else {
             // No modifier pressed
             state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNode);
-            state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
     return true;
@@ -246,10 +240,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     Coordinate movement, lastPos;
 
-    /* We have to activate motion tracking only for the skeleton VP for a right click */
-    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
-        state->viewerState->vpConfigs[VPfound].motionTracking = true;
-    }
     /* If not, we look up which skeletonizer work mode is
     active and do the appropriate operation */
     if(validPosition(event, VPfound) == false) {
@@ -384,7 +374,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 }
 
-bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) {
+bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if (state->viewerState->nodeSelectSquareVpId != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
@@ -392,103 +382,96 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
     }
 
     uint i;
-    for(i = 0; i < Viewport::numberViewports; i++) {
-        // motion tracking mode is active for viewport i
-        if(state->viewerState->vpConfigs[i].motionTracking == true) {
-            switch(state->viewerState->vpConfigs[i].type) {
-                // the user wants to drag the skeleton inside the VP
-                case VIEWPORT_SKELETON:
-                state->skeletonState->translateX += -xrel(event->x()) * 2.
-                        * ((float)state->skeletonState->volBoundary
-                        * (0.5 - state->skeletonState->zoomLevel))
-                        / ((float)state->viewerState->vpConfigs[i].edgeLength);
-                state->skeletonState->translateY += -yrel(event->y()) * 2.
-                        * ((float)state->skeletonState->volBoundary
-                        * (0.5 - state->skeletonState->zoomLevel))
-                        / ((float)state->viewerState->vpConfigs[i].edgeLength);
-                    break;
-                case VIEWPORT_XY:
-                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x())
-                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y())
-                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+    switch(state->viewerState->vpConfigs[VPfound].type) {
+    // the user wants to drag the skeleton inside the VP
+    case VIEWPORT_SKELETON:
+    state->skeletonState->translateX += -xrel(event->x()) * 2.
+            * ((float)state->skeletonState->volBoundary
+            * (0.5 - state->skeletonState->zoomLevel))
+            / ((float)state->viewerState->vpConfigs[i].edgeLength);
+    state->skeletonState->translateY += -yrel(event->y()) * 2.
+            * ((float)state->skeletonState->volBoundary
+            * (0.5 - state->skeletonState->zoomLevel))
+            / ((float)state->viewerState->vpConfigs[i].edgeLength);
+        break;
+    case VIEWPORT_XY:
+        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
+        state->viewerState->vpConfigs[i].userMouseSlideX -=
+                ((float)xrel(event->x())
+            / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[i].userMouseSlideY -=
+                ((float)yrel(event->y())
+            / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
-                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    }
-                    break;
-                case VIEWPORT_XZ:
-                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                        emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideY,
-                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    }
-                    break;
-                case VIEWPORT_YZ:
-                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                        emit userMoveSignal(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
-                            (int)state->viewerState->vpConfigs[i].userMouseSlideX,
-                                            USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    }
-                    break;
-                case VIEWPORT_ARBITRARY:
-                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
-                        break;
-                    }
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-                        emit userMoveArbSignal(
-                                (int)(state->viewerState->vpConfigs[i].v1.x
-                                      * state->viewerState->vpConfigs[i].userMouseSlideX
-                                      + state->viewerState->vpConfigs[i].v2.x
-                                      * state->viewerState->vpConfigs[i].userMouseSlideY),
-                                (int)(state->viewerState->vpConfigs[i].v1.y
-                                      * state->viewerState->vpConfigs[i].userMouseSlideX
-                                      + state->viewerState->vpConfigs[i].v2.y
-                                      * state->viewerState->vpConfigs[i].userMouseSlideY),
-                                (int)(state->viewerState->vpConfigs[i].v1.z
-                                      * state->viewerState->vpConfigs[i].userMouseSlideX
-                                      + state->viewerState->vpConfigs[i].v2.z
-                                      * state->viewerState->vpConfigs[i].userMouseSlideY));
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    }
-                break;
-            }
-
-            return true;
+            emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX,
+                (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
+            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
         }
+        break;
+    case VIEWPORT_XZ:
+        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
+        state->viewerState->vpConfigs[i].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[i].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+
+            emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                (int)state->viewerState->vpConfigs[i].userMouseSlideY,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
+            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+        }
+        break;
+    case VIEWPORT_YZ:
+        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
+        state->viewerState->vpConfigs[i].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[i].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+
+            emit userMoveSignal(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
+                (int)state->viewerState->vpConfigs[i].userMouseSlideX,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
+            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+        }
+        break;
+    case VIEWPORT_ARBITRARY:
+        if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
+            break;
+        }
+        state->viewerState->vpConfigs[i].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[i].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+
+        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+            emit userMoveArbSignal(
+                    (int)(state->viewerState->vpConfigs[i].v1.x
+                          * state->viewerState->vpConfigs[i].userMouseSlideX
+                          + state->viewerState->vpConfigs[i].v2.x
+                          * state->viewerState->vpConfigs[i].userMouseSlideY),
+                    (int)(state->viewerState->vpConfigs[i].v1.y
+                          * state->viewerState->vpConfigs[i].userMouseSlideX
+                          + state->viewerState->vpConfigs[i].v2.y
+                          * state->viewerState->vpConfigs[i].userMouseSlideY),
+                    (int)(state->viewerState->vpConfigs[i].v1.z
+                          * state->viewerState->vpConfigs[i].userMouseSlideX
+                          + state->viewerState->vpConfigs[i].v2.z
+                          * state->viewerState->vpConfigs[i].userMouseSlideY));
+            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+        }
+        break;
     }
 
     return true;
@@ -621,7 +604,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
         }
         return;
     }
-    if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
+    if (VPfound == VIEWPORT_SKELETON && state->skeletonState->rotationcounter == 0) {
         state->skeletonState->rotdx += xrel(event->x());
         state->skeletonState->rotdy += yrel(event->y());
     }
