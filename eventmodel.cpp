@@ -381,95 +381,94 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
     }
 
-    uint i;
     switch(state->viewerState->vpConfigs[VPfound].type) {
     // the user wants to drag the skeleton inside the VP
     case VIEWPORT_SKELETON:
     state->skeletonState->translateX += -xrel(event->x()) * 2.
             * ((float)state->skeletonState->volBoundary
             * (0.5 - state->skeletonState->zoomLevel))
-            / ((float)state->viewerState->vpConfigs[i].edgeLength);
+            / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
     state->skeletonState->translateY += -yrel(event->y()) * 2.
             * ((float)state->skeletonState->volBoundary
             * (0.5 - state->skeletonState->zoomLevel))
-            / ((float)state->viewerState->vpConfigs[i].edgeLength);
+            / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
         break;
     case VIEWPORT_XY:
         if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[i].userMouseSlideX -=
+        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
                 ((float)xrel(event->x())
-            / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[i].userMouseSlideY -=
+            / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
                 ((float)yrel(event->y())
-            / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+            / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
 
-            emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX,
-                (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+            emit userMoveSignal((int)state->viewerState->vpConfigs[VPfound].userMouseSlideX,
+                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY, 0,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
+            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
         }
         break;
     case VIEWPORT_XZ:
         if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[i].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[i].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
 
-            emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                (int)state->viewerState->vpConfigs[i].userMouseSlideY,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+            emit userMoveSignal((int)state->viewerState->vpConfigs[VPfound].userMouseSlideX, 0,
+                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
+            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
         }
         break;
     case VIEWPORT_YZ:
         if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[i].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[i].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
+        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
 
-            emit userMoveSignal(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
-                (int)state->viewerState->vpConfigs[i].userMouseSlideX,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[i].type);
-            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+            emit userMoveSignal(0, (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY,
+                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideX,
+                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
+            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
         }
         break;
     case VIEWPORT_ARBITRARY:
         if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
             break;
         }
-        state->viewerState->vpConfigs[i].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[i].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
+                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
+        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
+                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
 
-        if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
+            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
             emit userMoveArbSignal(
-                    (int)(state->viewerState->vpConfigs[i].v1.x
-                          * state->viewerState->vpConfigs[i].userMouseSlideX
-                          + state->viewerState->vpConfigs[i].v2.x
-                          * state->viewerState->vpConfigs[i].userMouseSlideY),
-                    (int)(state->viewerState->vpConfigs[i].v1.y
-                          * state->viewerState->vpConfigs[i].userMouseSlideX
-                          + state->viewerState->vpConfigs[i].v2.y
-                          * state->viewerState->vpConfigs[i].userMouseSlideY),
-                    (int)(state->viewerState->vpConfigs[i].v1.z
-                          * state->viewerState->vpConfigs[i].userMouseSlideX
-                          + state->viewerState->vpConfigs[i].v2.z
-                          * state->viewerState->vpConfigs[i].userMouseSlideY));
-            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                    (int)(state->viewerState->vpConfigs[VPfound].v1.x
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
+                          + state->viewerState->vpConfigs[VPfound].v2.x
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY),
+                    (int)(state->viewerState->vpConfigs[VPfound].v1.y
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
+                          + state->viewerState->vpConfigs[VPfound].v2.y
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY),
+                    (int)(state->viewerState->vpConfigs[VPfound].v1.z
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
+                          + state->viewerState->vpConfigs[VPfound].v2.z
+                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY));
+            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
+            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
         }
         break;
     }
