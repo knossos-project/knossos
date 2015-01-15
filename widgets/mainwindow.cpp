@@ -91,21 +91,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
     memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
 
-    state->viewerState->gui->comment1 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment1, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment2 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment2, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment3 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment3, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment4 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment4, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
-
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
@@ -213,12 +198,10 @@ void MainWindow::createToolbars() {
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
-    QObject::connect(commentShortcutsButton, &QToolButton::toggled, widgetContainer->commentsWidget, &CommentsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->commentsWidget, &CommentsWidget::visibilityChanged, commentShortcutsButton, &QToolButton::setChecked);
 
     defaultToolbar.addSeparator();
 
@@ -598,22 +581,21 @@ void MainWindow::createMenus() {
 
     commentsMenu->addSeparator();
 
-    auto addEditMenuShortcut = [&](const Qt::Key key, const QString & description, void(MainWindow::*const slot)()){
+    auto addCommentShortcut = [&](const int index, const QKeySequence key, const QString & description){
         auto * action = commentsMenu->addAction(QIcon(""), description);
         action->setShortcut(key);
         action->setShortcutContext(Qt::ApplicationShortcut);
-        QObject::connect(action, &QAction::triggered, this, slot);
+        commentActions.push_back(action);
+        QObject::connect(action, &QAction::triggered, this, [this, index]() { placeComment(index); });
     };
-
-    addEditMenuShortcut(Qt::Key_F1, "1st Comment Shortcut", &MainWindow::F1Slot);
-    addEditMenuShortcut(Qt::Key_F2, "2nd Comment Shortcut", &MainWindow::F2Slot);
-    addEditMenuShortcut(Qt::Key_F3, "3rd Comment Shortcut", &MainWindow::F3Slot);
-    addEditMenuShortcut(Qt::Key_F4, "4th Comment Shortcut", &MainWindow::F4Slot);
-    addEditMenuShortcut(Qt::Key_F5, "5th Comment Shortcut", &MainWindow::F5Slot);
+    addCommentShortcut(0, QKeySequence("F1"), "1st Comment Shortcut");
+    addCommentShortcut(1, QKeySequence("F2"), "2nd Comment Shortcut");
+    addCommentShortcut(2, QKeySequence("F3"), "3rd Comment Shortcut");
+    for(int i = 4; i < 11; ++i) {
+        addCommentShortcut(i-1, QKeySequence(QString("F%0").arg(i)), QString("%0th Comment Shortcut").arg(i));
+    }
 
     commentsMenu->addSeparator();
-
-    commentsMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", widgetContainer->commentsWidget, SLOT(show()));
 
     auto preferenceMenu = menuBar()->addMenu("Preferences");
     preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
@@ -1009,7 +991,6 @@ void MainWindow::saveSettings() {
     settings.endGroup();
 
     widgetContainer->datasetLoadWidget->saveSettings();
-    widgetContainer->commentsWidget->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->datasetOptionsWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
@@ -1074,17 +1055,13 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
-
     widgetContainer->datasetLoadWidget->loadSettings();
-    widgetContainer->commentsWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->datasetOptionsWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
     //widgetContainer->tracingTimeWidget->loadSettings();
-
-
 }
 
 void MainWindow::clearSettings() {
@@ -1291,60 +1268,19 @@ void MainWindow::popBranchNodeSlot() {
     Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
 }
 
-void MainWindow::F1Slot() {
+void MainWindow::placeComment(const int index) {
+    if(Segmentation::singleton().segmentationMode) {
+        Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
+        return;
+    }
     if(!state->skeletonState->activeNode) {
         return;
     }
-    QString comment(state->viewerState->gui->comment1);
-
-    if((!state->skeletonState->activeNode->comment) && (!comment.isEmpty())) {
-        Skeletonizer::singleton().addComment(state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
-    } else if (!comment.isEmpty()) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
-    }
-}
-
-void MainWindow::F2Slot() {
-    if(!state->skeletonState->activeNode) {
-        return;
-    }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-        Skeletonizer::singleton().addComment(state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
-    } else if(strncmp(state->viewerState->gui->comment2, "", 1) != 0) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
-    }
-}
-
-void MainWindow::F3Slot() {
-    if(!state->skeletonState->activeNode) {
-        return;
-    }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)) {
-        Skeletonizer::singleton().addComment(state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
-    } else if(strncmp(state->viewerState->gui->comment3, "", 1) != 0) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
-    }
-}
-
-void MainWindow::F4Slot() {
-    if(!state->skeletonState->activeNode) {
-        return;
-    }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-        Skeletonizer::singleton().addComment(state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
-    } else if (strncmp(state->viewerState->gui->comment4, "", 1) != 0) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
-    }
-}
-
-void MainWindow::F5Slot() {
-    if(!state->skeletonState->activeNode) {
-        return;
-    }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-        Skeletonizer::singleton().addComment(state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
-    } else  if (strncmp(state->viewerState->gui->comment5, "", 1) != 0) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+    CommentSetting comment = CommentSetting::comments[index];
+    if((!state->skeletonState->activeNode->comment) && (!comment.text.isEmpty())) {
+        Skeletonizer::singleton().addComment(comment.text, state->skeletonState->activeNode, 0);
+    } else if (!comment.text.isEmpty()) {
+        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, comment.text, state->skeletonState->activeNode, 0);
     }
 }
 

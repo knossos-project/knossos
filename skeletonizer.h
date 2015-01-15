@@ -77,7 +77,6 @@ public slots:
 
     static void setColorFromNode(struct nodeListElement *node, color4F *color);
     static void setRadiusFromNode(struct nodeListElement *node, float *radius);
-    static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);

@@ -181,6 +181,7 @@ public:
     void unselectObject(Object & object);
     void clearObjectSelection();
 
+    void placeCommentForSelectedObject(const QString comment);
     void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist();

@@ -4,6 +4,7 @@
 #include "tools/segmentationtab.h"
 #include "tools/toolstreeviewtab.h"
 #include "tools/toolscommandstab.h"
+#include "tools/commentstab.h"
 
 #include <QDialog>
 #include <QShowEvent>
@@ -18,6 +19,7 @@ public:
     ToolsTreeviewTab treeviewTab;
     SegmentationTab segmentationTab{this};
     ToolsCommandsTab commandsTab;
+    CommentsTab commentsTab;
     explicit AnnotationWidget(QWidget *parent = 0);
     void saveSettings();
     void loadSettings();

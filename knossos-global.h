@@ -472,18 +472,6 @@ struct guiConfig {
     uint stepsPerSec;
     uint recenteringTime;
     uint dropFrames;
-
-    char *comment1;
-    char *comment2;
-    char *comment3;
-    char *comment4;
-    char *comment5;
-
-    // substrings for comment node highlighting
-    QStringList *commentSubstr;
-    //char **commentSubstr;
-    // colors of color-dropdown in comment node highlighting
-    char **commentColors;
 };
 
 /**
@@ -838,8 +826,6 @@ struct skeletonState {
     uint greatestNodeID;
     int greatestTreeID;
 
-    color4F commentColors[NUM_COMMSUBSTR];
-    float commentNodeRadii[NUM_COMMSUBSTR];
     nodeListElement *selectedCommentNode;
 
     //If true, loadSkeleton merges the current skeleton with the provided

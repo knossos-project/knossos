@@ -2594,8 +2594,6 @@ bool Skeletonizer::updateCircRadius(nodeListElement *node) {
 }
 
 void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
-    int nr;
-
     if(node->isBranchNode) { //branch nodes are always blue
         SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
         return;
@@ -2605,48 +2603,26 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
         // default color for comment nodes
         SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
 
-        if(state->skeletonState->userCommentColoringOn == false) {
-            // conditional node coloring is disabled
-            // comment nodes have default color, return
-            return;
-        }
-
-        if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
-            //no substring match => keep default color and return
-            return;
-        }
-        if(state->skeletonState->commentColors[nr].a > 0.f) {
-            //substring match, change color
-            *color = state->skeletonState->commentColors[nr];
+        if(CommentSetting::useCommentColors) {
+            auto newColor = CommentSetting::getColor(QString(node->comment->content));
+            if(newColor.alpha() != 0) {
+                *color = color4F(newColor.red()/255, newColor.green()/255, newColor.blue()/255, newColor.alpha()/255);
+            }
         }
     }
-    return;
 }
 
 void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
-    int nr;
-
-        if(state->skeletonState->overrideNodeRadiusBool)
-            *radius = state->skeletonState->overrideNodeRadiusVal;
-        else
-            *radius = node->radius;
-
-        if(node->comment != NULL) {
-            if(state->skeletonState->commentNodeRadiusOn == false) {
-                // conditional node radius is disabled
-                return;
-            }
-
-            if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
-                //no substring match => keep default radius and return
-                return;
-            }
-
-            if(state->skeletonState->commentNodeRadii[nr] > 0.f) {
-                //substring match, change radius
-                *radius = state->skeletonState->commentNodeRadii[nr];
-            }
+    *radius = node->radius;
+    if(state->skeletonState->overrideNodeRadiusBool) {
+        *radius = state->skeletonState->overrideNodeRadiusVal;
+    }
+    if(node->comment != NULL && CommentSetting::useCommentNodeRadius) {
+        float newRadius = CommentSetting::getRadius(node->comment->content);
+        if(newRadius != 0) {
+            *radius = newRadius;
         }
+    }
 }
 
 #define RETVAL_MACRO(val, ptr) {if(NULL != ptr) {*ptr = val;} return;}
@@ -2885,31 +2861,6 @@ void Skeletonizer::deleteSelectedNodes() {
     }
     blockSignals(blockstate);
     emit resetData();
-}
-
-// index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
-// If -1, all substrings are compared against the comment.
-unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comment, int index) {
-    int i;
-
-    if(!comment) {
-        return -1;
-    }
-    if(index == -1) { //no index specified
-        for(i = 0; i < NUM_COMMSUBSTR; i++) {
-            if(state->viewerState->gui->commentSubstr->at(i).length() > 0
-                && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(i).toStdString().c_str())) != NULL) {
-                return i;
-            }
-        }
-    }
-    else if(index > -1 && index < NUM_COMMSUBSTR) {
-        if(state->viewerState->gui->commentSubstr->at(index).length() > 0
-           && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(index).toStdString().c_str())) != NULL) {
-            return index;
-        }
-    }
-    return -1;
 }
 
 bool Skeletonizer::areNeighbors(struct nodeListElement v, struct nodeListElement w) {

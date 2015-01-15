@@ -22,6 +22,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
     tabs.addTab(&treeviewTab, "Tree View");
     tabs.addTab(&segmentationTab, "Segmentation");
     tabs.addTab(&commandsTab, "Commands");
+    tabs.addTab(&commentsTab, "Comments");
 
     mainLayout.addWidget(&tabs);
     setLayout(&mainLayout);
@@ -111,6 +112,9 @@ void AnnotationWidget::loadSettings() {
     list.append(310);
     list.append(390);
     treeviewTab.splitter->setSizes(list);
+    settings.endGroup();
+
+    commentsTab.loadSettings();
 }
 
 void AnnotationWidget::saveSettings() {
@@ -130,6 +134,7 @@ void AnnotationWidget::saveSettings() {
     settings.setValue(ENABLE_COMMENT_LOCKING, commandsTab.commentLockingCheck->isChecked());
     settings.setValue(LOCKING_RADIUS, commandsTab.lockingRadiusSpin->value());
     settings.setValue(LOCK_TO_NODES_WITH_COMMENT, commandsTab.commentLockEdit->text());
-
     settings.endGroup();
+
+    commentsTab.saveSettings();
 }

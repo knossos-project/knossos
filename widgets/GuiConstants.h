@@ -3,7 +3,7 @@
 
 /* Constants for Widget-identification */
 const QString MAIN_WINDOW = "main_window";
-const QString COMMENTS_WIDGET = "comments_widget";
+const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_WIDGET = "dataset_widget";
 const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
@@ -19,15 +19,6 @@ const QString HEIGHT = "height";
 const QString POS_X  = "x";
 const QString POS_Y  = "y";
 const QString VISIBLE = "visible";
-
-/* Comments shortcuts */
-const QString COMMENT1 = "comment1";
-const QString COMMENT2 = "comment2";
-const QString COMMENT3 = "comment3";
-const QString COMMENT4 = "comment4";
-const QString COMMENT5 = "comment5";
-const QString COMMENTS_TAB_INDEX = "tab_index";
-
 
 /* Autosave */
 const QString AUTO_SAVING = "auto_saving";
@@ -131,32 +122,8 @@ const QString ENABLE_COMMENT_LOCKING = "enable_comment_locking";
 const QString LOCK_TO_NODES_WITH_COMMENT = "lock_to_nodes_with_comment";
 
 /* Comments Highlighting */
-const QString GREEN = "green";
-const QString ROSE = "rose";
-const QString AZURE = "azure";
-const QString PURPLE = "purple";
-const QString BROWN = "brown";
-
-const QString ENABLE_COND_COLORING = "enable_cond_coloring";
-const QString ENABLE_COND_RADIUS = "enable_cond_radius";
-
-const QString SUBSTR1 = "substring1";
-const QString SUBSTR2 = "substring2";
-const QString SUBSTR3 = "substring3";
-const QString SUBSTR4 = "substring4";
-const QString SUBSTR5 = "substring5";
-
-const QString COLOR1 = "color1";
-const QString COLOR2 = "color2";
-const QString COLOR3 = "color3";
-const QString COLOR4 = "color4";
-const QString COLOR5 = "color5";
-
-const QString RADIUS1 = "radius1";
-const QString RADIUS2 = "radius2";
-const QString RADIUS3 = "radius3";
-const QString RADIUS4 = "radius4";
-const QString RADIUS5 = "radius5";
+const QString CUSTOM_COMMENT_COLOR = "use_custom_comment_color";
+const QString CUSTOM_COMMENT_NODERADIUS = "use_custom_comment_node_radius";
 
 /* Tracing Time Widget */
 const QString RUNNING_TIME = "running_time";

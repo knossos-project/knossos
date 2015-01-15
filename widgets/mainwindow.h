@@ -70,11 +70,16 @@ class MainWindow : public QMainWindow {
     QString openFileDirectory;
     QString saveFileDirectory;
 
+    std::vector<QAction*> commentActions;
+
     QToolBar defaultToolbar;
+
+    // segmentation job mode
     QToolBar segJobModeToolbar;
     QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
     void updateTodosLeft();
 
+    void placeComment(const int index);
 public:
     std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
 
@@ -192,11 +197,6 @@ public slots:
     void previousCommentNodeSlot();
     void pushBranchNodeSlot();
     void popBranchNodeSlot();
-    void F1Slot();
-    void F2Slot();
-    void F3Slot();
-    void F4Slot();
-    void F5Slot();
     void pythonSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
