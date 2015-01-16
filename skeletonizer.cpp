@@ -1514,6 +1514,8 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->activeTree = NULL;
     skeletonState->activeNode = NULL;
     skeletonState->simpleTracing = false;
+    skeletonState->greatestNodeID = 0;
+    skeletonState->greatestTreeID = 0;
 
     skeletonState->branchStack = newStack(1048576);
 
