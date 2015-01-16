@@ -40,7 +40,7 @@ public:
     }
 };
 
-Session::Session() {
+Session::Session() : annotationMode(SkeletonizationMode) {
     qApp->installEventFilter(new ActivityEventFilter(*this));
 
     annotationTimer.setTimerType(Qt::PreciseTimer);

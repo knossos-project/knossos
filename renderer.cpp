@@ -24,6 +24,7 @@
 #define GLUT_DISABLE_ATEXIT_HACK
 #include "renderer.h"
 #include "functions.h"
+#include "session.h"
 #include "widgets/viewport.h"
 #include <math.h>
 
@@ -559,7 +560,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XY);
-                if (Segmentation::singleton().segmentationMode) {
+                if (Session::singleton().annotationMode == SegmentationMode) {
                     renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
@@ -692,7 +693,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XZ);
-                if (Segmentation::singleton().segmentationMode) {
+                if (Session::singleton().annotationMode == SegmentationMode) {
                     renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
@@ -816,7 +817,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_YZ);
-                if (Segmentation::singleton().segmentationMode) {
+                if (Session::singleton().annotationMode == SegmentationMode) {
                     renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }

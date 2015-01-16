@@ -33,6 +33,8 @@
 #include <QString>
 #include <QTimer>
 
+enum AnnotationMode { SkeletonizationMode, SegmentationMode };
+
 class Session : public QObject {
     Q_OBJECT
     class ActivityEventFilter;
@@ -47,6 +49,8 @@ class Session : public QObject {
     void handleTimeSlice();
 
 public:
+    AnnotationMode annotationMode;
+
     Coordinate movementCenter; // Center of movement area
     Coordinate movementRange; // Range around movement center for every dimension
     bool outsideMovementArea(Coordinate pos);

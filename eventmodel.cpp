@@ -26,6 +26,7 @@
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
+#include "session.h"
 #include "skeletonizer.h"
 #include "renderer.h"
 #include "segmentation.h"
@@ -160,7 +161,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             return false;
         }
         return false;
-    } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && !Segmentation::singleton().segmentationMode) {
+    } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && Session::singleton().annotationMode == SkeletonizationMode) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
     } else if(state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
         // check click mode of orthogonal viewports
@@ -229,7 +230,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    if (Segmentation::singleton().segmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
              rightMouseDownX = event->x();
@@ -595,8 +596,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 }
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-    auto & segmentation = Segmentation::singleton();
-    if (segmentation.segmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
         if (validPosition(event, VPfound) && notOrigin) {
             segmentation_work(event, VPfound);
@@ -611,7 +611,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if (segmentation.segmentationMode && segmentation.jobMode == false) { // in task mode the object should not be switched
+    if (Session::singleton().annotationMode == SegmentationMode && segmentation.jobMode == false) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
@@ -653,8 +653,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    auto & seg = Segmentation::singleton();
-    if (seg.segmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {//merge took already place on mouse down
             segmentation_work(event, VPfound);
         }
@@ -664,7 +663,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
-    if (Segmentation::singleton().segmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+    if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         connectedComponent(clickedCoordinate);
     }
@@ -694,7 +693,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         }
     } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
         emit zoomOrthoSignal(directionSign * 0.1);
-    } else if(Segmentation::singleton().segmentationMode && event->modifiers() == Qt::SHIFT) {
+    } else if(Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0)
             seg.brush.setRadius(0);

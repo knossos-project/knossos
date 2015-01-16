@@ -80,7 +80,7 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), segmentationMode(true), jobMode(false), hoverVersion(false), mouseFocusedObjectId(0) {
+Segmentation::Segmentation() : renderAllObjs(true), jobMode(false), hoverVersion(false), mouseFocusedObjectId(0) {
     loadOverlayLutFromFile();
 }
 

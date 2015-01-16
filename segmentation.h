@@ -142,7 +142,6 @@ Q_OBJECT
 public:
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
-    bool segmentationMode;
     bool jobMode;
     brush_t brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse

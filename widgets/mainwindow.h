@@ -27,6 +27,7 @@
 
 #include "viewport.h"
 #include "knossos-global.h"
+#include "session.h"
 #include "widgetcontainer.h"
 
 #include <array>
@@ -159,8 +160,7 @@ public slots:
     void saveAsSlot();
 
     /* edit skeleton menu*/
-    void segModeSelected();
-    void skelModeSelected();
+    void setAnnotationMode(AnnotationMode mode);
     void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();

@@ -33,7 +33,6 @@
 #include "version.h"
 #include "viewer.h"
 #include "viewport.h"
-#include "session.h"
 #include "scriptengine/scripting.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
@@ -191,7 +190,6 @@ void MainWindow::createToolbars() {
     };
     auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Dataset Options");
     auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
-    auto commentShortcutsButton = createToolToogleButton(":/images/icons/insert-text.png", "Comment Shortcuts");
     auto annotationButton = createToolToogleButton(":/images/icons/graph.png", "Annotation");
 
     //button → visibility
@@ -465,11 +463,11 @@ void MainWindow::createMenus() {
     auto segAnnotationModeGroup = new QActionGroup(this);
     segEditSegModeAction = segAnnotationModeGroup->addAction(tr("Segmentation Mode"));
     segEditSegModeAction->setCheckable(true);
-    segEditSegModeAction->setChecked(true);
     segEditSkelModeAction = segAnnotationModeGroup->addAction(tr("Skeletonization Mode"));
     segEditSkelModeAction->setCheckable(true);
-    connect(segEditSegModeAction, &QAction::triggered, this, &MainWindow::segModeSelected);
-    connect(segEditSkelModeAction, &QAction::triggered, this, &MainWindow::skelModeSelected);
+    segEditSkelModeAction->setChecked(true);
+    connect(segEditSegModeAction, &QAction::triggered, [this]() { setAnnotationMode(SegmentationMode); });
+    connect(segEditSkelModeAction, &QAction::triggered, [this]() { setAnnotationMode(SkeletonizationMode); });
     segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
     segEditMenu->addSeparator();
     segEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
@@ -478,11 +476,11 @@ void MainWindow::createMenus() {
     auto skelAnnotationModeGroup = new QActionGroup(this);
     skelEditSegModeAction = skelAnnotationModeGroup->addAction(tr("Segmentation Mode"));
     skelEditSegModeAction->setCheckable(true);
-    skelEditSegModeAction->setChecked(true);
     skelEditSkelModeAction = skelAnnotationModeGroup->addAction(tr("Skeletonization Mode"));
     skelEditSkelModeAction->setCheckable(true);
-    connect(skelEditSegModeAction, &QAction::triggered, this, &MainWindow::segModeSelected);
-    connect(skelEditSkelModeAction, &QAction::triggered, this, &MainWindow::skelModeSelected);
+    skelEditSkelModeAction->setChecked(true);
+    connect(skelEditSegModeAction, &QAction::triggered, [this]() { setAnnotationMode(SegmentationMode); });
+    connect(skelEditSkelModeAction, &QAction::triggered, [this]() { setAnnotationMode(SkeletonizationMode); });
     skelEditMenu->addActions({skelEditSegModeAction, skelEditSkelModeAction});
 
     skelEditMenu->addSeparator();
@@ -491,13 +489,6 @@ void MainWindow::createMenus() {
     addNodeAction->setCheckable(true);
     addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
     addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    if(Segmentation::singleton().segmentationMode) {
-        menuBar()->addMenu(segEditMenu);
-    }
-    else {
-        menuBar()->addMenu(skelEditMenu);
-    }
 
     linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
     linkWithActiveNodeAction->setCheckable(true);
@@ -529,6 +520,13 @@ void MainWindow::createMenus() {
 
     skelEditMenu->addSeparator();
     skelEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
+
+    if(Session::singleton().annotationMode == SegmentationMode) {
+        menuBar()->addMenu(segEditMenu);
+    }
+    else {
+        menuBar()->addMenu(skelEditMenu);
+    }
 
     auto viewMenu = menuBar()->addMenu("Navigation");
 
@@ -792,26 +790,21 @@ void MainWindow::saveAsSlot() {
     state->viewerState->renderInterval = FAST;
 }
 
-/* edit skeleton functionality */
-void MainWindow::segModeSelected() {
-    if(Segmentation::singleton().segmentationMode) {
+void MainWindow::setAnnotationMode(AnnotationMode mode) {
+    if(Session::singleton().annotationMode == mode) {
         return;
     }
-    segEditSegModeAction->setChecked(true);
-    skelEditSegModeAction->setChecked(true);
-    Segmentation::singleton().segmentationMode = true;
-    menuBar()->insertMenu(skelEditMenu->menuAction(), segEditMenu);
-    menuBar()->removeAction(skelEditMenu->menuAction());
-}
-void MainWindow::skelModeSelected() {
-    if(Segmentation::singleton().segmentationMode == false) {
-        return;
+    Session::singleton().annotationMode = mode;
+    segEditSkelModeAction->setChecked(mode == SkeletonizationMode);
+    skelEditSkelModeAction->setChecked(mode == SegmentationMode);
+    if(mode == SkeletonizationMode) {
+        menuBar()->insertMenu(segEditMenu->menuAction(), skelEditMenu);
+        menuBar()->removeAction(segEditMenu->menuAction());
     }
-    segEditSkelModeAction->setChecked(true);
-    skelEditSkelModeAction->setChecked(true);
-    Segmentation::singleton().segmentationMode = false;
-    menuBar()->insertMenu(segEditMenu->menuAction(), skelEditMenu);
-    menuBar()->removeAction(segEditMenu->menuAction());
+    else {
+        menuBar()->insertMenu(skelEditMenu->menuAction(), segEditMenu);
+        menuBar()->removeAction(skelEditMenu->menuAction());
+    }
 }
 
 void MainWindow::skeletonStatisticsSlot()
@@ -977,7 +970,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
-    settings.setValue(WORK_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
+    settings.setValue(TRACING_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
+    settings.setValue(ANNOTATION_MODE, Session::singleton().annotationMode);
 
     int i = 0;
     for (const auto & path : *skeletonFileHistory) {
@@ -1038,9 +1032,10 @@ void MainWindow::loadSettings() {
 
     saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY, autosaveLocation).toString();
 
-    const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(skeletonizerWorkMode));
+    const auto tracingMode = settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
+    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(tracingMode));
 
+    setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toUInt()));
     updateRecentFile(settings.value(LOADED_FILE1, "").toString());
     updateRecentFile(settings.value(LOADED_FILE2, "").toString());
     updateRecentFile(settings.value(LOADED_FILE3, "").toString());
@@ -1269,7 +1264,7 @@ void MainWindow::popBranchNodeSlot() {
 }
 
 void MainWindow::placeComment(const int index) {
-    if(Segmentation::singleton().segmentationMode) {
+    if(Session::singleton().annotationMode == SegmentationMode) {
         Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
         return;
     }
