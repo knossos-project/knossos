@@ -46,12 +46,8 @@ QVariant CommentsModel::data(const QModelIndex & index, int role) const {
 bool CommentsModel::setData(const QModelIndex & index, const QVariant & value, int role) {
     if (index.isValid()) {
         auto & comment = CommentSetting::comments[index.row()];
-        if (index.column() == 2 && role == Qt::BackgroundRole) {
-            auto color = QColorDialog::getColor(comment.color, nullptr, "Select comment color", QColorDialog::ShowAlphaChannel);
-            if (color.isValid() == QColorDialog::Accepted) {
-                comment.color = color;
-            }
-        } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
+
+        if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch (index.column()) {
             case 1: comment.text = value.toString(); break;
             case 3: {
@@ -82,6 +78,17 @@ Qt::ItemFlags CommentsModel::flags(const QModelIndex & index) const {
     return (index.column() == 0) ? flags | Qt::ItemNeverHasChildren : flags | Qt::ItemIsEditable;
 }
 
+void CommentsTab::itemDoubleClicked(const QModelIndex &index) {
+    auto & comment = CommentSetting::comments[index.row()];
+    if (index.column() == 2) {
+        auto color = QColorDialog::getColor(comment.color, this, "Select comment color", QColorDialog::ShowAlphaChannel);
+        if (color.isValid() == QColorDialog::Accepted) {
+            comment.color = color;
+        }
+    }
+}
+
+
 CommentsTab::CommentsTab(QWidget *parent) : QWidget(parent) {
     auto mainlayout = new QVBoxLayout();
 
@@ -99,6 +106,8 @@ CommentsTab::CommentsTab(QWidget *parent) : QWidget(parent) {
     for (const auto & index : {0, 2, 3}) {
         commentsTable.resizeColumnToContents(index);
     }
+    QObject::connect(&commentsTable, &QTreeView::doubleClicked, this, &CommentsTab::itemDoubleClicked);
+
     mainlayout->addLayout(checkboxLayout);
     mainlayout->addWidget(&commentsTable);
     setLayout(mainlayout);

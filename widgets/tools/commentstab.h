@@ -35,6 +35,8 @@ class CommentsTab : public QWidget
     QCheckBox useCommentRadiusCheckbox{"Use custom comment radius"};
     CommentsModel commentModel;
     QTreeView commentsTable;
+
+    void itemDoubleClicked(const QModelIndex &index);
 public:
     void saveSettings();
     void loadSettings();
