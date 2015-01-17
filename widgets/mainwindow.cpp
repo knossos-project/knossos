@@ -813,18 +813,6 @@ void MainWindow::setAnnotationMode(AnnotationMode mode) {
     }
 }
 
-void MainWindow::skeletonStatisticsSlot()
-{
-    QMessageBox info;
-    info.setIcon(QMessageBox::Information);
-    info.setWindowTitle("Information");
-    info.setText("This feature is not yet implemented");
-    info.setWindowFlags(Qt::WindowStaysOnTopHint);
-    info.addButton(QMessageBox::Ok);
-    info.exec();
-}
-
-
 void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
     clearSkeletonSlotNoGUI();
     annotationFilename.clear();//unload skeleton file

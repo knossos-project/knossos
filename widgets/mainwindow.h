@@ -161,7 +161,6 @@ public slots:
 
     /* edit skeleton menu*/
     void setAnnotationMode(AnnotationMode mode);
-    void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
     void clearSkeletonWithoutConfirmation();
