@@ -464,7 +464,6 @@ void MainWindow::createMenus() {
     segEditSegModeAction->setCheckable(true);
     segEditSkelModeAction = segAnnotationModeGroup->addAction(tr("Skeletonization Mode"));
     segEditSkelModeAction->setCheckable(true);
-    segEditSkelModeAction->setChecked(true);
     connect(segEditSegModeAction, &QAction::triggered, [this]() { setAnnotationMode(SegmentationMode); });
     connect(segEditSkelModeAction, &QAction::triggered, [this]() { setAnnotationMode(SkeletonizationMode); });
     segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
@@ -534,12 +533,7 @@ void MainWindow::createMenus() {
     skelEditMenu->addSeparator();
     skelEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
-    if(Session::singleton().annotationMode == SegmentationMode) {
-        menuBar()->addMenu(segEditMenu);
-    }
-    else {
-        menuBar()->addMenu(skelEditMenu);
-    }
+    menuBar()->addMenu(skelEditMenu);
 
     auto viewMenu = menuBar()->addMenu("Navigation");
 
@@ -804,19 +798,18 @@ void MainWindow::saveAsSlot() {
 }
 
 void MainWindow::setAnnotationMode(AnnotationMode mode) {
-    if(Session::singleton().annotationMode == mode) {
+    if (Session::singleton().annotationMode == mode) {
         return;
     }
     Session::singleton().annotationMode = mode;
-    segEditSkelModeAction->setChecked(mode == SkeletonizationMode);
-    skelEditSkelModeAction->setChecked(mode == SegmentationMode);
-    if(mode == SkeletonizationMode) {
+    if (mode == SkeletonizationMode) {
         menuBar()->insertMenu(segEditMenu->menuAction(), skelEditMenu);
         menuBar()->removeAction(segEditMenu->menuAction());
-    }
-    else {
+        skelEditSkelModeAction->setChecked(true);
+    } else {
         menuBar()->insertMenu(skelEditMenu->menuAction(), segEditMenu);
         menuBar()->removeAction(skelEditMenu->menuAction());
+        segEditSegModeAction->setChecked(true);
     }
 }
 
