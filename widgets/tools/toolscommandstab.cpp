@@ -171,7 +171,6 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, this, &ToolsCommandsTab::updateTreeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, this, &ToolsCommandsTab::updateTreeCount);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::setSimpleTracing, this, &ToolsCommandsTab::setSimpleTracing);
 
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
 }

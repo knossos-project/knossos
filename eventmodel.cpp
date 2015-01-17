@@ -147,13 +147,14 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     mouseDownX = event->x();
     mouseDownY = event->y();
+    auto & skel = Skeletonizer::singleton();
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
         auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
-            Skeletonizer::singleton().setActiveNode(NULL, clickedNode);
+            skel.setActiveNode(NULL, clickedNode);
             return true;
         }
 
@@ -182,14 +183,14 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         if(clickedNode) {
             auto activeNode = state->skeletonState->activeNode;
             if(activeNode) {
-                if (Skeletonizer::singleton().findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
+                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
-                } else if (Skeletonizer::singleton().findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
+                } else if (skel.findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNode, activeNode->nodeID, NULL);
                 } else{
-                    if(state->skeletonState->simpleTracing
-                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
-                        // prevent cycles
+                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
+                        QMessageBox::information(nullptr, "Cycle detected!",
+                                                 "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return false;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNode);
@@ -204,18 +205,20 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
+        auto & skel = Skeletonizer::singleton();
         auto activeNode = state->skeletonState->activeNode;
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
-            // Delete segment between clicked and active node
+            // Toggle segment between clicked and active node
             if(activeNode) {
-                if(Skeletonizer::singleton().findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
+                if(skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(activeNode->nodeID, clickedNode, 0);
-                } else if (Skeletonizer::singleton().findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
+                } else if (skel.findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNode, activeNode->nodeID, 0);
                 } else {
-                    if(state->skeletonState->simpleTracing
-                       && Skeletonizer::areNeighbors(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode)) == false) {
+                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
+                        QMessageBox::information(nullptr, "Cycle detected!",
+                                                 "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return false;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNode);

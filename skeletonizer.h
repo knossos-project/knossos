@@ -57,7 +57,6 @@ signals:
 
     void autosaveSignal();
     void setRecenteringPositionSignal(int x, int y, int z);
-    void setSimpleTracing(bool active);
     void segmentationJobModeChanged(bool enabled);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
@@ -138,16 +137,15 @@ public:
         , linkedNodes
         , unlinkedNodes
     };
-
+    bool simpleTracing;
     TracingMode getTracingMode() const;
     void setTracingMode(TracingMode mode);
-    static bool areNeighbors(struct nodeListElement v, struct nodeListElement w);
+    bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
 private:
     void clearNodeSelection();
     void clearTreeSelection();
 
     TracingMode tracingMode;
-    static std::unordered_map<uint, uint> dijkstraGraphSearch(nodeListElement *node);
 };
 
 #endif // SKELETONIZER_H

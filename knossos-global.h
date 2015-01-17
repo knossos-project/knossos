@@ -756,7 +756,6 @@ struct skeletonState {
     int skeletonTime;
     int skeletonTimeCorrection;
 
-    bool simpleTracing;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
     struct nodeListElement *activeNode;

@@ -102,7 +102,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::autosaveSignal, this, &MainWindow::autosaveSlot);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::setSimpleTracing, this, &MainWindow::setSimpleTracing);
 
     createToolbars();
     createMenus();
@@ -484,6 +483,10 @@ void MainWindow::createMenus() {
     skelEditMenu->addActions({skelEditSegModeAction, skelEditSkelModeAction});
 
     skelEditMenu->addSeparator();
+    auto simpleTracingAction = skelEditMenu->addAction(tr("Deactivate Simple Tracing"));
+    connect(simpleTracingAction, &QAction::triggered, [this](bool) { setSimpleTracing(!Skeletonizer::singleton().simpleTracing); });
+    skelEditMenu->addSeparator();
+
     auto workModeEditMenuGroup = new QActionGroup(this);
     addNodeAction = workModeEditMenuGroup->addAction(tr("Add one unlinked Node"));
     addNodeAction->setCheckable(true);
@@ -496,13 +499,23 @@ void MainWindow::createMenus() {
     dropNodesAction = workModeEditMenuGroup->addAction(tr("Add unlinked Nodes"));
     dropNodesAction->setCheckable(true);
 
-    QObject::connect(addNodeAction, &QAction::triggered, [](){
+    QObject::connect(addNodeAction, &QAction::triggered, [this](){
+        if(Skeletonizer::singleton().simpleTracing) {
+            QMessageBox::information(this, "Not available in Simple Tracing mode",
+                                     "Please deactivate Simple Tracing for this function.");
+            return;
+        }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
     });
     QObject::connect(linkWithActiveNodeAction, &QAction::triggered, [](){
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
     });
-    QObject::connect(dropNodesAction, &QAction::triggered, [](){
+    QObject::connect(dropNodesAction, &QAction::triggered, [this](){
+        if(Skeletonizer::singleton().simpleTracing) {
+            QMessageBox::information(this, "Not available in Simple Tracing mode",
+                                     "Please deactivate Simple Tracing for this function.");
+            return;
+        }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::unlinkedNodes);
     });
 
@@ -971,7 +984,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
     settings.setValue(TRACING_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
-    settings.setValue(ANNOTATION_MODE, Session::singleton().annotationMode);
+    settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
+    settings.setValue(ANNOTATION_MODE, static_cast<uint>(Session::singleton().annotationMode));
 
     int i = 0;
     for (const auto & path : *skeletonFileHistory) {
@@ -1034,8 +1048,10 @@ void MainWindow::loadSettings() {
 
     const auto tracingMode = settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
     state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(tracingMode));
+    setSimpleTracing(settings.value(SIMPLE_TRACING, true).toBool());
 
     setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toUInt()));
+
     updateRecentFile(settings.value(LOADED_FILE1, "").toString());
     updateRecentFile(settings.value(LOADED_FILE2, "").toString());
     updateRecentFile(settings.value(LOADED_FILE3, "").toString());
@@ -1242,6 +1258,11 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
+    if(Skeletonizer::singleton().simpleTracing) {
+        QMessageBox::information(this, "Not available in Simple Tracing mode",
+                                 "Please deactivate Simple Tracing for this function.");
+        return;
+    }
     color4F treeCol;
     treeCol.r = -1.;
     Skeletonizer::singleton().addTreeListElement(0, treeCol);
@@ -1304,9 +1325,9 @@ void MainWindow::resizeViewports(int width, int height) {
 }
 
 void MainWindow::setSimpleTracing(bool simple) {
-    skelEditMenu->actions().at(1)->setEnabled(!simple); // add one unlinked node
-    skelEditMenu->actions().at(3)->setEnabled(!simple); // add unlinked nodes
-    skelEditMenu->actions().at(5)->setEnabled(!simple); // add tree
+    Skeletonizer::singleton().simpleTracing = simple;
+    skelEditMenu->actions().at(3)->setText(simple ? "Deactivate Simple Tracing" : "Activate Simple Tracing");
+    widgetContainer->annotationWidget->commandsTab.setSimpleTracing(simple);
 }
 
 void MainWindow::pythonSlot() {

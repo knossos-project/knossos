@@ -460,14 +460,15 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
 void ToolsTreeviewTab::linkNodesAction() {
     const auto node0 = state->skeletonState->selectedNodes[0];
     const auto node1 = state->skeletonState->selectedNodes[1];
+    auto & skel = Skeletonizer::singleton();
     //segments are only stored and searched in one direction so we have to search for both
     if (Skeletonizer::findSegmentByNodeIDs(node0->nodeID, node1->nodeID) != nullptr) {
-        Skeletonizer::singleton().delSegment(node0->nodeID, node1->nodeID, nullptr);
+        skel.delSegment(node0->nodeID, node1->nodeID, nullptr);
     } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
-        Skeletonizer::singleton().delSegment(node1->nodeID, node0->nodeID, nullptr);
-    } else if (!state->skeletonState->simpleTracing || Skeletonizer::areNeighbors(*node0, *node1)) {
+        skel.delSegment(node1->nodeID, node0->nodeID, nullptr);
+    } else if (!skel.simpleTracing || Skeletonizer::singleton().areConnected(*node0, *node1)) {
         //nodes are not already linked
-        Skeletonizer::singleton().addSegment(node0->nodeID, node1->nodeID);
+        skel.addSegment(node0->nodeID, node1->nodeID);
     }
 }
 

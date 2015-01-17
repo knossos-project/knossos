@@ -36,9 +36,7 @@
 #include <queue>
 #include <set>
 
-Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
-    state->skeletonState->simpleTracing = false;
-
+Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(true) {
     state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
@@ -324,10 +322,6 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("z", QString::number(state->scale.z / state->magnification));
     xml.writeEndElement();
 
-    xml.writeStartElement("tracing");
-    xml.writeAttribute("simple", QString::number(state->skeletonState->simpleTracing ? 1 : 0));
-    xml.writeEndElement();
-
     xml.writeStartElement("RadiusLocking");
     xml.writeAttribute("enableCommentLocking", QString::number(state->skeletonState->lockPositions));
     xml.writeAttribute("lockingRadius", QString::number(state->skeletonState->lockRadius));
@@ -495,7 +489,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<std::pair<uint, uint>> edgeVector;
 
     bench.start();
-    emit setSimpleTracing(false);
     const auto blockState = this->signalsBlocked();
     blockSignals(true);
     if (!xml.readNextStartElement() || xml.name() != "things") {
@@ -523,10 +516,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     QStringRef attribute = attributes.value("path");
                     QString path = attribute.isNull() ? "" : attribute.toString();
                     state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(true, path);
-                } else if(xml.name() == "tracing") {
-                    QStringRef attribute = attributes.value("simple");
-                    state->skeletonState->simpleTracing = attribute.isNull() ? false : static_cast<bool>(attribute.toInt());
-                    emit setSimpleTracing(state->skeletonState->simpleTracing);
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.
@@ -1513,7 +1502,6 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->treeElements = 0;
     skeletonState->activeTree = NULL;
     skeletonState->activeNode = NULL;
-    skeletonState->simpleTracing = false;
     skeletonState->greatestNodeID = 0;
     skeletonState->greatestTreeID = 0;
 
@@ -2060,8 +2048,8 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     //  containing that node into a new tree, unless the connected component
     //  is equivalent to exactly one entire tree.
 
-    //  It uses depth-first search. Breadth-first-search would be the same with
-    //  a queue instead of a stack for storing pending nodes. There is no
+    //  It uses breadth-first-search. Depth-first-search would be the same with
+    //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
     //
     //  TODO trees might become empty when the connected component spans more
@@ -2071,19 +2059,24 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     if(!node) {
         return false;
     }
+    std::set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
+    std::queue<nodeListElement*> queue;
+    std::set<nodeListElement*> visitedNodes;
+    visitedNodes.insert(node);
+    queue.push(node);
+    while(queue.size() > 0) {
+        auto nextNode = queue.front();
+        queue.pop();
+        treesSeen.insert(nextNode->correspondingTree);
 
-    std::unordered_map<uint, uint> connectedComponent = dijkstraGraphSearch(node);
-
-    //  This is used to keep track of which trees we've seen. The connected
-    //  component for a specific node can be part of more than one tree. That
-    //  makes it slightly tedious to check whether the connected component is a
-    //  strict subgraph.
-
-    std::vector<treeListElement*> treesSeen;
-    for(const auto pair : connectedComponent) {
-        auto node = findNodeByNodeID(pair.first);
-        if(node) {
-            treesSeen.push_back(node->correspondingTree);
+        auto segment = nextNode->firstSegment;
+        while(segment) {
+            auto *neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
+            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
+                visitedNodes.insert(neighbor);
+                queue.push(neighbor);
+            }
+            segment = segment->next;
         }
     }
 
@@ -2105,48 +2098,46 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     for(auto tree : treesSeen) {
         nodeCountAllTrees += tree->size;
     }
+    if(treesSeen.size() == 1 || visitedNodes.size() == nodeCountAllTrees) {
+        QMessageBox::information(nullptr, "Nothing to split",
+                                 "The component spans an entire tree or multiple whole trees. Nothing to split.");
+        return visitedNodes.size();
+    }
 
-    if(treesSeen.size() > 1 || connectedComponent.size() < nodeCountAllTrees) {
-        color4F treeCol;
-        treeCol.r = -1.;
-        auto newTree = state->viewer->skeletonizer->addTreeListElement(0, treeCol);
-
-        // Splitting the connected component.
-        struct nodeListElement *last = NULL;
-        for(auto nodePair : connectedComponent) {
-            // Removing node list element from its old position
-            auto n = findNodeByNodeID(nodePair.first);
-            --n->correspondingTree->size;
-            if(n->previous != NULL) {
-                n->previous->next = n->next;
-            }
-            else {
-                n->correspondingTree->firstNode = n->next;
-            }
-            if(n->next != NULL) {
-                n->next->previous = n->previous;
-            }
-            // Inserting node list element into new list.
-            ++newTree->size;
-            n->next = NULL;
-            if(last != NULL) {
-                n->previous = last;
-                last->next = n;
-            }
-            else {
-                n->previous = NULL;
-                newTree->firstNode = n;
-            }
-            last = n;
-            n->correspondingTree = newTree;
+    color4F treeCol;
+    treeCol.r = -1.;
+    auto newTree = state->viewer->skeletonizer->addTreeListElement(0, treeCol);
+    // Splitting the connected component.
+    struct nodeListElement *last = NULL;
+    for(auto node : visitedNodes) {
+        // Removing node list element from its old position
+        --node->correspondingTree->size;
+        if(node->previous != NULL) {
+            node->previous->next = node->next;
         }
-        state->skeletonState->skeletonChanged = true;
+        else {
+            node->correspondingTree->firstNode = node->next;
+        }
+        if(node->next != NULL) {
+            node->next->previous = node->previous;
+        }
+        // Inserting node list element into new list.
+        ++newTree->size;
+        node->next = NULL;
+        if(last != NULL) {
+            node->previous = last;
+            last->next = node;
+        }
+        else {
+            node->previous = NULL;
+            newTree->firstNode = node;
+        }
+        last = node;
+        node->correspondingTree = newTree;
     }
-    else {
-        qDebug() << "The connected component is equal to the entire tree, not splitting.";
-    }
+    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
-    return connectedComponent.size();
+    return visitedNodes.size();
 }
 
 bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeID) {
@@ -2865,67 +2856,28 @@ void Skeletonizer::deleteSelectedNodes() {
     emit resetData();
 }
 
-bool Skeletonizer::areNeighbors(struct nodeListElement v, struct nodeListElement w) {
-    auto reachableNodes = dijkstraGraphSearch(&v);
-    auto iter = reachableNodes.find(w.nodeID);
-    if(iter != reachableNodes.end()) {
-        return iter->second == 1;
-    }
-    return false;
-}
-
-// returns a map of all reached nodes with key: nodeID and value: distance from 'node'
-std::unordered_map<uint, uint> Skeletonizer::dijkstraGraphSearch(struct nodeListElement *node) {
-    std::unordered_map<uint, uint> result;
-     // an ordered set to reduce look-up time for the node with shortest distance
-    std::set<std::pair<uint, struct nodeListElement *> > nodeQueue;
-    result.insert({node->nodeID, 0});
-    nodeQueue.insert(std::make_pair(0, node));
-
-    std::queue<struct nodeListElement *> tmpQueue;
-    std::unordered_map<uint, struct nodeListElement *> visitedNodes;
-    tmpQueue.push(node);
-    visitedNodes.insert({node->nodeID, node});
-
-    // BFS to mark all connected nodes with distance of infinity
-    while(tmpQueue.empty() == false) {
-       struct nodeListElement *nextNode = tmpQueue.front();
-       tmpQueue.pop();
-
-       if(nextNode != node) {
-           result.insert({nextNode->nodeID, UINT_MAX});
-           nodeQueue.insert(std::make_pair(UINT_MAX, nextNode));
-       }
-
-       struct segmentListElement *seg = nextNode->firstSegment;
-       while(seg) {
-           struct nodeListElement *neighbor = (seg->flag == SEGMENT_FORWARD)? seg->target : seg->source;
-           if(visitedNodes.find(neighbor->nodeID) == visitedNodes.end()) {
-               visitedNodes.insert({neighbor->nodeID, neighbor});
-               tmpQueue.push(neighbor);
-           }
-           seg = seg->next;
-       }
-    }
-    // dijkstra's algorithm
-    while(nodeQueue.empty() == false) {
-        struct nodeListElement *nextNode = nodeQueue.begin()->second;
-        nodeQueue.erase(nodeQueue.begin());
-
-        struct segmentListElement *seg = nextNode->firstSegment;
-        while(seg) {
-            struct nodeListElement *neighbor = (seg->flag == SEGMENT_FORWARD)? seg->target : seg->source;
-            uint currDistance = result[neighbor->nodeID];
-            uint altDistance = result[nextNode->nodeID] + 1;
-            if(altDistance < currDistance) {
-                nodeQueue.erase(std::make_pair(currDistance, neighbor));
-                result[neighbor->nodeID] = altDistance;
-                nodeQueue.insert(std::make_pair(altDistance, neighbor));
+bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement & w) const {
+    std::queue<const nodeListElement*> queue;
+    std::set<const nodeListElement*> visitedNodes;
+    visitedNodes.insert(&v);
+    queue.push(&v);
+    while(queue.size() > 0) {
+        auto nextNode = queue.front();
+        queue.pop();
+        if(nextNode == &w) {
+            return true;
+        }
+        auto segment = nextNode->firstSegment;
+        while(segment) {
+            auto neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
+            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
+                visitedNodes.insert(neighbor);
+                queue.push(neighbor);
             }
-            seg = seg->next;
+            segment = segment->next;
         }
     }
-    return result;
+    return false;
 }
 
 Skeletonizer::TracingMode Skeletonizer::getTracingMode() const {
