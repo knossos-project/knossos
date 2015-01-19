@@ -57,7 +57,6 @@ signals:
 
     void autosaveSignal();
     void setRecenteringPositionSignal(int x, int y, int z);
-    void segmentationJobModeChanged(bool enabled);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);

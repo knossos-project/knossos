@@ -528,7 +528,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     } else {
                         magnification = 0;
                     }
-                } else if(xml.name() == "segmentationJobMode") {
+                } else if(xml.name() == "MovementArea") {
                     auto & session = Session::singleton();
                     Coordinate center = session.movementCenter;
                     Coordinate range = session.movementRange;
@@ -556,13 +556,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     attribute = attributes.value("range.z");
                     if(attribute.isNull() == false) {
                         range.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
-                    }
-                    attribute = attributes.value("enabled");
-                    if(attribute.isNull() == false) {
-                        Segmentation::singleton().jobMode = true;
-                        blockSignals(false);
-                        emit segmentationJobModeChanged(static_cast<bool>(attribute.toInt()));
-                        blockSignals(true);
                     }
                     session.updateMovementArea(center, range);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
