@@ -24,9 +24,9 @@
 #include "knossos.h"
 
 #include "file_io.h"
-#include "ftp.h"
 #include "knossos-global.h"
 #include "loader.h"
+#include "network.h"
 #include "remote.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "scriptengine/scripting.h"

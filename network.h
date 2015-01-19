@@ -1,6 +1,7 @@
-#ifndef FTP_H
-#define FTP_H
+#ifndef NETWORK_H
+#define NETWORK_H
 
+#include <QNetworkAccessManager>
 #include <QThread>
 #include "knossos-global.h"
 #include "loader.h"
@@ -22,4 +23,17 @@ protected:
     void *ctx;
 };
 
-#endif // FTP_H
+class Network : public QObject {
+Q_OBJECT
+    QNetworkAccessManager manager;
+
+public:
+    explicit Network(const QObject *parent = nullptr);
+
+    static Network & singleton() {
+        static Network network;
+        return network;
+    }
+};
+
+#endif // NETWORK_H

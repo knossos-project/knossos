@@ -23,9 +23,9 @@
  */
 #include "loader.h"
 
-#include "ftp.h"
 #include "knossos.h"
 #include "knossos-global.h"
+#include "network.h"
 #include "segmentation.h"
 #include "session.h"
 

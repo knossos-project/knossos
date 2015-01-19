@@ -1,19 +1,22 @@
-﻿#include <QSemaphore>
-#include <QDir>
+﻿#include "network.h"
 
-#include "ftp.h"
 #include "knossos-global.h"
 #include "loader.h"
+
+#include <QDir>
+#include <QSemaphore>
+
+#include <curl/curl.h>
+#include <curl/multi.h>
 #include <stdio.h>
 #ifdef Q_OS_WIN
 #include "windows.h"
 #endif
-
-#include <curl/curl.h>
-#include <curl/multi.h>
 #ifdef Q_OS_UNIX
 #include <unistd.h>
 #endif
+
+Network::Network(const QObject *) {}
 
 static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {

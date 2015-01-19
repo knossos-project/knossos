@@ -13,12 +13,12 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
-#include "ftp.h"
 #include "GuiConstants.h"
 #include "knossos.h"
 #include "knossos-global.h"
 #include "loader.h"
 #include "mainwindow.h"
+#include "network.h"
 #include "viewer.h"
 
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
