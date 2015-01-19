@@ -614,7 +614,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if (Session::singleton().annotationMode == SegmentationMode && segmentation.jobMode == false) { // in task mode the object should not be switched
+    if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);

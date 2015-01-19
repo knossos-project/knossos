@@ -47,6 +47,9 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
                 Segmentation::singleton().mergelistLoad(file);
                 mergelistSuccess = true;
             }
+            if (fileInside == "microworker.txt") {
+                Segmentation::singleton().jobLoad(file);
+            }
             if (cubeRegEx.exactMatch(fileInside)) {
                 file.open(QIODevice::ReadOnly);
                 auto cube = file.readAll();
@@ -90,6 +93,16 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 Segmentation::singleton().mergelistSave(file_write);
             } else {
                 qDebug() << filename << "saving mergelist failed";
+                allSuccess = false;
+            }
+        }
+        if (Segmentation::singleton().job.active) {
+            QuaZipFile file_write(&archive_write);
+            const bool open = zipCreateFile(file_write, "microworker.txt", 1);
+            if (open) {
+                Segmentation::singleton().jobSave(file_write);
+            } else {
+                qDebug() << filename << "saving segmentation job failed";
                 allSuccess = false;
             }
         }
