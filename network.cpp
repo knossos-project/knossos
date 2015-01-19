@@ -4,6 +4,9 @@
 #include "loader.h"
 
 #include <QDir>
+#include <QHttpMultiPart>
+#include <QMessageBox>
+#include <QNetworkReply>
 #include <QSemaphore>
 
 #include <curl/curl.h>
@@ -17,6 +20,31 @@
 #endif
 
 Network::Network(const QObject *) {}
+
+void Network::submitSegmentationJob(const QString & path) {
+   QHttpPart part;
+   part.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/zip"));
+   // Django requires enctype="multipart/form-data" for receiving file uploads
+   part.setHeader(QNetworkRequest::ContentDispositionHeader,
+                  QVariant("enctype=\"multipart/form-data\"; name=\"submit\"; filename=\"" + QFileInfo(path).fileName() + "\""));
+   auto uploadfile = new QFile(path);
+   uploadfile->open(QIODevice::ReadOnly);
+   part.setBodyDevice(uploadfile);
+
+   auto multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+   multiPart->append(part);
+   uploadfile->setParent(multiPart);
+   auto & job = Segmentation::singleton().job;
+   QNetworkRequest request(QUrl(QString("http://localhost:8000/jobs/job_%0/camp_%1/mw_%2/").arg(job.id).arg(job.campaign).arg(job.worker)));
+   auto reply = manager.post(request, multiPart);
+   multiPart->setParent(reply);
+   connect(reply, &QNetworkReply::finished, [reply]() {
+       QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
+       QMessageBox verificationBox(QMessageBox::Information, "Your verification", content);
+       verificationBox.exec();
+       reply->deleteLater();
+   });
+}
 
 static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {

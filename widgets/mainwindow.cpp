@@ -29,6 +29,7 @@
 #include "knossos.h"
 #include "knossos-global.h"
 #include "mainwindow.h"
+#include "network.h"
 #include "skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
@@ -248,7 +249,6 @@ void MainWindow::setJobModeUI(bool enabled) {
         }
         viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
     } else {
-        Segmentation::singleton().jobMode = false;
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
@@ -267,7 +267,16 @@ void MainWindow::updateTodosLeft() {
     }
     else {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
-        QMessageBox::information(this, "Good Job!", "You're done, now save your work and upload it under ...");
+        QMessageBox msgBox(QMessageBox::Question,
+                           "Good Job, you're done!", "Upload your work now to receive a verification?",
+                           QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        if(msgBox.exec() == QMessageBox::Yes) {
+            auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
+            auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
+            annotationFileSave(finishedJobPath, nullptr);
+            Network::singleton().submitSegmentationJob(finishedJobPath);
+        }
     }
 }
 

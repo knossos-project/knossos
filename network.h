@@ -34,6 +34,8 @@ public:
         static Network network;
         return network;
     }
+
+    void submitSegmentationJob(const QString &filename);
 };
 
 #endif // NETWORK_H
