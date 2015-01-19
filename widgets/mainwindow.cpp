@@ -93,8 +93,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::segmentationJobModeChanged, this, &MainWindow::setSegmentationJobMode);
-
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -227,7 +225,7 @@ void MainWindow::createToolbars() {
     nextBtn->setShortcut(QKeySequence(Qt::Key_N));
     QObject::connect(prevBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectPrevTodoObject(); });
     QObject::connect(nextBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectNextTodoObject(); });
-    QObject::connect(exitButton, &QPushButton::clicked, [this](bool) { setSegmentationJobMode(false); });
+    QObject::connect(exitButton, &QPushButton::clicked, [this](bool) { Segmentation::singleton().job.active = false; setJobModeUI(false); });
 
     segJobModeToolbar.addWidget(prevBtn);
     segJobModeToolbar.addWidget(nextBtn);
@@ -239,9 +237,8 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(exitButton);
 }
 
-void MainWindow::setSegmentationJobMode(bool enabled) {
+void MainWindow::setJobModeUI(bool enabled) {
     if(enabled) {
-        Segmentation::singleton().jobMode = true;
         menuBar()->hide();
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
@@ -720,6 +717,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     updateTitlebar();
 
+    if(Segmentation::singleton().job.active) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
+        setJobModeUI(true);
+        Segmentation::singleton().startJobMode();
+    }
     return success;
 }
 

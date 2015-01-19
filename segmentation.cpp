@@ -80,7 +80,7 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), jobMode(false), hoverVersion(false), mouseFocusedObjectId(0) {
+Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFocusedObjectId(0) {
     loadOverlayLutFromFile();
 }
 
@@ -517,13 +517,38 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     }
     blockSignals(false);
     emit resetData();
-    if(Segmentation::jobMode) {
-        alpha = 37;
-        selectNextTodoObject();
-        jumpToObject(objects[selectedObjectIndices.front()]);
-        renderAllObjs = false;
-        emit renderAllObjsChanged(renderAllObjs);
+}
+
+void Segmentation::jobLoad(QIODevice & file) {
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream stream(&file);
+    QString job_line = stream.readLine();
+    QString campaign_line = stream.readLine();
+    QString worker_line = stream.readLine();
+    if(!job_line.isNull() && !campaign_line.isNull() && !worker_line.isNull()) {
+        job.active = true;
+        job.id = job_line.toInt();
+        job.campaign = campaign_line;
+        job.worker = worker_line;
     }
+}
+
+void Segmentation::jobSave(QIODevice &file) const {
+    QTextStream stream(&file);
+    stream << job.id << '\n';
+    stream << job.campaign << '\n';
+    stream << job.worker << '\n';
+
+    if (stream.status() != QTextStream::Ok) {
+        qDebug() << "mergelistSave fail";
+    }
+}
+
+void Segmentation::startJobMode() {
+    alpha = 37;
+    renderAllObjs = false;
+    Segmentation::singleton().selectNextTodoObject();
+    emit renderAllObjsChanged(renderAllObjs);
 }
 
 void Segmentation::deleteSelectedObjects() {

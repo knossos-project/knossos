@@ -140,9 +140,21 @@ Q_OBJECT
     Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
 public:
+    class Job {
+    public:
+        bool active = false;
+        int id;
+        QString campaign;
+        QString worker;
+        QString path;
+    };
+    Job job;
+    void jobLoad(QIODevice & file);
+    void jobSave(QIODevice & file) const;
+    void startJobMode();
+
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
-    bool jobMode;
     brush_t brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
     bool hoverVersion;
@@ -204,8 +216,8 @@ signals:
     void resetSelection();
     void resetTouchedObjects();
     void renderAllObjsChanged(bool all);
-    void todosLeftChanged();
     void setRecenteringPositionSignal(float x, float y, float z);
+    void todosLeftChanged();
 public slots:
     void clear();
     void deleteSelectedObjects();

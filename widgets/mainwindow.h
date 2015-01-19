@@ -147,7 +147,7 @@ signals:
 
     void resetRotationSignal();
 public slots:
-    void setSegmentationJobMode(bool enabled);
+    void setJobModeUI(bool enabled);
 
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);
