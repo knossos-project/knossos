@@ -152,6 +152,9 @@ public:
     void jobLoad(QIODevice & file);
     void jobSave(QIODevice & file) const;
     void startJobMode();
+    void selectNextTodoObject();
+    void selectPrevTodoObject();
+    void markSelectedObjectForSplitting(const Coordinate & pos);
 
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
@@ -223,8 +226,6 @@ public slots:
     void deleteSelectedObjects();
     void mergeSelectedObjects();
     void unmergeSelectedObjects(const Coordinate & clickPos);
-    void selectNextTodoObject();
-    void selectPrevTodoObject();
 };
 
 #endif // SEGMENTATION_H

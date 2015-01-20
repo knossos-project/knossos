@@ -397,6 +397,16 @@ void Segmentation::selectPrevTodoObject() {
     return;
 }
 
+void Segmentation::markSelectedObjectForSplitting(const Coordinate & pos) {
+    if(selectedObjectIndices.empty() == false) {
+        auto & object = objects[selectedObjectIndices.front()];
+        object.comment = "Split request";
+        object.location = pos;
+        emit changedRow(selectedObjectIndices.front());
+        selectNextTodoObject();
+    }
+}
+
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist() {
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist;
     for (auto & obj : objects) {
