@@ -1,0 +1,10 @@
+{
+    "build_systems":
+    [
+        {
+            "name": "Make",
+            "cmd": ["make"],
+            "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+        }
+    ]
+}
