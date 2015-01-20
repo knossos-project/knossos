@@ -1170,9 +1170,7 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
     }
     if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;
-        static bool changeToRaw = false;
-        changeToRaw = !changeToRaw;
-        if (changeToRaw) {
+        if (state->compressionRatio != 0) {
             originalCompressionRatio = state->compressionRatio;
             state->compressionRatio = 0;
         } else {
