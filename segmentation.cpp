@@ -535,12 +535,10 @@ void Segmentation::jobLoad(QIODevice & file) {
     QString job_line = stream.readLine();
     QString campaign_line = stream.readLine();
     QString worker_line = stream.readLine();
-    if(!job_line.isNull() && !campaign_line.isNull() && !worker_line.isNull()) {
-        job.active = true;
-        job.id = job_line.toInt();
-        job.campaign = campaign_line;
-        job.worker = worker_line;
-    }
+    job.id = job_line.isNull()? 0 : job_line.toInt();
+    job.campaign = campaign_line.isNull() ? "" : campaign_line;
+    job.worker = worker_line.isNull() ? "" : worker_line;
+    job.active = (job.id == 0) ? false : true;
 }
 
 void Segmentation::jobSave(QIODevice &file) const {
