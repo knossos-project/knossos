@@ -375,17 +375,22 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     updateLabels();
 }
 
-void SegmentationTab::commitSelection(const QItemSelection & selected, const QItemSelection & deselected) {
+template<typename Func>
+void commitSelection(const QItemSelection & selected, const QItemSelection & deselected, Func proxy) {
     for (const auto & index : deselected.indexes()) {
         if (index.column() == 1) {//only evaluate id cell
-            Segmentation::singleton().unselectObject(index.row());
+            Segmentation::singleton().unselectObject(proxy(index.row()));
         }
     }
     for (const auto & index : selected.indexes()) {
         if (index.column() == 1) {//only evaluate id cell
-            Segmentation::singleton().selectObject(index.row());
+            Segmentation::singleton().selectObject(proxy(index.row()));
         }
     }
+}
+
+void commitSelection(const QItemSelection & selected, const QItemSelection & deselected) {
+    commitSelection(selected, deselected, [](const int & i){return i;});
 }
 
 void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
@@ -394,17 +399,18 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     }
     Segmentation::singleton().blockSignals(true);//prevent ping pong
     if (!QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
-        //unselect all selected objects which are not present in the touchedObjectsTable
-        auto selection = touchedObjsTable.selectionModel()->selection();
-        commitSelection(selection, objectsTable.selectionModel()->selection());
+        //unselect all previously selected objects
+        commitSelection(QItemSelection{}, objectsTable.selectionModel()->selection());
     }
-    commitSelection(selected, deselected);
+    commitSelection(selected, deselected, [this](const int & i){
+        return touchedObjectModel.objectCache[i].get().index;
+    });
     Segmentation::singleton().blockSignals(false);
     updateSelection();
-    if(selected.length() == 1) {
-        for(const auto & index : selected.indexes()) {
-            if(index.column() == 1) {
-                Segmentation::singleton().jumpToObject(index.row());
+    if (selected.length() == 1) {
+        for (const auto & index : selected.indexes()) {
+            if (index.column() == 1) {
+                Segmentation::singleton().jumpToObject(touchedObjectModel.objectCache[index.row()].get().index);
             }
         }
     }

@@ -105,7 +105,6 @@ public:
     explicit SegmentationTab(QWidget * const parent = nullptr);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-    void commitSelection(const QItemSelection &selected, const QItemSelection &deselected);
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();
