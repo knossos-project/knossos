@@ -414,8 +414,10 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     if (objectSelectionProtection) {
         return;
     }
+    const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
+    const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
     Segmentation::singleton().blockSignals(true);//prevent ping pong
-    commitSelection(selected, deselected);
+    commitSelection(proxySelected, proxyDeselected);
     Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
     if(selected.length() == 1) {
