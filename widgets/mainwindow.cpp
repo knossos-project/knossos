@@ -268,7 +268,7 @@ void MainWindow::updateTodosLeft() {
     if(todosLeft > 0) {
         todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
     }
-    else {
+    else if(Segmentation::singleton().job.active) {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
         QMessageBox msgBox(QMessageBox::Question,
                            "Good Job, you're done!", "Upload your work now to receive a verification?",
