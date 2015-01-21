@@ -16,7 +16,7 @@ uint64_t Segmentation::Object::highestId = 0;
 uint64_t Segmentation::Object::highestIndex = -1;
 
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
-    : todo(false), immutable(false), location(Coordinate(0, 0, 0))
+    : id(++highestId), todo(false), immutable(false), location(Coordinate(0, 0, 0))
 {
     addExistingSubObject(initialVolume);
 }
@@ -29,7 +29,7 @@ Segmentation::Object::Object(const uint64_t & id, const bool & todo, const bool 
 }
 
 Segmentation::Object::Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
-    : todo(todo), immutable(immutable), location(location)
+    : id(++highestId), todo(todo), immutable(immutable), location(location)
 {
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
@@ -38,7 +38,7 @@ Segmentation::Object::Object(const bool & todo, const bool & immutable, const Co
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : immutable(false), location(second.location), selected{true} //merge is selected
+    : id(++highestId), todo(false), immutable(false), location(second.location), selected{true} //merge is selected
 {
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
