@@ -408,11 +408,7 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     Segmentation::singleton().blockSignals(false);
     updateSelection();
     if (selected.length() == 1) {
-        for (const auto & index : selected.indexes()) {
-            if (index.column() == 1) {
-                Segmentation::singleton().jumpToObject(touchedObjectModel.objectCache[index.row()].get().index);
-            }
-        }
+        Segmentation::singleton().jumpToObject(touchedObjectModel.objectCache[selected.indexes().front().row()].get().index);
     }
 }
 
@@ -426,12 +422,9 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     commitSelection(proxySelected, proxyDeselected);
     Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
-    if(selected.length() == 1) {
-        for(const auto & index : selected.indexes()) {
-            if(index.column() == 1) {
-                Segmentation::singleton().jumpToObject(index.row());
-            }
-        }
+    //the proxy selection contains ranges for every cell of a line while the source selection consists of _one_ range per line
+    if (selected.length() == 1) {
+        Segmentation::singleton().jumpToObject(proxySelected.indexes().front().row());
     }
 }
 
