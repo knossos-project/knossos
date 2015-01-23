@@ -724,8 +724,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     annotationFilename = "";
     if (success) {
-        if (!multipleFiles && !zips.empty()) {
-            annotationFilename = zips.front();
+        if (!multipleFiles) { // either an .nml or a .k.zip was loaded
+            annotationFilename = nmls.empty() ? zips.front() : nmls.front();
         }
     }
     updateTitlebar();
@@ -765,6 +765,10 @@ void MainWindow::saveSlot() {
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
+        if(annotationFilename.endsWith(".nml")) {
+            annotationFilename.chop(4);
+            annotationFilename += ".k.zip";
+        }
         if (state->skeletonState->autoFilenameIncrementBool) {
             int index = skeletonFileHistory->indexOf(annotationFilename);
             updateFileName(annotationFilename);
