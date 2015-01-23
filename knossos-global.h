@@ -828,7 +828,7 @@ struct skeletonState {
     nodeListElement *selectedCommentNode;
 
     //If true, loadSkeleton merges the current skeleton with the provided
-    int mergeOnLoadFlag;
+    bool mergeOnLoadFlag;
 
     uint lastSaveTicks;
     bool autoSaveBool;
