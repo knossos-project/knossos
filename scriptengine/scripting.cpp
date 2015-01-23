@@ -53,6 +53,7 @@ Scripting::Scripting() {
     // as ipython does not export it's sys paths after the installation we refer to that site-package
     ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
+    ctx.evalScript("plugin_container = []");
 
     ctx.addObject("knossos", skeletonProxy);
     ctx.addVariable("GL_POINTS", GL_POINTS);
