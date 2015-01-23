@@ -111,18 +111,23 @@ void merging(QMouseEvent *event, const int vp) {
         if (seg.selectedObjectsCount() == 1) {
             auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
             const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
-            //select if not selected and merge
+            // if clicked object is currently selected, an unmerge is requested
             if (seg.isSelected(subobject)) {
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         seg.selectObjectFromSubObject(subobject, clickPos);
                         seg.unmergeSelectedObjects(clickPos);
                     } else {
-                        seg.selectObject(objectToMergeId);
+                        if(seg.isSelected(objectToMergeId)) { // if no other object to unmerge, just unmerge subobject
+                            seg.selectObjectFromSubObject(subobject, clickPos);
+                        }
+                        else {
+                            seg.selectObject(objectToMergeId);
+                        }
                         seg.unmergeSelectedObjects(clickPos);
                     }
                 }
-            } else {
+            } else { // object is not selected, so user wants to merge
                 if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         seg.selectObjectFromSubObject(subobject, clickPos);
