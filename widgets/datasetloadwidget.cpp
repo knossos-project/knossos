@@ -321,8 +321,6 @@ void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
 
     emit breakLoaderSignal();
 
-    Knossos::applyDefaultConfig();
-
     if(false == Knossos::readConfigFile(filePath.toStdString().c_str())) {
         QMessageBox info;
         info.setWindowFlags(Qt::WindowStaysOnTopHint);
