@@ -511,6 +511,7 @@ void MainWindow::createMenus() {
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
                                      "Please deactivate Simple Tracing for this function.");
+            linkWithActiveNodeAction->trigger();
             return;
         }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
@@ -522,6 +523,7 @@ void MainWindow::createMenus() {
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
                                      "Please deactivate Simple Tracing for this function.");
+            linkWithActiveNodeAction->trigger();
             return;
         }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::unlinkedNodes);
