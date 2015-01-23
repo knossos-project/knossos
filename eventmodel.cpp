@@ -431,6 +431,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     if (state->viewerState->nodeSelectSquareVpId != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+        return true;
     }
 
     switch(state->viewerState->vpConfigs[VPfound].type) {
