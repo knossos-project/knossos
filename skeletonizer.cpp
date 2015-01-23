@@ -694,7 +694,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         }
                     }
                     attribute = attributes.value("content");
-                    if(attribute.isNull() == false) {
+                    if(attribute.isNull() == false && attribute.length() == 0) {
                         commentsVector.emplace_back(nodeID, attribute.toLocal8Bit());
                     }
                 }
