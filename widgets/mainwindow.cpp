@@ -1075,13 +1075,11 @@ void MainWindow::clearSettings() {
     skeletonFileHistory->clear();
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-        historyEntryActions[i]->setText("");
         historyEntryActions[i]->setVisible(false);
     }
 
-    QStringList keys = settings.allKeys();
-    for(int i = 0; i < keys.size(); i++) {
-        settings.remove(keys.at(i));
+    for(auto a : settings.allKeys()) {
+        settings.remove(a);
     }
 }
 
