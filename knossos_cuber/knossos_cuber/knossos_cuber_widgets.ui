@@ -647,7 +647,7 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the cubing job. Depending on the size of the input data and the performance / number of compute cores on this machine, this operation may take a very long time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Start job</string>
+          <string>Start Job</string>
          </property>
         </widget>
        </item>

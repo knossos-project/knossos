@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'knossos_cuber_widgets.ui'
 #
-# Created: Thu Jan 15 17:58:54 2015
-#      by: PyQt4 UI code generator 4.11.1
+# Created: Fri Jan 23 11:22:33 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -387,5 +387,5 @@ class Ui_Dialog(object):
         self.check_box_compress.setText(_translate("Dialog", "Create compressed cubes", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("Dialog", "Compression", None))
         self.push_button_start_job.setToolTip(_translate("Dialog", "<html><head/><body><p>Start the cubing job. Depending on the size of the input data and the performance / number of compute cores on this machine, this operation may take a very long time.</p></body></html>", None))
-        self.push_button_start_job.setText(_translate("Dialog", "Start job", None))
+        self.push_button_start_job.setText(_translate("Dialog", "Start Job", None))
 

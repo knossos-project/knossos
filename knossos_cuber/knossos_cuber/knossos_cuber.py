@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""This is knossos_cuber.
+"""A Python script that converts images into a **Knossos**-readable
+format."
 
 """
 
@@ -50,6 +51,35 @@ class InvalidCubingConfigError(Exception):
     pass
 
 
+class DownsampleJobInfo(object):
+    """Class solely made to pass arguments to the downsample worker
+    pool easier.
+
+    """
+
+    def __init__(self):
+        self.src_cube_paths = []
+        self.src_cube_local_coords = []
+        self.trg_cube_path = ''
+        self.cube_edge_len = 128
+        self.skip_already_cubed_layers = False
+
+
+class CompressionJobInfo(object):
+    """Class solely made to pass arguments to the compression worker
+    pool easier.
+
+    """
+
+    def __init__(self):
+        self.src_cube_path = ''
+        self.compressor = ''
+        self.quality_or_ratio = 0
+        self.pre_gauss = 0.0
+        self.open_jpeg_bin_path = ''
+        self.cube_edge_len = 128
+
+
 
 def get_list_of_all_cubes_in_dataset(dataset_base_path, log_fn):
     """TODO
@@ -63,7 +93,7 @@ def get_list_of_all_cubes_in_dataset(dataset_base_path, log_fn):
     all_cubes = []
     ref_time = time.time()
 
-    for root, dirs, files in os.walk(dataset_base_path):
+    for root, _, files in os.walk(dataset_base_path):
         #if len(files) > 1:
             #print
             # either overlay cubes or different compressions found
@@ -99,50 +129,20 @@ def write_knossos_conf(data_set_base_folder='',
 
     return
 
-# TODO This and the object after this one can be replaced by a namedtuple.
-class downsample_job_info(object):
-    """Class solely made to pass arguments to the downsample worker
-    pool easier.
-
-    """
-
-    def __init__(self):
-        self.src_cube_paths = []
-        self.src_cube_local_coords = []
-        self.trg_cube_path = ''
-        self.cube_edge_len = 128
-        self.skip_already_cubed_layers = False
-
-class compression_job_info(object):
-    """Class solely made to pass arguments to the compression worker
-    pool easier.
-
-    """
-
-    def __init__(self):
-        self.src_cube_path = ''
-        self.compressor = ''
-        self.quality_or_ratio = 0
-        self.pre_gauss = 0.0
-        self.open_jpeg_bin_path = ''
-        self.cube_edge_len = 128
-
-# TODO Better just pass the ConfigParser object ...
-def downsample_dataset(src_mag,
-                       trg_mag,
-                       target_path,
-                       scaling,
-                       boundaries,
-                       exp_name,
-                       num_workers,
-                       buffer_size_in_cubes_downsampling,
-                       num_io_threads,
-                       cube_edge_len,
-                       skip_already_cubed_layers,
-                       log_fn,
-                       dataset_base_path=''):
+def downsample_dataset(config, src_mag, trg_mag, log_fn):
     """TODO
     """
+
+    target_path = config.get('Project', 'target_path') + '/mag1/'
+    exp_name = config.get('Project', 'exp_name') + '_mag1'
+
+    scaling = literal_eval(config.get('Dataset', 'scaling'))
+    boundaries = literal_eval(config.get('Dataset', 'boundaries'))
+    num_workers = config.getint('Processing', 'num_downsampling_cores')
+    buffer_size_in_cubes_downsampling = \
+        config.getint('Processing', 'buffer_size_in_cubes_downsampling')
+    num_io_threads = config.getint('Processing', 'num_io_threads')
+    dataset_base_path = config.get('Project', 'target_path')
 
     # check if src mag is available
     subdirs = [name
@@ -250,11 +250,13 @@ def downsample_dataset(src_mag,
             these_cubes.append(path_hash[(cur_x + lx, cur_y + ly, cur_z + lz)])
             these_cubes_local_coords.append((lx, ly, lz))
 
-        this_job_info = downsample_job_info()
+        this_job_info = DownsampleJobInfo()
         this_job_info.src_cube_paths = these_cubes
         this_job_info.src_cube_local_coords = these_cubes_local_coords
-        this_job_info.skip_already_cubed_layers = skip_already_cubed_layers
-        this_job_info.cube_edge_len = cube_edge_len
+        this_job_info.skip_already_cubed_layers = \
+            config.getboolean('Processing', 'skip_already_cubed_layers')
+        this_job_info.cube_edge_len = config.getint('Processing',
+                                                    'cube_edge_len')
 
         out_path = path_hash[(cur_x/2, cur_y/2, cur_z/2)]
         out_path = out_path.replace('mag'+str(src_mag), 'mag'+str(trg_mag))
@@ -284,12 +286,9 @@ def downsample_dataset(src_mag,
     log_queue = multiprocessing.Queue()
 
     for this_job_chunk in chunked_jobs:
-
         log_fn("Starting {0} workers...".format(num_workers))
-
-        log_fn(
-            "First cube in this chunk: {0}".format(
-                this_job_chunk[0].trg_cube_path))
+        log_fn("First cube in this chunk: {0}"
+               .format(this_job_chunk[0].trg_cube_path))
 
         ref_time = time.time()
         worker_pool = multiprocessing.Pool(num_workers,
@@ -318,6 +317,7 @@ def downsample_dataset(src_mag,
             prefix = os.path.dirname(job_info.trg_cube_path)
             cube_full_path = job_info.trg_cube_path
             ref_time = time.time()
+
             if cube_data == 'skipped':
                 write_times.append(time.time()-ref_time)
                 #print("Skipped cube {0}".format(job_info.trg_cube_path))
@@ -403,8 +403,7 @@ def downsample_cube(job_info):
         fd.close()
 
         this_cube = np.fromstring(content, dtype=np.uint8).reshape(
-            [cube_edge_len, cube_edge_len, cube_edge_len], order='F'
-        )
+            [cube_edge_len, cube_edge_len, cube_edge_len], order='F')
 
 
         #this_cube = np.fromfile(path_to_src_cube, dtype=np.uint8).reshape([
@@ -440,18 +439,15 @@ def downsample_cube(job_info):
     # for noisy images. On top of that, the gains of more sophisticated
     # filters become less clear, and data and scaling factor dependent.
     down_block = scipy.ndimage.interpolation.zoom(
-        down_block,
-        0.5,
-        output=np.uint8,
-        order=1,
+        down_block, 0.5, output=np.uint8,
         # 1: bilinear
         # 2: bicubic
-        mode='nearest',
+        order=1,
         # this does not mean nearest interpolation, it corresponds to how the
         # borders are treated.
-        prefilter=True
+        mode='nearest',
         # treat the borders.
-    )
+        prefilter=True)
 
     # extract directory of out_path
     #if not os.path.exists(os.path.dirname(job_info.trg_cube_path)):
@@ -473,15 +469,12 @@ def downsample_cube_init(log_queue):
     downsample_cube.log_queue = log_queue
 
 
-def compress_dataset(dataset_base_path,
-                     compressor,
-                     quality,
-                     num_workers,
-                     pre_comp_gauss_filter,
-                     log_fn):
-
+def compress_dataset(config, log_fn):
     """TODO
     """
+
+    dataset_base_path = config.get('Project', 'target_path')
+    num_workers = config.getint('Compression', 'num_compression_cores')
 
     mag_dirs = [dataset_base_path + '/' + name
                 for name in os.listdir(dataset_base_path)
@@ -496,12 +489,14 @@ def compress_dataset(dataset_base_path,
 
     compress_job_infos = []
     for cube_path in list_of_all_cubes:
-        this_job_info = compression_job_info()
+        this_job_info = CompressionJobInfo()
 
-        this_job_info.compressor = compressor
-        this_job_info.quality_or_ratio = quality
+        this_job_info.compressor = config.get('Compression', 'compression_algo')
+        this_job_info.quality_or_ratio = config.getint('Compression',
+                                                       'out_comp_quality')
         this_job_info.src_cube_path = cube_path
-        this_job_info.pre_gauss = pre_comp_gauss_filter
+        this_job_info.pre_gauss = config.getfloat('Compression',
+                                                  'pre_comp_gauss_filter')
 
         compress_job_infos.append(this_job_info)
 
@@ -647,10 +642,8 @@ def init_from_source_dir(config, log_fn):
     source_files = [
         f for f in os.listdir(source_path)
         if any([f.endswith(suffix)
-                for suffix in SOURCE_FORMAT_FILES[source_format][:-1]])
-                                                # [:-1] cuts away the
-                                                # description string `*.suffix'
-    ]
+                # [:-1] cuts away the description string `*.suffix'
+                for suffix in SOURCE_FORMAT_FILES[source_format][:-1]])]
 
 
     source_path = config.get('Project', 'source_path')
@@ -676,10 +669,7 @@ def init_from_source_dir(config, log_fn):
 
     source_dims = test_data.shape
     config.set('Dataset', 'source_dims', str(test_data.shape))
-
-    source_dtype = test_data.dtype
     config.set('Dataset', 'source_dtype', str(test_data.dtype))
-
 
     cube_edge_len = config.getfloat('Processing', 'cube_edge_len')
 
@@ -756,19 +746,13 @@ def make_mag1_cubes_from_z_stack(config,
     for cur_z in range(0, num_z_cubes):
         if skip_already_cubed_layers:
             # test whether this layer contains already "cubes"
-            prefix = os.path.normpath(
-                os.path.abspath(
-                    target_path + '/mag1' + '/x%04d/y%04d/z%04d/' % (1, 1, cur_z)
-                )
-            )
+            prefix = os.path.normpath(os.path.abspath(
+                target_path + '/mag1' + '/x%04d/y%04d/z%04d/' % (1, 1, cur_z)))
 
             cube_full_path = os.path.normpath(
-                prefix + '/%s_mag%d_x%04d_y%04d_z%04d.raw' % (exp_name,
-                                                              #1 indicates mag1
-                                                              1,
-                                                              1,
-                                                              1,
-                                                              cur_z))
+                prefix + '/%s_mag%d_x%04d_y%04d_z%04d.raw'
+                # 1 indicates mag1
+                % (exp_name, 1, 1, 1, cur_z))
 
             if os.path.exists(cube_full_path):
                 log_fn("Skipping cube layer: {0}".format(cur_z))
@@ -898,18 +882,17 @@ def make_mag1_cubes_from_z_stack(config,
                     cube_data = np.swapaxes(cube_data, 1, 2)
 
                     prefix = os.path.normpath(os.path.abspath(
-                        target_path + '/mag1' + '/x%04d/y%04d/z%04d/' % (
-                                glob_cur_x_cube,
-                                glob_cur_y_cube,
-                                glob_cur_z_cube)))
+                        target_path + '/mag1' + '/x%04d/y%04d/z%04d/'
+                        % (glob_cur_x_cube, glob_cur_y_cube, glob_cur_z_cube)))
 
                     cube_full_path = os.path.normpath(
-                        prefix + '/%s_mag%d_x%04d_y%04d_z%04d.raw' % (
-                                    # 1 indicates mag1
-                            exp_name, 1,
-                            glob_cur_x_cube,
-                            glob_cur_y_cube,
-                            glob_cur_z_cube))
+                        prefix + '/%s_mag%d_x%04d_y%04d_z%04d.raw'
+                        % (exp_name,
+                           # 1 indicates mag1
+                           1,
+                           glob_cur_x_cube,
+                           glob_cur_y_cube,
+                           glob_cur_z_cube))
 
                     log_fn("Writing cube {0}".format(cube_full_path))
 
@@ -963,11 +946,7 @@ def knossos_cuber(config, log_fn):
     except ValueError:
         boundaries = None
 
-
-    perform_mag1_cubing = config.getboolean('Processing',
-                                            'perform_mag1_cubing')
-
-    if perform_mag1_cubing:
+    if config.getboolean('Processing', 'perform_mag1_cubing'):
         cubing_info = init_from_source_dir(config, log_fn)
         all_source_files = cubing_info.all_source_files
 
@@ -984,27 +963,22 @@ def knossos_cuber(config, log_fn):
 
         source_dims = literal_eval(config.get('Dataset', 'source_dims'))
         boundaries = (source_dims[0], source_dims[1], len(all_source_files))
+        config.set('Dataset', 'boundaries', str(boundaries))
         dataset_base_path = config.get('Project', 'target_path') + '/mag1/'
         scale = literal_eval(config.get('Dataset', 'scaling'))
         exp_name = config.get('Project', 'exp_name') + '_mag1'
 
 
-        write_knossos_conf(
-            dataset_base_path, scale, boundaries, exp_name, mag=1
-        )
+        write_knossos_conf(dataset_base_path, scale, boundaries, exp_name,
+                           mag=1)
 
         total_mag1_time = time.time() - mag1_ref_time
 
-        log_fn(
-            "Mag 1 succesfully cubed. Took {0} h".format(total_mag1_time/3600)
-        )
+        log_fn("Mag 1 succesfully cubed. Took {0} h"
+               .format(total_mag1_time/3600))
 
 
-
-    perform_downsampling = config.getboolean('Processing',
-                                             'perform_downsampling')
-
-    if perform_downsampling:
+    if config.getboolean('Processing', 'perform_downsampling'):
         total_down_ref_time = time.time()
         curr_mag = 2
 
@@ -1015,34 +989,8 @@ def knossos_cuber(config, log_fn):
         mags_to_gen = reduce(lambda x, y: int(x) ** int(y),
                              mags_to_gen_string.split("**"))
 
-        num_downsampling_cores = config.getint('Processing',
-                                               'num_downsampling_cores')
-
-        buffer_size_in_cubes_downsampling = config.getint(
-            'Processing',
-            'buffer_size_in_cubes_downsampling')
-
-        num_io_threads = config.getint('Processing', 'num_io_threads')
-        cube_edge_len = config.getint('Processing', 'cube_edge_len')
-
-        skip_already_cubed_layers = config.getboolean(
-            'Processing',
-            'skip_already_cubed_layers')
-
         while curr_mag <= mags_to_gen:
-            worked = downsample_dataset(curr_mag/2,
-                                        curr_mag,
-                                        dataset_base_path,
-                                        scale,
-                                        boundaries,
-                                        exp_name,
-                                        num_downsampling_cores,
-                                        buffer_size_in_cubes_downsampling,
-                                        num_io_threads,
-                                        cube_edge_len,
-                                        skip_already_cubed_layers,
-                                        log_fn,
-                                        config.get('Project', 'target_path'))
+            worked = downsample_dataset(config, curr_mag/2, curr_mag, log_fn)
 
             if worked:
                 log_fn("Mag {0} succesfully cubed.".format(curr_mag))
@@ -1055,27 +1003,9 @@ def knossos_cuber(config, log_fn):
                .format((time.time() - total_down_ref_time)/3600))
 
 
-    perform_compression = config.getboolean('Compression',
-                                            'perform_compression')
-
-    target_path = config.get('Project', 'target_path')
-    compression_algo = config.get('Compression', 'compression_algo')
-    out_comp_quality = config.getint('Compression', 'out_comp_quality')
-
-    num_compression_cores = config.getint('Compression',
-                                          'num_compression_cores')
-
-    pre_comp_gauss_filter = config.getfloat('Compression',
-                                            'pre_comp_gauss_filter')
-
-    if perform_compression:
+    if config.getboolean('Compression', 'perform_compression'):
         total_comp_ref_time = time.time()
-        compress_dataset(target_path,
-                         compression_algo,
-                         out_comp_quality,
-                         num_compression_cores,
-                         pre_comp_gauss_filter,
-                         log_fn)
+        compress_dataset(config, log_fn)
 
         log_fn("Compression done. Took {0} h."
                .format((time.time() - total_comp_ref_time)/3600))
@@ -1176,27 +1106,26 @@ def create_parser():
 
     parser.add_argument(
         'source_dir',
-        help="Directory containing the input images."
-    )
+        help="Directory containing the input images.")
+
     parser.add_argument(
         'target_dir',
-        help="Output directory for the generated dataset."
-    )
+        help="Output directory for the generated dataset.")
+
     parser.add_argument(
         '--format', '-f',
         help="Specifies the format of the input images. "
              "Currently supported formats are: png, tif, jpg. "
              "The option `jpg' searches for all images matching "
-             "*.jp(e)g, and *.JP(E)G (`tif' and `png' respectively)."
-    )
+             "*.jp(e)g, and *.JP(E)G (`tif' and `png' respectively).")
+
     parser.add_argument(
         '--config', '-c',
         help="A configuration file. If no file is specified, `config.ini' "
              "from knossos_cuber's installation directory is used. Note that "
              "you still have to specify the input/output directory and "
              "source format via the command line.",
-        default='config.ini'
-    )
+        default='config.ini')
 
     return parser
 
@@ -1222,14 +1151,11 @@ def validate_args(args):
     return True
 
 
-
 if __name__ == '__main__':
     PARSER = create_parser()
     ARGS = PARSER.parse_args()
 
-    if validate_args(ARGS):
-        pass
-    else:
+    if not validate_args(ARGS):
         sys.exit()
 
     CONFIG = read_config_file(ARGS.config)
