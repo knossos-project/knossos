@@ -65,7 +65,7 @@ void writeVoxels(const Coordinate & pos, uint64_t value, const brush_t & brush) 
         for (int y = start[1]; y <= end[1]; ++y)
         for (int z = start[2]; z <= end[2]; ++z) {
             if ((brush.getShape() == brush_t::shape_t::square) ||
-                (brush.getShape() == brush_t::shape_t::circle && isInsideCircle(x - pos.x, y - pos.y, z - pos.z, brush.getRadius()))) {
+                (brush.getShape() == brush_t::shape_t::circle && isInsideCircle(x - pos.x, y - pos.y, z - pos.z, brush.getRadius()+1))) {
                 if (brush.isInverse()) {
                     //if there’re selected objects, we only want to erase these
                     bool shouldErase = Segmentation::singleton().selectedObjectsCount() != 0;

@@ -117,14 +117,14 @@ std::unordered_set<uint64_t> segmentationColorPickingCircle(const int originx, c
 std::unordered_set<uint64_t> segmentationColorPicking(const int originx, const int originy, const brush_t& brush, const int viewportId = 0) {
     if(brush.getShape() == brush_t::shape_t::circle) {
         if(brush.getMode() == brush_t::mode_t::three_dim)
-            return segmentationColorPickingCircle(originx, originy, brush.getRadius(), brush.getRadius());
+            return segmentationColorPickingCircle(originx, originy, brush.getRadius()+1, brush.getRadius()+1);
         else /*if(brush.getMode() == brush_t::mode_t::two_dim)*/
-            return segmentationColorPickingCircle(originx, originy, brush.getRadius(), brush.getRadius(), viewportId);
+            return segmentationColorPickingCircle(originx, originy, brush.getRadius()+1, brush.getRadius()+1, viewportId);
     } else /*if(brush.getShape() == brusht_t::shape_t::circle)*/ {
         if(brush.getMode() == brush_t::mode_t::three_dim)
-            return segmentationColorPickingRect(originx, originy, brush.getRadius(), brush.getRadius());
+            return segmentationColorPickingRect(originx, originy, brush.getRadius()+1, brush.getRadius()+1);
         else /*if(brush.getMode() == brush_t::mode_t::two_dim)*/
-            return segmentationColorPickingRect(originx, originy, brush.getRadius(), brush.getRadius(), viewportId);
+            return segmentationColorPickingRect(originx, originy, brush.getRadius()+1, brush.getRadius()+1, viewportId);
     }
 }
 
