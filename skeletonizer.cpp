@@ -902,9 +902,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     if(!merge) {
         setActiveNode(NULL, activeNodeID);
-        if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
-            setActiveNode(state->skeletonState->firstTree->firstNode, 0);
-        }
 
         if((loadedPosition.x != 0) &&
            (loadedPosition.y != 0) &&
@@ -915,6 +912,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                  loadedPosition.z - 1 - state->viewerState->currentPosition.z);
             emit userMoveSignal(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
         }
+    }
+    if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
+        setActiveNode(state->skeletonState->firstTree->firstNode, 0);
     }
     if(merge == false) {
         // when a skeleton is *not* merged on loading, it overrides the current annotation.
