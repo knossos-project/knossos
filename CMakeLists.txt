@@ -5,6 +5,10 @@ if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
 
+if(DISTCC STREQUAL "1")
+set(CMAKE_CXX_COMPILER distcc)
+endif()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 include(CustomLibraryLocations.cmake)#prefill variables
@@ -117,6 +121,8 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Xml
     QuaZip::QuaZip
     Snappy::Snappy
+    m
+    stdc++
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${CURL_CONFIG_OUTPUT}")
 set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")

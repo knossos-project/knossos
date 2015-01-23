@@ -706,7 +706,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     for (const auto & filename : nmls) {
-        const QString treeCmtOnMultiLoad = multipleFiles ? filename : "";
+        const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         QFile file(filename);
         if (success &= state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad)) {
             updateRecentFile(filename);
@@ -716,7 +716,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
     for (const auto & filename : zips) {
-        const QString treeCmtOnMultiLoad = multipleFiles ? filename : "";
+        const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         annotationFileLoad(filename, treeCmtOnMultiLoad);
         updateRecentFile(filename);
         state->skeletonState->mergeOnLoadFlag = true;//merge next file
