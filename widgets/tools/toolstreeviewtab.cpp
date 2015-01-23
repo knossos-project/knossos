@@ -166,6 +166,11 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     nodeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     nodeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
 
+    for (auto && verticalHeader : {activeTreeTable->verticalHeader(), treeTable->verticalHeader(), activeNodeTable->verticalHeader(), nodeTable->verticalHeader()}) {
+        verticalHeader->sectionResizeMode(QHeaderView::Fixed);
+        verticalHeader->setDefaultSectionSize(verticalHeader->minimumSectionSize());
+    }
+
     bottomHLayout.addWidget(&treeCountLabel, 0, Qt::AlignLeft);
     bottomHLayout.addWidget(&nodeCountLabel, 0, Qt::AlignRight);
 
