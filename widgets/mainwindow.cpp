@@ -62,7 +62,7 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
-    this->setWindowIcon(QIcon(":/images/logo.ico"));
+    this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
@@ -141,11 +141,11 @@ void MainWindow::createToolbars() {
     basicToolbar->setFloatable(false);
     basicToolbar->setMaximumHeight(45);
 
-    basicToolbar->addAction(QIcon(":/images/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
-    basicToolbar->addAction(QIcon(":/images/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar->addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
+    basicToolbar->addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
     basicToolbar->addSeparator();
-    basicToolbar->addAction(QIcon(":/images/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
-    basicToolbar->addAction(QIcon(":/images/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
+    basicToolbar->addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
+    basicToolbar->addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
     xField->setRange(1, 1000000);
@@ -176,7 +176,7 @@ void MainWindow::createToolbars() {
     addToolBar(basicToolbar);
     addToolBar(&defaultToolbar);
 
-    defaultToolbar.addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    defaultToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
@@ -186,9 +186,9 @@ void MainWindow::createToolbars() {
         defaultToolbar.addWidget(button);
         return button;
     };
-    auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Dataset Options");
-    auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
-    auto annotationButton = createToolToogleButton(":/images/icons/graph.png", "Annotation");
+    auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
+    auto viewportSettingsButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Viewport Settings");
+    auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
@@ -203,11 +203,11 @@ void MainWindow::createToolbars() {
 
     auto * const pythonButton = new QToolButton();
     pythonButton->setMenu(new QMenu());
-    pythonButton->setIcon(QIcon(":/images/python.png"));
+    pythonButton->setIcon(QIcon(":/resources/icons/python.png"));
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
-    pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
-    pythonButton->menu()->addAction(QIcon(":/images/python.png"), "Python File", this, SLOT(pythonFileSlot()));
+    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
+    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
     defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
@@ -453,21 +453,21 @@ void MainWindow::recentFileSelected() {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/images/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/images/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
+    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
     for (auto & elem : historyEntryActions) {
-        elem = recentfileMenu.addAction(QIcon(":/images/icons/document-open-recent.png"), "");
+        elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
         elem->setVisible(false);
         QObject::connect(elem, &QAction::triggered, this, &MainWindow::recentFileSelected);
     }
-    fileMenu.addAction(QIcon(":/images/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu.addAction(QIcon(":/images/icons/document-save-as.png"), "Save Annotation As...", this, SLOT(saveAsSlot()));
+    fileMenu.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu.addAction(QIcon(":/resources/icons/document-save-as.png"), "Save Annotation As...", this, SLOT(saveAsSlot()));
     fileMenu.addSeparator();
     fileMenu.addAction("Export to NML...", this, SLOT(exportToNml()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    fileMenu.addAction(QIcon(":/resources/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     segEditMenu = new QMenu("Edit Segmentation");
     auto segAnnotationModeGroup = new QActionGroup(this);
@@ -479,7 +479,7 @@ void MainWindow::createMenus() {
     connect(segEditSkelModeAction, &QAction::triggered, [this]() { setAnnotationMode(SkeletonizationMode); });
     segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
     segEditMenu->addSeparator();
-    segEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
+    segEditMenu->addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
 
     skelEditMenu = new QMenu("Edit Skeleton");
     auto skelAnnotationModeGroup = new QActionGroup(this);
@@ -544,7 +544,7 @@ void MainWindow::createMenus() {
     popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
     skelEditMenu->addSeparator();
-    skelEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
+    skelEditMenu->addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
     menuBar()->addMenu(skelEditMenu);
 
@@ -621,16 +621,16 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
     preferenceMenu->addAction(tr("Data Saving Options"), widgetContainer->dataSavingWidget, SLOT(show()));
-    preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
-    windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
 
     auto helpMenu = menuBar()->addMenu("Help");
-    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));
-    helpMenu->addAction(QIcon(":/images/icons/knossos.png"), "About", widgetContainer->splashWidget, SLOT(show()));
+    helpMenu->addAction(QIcon(":/resources/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));
+    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", widgetContainer->splashWidget, SLOT(show()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

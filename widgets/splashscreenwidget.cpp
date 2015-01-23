@@ -34,7 +34,7 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
     versionLabel.setText(KVERSION);
     revisionLabel.setText(KREVISION);
 
-    splash.setPixmap(QPixmap(":/images/splash"));
+    splash.setPixmap(QPixmap(":/resources/splash"));
 
     mainLayout.addRow(QString("Knossos Version: "), &versionLabel);
     mainLayout.addRow(QString("Revision: "), &revisionLabel);

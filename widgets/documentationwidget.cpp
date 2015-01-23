@@ -37,7 +37,7 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent) {
     QHelpContentWidget *contentWidget = helpEngine->contentWidget();
     contentWidget->setModel(helpEngine->contentModel());
 
-    setWindowIcon(QIcon(":/images/icons/edit-select-all.png"));
+    setWindowIcon(QIcon(":/resources/icons/edit-select-all.png"));
     setWindowTitle("Documentation");
     splitter = new QSplitter();
     splitter->addWidget(contentWidget);

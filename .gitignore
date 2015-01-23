@@ -1,6 +1,6 @@
 #generated documentation files
-doc/collection.qhc
-doc/doc.qch
+resources/doc/collection.qhc
+resources/doc/doc.qch
 
 #qtcreator settings
 CMakeLists.txt.user

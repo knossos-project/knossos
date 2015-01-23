@@ -41,21 +41,21 @@ find_package(QuaZip 0.6.2 REQUIRED)
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
 elseif(APPLE)
-    set_source_files_properties("knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    set_source_files_properties("resources/icons/knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 #generate docs
 
 find_program(QCOLLECTIONGENERATOR qcollectiongenerator)
 add_custom_command(
     OUTPUT
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch"
     PRE_BUILD
-    COMMAND ${QCOLLECTIONGENERATOR} "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp" -o "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
+    COMMAND ${QCOLLECTIONGENERATOR} "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhcp" -o "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc"
     DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qhp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.html"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhcp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qhp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/documentation.html"
 )
 
 add_custom_target(version DEPENDS versioncreator)#forces the pseudo target to be generated
@@ -71,7 +71,7 @@ add_custom_command(OUTPUT versioncreator ${CMAKE_CURRENT_BINARY_DIR}/version.h
 
 add_executable(${PROJECT_NAME} ${SRC_LIST} version.h)
 add_dependencies(${PROJECT_NAME} version)#main target needs version
-set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch")
+set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
     #these definitions remove the dllimport directives from the includes

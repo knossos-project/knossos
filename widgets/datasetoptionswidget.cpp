@@ -38,7 +38,7 @@
 
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true) {
-    setWindowIcon(QIcon(":/images/icons/zoom-in.png"));
+    setWindowIcon(QIcon(":/resources/icons/zoom-in.png"));
     setWindowTitle("Dataset Options");
 
     // compression section

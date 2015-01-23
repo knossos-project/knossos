@@ -1,0 +1,39 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/splash.png</file>
+
+        <file>resources/doc/collection.qhc</file>
+        <file>resources/doc/doc.qch</file>
+
+        <file>resources/icons/application-exit.png</file>
+        <file>resources/icons/appointment.png</file>
+        <file>resources/icons/configure-toolbars.png</file>
+        <file>resources/icons/dialog-ok.png</file>
+        <file>resources/icons/document-open.png</file>
+        <file>resources/icons/document-open-recent.png</file>
+        <file>resources/icons/document-save.png</file>
+        <file>resources/icons/document-save-as.png</file>
+        <file>resources/icons/edit-copy.png</file>
+        <file>resources/icons/edit-paste.png</file>
+        <file>resources/icons/edit-select-all.png</file>
+        <file>resources/icons/graph.png</file>
+        <file>resources/icons/insert-text.png</file>
+        <file>resources/icons/knossos.png</file>
+        <file>resources/icons/logo.ico</file>
+        <file>resources/icons/network-connect.png</file>
+        <file>resources/icons/network-disconnect.png</file>
+        <file>resources/icons/open-annotation.png</file>
+        <file>resources/icons/open-dataset.png</file>
+        <file>resources/icons/python.png</file>
+        <file>resources/icons/resize.gif</file>
+        <file>resources/icons/system-shutdown.png</file>
+        <file>resources/icons/task.png</file>
+        <file>resources/icons/text-x-readme.png</file>
+        <file>resources/icons/user-trash.png</file>
+        <file>resources/icons/user-trash-full.png</file>
+        <file>resources/icons/view-list-icons-symbolic.png</file>
+        <file>resources/icons/zoom-in.png</file>
+        <file>resources/icons/zoom-original.png</file>
+        <file>resources/icons/zoom-out.png</file>
+    </qresource>
+</RCC>

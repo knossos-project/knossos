@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
 #ifdef NDEBUG
-    Splash splash(":/images/splash.png", 1500);
+    Splash splash(":/resources/splash.png", 1500);
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");

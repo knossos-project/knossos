@@ -16,7 +16,7 @@
 #include <QSplitter>
 
 AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
-    setWindowIcon(QIcon(":/images/icons/graph.png"));
+    setWindowIcon(QIcon(":/resources/icons/graph.png"));
     setWindowTitle("Annotation");
 
     tabs.addTab(&treeviewTab, "Tree View");

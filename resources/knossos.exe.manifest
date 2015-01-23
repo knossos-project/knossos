@@ -1,7 +1,7 @@
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
 	<dependency>
 		<dependentAssembly>
-			<assemblyIdentity 
+			<assemblyIdentity
 				type="win32"
 				name="Microsoft.VC90.CRT"
 				version="9.0.21022.8"

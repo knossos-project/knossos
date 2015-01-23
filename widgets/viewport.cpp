@@ -80,7 +80,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 
     resizeButton = new ResizeButton(this);
     resizeButton->setCursor(Qt::SizeFDiagCursor);
-    resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
+    resizeButton->setIcon(QIcon(":/resources/icons/resize.gif"));
     resizeButton->setMinimumSize(20, 20);
     resizeButton->setMaximumSize(resizeButton->minimumSize());
 

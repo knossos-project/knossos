@@ -43,7 +43,7 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent
     this->slicePlaneViewportWidget = new VPSlicePlaneViewportWidget();
     this->skeletonViewportWidget = new VPSkeletonViewportWidget();
 
-    setWindowIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
+    setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
     setWindowTitle("Viewport Settings");
     tabs = new QTabWidget(this);
     tabs->addTab(generalTabWidget, "General");
