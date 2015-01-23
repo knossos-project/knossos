@@ -84,7 +84,6 @@ if(NOT BUILD_SHARED_LIBS)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         set(CURL_LIBRARIES "")
-        message(curl-config: "${CURL_CONFIG} --static-libs = ${CURL_CONFIG_OUTPUT}")
     endif()
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
@@ -98,7 +97,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CURL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
-    ${PYTHON_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
@@ -112,11 +110,9 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Core
     Qt5::Gui
     Qt5::Help
-    Qt5::Network
     Qt5::OpenGL
     Qt5::Sql
     Qt5::Widgets
-    Qt5::Xml
     QuaZip::QuaZip
     Snappy::Snappy
 )
@@ -145,7 +141,6 @@ if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
 elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "RELEASE")#no openmp for clang
-    message("${CMAKE_CXX_COMPILER_ID}, ${CMAKE_BUILD_TYPE}")
     find_package(OpenMP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
