@@ -47,7 +47,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(tru
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
 
-    state->skeletonState->mergeOnLoadFlag = 0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
     //state->skeletonState->autoFilenameIncrementBool = true;
     state->skeletonState->greatestNodeID = 0;
@@ -442,7 +441,6 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 }
 
 bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
-    int merge = false;
     uint activeNodeID = 0, greatestNodeIDbeforeLoading = 0;
     int greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
@@ -458,12 +456,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         return false;
     }
 
-    if(state->skeletonState->mergeOnLoadFlag == false) {
-        merge = false;
+    const bool merge = state->skeletonState->mergeOnLoadFlag;
+    if (!merge) {
         clearSkeleton(true);
-    }
-    else {
-        merge = true;
+    } else {
         greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
     }
@@ -905,13 +901,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if(!merge) {
-        if(activeNodeID) {
-            if(setActiveNode(NULL, activeNodeID) == false and state->skeletonState->firstTree) {
-            // if nml has invalid active node ID, simply make first node active
-                if(state->skeletonState->firstTree->firstNode) {
-                    setActiveNode(NULL, state->skeletonState->firstTree->firstNode->nodeID);
-                }
-            }
+        setActiveNode(NULL, activeNodeID);
+        if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
+            setActiveNode(state->skeletonState->firstTree->firstNode, 0);
         }
 
         if((loadedPosition.x != 0) &&
