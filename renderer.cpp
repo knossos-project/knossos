@@ -1667,57 +1667,72 @@ void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
-    const auto bsize = seg.brush.getRadius();
+    auto bsize = seg.brush.getRadius();
+    const auto bdim = seg.brush.getMode();
     const auto bview = seg.brush.getView();
-
+    const int circleLines = 64;
+    const float twicePi = 2*3.1415;
     glLineWidth(2.0f);
+
+    auto drawCursor = [&]() {
+        if(seg.brush.getShape() == brush_t::shape_t::square) {
+            glBegin(GL_LINE_LOOP);
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+                glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z-1);
+                glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z-1);
+                glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z-1);
+                glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z-1);
+            }
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+                glVertex3i(coord.x - bsize  , coord.y+1, coord.z - bsize  );
+                glVertex3i(coord.x + bsize+1, coord.y+1, coord.z - bsize  );
+                glVertex3i(coord.x + bsize+1, coord.y+1, coord.z + bsize+1);
+                glVertex3i(coord.x - bsize  , coord.y+1, coord.z + bsize+1);
+            }
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+                glVertex3i(coord.x-1, coord.y - bsize,   coord.z - bsize  );
+                glVertex3i(coord.x-1, coord.y + bsize+1, coord.z - bsize  );
+                glVertex3i(coord.x-1, coord.y + bsize+1, coord.z + bsize+1);
+                glVertex3i(coord.x-1, coord.y - bsize,   coord.z + bsize+1);
+            }
+            glEnd();
+        } else if(seg.brush.getShape() == brush_t::shape_t::circle){
+            float bradius = bsize + 0.5f;
+            glBegin(GL_LINE_LOOP);
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+                for(int i = 0; i <= circleLines;i++)
+                    glVertex3f(coord.x+0.5f + (bradius * std::cos(i *  twicePi / circleLines)), coord.y+0.5f + (bradius* std::sin(i * twicePi / circleLines)), coord.z-1);
+            }
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+                for(int i = 0; i <= circleLines;i++)
+                    glVertex3f(coord.x+0.5f + (bradius * std::cos(i *  twicePi / circleLines)), coord.y+1, coord.z+0.5f + (bradius* std::sin(i * twicePi / circleLines)));
+            }
+            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+                for(int i = 0; i <= circleLines;i++)
+                    glVertex3f(coord.x-1, coord.y+0.5f + (bradius* std::cos(i * twicePi / circleLines)), coord.z+0.5f + (bradius * std::sin(i *  twicePi / circleLines)));
+            }
+            glEnd();
+        }
+    };
+
+    // inner cursor
     if (seg.brush.isInverse()) {
         glColor4f(0.6f, 0.1f, 0.1f, 1.0f);
     } else {
         glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     }
-    glBegin(GL_LINE_LOOP);
-    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
-        glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z - 0.1);
-        glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z - 0.1);
-        glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z - 0.1);
-        glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z - 0.1);
-    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z - bsize  );
-        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z - bsize  );
-        glVertex3i(coord.x + bsize+1, coord.y + 1, coord.z + bsize+1);
-        glVertex3i(coord.x - bsize  , coord.y + 1, coord.z + bsize+1);
-    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
-        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z - bsize  );
-        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z - bsize  );
-        glVertex3i(coord.x - 0.1, coord.y + bsize+1, coord.z + bsize+1);
-        glVertex3i(coord.x - 0.1, coord.y - bsize,   coord.z + bsize+1);
-    }
-    glEnd();
+    drawCursor();
 
+
+    // outer cursor
+    ++bsize;
     if (seg.brush.isInverse()) {
         glColor4f(1.0f, 0.1f, 0.1f, 1.0f);
     } else {
         glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     }
-    glBegin(GL_LINE_LOOP);
-    if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
-        glVertex3i(coord.x - bsize-1, coord.y - bsize-1, coord.z - 0.1);
-        glVertex3i(coord.x + bsize+2, coord.y - bsize-1, coord.z - 0.1);
-        glVertex3i(coord.x + bsize+2, coord.y + bsize+2, coord.z - 0.1);
-        glVertex3i(coord.x - bsize-1, coord.y + bsize+2, coord.z - 0.1);
-    } else if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z - bsize-1);
-        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z - bsize-1);
-        glVertex3i(coord.x + bsize+2, coord.y + 1, coord.z + bsize+2);
-        glVertex3i(coord.x - bsize-1, coord.y + 1, coord.z + bsize+2);
-    } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
-        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z - bsize-1);
-        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z - bsize-1);
-        glVertex3i(coord.x - 0.1, coord.y + bsize+2, coord.z + bsize+2);
-        glVertex3i(coord.x - 0.1, coord.y - bsize-1, coord.z + bsize+2);
-    }
-    glEnd();
+    drawCursor();
+    
     glPopMatrix();
 }
 

@@ -48,7 +48,6 @@
   */
 
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
-uint64_t segmentationColorPicking(int x, int y, const int viewportId);
 void merging(QMouseEvent *event, const int vp);
 
 class EventModel : public QObject

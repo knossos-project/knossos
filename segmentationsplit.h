@@ -19,6 +19,9 @@ public:
     enum class view_t {
         xy, xz, yz
     };
+    enum class shape_t {
+        square, circle
+    };
 
     void setInverse(const bool newInverse) {
         inverse = newInverse;
@@ -54,17 +57,26 @@ public:
     view_t getView() const {
         return view;
     }
+    void setShape(const shape_t newShape) {
+        shape = newShape;
+        emit shapeChanged(shape);
+    }
+    shape_t getShape() const {
+        return shape;
+    }
 signals:
     void inverseChanged(const bool);
     void modeChanged(const mode_t);
     void radiusChanged(const int);
     void toolChanged(const tool_t);
+    void shapeChanged(const shape_t);
 private:
     int radius = 10;
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
     view_t view = view_t::xy;
+    shape_t shape = shape_t::circle;
 };
 
 void connectedComponent(const Coordinate & seed);
