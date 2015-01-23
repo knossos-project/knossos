@@ -104,7 +104,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     localLayout->addLayout(hLayoutDelDataset);
     localLayout->addLayout(hLayoutLine1);
     localLayout->addLayout(hLayout2);
-    localLayout->addLayout(hLayoutCubeSize);
+    //localLayout->addLayout(hLayoutCubeSize);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
 
