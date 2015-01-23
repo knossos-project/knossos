@@ -465,6 +465,8 @@ void MainWindow::createMenus() {
     fileMenu.addAction(QIcon(":/images/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
     fileMenu.addAction(QIcon(":/images/icons/document-save-as.png"), "Save Annotation As...", this, SLOT(saveAsSlot()));
     fileMenu.addSeparator();
+    fileMenu.addAction("Export to NML...", this, SLOT(exportToNml()));
+    fileMenu.addSeparator();
     fileMenu.addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     segEditMenu = new QMenu("Edit Segmentation");
@@ -813,6 +815,28 @@ void MainWindow::saveAsSlot() {
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;
         state->skeletonState->skeletonChanged = false;
+    }
+    state->viewerState->renderInterval = FAST;
+}
+
+void MainWindow::exportToNml() {
+    state->viewerState->renderInterval = SLOW;
+    QApplication::processEvents();
+    if(!state->skeletonState->firstTree) {
+        QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
+        return;
+    }
+    auto info = QFileInfo(annotationFilename);
+    auto defaultpath = annotationFileDefaultPath();
+    defaultpath.chop(6);
+    defaultpath += ".nml";
+    const auto & suggestedFilepath = annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    auto filename = QFileDialog::getSaveFileName(this, "Export to Skeleton file", suggestedFilepath, "KNOSSOS Skeleton file (*.nml)");
+    if(filename.isEmpty() == false) {
+        if(filename.endsWith(".nml") == false) {
+            filename += ".nml";
+        }
+        nmlExport(filename);
     }
     state->viewerState->renderInterval = FAST;
 }

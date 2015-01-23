@@ -158,6 +158,7 @@ public slots:
     void autosaveSlot();
     void saveSlot();
     void saveAsSlot();
+    void exportToNml();
 
     /* edit skeleton menu*/
     void setAnnotationMode(AnnotationMode mode);

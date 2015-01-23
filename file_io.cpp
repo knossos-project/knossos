@@ -133,6 +133,13 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     }
 }
 
+void nmlExport(const QString & filename) {
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly);
+    state->viewer->skeletonizer->saveXmlSkeleton(file);
+    file.close();
+}
+
 /** This is a replacement for the old updateFileName
     It decides if a skeleton file has a revision(case 1) or not(case2).
     if case1 the revision substring is extracted, incremented and will be replaced.
