@@ -166,7 +166,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     nodeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     nodeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
 
-    for (auto && verticalHeader : {activeTreeTable->verticalHeader(), treeTable->verticalHeader(), activeNodeTable->verticalHeader(), nodeTable->verticalHeader()}) {
+    for (auto && verticalHeader : {treeTable->verticalHeader(), nodeTable->verticalHeader()}) {
         verticalHeader->sectionResizeMode(QHeaderView::Fixed);
         verticalHeader->setDefaultSectionSize(verticalHeader->minimumSectionSize());
     }
@@ -1030,6 +1030,10 @@ void ToolsTreeviewTab::treeActivated() {
         treeTable->selectRow(getActiveTreeRow());
         treeTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
         treeTable->selectionProtection = false;
+
+        const auto height = activeTreeTable->horizontalHeader()->sizeHint().height() + 2 + activeTreeTable->rowHeight(0);
+        activeTreeTable->setMinimumHeight(height);
+        activeTreeTable->setMaximumHeight(height);
     }
 }
 
@@ -1084,6 +1088,10 @@ void ToolsTreeviewTab::nodeActivated() {
         nodeTable->selectRow(getActiveNodeRow());
         nodeTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
         nodeTable->selectionProtection = false;
+
+        const auto height = activeNodeTable->horizontalHeader()->sizeHint().height() + 2 + activeNodeTable->rowHeight(0);
+        activeNodeTable->setMinimumHeight(height);
+        activeNodeTable->setMaximumHeight(height);
     }
 
     treeActivated(); // update active tree table in case of tree switch
