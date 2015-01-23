@@ -489,11 +489,15 @@ void DatasetLoadWidget::loadSettings() {
 
     lastused = settings.value(DATASET_LAST_USED).toString();
 
-    QStringList a;
-    a = settings.value(DATASET_MRU).toStringList();
+    for(const auto & mru : settings.value(DATASET_MRU).toStringList()) {
+        datasetlistwidget->addItem(mru);
+    }
 
-    for(auto i : a)
-        datasetlistwidget->addItem(i);
+    //add public datasets
+    auto datasetsDir = QDir(":/resources/datasets");
+    for (const auto & dataset : datasetsDir.entryInfoList()) {
+        datasetlistwidget->addItem(dataset.absoluteFilePath());
+    }
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
