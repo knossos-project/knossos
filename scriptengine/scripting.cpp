@@ -11,6 +11,7 @@
 #include "decorators/colordecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
+#include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
 #include "decorators/meshdecorator.h"
 #include "decorators/transformdecorator.h"
@@ -42,6 +43,7 @@ Scripting::Scripting() {
     floatCoordinateDecorator = new FloatCoordinateDecorator();
     meshDecorator = new MeshDecorator();
     nodeListDecorator = new NodeListDecorator();
+    nodeCommentDecorator = new NodeCommentDecorator();
     segmentListDecorator = new SegmentListDecorator();
     treeListDecorator = new TreeListDecorator();
 //    transformDecorator = new TransformDecorator();
@@ -84,6 +86,9 @@ Scripting::Scripting() {
 
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
+
+    PythonQt::self()->addDecorators(nodeCommentDecorator);
+    PythonQt::self()->registerCPPClass("NodeComment", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
     PythonQt::self()->registerCPPClass("Segment", "", module.toLocal8Bit().data());

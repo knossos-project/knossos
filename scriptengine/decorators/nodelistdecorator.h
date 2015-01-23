@@ -2,6 +2,7 @@
 #define NODELISTDECORATOR_H
 
 #include "coordinate.h"
+#include "nodecommentdecorator.h"
 #include "knossos-global.h"
 
 #include <QObject>
@@ -20,7 +21,7 @@ public slots:
     int node_id(nodeListElement *self);
     QList<segmentListElement *> *segments(nodeListElement *self);
     bool is_branch_node(nodeListElement *self);
-    char *comment(nodeListElement *self);
+    commentListElement *comment(nodeListElement *self);
     int time(nodeListElement *self);
     float radius(nodeListElement *self);
     treeListElement *parent_tree(nodeListElement *self);

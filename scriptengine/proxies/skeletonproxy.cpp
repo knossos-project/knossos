@@ -260,17 +260,12 @@ bool SkeletonProxy::set_active_tree(int tree_id) {
     return true;
 }
 
-bool SkeletonProxy::add_comment(int node_id, char *comment) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
-    if(NULL == node) {
-        emit echo(QString("no node id id %1 found").arg(node_id));
-        return false;
-    }
-    if (!Skeletonizer::singleton().addComment( QString(comment), node, 0)) {
-        emit echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
-        return false;
-    }
-    return true;
+bool SkeletonProxy::set_comment(int node_id, char *comment) {
+    return Skeletonizer::singleton().setComment(comment, NULL, node_id);
+}
+
+bool SkeletonProxy::delete_comment(int node_id) {
+    return Skeletonizer::singleton().delComment(NULL, node_id);
 }
 
 bool SkeletonProxy::add_segment(int source_id, int target_id) {

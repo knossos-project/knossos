@@ -20,13 +20,9 @@ QList<segmentListElement *> *NodeListDecorator::segments(nodeListElement *self) 
     return self->getSegments();
 }
 
-char *NodeListDecorator::comment(nodeListElement *self) {
+commentListElement *NodeListDecorator::comment(nodeListElement *self) {
 
-    if(self->comment) {
-        return self->comment->content;
-    }
-
-    return 0;
+    return self->comment;
 }
 
 int NodeListDecorator::time(nodeListElement *self) {

@@ -14,6 +14,7 @@ class FloatCoordinateDecorator;
 class CoordinateDecorator;
 class TreeListDecorator;
 class NodeListDecorator;
+class NodeCommentDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
 class SkeletonProxy;
@@ -36,6 +37,7 @@ public:
     ColorDecorator *colorDecorator;
     TreeListDecorator *treeListDecorator;
     NodeListDecorator *nodeListDecorator;
+    NodeCommentDecorator *nodeCommentDecorator;
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
     SkeletonProxy *skeletonProxy;
