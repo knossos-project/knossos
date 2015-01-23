@@ -44,12 +44,14 @@ elseif(APPLE)
     set_source_files_properties("knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 #generate docs
+
+find_program(QCOLLECTIONGENERATOR qcollectiongenerator)
 add_custom_command(
     OUTPUT
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch"
     PRE_BUILD
-    COMMAND qcollectiongenerator "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp" -o "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
+    COMMAND ${QCOLLECTIONGENERATOR} "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp" -o "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
     DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp"
     "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qhp"
