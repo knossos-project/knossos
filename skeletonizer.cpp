@@ -2585,7 +2585,7 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
         return;
     }
 
-    if(node->comment != NULL) {
+    if(node->comment != NULL && node->comment->content != "") {
         // default color for comment nodes
         SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
 
