@@ -2585,14 +2585,14 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
         return;
     }
 
-    if(node->comment != NULL && node->comment->content != "") {
+    if(node->comment != NULL && strlen(node->comment->content) != 0) {
         // default color for comment nodes
         SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
 
         if(CommentSetting::useCommentColors) {
             auto newColor = CommentSetting::getColor(QString(node->comment->content));
             if(newColor.alpha() != 0) {
-                *color = color4F(newColor.red()/255, newColor.green()/255, newColor.blue()/255, newColor.alpha()/255);
+                *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
             }
         }
     }
@@ -2604,7 +2604,7 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
         *radius = state->skeletonState->overrideNodeRadiusVal;
     }
     if(node->comment != NULL && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(node->comment->content);
+        float newRadius = CommentSetting::getRadius(QString(node->comment->content));
         if(newRadius != 0) {
             *radius = newRadius;
         }

@@ -9,7 +9,7 @@ CommentSetting::CommentSetting(const QString shortcut, const QString text, const
 
 QColor CommentSetting::getColor(const QString comment) {
     for(const auto item : comments) {
-        if(item.text.contains(comment)) {
+        if(comment.contains(item.text)) {
             return item.color;
         }
     }
@@ -18,7 +18,7 @@ QColor CommentSetting::getColor(const QString comment) {
 
 float CommentSetting::getRadius(const QString comment) {
     for(const auto item : comments) {
-        if(item.text.contains(comment)) {
+        if(comment.contains(item.text)) {
             return item.nodeRadius;
         }
     }
