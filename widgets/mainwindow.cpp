@@ -1316,10 +1316,8 @@ void MainWindow::placeComment(const int index) {
         return;
     }
     CommentSetting comment = CommentSetting::comments[index];
-    if((!state->skeletonState->activeNode->comment) && (!comment.text.isEmpty())) {
-        Skeletonizer::singleton().addComment(comment.text, state->skeletonState->activeNode, 0);
-    } else if (!comment.text.isEmpty()) {
-        Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0, comment.text, state->skeletonState->activeNode, 0);
+    if (!comment.text.isEmpty()) {
+        Skeletonizer::singleton().setComment(comment.text, state->skeletonState->activeNode, 0);
     }
 }
 

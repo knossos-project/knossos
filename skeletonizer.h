@@ -98,6 +98,7 @@ public slots:
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement *node, uint nodeID);
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
+    bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
     void jumpToActiveNode(bool *isSuccess = NULL);
     bool setActiveTreeByID(int treeID);

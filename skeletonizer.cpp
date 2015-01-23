@@ -2182,6 +2182,20 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeI
     return true;
 }
 
+bool Skeletonizer::setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID) {
+    if(commentNodeID) {
+        commentNode = findNodeByNodeID(commentNodeID);
+    }
+    if (!commentNode) {
+        qDebug() << "Please provide a valid comment node to set!";
+        return false;
+    }
+    if(commentNode->comment) {
+        return editComment(commentNode->comment, 0, newContent, NULL, 0);
+    }
+    return addComment(newContent, commentNode, 0);
+}
+
 bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNodeID) {
     nodeListElement *commentNode = NULL;
 
@@ -2193,7 +2207,7 @@ bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNo
     }
 
     if(!currentComment) {
-        qDebug() << "Please provide a valid comment element to delete!";
+        qDebug() << "Please provide a valid comment node to delete!";
         return false;
     }
 

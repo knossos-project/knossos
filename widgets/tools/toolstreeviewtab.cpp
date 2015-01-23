@@ -516,25 +516,14 @@ void ToolsTreeviewTab::setNodeCommentAction() {
 
         if (activeNodeTable->hasFocus()) {
             if (nodeCommentBuffer.length() > 0) {
-                if(state->skeletonState->activeNode->comment == nullptr) {
-                    Skeletonizer::singleton().addComment(nodeCommentBuffer.toLocal8Bit().data(),
-                                             state->skeletonState->activeNode, 0);
-                } else {
-                    Skeletonizer::singleton().editComment(state->skeletonState->activeNode->comment, 0,
-                                              nodeCommentBuffer.toLocal8Bit().data(),
-                                              state->skeletonState->activeNode, 0);
-                }
+                Skeletonizer::singleton().setComment(nodeCommentBuffer, state->skeletonState->activeNode, 0);
             } else if(state->skeletonState->activeNode->comment != nullptr) {
                 Skeletonizer::singleton().delComment(state->skeletonState->activeNode->comment, state->skeletonState->activeNode->nodeID);
             }
         } else {// nodeTable focused
             for (auto node : state->skeletonState->selectedNodes) {
                 if(nodeCommentBuffer.length() > 0) {
-                    if (node->comment == nullptr) {
-                        Skeletonizer::singleton().addComment(nodeCommentBuffer.toLocal8Bit().data(), node, 0);
-                    } else {
-                        Skeletonizer::singleton().editComment(node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
-                    }
+                    Skeletonizer::singleton().setComment(nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                 } else if (node->comment != nullptr) {
                     Skeletonizer::singleton().delComment(node->comment, node->nodeID);
                 }
