@@ -662,6 +662,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     QApplication::processEvents();
 
+    state->skeletonState->mergeOnLoadFlag = false;
     if (state->skeletonState->treeElements > 0) {
         const auto text = tr("Which Action do you like to choose?<ul>")
             + tr("<li>Merge the new Skeleton into the current one</li>")
