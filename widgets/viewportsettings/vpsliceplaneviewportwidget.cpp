@@ -119,16 +119,16 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 
     gridLayout->addWidget(&arbitraryModeCheckBox, 0, 0);
     gridLayout->addWidget(skeletonOverlayLabel, 1, 0);
-    gridLayout->addWidget(voxelFilteringLabel, 1, 3);
+    gridLayout->addWidget(voxelFilteringLabel, 1, 3, 1, 3);
     gridLayout->addWidget(line, 2, 0, 1, 2);
     gridLayout->addWidget(line2, 2, 3, 1, 3);
-    gridLayout->addWidget(datasetLinearFilteringCheckBox, 3, 3);
+    gridLayout->addWidget(datasetLinearFilteringCheckBox, 3, 3, 1, 3);
     gridLayout->addWidget(highlightIntersectionsCheckBox, 3, 0);
     gridLayout->addWidget(depthCutoffLabel, 5, 0);
     gridLayout->addWidget(depthCutoffSpinBox, 5, 1);
     gridLayout->addWidget(&showNodeCommentsCheckBox, 6, 0);
     gridLayout->addWidget(colorLookupTablesLabel, 8, 0);
-    gridLayout->addWidget(datasetDynamicRangeLabel, 8, 3);
+    gridLayout->addWidget(datasetDynamicRangeLabel, 8, 3, 1, 3);
     gridLayout->addWidget(line3, 9, 0, 1, 2);
     gridLayout->addWidget(line4, 9, 3, 1, 3);
     gridLayout->addWidget(useOwnDatasetColorsCheckBox, 10, 0);
@@ -146,8 +146,8 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(line5, 13, 0, 1, 2);
     gridLayout->addWidget(line6, 13, 3, 1, 3);
     gridLayout->addLayout(&segmentationOverlayLayout, 14, 0, 1, 2);
-    gridLayout->addWidget(drawIntersectionsCrossHairCheckBox, 14, 3);
-    gridLayout->addWidget(showViewPortsSizeCheckBox, 15, 3);
+    gridLayout->addWidget(drawIntersectionsCrossHairCheckBox, 14, 3, 1, 2);
+    gridLayout->addWidget(showViewPortsSizeCheckBox, 15, 3, 1, 2);
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
