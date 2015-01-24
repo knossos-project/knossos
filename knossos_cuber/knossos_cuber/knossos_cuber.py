@@ -1065,8 +1065,6 @@ def read_config_file(config_file):
 
     config = ConfigParser.SafeConfigParser(allow_no_value=True)
 
-    print "Using config file `" + config_file + "'."
-
     try:
         config.readfp(open(config_file))
     except IOError:
