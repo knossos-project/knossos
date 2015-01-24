@@ -134,7 +134,7 @@ void TaskLoginWidget::loginButtonClicked() {
             serverStatus->setText(QString("<font color='red'>%1</font>").arg(response.content));
         }
     } else { // !CURLE_OK
-        serverStatus->setText("<font color='red'>Request failed. Please check your connection.</font>");
+        serverStatus->setText(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response.content));
     }
     free(response.content);
 }

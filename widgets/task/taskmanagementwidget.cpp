@@ -90,16 +90,13 @@ void TaskManagementWidget::logoutButtonClicked() {
     CURLcode code;
 
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpDELETE(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
+    bool success = taskState::httpDELETE(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
 
-    if(result == false) {
-        setResponse("<font color='red'>Request failed. Please check your connection.</font>");
-    }
-    if(code == CURLE_OK) {
+    if (success && code == CURLE_OK && httpCode == 200) {
         resetSession("<font color='green'>Logged out successfully.</font>");
     } else {
-        setResponse("<font color='red'>Request failed. Please check your connection.</font>");
+        handleError(success, code, httpCode, response.content);
     }
 
     free(response.content);
@@ -109,7 +106,7 @@ void TaskManagementWidget::handleError(bool success, CURLcode code, long httpCod
     if (success == false) {
         resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
     } else if (code != CURLE_OK) {
-        setResponse(QString("<font color='red'>Request failed. Please check your connection.</font><br />%0").arg(response));
+        setResponse(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response));
         taskState::removeCookie();
     } else if (httpCode == 400) {
         setResponse(QString("<font color='red'>Not available.</font><br />%0").arg(response));
