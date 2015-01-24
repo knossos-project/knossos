@@ -10,33 +10,30 @@
          <filterAttribute>KNOSSOS</filterAttribute>
          <filterAttribute>4.0</filterAttribute>
          <toc>
-            <section title="KNOSSOS Quickstart" ref="documentation.html#quickstart">
-              <section title="Start and Main Window" ref="documentation.html#start"/>
-              <section title="Saving/Autosaving/Loading" ref="documentation.html#saving"/>
-              <section title="Basic Viewport Handling" ref="documentation.html#viewports"/>
-              <section title="Skeleton Tracing" ref="documentation.html#tracing"/>
+            <section title="KNOSSOS Quickstart" ref="documentation.html#knossos-quickstart-guide">
+              <section title="Launching KNOSSOS" ref="documentation.html#lanching-knossos"/>
+              <section title="Saving/Autosaving/Loading" ref="documentation.html#savingauto-savingloading"/>
+              <section title="Basic Viewport Handling" ref="documentation.html#basic-viewport-handling"/>
+              <section title="Skeleton Tracing" ref="documentation.html#skeleton-tracing"/>
               <section title="Comments" ref="documentation.html#comments"/>
               <section title="Shortcuts" ref="documentation.html#shortcuts"/>
             </section>
-            <section title="Full Documentation" ref="documentation.html#full">
-              <section title="1 Preparing your dataset" ref="documentation.html#Dataset_Preparation"/>
-              <section title="2 Launching Knossos" ref="documentation.html#Launching_Knossos"/>
-              <section title="3 KNOSSOS" ref="documentation.html#Knossos">
-                <section title="3.1 Branchpoints" ref="documentation.html#Branch_points_.5Bbranchpoints.5D"/>
-                <section title="3.2 Coordinates" ref="documentation.html#Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"/>
-                <section title="3.3 Edit Skeleton (menu)" ref="documentation.html#Edit_Skeleton_.28menu.29"/>
-                <section title="3.4 Skeleton File (menu)" ref="documentation.html#File_.28menu.29"/>
-                <section title="3.5 Help (menu)" ref="documentation.html#Help_.28menu.29"/>
-                <section title="3.6 Hot Keys" ref="documentation.html#Hot_keys_.5BHotkey.2C_Shortcuts.2C_Short_cuts.5D"/>
-                <section title="3.8 Moving" ref="documentation.html#Moving_.5Bscrolling.2C_panning.5D"/>
-                <section title="3.9 Nodes" ref="documentation.html#Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D"/>
-                <section title="3.10 Preferences (menu)" ref="documentation.html#Preferences_.28menu.29"/>
-                <section title="3.12 Annotation window" ref="documentation.html#Annotation_window"/>
-                <section title="3.13 Trees" ref="documentation.html#Trees_.5BSkeleton.5D"/>
-                <section title="3.14 Navigation (menu)" ref="documentation.html#Navigation_.28menu.29"/>
-                <section title="3.15 Viewport" ref="documentation.html#Viewport"/>
-                <section title="3.16 Viewport Settings" ref="documentation.html#Viewport_Settings"/>
-                <section title="3.17 Windows (menu)" ref="documentation.html#Windows_.28menu.29"/>
+            <section title="1 KNOSSOS Full Documentation" ref="documentation.html#knossos-full-documentation">
+                <section title="1.1 Branch points" ref="documentation.html#branch-points"/>
+                <section title="1.2 Coordinates" ref="documentation.html#coordinates"/>
+                <section title="1.3 Edit Skeleton (Menu)" ref="documentation.html#edit-skeleton-menu"/>
+                <section title="1.4 File (Menu)" ref="documentation.html#file-menu"/>
+                <section title="1.5 Help (Menu)" ref="documentation.html#help-menu"/>
+                <section title="1.6 Shortcuts" ref="documentation.html#shortcuts-1"/>
+                <section title="1.7 Moving" ref="documentation.html#moving-scrolling-panning"/>
+                <section title="1.8 Nodes" ref="documentation.html#nodes-skeleton-nodes-skeleton-points"/>
+                <section title="1.9 Preferences (Menu)" ref="documentation.html#preferences-menu"/>
+                <section title="1.10 Annotation window" ref="documentation.html#annotation-window"/>
+                <section title="1.11 Trees" ref="documentation.html#trees-skeleton"/>
+                <section title="1.12 Navigation (Menu)" ref="documentation.html#navigation-menu"/>
+                <section title="1.13 Viewport" ref="documentation.html#viewport"/>
+                <section title="1.14 Viewport Settings" ref="documentation.html#viewport-settings"/>
+                <section title="1.15 Windows (Menu)" ref="documentation.html#windows-menu"/>
               </section>
             </section>
          </toc>
