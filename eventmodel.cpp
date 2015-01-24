@@ -725,7 +725,10 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     const int directionSign = event->delta() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
-    if((state->skeletonState->activeNode) and (event->modifiers() == Qt::SHIFT)) {//change node radius
+    if (Session::singleton().annotationMode == SkeletonizationMode
+            && event->modifiers() == Qt::SHIFT
+            && state->skeletonState->activeNode != nullptr)
+    {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
 
         Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius
@@ -737,6 +740,11 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
            state->skeletonState->defaultNodeRadius = radius;
         }
+    } else if (Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
+        seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
+        if(seg.brush.getRadius() < 0) {
+            seg.brush.setRadius(0);
+        }
     } else if (VPfound == VIEWPORT_SKELETON) {
         if (directionSign == -1) {
             emit zoomInSkeletonVPSignal();
@@ -745,10 +753,6 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         }
     } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
         emit zoomOrthoSignal(directionSign * 0.1);
-    } else if(Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
-        seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
-        if(seg.brush.getRadius() < 0)
-            seg.brush.setRadius(0);
     } else {
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
         const auto type = state->viewerState->vpConfigs[VPfound].type;
