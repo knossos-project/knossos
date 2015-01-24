@@ -138,11 +138,13 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
-        const auto soid = seg.subobjectIdOfFirstSelectedObject();
-        seg.updateLocationForFirstSelectedObject(coord);
-        writeVoxels(coord, soid, seg.brush);
-        state->viewer->window->notifyUnsavedChanges();
-        state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
+        if (seg.selectedObjectsCount()) {
+            const auto soid = seg.subobjectIdOfFirstSelectedObject();
+            seg.updateLocationForFirstSelectedObject(coord);
+            writeVoxels(coord, soid, seg.brush);
+            state->viewer->window->notifyUnsavedChanges();
+            state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
+        }
     }
 }
 
