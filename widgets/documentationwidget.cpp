@@ -26,8 +26,8 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent) {
     //delete first to update because copy does not overwrite
     QFile::remove(collectionFilePath);
     QFile::remove(docFilePath);
-    QFile::copy(":/doc/collection.qhc", collectionFilePath);
-    QFile::copy(":/doc/doc.qch", docFilePath);
+    QFile::copy(":/resources/doc/collection.qhc", collectionFilePath);
+    QFile::copy(":/resources/doc/doc.qch", docFilePath);
 
     QHelpEngine *helpEngine = new QHelpEngine(collectionFilePath);
     helpEngine->setupData();
