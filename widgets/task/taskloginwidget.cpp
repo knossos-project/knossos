@@ -18,9 +18,6 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) : QDialog(parent), taskManagem
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Login");
 
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    QFormLayout *formLayout = new QFormLayout();
-
     urlField = new QLineEdit();
     urlField->setText(state->taskState->host);
     usernameField = new QLineEdit();
@@ -37,14 +34,16 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) : QDialog(parent), taskManagem
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
-    formLayout->addWidget(serverStatus);
+    QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(hostLabel, urlField);
     formLayout->addWidget(line);
     formLayout->addRow(usernameLabel, usernameField);
     formLayout->addRow(passwordLabel, passwordField);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(serverStatus);
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(loginButton);
-
     setLayout(mainLayout);
 
     connect(urlField, SIGNAL(editingFinished()), this, SLOT(urlEditingFinished()));

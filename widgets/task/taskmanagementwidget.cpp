@@ -41,8 +41,8 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
 
     submitButton = new QPushButton("Submit");
 
+
     QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(statusLabel);
     formLayout->addRow(loggedAsLabel, logoutButton);
     formLayout->addRow(loadLastSubmitButton, startNewTaskButton);
     formLayout->addRow(currentTaskLabel);
@@ -50,7 +50,11 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
 
     formLayout->addRow(&categoryDescriptionLabel);
     formLayout->addRow(&taskCommentLabel);
-    setLayout(formLayout);
+
+    auto mainLayout = new QVBoxLayout();
+    mainLayout->addWidget(statusLabel);
+    mainLayout->addLayout(formLayout);
+    setLayout(mainLayout);
 
     // prepare the work submission dialog
     submitDialog = new QDialog(this);
