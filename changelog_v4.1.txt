@@ -16,7 +16,9 @@ Project host: https://github.com/knossos-project/
 Roadmap:
 v4.2:
 - 3D visualization of segmentation
-- Support for Google and WebKNOSSOS datasets
+- Improved loader with support for several different dataset sources
+- Segmentation job mode
+- GPU slicing (major perfomance increase, better quality for arbitrary views)
 
 ----------------------------------
 -  Known Bugs                    -
@@ -29,6 +31,7 @@ v4.2:
 ----------------------------------
 
 - Annotation time will not reduce anymore when running KNOSSOS too long.
+- Resolved several crash conditions. 
 
 ----------------------------------
 -  Features                      -
@@ -45,8 +48,10 @@ Segmentation:
 The segmentation feature allows to annotate the volume of neurons where skeletonization only reconstructs morphology and connectivity.
 - Activate this feature at 'Edit Skeleton' -> 'Segmentation Mode'. The settings for it can be found at 'Windows' -> 'Annotation Window' -> 'Segmentation'.
 - The Brush tool is used to perform original segmentation or to correct existing segmentations.
-- The Merge tool is used to connect or disconnect existing segmentation objects.
-- We support segmentation data in the form of raw 64-bit images compressed with google-snappy.
+    - Edited cubes can be saved and loaded as part of the annotation file. 
+- The Merge tool is used to connect or disconnect existing segmentation objects. 
+    - The result can be saved and loaded as a ›mergelist‹ as part of the annotation file. 
+- We support segmentation data in the form of raw 64-bit matrices optionally compressed with google-snappy and zip.
 
 Skeletonization:
 - The new Simple Tracing Mode prevents annotation mistakes through reduced functionality.
@@ -64,3 +69,4 @@ Skeletonization:
 - The table row size within the Annotation Window has been reduced to display more rows.
 - The annotation time is now displayed at the bottom right corner.
 - Arbitrary viewport orientation now needs to be enabled at 'Windows' -> 'Viewport Settings' -> 'Slice Plane Viewports'.
+- Both tabs for the heidelbrain integration have been merged. 
