@@ -35,7 +35,6 @@
                 <section title="1.14 Viewport Settings" ref="documentation.html#viewport-settings"/>
                 <section title="1.15 Windows (Menu)" ref="documentation.html#windows-menu"/>
               </section>
-            </section>
          </toc>
          <files>
              <file>documentation.html</file>
