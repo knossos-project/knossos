@@ -51,6 +51,8 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent) {
     layout->addWidget(splitter);
     setLayout(layout);
 
+    resize(1024, 640);
+
     connect(contentWidget, SIGNAL(linkActivated(const QUrl &)), helpBrowser, SLOT(setSource(const QUrl &)));
 }
 
