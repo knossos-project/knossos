@@ -496,7 +496,9 @@ void DatasetLoadWidget::loadSettings() {
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
-        datasetlistwidget->addItem(dataset.absoluteFilePath());
+        if (datasetlistwidget->findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
+            datasetlistwidget->addItem(dataset.absoluteFilePath());
+        }
     }
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
