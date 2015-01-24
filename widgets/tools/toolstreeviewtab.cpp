@@ -31,14 +31,13 @@ void applySelection(Table table, Func func) {
     std::size_t startIndex;
     bool blockSelection = false;
     int row;
-    //qDebug() << table->rowCount();
     for (row = 0; row < table->rowCount(); ++row) {
-        const auto selected = func(table->item(row, 0)->data(Qt::DisplayRole));
-        if (!blockSelection && selected) {//start block selection
+        const auto & elem = table->item(row, 0)->data(Qt::DisplayRole);
+        if (!blockSelection && func(elem)) {//start block selection
             blockSelection = true;
             startIndex = row;
         }
-        if (blockSelection && !selected) {//end block selection
+        if (blockSelection && !func(elem)) {//end block selection
             blockSelection = false;
             selectedItems.select(table->model()->index(startIndex, 0), table->model()->index(row-1, table->model()->columnCount()-1));
         }
