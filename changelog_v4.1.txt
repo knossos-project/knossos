@@ -1,0 +1,66 @@
+==================================
+=  KNOSSOS V4.1 - Change Log     =
+==================================
+
+KNOSSOS is a software tool for the visualization and annotation of 3D image data. It was developed for the rapid reconstruction of neural morphology, connectivity and volume.
+
+----------------------------------
+-  General Information           -
+----------------------------------
+
+Release Date: 24th January 2014
+
+Homepage: http://www.knossostool.org/
+Project host: https://github.com/knossos-project/
+
+Roadmap:
+v4.2:
+- 3D visualization of segmentation
+- Support for Google and WebKNOSSOS datasets
+
+----------------------------------
+-  Known Bugs                    -
+----------------------------------
+
+- The Python scripting interface is still experimental at the moment.
+
+----------------------------------
+-  Bug fixes                     -
+----------------------------------
+
+- Annotation time will not reduce anymore when running KNOSSOS too long.
+
+----------------------------------
+-  Features                      -
+----------------------------------
+
+Dataset:
+- The KNOSSOS cuber is now available. It allows easy conversion from image stacks to KNOSSOS datasets. Currently supported file formats: tif, png and jpeg.
+- KNOSSOS now remembers your last used datasets and displays identifying information about them.
+- Datasets can now be loaded by specifying a .conf file. Specifying a dataset folder is still supported.
+- Two streaming datasets of the mouse retina are now shipped with KNOSSOS.
+- Changing the Supercube edge size does not require a restart anymore.
+
+Segmentation:
+The segmentation feature allows to annotate the volume of neurons where skeletonization only reconstructs morphology and connectivity.
+- Activate this feature at 'Edit Skeleton' -> 'Segmentation Mode'. The settings for it can be found at 'Windows' -> 'Annotation Window' -> 'Segmentation'.
+- The Brush tool is used to perform original segmentation or to correct existing segmentations.
+- The Merge tool is used to connect or disconnect existing segmentation objects.
+- We support segmentation data in the form of raw 64-bit images compressed with google-snappy.
+
+Skeletonization:
+- The new Simple Tracing Mode prevents annotation mistakes through reduced functionality.
+  Turned-off Features are: creating a new tree, placing unconnected nodes and creating cycles within the skeleton.
+  You can deactivate Simple Tracing Mode at 'Edit Skeleton'.
+- The Python scrpting interface can now be used to deploy custom plugins written in Python.
+- Node comments can be displayed in the orthogonal viewports by enabling 'show node comments' at 'Windows' -> 'Viewport Settings' -> 'Slice Plane Viewports'.
+
+----------------------------------
+-  Changes                       -
+----------------------------------
+
+- Skeleton files (.nml-files) will still be supported continuously, but the new KNOSSOS annotation file (.k.zip) is now the default file type.
+- The former 'Comment Settings' Window has been moved to the 'Comments' tab in the Annotation Window. You can define comment shortcuts from F1 - F10.
+- The table row size within the Annotation Window has been reduced to display more rows.
+- The annotation time is now displayed at the bottom right corner.
+- Arbitrary viewport orientation now needs to be enabled at 'Windows' -> 'Viewport Settings' -> 'Slice Plane Viewports'.
