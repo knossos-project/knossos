@@ -29,7 +29,9 @@
 
 void PythonQtInit() {
     PythonQt::init(PythonQt::RedirectStdOut);
+#ifdef QtAll
     PythonQt_QtAll::init();
+#endif
 }
 
 Scripting::Scripting() {

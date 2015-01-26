@@ -31,10 +31,9 @@ find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Qt5Python27 REQUIRED)
-find_package(Qt5Python27_QtAll REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(TurboJPEG REQUIRED)
-find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL PrintSupport Sql Svg WebKitWidgets UiTools Widgets Xml)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 #platform dependent resources
@@ -92,6 +91,12 @@ if(NOT BUILD_SHARED_LIBS)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
     endif()
 endif()
+option(PythonQt_QtAll OFF)
+if(PythonQt_QtAll)
+	find_package(Qt5Python27_QtAll REQUIRED)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
+	target_link_libraries(${PROJECT_NAME} Qt5Python27_QtAll)
+endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
@@ -106,7 +111,6 @@ target_link_libraries(${PROJECT_NAME}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
     Qt5Python27
-    Qt5Python27_QtAll
     TurboJPEG::TurboJPEG
     Qt5::Core
     Qt5::Gui
