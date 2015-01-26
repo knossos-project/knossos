@@ -13,12 +13,10 @@ Release Date: 24th January 2014
 Homepage: http://www.knossostool.org/
 Project host: https://github.com/knossos-project/
 
-Roadmap:
-v4.2:
-- 3D visualization of segmentation by realtime volume rendering
+Upcoming features and improvements:
+- 3D visualization of segmentation with volume rendering
 - Improved loader with support for several different dataset sources
-- Segmentation job mode
-- GPU slicing (major perfomance increase, better quality for arbitrary views)
+- GPU-based data slicing (major perfomance increase, better quality for arbitrary views)
 
 ----------------------------------
 -  Bug fixes                     -
@@ -54,7 +52,7 @@ Skeletonization:
 - The new Simple Tracing Mode prevents annotation mistakes through reduced functionality.
   Turned-off Features are: creating a new tree, placing unconnected nodes and creating cycles within the skeleton.
   You can deactivate Simple Tracing Mode at 'Edit Skeleton'.
-
+- KNOSSOS now supports >5e6 nodes (loading, saving, and parallel visualization of up to 500k nodes).
 - Node comments can be displayed in the orthogonal viewports by enabling 'show node comments' at 'Windows' -> 'Viewport Settings' -> 'Slice Plane Viewports'.
 
 Python plugin interface (experimental):
