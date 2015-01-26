@@ -90,6 +90,7 @@ if(NOT BUILD_SHARED_LIBS)
         set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
     endif()
+    string(REPLACE " " ";" CURL_LIBRARIES "${CURL_CONFIG_OUTPUT}")
 endif()
 option(PythonQt_QtAll OFF)
 if(PythonQt_QtAll)
