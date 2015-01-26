@@ -176,12 +176,12 @@ bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
                 if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
                     ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
-                    r /= 2, g /= 2, b /= 2;
+                    r /= 1.25, g /= 1.25, b /= 1.25;
                 }
                 else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
                         (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
-                    r /= 2, g /= 2, b /= 2;
+                    r /= 1.25, g /= 1.25, b /= 1.25;
                 }
             }
             slice[0] = r, slice[1] = g, slice[2] = b;
