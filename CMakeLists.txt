@@ -97,6 +97,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CURL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
+    ${PYTHON_INCLUDE_DIR}
 )
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
