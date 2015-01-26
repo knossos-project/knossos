@@ -55,6 +55,21 @@ struct WidgetContainer {
     TaskLoginWidget * const taskLoginWidget;
     TaskManagementWidget * const taskManagementWidget;
     ViewportSettingsWidget * const viewportSettingsWidget;
+
+    void hideAll() {
+        annotationWidget->hide();
+        datasetLoadWidget->hide();
+        datasetOptionsWidget->hide();
+        dataSavingWidget->hide();
+        docWidget->hide();
+        navigationWidget->hide();
+        pythonPropertyWidget->hide();
+        pythonPropertyWidget->closeTerminal();
+        splashWidget->hide();
+        taskLoginWidget->hide();
+        taskManagementWidget->hide();
+        viewportSettingsWidget->hide();
+    }
 };
 
 #endif // WIDGETCONTAINER_H

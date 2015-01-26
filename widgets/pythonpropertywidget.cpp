@@ -127,6 +127,12 @@ void PythonPropertyWidget::openTerminal() {
     console->show();
 }
 
+void PythonPropertyWidget::closeTerminal() {
+    if(console) {
+        console->hide();
+    }
+}
+
 void PythonPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);

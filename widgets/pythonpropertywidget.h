@@ -38,6 +38,7 @@ public slots:
     void autoStartFolderButtonClicked();
     void autoConf();
     void openTerminal();
+    void closeTerminal();
     void saveSettings();
     void loadSettings();
     void autoStartTerminalClicked(bool on);
