@@ -374,6 +374,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     emit datasetChanged(range, range, segmentationOverlayCheckbox.isChecked());
 
     emit userMoveSignal(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    return true;
 }
 
 DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const char *path) {
