@@ -131,6 +131,8 @@ void DatasetLoadWidget::deleteDataset() {
 }
 
 void DatasetLoadWidget::processListWidgetClicked() {
+    if(datasetlistwidget->selectedItems().count() == 0) return;
+
     QListWidgetItem * itemClicked = datasetlistwidget->selectedItems().front();
 
     datasetinfo = getConfigFileInfo(itemClicked->text().toStdString().c_str());
@@ -226,9 +228,9 @@ void DatasetLoadWidget::processButtonClicked() {
         return;
     }
 
-    loadDataset(true, datasetlistwidget->currentItem()->text());
-
-    this->hide();
+    if(loadDataset(true, datasetlistwidget->currentItem()->text())) {
+        this->hide(); //hide datasetloadwidget only if we could successfully load a widget
+    }
 }
 
 /* dataset can be selected in three ways:
@@ -236,7 +238,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
+bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     QFile confFile;
     QString filePath; // for holding the whole path to a .conf file
     QFileInfo pathInfo;
@@ -255,7 +257,7 @@ void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
         std::string tmp = downloadRemoteConfFile(path.toStdString());
         path = QString::fromStdString(tmp);
 
-        if(path == "") return;
+        if(path == "") return false;
     }
 
     pathInfo.setFile(path);
@@ -297,7 +299,7 @@ void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
                     info.addButton(QMessageBox::Ok);
                     info.exec();
                 }
-                return;
+                return false;
             }
         }
         else {
@@ -329,7 +331,7 @@ void DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
         info.setText(QString("Failed to read config from %1").arg(filePath));
         info.addButton(QMessageBox::Ok);
         info.exec();
-        return;
+        return false;
     }
 
     // we want state->path to hold the path to the dataset folder
