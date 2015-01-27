@@ -18,7 +18,7 @@ file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
 set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)#Resources.qrc
+set(CMAKE_AUTORCC ON)#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 option(BUILD_SHARED_LIBS "try to find static versions of all libraries")
@@ -74,6 +74,7 @@ set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CM
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
     #these definitions remove the dllimport directives from the includes
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "QT_STATIC")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
     if(UNIX AND NOT "${CURL_LIBRARIES}" MATCHES ".so")
@@ -91,8 +92,9 @@ if(NOT BUILD_SHARED_LIBS)
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
         #satisfy additional dependecies
-        set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+        set(GLUT_LIBRARIES freeglut_static -lWinmm)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
+        set(static_runtime -static stdc++ gomp winpthread)
     endif()
 endif()
 option(PythonQt_QtAll OFF)
@@ -125,6 +127,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Network
     QuaZip::QuaZip
     Snappy::Snappy
+    ${static_runtime}
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${CURL_CONFIG_OUTPUT}")
 set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
