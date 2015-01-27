@@ -50,6 +50,11 @@
 
 #define NUMTHREADS 4
 
+#if defined(Q_OS_WIN) && defined(QT_STATIC)
+#include <QtPlugin>
+Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
+#endif
+
 std::unique_ptr<Knossos> knossos;
 std::unique_ptr<Loader> loader;
 
