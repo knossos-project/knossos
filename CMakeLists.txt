@@ -131,6 +131,16 @@ target_link_libraries(${PROJECT_NAME}
     Snappy::Snappy
     ${static_runtime}
 )
+find_program(LSBRELEASE lsb_release)
+if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
+    execute_process(COMMAND ${LSBRELEASE} -is
+        OUTPUT_VARIABLE LSB_OUTPUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if("${LSB_OUTPUT}" STREQUAL "Ubuntu")
+        target_link_libraries(${PROJECT_NAME} xcb Xxf86vm dl)
+    endif()
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${CURL_CONFIG_OUTPUT}")
 set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
