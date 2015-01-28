@@ -302,7 +302,7 @@ void MainWindow::notifyUnsavedChanges() {
 }
 
 void MainWindow::updateTitlebar() {
-    QString title = qApp->applicationDisplayName() + " (" + KREVISION + ")" + " showing ";
+    QString title = qApp->applicationDisplayName() + " showing ";
     if (!annotationFilename.isEmpty()) {
         title.append(annotationFilename);
     } else {
