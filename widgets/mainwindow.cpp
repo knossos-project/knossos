@@ -243,6 +243,7 @@ void MainWindow::createToolbars() {
 
 void MainWindow::setJobModeUI(bool enabled) {
     if(enabled) {
+        setAnnotationMode(SegmentationMode);
         menuBar()->hide();
         widgetContainer->hideAll();
         removeToolBar(&defaultToolbar);
