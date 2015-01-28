@@ -84,11 +84,13 @@ if(NOT BUILD_SHARED_LIBS)
         OUTPUT_VARIABLE CURL_CONFIG_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if(NOT APPLE)
-        string(REPLACE " " ";" CURL_LIBRARIES "${CURL_CONFIG_OUTPUT}")#convert to list
-        set(CURL_CONFIG_OUTPUT "")
-    else()
-        set(CURL_LIBRARIES "")
+    if(NOT "${CURL_CONFIG_OUTPUT}" STREQUAL "")
+        if(NOT APPLE)
+            string(REPLACE " " ";" CURL_LIBRARIES "${CURL_CONFIG_OUTPUT}")#convert to list
+            set(CURL_CONFIG_OUTPUT "")
+        else()
+            set(CURL_LIBRARIES "")
+        endif()
     endif()
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv -lWs2_32)
