@@ -22,7 +22,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-option(BUILD_SHARED_LIBS "try to find static versions of all libraries")
+option(BUILD_SHARED_LIBS "try to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
@@ -43,8 +43,8 @@ if(WIN32)
 elseif(APPLE)
     set_source_files_properties("resources/icons/knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
-#generate docs
 
+#generate docs
 find_program(QCOLLECTIONGENERATOR qcollectiongenerator)
 add_custom_command(
     OUTPUT
@@ -79,31 +79,28 @@ if(NOT BUILD_SHARED_LIBS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QT_STATIC")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
-    if(UNIX AND NOT "${CURL_LIBRARIES}" MATCHES ".so")
-        find_program(CURL_CONFIG curl-config)
-        execute_process(COMMAND ${CURL_CONFIG} --static-libs
-            OUTPUT_VARIABLE CURL_CONFIG_OUTPUT
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(NOT APPLE)
-            string(REPLACE " " ";" CURL_LIBRARIES "${CURL_CONFIG_OUTPUT}")
-        else()
-            set(CURL_LIBRARIES "")
-        endif()
+    find_program(CURL_CONFIG curl-config)
+    execute_process(COMMAND ${CURL_CONFIG} --static-libs
+        OUTPUT_VARIABLE CURL_CONFIG_OUTPUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT APPLE)
+        string(REPLACE " " ";" CURL_LIBRARIES "${CURL_CONFIG_OUTPUT}")#convert to list
+        set(CURL_CONFIG_OUTPUT "")
+    else()
+        set(CURL_LIBRARIES "")
     endif()
     if(WIN32)
-        set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv)
-        #satisfy additional dependecies
+        set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv -lWs2_32)
         set(GLUT_LIBRARIES freeglut_static -lWinmm)
-        set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
         set(static_runtime -static stdc++ gomp winpthread)
     endif()
 endif()
 option(PythonQt_QtAll OFF)
 if(PythonQt_QtAll)
-	find_package(Qt5Python27_QtAll REQUIRED)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
-	target_link_libraries(${PROJECT_NAME} Qt5Python27_QtAll)
+    find_package(Qt5Python27_QtAll REQUIRED)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
+    target_link_libraries(${PROJECT_NAME} Qt5Python27_QtAll)
 endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${Boost_INCLUDE_DIRS}
