@@ -1,8 +1,9 @@
 #define MyAppName "Knossos"
-#define MyAppVersion "4.0"
+#define MyAppVersion "4.1"
 #define MyAppPublisher "Knossos"
-#define MyAppURL "http://www.KnossosTool.org"
+#define MyAppURL "http://www.knossostool.org"
 #define MyAppExeName "knossos32.exe"
+#define pythonSetup "python-2.7.9.msi"
 #define KNOSSOS_SRC_PATH ""
 #define License "LICENSE"
 
@@ -37,6 +38,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#KNOSSOS_SRC_PATH}{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#KNOSSOS_SRC_PATH}{#PythonSetup}"; DestDir: "{app}\python"; Flags: ignoreversion
 
 [UninstallDelete]
 Type: files; Name: "{app}"
@@ -47,4 +49,5 @@ Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
+Filename: "{app}\python\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent nowait
