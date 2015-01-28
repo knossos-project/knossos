@@ -35,7 +35,7 @@ void Network::submitSegmentationJob(const QString & path) {
    multiPart->append(part);
    uploadfile->setParent(multiPart);
    auto & job = Segmentation::singleton().job;
-   QNetworkRequest request(QUrl(QString("http://localhost:8000/jobs/job_%0/camp_%1/mw_%2/").arg(job.id).arg(job.campaign).arg(job.worker)));
+   QNetworkRequest request(QUrl(job.submitPath));
    auto reply = manager.post(request, multiPart);
    multiPart->setParent(reply);
    connect(reply, &QNetworkReply::finished, [reply]() {

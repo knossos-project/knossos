@@ -267,13 +267,24 @@ void MainWindow::setJobModeUI(bool enabled) {
 
 void MainWindow::updateTodosLeft() {
     int todosLeft = Segmentation::singleton().todolist().size();
+    auto & job = Segmentation::singleton().job;
+
     if(todosLeft > 0) {
         todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
     }
-    else if(Segmentation::singleton().job.active) {
+    else if(job.active) {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
+        // submit work
+        QRegExp regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b");
+        if(regex.exactMatch(job.submitPath)) { // submission by email
+            QMessageBox msgBox(QMessageBox::Information,
+                               "Good Job, you're done!", QString("Please save your work and send it to:\n%0").arg(job.submitPath));
+            msgBox.exec();
+            return;
+        }
+        // submission by upload
         QMessageBox msgBox(QMessageBox::Question,
-                           "Good Job, you're done!", "Upload your work now to receive a verification?",
+                           "Good Job, you're done!", "Submit your work now to receive a verification?",
                            QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Yes);
         if(msgBox.exec() == QMessageBox::Yes) {

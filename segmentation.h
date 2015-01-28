@@ -147,6 +147,7 @@ public:
         QString campaign;
         QString worker;
         QString path;
+        QString submitPath;
     };
     Job job;
     void jobLoad(QIODevice & file);
