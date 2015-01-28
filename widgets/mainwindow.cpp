@@ -525,7 +525,7 @@ void MainWindow::createMenus() {
     QObject::connect(addNodeAction, &QAction::triggered, [this](){
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
-                                     "Please deactivate Simple Tracing for this function.");
+                                     "Please deactivate Simple Tracing under 'Edit Skeleton' for this function.");
             linkWithActiveNodeAction->trigger();
             return;
         }
@@ -537,7 +537,7 @@ void MainWindow::createMenus() {
     QObject::connect(dropNodesAction, &QAction::triggered, [this](){
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
-                                     "Please deactivate Simple Tracing for this function.");
+                                     "Please deactivate Simple Tracing under 'Edit Skeleton' for this function.");
             linkWithActiveNodeAction->trigger();
             return;
         }
@@ -1296,7 +1296,7 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     if(Skeletonizer::singleton().simpleTracing) {
         QMessageBox::information(this, "Not available in Simple Tracing mode",
-                                 "Please deactivate Simple Tracing for this function.");
+                                 "Please deactivate Simple Tracing under 'Edit Skeleton' for this function.");
         return;
     }
     color4F treeCol;
