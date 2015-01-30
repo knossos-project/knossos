@@ -141,12 +141,12 @@ bool Viewer::resetViewPortData(vpConfig *viewport) {
 bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
     datacube += dcOffset;
     const auto & session = Session::singleton();
-    const Coordinate areaMinCoord = {session.movementCenter.x - session.movementRange.x,
-                                     session.movementCenter.y - session.movementRange.y,
-                                     session.movementCenter.z - session.movementRange.z};
-    const Coordinate areaMaxCoord = {session.movementCenter.x + session.movementRange.x,
-                                     session.movementCenter.y + session.movementRange.y,
-                                     session.movementCenter.z + session.movementRange.z};
+    const Coordinate areaMinCoord = {session.movementAreaMin.x,
+                                     session.movementAreaMin.y,
+                                     session.movementAreaMin.z};
+    const Coordinate areaMaxCoord = {session.movementAreaMax.x,
+                                     session.movementAreaMax.y,
+                                     session.movementAreaMax.z};
 
     const auto partlyInMovementArea =
        areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + state->cubeEdgeLength * state->magnification ||
@@ -275,12 +275,12 @@ void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
     datacube += dcOffset;
 
     const auto & session = Session::singleton();
-    const Coordinate areaMinCoord = {session.movementCenter.x - session.movementRange.x,
-                                     session.movementCenter.y - session.movementRange.y,
-                                     session.movementCenter.z - session.movementRange.z};
-    const Coordinate areaMaxCoord = {session.movementCenter.x + session.movementRange.x,
-                                     session.movementCenter.y + session.movementRange.y,
-                                     session.movementCenter.z + session.movementRange.z};
+    const Coordinate areaMinCoord = {session.movementAreaMin.x,
+                                     session.movementAreaMin.y,
+                                     session.movementAreaMin.z};
+    const Coordinate areaMaxCoord = {session.movementAreaMax.x,
+                                     session.movementAreaMax.y,
+                                     session.movementAreaMax.z};
 
     const auto partlyInMovementArea =
        areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + state->cubeEdgeLength * state->magnification ||
@@ -1296,7 +1296,7 @@ void Viewer::updateCurrentPosition() {
     auto & session = Session::singleton();
     if(session.outsideMovementArea(state->viewerState->currentPosition)) {
         Coordinate currPos = state->viewerState->currentPosition;
-        userMove(session.movementCenter.x - currPos.x, session.movementCenter.y - currPos.y, session.movementCenter.z - currPos.z,
+        userMove(session.movementAreaMin.x - currPos.x, session.movementAreaMin.y - currPos.y, session.movementAreaMin.z - currPos.z,
                  USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }

@@ -51,10 +51,10 @@ class Session : public QObject {
 public:
     AnnotationMode annotationMode;
 
-    Coordinate movementCenter; // Center of movement area
-    Coordinate movementRange; // Range around movement center for every dimension
+    Coordinate movementAreaMin; // Center of movement area
+    Coordinate movementAreaMax; // Range around movement center for every dimension
     bool outsideMovementArea(Coordinate pos);
-    void updateMovementArea(Coordinate center, Coordinate range);
+    void updateMovementArea(Coordinate min, Coordinate max);
 
     Session();
     static Session & singleton() {
