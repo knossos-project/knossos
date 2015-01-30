@@ -4,14 +4,13 @@
 #define MyAppURL "http://www.knossostool.org"
 #define MyAppExeName "knossos32.exe"
 #define pythonSetup "python-2.7.9.msi"
-#define KNOSSOS_SRC_PATH ""
 #define License "LICENSE"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{AF7E2805-C45C-40E7-8354-90D121683915}
+AppId={{01CE4BB4-056B-455A-90EA-F326DFF9DA75}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -19,7 +18,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName} {#MyAppVersion}
-DefaultGroupName={#MyAppName} {#MyAppVersion}
+DefaultGroupName={#MyAppName} {#MyAppVersion} 32 Bit
 LicenseFile={#License}
 OutputBaseFilename=win32-Setup-Knossos {#MyAppVersion}
 SetupIconFile=../resources/icons/logo.ico
@@ -34,20 +33,21 @@ UsePreviousGroup=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: pythonsetup; Description: 32 Bit &Python 2.7.9 (installation recommended if you are unsure); GroupDescription: Python runtime environment (required)
+Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
-Source: "{#KNOSSOS_SRC_PATH}{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#KNOSSOS_SRC_PATH}{#PythonSetup}"; DestDir: "{app}\python"; Flags: ignoreversion
+Source: {#MyAppExeName}; DestDir: {app}; Flags: ignoreversion
+Source: {#PythonSetup}; DestDir: {tmp}; Flags: deleteafterinstall ignoreversion
 
 [UninstallDelete]
-Type: files; Name: "{app}"
+Type: files; Name: {app}
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: {group}\{#MyAppName}; Filename: {app}/{#MyAppExeName}
+Name: {group}\Uninstall; Filename: {uninstallexe}
+Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: {app}/{#MyAppExeName}; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\python\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent nowait
+Filename: {tmp}/{#PythonSetup}; Flags: hidewizard shellexec waituntilterminated; Tasks: pythonsetup
+Filename: {app}/{#MyAppExeName}; Description: {cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}; Flags: postinstall nowait
