@@ -7,6 +7,11 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
+option(BUILD_SHARED_LIBS "try to find static versions of all libraries" ON)
+if(NOT BUILD_SHARED_LIBS)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
+endif()
+
 include(CustomLibraryLocations.cmake)#prefill variables
 
 #the *.cpp file of openjpeg (why ever its named *.cpp) is skipped because it causes problems
@@ -21,11 +26,6 @@ set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${widgets})
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-option(BUILD_SHARED_LIBS "try to find static versions of all libraries" ON)
-if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
-endif()
 
 find_package(Boost 1.50 REQUIRED)
 find_package(CURL REQUIRED)

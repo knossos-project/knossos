@@ -8,9 +8,18 @@ set(CMAKE_PREFIX_PATH
     "/usr/local/opt/qt5/bin"
 )
 
-if(WIN32 AND NOT BUILD_SHARED_LIBS)
+if(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(STATUS "x64 static build")
     set(CMAKE_PREFIX_PATH
         "${CMAKE_PREFIX_PATH}"
         "C:/msys64/mingw64/qt5-static"
+        "C:/dev/curl-7.40.0/_build_64/_install"
+    )
+elseif(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(STATUS "x32 static build")
+    set(CMAKE_PREFIX_PATH
+        "${CMAKE_PREFIX_PATH}"
+        "C:/msys64/mingw32/qt5-static"
+        "C:/dev/curl-7.40.0/_build_32/_install"
     )
 endif()

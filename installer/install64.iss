@@ -4,7 +4,6 @@
 #define MyAppURL "http://www.knossostool.org"
 #define MyAppExeName "knossos64.exe"
 #define pythonSetup "python-2.7.9.amd64.msi"
-#define KNOSSOS_SRC_PATH ""
 #define License "LICENSE"
 
 [Setup]
@@ -35,19 +34,21 @@ UsePreviousGroup=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: pythonsetup; Description: 64 Bit &Python 2.7.9 (installation recommended if you are unsure); GroupDescription: Python runtime environment (required)
+Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
-Source: "{#KNOSSOS_SRC_PATH}{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#KNOSSOS_SRC_PATH}{#PythonSetup}"; DestDir: "{app}\python"; Flags: ignoreversion
+Source: {#MyAppExeName}; DestDir: {app}; Flags: ignoreversion
+Source: {#PythonSetup}; DestDir: {tmp}; Flags: deleteafterinstall ignoreversion
+
 [UninstallDelete]
-Type: files; Name: "{app}"
+Type: files; Name: {app}
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: {group}\{#MyAppName}; Filename: {app}/{#MyAppExeName}
+Name: {group}\Uninstall; Filename: {uninstallexe}
+Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: {app}/{#MyAppExeName}; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\python\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent nowait
+Filename: {tmp}/{#PythonSetup}; Flags: hidewizard shellexec waituntilterminated; Tasks: pythonsetup
+Filename: {app}/{#MyAppExeName}; Description: {cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}; Flags: postinstall nowait
