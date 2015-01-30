@@ -374,6 +374,7 @@ void Segmentation::selectNextTodoObject() {
         lastTodoObject_id = selectedObjectIndices.front();
         auto & obj = objects[lastTodoObject_id];
         obj.todo = false;
+        obj.immutable = true;
         unselectObject(obj);
     }
     auto list = todolist();
@@ -391,6 +392,7 @@ void Segmentation::selectPrevTodoObject() {
     }
     auto & obj = objects[lastTodoObject_id];
     obj.todo = true;
+    obj.immutable = false;
     selectObject(obj);
     jumpToObject(obj);
     emit todosLeftChanged();
