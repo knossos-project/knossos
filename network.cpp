@@ -69,7 +69,6 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 static size_t conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream) {
     FtpElement *elem = (FtpElement *)stream;
     FILE **ftp_fh_ptr = &elem->cube->ftp_data_fh;
-    qDebug() << "local data filename "<< elem->cube->local_data_filename;
     *ftp_fh_ptr = fopen(elem->cube->local_data_filename, "wb");
 
     if(NULL == *ftp_fh_ptr) {
