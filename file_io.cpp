@@ -47,7 +47,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
                 Segmentation::singleton().mergelistLoad(file);
                 mergelistSuccess = true;
             }
-            if (fileInside == "microworker.txt") {
+            if (fileInside.endsWith("microjob.txt")) {
                 Segmentation::singleton().jobLoad(file);
             }
             if (cubeRegEx.exactMatch(fileInside)) {
@@ -98,7 +98,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
         }
         if (Segmentation::singleton().job.active) {
             QuaZipFile file_write(&archive_write);
-            const bool open = zipCreateFile(file_write, "microworker.txt", 1);
+            const bool open = zipCreateFile(file_write, "microjob.txt", 1);
             if (open) {
                 Segmentation::singleton().jobSave(file_write);
             } else {
