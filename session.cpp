@@ -51,14 +51,14 @@ Session::Session() : annotationMode(SkeletonizationMode) {
 }
 
 bool Session::outsideMovementArea(Coordinate pos) {
-    return pos.x < movementCenter.x - movementRange.x || pos.x > movementCenter.x + movementRange.x ||
-           pos.y < movementCenter.y - movementRange.y || pos.y > movementCenter.y + movementRange.y ||
-           pos.z < movementCenter.z - movementRange.z || pos.z > movementCenter.z + movementRange.z;
+    return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
+           pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
+           pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
 }
 
-void Session::updateMovementArea(Coordinate center, Coordinate range) {
-    movementCenter = center;
-    movementRange = range;
+void Session::updateMovementArea(Coordinate min, Coordinate max) {
+    movementAreaMin = min;
+    movementAreaMax = max;
     emit movementAreaChanged();
 }
 

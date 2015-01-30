@@ -51,7 +51,7 @@ signals:
     void movementAreaChanged();
     void sendLoadSignal(int magChanged);
 public slots:
-    void updateRangeField(QSpinBox &box);
+    void updateAreaMaxField(QSpinBox &box);
     void resetMovementArea();
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
@@ -67,7 +67,7 @@ public slots:
 protected:
     void closeEvent(QCloseEvent *event);
 
-    QSpinBox xCenterField, yCenterField, zCenterField, xRangeField, yRangeField, zRangeField;
+    QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
 
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;

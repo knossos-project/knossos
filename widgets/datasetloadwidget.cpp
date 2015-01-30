@@ -367,7 +367,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     Coordinate range(state->boundary.x/2, state->boundary.y/2, state->boundary.z/2);
     state->viewerState->currentPosition = range;
 
-    emit datasetChanged(range, range, segmentationOverlayCheckbox.isChecked());
+    emit datasetChanged(Coordinate(0, 0, 0), state->boundary, segmentationOverlayCheckbox.isChecked());
 
     emit userMoveSignal(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     return true;

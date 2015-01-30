@@ -47,27 +47,27 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
 
     QGroupBox *movementAreaGroup = new QGroupBox("Movement Area");
     QVBoxLayout *movementAreaLayout = new QVBoxLayout();
-    QHBoxLayout *centerLayout = new QHBoxLayout();
-    QHBoxLayout *rangeLayout = new QHBoxLayout();
+    QHBoxLayout *areaMinLayout = new QHBoxLayout();
+    QHBoxLayout *areaMaxLayout = new QHBoxLayout();
 
-    xCenterField.setRange(0, 1000000); yCenterField.setRange(0, 1000000); zCenterField.setRange(0, 1000000);
-    xRangeField.setRange(0, 1000000); yRangeField.setRange(0, 1000000); zRangeField.setRange(0, 1000000);
-    centerLayout->addWidget(new QLabel("Movement center:"));
-    centerLayout->addWidget(new QLabel("x"));
-    centerLayout->addWidget(&xCenterField);
-    centerLayout->addWidget(new QLabel("y"));
-    centerLayout->addWidget(&yCenterField);
-    centerLayout->addWidget(new QLabel("z"));
-    centerLayout->addWidget(&zCenterField);
-    rangeLayout->addWidget(new QLabel("Movement range:"));
-    rangeLayout->addWidget(new QLabel("x"));
-    rangeLayout->addWidget(&xRangeField);
-    rangeLayout->addWidget(new QLabel("y"));
-    rangeLayout->addWidget(&yRangeField);
-    rangeLayout->addWidget(new QLabel("z"));
-    rangeLayout->addWidget(&zRangeField);
-    movementAreaLayout->addLayout(centerLayout);
-    movementAreaLayout->addLayout(rangeLayout);
+    xMinField.setRange(1, 1000000); yMinField.setRange(1, 1000000); zMinField.setRange(1, 1000000);
+    xMaxField.setRange(1, 1000000); yMaxField.setRange(1, 1000000); zMaxField.setRange(1, 1000000);
+    areaMinLayout->addWidget(new QLabel("Movement area min:"));
+    areaMinLayout->addWidget(new QLabel("x"));
+    areaMinLayout->addWidget(&xMinField);
+    areaMinLayout->addWidget(new QLabel("y"));
+    areaMinLayout->addWidget(&yMinField);
+    areaMinLayout->addWidget(new QLabel("z"));
+    areaMinLayout->addWidget(&zMinField);
+    areaMaxLayout->addWidget(new QLabel("Movement area max:"));
+    areaMaxLayout->addWidget(new QLabel("x"));
+    areaMaxLayout->addWidget(&xMaxField);
+    areaMaxLayout->addWidget(new QLabel("y"));
+    areaMaxLayout->addWidget(&yMaxField);
+    areaMaxLayout->addWidget(new QLabel("z"));
+    areaMaxLayout->addWidget(&zMaxField);
+    movementAreaLayout->addLayout(areaMinLayout);
+    movementAreaLayout->addLayout(areaMaxLayout);
     movementAreaGroup->setLayout(movementAreaLayout);
     mainLayout->addWidget(movementAreaGroup);
 
@@ -137,35 +137,35 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     mainLayout->addWidget(advanceGroup);
     setLayout(mainLayout);
 
-    QObject::connect(&xCenterField, &QSpinBox::editingFinished, [this]() {
-        xCenterField.setValue(std::min(xCenterField.value(), state->boundary.x + 1));
-        Session::singleton().movementCenter.x = xCenterField.value() - 1;
-        updateRangeField(xRangeField);
+    QObject::connect(&xMinField, &QSpinBox::editingFinished, [this]() {
+        xMinField.setValue(std::min(xMinField.value(), state->boundary.x + 1));
+        Session::singleton().movementAreaMin.x = xMinField.value() - 1;
+        updateAreaMaxField(xMaxField);
         emit movementAreaChanged();
     });
-    QObject::connect(&yCenterField, &QSpinBox::editingFinished, [this]() {
-        yCenterField.setValue(std::min(yCenterField.value(), state->boundary.y + 1));
-        Session::singleton().movementCenter.y = yCenterField.value() - 1;
-        updateRangeField(yRangeField);
+    QObject::connect(&yMinField, &QSpinBox::editingFinished, [this]() {
+        yMinField.setValue(std::min(yMinField.value(), state->boundary.y + 1));
+        Session::singleton().movementAreaMin.y = yMinField.value() - 1;
+        updateAreaMaxField(yMaxField);
         emit movementAreaChanged();
     });
-    QObject::connect(&zCenterField, &QSpinBox::editingFinished, [this]() {
-        zCenterField.setValue(std::min(zCenterField.value(), state->boundary.z + 1));
-        Session::singleton().movementCenter.z = zCenterField.value() - 1;
-        updateRangeField(zRangeField);
+    QObject::connect(&zMinField, &QSpinBox::editingFinished, [this]() {
+        zMinField.setValue(std::min(zMinField.value(), state->boundary.z + 1));
+        Session::singleton().movementAreaMin.z = zMinField.value() - 1;
+        updateAreaMaxField(zMaxField);
         emit movementAreaChanged();
     });
-    QObject::connect(&xRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(xRangeField); });
-    QObject::connect(&yRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(yRangeField); });
-    QObject::connect(&zRangeField, &QSpinBox::editingFinished, [this]() { updateRangeField(zRangeField); });
+    QObject::connect(&xMaxField, &QSpinBox::editingFinished, [this]() { updateAreaMaxField(xMaxField); });
+    QObject::connect(&yMaxField, &QSpinBox::editingFinished, [this]() { updateAreaMaxField(yMaxField); });
+    QObject::connect(&zMaxField, &QSpinBox::editingFinished, [this]() { updateAreaMaxField(zMaxField); });
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
         auto & session = Session::singleton();
-        xCenterField.setValue(session.movementCenter.x + 1);
-        yCenterField.setValue(session.movementCenter.y + 1);
-        zCenterField.setValue(session.movementCenter.z + 1);
-        xRangeField.setValue(session.movementRange.x);
-        yRangeField.setValue(session.movementRange.y);
-        zRangeField.setValue(session.movementRange.z);
+        xMinField.setValue(session.movementAreaMin.x + 1);
+        yMinField.setValue(session.movementAreaMin.y + 1);
+        zMinField.setValue(session.movementAreaMin.z + 1);
+        xMaxField.setValue(session.movementAreaMax.x + 1);
+        yMaxField.setValue(session.movementAreaMax.y + 1);
+        zMaxField.setValue(session.movementAreaMax.z + 1);
         emit sendLoadSignal(0);
     });
 
@@ -191,38 +191,38 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void NavigationWidget::updateRangeField(QSpinBox &box) {
+void NavigationWidget::updateAreaMaxField(QSpinBox &box) {
     auto & session = Session::singleton();
-    int *boundary, *movementCenter, *movementRange;
-    if(&box == &xRangeField) {
+    int *boundary, *areaMin, *areaMax;
+    if(&box == &xMaxField) {
         boundary = &state->boundary.x;
-        movementCenter = &session.movementCenter.x;
-        movementRange = &session.movementRange.x;
+        areaMin = &session.movementAreaMin.x;
+        areaMax = &session.movementAreaMax.x;
     }
-    else if(&box == &yRangeField) {
+    else if(&box == &yMaxField) {
         boundary = &state->boundary.y;
-        movementCenter = &session.movementCenter.y;
-        movementRange = &session.movementRange.y;
+        areaMin = &session.movementAreaMin.y;
+        areaMax = &session.movementAreaMax.y;
     }
-    else if(&box == &zRangeField) {
+    else if(&box == &zMaxField) {
         boundary = &state->boundary.z;
-        movementCenter = &session.movementCenter.z;
-        movementRange = &session.movementRange.z;
+        areaMin = &session.movementAreaMin.z;
+        areaMax = &session.movementAreaMax.z;
     }
     else {
         return;
     }
-    box.setValue(std::min(box.value(), *boundary));
-    *movementRange = box.value();
+    box.setValue(std::min(box.value() + 1, *boundary + 1));
+    *areaMax = box.value() - 1;
     emit sendLoadSignal(0);
     emit movementAreaChanged();
 }
 
 void NavigationWidget::resetMovementArea() {
-    xCenterField.setValue(state->boundary.x/2 + 1); yCenterField.setValue(state->boundary.y/2 + 1); zCenterField.setValue(state->boundary.z/2 + 1);
-    xRangeField.setValue(state->boundary.x/2); yRangeField.setValue(state->boundary.y/2); zRangeField.setValue(state->boundary.z/2);
-    Session::singleton().movementCenter = { xCenterField.value() - 1, yCenterField.value() - 1, zCenterField.value() - 1 };
-    Session::singleton().movementRange = { xRangeField.value(), yRangeField.value(), zRangeField.value() };
+    xMinField.setValue(1); yMinField.setValue(1); zMinField.setValue(1);
+    xMaxField.setValue(state->boundary.x + 1); yMaxField.setValue(state->boundary.y + 1); zMaxField.setValue(state->boundary.z + 1);
+    Session::singleton().movementAreaMin = { xMinField.value() - 1, yMinField.value() - 1, zMinField.value() - 1 };
+    Session::singleton().movementAreaMax = { xMaxField.value() - 1, yMaxField.value() - 1, zMaxField.value() - 1};
 }
 
 void NavigationWidget::movementSpeedChanged(int value) {
