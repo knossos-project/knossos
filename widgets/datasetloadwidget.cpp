@@ -251,12 +251,8 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
 
     //check if we have a remote conf
     if(path.startsWith("http", Qt::CaseInsensitive)) {
-        path.remove("http://", Qt::CaseInsensitive);
-        path.remove("https://", Qt::CaseInsensitive);
-
-        std::string tmp = downloadRemoteConfFile(path.toStdString());
+        std::string tmp = downloadRemoteConfFile(path);
         path = QString::fromStdString(tmp);
-
         if(path == "") return false;
     }
 
@@ -382,10 +378,7 @@ DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const char *
     QString qpath{path};
 
     if(qpath.startsWith("http", Qt::CaseInsensitive)) {
-        qpath.remove("http://", Qt::CaseInsensitive);
-        qpath.remove("https://", Qt::CaseInsensitive);
-
-        std::string tmp = downloadRemoteConfFile(qpath.toStdString());
+        std::string tmp = downloadRemoteConfFile(qpath);
         qpath = QString::fromStdString(tmp);
 
         if(qpath == "") return info;

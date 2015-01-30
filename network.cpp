@@ -69,7 +69,7 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 static size_t conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream) {
     FtpElement *elem = (FtpElement *)stream;
     FILE **ftp_fh_ptr = &elem->cube->ftp_data_fh;
-
+    qDebug() << "local data filename "<< elem->cube->local_data_filename;
     *ftp_fh_ptr = fopen(elem->cube->local_data_filename, "wb");
 
     if(NULL == *ftp_fh_ptr) {
@@ -79,18 +79,19 @@ static size_t conf_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
     return fwrite(buffer, size, nmemb, *ftp_fh_ptr);
 }
 
-std::string downloadRemoteConfFile(std::string url) {
+std::string downloadRemoteConfFile(QString url) {
     CURL *eh = NULL;
     FtpElement *elem = new FtpElement;
     elem->cube = new C_Element;
     elem->isOverlay = false;
 
-    elem->cube->fullpath_data_filename = new char[url.length() + 1];
-    strcpy(elem->cube->fullpath_data_filename, url.c_str());
-
     char remoteURL[MAX_PATH];
+    snprintf(remoteURL, MAX_PATH, url.toStdString().c_str());
 
-    snprintf(remoteURL, MAX_PATH, "http://%s", url.c_str());
+    url.remove("http://");
+    url.remove("https://");
+    elem->cube->fullpath_data_filename = new char[url.length() + 1];
+    strcpy(elem->cube->fullpath_data_filename, url.toStdString().c_str());
 
     char *lpath = (char*)malloc(MAX_PATH);
     snprintf(lpath, MAX_PATH, "%s/knossos.conf", state->loadFtpCachePath);
@@ -126,7 +127,6 @@ std::string downloadRemoteConfFile(std::string url) {
         free(elem->cube);
         free(elem);
         free(lpath);
-
         return "";
     }
 
@@ -134,7 +134,6 @@ std::string downloadRemoteConfFile(std::string url) {
         free(elem->cube);
         free(elem);
         free(lpath);
-
         return "";
     }
 

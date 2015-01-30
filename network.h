@@ -7,7 +7,7 @@
 #include "loader.h"
 
 int downloadFile(const char *remote_path, char *local_filename);
-std::string downloadRemoteConfFile(std::string url);
+std::string downloadRemoteConfFile(QString url);
 
 struct FtpElement {
     bool isOverlay;
