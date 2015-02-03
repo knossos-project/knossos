@@ -71,7 +71,7 @@ signals:
     void toolChanged(const tool_t);
     void shapeChanged(const shape_t);
 private:
-    int radius = 10;
+    int radius = 5;
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
