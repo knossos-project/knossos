@@ -3,10 +3,13 @@
 #include "knossos-global.h"
 #include "loader.h"
 
+#include <QApplication>
+#include <QClipboard>
 #include <QDir>
 #include <QHttpMultiPart>
 #include <QMessageBox>
 #include <QNetworkReply>
+#include<QPushButton>
 #include <QSemaphore>
 
 #include <curl/curl.h>
@@ -41,7 +44,12 @@ void Network::submitSegmentationJob(const QString & path) {
    connect(reply, &QNetworkReply::finished, [reply]() {
        QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
        QMessageBox verificationBox(QMessageBox::Information, "Your verification", content);
+       auto copyButton = verificationBox.addButton(tr("Copy"), QMessageBox::YesRole);
+       verificationBox.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
        verificationBox.exec();
+       if(verificationBox.clickedButton() == copyButton) {
+           QApplication::clipboard()->setText(content);
+       }
        reply->deleteLater();
    });
 }
