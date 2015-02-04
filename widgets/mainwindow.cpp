@@ -289,7 +289,11 @@ void MainWindow::updateTodosLeft() {
         msgBox.setDefaultButton(QMessageBox::Yes);
         if(msgBox.exec() == QMessageBox::Yes) {
             auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
-            auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
+            QDir segmentationDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/");
+            if(segmentationDir.exists() == false) {
+                segmentationDir.mkpath(".");
+            }
+            auto finishedJobPath = segmentationDir.path() + jobFilename;
             annotationFileSave(finishedJobPath, nullptr);
             Network::singleton().submitSegmentationJob(finishedJobPath);
         }
