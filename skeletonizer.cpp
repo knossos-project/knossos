@@ -81,9 +81,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(tru
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
         state->skeletonState->volBoundary = state->boundary.x * 2;
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = false;
-
 }
 
 nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
@@ -900,7 +898,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
-    if(!merge) {
+    if (!merge) {
         setActiveNode(NULL, activeNodeID);
 
         if((loadedPosition.x != 0) &&
@@ -916,14 +914,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
         setActiveNode(state->skeletonState->firstTree->firstNode, 0);
     }
-    if(merge == false) {
-        // when a skeleton is *not* merged on loading, it overrides the current annotation.
-        // On saving the time should then be:
-        // the skeleton's time + knossos running time - running time until loading.
-        // On merging though, the current annotation's time is kept and no time correction
-        // should take place
-        state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
-    }
+
     return true;
 }
 
@@ -972,7 +963,6 @@ bool Skeletonizer::delSegment(uint sourceNodeID, uint targetNodeID, segmentListE
     free(segToDel);
     state->skeletonState->totalSegmentElements--;
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     return true;
@@ -1045,7 +1035,6 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
 
     state->skeletonState->totalNodeElements--;
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     return true;
@@ -1099,7 +1088,6 @@ bool Skeletonizer::delTree(int treeID) {
 
     state->skeletonState->treeElements--;
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     return true;
@@ -1232,7 +1220,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         setActiveNode(currentTree->firstNode, 0);
     }
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     emit treeSelectionChangedSignal();
@@ -1258,7 +1245,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     }
 
     state->skeletonState->activeNode = node;
-    state->skeletonState->skeletonChanged = true;
 
     clearNodeSelection();
     if(node) {
@@ -1373,8 +1359,6 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
 
     state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
 
-    state->skeletonState->skeletonChanged = true;
-
     if(nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
     }
@@ -1439,7 +1423,6 @@ bool Skeletonizer::addSegment(uint sourceNodeID, uint targetNodeID) {
 
     updateCircRadius(sourceNode);
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     return true;
@@ -1494,7 +1477,6 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 
     Session::singleton().annotationTime(0);
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
-    skeletonState->unsavedChanges = false;
 
     return true;
 }
@@ -1757,7 +1739,6 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
         state->skeletonState->greatestTreeID = newElement->treeID;
     }
 
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     emit treeAddedSignal(*newElement);
@@ -1944,7 +1925,6 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
     node->createdInMag = inMag;
 
     updateCircRadius(node);
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     emit nodeChangedSignal(*node);
@@ -2120,7 +2100,6 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         last = node;
         node->correspondingTree = newTree;
     }
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
     return visitedNodes.size();
 }
@@ -2147,7 +2126,6 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeI
 
     if(content_cstr) {
         strncpy(newComment->content, content_cstr, strlen(content_cstr));
-        state->skeletonState->skeletonChanged = true;
     }
 
     if(!state->skeletonState->currentComment) {
@@ -2216,7 +2194,6 @@ bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNo
     }
     if(currentComment->node) {
         currentComment->node->comment = NULL;
-        state->skeletonState->skeletonChanged = true;
     }
 
     if(state->skeletonState->currentComment == currentComment) {
@@ -2450,7 +2427,6 @@ bool Skeletonizer::popBranchNode() {
         setActiveNode(branchNode, 0);
 
         branchNode->isBranchNode = 0;
-        state->skeletonState->skeletonChanged = true;
 
         emit userMoveSignal(branchNode->position.x - state->viewerState->currentPosition.x,
                             branchNode->position.y - state->viewerState->currentPosition.y,
@@ -2478,7 +2454,6 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
 
-                state->skeletonState->skeletonChanged = true;
                 qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
                 emit branchPushedSignal();
             }
@@ -2542,7 +2517,6 @@ void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
     tree->color.a = 1.;
 
     tree->colorSetManually = false;
-    state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 }
 
@@ -2560,7 +2534,6 @@ bool Skeletonizer::updateTreeColors() {
         tree->color.a = 1.;
         tree = tree->next;
     }
-    state->skeletonState->skeletonChanged = true;
     return true;
 }
 

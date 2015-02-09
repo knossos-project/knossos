@@ -152,12 +152,10 @@ void VPGeneralTabWidget::lightEffectsChecked(bool on) {
 
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
     state->skeletonState->highlightActiveTree = on;
-    state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
     state->skeletonState->showNodeIDs = on;
-    state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
@@ -167,7 +165,6 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
 
 void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
     state->skeletonState->overrideNodeRadiusVal = value;
-    state->skeletonState->skeletonChanged = true;
 }
 
 

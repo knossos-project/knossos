@@ -1079,9 +1079,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     }*/
     sendLoadSignal(upOrDownFlag);
 
-    /* set flags to trigger the necessary renderer updates */
-    state->skeletonState->skeletonChanged = true;
-
     emit updateDatasetOptionsWidgetSignal();
 
     return true;
@@ -1284,10 +1281,6 @@ bool Viewer::updateZoomCube() {
                 state->viewerState->zoomCube = currentZoomCube;
             }
         }
-    }
-    if(oldZoomCube != state->viewerState->zoomCube) {
-        state->skeletonState->skeletonChanged = true;
-        //skeletonizer->skeletonChanged = true;
     }
     return true;
 }

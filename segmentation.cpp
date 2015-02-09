@@ -85,6 +85,8 @@ Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFo
 }
 
 void Segmentation::clear() {
+    state->skeletonState->unsavedChanges |= hasObjects() || !loader->snappyCache.empty();//we will change smth
+
     selectedObjectIndices.clear();
     objects.clear();
     Object::highestId = 0;

@@ -1137,7 +1137,6 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         const auto hideSkeletonOrtho = vpSettings->hideSkeletonOrthoVPsCheckBox.isChecked();
         vpSettings->hideSkeletonOrthoVPsCheckBox.setChecked(!hideSkeletonOrtho);
         vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
-        state->skeletonState->skeletonChanged = true;//idk
     } else if(event->key() == Qt::Key_Plus) {
         if(control) {
             Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1);

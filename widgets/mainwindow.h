@@ -154,6 +154,7 @@ public slots:
     void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
+    void newAnnotationSlot();
     void openSlot();
     void autosaveSlot();
     void saveSlot();
@@ -164,7 +165,6 @@ public slots:
     void setAnnotationMode(AnnotationMode mode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
-    void clearSkeletonWithoutConfirmation();
     void setSimpleTracing(bool simple);
 
     /* view menu */

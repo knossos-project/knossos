@@ -748,13 +748,9 @@ struct skeletonState {
 
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
-    //    skeletonTimeCorrection is the time that has to be subtracted from
-    //    state->time->elapsed() to yield the number of milliseconds the current skeleton
-    //    was loaded in the current knossos instance.
 
     bool unsavedChanges;
     int skeletonTime;
-    int skeletonTimeCorrection;
 
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
@@ -799,9 +795,6 @@ struct skeletonState {
     // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
-
-    //true, if all display lists must be updated
-    bool skeletonChanged;
 
     uint displayMode;
 

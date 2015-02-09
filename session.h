@@ -28,7 +28,6 @@
 #include "coordinate.h"
 
 #include <QElapsedTimer>
-#include <QLabel>
 #include <QObject>
 #include <QString>
 #include <QTimer>

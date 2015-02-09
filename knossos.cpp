@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
     return a.exec();
 }
@@ -722,7 +722,6 @@ bool Knossos::configDefaults() {
     state->skeletonState->autoSaveBool = true;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->skeletonTime = 0;
-    state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = -1;
 
     state->loadMode = LM_LOCAL;
