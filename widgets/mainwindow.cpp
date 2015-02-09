@@ -799,7 +799,6 @@ void MainWindow::saveSlot() {
         updateRecentFile(annotationFilename);
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;
-        state->skeletonState->skeletonChanged = false;
     }
 }
 
@@ -827,7 +826,6 @@ void MainWindow::saveAsSlot() {
         updateRecentFile(annotationFilename);
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;
-        state->skeletonState->skeletonChanged = false;
     }
     state->viewerState->renderInterval = FAST;
 }

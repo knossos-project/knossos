@@ -722,7 +722,6 @@ bool Knossos::configDefaults() {
     state->skeletonState->autoSaveBool = true;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->skeletonTime = 0;
-    state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = -1;
 
     state->loadMode = LM_LOCAL;
