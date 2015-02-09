@@ -468,6 +468,7 @@ void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
+    fileMenu.addAction(QIcon(":/resources/icons/graph.png"), "Create New Annotation", this, SLOT(newAnnotationSlot()), QKeySequence(tr("CTRL+C")));
     fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
     for (auto & elem : historyEntryActions) {
@@ -679,7 +680,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     QApplication::processEvents();
 
-    state->skeletonState->mergeOnLoadFlag = false;
+    bool mergeSkeleton = false;
+    bool mergeSegmentation = false;
     if (state->skeletonState->treeElements > 0) {
         const auto text = tr("Which Action do you like to choose?<ul>")
             + tr("<li>Merge the new Skeleton into the current one</li>")
@@ -688,11 +690,9 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         const auto button = QMessageBox::question(this, tr("Existing Skeleton"), text, tr("Merge"), tr("Override"), tr("Cancel"), 0, 2);
 
         if (button == 0) {
-            state->skeletonState->mergeOnLoadFlag = true;
-            state->skeletonState->unsavedChanges = true;//merge implies changes
-        } else if(button == 1) {
-            state->skeletonState->mergeOnLoadFlag = false;
-            state->skeletonState->unsavedChanges = false;
+            mergeSkeleton = true;
+        } else if(button == 1) {//clear skeleton
+            mergeSkeleton = false;
         } else {
             return false;
         }
@@ -705,10 +705,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         const auto button = QMessageBox::question(this, tr("Existing Merge List"), text, tr("Merge"), tr("Clear and Load"), tr("Cancel"), 0, 2);
 
         if (button == 0) {
-            state->skeletonState->unsavedChanges = true;//merge implies changes
+            mergeSegmentation = true;
         } else if (button == 1) {//clear segmentation
             Segmentation::singleton().clear();
-            state->skeletonState->unsavedChanges = false;
+            mergeSegmentation = false;
         } else if (button == 2) {
             return false;
         }
@@ -721,6 +721,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         return QFileInfo(elem).suffix() == "nml";
     });
 
+    state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
+
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     for (const auto & filename : nmls) {
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
@@ -728,7 +730,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         if (success &= state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad)) {
             updateRecentFile(filename);
         }
-        state->skeletonState->mergeOnLoadFlag = true;//merge next file
+        state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
     }
 
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
@@ -736,22 +738,36 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         annotationFileLoad(filename, treeCmtOnMultiLoad);
         updateRecentFile(filename);
-        state->skeletonState->mergeOnLoadFlag = true;//merge next file
+        state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
     }
 
+    state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
+
     annotationFilename = "";
-    if (success) {
-        if (!multipleFiles) { // either an .nml or a .k.zip was loaded
-            annotationFilename = nmls.empty() ? zips.front() : nmls.front();
-        }
+    if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
+        annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
 
-    if(Segmentation::singleton().job.active) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
+    if (Segmentation::singleton().job.active) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
     return success;
+}
+
+void MainWindow::newAnnotationSlot() {
+    if (state->skeletonState->unsavedChanges) {
+        const auto text = tr("There’re unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
+        const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
+        if (button == 1) {
+            return;
+        }
+    }
+    Skeletonizer::singleton().clearSkeleton(false);
+    Segmentation::singleton().clear();
+    state->skeletonState->unsavedChanges = false;
+    annotationFilename = "";
 }
 
 /**
@@ -798,7 +814,6 @@ void MainWindow::saveSlot() {
 
         updateRecentFile(annotationFilename);
         updateTitlebar();
-        state->skeletonState->unsavedChanges = false;
     }
 }
 
@@ -825,7 +840,6 @@ void MainWindow::saveAsSlot() {
 
         updateRecentFile(annotationFilename);
         updateTitlebar();
-        state->skeletonState->unsavedChanges = false;
     }
     state->viewerState->renderInterval = FAST;
 }
@@ -868,12 +882,6 @@ void MainWindow::setAnnotationMode(AnnotationMode mode) {
     }
 }
 
-void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
-    clearSkeletonSlotNoGUI();
-    annotationFilename.clear();//unload skeleton file
-    updateTitlebar();
-}
-
 void MainWindow::clearSkeletonSlotGUI() {
     if(state->skeletonState->unsavedChanges or state->skeletonState->treeElements > 0) {
         QMessageBox question;
@@ -892,7 +900,6 @@ void MainWindow::clearSkeletonSlotGUI() {
 
 void MainWindow::clearSkeletonSlotNoGUI() {
     Skeletonizer::singleton().clearSkeleton(false);
-    annotationFilename.clear();//unload skeleton file
     updateTitlebar();
 }
 

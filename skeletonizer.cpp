@@ -898,7 +898,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
-    if(!merge) {
+    if (!merge) {
         setActiveNode(NULL, activeNodeID);
 
         if((loadedPosition.x != 0) &&
@@ -1477,7 +1477,6 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 
     Session::singleton().annotationTime(0);
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
-    skeletonState->unsavedChanges = false;
 
     return true;
 }

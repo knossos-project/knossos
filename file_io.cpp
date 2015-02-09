@@ -128,6 +128,10 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
         allSuccess = false;
     }
 
+    if (allSuccess) {
+        state->skeletonState->unsavedChanges = false;
+    }
+
     if (NULL != isSuccess) {
         *isSuccess = allSuccess;
     }

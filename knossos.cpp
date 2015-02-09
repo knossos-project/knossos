@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
+    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
     return a.exec();
 }
