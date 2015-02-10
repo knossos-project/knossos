@@ -50,14 +50,13 @@ void Network::submitSegmentationJob(const QString & path) {
            title = "Submission Failed";
            content = (reply->hasRawHeader("error")) ? reply->rawHeader("error") : reply->errorString();
        }
-
+       bool withVerification = content.startsWith("verification code: ");
        QMessageBox responseBox(QMessageBox::Information, title, content);
-       QPushButton copyButton(tr("Copy"));
-       QPushButton okButton(tr("OK"));
-       responseBox.addButton((content.startsWith("verification code: ")) ? &copyButton : &okButton, QMessageBox::YesRole);
+       QPushButton okButton(tr(withVerification ? "Copy" : "OK"));
+       responseBox.addButton(&okButton, QMessageBox::YesRole);
        responseBox.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
        responseBox.exec();
-       if(responseBox.clickedButton() == &copyButton) {
+       if(withVerification) {
            QApplication::clipboard()->setText(content.remove("verification code: "));
        }
        reply->deleteLater();
