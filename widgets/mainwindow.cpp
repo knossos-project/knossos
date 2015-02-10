@@ -283,15 +283,21 @@ void MainWindow::updateTodosLeft() {
     else if(job.active) {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
         // submit work
-        QMessageBox msgBox(QMessageBox::Question, "Good Job, you're done!", "Submit your work now?", QMessageBox::Yes | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-        if(msgBox.exec() == QMessageBox::Yes) {
-            auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
-            QDir segmentationDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/");
-            segmentationDir.mkpath(".");
-            auto finishedJobPath = segmentationDir.path() + jobFilename;
-            annotationFileSave(finishedJobPath, nullptr);
-            Network::singleton().submitSegmentationJob(finishedJobPath);
+        if(job.type == Segmentation::Job::Conventional) { // submit through task management
+            QMessageBox info(QMessageBox::Information, "Good job, you're done!", "Please submit your work now.");
+            info.exec();
+        }
+        else { // submit to url
+            QMessageBox msgBox(QMessageBox::Question, "Good job, you're done!", "Submit your work now?", QMessageBox::Yes | QMessageBox::Cancel);
+            msgBox.setDefaultButton(QMessageBox::Yes);
+            if(msgBox.exec() == QMessageBox::Yes) {
+                auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
+                QDir segmentationDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/");
+                segmentationDir.mkpath(".");
+                auto finishedJobPath = segmentationDir.path() + jobFilename;
+                annotationFileSave(finishedJobPath, nullptr);
+                Network::singleton().submitSegmentationJob(finishedJobPath);
+            }
         }
     }
 }
