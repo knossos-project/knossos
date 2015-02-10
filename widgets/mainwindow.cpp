@@ -36,6 +36,7 @@
 #include "viewport.h"
 #include "scriptengine/scripting.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgetcontainer.h"
 
 #include <QAction>
@@ -249,17 +250,25 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
-        for(uint i = 1; i < Viewport::numberViewports; ++i) {
+        // show only xy viewport
+        for(uint i = VIEWPORT_XZ; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->hide();
         }
         viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
+        // hide buttons and crosshairs
+        viewports[VIEWPORT_XY].get()->hideButtons();
+        state->viewerState->drawVPCrosshairs = false;
+        widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget->updateIntersection();
     } else {
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
-        for(uint i = 1; i < Viewport::numberViewports; ++i) {
+        for(uint i = VIEWPORT_XZ; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->show();
+        }
+        if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
+            viewports[VIEWPORT_XY].get()->showButtons();
         }
         resetViewports();
     }
