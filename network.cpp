@@ -42,13 +42,23 @@ void Network::submitSegmentationJob(const QString & path) {
    auto reply = manager.post(request, multiPart);
    multiPart->setParent(reply);
    connect(reply, &QNetworkReply::finished, [reply]() {
-       QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
-       QMessageBox verificationBox(QMessageBox::Information, "Your verification", content);
-       auto copyButton = verificationBox.addButton(tr("Copy"), QMessageBox::YesRole);
-       verificationBox.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
-       verificationBox.exec();
-       if(verificationBox.clickedButton() == copyButton) {
-           QApplication::clipboard()->setText(content);
+       QString title, content;
+       if(reply->error() == QNetworkReply::NoError) {
+           title = "Successful Submission";
+           content = reply->readAll();
+       } else {
+           title = "Submission Failed";
+           content = (reply->hasRawHeader("error")) ? reply->rawHeader("error") : reply->errorString();
+       }
+
+       QMessageBox responseBox(QMessageBox::Information, title, content);
+       QPushButton copyButton(tr("Copy"));
+       QPushButton okButton(tr("OK"));
+       responseBox.addButton((content.startsWith("verification code: ")) ? &copyButton : &okButton, QMessageBox::YesRole);
+       responseBox.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+       responseBox.exec();
+       if(responseBox.clickedButton() == &copyButton) {
+           QApplication::clipboard()->setText(content.remove("verification code: "));
        }
        reply->deleteLater();
    });
