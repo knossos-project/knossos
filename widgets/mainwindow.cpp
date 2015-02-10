@@ -1378,7 +1378,9 @@ void MainWindow::pythonPropertiesSlot() {
 }
 
 void MainWindow::pythonFileSlot() {
+    state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
+    state->viewerState->renderInterval = FAST;
     QFile pyFile(pyFileName);
     pyFile.open(QIODevice::ReadOnly);
     QString s;
