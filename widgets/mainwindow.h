@@ -72,7 +72,8 @@ class MainWindow : public QMainWindow {
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
-
+    QToolBar basicToolbar;
+    QAction *taskAction;
     QToolBar defaultToolbar;
 
     // segmentation job mode
