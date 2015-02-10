@@ -142,11 +142,9 @@ Q_OBJECT
 public:
     class Job {
     public:
+        enum Type {Conventional, Microworker};
         bool active = false;
-        int id;
-        QString campaign;
-        QString worker;
-        QString path;
+        Type type;
         QString submitPath;
     };
     Job job;

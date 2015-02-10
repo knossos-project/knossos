@@ -536,25 +536,19 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 void Segmentation::jobLoad(QIODevice & file) {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream stream(&file);
-    QString job_line = stream.readLine();
+    QString jobtype = stream.readLine();
     QString submit_line = stream.readLine();
-    QString campaign_line = stream.readLine();
-    QString worker_line = stream.readLine();
-    job.id = job_line.isNull()? 0 : job_line.toInt();
+    job.type = jobtype.isNull() ? Job::Conventional : static_cast<Job::Type>(jobtype.toInt());
     job.submitPath = submit_line.isNull() ? "" : submit_line;
-    job.campaign = campaign_line.isNull() ? "" : campaign_line;
-    job.worker = worker_line.isNull() ? "" : worker_line;
-    job.active = (job.id == 0) ? false : true;
+    job.active = (jobtype.isNull()) ? false : true;
 }
 
 void Segmentation::jobSave(QIODevice &file) const {
     QTextStream stream(&file);
-    stream << job.id << '\n';
+    stream << static_cast<int>(job.type) << '\n';
     stream << job.submitPath << '\n';
-    stream << job.campaign << '\n';
-    stream << job.worker << '\n';
     if (stream.status() != QTextStream::Ok) {
-        qDebug() << "mergelistSave fail";
+        qDebug() << "jobSave fail";
     }
 }
 
