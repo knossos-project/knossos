@@ -263,6 +263,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
+        taskAction->setVisible(true);
         for(uint i = VIEWPORT_XZ; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->show();
         }
@@ -740,6 +741,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
 
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
+    Segmentation::singleton().job.active = (zips.empty() == false);
     for (const auto & filename : zips) {
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         annotationFileLoad(filename, treeCmtOnMultiLoad);
@@ -755,8 +757,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     updateTitlebar();
 
+    setJobModeUI(Segmentation::singleton().job.active);
     if (Segmentation::singleton().job.active) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
-        setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
     return success;
