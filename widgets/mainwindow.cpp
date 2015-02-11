@@ -240,11 +240,11 @@ void MainWindow::createToolbars() {
     QObject::connect(nextBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().selectNextTodoObject(); });
     QObject::connect(splitBtn, &QPushButton::clicked, [](bool) { Segmentation::singleton().markSelectedObjectForSplitting(state->viewerState->currentPosition); });
 
-    segJobModeToolbar.addWidget(prevBtn);
-    segJobModeToolbar.addWidget(nextBtn);
-    segJobModeToolbar.addWidget(splitBtn);
-    segJobModeToolbar.addSeparator();
-    segJobModeToolbar.addWidget(&todosLeftLabel);
+    jobModeToolbar.addWidget(prevBtn);
+    jobModeToolbar.addWidget(nextBtn);
+    jobModeToolbar.addWidget(splitBtn);
+    jobModeToolbar.addSeparator();
+    jobModeToolbar.addWidget(&todosLeftLabel);
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
@@ -253,9 +253,9 @@ void MainWindow::setJobModeUI(bool enabled) {
         menuBar()->hide();
         widgetContainer->hideAll();
         removeToolBar(&defaultToolbar);
-        addToolBar(&segJobModeToolbar);
-        segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
-        taskAction->setVisible(Segmentation::singleton().job.type != Segmentation::Job::Microworker);
+        addToolBar(&jobModeToolbar);
+        jobModeToolbar.show(); // toolbar is hidden by removeToolBar
+        taskAction->setVisible(Segmentation::singleton().job.type == Segmentation::Job::Conventional);
         // show only xy viewport
         for(uint i = VIEWPORT_XZ; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->hide();
@@ -267,7 +267,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget->updateIntersection();
     } else {
         menuBar()->show();
-        removeToolBar(&segJobModeToolbar);
+        removeToolBar(&jobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
         taskAction->setVisible(true);
@@ -291,11 +291,7 @@ void MainWindow::updateTodosLeft() {
     else if(job.active) {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
         // submit work
-        if(job.type == Segmentation::Job::Conventional) { // submit through task management
-            QMessageBox info(QMessageBox::Information, "Good job, you're done!", "Please submit your work now.");
-            info.exec();
-        }
-        else { // submit to url
+        if(job.type == Segmentation::Job::Crowdsourced) { // submit to url
             QMessageBox msgBox(QMessageBox::Question, "Good job, you're done!", "Submit your work now?", QMessageBox::Yes | QMessageBox::Cancel);
             msgBox.setDefaultButton(QMessageBox::Yes);
             if(msgBox.exec() == QMessageBox::Yes) {
@@ -306,6 +302,10 @@ void MainWindow::updateTodosLeft() {
                 annotationFileSave(finishedJobPath, nullptr);
                 Network::singleton().submitSegmentationJob(finishedJobPath);
             }
+        }
+        else { // submit through task management or without knossos
+            QMessageBox info(QMessageBox::Information, "Good job, you're done!", "Please submit your work now.");
+            info.exec();
         }
     }
 }

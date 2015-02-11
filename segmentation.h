@@ -142,7 +142,7 @@ Q_OBJECT
 public:
     class Job {
     public:
-        enum Type {Conventional, Microworker};
+        enum Type {Conventional, Outsourced, Crowdsourced};
         bool active = false;
         Type type;
         QString submitPath;
