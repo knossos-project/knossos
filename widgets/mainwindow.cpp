@@ -146,6 +146,12 @@ void MainWindow::createToolbars() {
     basicToolbar.setMovable(false);
     basicToolbar.setFloatable(false);
     basicToolbar.setMaximumHeight(45);
+    defaultToolbar.setMovable(false);
+    defaultToolbar.setFloatable(false);
+    defaultToolbar.setMaximumHeight(45);
+    jobModeToolbar.setMovable(false);
+    jobModeToolbar.setFloatable(false);
+    jobModeToolbar.setMaximumHeight(45);
 
     basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
     basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
@@ -178,6 +184,7 @@ void MainWindow::createToolbars() {
     basicToolbar.addWidget(yField);
     basicToolbar.addWidget(new QLabel("<font color='black'>z</font>"));
     basicToolbar.addWidget(zField);
+    basicToolbar.addSeparator();
     taskAction = basicToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     addToolBar(&basicToolbar);

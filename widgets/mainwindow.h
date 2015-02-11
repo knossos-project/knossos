@@ -77,7 +77,7 @@ class MainWindow : public QMainWindow {
     QToolBar defaultToolbar;
 
     // segmentation job mode
-    QToolBar segJobModeToolbar;
+    QToolBar jobModeToolbar;
     QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
     void updateTodosLeft();
 
