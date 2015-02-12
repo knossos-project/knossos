@@ -748,7 +748,9 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
 
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
-    Segmentation::singleton().job.active = (zips.empty() == false);
+    if(zips.empty()) {
+        Segmentation::singleton().job.active = false;
+    }
     for (const auto & filename : zips) {
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         annotationFileLoad(filename, treeCmtOnMultiLoad);
