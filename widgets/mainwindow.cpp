@@ -262,8 +262,6 @@ void MainWindow::setJobModeUI(bool enabled) {
             viewports[i].get()->hide();
         }
         viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
-        // hide buttons and crosshairs
-        viewports[VIEWPORT_XY].get()->hideButtons();
         state->viewerState->drawVPCrosshairs = false;
         widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget->updateIntersection();
     } else {
@@ -274,9 +272,6 @@ void MainWindow::setJobModeUI(bool enabled) {
         taskAction->setVisible(true);
         for(uint i = VIEWPORT_XZ; i < Viewport::numberViewports; ++i) {
             viewports[i].get()->show();
-        }
-        if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
-            viewports[VIEWPORT_XY].get()->showButtons();
         }
         resetViewports();
     }
