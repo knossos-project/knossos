@@ -233,7 +233,7 @@ void MainWindow::createToolbars() {
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
     auto nextBtn = new QPushButton("(N)ext >");
-    auto splitBtn = new QPushButton("Split required >");
+    auto splitBtn = new QPushButton("? >");
     prevBtn->setToolTip("Go back to last task.");
     nextBtn->setToolTip("Mark current task as finished and go to next one.");
     nextBtn->setShortcut(QKeySequence(Qt::Key_N));
