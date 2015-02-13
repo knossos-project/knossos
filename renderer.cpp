@@ -560,7 +560,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XY);
-                if (Session::singleton().annotationMode == SegmentationMode) {
+                if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false) {
                     renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }

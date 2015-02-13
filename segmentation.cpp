@@ -554,7 +554,7 @@ void Segmentation::jobSave(QIODevice &file) const {
 
 void Segmentation::startJobMode() {
     alpha = 37;
-    brush.setRadius(2);
+    brush.setRadius(1);
     renderAllObjs = false;
     Segmentation::singleton().selectNextTodoObject();
     emit renderAllObjsChanged(renderAllObjs);
