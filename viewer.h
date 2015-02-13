@@ -56,7 +56,7 @@ private:
     float alphaCache;
     Rotation rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
-
+    QString timerString;
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;

@@ -417,7 +417,8 @@ static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportText
 bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
-
+    //QElapsedTimer t;
+    //t.start();
     uint x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
@@ -587,6 +588,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         }
     }
     glBindTexture(GL_TEXTURE_2D, 0);
+   // timerString = QString(" %0").arg(t.elapsed());
     return true;
 }
 
@@ -1162,12 +1164,12 @@ void Viewer::run() {
             vpUpperRight->makeCurrent();
         }
 
-        if(currentVp.type != VIEWPORT_SKELETON) {
-            if(currentVp.type != VIEWPORT_ARBITRARY) {
-                vpGenerateTexture(currentVp);
-            } else {
-                vpGenerateTexture_arb(currentVp);
-            }
+        if(Segmentation::singleton().job.active && currentVp.id == VP_UPPERLEFT) {
+            vpGenerateTexture(currentVp);
+        } else if(currentVp.type != VIEWPORT_SKELETON && currentVp.type != VIEWPORT_ARBITRARY) {
+            vpGenerateTexture(currentVp);
+        } else if(currentVp.type != VIEWPORT_SKELETON && currentVp.type == VIEWPORT_ARBITRARY) {
+            vpGenerateTexture_arb(currentVp);
         }
 
         if(drawCounter == 3) {
@@ -1208,6 +1210,7 @@ void Viewer::run() {
             state->viewerState->userMove = false;
         }
     }
+ //   window->timeLabel.setText(timerString);
 }
 
 bool Viewer::updateViewerState() {

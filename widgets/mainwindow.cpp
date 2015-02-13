@@ -120,6 +120,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     statusBar()->setSizeGripEnabled(false);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
+    statusBar()->addPermanentWidget(&timeLabel);
 
 #ifdef Q_OS_WIN
     //manually tweak padding between widgets and both window borders and statusbar seperators
