@@ -305,8 +305,10 @@ void MainWindow::updateTodosLeft() {
             }
         }
         else { // submit through task management or without knossos
-            QMessageBox info(QMessageBox::Information, "Good job, you're done!", "Please submit your work now.");
-            info.exec();
+            QMessageBox submitBox(QMessageBox::Question, "Good job, you're done!", "Save your work now?", QMessageBox::Yes | QMessageBox::No);
+            if(submitBox.exec() == QMessageBox::Yes) {
+                saveSlot();
+            }
         }
     }
 }
