@@ -68,7 +68,7 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    void renderRectCursor(uint viewportType, Coordinate coord);
+    void renderBrush(uint viewportType, Coordinate coord);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
