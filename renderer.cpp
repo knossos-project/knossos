@@ -561,7 +561,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XY);
                 if (Session::singleton().annotationMode == SegmentationMode) {
-                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
 
@@ -694,7 +694,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_XZ);
                 if (Session::singleton().annotationMode == SegmentationMode) {
-                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
 
@@ -818,7 +818,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if (!state->viewerState->uniqueColorMode) {
                 renderSkeleton(currentVP, VIEWPORT_YZ);
                 if (Session::singleton().annotationMode == SegmentationMode) {
-                    renderRectCursor(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
                 }
             }
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -1663,7 +1663,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
-void Renderer::renderRectCursor(uint viewportType, Coordinate coord) {
+void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
