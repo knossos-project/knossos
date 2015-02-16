@@ -28,6 +28,7 @@
 #include "network.h"
 #include "segmentation.h"
 #include "session.h"
+#include "viewer.h"
 
 #include <quazip/quazip.h>
 #include <quazip/quazipfile.h>
@@ -385,7 +386,9 @@ uint lll_put(C_Element *destElement, coord2bytep_map_t *currentLoadedHash, Coord
     return LLL_SUCCESS;
 }
 
-Loader::Loader(QObject *parent) : QThread(parent) {}
+Loader::Loader(QObject *parent) : QThread(parent) {
+    QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::reslice_notify);
+}
 
 int calc_nonzero_sign(float x) {
     if (x > 0) {
@@ -812,6 +815,8 @@ loadcube_manage:
      * to the Cube2Pointer table.
      *
      */
+
+    emit reslice_notify();
     if (!retVal) {
         goto loadcube_ret;
     }

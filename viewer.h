@@ -74,6 +74,9 @@ public:
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
+    bool dc_xy_changed;
+    bool dc_xz_changed;
+    bool dc_zy_changed;
 
 signals:
     void loadSignal();
@@ -107,6 +110,7 @@ public slots:
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
     void setVPOrientation(bool arbitrary);
+    void reslice_notify();
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
