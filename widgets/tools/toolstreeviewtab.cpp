@@ -354,7 +354,7 @@ void ToolsTreeviewTab::setTreeCommentAction() {
 void ToolsTreeviewTab::contextMenu(QPoint pos) {
     if (activeNodeTable->hasFocus()) {
         QMenu nodeContextMenu;
-        QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
+        QObject::connect(nodeContextMenu.addAction("Extract connected component"), &QAction::triggered, this, &ToolsTreeviewTab::extractConnectedComponentAction);
         QObject::connect(nodeContextMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "(DEL)ete active node"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
         nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
@@ -363,7 +363,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         nodeContextMenu.exec(activeNodeTable->viewport()->mapToGlobal(pos));
     } else if (nodeTable->hasFocus()) {
         QMenu nodeContextMenu;
-        QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
+        QObject::connect(nodeContextMenu.addAction("Extract connected component"), &QAction::triggered, this, &ToolsTreeviewTab::extractConnectedComponentAction);
         QObject::connect(nodeContextMenu.addAction("(Un)link nodes"), &QAction::triggered, this, &ToolsTreeviewTab::linkNodesAction);
         QObject::connect(nodeContextMenu.addAction("Set comment for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeCommentAction);
         QObject::connect(nodeContextMenu.addAction("Set radius for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeRadiusAction);
@@ -476,23 +476,21 @@ void ToolsTreeviewTab::linkNodesAction() {
     }
 }
 
-void ToolsTreeviewTab::splitComponentAction() {
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Cofirmation required");
-    prompt.setText("Do you really want to split the connected component from the tree?");
-    QPushButton *confirmButton = prompt.addButton("Split", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        treeListElement *prevActive = state->skeletonState->activeTree;
-        Skeletonizer::splitConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
-        if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
-            // when a tree is split, a new tree has been created and made active
-            treeActivated();//add new tree to active tree table
-            insertTree(state->skeletonState->activeTree, treeTable);//add new tree to tree table
-            updateLabels();
+void ToolsTreeviewTab::extractConnectedComponentAction() {
+    const QString msg("Do you really want to extract all nodes in this component into a new tree?");
+    const int confirm = 0;
+    const auto res = QMessageBox::question(this, "Extract connected component", msg, "Extract", "Cancel", QString(), confirm, 1);
+    const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
+    if (res == confirm) {
+        const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
+        if (!extracted) {
+            QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
+        } else {
+            auto msg = QString("The connected component was extracted into tree %1.").arg(state->skeletonState->firstTree->treeID);
+            if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
+                msg += " \nTrees have become empty and were deleted.";
+            }
+            QMessageBox::information(this, "Component extracted successfully", msg);
         }
     }
 }

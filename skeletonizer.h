@@ -120,7 +120,7 @@ public slots:
     static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
 
-    static int splitConnectedComponent(int nodeID);
+    bool extractConnectedComponent(int nodeID);
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
     static bool updateTreeColors();

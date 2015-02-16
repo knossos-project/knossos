@@ -116,7 +116,7 @@ public slots:
     void setNodeRadiusAction();
     void linkNodesAction();
     void moveNodesAction();
-    void splitComponentAction();
+    void extractConnectedComponentAction();
     void setNodeCommentAction();
     void deleteNodesAction();
 
