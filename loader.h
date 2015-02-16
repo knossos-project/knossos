@@ -170,6 +170,7 @@ public:
     C_Element *Dcoi;
 signals:
     void finished();
+    void reslice_notify();
 public slots:
     bool load();
 };

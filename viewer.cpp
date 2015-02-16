@@ -446,15 +446,27 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         dcOffset = state->cubeSliceArea
                    * (currPosTrans.z - state->cubeEdgeLength
                    * currentPosition_dc.z);
+        if(!dc_xy_changed) {
+            return true;
+        }
+        dc_xy_changed = false;
         break;
     case SLICE_XZ:
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
+        if(!dc_xz_changed) {
+            return true;
+        }
+        dc_xz_changed = false;
         break;
     case SLICE_YZ:
         dcOffset = currPosTrans.x - state->cubeEdgeLength
                    * currentPosition_dc.x;
+        if(!dc_zy_changed) {
+            return true;
+        }
+        dc_zy_changed = false;
         break;
     default:
         qDebug("No such slice view: %d.", currentVp.type);
@@ -1300,6 +1312,10 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     Coordinate lastPosition_dc;
     Coordinate newPosition_dc;
 
+    if(std::abs(z) > 0) dc_xy_changed = true;
+    if(std::abs(x) > 0) dc_zy_changed = true;
+    if(std::abs(y) > 0) dc_xz_changed = true;
+
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
@@ -1326,6 +1342,10 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
+        dc_xy_changed = true;
+        dc_xz_changed = true;
+        dc_zy_changed = true;
+
         state->loaderUserMoveType = userMoveType;
         Coordinate direction;
         switch (userMoveType) {
@@ -1359,6 +1379,12 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
 
     return true;
+}
+
+void Viewer::reslice_notify() {
+    dc_xy_changed = true;
+    dc_xz_changed = true;
+    dc_zy_changed = true;
 }
 
 bool Viewer::userMove_arb(float x, float y, float z) {
