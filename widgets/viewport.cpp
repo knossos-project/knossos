@@ -128,17 +128,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     vpLayout->addWidget(resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
     setLayout(vpLayout);
 
-    if(viewportType == VIEWPORT_XY)
-        this->setToolTip(QString("Viewport %1").arg("XY"));
-    else if(viewportType == VIEWPORT_XZ)
-        this->setToolTip(QString("Viewport %1").arg("XZ"));
-    else if(viewportType == VIEWPORT_YZ)
-        this->setToolTip(QString("Viewport %1").arg("YZ"));
-    else if(viewportType == VIEWPORT_ARBITRARY)
-        this->setToolTip(QString("Viewport %1").arg("Arbitrary"));
-    else if(viewportType == VIEWPORT_SKELETON)
-        this->setToolTip(QString("Skeleton Viewport"));
-
     timeDBase.start();
     timeFBase.start();
 }
