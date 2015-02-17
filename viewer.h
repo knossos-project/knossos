@@ -91,7 +91,6 @@ protected:
     bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
 
     void ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
-    void ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
 
     void rewire();
 public slots:

@@ -386,31 +386,6 @@ void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
     }
 }
 
-void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    datacube += dcOffset;
-    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
-    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
-    const std::size_t sliceIncrement = vpConfig->type != SLICE_XY ? state->cubeSliceArea * OBJID_BYTES : state->cubeEdgeLength * OBJID_BYTES;
-    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
-
-    for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
-        for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
-            uint64_t subObjectID = *reinterpret_cast<uint64_t*>(datacube);
-
-            const auto color = Segmentation::singleton().colorUniqueFromId(subObjectID);
-            slice[0] = std::get<0>(color);
-            slice[1] = std::get<1>(color);
-            slice[2] = std::get<2>(color);
-            slice[3] = std::get<3>(color);
-
-            slice += 4;//RGBA per pixel
-            datacube += voxelIncrement;
-        }
-        datacube += sliceSubLineIncrement;
-    }
-}
-
 static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportTexture *texture) {
     uint index = 0;
 
@@ -533,7 +508,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                          currentDc.y * state->magnification * state->cubeEdgeLength,
                                          currentDc.z * state->magnification * state->cubeEdgeLength};
 
-            if(datacube == HT_FAILURE || state->viewerState->uniqueColorMode) {
+            if(datacube == HT_FAILURE) {
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -579,18 +554,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                     state->viewerState->defaultOverlayData);
                 }
                 else {
-                    if(state->viewerState->uniqueColorMode) {
-                        ocSliceExtractUnique(overlayCube,
-                                             state->viewerState->overlayData + index,
-                                             dcOffset * OBJID_BYTES,
-                                             &currentVp);
-                    } else {
-                        ocSliceExtract(overlayCube,
-                                       cubePosInAbsPx,
-                                       state->viewerState->overlayData + index,
-                                       dcOffset * OBJID_BYTES,
-                                       &currentVp);
-                    }
+                    ocSliceExtract(overlayCube,
+                                   cubePosInAbsPx,
+                                   state->viewerState->overlayData + index,
+                                   dcOffset * OBJID_BYTES,
+                                   &currentVp);
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -1810,7 +1778,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
     QObject::connect(eventModel, &EventModel::zoomReset, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
     QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
-    QObject::connect(eventModel, &EventModel::zoomOrthoSignal, renderer, &Renderer::invalidatePickingBuffer);
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);

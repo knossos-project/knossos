@@ -49,83 +49,7 @@ EventModel::EventModel(QObject *parent) :
 }
 
 uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewportId) {
-    const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-    return Segmentation::singleton().subobjectIdFromUniqueColor(color);
-}
-
-std::unordered_set<uint64_t> segmentationColorPickingRect(const int originx, const int originy, const int width, const int height, const int viewportId) {
-    std::unordered_set<uint64_t> found;
-    const int widthscaled = width * state->viewerState->vpConfigs[viewportId].screenPxXPerDataPx;
-    const int heightscaled = height * state->viewerState->vpConfigs[viewportId].screenPxYPerDataPx;
-    const std::size_t xmin = std::max(0, originx - widthscaled);
-    const std::size_t ymin = std::max(0, originy - heightscaled);
-    const std::size_t xmax = std::min(state->viewer->window->viewports[viewportId]->width(), originx + widthscaled + 1);
-    const std::size_t ymax = std::min(state->viewer->window->viewports[viewportId]->height(), originy + heightscaled + 1);
-    for (std::size_t y = ymin; y < ymax; ++y) {
-        for (std::size_t x = xmin; x < xmax; ++x) {
-            const auto found_color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-            const auto found_id = Segmentation::singleton().subobjectIdFromUniqueColor(found_color);
-            if (found_id != 0) { //don’t select the unsegmented area as object
-                found.emplace(found_id);
-            }
-        }
-    }
-    return found;
-}
-
-std::unordered_set<uint64_t> segmentationColorPickingRect(const int originx, const int originy, const int width, const int height) {
-    std::unordered_set<uint64_t> all_found;
-    for (auto vp : {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ}) {
-        const auto found = segmentationColorPickingRect(originx, originy, width, height, vp);
-        all_found.insert(found.begin(), found.end());
-    }
-    return all_found;
-}
-
-std::unordered_set<uint64_t> segmentationColorPickingCircle(const int originx, const int originy, const int width, const int height, const int viewportId) {
-    std::unordered_set<uint64_t> found;
-    const int widthscaled = width * state->viewerState->vpConfigs[viewportId].screenPxXPerDataPx;
-    const int heightscaled = height * state->viewerState->vpConfigs[viewportId].screenPxYPerDataPx;
-    const int xmin = std::max(0, originx - widthscaled);
-    const int ymin = std::max(0, originy - heightscaled);
-    const int xmax = std::min(state->viewer->window->viewports[viewportId]->width(), originx + widthscaled);
-    const int ymax = std::min(state->viewer->window->viewports[viewportId]->height(), originy + heightscaled);
-    for (int y = ymin; y <= ymax; ++y) {
-        for (int x = xmin; x <= xmax; ++x) {
-            const auto sqdistance = std::pow(x-originx, 2) / (std::pow(xmax-xmin, 2)/4.0) + std::pow(y - originy, 2)/(std::pow(ymax-ymin, 2)/4.0);
-            if(sqdistance <= 1.0) {
-                const auto found_color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-                const auto found_id = Segmentation::singleton().subobjectIdFromUniqueColor(found_color);
-                if (found_id != 0) { //don’t select the unsegmented area as object
-                    found.emplace(found_id);
-                }
-            }
-        }
-    }
-    return found;
-}
-
-std::unordered_set<uint64_t> segmentationColorPickingCircle(const int originx, const int originy, const int width, const int height) {
-    std::unordered_set<uint64_t> all_found;
-    for (auto vp : {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ}) {
-        const auto found = segmentationColorPickingCircle(originx, originy, width, height, vp);
-        all_found.insert(found.begin(), found.end());
-    }
-    return all_found;
-}
-
-std::unordered_set<uint64_t> segmentationColorPicking(const int originx, const int originy, const brush_t& brush, const int viewportId = 0) {
-    if(brush.getShape() == brush_t::shape_t::circle) {
-        if(brush.getMode() == brush_t::mode_t::three_dim)
-            return segmentationColorPickingCircle(originx, originy, brush.getRadius()+1, brush.getRadius()+1);
-        else /*if(brush.getMode() == brush_t::mode_t::two_dim)*/
-            return segmentationColorPickingCircle(originx, originy, brush.getRadius()+1, brush.getRadius()+1, viewportId);
-    } else /*if(brush.getShape() == brusht_t::shape_t::circle)*/ {
-        if(brush.getMode() == brush_t::mode_t::three_dim)
-            return segmentationColorPickingRect(originx, originy, brush.getRadius()+1, brush.getRadius()+1);
-        else /*if(brush.getMode() == brush_t::mode_t::two_dim)*/
-            return segmentationColorPickingRect(originx, originy, brush.getRadius()+1, brush.getRadius()+1, viewportId);
-    }
+    return readVoxel(getCoordinateFromOrthogonalClick(x, y, viewportId));
 }
 
 void segmentation_work(QMouseEvent *event, const int vp) {
@@ -134,17 +58,17 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 
     if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
-    } else {//add, erase
+    } else {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
+        uint64_t soid = 0;
         if (seg.selectedObjectsCount()) {
-            const auto soid = seg.subobjectIdOfFirstSelectedObject();
+            soid = seg.subobjectIdOfFirstSelectedObject();
             seg.updateLocationForFirstSelectedObject(coord);
-            writeVoxels(coord, soid, seg.brush);
-            state->viewer->window->notifyUnsavedChanges();
-            state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
         }
+        writeVoxels(coord, soid, seg.brush);
+        state->viewer->window->notifyUnsavedChanges();
     }
 
     state->viewer->reslice_notify();
@@ -152,7 +76,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    const auto subobjectIds = segmentationColorPicking(event->x(), event->y(), seg.brush, vp);
+    const auto subobjectIds = readVoxels(getCoordinateFromOrthogonalClick(event->x(), event->y(), vp), seg.brush);
     Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
@@ -192,7 +116,7 @@ void merging(QMouseEvent *event, const int vp) {
 }
 
 void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
-    auto subObjectId = segmentationColorPickingPoint(event->x(), event->y(), VPfound);
+    auto subObjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
     Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
 }
 
@@ -670,7 +594,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-            const auto subobjectId = segmentationColorPickingPoint(event->x(), event->y(), VPfound);
+            const auto subobjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
             if (subobjectId != 0) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);

@@ -615,8 +615,6 @@ struct viewerState {
     float treeAdjustmentTable[RGB_LUTSIZE];
     float defaultTreeTable[RGB_LUTSIZE];
 
-    bool uniqueColorMode;
-
     // Advanced Tracing Modes Stuff
     navigationMode autoTracingMode;
     int autoTracingDelay;
