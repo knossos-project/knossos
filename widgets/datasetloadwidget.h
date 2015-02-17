@@ -51,7 +51,7 @@ public:
     QLabel *infolabel;
     QListWidget *datasetlistwidget;
     QScrollArea *scrollarea;
-    QString lastused;
+    QString datasetPath;
 protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;

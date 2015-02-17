@@ -313,6 +313,19 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("version", createdInVersion);
     xml.writeEndElement();
 
+    xml.writeStartElement("dataset");
+    xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetPath);
+    xml.writeEndElement();
+
+    xml.writeStartElement("MovementArea");
+    xml.writeAttribute("min.x", QString::number(Session::singleton().movementAreaMin.x));
+    xml.writeAttribute("min.y", QString::number(Session::singleton().movementAreaMin.y));
+    xml.writeAttribute("min.z", QString::number(Session::singleton().movementAreaMin.z));
+    xml.writeAttribute("max.x", QString::number(Session::singleton().movementAreaMax.x));
+    xml.writeAttribute("max.y", QString::number(Session::singleton().movementAreaMax.y));
+    xml.writeAttribute("max.z", QString::number(Session::singleton().movementAreaMax.z));
+    xml.writeEndElement();
+
     xml.writeStartElement("scale");
     xml.writeAttribute("x", QString::number(state->scale.x / state->magnification));
     xml.writeAttribute("y", QString::number(state->scale.y / state->magnification));

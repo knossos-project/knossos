@@ -244,9 +244,9 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     QFileInfo pathInfo;
 
     if(path.isEmpty()) {
-        path = lastused;
+        path = datasetPath;
     } else {
-        lastused = path;
+        datasetPath = path;
     }
 
     //check if we have a remote conf
@@ -451,7 +451,7 @@ void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
-    settings.setValue(DATASET_LAST_USED, lastused);
+    settings.setValue(DATASET_LAST_USED, datasetPath);
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
@@ -483,7 +483,7 @@ void DatasetLoadWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
-    lastused = settings.value(DATASET_LAST_USED).toString();
+    datasetPath = settings.value(DATASET_LAST_USED).toString();
 
     for(const auto & mru : settings.value(DATASET_MRU).toStringList()) {
         datasetlistwidget->addItem(mru);
