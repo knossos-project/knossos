@@ -74,10 +74,6 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 }
 
-void Renderer::invalidatePickingBuffer() {
-    pickBuffer.invalidated = true;
-}
-
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
     float currentAngle = 0.;
         floatCoordinate segDirection, tempVec, tempVec2;
@@ -453,7 +449,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
-    if(!state->viewerState->selectModeFlag && !state->viewerState->uniqueColorMode) {
+    if(!state->viewerState->selectModeFlag) {
         if(state->viewerState->multisamplingOnOff) {
             glEnable(GL_MULTISAMPLE);
         }
@@ -558,11 +554,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            if (!state->viewerState->uniqueColorMode) {
-                renderSkeleton(currentVP, VIEWPORT_XY);
-                if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false) {
-                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
-                }
+            renderSkeleton(currentVP, VIEWPORT_XY);
+            if (Session::singleton().annotationMode == SegmentationMode) {
+                renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -609,7 +603,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
+            if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(0., 1., 0., 0.3);
@@ -691,11 +685,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            if (!state->viewerState->uniqueColorMode) {
-                renderSkeleton(currentVP, VIEWPORT_XZ);
-                if (Session::singleton().annotationMode == SegmentationMode) {
-                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
-                }
+            renderSkeleton(currentVP, VIEWPORT_XZ);
+            if (Session::singleton().annotationMode == SegmentationMode) {
+                renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -743,7 +735,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
+            if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -815,12 +807,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
-            if (!state->viewerState->uniqueColorMode) {
-                renderSkeleton(currentVP, VIEWPORT_YZ);
-                if (Session::singleton().annotationMode == SegmentationMode) {
-                    renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
-                }
+            renderSkeleton(currentVP, VIEWPORT_YZ);
+            if (Session::singleton().annotationMode == SegmentationMode) {
+                renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
+
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
@@ -866,7 +857,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
+            if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -969,9 +960,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
         glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-        if (!state->viewerState->uniqueColorMode) {
-            renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
-        }
+        renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
 
         glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -1026,7 +1015,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if (state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
+        if (state->viewerState->drawVPCrosshairs) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2->z, v2->y, v2->x, 0.3);
@@ -1051,9 +1040,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         break;
     }
     glDisable(GL_BLEND);
-    if (!state->viewerState->uniqueColorMode) {
-        renderViewportBorders(currentVP);
-    }
+    renderViewportBorders(currentVP);
+
     return true;
 }
 
@@ -1732,7 +1720,7 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
         glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     }
     drawCursor();
-    
+
     glPopMatrix();
 }
 
@@ -1847,59 +1835,6 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     state->viewerState->selectModeFlag = false;
 
     return foundNodes;
-}
-
-std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y) {
-    Viewport *vp = nullptr;
-    vpConfig &vpConf = state->viewerState->vpConfigs[currentVP];
-    if(currentVP == VIEWPORT_XY) {
-        vp = refVPXY;
-    } else if(currentVP == VIEWPORT_XZ) {
-        vp = refVPXZ;
-    } else if(currentVP == VIEWPORT_YZ) {
-        vp = refVPYZ;
-    } else if(currentVP == VIEWPORT_SKELETON) {
-        refVPSkel->makeCurrent();
-        return std::make_tuple(0, 0, 0); // disable skeleton viewport until segmentation works in it
-    }
-
-    if(pickBuffer.upToDate(currentVP, vp->width(), state->viewerState->currentPosition)) {
-        return pickBuffer.getColor(x, y);
-    }
-
-    vp->makeCurrent();
-    // disable any special filtering
-    glBindTexture(GL_TEXTURE_2D,vpConf.texture.overlayHandle);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // set and generate unique color segmentation texture
-    state->viewerState->uniqueColorMode = true;
-    state->viewer->vpGenerateTexture(vpConf);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
-    renderOrthogonalVP(currentVP);
-
-    // reset filtering
-    glBindTexture(GL_TEXTURE_2D, vpConf.texture.overlayHandle);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // color picking
-    glReadBuffer(GL_BACK);
-    glPixelStoref(GL_PACK_ALIGNMENT, 1);
-    pickBuffer = ColorPickBuffer(currentVP, vp->width(), state->viewerState->currentPosition);
-
-    // restore normal segmentation texture
-    state->viewerState->uniqueColorMode = false;
-    state->viewer->vpGenerateTexture(vpConf);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glFlush();
-
-    return pickBuffer.getColor(x, y);
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

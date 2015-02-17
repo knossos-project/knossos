@@ -204,7 +204,7 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     auto mibibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
     const auto fov = cubeEdge * (superCubeEdge - 1);
-    auto text = QString("Data cache cube edge length (%1 MiB RAM) – FOV %2 pixel per demension").arg(mibibytes).arg(fov);
+    auto text = QString("Data cache cube edge length (%1 MiB RAM) – FOV %2 pixel per dimension").arg(mibibytes).arg(fov);
     supercubeSizeLabel->setText(text);
     const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
     //make sure it’s an odd number
@@ -501,7 +501,7 @@ void DatasetLoadWidget::loadSettings() {
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     }
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        state->overlay = settings.value(DATASET_OVERLAY, true).toBool();
+        state->overlay = settings.value(DATASET_OVERLAY, false).toBool();
     }
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);

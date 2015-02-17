@@ -311,11 +311,7 @@ void NavigationWidget::loadSettings() {
 
     resetMovementArea();
 
-    if(!settings.value(MOVEMENT_SPEED).isNull()) {
-        this->movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED).toInt());
-    } else {
-        this->movementSpeedSpinBox->setValue(40);
-    }
+    movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
 
     if(!settings.value(JUMP_FRAMES).isNull()) {
         this->jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES).toInt());

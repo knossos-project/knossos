@@ -2008,7 +2008,7 @@ bool Skeletonizer::delStack(stack *stack) {
     return true;
 }
 
-int Skeletonizer::splitConnectedComponent(int nodeID) {
+bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  This function takes a node and splits the connected component
     //  containing that node into a new tree, unless the connected component
     //  is equivalent to exactly one entire tree.
@@ -2016,14 +2016,12 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     //  It uses breadth-first-search. Depth-first-search would be the same with
     //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
-    //
-    //  TODO trees might become empty when the connected component spans more
-    //       than one tree.
 
     auto node = findNodeByNodeID(nodeID);
-    if(!node) {
+    if (!node) {
         return false;
     }
+
     std::set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
     std::queue<nodeListElement*> queue;
     std::set<nodeListElement*> visitedNodes;
@@ -2050,29 +2048,24 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
     //  strict subgraph of the graph containing all trees we've seen and we
     //  should split it.
 
-    //  Since we're checking for treesCount > 1 below, this implementation is
-    //  now slightly redundant. We want this function to not do anything when
-    //  there are no disconnected components in the same tree, but create a new
-    //  tree when the connected component spans several trees. This is a useful
-    //  feature when performing skeleton consolidation and allows one to merge
-    //  many trees at once.
-    //  Just remove the treesCount > 1 below to get back to the original
-    //  behaviour of only splitting strict subgraphs.
-
-    uint nodeCountAllTrees = 0;
+    // We want this function to not do anything when
+    // there are no disconnected components in the same tree, but create a new
+    // tree when the connected component spans several trees. This is a useful
+    // feature when performing skeleton consolidation and allows one to merge
+    // many trees at once.
+    uint nodeCountSeenTrees = 0;
     for(auto tree : treesSeen) {
-        nodeCountAllTrees += tree->size;
+        nodeCountSeenTrees += tree->size;
     }
-    if(treesSeen.size() == 1 || visitedNodes.size() == nodeCountAllTrees) {
-        QMessageBox::information(nullptr, "Nothing to split",
-                                 "The component spans an entire tree or multiple whole trees. Nothing to split.");
-        return visitedNodes.size();
+    if(visitedNodes.size() == nodeCountSeenTrees && treesSeen.size() == 1) {
+        return false;
     }
 
     color4F treeCol;
     treeCol.r = -1.;
-    auto newTree = state->viewer->skeletonizer->addTreeListElement(0, treeCol);
+    auto newTree = addTreeListElement(0, treeCol);
     // Splitting the connected component.
+    std::vector<int> deletedTrees;
     struct nodeListElement *last = NULL;
     for(auto node : visitedNodes) {
         // Removing node list element from its old position
@@ -2085,6 +2078,10 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         }
         if(node->next != NULL) {
             node->next->previous = node->previous;
+        }
+        if (node->correspondingTree->size == 0) {//remove empty trees
+            deletedTrees.emplace_back(node->correspondingTree->treeID);
+            delTree(node->correspondingTree->treeID);
         }
         // Inserting node list element into new list.
         ++newTree->size;
@@ -2101,7 +2098,9 @@ int Skeletonizer::splitConnectedComponent(int nodeID) {
         node->correspondingTree = newTree;
     }
     state->skeletonState->unsavedChanges = true;
-    return visitedNodes.size();
+    setActiveTreeByID(newTree->treeID);//the empty tree had no active node
+
+    return true;
 }
 
 bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeID) {

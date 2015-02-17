@@ -191,18 +191,6 @@ void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
     obj.addExistingSubObject(subobjectIt->second);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorUniqueFromId(const uint64_t subObjectID) const {
-    const uint8_t red   =  subObjectID        & 0xFF;
-    const uint8_t green = (subObjectID >> 8)  & 0xFF;
-    const uint8_t blue  = (subObjectID >> 16) & 0xFF;
-
-    return std::make_tuple(red, green, blue, 255);
-}
-
-uint64_t Segmentation::subobjectIdFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) const {
-    return std::get<0>(color) + (std::get<1>(color) << 8) + (std::get<2>(color) << 16);
-}
-
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red

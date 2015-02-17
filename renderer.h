@@ -34,29 +34,6 @@
 
 class Viewport;
 
-struct ColorPickBuffer {
-private:
-    uint vpId = 0;
-    uint size{0};
-    Coordinate position{-1, -1, -1};
-    //one cannot assign multi_arrays of different sizes → pointer
-    std::unique_ptr<boost::multi_array<std::array<GLubyte, 3>, 2>> buffer;
-public:
-    bool invalidated{false};
-    ColorPickBuffer() = default;
-    ColorPickBuffer(const uint & vpid, const uint & size, const Coordinate & pos)
-            : vpId{vpid}, size{size}, position{pos}, buffer(new decltype(buffer)::element_type(boost::extents[size][size])) {
-        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer->data()));
-    }
-    bool upToDate(const uint & currVp, const uint & currSize, const Coordinate & currPos) const {
-        return currVp == vpId && size == currSize && currPos == position && !invalidated;
-    }
-    std::tuple<uint8_t, uint8_t, uint8_t> getColor(const uint & x, const uint & y) {
-        const auto yinverse = size-y-1;
-        return std::make_tuple((*buffer)[yinverse][x][0], (*buffer)[yinverse][x][1], (*buffer)[yinverse][x][2]);
-    }
-};
-
 class Renderer : public QObject {
     Q_OBJECT
     friend class MeshDecorator;
@@ -64,7 +41,6 @@ class Renderer : public QObject {
     for static objects (like slice plane quads...) */
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
-    ColorPickBuffer pickBuffer;
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
@@ -87,10 +63,8 @@ protected:
     bool updateFrustumClippingPlanes(uint viewportType);
 
 public slots:
-    void invalidatePickingBuffer();
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
-    std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, const uint x, const uint y);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };
