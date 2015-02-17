@@ -1732,7 +1732,7 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
         glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     }
     drawCursor();
-    
+
     glPopMatrix();
 }
 
@@ -1876,6 +1876,7 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
 
     // set and generate unique color segmentation texture
     state->viewerState->uniqueColorMode = true;
+    state->viewer->dc_xy_changed = state->viewer->dc_xz_changed = state->viewer->dc_zy_changed = true;
     state->viewer->vpGenerateTexture(vpConf);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
@@ -1894,7 +1895,9 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
 
     // restore normal segmentation texture
     state->viewerState->uniqueColorMode = false;
+    state->viewer->dc_xy_changed = state->viewer->dc_xz_changed = state->viewer->dc_zy_changed = true;
     state->viewer->vpGenerateTexture(vpConf);
+    state->viewer->dc_xy_changed = state->viewer->dc_xz_changed = state->viewer->dc_zy_changed = true;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glFlush();

@@ -146,6 +146,8 @@ void segmentation_work(QMouseEvent *event, const int vp) {
             state->viewer->renderer->invalidatePickingBuffer();//subobjects got changed
         }
     }
+
+    state->viewer->reslice_notify();
 }
 
 void merging(QMouseEvent *event, const int vp) {

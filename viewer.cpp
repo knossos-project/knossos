@@ -124,6 +124,13 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::reslice_notify);
+
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
 
     baseTime.start();//keyRepeat timer
