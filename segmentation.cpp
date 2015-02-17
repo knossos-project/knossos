@@ -524,17 +524,19 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 void Segmentation::jobLoad(QIODevice & file) {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream stream(&file);
-    QString jobtype = stream.readLine();
+    QString job_type = stream.readLine();
     QString submit_line = stream.readLine();
-    job.type = jobtype.isNull() ? Job::Conventional : static_cast<Job::Type>(jobtype.toInt());
+    QString job_active = stream.readLine();
+    job.type = job_type.isNull() ? Job::Conventional : static_cast<Job::Type>(job_type.toInt());
     job.submitPath = submit_line.isNull() ? "" : submit_line;
-    job.active = (jobtype.isNull()) ? false : true;
+    job.active = (job_active.isNull()) ? true : job_active.toInt() == 1;
 }
 
 void Segmentation::jobSave(QIODevice &file) const {
     QTextStream stream(&file);
     stream << static_cast<int>(job.type) << '\n';
     stream << job.submitPath << '\n';
+    stream << (singleton().todolist().size() != 0) << '\n'; // job active if todos left
     if (stream.status() != QTextStream::Ok) {
         qDebug() << "jobSave fail";
     }
