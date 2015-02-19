@@ -1761,7 +1761,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     }
 }
 
-std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height) {
+std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1789,17 +1789,21 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     GLdouble vp_height = refVPSkel->height();
 
     if(currentVP == VIEWPORT_XY) {
-        vp_height = refVPXY->height();
+        vp_height = refVPXY->height() * refVPXY->devicePixelRatio();
     } else if(currentVP == VIEWPORT_XZ) {
-        vp_height = refVPXZ->height();
+        vp_height = refVPXZ->height() * refVPXZ->devicePixelRatio();
     } else if(currentVP == VIEWPORT_YZ) {
-        vp_height = refVPYZ->height();
+        vp_height = refVPYZ->height() * refVPYZ->devicePixelRatio();
     }
+    centerX *= refVPXY->devicePixelRatio();
+    centerY *= refVPXY->devicePixelRatio();
+    selectionWidth *= refVPXY->devicePixelRatio();
+    selectionHeight *= refVPXY->devicePixelRatio();
 
     GLint openGLviewport[4];
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
-    gluPickMatrix(centerX, vp_height - centerY, width, height, openGLviewport);
+    gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
