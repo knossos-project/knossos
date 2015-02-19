@@ -193,8 +193,6 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    //TODO
-    //AL3XST REMOTE/LOCAL DATASETCHANGE
     viewer.window->widgetContainer->datasetLoadWidget->loadDataset(false);
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
