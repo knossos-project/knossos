@@ -555,7 +555,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
             renderSkeleton(currentVP, VIEWPORT_XY);
-            if (Session::singleton().annotationMode == SegmentationMode) {
+            if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false) {
                 renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
 

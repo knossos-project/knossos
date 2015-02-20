@@ -51,7 +51,7 @@ public:
     QSpinBox *supercubeEdgeSpin;
     QLabel *infolabel;
     QScrollArea *scrollarea;
-    QString lastused;
+    QString datasetPath;
     QTableWidget *tableWidget;
 protected:
     QLabel *supercubeSizeLabel;
