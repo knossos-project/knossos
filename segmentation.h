@@ -37,7 +37,8 @@ Q_OBJECT
         std::size_t selectedObjectsCount = 0;
     public:
         const uint64_t id;
-        explicit SubObject(const uint64_t & id) : id(id) {
+        bool todo;
+        explicit SubObject(const uint64_t & id, const bool & todo) : id(id), todo(todo) {
             highestId = std::max(id, highestId);
             objects.reserve(10);//improves merging performance by a factor of 3
         }
@@ -70,7 +71,6 @@ Q_OBJECT
     public:
         uint64_t id;
         uint64_t index = ++highestIndex;
-        bool todo;
         bool immutable;
         Coordinate location;
         QString category;
@@ -78,12 +78,15 @@ Q_OBJECT
         bool selected = false;
 
         explicit Object(SubObject & initialVolume);
-        explicit Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
+        explicit Object(const uint64_t & id, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
+        explicit Object(const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
         explicit Object(Object &first, Object &second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
         Object & merge(Object & other);
+        bool hasTodo() const;
+        void setTodoDone();
+        void resetTodo();
     };
 
     std::unordered_map<uint64_t, SubObject> subobjects;
@@ -133,7 +136,7 @@ Q_OBJECT
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
-    void newSubObject(Object & obj, uint64_t subObjID);
+    void newSubObject(Object & obj, uint64_t subObjID, const bool &todo);
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
 
@@ -146,6 +149,7 @@ public:
         bool active = false;
         Type type;
         QString submitPath;
+        std::vector<uint64_t> todolist;
     };
     Job job;
     void jobLoad(QIODevice & file);
