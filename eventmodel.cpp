@@ -664,7 +664,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
            state->skeletonState->defaultNodeRadius = radius;
         }
-    } else if (Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
+    } else if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0) {
             seg.brush.setRadius(0);
