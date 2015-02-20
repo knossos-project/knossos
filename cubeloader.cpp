@@ -74,7 +74,10 @@ void traverseBrush(const Coordinate & pos, const brush_t & brush, Func func) {
 std::unordered_set<uint64_t> readVoxels(const Coordinate & centerPos, const brush_t &brush) {
     std::unordered_set<uint64_t> subobjects;
     traverseBrush(centerPos, brush, [&subobjects](const Coordinate & pos){
-        subobjects.emplace(readVoxel(pos));
+        const auto soid = readVoxel(pos);
+        if (soid != 0) {// don’t select the unsegmented area as object
+            subobjects.emplace(soid);
+        }
     });
     return subobjects;
 }
@@ -86,7 +89,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                 //if there’re selected objects, we only want to erase these
                 const bool selectedObjects = Segmentation::singleton().selectedObjectsCount() != 0;
                 const bool visitingSelected = selectedObjects && Segmentation::singleton().isSubObjectIdSelected(readVoxel(pos));
-                if (!selectedObjects ||visitingSelected) {
+                if (!selectedObjects || visitingSelected) {
                     writeVoxel(pos, 0);
                 }
             } else {
