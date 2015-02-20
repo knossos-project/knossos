@@ -143,12 +143,11 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     } else if(state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
         // check click mode of orthogonal viewports
         if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
-            if(validPosition(event, VPfound) == false) {
-                return false;
+            if(mouseEventAtValidDatasetPosition(event, VPfound)) {
+                Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
+                emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
+                Knossos::sendRemoteSignal();
             }
-            Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-            emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
-            Knossos::sendRemoteSignal();
         }
     }
 
@@ -209,9 +208,12 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
+    if(mouseEventAtValidDatasetPosition(event, VPfound) == false) {
+        return;
+    }
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        if (validPosition(event, VPfound) && event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
+        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
              rightMouseDownX = event->x();
              rightMouseDownY = event->y();
              segmentation_work(event, VPfound);
@@ -219,12 +221,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return;
     }
     Coordinate movement, lastPos;
-
-    /* If not, we look up which skeletonizer work mode is
-    active and do the appropriate operation */
-    if(validPosition(event, VPfound) == false) {
-        return;
-    }
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
 
     bool newNode = false;
@@ -578,7 +574,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
-        if (validPosition(event, VPfound) && notOrigin) {
+        if (mouseEventAtValidDatasetPosition(event, VPfound) && notOrigin) {
             segmentation_work(event, VPfound);
         }
         return;
@@ -591,7 +587,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false) { // in task mode the object should not be switched
+    if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
@@ -633,7 +629,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode == SegmentationMode && mouseEventAtValidDatasetPosition(event, VPfound)) {
         if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {//merge took already place on mouse down
             segmentation_work(event, VPfound);
         }
@@ -643,7 +639,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
-    if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+    if (mouseEventAtValidDatasetPosition(event, VPfound) && Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         connectedComponent(clickedCoordinate);
     }
@@ -1218,18 +1214,20 @@ Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, 
     return Coordinate(x, y, z);
 }
 
-bool EventModel::validPosition(QMouseEvent *event, int VPfound) {
-    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) ||
-        event->x() < 0 || event->x() > (int)state->viewerState->vpConfigs[VPfound].edgeLength ||
-        event->y() < 0 || event->y() > (int)state->viewerState->vpConfigs[VPfound].edgeLength) {
+bool EventModel::mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound) {
+    if(VPfound == -1 || state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON ||
+       event->x() < 0 || event->x() > (int)state->viewerState->vpConfigs[VPfound].edgeLength ||
+       event->y() < 0 || event->y() > (int)state->viewerState->vpConfigs[VPfound].edgeLength) {
             return false;
     }
 
     Coordinate pos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
+    const auto min = Session::singleton().movementAreaMin;
+    const auto max = Session::singleton().movementAreaMax;
     //check if coordinates are in range
-    if((pos.x < 0) || (pos.x > state->boundary.x)
-        ||(pos.y < 0) || (pos.y > state->boundary.y)
-        ||(pos.z < 0) || (pos.z > state->boundary.z)) {
+    if((pos.x < min.x) || (pos.x > max.x)
+        ||(pos.y < min.y) || (pos.y > max.y)
+        ||(pos.z < min.z) || (pos.z > max.z)) {
         return false;
     }
     return true;
