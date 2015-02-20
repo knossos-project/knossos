@@ -577,6 +577,7 @@ void Segmentation::jobSave(QIODevice &file) const {
 void Segmentation::startJobMode() {
     alpha = 37;
     brush.setRadius(1);
+    brush.setTool(brush_t::tool_t::merge);
     renderAllObjs = false;
     selectNextTodoObject();
     emit renderAllObjsChanged(renderAllObjs);
