@@ -53,7 +53,7 @@ void merging(QMouseEvent *event, const int vp);
 class EventModel : public QObject
 {
     Q_OBJECT
-    bool validPosition(QMouseEvent *event, int VPfound);
+    bool mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound);
 
 public:
     explicit EventModel(QObject *parent = 0);
