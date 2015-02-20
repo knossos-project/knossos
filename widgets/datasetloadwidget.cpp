@@ -21,12 +21,17 @@
 #include "network.h"
 #include "viewer.h"
 
-DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
+void DatasetLoadWidget::MessageBoxInformation(QString message) {
+    QMessageBox info;
+    info.setWindowFlags(Qt::WindowStaysOnTopHint);
+    info.setIcon(QMessageBox::Information);
+    info.setWindowTitle("Information");
+    info.setText(message);
+    info.addButton(QMessageBox::Ok);
+    info.exec();
+}
 
-    datasetfileDialog = new QPushButton("…");
-    datasetfileDialog->setMaximumWidth(30);
-    datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    pathLineEdit = new QLineEdit();
+DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     cubeEdgeSpin.setRange(1, 256);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -40,13 +45,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    fileDialogButton = new QPushButton("Add Dataset");
-
-    auto hLayoutAddDataSet = new QHBoxLayout;
-    hLayoutAddDataSet->addWidget(pathLineEdit);
-    hLayoutAddDataSet->addWidget(datasetfileDialog);
-    hLayoutAddDataSet->addWidget(fileDialogButton);
-
     QFrame* line0 = new QFrame();
     line0->setFrameShape(QFrame::HLine);
     line0->setFrameShadow(QFrame::Sunken);
@@ -54,10 +52,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     hLayoutLine0->addWidget(line0);
 
     auto hLayoutDatasetInfo = new QGridLayout;
-    datasetlistwidget = new QListWidget();
-    datasetlistwidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableWidget = new QTableWidget();
+    tableWidget->setColumnCount(3);
 
-    hLayoutDatasetInfo->addWidget(datasetlistwidget, 0 ,0);
+    tableWidget->resizeRowsToContents();
+    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    tableWidget->verticalHeader()->setVisible(false);
+    tableWidget->horizontalHeader()->setVisible(false);
+    hLayoutDatasetInfo->addWidget(tableWidget,0,0);
 
     infolabel = new QLabel();
     auto str = QString("");
@@ -68,13 +71,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     scrollarea->setWidget(infolabel);
 
     hLayoutDatasetInfo->addWidget(scrollarea, 0, 1);
-
-    auto hLayoutDelDataset = new QHBoxLayout;
-    deleteButton = new QPushButton("Delete Dataset");
-    deleteButton->setMaximumWidth(200);
-    hLayoutDelDataset->addWidget(deleteButton);
-
-    hLayoutDelDataset->setAlignment(deleteButton, Qt::AlignLeft);
 
     QFrame* line1 = new QFrame();
     line1->setFrameShape(QFrame::HLine);
@@ -98,13 +94,10 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     auto localLayout = new QVBoxLayout();
 
-    localLayout->addLayout(hLayoutAddDataSet);
     localLayout->addLayout(hLayoutLine0);
     localLayout->addLayout(hLayoutDatasetInfo);
-    localLayout->addLayout(hLayoutDelDataset);
     localLayout->addLayout(hLayoutLine1);
     localLayout->addLayout(hLayout2);
-    //localLayout->addLayout(hLayoutCubeSize);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
 
@@ -112,28 +105,80 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     mainLayout->addLayout(localLayout);
     setLayout(mainLayout);
 
-    QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetLoadWidget::datasetfileDialogClicked);
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
     QObject::connect(processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
-    QObject::connect(fileDialogButton, &QPushButton::clicked, this, &DatasetLoadWidget::addDatasetClicked);
-    QObject::connect(deleteButton, &QPushButton::clicked, this, &DatasetLoadWidget::deleteDataset);
-
-    QObject::connect(datasetlistwidget, &QListWidget::itemSelectionChanged, this, &DatasetLoadWidget::processListWidgetClicked);
+    QObject::connect(tableWidget, &QTableWidget::clicked, this, &DatasetLoadWidget::processTableWidgetClicked);
+    QObject::connect(tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::processTableWidgetClicked);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void DatasetLoadWidget::deleteDataset() {
-    datasetlistwidget->takeItem(datasetlistwidget->currentRow());
+void DatasetLoadWidget::addRow(int row, int col) {
+    if(col == 0 && row == tableWidget->rowCount() - 1) {
+        if(tableWidget->item(row, 0)->text() != "") {
+            QPushButton *delDs = new QPushButton("Del");
+            delDs->setMaximumWidth(40);
+            delDs->setEnabled(true);
+            tableWidget->setCellWidget(tableWidget->rowCount()-1, 2, delDs);
+            QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
+
+            tableWidget->insertRow(tableWidget->rowCount());
+
+            QPushButton *addDs = new QPushButton("…");
+            addDs->setMaximumWidth(20);
+            QPushButton *fdelDs = new QPushButton("Del");
+            delDs->setMaximumWidth(40);
+            fdelDs->setEnabled(false);
+            QTableWidgetItem *t = new QTableWidgetItem("");
+            tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
+            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
+            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, fdelDs);
+
+            QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
+        }
+    }
 }
 
-void DatasetLoadWidget::processListWidgetClicked() {
-    if(datasetlistwidget->selectedItems().count() == 0) return;
+void DatasetLoadWidget::addClicked(){
+    for(int row = 0; row < tableWidget->rowCount(); ++row) {
+        for(int col = 0; col < tableWidget->columnCount(); ++col) {
+            if(sender() == tableWidget->cellWidget(row, col)) {
+                //open dialog
+                state->viewerState->renderInterval = SLOW;
+                QApplication::processEvents();
+                QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
 
-    QListWidgetItem * itemClicked = datasetlistwidget->selectedItems().front();
+                if(selectFile != "") {
+                    qDebug() << selectFile;
+                    QTableWidgetItem *t = new QTableWidgetItem(selectFile);
+                    tableWidget->setItem(row, 0, t);
+                }
+
+                state->viewerState->renderInterval = FAST;
+            }
+        }
+    }
+}
+
+void DatasetLoadWidget::delClicked(){
+    for(int row = 0; row < tableWidget->rowCount(); ++row) {
+        for(int col = 0; col < tableWidget->columnCount(); ++col) {
+            if(sender() == tableWidget->cellWidget(row, col)) {
+                //delete row
+                tableWidget->removeRow(row);
+            }
+        }
+    }
+}
+
+void DatasetLoadWidget::processTableWidgetClicked() {
+    if(tableWidget->selectedItems().count() == 0) return;
+
+    QTableWidgetItem * itemClicked = tableWidget->selectedItems().front();
+    if(itemClicked->text() == "") return;
 
     datasetinfo = getConfigFileInfo(itemClicked->text().toStdString().c_str());
 
@@ -166,36 +211,14 @@ void DatasetLoadWidget::processListWidgetClicked() {
 
 QStringList DatasetLoadWidget::getRecentPathItems() {
     QStringList recentPaths;
-    int dirCount = this->datasetlistwidget->count();
-    for (int i = 0; i < dirCount; i++) {
-        recentPaths.append(this->datasetlistwidget->item(i)->text());
+
+    for(int row = 0; row < tableWidget->rowCount() - 1; ++row) {
+        if(tableWidget->item(row, 0)->text() != "") {
+            recentPaths.append(tableWidget->item(row, 0)->text());
+        }
     }
 
     return recentPaths;
-}
-
-void DatasetLoadWidget::addDatasetClicked() {
-    if(pathLineEdit->text().size() == 0) return;
-
-    bool duplicate = false;
-    for(int i = 0; i < datasetlistwidget->count(); ++i) {
-        if(datasetlistwidget->item(i)->text() == pathLineEdit->text()) {
-            duplicate = true;
-        }
-    }
-    if(!duplicate) datasetlistwidget->addItem(pathLineEdit->text());
-
-    pathLineEdit->setText("");
-}
-
-void DatasetLoadWidget::datasetfileDialogClicked() {
-    state->viewerState->renderInterval = SLOW;
-    QApplication::processEvents();
-    QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
-
-    pathLineEdit->setText(selectFile);
-
-    state->viewerState->renderInterval = FAST;
 }
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
@@ -216,19 +239,13 @@ void DatasetLoadWidget::cancelButtonClicked() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    if(datasetlistwidget->selectedItems().toStdList().size() == 0) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText("No path selected!");
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+    if(tableWidget->currentItem()->text().isEmpty()) {
+        MessageBoxInformation("No path selected");
 
         return;
     }
 
-    if(loadDataset(true, datasetlistwidget->currentItem()->text())) {
+    if(loadDataset(true, tableWidget->currentItem()->text())) {
         this->hide(); //hide datasetloadwidget only if we could successfully load a widget
     }
 }
@@ -253,7 +270,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     if(path.startsWith("http", Qt::CaseInsensitive)) {
         std::string tmp = downloadRemoteConfFile(path);
         path = QString::fromStdString(tmp);
-        if(path == "") return false;
+        if(path.isEmpty()) return false;
     }
 
     pathInfo.setFile(path);
@@ -261,8 +278,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     if(pathInfo.isFile()) { // .conf file selected (case 3)
         filePath = path;
         confFile.setFileName(filePath);
-    }
-    else { // folder selected
+    }  else { // folder selected
         if(path.endsWith('/') == false && path.endsWith('\\') == false) {
             // qFileInfo only recognizes paths with trailing slash as directories.
             path.append('/');
@@ -287,13 +303,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
             }
             if(foundConf == false) {
                 if (isGUI) {
-                    QMessageBox info;
-                    info.setWindowFlags(Qt::WindowStaysOnTopHint);
-                    info.setIcon(QMessageBox::Information);
-                    info.setWindowTitle("Information");
-                    info.setText("Could not find a dataset file (*.conf)");
-                    info.addButton(QMessageBox::Ok);
-                    info.exec();
+                    MessageBoxInformation("Could not find a dataset file (*.conf)");
                 }
                 return false;
             }
@@ -320,13 +330,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     emit breakLoaderSignal();
 
     if(false == Knossos::readConfigFile(filePath.toStdString().c_str())) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText(QString("Failed to read config from %1").arg(filePath));
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+        MessageBoxInformation(QString("Failed to read config from %1").arg(filePath));
         return false;
     }
 
@@ -370,6 +374,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     emit datasetChanged(Coordinate(0, 0, 0), state->boundary, segmentationOverlayCheckbox.isChecked());
 
     emit userMoveSignal(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+
     return true;
 }
 
@@ -485,17 +490,55 @@ void DatasetLoadWidget::loadSettings() {
 
     datasetPath = settings.value(DATASET_LAST_USED).toString();
 
+    //add datasets from file
     for(const auto & mru : settings.value(DATASET_MRU).toStringList()) {
-        datasetlistwidget->addItem(mru);
+        tableWidget->insertRow(tableWidget->rowCount());
+
+        QPushButton *addDs = new QPushButton("…");
+        addDs->setMaximumWidth(20);
+        QPushButton *delDs = new QPushButton("Del");
+        delDs->setMaximumWidth(40);
+        QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
+        QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
+
+        QTableWidgetItem * t = new QTableWidgetItem(mru);
+        tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
+        tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
+        tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
     }
 
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
-        if (datasetlistwidget->findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
-            datasetlistwidget->addItem(dataset.absoluteFilePath());
+        if (tableWidget->findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
+            tableWidget->insertRow(tableWidget->rowCount());
+
+            QPushButton *addDs = new QPushButton("…");
+            addDs->setMaximumWidth(20);
+            QPushButton *delDs = new QPushButton("Del");
+            delDs->setMaximumWidth(40);
+            QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
+            QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
+
+            QTableWidgetItem *t = new QTableWidgetItem(dataset.absoluteFilePath());
+            tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
+            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
+            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
         }
     }
+
+    //add Empty row at the end
+    tableWidget->insertRow(tableWidget->rowCount());
+    QPushButton *addDs = new QPushButton("…");
+    addDs->setMaximumWidth(20);
+    QPushButton *delDs = new QPushButton("Del");
+    delDs->setMaximumWidth(40);
+    QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
+    delDs->setEnabled(false);
+    QTableWidgetItem *t = new QTableWidgetItem("");
+    tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
+    tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
+    tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
@@ -512,4 +555,8 @@ void DatasetLoadWidget::loadSettings() {
     settings.endGroup();
 
     applyGeometrySettings();
+
+    QObject::connect(tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::addRow);
+    tableWidget->resizeColumnsToContents();
+    tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 }

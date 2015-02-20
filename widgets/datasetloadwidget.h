@@ -8,6 +8,7 @@
 #include <QDialog>
 #include <QTextDocument>
 #include <QListWidget>
+#include <QTableWidget>
 
 class QComboBox;
 class QGroupBox;
@@ -18,6 +19,7 @@ class QSpinBox;
 class QTextDocument;
 class QRadioBox;
 class QListWidget;
+class QTableWidget;
 class QScrollArea;
 
 class DatasetLoadWidget : public QDialog {
@@ -31,7 +33,10 @@ public:
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
-    void processListWidgetClicked();
+    void processTableWidgetClicked();
+    void addRow(int row, int col);
+    void addClicked();
+    void delClicked();
     struct Datasetinfo{
         Coordinate boundary;
         floatCoordinate scale{0,0,0};
@@ -42,20 +47,17 @@ public:
     Datasetinfo datasetinfo;
     Datasetinfo getConfigFileInfo(const char *path);
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
-    QLineEdit *pathLineEdit;
-    QPushButton *datasetfileDialog;
-    QPushButton *fileDialogButton;
-    QPushButton *deleteButton;
     QStringList getRecentPathItems();
     QSpinBox *supercubeEdgeSpin;
     QLabel *infolabel;
-    QListWidget *datasetlistwidget;
     QScrollArea *scrollarea;
     QString datasetPath;
+    QTableWidget *tableWidget;
 protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
+    void MessageBoxInformation(QString message);
 
 signals:
     void clearSkeletonSignalGUI();
@@ -68,12 +70,9 @@ signals:
     void startLoaderSignal();
     void breakLoaderSignal();
 public slots:
-    void datasetfileDialogClicked();
     void adaptMemoryConsumption();
     void cancelButtonClicked();
     void processButtonClicked();
-    void addDatasetClicked();
-    void deleteDataset();
 };
 
 #endif // DATASETLOADWIDGET_H

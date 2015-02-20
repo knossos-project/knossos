@@ -1665,19 +1665,19 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     auto drawCursor = [&]() {
         if(seg.brush.getShape() == brush_t::shape_t::square) {
             glBegin(GL_LINE_LOOP);
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+            if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
                 glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z-1);
                 glVertex3i(coord.x + bsize+1, coord.y - bsize,   coord.z-1);
                 glVertex3i(coord.x + bsize+1, coord.y + bsize+1, coord.z-1);
                 glVertex3i(coord.x - bsize,   coord.y + bsize+1, coord.z-1);
             }
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+            if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
                 glVertex3i(coord.x - bsize  , coord.y+1, coord.z - bsize  );
                 glVertex3i(coord.x + bsize+1, coord.y+1, coord.z - bsize  );
                 glVertex3i(coord.x + bsize+1, coord.y+1, coord.z + bsize+1);
                 glVertex3i(coord.x - bsize  , coord.y+1, coord.z + bsize+1);
             }
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+            if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
                 glVertex3i(coord.x-1, coord.y - bsize,   coord.z - bsize  );
                 glVertex3i(coord.x-1, coord.y + bsize+1, coord.z - bsize  );
                 glVertex3i(coord.x-1, coord.y + bsize+1, coord.z + bsize+1);
@@ -1687,15 +1687,15 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
         } else if(seg.brush.getShape() == brush_t::shape_t::circle){
             float bradius = bsize + 0.5f;
             glBegin(GL_LINE_LOOP);
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
+            if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
                 for(int i = 0; i <= circleLines;i++)
                     glVertex3f(coord.x+0.5f + (bradius * std::cos(i *  twicePi / circleLines)), coord.y+0.5f + (bradius* std::sin(i * twicePi / circleLines)), coord.z-1);
             }
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+            if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
                 for(int i = 0; i <= circleLines;i++)
                     glVertex3f(coord.x+0.5f + (bradius * std::cos(i *  twicePi / circleLines)), coord.y+1, coord.z+0.5f + (bradius* std::sin(i * twicePi / circleLines)));
             }
-            if(bdim == brush_t::mode_t::two_dim && viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+            if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
                 for(int i = 0; i <= circleLines;i++)
                     glVertex3f(coord.x-1, coord.y+0.5f + (bradius* std::cos(i * twicePi / circleLines)), coord.z+0.5f + (bradius * std::sin(i *  twicePi / circleLines)));
             }
@@ -1761,7 +1761,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     }
 }
 
-std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height) {
+std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1789,17 +1789,21 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     GLdouble vp_height = refVPSkel->height();
 
     if(currentVP == VIEWPORT_XY) {
-        vp_height = refVPXY->height();
+        vp_height = refVPXY->height() * refVPXY->devicePixelRatio();
     } else if(currentVP == VIEWPORT_XZ) {
-        vp_height = refVPXZ->height();
+        vp_height = refVPXZ->height() * refVPXZ->devicePixelRatio();
     } else if(currentVP == VIEWPORT_YZ) {
-        vp_height = refVPYZ->height();
+        vp_height = refVPYZ->height() * refVPYZ->devicePixelRatio();
     }
+    centerX *= refVPXY->devicePixelRatio();
+    centerY *= refVPXY->devicePixelRatio();
+    selectionWidth *= refVPXY->devicePixelRatio();
+    selectionHeight *= refVPXY->devicePixelRatio();
 
     GLint openGLviewport[4];
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
-    gluPickMatrix(centerX, vp_height - centerY, width, height, openGLviewport);
+    gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
