@@ -52,7 +52,13 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     tableWidget->verticalHeader()->setVisible(false);
     tableWidget->horizontalHeader()->setVisible(false);
-    hLayoutDatasetInfo->addWidget(tableWidget,0,0);
+
+    tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableWidget->resizeColumnsToContents();
+    tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+    hLayoutDatasetInfo->addWidget(tableWidget, 0, 0);
 
     infolabel = new QLabel();
     auto str = QString("");
@@ -97,40 +103,44 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     mainLayout->addLayout(localLayout);
     setLayout(mainLayout);
 
+    QObject::connect(tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
+    QObject::connect(tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::updateDatasetInfo);
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
     QObject::connect(processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
-    QObject::connect(tableWidget, &QTableWidget::clicked, this, &DatasetLoadWidget::processTableWidgetClicked);
-    QObject::connect(tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::processTableWidgetClicked);
+    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void DatasetLoadWidget::addRow(int row, int col) {
-    if(col == 0 && row == tableWidget->rowCount() - 1) {
-        if(tableWidget->item(row, 0)->text() != "") {
-            QPushButton *delDs = new QPushButton("Del");
-            delDs->setMaximumWidth(40);
-            delDs->setEnabled(true);
-            tableWidget->setCellWidget(tableWidget->rowCount()-1, 2, delDs);
-            QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
+void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row) {
+    tableWidget->insertRow(row);
 
-            tableWidget->insertRow(tableWidget->rowCount());
+    QPushButton *addDs = new QPushButton("…");
+    addDs->setMaximumWidth(20);
+    QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
 
-            QPushButton *addDs = new QPushButton("…");
-            addDs->setMaximumWidth(20);
-            QPushButton *fdelDs = new QPushButton("Del");
-            delDs->setMaximumWidth(40);
-            fdelDs->setEnabled(false);
-            QTableWidgetItem *t = new QTableWidgetItem("");
-            tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
-            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
-            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, fdelDs);
+    QPushButton *delDs = new QPushButton("Del");
+    delDs->setMaximumWidth(40);
+    QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
 
-            QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
-        }
+    QTableWidgetItem *t = new QTableWidgetItem(dataset);
+    tableWidget->setItem(row, 0, t);
+    tableWidget->setCellWidget(row, 1, addDs);
+    tableWidget->setCellWidget(row, 2, delDs);
+}
+
+void DatasetLoadWidget::datasetCellChanged(int row, int col) {
+    if (col == 0 && row == tableWidget->rowCount() - 1 && tableWidget->item(row, 0)->text() != "") {
+        const auto dataset = tableWidget->item(row, 0)->text();
+        tableWidget->blockSignals(true);
+
+        tableWidget->item(row, 0)->setText("");//clear edit row
+        insertDatasetRow(dataset, tableWidget->rowCount() - 1);//insert before edit row
+        tableWidget->selectRow(row);//select new item
+
+        tableWidget->blockSignals(false);
     }
 }
 
@@ -166,36 +176,35 @@ void DatasetLoadWidget::delClicked(){
     }
 }
 
-void DatasetLoadWidget::processTableWidgetClicked() {
-    if(tableWidget->selectedItems().count() == 0) return;
-
-    QTableWidgetItem * itemClicked = tableWidget->selectedItems().front();
-    if(itemClicked->text() == "") return;
-
-    datasetinfo = getConfigFileInfo(itemClicked->text().toStdString().c_str());
+void DatasetLoadWidget::updateDatasetInfo() {
+    if (tableWidget->selectedItems().empty()) return;
 
     QString infotext;
+    const auto dataset = tableWidget->item(tableWidget->selectedItems().front()->row(), 0)->text();
+    if (dataset != "") {
+        datasetinfo = getConfigFileInfo(dataset.toUtf8());
 
-    if(datasetinfo.remote) {
-        infotext = QString("<b>Remote Dataset</b><br>URL: %0%1<br>Boundary (x y z): %2 %3 %4<br>Compression: %5<br>cubeEdgeLength: %6<br>Magnification: %7<br>Scale (x y z): %8 %9 %10")
-                .arg(datasetinfo.ftphostname.c_str())
-                .arg(datasetinfo.ftpbasepath.c_str())
-                .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                .arg(datasetinfo.compressionRatio)
-                .arg(datasetinfo.cubeEdgeLength)
-                .arg(datasetinfo.magnification)
-                .arg(datasetinfo.scale.x)
-                .arg(datasetinfo.scale.y)
-                .arg(datasetinfo.scale.z);
-    } else {
-        infotext = QString("<b>Local Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
-                .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                .arg(datasetinfo.compressionRatio)
-                .arg(datasetinfo.cubeEdgeLength)
-                .arg(datasetinfo.magnification)
-                .arg(datasetinfo.scale.x)
-                .arg(datasetinfo.scale.y)
-                .arg(datasetinfo.scale.z);
+        if (datasetinfo.remote) {
+            infotext = QString("<b>Remote Dataset</b><br>URL: %0%1<br>Boundary (x y z): %2 %3 %4<br>Compression: %5<br>cubeEdgeLength: %6<br>Magnification: %7<br>Scale (x y z): %8 %9 %10")
+                    .arg(datasetinfo.ftphostname.c_str())
+                    .arg(datasetinfo.ftpbasepath.c_str())
+                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+                    .arg(datasetinfo.compressionRatio)
+                    .arg(datasetinfo.cubeEdgeLength)
+                    .arg(datasetinfo.magnification)
+                    .arg(datasetinfo.scale.x)
+                    .arg(datasetinfo.scale.y)
+                    .arg(datasetinfo.scale.z);
+        } else {
+            infotext = QString("<b>Local Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
+                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+                    .arg(datasetinfo.compressionRatio)
+                    .arg(datasetinfo.cubeEdgeLength)
+                    .arg(datasetinfo.magnification)
+                    .arg(datasetinfo.scale.x)
+                    .arg(datasetinfo.scale.y)
+                    .arg(datasetinfo.scale.z);
+        }
     }
 
     infolabel->setText(infotext);
@@ -235,7 +244,7 @@ void DatasetLoadWidget::processButtonClicked() {
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
     } else if (loadDataset(dataset)) {
-        this->hide(); //hide datasetloadwidget only if we could successfully load a widget
+        hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
 
@@ -476,55 +485,33 @@ void DatasetLoadWidget::loadSettings() {
 
     datasetPath = settings.value(DATASET_LAST_USED, "").toString();
 
+    auto appendRowSelectIfLU = [this](const QString & dataset){
+        insertDatasetRow(dataset, tableWidget->rowCount());
+        if (dataset == datasetPath) {
+            tableWidget->selectRow(tableWidget->rowCount() - 1);
+        }
+    };
+
+    tableWidget->blockSignals(true);
+
     //add datasets from file
-    for(const auto & mru : settings.value(DATASET_MRU).toStringList()) {
-        tableWidget->insertRow(tableWidget->rowCount());
-
-        QPushButton *addDs = new QPushButton("…");
-        addDs->setMaximumWidth(20);
-        QPushButton *delDs = new QPushButton("Del");
-        delDs->setMaximumWidth(40);
-        QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
-        QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
-
-        QTableWidgetItem * t = new QTableWidgetItem(mru);
-        tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
-        tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
-        tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
+    for(const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
+        appendRowSelectIfLU(dataset);
     }
-
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
         if (tableWidget->findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
-            tableWidget->insertRow(tableWidget->rowCount());
-
-            QPushButton *addDs = new QPushButton("…");
-            addDs->setMaximumWidth(20);
-            QPushButton *delDs = new QPushButton("Del");
-            delDs->setMaximumWidth(40);
-            QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
-            QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
-
-            QTableWidgetItem *t = new QTableWidgetItem(dataset.absoluteFilePath());
-            tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
-            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
-            tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
+            appendRowSelectIfLU(dataset.absoluteFilePath());
         }
     }
-
     //add Empty row at the end
-    tableWidget->insertRow(tableWidget->rowCount());
-    QPushButton *addDs = new QPushButton("…");
-    addDs->setMaximumWidth(20);
-    QPushButton *delDs = new QPushButton("Del");
-    delDs->setMaximumWidth(40);
-    QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
-    delDs->setEnabled(false);
-    QTableWidgetItem *t = new QTableWidgetItem("");
-    tableWidget->setItem(tableWidget->rowCount() - 1, 0, t);
-    tableWidget->setCellWidget(tableWidget->rowCount() - 1, 1, addDs);
-    tableWidget->setCellWidget(tableWidget->rowCount() - 1, 2, delDs);
+    appendRowSelectIfLU("");
+    tableWidget->cellWidget(tableWidget->rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
+
+    tableWidget->blockSignals(false);
+    updateDatasetInfo();
+
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
@@ -541,8 +528,4 @@ void DatasetLoadWidget::loadSettings() {
     settings.endGroup();
 
     applyGeometrySettings();
-
-    QObject::connect(tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::addRow);
-    tableWidget->resizeColumnsToContents();
-    tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 }

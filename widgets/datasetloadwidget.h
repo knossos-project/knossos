@@ -33,8 +33,9 @@ public:
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
-    void processTableWidgetClicked();
-    void addRow(int row, int col);
+    void updateDatasetInfo();
+    void insertDatasetRow(const QString & dataset, const int pos);
+    void datasetCellChanged(int row, int col);
     void addClicked();
     void delClicked();
     struct Datasetinfo{
