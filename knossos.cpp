@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    viewer.window->widgetContainer->datasetLoadWidget->loadDataset(false);
+    viewer.window->widgetContainer->datasetLoadWidget->loadDataset();
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();

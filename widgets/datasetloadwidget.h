@@ -29,7 +29,7 @@ class DatasetLoadWidget : public QDialog {
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    bool loadDataset(bool isGUI, QString path = "");
+    bool loadDataset(QString path = "");
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
@@ -57,7 +57,6 @@ protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
-    void MessageBoxInformation(QString message);
 
 signals:
     void clearSkeletonSignalGUI();

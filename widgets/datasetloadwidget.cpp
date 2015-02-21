@@ -21,17 +21,9 @@
 #include "network.h"
 #include "viewer.h"
 
-void DatasetLoadWidget::MessageBoxInformation(QString message) {
-    QMessageBox info;
-    info.setWindowFlags(Qt::WindowStaysOnTopHint);
-    info.setIcon(QMessageBox::Information);
-    info.setWindowTitle("Information");
-    info.setText(message);
-    info.addButton(QMessageBox::Ok);
-    info.exec();
-}
-
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
+    setModal(true);
+    setWindowTitle("Load Dataset");
 
     cubeEdgeSpin.setRange(1, 256);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -196,7 +188,7 @@ void DatasetLoadWidget::processTableWidgetClicked() {
                 .arg(datasetinfo.scale.y)
                 .arg(datasetinfo.scale.z);
     } else {
-        infotext = QString("<b>Locale Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
+        infotext = QString("<b>Local Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
                 .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
                 .arg(datasetinfo.compressionRatio)
                 .arg(datasetinfo.cubeEdgeLength)
@@ -239,13 +231,10 @@ void DatasetLoadWidget::cancelButtonClicked() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    if(tableWidget->currentItem()->text().isEmpty()) {
-        MessageBoxInformation("No path selected");
-
-        return;
-    }
-
-    if(loadDataset(true, tableWidget->currentItem()->text())) {
+    const auto dataset = tableWidget->item(tableWidget->currentRow(), 0)->text();
+    if (dataset.isEmpty()) {
+        QMessageBox::information(this, "Unable to load", "No path selected");
+    } else if (loadDataset(dataset)) {
         this->hide(); //hide datasetloadwidget only if we could successfully load a widget
     }
 }
@@ -255,15 +244,12 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
-    QFile confFile;
-    QString filePath; // for holding the whole path to a .conf file
-    QFileInfo pathInfo;
-
-    if(path.isEmpty()) {
+bool DatasetLoadWidget::loadDataset(QString path) {
+    if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
+        show();
+        return false;
+    } else if (path.isEmpty()) {
         path = datasetPath;
-    } else {
-        datasetPath = path;
     }
 
     //check if we have a remote conf
@@ -273,8 +259,11 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
         if(path.isEmpty()) return false;
     }
 
+    QFileInfo pathInfo;
     pathInfo.setFile(path);
 
+    QString filePath; // for holding the whole path to a .conf file
+    QFile confFile;
     if(pathInfo.isFile()) { // .conf file selected (case 3)
         filePath = path;
         confFile.setFileName(filePath);
@@ -302,9 +291,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
                 }
             }
             if(foundConf == false) {
-                if (isGUI) {
-                    MessageBoxInformation("Could not find a dataset file (*.conf)");
-                }
+                QMessageBox::information(this, "Unable to load", "Could not find a dataset file (*.conf)");
                 return false;
             }
         }
@@ -318,19 +305,18 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
         }
     }
 
-    // Note:
-    // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
-    // This is a gamble we take, in order to not have possible bugs where the skeleton depends on old configuration values.
-    if (isGUI) {
-        emit clearSkeletonSignalGUI();
-    } else {
-        emit clearSkeletonSignalNoGUI();
+    state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
+    if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
+        return false;
     }
+
+    // actually load the dataset
+    datasetPath = path;
 
     emit breakLoaderSignal();
 
-    if(false == Knossos::readConfigFile(filePath.toStdString().c_str())) {
-        MessageBoxInformation(QString("Failed to read config from %1").arg(filePath));
+    if (!Knossos::readConfigFile(filePath.toStdString().c_str())) {
+        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(filePath));
         return false;
     }
 
@@ -488,7 +474,7 @@ void DatasetLoadWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
-    datasetPath = settings.value(DATASET_LAST_USED).toString();
+    datasetPath = settings.value(DATASET_LAST_USED, "").toString();
 
     //add datasets from file
     for(const auto & mru : settings.value(DATASET_MRU).toStringList()) {
