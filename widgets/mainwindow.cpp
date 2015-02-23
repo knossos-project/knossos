@@ -767,7 +767,7 @@ void MainWindow::newAnnotationSlot() {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
+    QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
     QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
@@ -816,7 +816,12 @@ void MainWindow::saveAsSlot() {
         return;
     }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
+
+#ifdef Q_OS_MAC
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
+#else
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
+#endif
     if (!fileName.isEmpty()) {
         if (!fileName.contains(".k.zip")) {
             fileName += ".k.zip";
