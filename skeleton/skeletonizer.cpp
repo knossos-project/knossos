@@ -25,9 +25,9 @@
 
 #include "file_io.h"
 #include "functions.h"
-#include "knossos-global.h"
 #include "knossos.h"
 #include "session.h"
+#include "skeleton/tree.h"
 #include "version.h"
 #include "viewer.h"
 
@@ -35,6 +35,18 @@
 #include <vector>
 #include <queue>
 #include <set>
+
+#define SEGMENT_FORWARD true
+#define SEGMENT_BACKWARD false
+
+#define CATCH_RADIUS 10
+
+struct stack {
+    uint elementsOnStack;
+    void **elements;
+    int stackpointer;
+    int size;
+};
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(true) {
     state->skeletonState->branchStack = newStack(1048576);
@@ -187,7 +199,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return NULL;
 }
 
-bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
+bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
     color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
@@ -223,7 +235,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
     return true;
 }
 
-uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive) {
+uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
     if(!state->skeletonState->activeNode) {
         qDebug() << "Please create a node before trying to link nodes.";
         return false;
@@ -439,7 +451,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement(); // end comments
 
     xml.writeStartElement("branchpoints");
-    while (const auto currentBranchPointID = (PTRSIZEUINT)popStack(reverseBranchStack)) {
+    while (const auto currentBranchPointID = reinterpret_cast<std::size_t>(popStack(reverseBranchStack))) {
         xml.writeStartElement("branchpoint");
         xml.writeAttribute("id", QString::number(currentBranchPointID));
         xml.writeEndElement();
@@ -812,10 +824,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                 currentCoordinate.z = 0;
                             }
 
-                            Byte VPtype;
+                            ViewportType VPtype;
                             attribute = attributes.value("inVp");
                             if(attribute.isNull() == false) {
-                                VPtype = attribute.toLocal8Bit().toInt();
+                                VPtype = static_cast<ViewportType>(attribute.toLocal8Bit().toInt());
                             } else {
                                 VPtype = VIEWPORT_UNDEFINED;
                             }
@@ -1291,7 +1303,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 }
 
 uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *position,
-                           Byte VPtype, int inMag, int time, int respectLocks) {
+                           ViewportType VPtype, int inMag, int time, int respectLocks) {
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
@@ -1308,7 +1320,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
 
     if(respectLocks) {
         if(state->skeletonState->positionLocked) {
-            if(state->viewerState->gui->lockComment == QString(state->skeletonState->onCommentLock)) {
+            if (state->viewerState->lockComment == QString(state->skeletonState->onCommentLock)) {
                 unlockPosition();
                 return false;
             }
@@ -1867,52 +1879,6 @@ segmentListElement* Skeletonizer::findSegmentByNodeIDs(uint sourceNodeID, uint t
     return NULL;
 }
 
-bool Skeletonizer::genTestNodes(uint number) {
-    uint i;
-    uint nodeID;
-    struct nodeListElement *node;
-    Coordinate pos;
-    color4F treeCol;
-    //add new tree for test nodes
-    treeCol.r = -1.;
-    addTreeListElement(0, treeCol);
-
-    srand(time(NULL));
-    pos.x = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
-    pos.y = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
-    pos.z = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-
-    nodeID = UI_addSkeletonNode(&pos, rand()%4);
-
-    for(i = 1; i < number; i++) {
-        pos.x = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
-        pos.y = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
-        pos.z = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        nodeID = UI_addSkeletonNode(&pos, rand()%4);
-        node = findNodeByNodeID(nodeID);
-        node->comment = (commentListElement*)calloc(1, sizeof(struct commentListElement)); // @tocheck
-        node->comment->content = (char*)calloc(1, 512); // @tocheck
-        strcpy(node->comment->content, "test");
-        node->comment->node = node;
-
-        if(!state->skeletonState->currentComment) {
-            state->skeletonState->currentComment = node->comment;
-            //We build a circular linked list
-            node->comment->next = node->comment;
-            node->comment->previous = node->comment;
-        } else {
-            //We insert into a circular linked list
-            state->skeletonState->currentComment->previous->next = node->comment;
-            node->comment->next = state->skeletonState->currentComment;
-            node->comment->previous = state->skeletonState->currentComment->previous;
-            state->skeletonState->currentComment->previous = node->comment;
-
-            state->skeletonState->currentComment = node->comment;
-        }
-    }
-    return true;
-}
-
 bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
                             float newRadius, int newXPos, int newYPos, int newZPos, int inMag) {
 
@@ -2279,6 +2245,7 @@ bool Skeletonizer::editComment(commentListElement *currentComment, uint nodeID, 
 
     return true;
 }
+
 commentListElement* Skeletonizer::nextComment(QString searchString) {
    commentListElement *firstComment, *currentComment;
 
@@ -2410,7 +2377,7 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
 /* @todo loader gets out of sync (endless loop) */
 bool Skeletonizer::popBranchNode() {
     nodeListElement *branchNode = NULL;
-    PTRSIZEUINT branchNodeID = 0;
+    std::size_t branchNodeID = 0;
 
     // Nodes on the branch stack may not actually exist anymore
     while(true){
@@ -2418,7 +2385,7 @@ bool Skeletonizer::popBranchNode() {
             if (branchNode->isBranchNode == true) {
                 break;
             }
-        branchNodeID =(PTRSIZEUINT)popStack(state->skeletonState->branchStack);
+        branchNodeID = reinterpret_cast<std::size_t>(popStack(state->skeletonState->branchStack));
         if(branchNodeID == 0) {
             QMessageBox box;
             box.setWindowTitle("Knossos Information");
@@ -2462,7 +2429,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
     }
     if(branchNode) {
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
-            pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEUINT)branchNode->nodeID);
+            pushStack(state->skeletonState->branchStack, reinterpret_cast<void *>(static_cast<std::size_t>(branchNode->nodeID)));
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
 
@@ -2572,13 +2539,13 @@ bool Skeletonizer::updateCircRadius(nodeListElement *node) {
 
 void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
     if(node->isBranchNode) { //branch nodes are always blue
-        SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
+        *color = {0.f, 0.f, 1.f, 1.f};
         return;
     }
 
     if(node->comment != NULL && strlen(node->comment->content) != 0) {
         // default color for comment nodes
-        SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
+        *color = {1.f, 1.f, 0.f, 1.f};
 
         if(CommentSetting::useCommentColors) {
             auto newColor = CommentSetting::getColor(QString(node->comment->content));

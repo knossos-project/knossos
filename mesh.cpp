@@ -1,5 +1,4 @@
-#include "knossos-global.h"
-#include "renderer.h"
+#include "mesh.h"
 
 mesh::mesh() {
     //Renderer::initmesh(this, 1024);

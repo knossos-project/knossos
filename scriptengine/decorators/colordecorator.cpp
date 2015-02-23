@@ -1,5 +1,6 @@
 #include "colordecorator.h"
-#include "knossos-global.h"
+
+#include "color4F.h"
 
 Q_DECLARE_METATYPE(color4F)
 

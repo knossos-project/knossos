@@ -21,6 +21,12 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "navigationwidget.h"
+
+#include "GuiConstants.h"
+#include "session.h"
+#include "stateInfo.h"
+#include "viewer.h"
 
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -33,11 +39,6 @@
 #include <QGroupBox>
 #include <QApplication>
 #include <QDesktopWidget>
-
-#include "GuiConstants.h"
-#include "knossos-global.h"
-#include "navigationwidget.h"
-#include "session.h"
 
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)

@@ -1,8 +1,9 @@
 #include "pythonpropertywidget.h"
 
 #include "GuiConstants.h"
-#include "knossos-global.h"
 #include "scriptengine/scripting.h"
+#include "viewer.h"
+
 #include <Python.h>
 #include <QApplication>
 #include <QCheckBox>

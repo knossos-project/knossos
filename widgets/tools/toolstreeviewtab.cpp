@@ -1,5 +1,9 @@
 #include "toolstreeviewtab.h"
 
+#include "skeleton/node.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
+
 #include <QColorDialog>
 #include <QInputDialog>
 #include <QTreeWidgetItem>
@@ -22,8 +26,6 @@
 #include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QDropEvent>
-
-#include "skeletonizer.h"
 
 template <typename Table, typename Func>
 void applySelection(Table table, Func func) {
@@ -542,9 +544,12 @@ void ToolsTreeviewTab::treeSearchChanged() {
             QToolTip::showText(treeSearchField->mapToGlobal(treeSearchField->pos()), "Invalid regular expression.");
             return;
         }
+    } else {
+        state->skeletonState->treeCommentFilter = nodeSearchField->text();
     }
     recreateTreesTable();
 }
+
 void ToolsTreeviewTab::nodeSearchChanged() {
     if(nodeRegExCheck->isChecked() and nodeSearchField->text().length() > 0) {
         QRegularExpression regex(nodeSearchField->text());
@@ -552,6 +557,8 @@ void ToolsTreeviewTab::nodeSearchChanged() {
             QToolTip::showText(nodeSearchField->mapToGlobal(nodeSearchField->pos()), "Invalid regular expression.");
             return;
         }
+    } else {
+        state->skeletonState->nodeCommentFilter = nodeSearchField->text();
     }
     recreateNodesTable();
 }

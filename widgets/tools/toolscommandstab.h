@@ -3,8 +3,6 @@
 
 #include <QWidget>
 
-#include "knossos-global.h"
-
 class QLabel;
 class QPushButton;
 class QCheckBox;

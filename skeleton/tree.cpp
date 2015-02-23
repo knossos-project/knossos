@@ -1,10 +1,10 @@
-#include "knossos-global.h"
-#include "skeletonizer.h"
-#include "functions.h"
+#include "tree.h"
 
-treeListElement::treeListElement() {
+#include "node.h"
 
-}
+#include <QString>
+
+treeListElement::treeListElement() {}
 
 treeListElement::treeListElement(int treeID, QString comment, color4F color) {
     this->treeID = treeID;
@@ -27,7 +27,6 @@ QList<nodeListElement *> *treeListElement::getNodes() {
         currentNode = currentNode->next;
     }
 
-
     return nodes;
 }
 
@@ -44,7 +43,6 @@ QList<segmentListElement *> treeListElement::getSegments() {
             }
         }
     }
-
 
     return complete_segments->toList();
 }

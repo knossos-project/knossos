@@ -1,8 +1,8 @@
 #ifndef DATASETLOADWIDGET_H
 #define DATASETLOADWIDGET_H
 
-#include "knossos-global.h"
 #include "coordinate.h"
+#include "widgets/viewport.h"
 
 #include <QCheckBox>
 #include <QDialog>

@@ -1,11 +1,10 @@
 #include "treetable.h"
 
+#include "skeleton/skeletonizer.h"
+
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QPushButton>
-
-#include "knossos-global.h"
-#include "skeletonizer.h"
 
 TreeTable::TreeTable(QWidget *parent) : QTableWidget(parent), droppedOnTreeID(0), selectionProtection(true) {}
 
@@ -28,7 +27,7 @@ void TreeTable::setRow(const int row, const QString & treeId, const QColor & tre
 
 void TreeTable::dropEvent(QDropEvent * event) {
     QTableWidgetItem *droppedOnItem = itemAt(event->pos());
-    if(droppedOnItem == NULL or ::state->skeletonState->selectedNodes.size() == 0) {
+    if (droppedOnItem == nullptr || ::state->skeletonState->selectedNodes.size() == 0) {
         return;
     }
     droppedOnTreeID = item(droppedOnItem->row(), 0)->text().toInt();

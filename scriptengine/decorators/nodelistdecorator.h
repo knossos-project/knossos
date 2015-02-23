@@ -3,7 +3,8 @@
 
 #include "coordinate.h"
 #include "nodecommentdecorator.h"
-#include "knossos-global.h"
+#include "skeleton/node.h"
+#include "skeleton/tree.h"
 
 #include <QObject>
 

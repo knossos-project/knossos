@@ -1,12 +1,10 @@
-#include "knossos-global.h"
-#include "functions.h"
-#include "skeletonizer.h"
+#include "node.h"
 
+#include <coordinate.h>
 
-nodeListElement::nodeListElement() {
-}
+nodeListElement::nodeListElement() {}
 
-nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int, float radius, int inVp, int inMag, int time) {
+nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int, float radius, ViewportType inVp, int inMag, int time) {
     this->nodeID = nodeID;
     this->radius = radius;
 

@@ -1,7 +1,7 @@
 #include <curl/curl.h>
 
-#include "knossos-global.h"
-#include "skeletonizer.h"
+#include "skeleton/skeletonizer.h"
+#include "task.h"
 #include "taskmanagementwidget.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"

@@ -1,9 +1,12 @@
 #ifndef MeshDECORATOR_H
 #define MeshDECORATOR_H
 
-#include <QObject>
 #include <QList>
-#include "knossos-global.h"
+#include <QObject>
+
+class color4F;
+class floatCoordinate;
+class mesh;
 
 class MeshDecorator : public QObject
 {

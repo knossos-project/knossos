@@ -27,14 +27,15 @@
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "knossos.h"
-#include "knossos-global.h"
 #include "mainwindow.h"
 #include "network.h"
-#include "skeletonizer.h"
+#include "skeleton/node.h"
 #include "version.h"
 #include "viewer.h"
 #include "viewport.h"
 #include "scriptengine/scripting.h"
+#include "skeleton/skeletonizer.h"
+#include "task.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
@@ -60,19 +61,16 @@
 #include <QToolButton>
 #include <QQueue>
 
+// default position of xy viewport and default viewport size
+#define DEFAULT_VP_MARGIN 5
+#define DEFAULT_VP_SIZE 350
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
-
-    state->viewerState->gui->oneShiftedCurrPos.x =
-        state->viewerState->currentPosition.x + 1;
-    state->viewerState->gui->oneShiftedCurrPos.y =
-        state->viewerState->currentPosition.y + 1;
-    state->viewerState->gui->oneShiftedCurrPos.z =
-        state->viewerState->currentPosition.z + 1;
 
     // for task management
     QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
@@ -81,15 +79,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     state->taskState->taskFile = "";
     state->taskState->taskName = "";
     state->taskState->host = "heidelbrain.org";
-
-    state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
-    memset(state->viewerState->gui->commentSearchBuffer, '\0', 2048 * sizeof(char));
-
-    state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
-    memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
 
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
@@ -1310,11 +1299,11 @@ void MainWindow::newTreeSlot() {
 }
 
 void MainWindow::nextCommentNodeSlot() {
-    Skeletonizer::singleton().nextComment(state->viewerState->gui->commentSearchBuffer);
+    Skeletonizer::singleton().nextComment(state->skeletonState->nodeCommentFilter);
 }
 
 void MainWindow::previousCommentNodeSlot() {
-    Skeletonizer::singleton().previousComment(state->viewerState->gui->commentSearchBuffer);
+    Skeletonizer::singleton().previousComment(state->skeletonState->nodeCommentFilter);
 }
 
 void MainWindow::pushBranchNodeSlot() {

@@ -1,3 +1,9 @@
+#include "taskloginwidget.h"
+
+#include "stateInfo.h"
+#include "task.h"
+#include "taskmanagementwidget.h"
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QVBoxLayout>
@@ -8,10 +14,6 @@
 #include <QString>
 
 #include <curl/curl.h>
-
-#include "taskloginwidget.h"
-#include "taskmanagementwidget.h"
-#include "knossos-global.h"
 
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) : QDialog(parent), taskManagementWidget(NULL) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);

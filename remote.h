@@ -25,9 +25,11 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <stateInfo.h>
+#include <widgets/viewport.h>
+
 #include <QObject>
 #include <QThread>
-#include <knossos-global.h>
 
 class Remote : public QThread {
     Q_OBJECT

@@ -21,9 +21,9 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
 #include "vpskeletonviewportwidget.h"
-#include "knossos-global.h"
+
+#include <skeleton/skeletonizer.h>
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
     line.setFrameShape(QFrame::HLine);

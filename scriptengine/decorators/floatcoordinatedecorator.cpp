@@ -1,13 +1,8 @@
 #include "floatcoordinatedecorator.h"
-#include "knossos-global.h"
+
 #include <QDebug>
 
-
-
-
-FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) :
-    QObject(parent)
-{
+FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) : QObject(parent) {
     qRegisterMetaType<floatCoordinate>();
 }
 

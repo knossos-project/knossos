@@ -1,6 +1,6 @@
 #include "segmentationtab.h"
 
-#include "knossos-global.h"
+#include "viewer.h"
 
 #include <QApplication>
 #include <QHeaderView>

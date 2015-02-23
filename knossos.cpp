@@ -23,14 +23,15 @@
  */
 #include "knossos.h"
 
+#include "eventmodel.h"
 #include "file_io.h"
-#include "knossos-global.h"
 #include "loader.h"
 #include "network.h"
 #include "remote.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "scriptengine/scripting.h"
-#include "skeletonizer.h"
+#include "skeleton/skeletonizer.h"
+#include "task.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"
@@ -462,11 +463,9 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 stateInfo *Knossos::emptyState() {
-
     stateInfo *state = new stateInfo();
 
     state->viewerState = new viewerState();
-    state->viewerState->gui = new guiConfig();
 
     state->skeletonState = new skeletonState();
     state->taskState = new taskState();

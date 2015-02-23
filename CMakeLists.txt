@@ -19,9 +19,11 @@ file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
 
 file(GLOB root *.cpp *.h *.qrc *.h.in)
 file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
+file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
+file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
-set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${widgets})
+set(SRC_LIST ${openjpeg} ${root} ${segmentation} ${scriptengine} ${skeleton} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc

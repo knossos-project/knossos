@@ -1,7 +1,7 @@
 ﻿#include "network.h"
 
-#include "knossos-global.h"
 #include "loader.h"
+#include "stateInfo.h"
 
 #include <QDir>
 #include <QHttpMultiPart>
@@ -315,7 +315,7 @@ int downloadFiles(CURL **data_eh_array, CURL **overlay_eh_array, int /*totalCube
                     // Since most datasets are still not massively overlaid, no point in flooding the screen
                     // with errors of 404 failures for them
                     if ((!isOverlay) || (404 != httpCode)) {
-                        qDebug() << QString().sprintf("cube coordinate = %d,%d,%d\t%s\tresult = %d\thttpCode = %d",
+                        qDebug() << QString().sprintf("cube coordinate = %d,%d,%d\t%s\tresult = %d\thttpCode = %ld",
                                                        currentCube->coordinate.x, currentCube->coordinate.y,
                                                        currentCube->coordinate.z, isOverlay ? "overlay" : "data",
                                                       result, httpCode);
@@ -412,7 +412,7 @@ int downloadFiles(CURL **data_eh_array, CURL **overlay_eh_array, int /*totalCube
 
 int downloadFile(const char *remote_path, char *local_filename) {
     int retVal;
-    int hadErrors, retriesPend;
+    int hadErrors;
     C_Element elem;
     CURL *eh = NULL;
 
@@ -447,16 +447,14 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
     C_Element **multiCubes;
     CURL **data_eh_array = NULL, **overlay_eh_array = NULL;
     int eh_array_size = sizeof(CURL *) * fts->cubeCount;
-    FILE *fh = NULL;
     int i;
     // Retries are disabled until supported for data/overlay download
     //extern int RETRIES_NUM;
-    int curRetry;
     int retVal = true;
     int downloadRetVal;
     int MAX_DOWNLOADS;
     int max_connections, pipelines_per_connection;
-    int hadErrors, retriesPend;
+    int hadErrors;
     int totalDownloads = 0;
 
     data_eh_array = (CURL**)malloc(eh_array_size);

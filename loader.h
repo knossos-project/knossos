@@ -24,9 +24,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "knossos-global.h"
-
-#include "segmentation.h"
+#include "hashtable.h"
+#include "segmentation/segmentation.h"
 
 #include <QObject>
 #include <QSemaphore>
@@ -54,6 +53,8 @@
 #define LM_FTP      1
 
 #define FTP_RETRY_NUM 3
+
+using CURL = void;
 
 struct C_Element {
     Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
@@ -138,14 +139,14 @@ class Loader : public QThread {
     friend void annotationFileSave(const QString &, bool *);
     friend void Segmentation::clear();
 private:
-    std::list<std::vector<Byte>> DcSetChunk;
-    std::list<std::vector<Byte>> OcSetChunk;
-    std::list<Byte*> freeDcSlots;
-    std::list<Byte*> freeOcSlots;
+    std::list<std::vector<char>> DcSetChunk;
+    std::list<std::vector<char>> OcSetChunk;
+    std::list<char*> freeDcSlots;
+    std::list<char*> freeOcSlots;
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
-    Byte *bogusDc;
-    Byte *bogusOc;
+    char *bogusDc;
+    char *bogusOc;
     bool magChange;
     int currentMaxMetric;
     coord2bytep_map_t mergeCube2Pointer;
@@ -160,7 +161,7 @@ private:
     void loadCube(loadcube_thread_struct *lts);
     uint removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
-    void snappyCacheAdd(const CoordOfCube &, const Byte *cube);
+    void snappyCacheAdd(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
     void snappyCacheFlush();
 public:

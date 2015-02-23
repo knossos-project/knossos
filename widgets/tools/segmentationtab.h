@@ -1,7 +1,7 @@
 #ifndef SEGMENTATIONTAB_H
 #define SEGMENTATIONTAB_H
 
-#include "segmentation.h"
+#include "segmentation/segmentation.h"
 
 #include <QAbstractListModel>
 #include <QButtonGroup>

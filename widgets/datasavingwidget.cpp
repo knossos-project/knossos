@@ -21,9 +21,11 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
 #include "datasavingwidget.h"
+
 #include "GuiConstants.h"
+#include "skeleton/skeletonizer.h"
+
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -34,8 +36,6 @@
 #include <QSpacerItem>
 #include <QApplication>
 #include <QDesktopWidget>
-
-#include "knossos-global.h"
 
 DataSavingWidget::DataSavingWidget(QWidget *parent) :
     QDialog(parent)

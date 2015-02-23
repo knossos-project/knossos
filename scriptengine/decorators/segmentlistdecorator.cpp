@@ -1,10 +1,8 @@
 #include "segmentlistdecorator.h"
-#include "knossos-global.h"
 
-SegmentListDecorator::SegmentListDecorator(QObject *parent) :
-    QObject(parent)
-{
-}
+#include "skeleton/node.h"
+
+SegmentListDecorator::SegmentListDecorator(QObject *parent) : QObject(parent) {}
 
 nodeListElement *SegmentListDecorator::source(segmentListElement *self) {
     return self->source;

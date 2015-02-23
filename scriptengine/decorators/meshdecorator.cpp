@@ -1,7 +1,9 @@
 #include "meshdecorator.h"
-#include "knossos-global.h"
-#include "viewer.h"
+
+#include "mesh.h"
 #include "renderer.h"
+#include "viewer.h"
+
 #include <QDebug>
 
 Q_DECLARE_METATYPE(color4F)

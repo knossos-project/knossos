@@ -1,16 +1,11 @@
 #include "pythonproxy.h"
-#include "functions.h"
-#include "skeletonizer.h"
+
+#include "skeleton/skeletonizer.h"
+
 #include <QApplication>
 #include <QFile>
 
-#include "knossos-global.h"
-
-PythonProxy::PythonProxy(QObject *parent) :
-    QObject(parent)
-{
-
-}
+PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
 
 QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
     char *cube = (char*)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], Coordinate(Dc[0], Dc[1], Dc[2]));

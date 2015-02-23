@@ -23,8 +23,9 @@
  */
 #include "remote.h"
 
-#include "functions.h"
-#include "knossos-global.h"
+#include "skeleton/node.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 

@@ -21,25 +21,24 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include <cmath>
-#include <fstream>
+#include "viewer.h"
 
-#include <QDebug>
-#include <qopengl.h>
-#include <QtConcurrent/QtConcurrentRun>
-
+#include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
 #include "renderer.h"
-#include "segmentation.h"
+#include "segmentation/segmentation.h"
 #include "session.h"
-#include "skeletonizer.h"
-#include "viewer.h"
+#include "skeleton/skeletonizer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgets/widgetcontainer.h"
+
+#include <QDebug>
+#include <qopengl.h>
+#include <QtConcurrent/QtConcurrentRun>
 
 #if defined(Q_OS_WIN)
 #include <GL/wglext.h>
@@ -51,9 +50,16 @@
 #define WINAPI
 #endif
 
+#include <fstream>
+
+#include <cmath>
+
 static WINAPI int dummy(int) {
     return 0;
 }
+
+//  For the Lookup tables
+#define RGBA_LUTSIZE 1024
 
 Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewer = this;
@@ -140,12 +146,12 @@ bool Viewer::resetViewPortData(vpConfig *viewport) {
     // for arbitrary vp orientation
     memset(viewport->viewPortData,
            state->viewerState->defaultTexData[0],
-           TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
+           TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
     viewport->s_max = viewport->t_max  = -1;
     return true;
 }
 
-bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
+bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
     datacube += dcOffset;
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
@@ -170,7 +176,7 @@ bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
     int pixelsPerLine = state->cubeEdgeLength*state->magnification;
     for(std::size_t y = 0; y < outerLoopBoundary; y++) {
         for(std::size_t x = 0; x < innerLoopBoundary; x++) {
-            Byte r, g, b;
+            char r, g, b;
             if(useCustomLUT) {
                 r = state->viewerState->datasetAdjustmentTable[0][*datacube];
                 g = state->viewerState->datasetAdjustmentTable[1][*datacube];
@@ -204,8 +210,8 @@ bool Viewer::dcSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *sli
     return true;
 }
 
-bool Viewer::dcSliceExtract_arb(Byte *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
-    Byte *slice = viewPort->viewPortData;
+bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
+    char *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(viewPort->v2);
@@ -278,7 +284,7 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, struct vpConfig *viewPort, float
  * each pixel is tested for its position and is omitted if outside of the area.
  *
  */
-void Viewer::ocSliceExtract(Byte *datacube, Coordinate cubePosInAbsPx, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
 
     const auto & session = Session::singleton();
@@ -404,7 +410,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
 
-    Byte *datacube = NULL, *overlayCube = NULL;
+    char *datacube = NULL, *overlayCube = NULL;
     int dcOffset = 0, index = 0;
 
     CPY_COORDINATE(currPosTrans, state->viewerState->currentPosition);
@@ -508,7 +514,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                          currentDc.y * state->magnification * state->cubeEdgeLength,
                                          currentDc.z * state->magnification * state->cubeEdgeLength};
 
-            if(datacube == HT_FAILURE) {
+            if(datacube == nullptr) {
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -542,7 +548,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
 
-                if(overlayCube == HT_FAILURE) {
+                if(overlayCube == nullptr) {
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
@@ -583,7 +589,7 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     Coordinate currentDc, currentPx;
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    Byte *datacube = NULL;
+    char *datacube = NULL;
 
     floatCoordinate *v1 = &currentVp.v1;
     floatCoordinate *v2 = &currentVp.v2;
@@ -794,9 +800,9 @@ bool Viewer::initViewer() {
     // This is the buffer that holds the actual texture data (for _all_ textures)
 
     state->viewerState->texData =
-            (Byte *) malloc(TEXTURE_EDGE_LEN
+            (char *) malloc(TEXTURE_EDGE_LEN
                * TEXTURE_EDGE_LEN
-               * sizeof(Byte)
+               * sizeof(char)
                * 3);
     if(state->viewerState->texData == NULL) {
         qDebug() << "Out of memory.";
@@ -805,16 +811,16 @@ bool Viewer::initViewer() {
     memset(state->viewerState->texData, '\0',
            TEXTURE_EDGE_LEN
            * TEXTURE_EDGE_LEN
-           * sizeof(Byte)
+           * sizeof(char)
            * 3);
 
     // This is the buffer that holds the actual overlay texture data (for _all_ textures)
 
     if(state->overlay) {
         state->viewerState->overlayData =
-                (Byte *) malloc(TEXTURE_EDGE_LEN *
+                (char *) malloc(TEXTURE_EDGE_LEN *
                    TEXTURE_EDGE_LEN *
-                   sizeof(Byte) *
+                   sizeof(char) *
                    4);
         if(state->viewerState->overlayData == NULL) {
             qDebug() << "Out of memory.";
@@ -823,46 +829,46 @@ bool Viewer::initViewer() {
         memset(state->viewerState->overlayData, '\0',
                TEXTURE_EDGE_LEN
                * TEXTURE_EDGE_LEN
-               * sizeof(Byte)
+               * sizeof(char)
                * 4);
     }
 
     // This is the data we use when the data for the
     //   slices is not yet available (hasn't yet been loaded).
 
-    state->viewerState->defaultTexData = (Byte *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                         * sizeof(Byte)
+    state->viewerState->defaultTexData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
+                                                         * sizeof(char)
                                                          * 3);
     if(state->viewerState->defaultTexData == NULL) {
         qDebug() << "Out of memory.";
         _Exit(false);
     }
     memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                     * sizeof(Byte)
+                                                     * sizeof(char)
                                                      * 3);
 
     /* @arb */
     for (std::size_t i = 0; i < Viewport::numberViewports; ++i){
-        state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
+        state->viewerState->vpConfigs[i].viewPortData = (char *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             qDebug() << "Out of memory.";
             exit(0);
         }
-        memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
+        memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
     }
 
 
     // Default data for the overlays
     if(state->overlay) {
-        state->viewerState->defaultOverlayData = (Byte *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                                 * sizeof(Byte)
+        state->viewerState->defaultOverlayData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
+                                                                 * sizeof(char)
                                                                  * 4);
         if(state->viewerState->defaultOverlayData == NULL) {
             qDebug() << "Out of memory.";
             _Exit(false);
         }
         memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                             * sizeof(Byte)
+                                                             * sizeof(char)
                                                              * 4);
     }
 
@@ -1228,11 +1234,10 @@ bool Viewer::updateViewerState() {
 
 bool Viewer::updateZoomCube() {
     uint i;
-    int residue, max, currentZoomCube, oldZoomCube;
+    int residue, max, currentZoomCube;
 
     /* Notice int division! */
     max = ((state->M/2)*2-1);
-    oldZoomCube = state->viewerState->zoomCube;
     state->viewerState->zoomCube = 0;
 
     for(i = 0; i < Viewport::numberViewports; i++) {
@@ -1783,7 +1788,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
     QObject::connect(eventModel, &EventModel::updateSlicePlaneWidgetSignal, window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateIntersection);

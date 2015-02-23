@@ -1,12 +1,8 @@
 #include "nodecommentdecorator.h"
-#include "knossos-global.h"
 
+#include "skeleton/node.h"
 
-NodeCommentDecorator::NodeCommentDecorator(QObject *parent) :
-    QObject(parent)
-{
-
-}
+NodeCommentDecorator::NodeCommentDecorator(QObject *parent) : QObject(parent) {}
 
 char *NodeCommentDecorator::content(commentListElement *self) {
     return self->content;

@@ -24,9 +24,8 @@
 #include "loader.h"
 
 #include "knossos.h"
-#include "knossos-global.h"
 #include "network.h"
-#include "segmentation.h"
+#include "segmentation/segmentation.h"
 #include "session.h"
 #include "viewer.h"
 
@@ -57,7 +56,7 @@ C_Element *lll_new()
     if (NULL == lll)
     {
         printf("Out of memory\n");
-        return HT_FAILURE;
+        return nullptr;
     }
 
     lll->previous = lll;
@@ -332,7 +331,7 @@ uint lll_put(C_Element *destElement, coord2bytep_map_t *currentLoadedHash, Coord
     */
     if (NULL != currentLoadedHash) {
         if (Coordinate2BytePtr_hash_get_has_key(*currentLoadedHash, key)) {
-            (*currentLoadedHash)[key] = (Byte*)(!NULL);
+            (*currentLoadedHash)[key] = (char*)(!NULL);
             return LLL_SUCCESS;
         }
     }
@@ -396,6 +395,22 @@ int calc_nonzero_sign(float x) {
     }
     return -1;
 }
+
+#define ABS(x) (((x) >= 0) ? (x) : -(x))
+#define SQR(x) ((x)*(x))
+#define INNER_MULT_VECTOR(v) ((v).x * (v).y * (v).z)
+#define CALC_VECTOR_NORM(v) \
+    ( \
+        sqrt(SQR((v).x) + SQR((v).y) + SQR((v).z)) \
+    )
+#define CALC_DOT_PRODUCT(a, b) \
+    ( \
+        ((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z) \
+    )
+#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) \
+    ( \
+        ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
+    )
 
 void Loader::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
     float distance_from_plane, distance_from_origin, dot_product;
@@ -568,10 +583,10 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     char *filename;
     FILE *cubeFile = NULL;
     size_t readBytes = 0;
-    Byte *currentDcSlot = NULL;
+    char *currentDcSlot = NULL;
 #ifdef KNOSSOS_USE_TURBOJPEG
     tjhandle _jpegDecompressor = NULL;
-    Byte *localCompressedBuf = NULL;
+    char *localCompressedBuf = NULL;
     size_t localCompressedBufSize = 0;
     int jpegSubsamp, width, height;
 #endif
@@ -756,7 +771,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             qDebug("fseek SET failed for %s!\n", filename);
             goto loadcube_fail;
         }
-        localCompressedBuf = (Byte*)malloc(localCompressedBufSize);
+        localCompressedBuf = (char*)malloc(localCompressedBufSize);
         if (NULL == localCompressedBuf) {
             qDebug() << "malloc failed!\n";
             goto loadcube_fail;
@@ -775,11 +790,11 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             qDebug() << "tjInitDecompress() failed!";
             goto loadcube_fail;
         }
-        if (0 != tjDecompressHeader2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, &width, &height, &jpegSubsamp)) {
+        if (0 != tjDecompressHeader2(_jpegDecompressor, reinterpret_cast<unsigned char*>(localCompressedBuf), localCompressedBufSize, &width, &height, &jpegSubsamp)) {
             qDebug() << "tjDecompressHeader2() failed!";
             goto loadcube_fail;
         }
-        if (0 != tjDecompress2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, currentDcSlot, width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT)) {
+        if (0 != tjDecompress2(_jpegDecompressor, reinterpret_cast<unsigned char*>(localCompressedBuf), localCompressedBufSize, reinterpret_cast<unsigned char*>(currentDcSlot), width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT)) {
             qDebug() << "tjDecompress2() failed!";
             goto loadcube_fail;
         }
@@ -894,7 +909,7 @@ bool Loader::initLoader() {
     // load given our current position.
     // See the comment about the ht_new() call in knossos.c
     this->Dcoi = lll_new();
-    if(this->Dcoi == HT_FAILURE) {
+    if(this->Dcoi == nullptr) {
         qDebug() << "Unable to create Dcoi.";
         return false;
     }
@@ -920,7 +935,7 @@ bool Loader::initLoader() {
     }
 
     // Load the bogus dc (a placeholder when data is unavailable).
-    this->bogusDc = (Byte*)malloc(state->cubeBytes);
+    this->bogusDc = (char*)malloc(state->cubeBytes);
     if(this->bogusDc == NULL) {
         qDebug() << "Out of memory.";
         return false;
@@ -938,7 +953,7 @@ bool Loader::initLoader() {
     }
     if(state->overlay) {
         // bogus oc is white
-        this->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
+        this->bogusOc = (char*)malloc(state->cubeBytes * OBJID_BYTES);
         if(this->bogusOc == NULL) {
             qDebug() << "Out of memory.";
                     return false;
@@ -960,7 +975,7 @@ bool Loader::initLoader() {
     return true;
 }
 
-void Loader::snappyCacheAdd(const CoordOfCube & cubeCoord, const Byte * cube) {
+void Loader::snappyCacheAdd(const CoordOfCube & cubeCoord, const char *cube) {
     //insert empty string into snappy cache
     auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
@@ -976,7 +991,7 @@ void Loader::snappyCacheFlush() {
     state->protectCube2Pointer->lock();
     for (const auto & cubeCoord : OcModifiedCacheQueue) {
         auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
-        if (cube != HT_FAILURE) {
+        if (cube != nullptr) {
             snappyCacheAdd(cubeCoord, cube);
         }
     }
@@ -1003,13 +1018,13 @@ uint Loader::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint 
          */
 
         state->protectCube2Pointer->lock();
-        Byte *delCubePtr = NULL;
+        char *delCubePtr = NULL;
 
         /*
          * Process Dc2Pointer if the current cube is in Dc2Pointer.
          *
          */
-        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[prevLoaderMagnification], coord)) != HT_FAILURE) {
+        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[prevLoaderMagnification], coord)) != nullptr) {
             state->Dc2Pointer[prevLoaderMagnification].erase(coord);
             freeDcSlots.emplace_back(delCubePtr);
             /*
@@ -1025,7 +1040,7 @@ uint Loader::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint 
          *
          */
 
-        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[prevLoaderMagnification], coord)) != HT_FAILURE) {
+        if((delCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[prevLoaderMagnification], coord)) != nullptr) {
             if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
                 snappyCacheAdd(cubeCoord, delCubePtr);
                 //remove from work queue

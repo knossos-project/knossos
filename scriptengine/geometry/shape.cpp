@@ -1,9 +1,7 @@
 #include "shape.h"
 #include "transform.h"
-#include "knossos-global.h"
 
-Shape::Shape(uint id, Transform *transform, Coordinate *origin)
-{
+Shape::Shape(uint id, Transform *transform, Coordinate *origin) {
     if(id)
         this->id = id;
     else {

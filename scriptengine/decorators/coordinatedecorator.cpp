@@ -1,13 +1,8 @@
 #include "coordinatedecorator.h"
-#include "knossos-global.h"
 
-
-CoordinateDecorator::CoordinateDecorator(QObject *parent) :
-    QObject(parent)
-{
+CoordinateDecorator::CoordinateDecorator(QObject *parent) : QObject(parent) {
     qRegisterMetaType<Coordinate>();
 }
-
 
 int CoordinateDecorator::x(Coordinate *self) {
     return self->x;

@@ -24,7 +24,6 @@
 #include "geometry/shape.h"
 
 #include "highlighter.h"
-#include "knossos-global.h"
 #include "widgets/mainwindow.h"
 
 void PythonQtInit() {

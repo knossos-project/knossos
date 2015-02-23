@@ -1,3 +1,3 @@
-#include "knossos-global.h"
+#include "stateInfo.h"
 
 stateInfo * state = nullptr;//state lives here

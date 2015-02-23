@@ -25,7 +25,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "eventmodel.h"
+#include "coordinate.h"
+#include "stateInfo.h"
 
 #include <QDebug>
 #include <QFont>
@@ -35,10 +36,113 @@
 #include <QtOpenGL>
 #include <QWidget>
 
-class Viewport;
+class EventModel;
 
 enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
 
+enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED, VIEWPORT_ARBITRARY};
+Q_DECLARE_METATYPE(ViewportType)
+/* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
+This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
+values. The XY vp always used. */
+const auto VIEWPORT_ORTHO = VIEWPORT_XY;
+
+// vp zoom max < vp zoom min, because vp zoom level translates to displayed edgeLength.
+// close zoom -> smaller displayed edge length
+constexpr const double VPZOOMMAX = 0.02000;
+constexpr const double VPZOOMMIN = 1.0;
+constexpr const double SKELZOOMMAX = 0.4999;
+constexpr const double SKELZOOMMIN = 0.0;
+
+struct viewportTexture {
+    //Handles for OpenGl
+    uint texHandle;
+    uint overlayHandle;
+
+    //The absPx coordinate of the upper left corner of the texture actually stored in *texture
+    Coordinate leftUpperPxInAbsPx;
+    uint edgeLengthDc;
+    uint edgeLengthPx;
+
+    //These variables specifiy the area inside the textures which are used
+    //for data storage. Storage always starts at texture pixels (0,0).
+    uint usedTexLengthDc;
+    uint usedTexLengthPx;
+
+    //These variables specifiy the lengths inside the texture that are currently displayed.
+    //Their values depend on the zoom level and the data voxel dimensions (because of aspect
+    //ratio correction). Units are texture coordinates.
+    float displayedEdgeLengthX;
+    float displayedEdgeLengthY;
+
+    float texUnitsPerDataPx;
+
+    //Texture coordinates
+    float texLUx, texLUy, texLLx, texLLy, texRUx, texRUy, texRLx, texRLy;
+    //Coordinates of crosshair inside VP
+    float xOffset, yOffset;
+
+    // Current zoom level. 1: no zoom; near 0: maximum zoom.
+    float zoomLevel;
+};
+
+/**
+  * @struct vpConfig
+  * @brief Contains attributes for widget size, screen pixels per data pixels,
+  *        as well as flags about user interaction with the widget
+  */
+struct vpConfig {
+    // s*v1 + t*v2 = px
+    floatCoordinate n;
+    floatCoordinate v1; // vector in x direction
+    floatCoordinate v2; // vector in y direction
+    floatCoordinate leftUpperPxInAbsPx_float;
+    floatCoordinate leftUpperDataPxOnScreen_float;
+    int s_max;
+    int t_max;
+
+    char * viewPortData;
+
+    viewportTexture texture;
+
+    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
+    Coordinate leftUpperDataPxOnScreen;
+
+    //This is a bit confusing..the screen coordinate system has always
+    //x on the horizontal and y on the verical axis, but the displayed
+    //data pixels can have a different axis. Keep this in mind.
+    //These values depend on texUnitsPerDataPx (in struct viewportTexture),
+    //the current zoom value and the data pixel voxel dimensions.
+    float screenPxXPerDataPx;
+    float screenPxYPerDataPx;
+
+    float displayedlengthInNmX;
+    float displayedlengthInNmY;
+
+    ViewportType type; // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_ARBITRARY}
+    uint id; // id e {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT}
+    // CORRECT THIS COMMENT TODO BUG
+    //lower left corner of viewport in screen pixel coords (max: window borders)
+    //we use here the lower left corner, because the openGL intrinsic coordinate system
+    //is defined over the lower left window corner. All operations inside the viewports
+    //use a coordinate system with lowest coordinates in the upper left corner.
+    Coordinate upperLeftCorner;
+    //edge length in screen pixel coordinates; only squarish VPs are allowed
+
+    uint edgeLength;
+
+    struct nodeListElement *draggedNode;
+
+    /* Stores the current view frustum planes */
+    float frustum[6][4];
+
+    //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
+    //would result in a data pixel movement
+    float userMouseSlideX;
+    float userMouseSlideY;
+};
+
+class Viewport;
 class ResizeButton : public QPushButton {
     Q_OBJECT
     void mouseMoveEvent(QMouseEvent * event) override;

@@ -1,6 +1,13 @@
 #include "datasetloadwidget.h"
 
-#include <stdexcept>
+#include "GuiConstants.h"
+#include "knossos.h"
+#include "loader.h"
+#include "mainwindow.h"
+#include "network.h"
+#include "renderer.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -13,13 +20,7 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
-#include "GuiConstants.h"
-#include "knossos.h"
-#include "knossos-global.h"
-#include "loader.h"
-#include "mainwindow.h"
-#include "network.h"
-#include "viewer.h"
+#include <stdexcept>
 
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     setModal(true);

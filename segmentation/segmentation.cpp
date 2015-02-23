@@ -2,6 +2,7 @@
 
 #include "knossos.h"
 #include "loader.h"
+#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QTextStream>

@@ -23,7 +23,9 @@
  */
 #include "vpsliceplaneviewportwidget.h"
 
-#include "segmentation.h"
+#include "segmentation/segmentation.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <QLabel>
