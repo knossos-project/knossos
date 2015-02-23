@@ -767,7 +767,11 @@ void MainWindow::newAnnotationSlot() {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
+#ifdef Q_OS_MAC
     QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
+#else
+    QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
+#endif
     QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
