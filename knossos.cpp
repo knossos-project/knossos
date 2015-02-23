@@ -243,6 +243,17 @@ bool Knossos::commonInitStates() {
     state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
 
+    //reset viewerState texture properties
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+    }
+
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
     if(state->path[0] == '\0') {
