@@ -56,7 +56,8 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    tableWidget->resizeColumnsToContents();
+    tableWidget->horizontalHeader()->resizeSection(1, 20);
+    tableWidget->horizontalHeader()->resizeSection(2, 40);
     tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     hLayoutDatasetInfo->addWidget(tableWidget, 0, 0);
@@ -119,11 +120,9 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     tableWidget->insertRow(row);
 
     QPushButton *addDs = new QPushButton("…");
-    addDs->setMaximumWidth(20);
     QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
 
     QPushButton *delDs = new QPushButton("Del");
-    delDs->setMaximumWidth(40);
     QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
 
     QTableWidgetItem *t = new QTableWidgetItem(dataset);
