@@ -72,7 +72,10 @@ add_custom_command(OUTPUT versioncreator ${CMAKE_CURRENT_BINARY_DIR}/version.h
 )
 
 
-add_executable(${PROJECT_NAME} WIN32 ${SRC_LIST} version.h)
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+    ${SRC_LIST} version.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} version)#main target needs version
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
 #custom adjustments
