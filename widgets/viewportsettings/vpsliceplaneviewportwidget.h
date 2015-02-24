@@ -25,7 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <QGL>
+#include <qgl.h>
 #include <QLabel>
 #include <QSpinBox>
 #include <QHBoxLayout>
