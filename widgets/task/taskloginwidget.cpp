@@ -4,14 +4,16 @@
 #include "task.h"
 #include "taskmanagementwidget.h"
 
+#include <QDir>
+#include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QVBoxLayout>
 #include <QPushButton>
-#include <QFormLayout>
+#include <QStandardPaths>
+#include <QString>
+#include <QVBoxLayout>
 #include <QXmlStreamReader>
 #include <QXmlStreamAttributes>
-#include <QString>
 
 #include <curl/curl.h>
 
@@ -19,6 +21,13 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) : QDialog(parent), taskManagem
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Login");
+
+    QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
+    taskDir.mkpath(".");
+    state->taskState->cookieFile = taskDir.absolutePath() + "/cookie";
+    state->taskState->taskFile = "";
+    state->taskState->taskName = "";
+    state->taskState->host = "heidelbrain.org";
 
     urlField = new QLineEdit();
     urlField->setText(state->taskState->host);

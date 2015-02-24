@@ -72,14 +72,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    // for task management
-    QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
-    taskDir.mkpath(".");
-    state->taskState->cookieFile = taskDir.absolutePath() + "/cookie";
-    state->taskState->taskFile = "";
-    state->taskState->taskName = "";
-    state->taskState->host = "heidelbrain.org";
-
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged,
