@@ -302,14 +302,14 @@ bool Knossos::initStates() {
    SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
    curl_global_init(CURL_GLOBAL_DEFAULT);
-   state->loadFtpCachePath = (char*)malloc(MAX_PATH);
+   state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
 
 #ifdef Q_OS_UNIX
    const char *tmp = "/tmp/";
    strcpy(state->loadFtpCachePath, tmp);
 #endif
 #ifdef Q_OS_WIN32
-    GetTempPathA(MAX_PATH, state->loadFtpCachePath);
+    GetTempPathA(CSTRING_SIZE, state->loadFtpCachePath);
 #endif
 
    return commonInitStates();
@@ -415,7 +415,7 @@ bool Knossos::readConfigFile(const char *path) {
             for (ti = 0; ti < FTP_PARAMS_NUM; ti++) {
                 token = tokenList.at(ti + 1);
                 stdString = token.toStdString();
-                strncpy(ftp_conf_strings[ti], stdString.c_str(), MAX_PATH);
+                strncpy(ftp_conf_strings[ti], stdString.c_str(), CSTRING_SIZE);
             }
             state->ftpFileTimeout = tokenList.at(ti + 1).toInt();
 

@@ -84,16 +84,16 @@ std::string downloadRemoteConfFile(QString url) {
     elem->cube = new C_Element;
     elem->isOverlay = false;
 
-    char remoteURL[MAX_PATH];
-    snprintf(remoteURL, MAX_PATH, url.toStdString().c_str());
+    char remoteURL[CSTRING_SIZE];
+    snprintf(remoteURL, CSTRING_SIZE, url.toStdString().c_str());
 
     url.remove("http://");
     url.remove("https://");
     elem->cube->fullpath_data_filename = new char[url.length() + 1];
     strcpy(elem->cube->fullpath_data_filename, url.toStdString().c_str());
 
-    char *lpath = (char*)malloc(MAX_PATH);
-    snprintf(lpath, MAX_PATH, "%s/knossos.conf", state->loadFtpCachePath);
+    char *lpath = (char*)malloc(CSTRING_SIZE);
+    snprintf(lpath, CSTRING_SIZE, "%s/knossos.conf", state->loadFtpCachePath);
 
     //libcurl can't create the folder if it does not exist
     QString qpath(state->loadFtpCachePath);
@@ -149,13 +149,13 @@ std::string downloadRemoteConfFile(QString url) {
 CURLM *curlm = NULL;
 
 void fill_curl_eh(CURL *eh, C_Element *cube, bool isOverlay, FtpElement *elem) {
-    char remoteURL[MAX_PATH];
+    char remoteURL[CSTRING_SIZE];
 
     elem->isOverlay = isOverlay;
     elem->cube = cube;
     CURL **eh_ptr = isOverlay ? &cube->curlOverlayHandle : &cube->curlDataHandle;
     *eh_ptr = eh;
-    snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName,
+    snprintf(remoteURL, CSTRING_SIZE, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName,
              isOverlay ? cube->fullpath_overlay_filename : cube->fullpath_data_filename);
 
     curl_easy_setopt(eh, CURLOPT_URL, remoteURL);

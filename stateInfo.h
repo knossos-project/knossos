@@ -11,9 +11,8 @@
 class stateInfo;
 extern stateInfo * state;
 
-#ifndef MAX_PATH
-#define MAX_PATH 256
-#endif
+//used to be MAX_PATH but conflicted with the official one
+#define CSTRING_SIZE 250
 
 #define NUM_MAG_DATASETS 65536
 
@@ -199,10 +198,10 @@ public:
     // Cube loader affairs
     int    loadMode;
     char       *loadFtpCachePath;
-    char       ftpBasePath[MAX_PATH];
-    char       ftpHostName[MAX_PATH];
-    char       ftpUsername[MAX_PATH];
-    char       ftpPassword[MAX_PATH];
+    char       ftpBasePath[CSTRING_SIZE];
+    char       ftpHostName[CSTRING_SIZE];
+    char       ftpUsername[CSTRING_SIZE];
+    char       ftpPassword[CSTRING_SIZE];
     int    ftpFileTimeout;
 
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
