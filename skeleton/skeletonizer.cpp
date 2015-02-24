@@ -519,7 +519,14 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             while(xml.readNextStartElement()) {
                 QXmlStreamAttributes attributes = xml.attributes();
 
-                if(xml.name() == "createdin") {
+                if (xml.name() == "experiment") {
+                    QStringRef attribute = attributes.value("name");
+                    QString experimentName = attribute.isNull() ? "" : attribute.toString();
+                    if (experimentName != state->name) {
+                        const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
+                        QMessageBox::information(state->viewer->window, tr("Wrong dataset"), text);
+                    }
+                } else if (xml.name() == "createdin") {
                     QStringRef attribute = attributes.value("version");
                     if(attribute.isNull() == false) {
                         strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toLocal8Bit().data());
