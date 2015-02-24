@@ -21,6 +21,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "task.h"//because curl wants to be first on win
+
 #include "knossos.h"
 
 #include "eventmodel.h"
@@ -31,7 +33,6 @@
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "scriptengine/scripting.h"
 #include "skeleton/skeletonizer.h"
-#include "task.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"

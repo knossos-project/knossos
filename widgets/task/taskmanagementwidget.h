@@ -7,8 +7,6 @@
 #include <QLabel>
 #include <QWidget>
 
-#include <curl/curl.h>
-
 class QPushButton;
 class QCheckBox;
 class QLineEdit;
@@ -17,13 +15,13 @@ class TaskManagementWidget : public QDialog
 {
     Q_OBJECT
     friend class TaskLoginWidget;
-    void handleError(bool, CURLcode, long, const char * const response);
     void saveAndLoadFile(httpResponse &, httpResponse &);
 public:
     explicit TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent = 0);
     void setResponse(QString message);
     void setActiveUser(QString username);
     void setTask(QString task);
+    void resetSession(QString message);
 
 protected:
     QLabel *statusLabel;
@@ -43,8 +41,6 @@ protected:
 
     QLabel categoryDescriptionLabel;
     QLabel taskCommentLabel;
-
-    void resetSession(QString message);
 
 signals:
     void autosaveSignal();
