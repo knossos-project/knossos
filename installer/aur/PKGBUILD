@@ -4,7 +4,7 @@
 
 pkgname=knossos
 pkgver=4.1.1
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 pkgdesc="A software tool for the visualization and annotation of 3D image data. It was developed for the rapid reconstruction of neural morphology and connectivity."
 url="http://www.knossostool.org/"
@@ -26,8 +26,7 @@ makedepends=("cmake"
 source=("https://github.com/knossos-project/knossos/archive/v${pkgver}.tar.gz"
     "knossos.desktop"
 )
-sha256sums=('007555d603a6775b102cf2798580026029bece642b856f4d4e98236d99f3d154'
-            '462aa5f01abf5f330eeca964789513de7061c6c801ee779245f864b14b583012')
+sha256sums=()
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
