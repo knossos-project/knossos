@@ -44,12 +44,9 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     auto hLayoutLine0 = new QHBoxLayout;
     hLayoutLine0->addWidget(line0);
 
-    auto hLayoutDatasetInfo = new QGridLayout;
+    auto hDatasetInfoSplitter = new QSplitter();
     tableWidget = new QTableWidget();
     tableWidget->setColumnCount(3);
-
-    tableWidget->resizeRowsToContents();
-    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
 
     tableWidget->verticalHeader()->setVisible(false);
     tableWidget->horizontalHeader()->setVisible(false);
@@ -60,17 +57,17 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     tableWidget->horizontalHeader()->resizeSection(2, 40);
     tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-    hLayoutDatasetInfo->addWidget(tableWidget, 0, 0);
 
     infolabel = new QLabel();
-    auto str = QString("");
-    infolabel->setText(str);
 
     scrollarea = new QScrollArea();
     scrollarea->setWidgetResizable(true);
     scrollarea->setWidget(infolabel);
 
-    hLayoutDatasetInfo->addWidget(scrollarea, 0, 1);
+    hDatasetInfoSplitter->addWidget(tableWidget);
+    hDatasetInfoSplitter->addWidget(scrollarea);
+    const auto splitterWidth = hDatasetInfoSplitter->size().width();
+    hDatasetInfoSplitter->setSizes({splitterWidth/2, splitterWidth/2});
 
     QFrame* line1 = new QFrame();
     line1->setFrameShape(QFrame::HLine);
@@ -95,7 +92,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     auto localLayout = new QVBoxLayout();
 
     localLayout->addLayout(hLayoutLine0);
-    localLayout->addLayout(hLayoutDatasetInfo);
+    localLayout->addWidget(hDatasetInfoSplitter);
     localLayout->addLayout(hLayoutLine1);
     localLayout->addLayout(hLayout2);
     localLayout->addWidget(&segmentationOverlayCheckbox);
