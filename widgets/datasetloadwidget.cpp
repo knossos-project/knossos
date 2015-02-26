@@ -245,7 +245,7 @@ void DatasetLoadWidget::processButtonClicked() {
         return;
     }
 
-    if(loadDataset(true, tableWidget->currentItem()->text())) {
+    if(loadDataset(true, segmentationOverlayCheckbox.isChecked(), tableWidget->currentItem()->text())) {
         this->hide(); //hide datasetloadwidget only if we could successfully load a widget
     }
 }
@@ -255,7 +255,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
+bool DatasetLoadWidget::loadDataset(bool isGUI, bool loadOverlay, QString path) {
     QFile confFile;
     QString filePath; // for holding the whole path to a .conf file
     QFileInfo pathInfo;
@@ -347,7 +347,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = supercubeEdgeSpin->value();
-    state->overlay = segmentationOverlayCheckbox.isChecked();
+    state->overlay = loadOverlay;
 
     if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
         qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
@@ -371,7 +371,7 @@ bool DatasetLoadWidget::loadDataset(bool isGUI, QString path) {
     Coordinate range(state->boundary.x/2, state->boundary.y/2, state->boundary.z/2);
     state->viewerState->currentPosition = range;
 
-    emit datasetChanged(Coordinate(0, 0, 0), state->boundary, segmentationOverlayCheckbox.isChecked());
+    emit datasetChanged(Coordinate(0, 0, 0), state->boundary, loadOverlay);
 
     emit userMoveSignal(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 

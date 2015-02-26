@@ -29,7 +29,7 @@ class DatasetLoadWidget : public QDialog {
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    bool loadDataset(bool isGUI, QString path = "");
+    bool loadDataset(bool isGUI, bool loadOverlay = false, QString path = "");
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();

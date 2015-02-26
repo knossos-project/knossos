@@ -315,6 +315,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetPath);
+    xml.writeAttribute("overlay", QString::number(state->overlay? 1 : 0));
     xml.writeEndElement();
 
     xml.writeStartElement("MovementArea");
@@ -522,7 +523,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "dataset") {
                     QStringRef attribute = attributes.value("path");
                     QString path = attribute.isNull() ? "" : attribute.toString();
-                    state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(true, path);
+                    attribute = attributes.value("overlay");
+                    bool overlay = attribute.isNull() ? state->overlay : attribute.toInt() == 1;
+                    state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(true, overlay, path);
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.
