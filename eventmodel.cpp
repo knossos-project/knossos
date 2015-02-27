@@ -1143,6 +1143,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->overlay = true;
+        state->viewer->reslice_notify();
     }
     if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;
