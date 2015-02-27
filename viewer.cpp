@@ -178,9 +178,11 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
         for(std::size_t x = 0; x < innerLoopBoundary; x++) {
             char r, g, b;
             if(useCustomLUT) {
-                r = state->viewerState->datasetAdjustmentTable[0][*datacube];
-                g = state->viewerState->datasetAdjustmentTable[1][*datacube];
-                b = state->viewerState->datasetAdjustmentTable[2][*datacube];
+                //extract data as unsigned number from the datacube
+                const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[0];
+                r = state->viewerState->datasetAdjustmentTable[0][adjustIndex];
+                g = state->viewerState->datasetAdjustmentTable[1][adjustIndex];
+                b = state->viewerState->datasetAdjustmentTable[2][adjustIndex];
             }
             else {
                 r = g = b = *datacube;
@@ -248,9 +250,11 @@ bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, float
         }
         else {
             if(useCustomLUT) {
-                slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
-                slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
-                slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
+                //extract data as unsigned number from the datacube
+                const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[dcIndex];
+                slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][adjustIndex];
+                slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][adjustIndex];
+                slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][adjustIndex];
             }
             else {
                 slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
