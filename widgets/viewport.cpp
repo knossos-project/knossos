@@ -527,7 +527,6 @@ void Viewport::zoomOrthogonals(float step){
    emit recalcTextureOffsetsSignal();
    emit updateDatasetOptionsWidget();
 
-   state->viewer->reslice_notify();
 }
 
 void Viewport::zoomOutSkeletonVP() {

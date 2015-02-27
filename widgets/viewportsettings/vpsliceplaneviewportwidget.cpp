@@ -168,17 +168,19 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
     QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsClicked);
     connect(useOwnTreeColorButton, SIGNAL(clicked()), this, SLOT(useOwnTreeColorButtonClicked()));
-    connect(biasSlider, SIGNAL(sliderMoved(int)), this, SLOT(biasSliderMoved(int)));
-    connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
-    connect(rangeDeltaSlider, SIGNAL(sliderMoved(int)), this, SLOT(rangeDeltaSliderMoved(int)));
-    connect(rangeDeltaSpinBox, SIGNAL(valueChanged(int)), this, SLOT(rangeDeltaChanged(int)));
+    QObject::connect(biasSlider, &QSlider::valueChanged, this, &VPSlicePlaneViewportWidget::biasSliderMoved);
+    QObject::connect(biasSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &VPSlicePlaneViewportWidget::biasChanged);
+    QObject::connect(rangeDeltaSlider, &QSlider::valueChanged, this, &VPSlicePlaneViewportWidget::rangeDeltaSliderMoved);
+    QObject::connect(rangeDeltaSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &VPSlicePlaneViewportWidget::rangeDeltaChanged);
     QObject::connect(&segmenationOverlaySlider, &QSlider::valueChanged, [&](int value){
         segmenationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
+        state->viewer->oc_reslice_notify();
     });
     QObject::connect(&segmenationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
         segmenationOverlaySlider.setValue(value);
         Segmentation::singleton().alpha = value;
+        state->viewer->oc_reslice_notify();
     });
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
@@ -227,7 +229,6 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
 }
 
 void VPSlicePlaneViewportWidget::loadDatasetLUT() {
-
     bool result = loadDataSetColortableSignal(this->datasetLutFile->text(), &(state->viewerState->datasetColortable[0][0]), GL_RGB);
 
     if(!result) {
@@ -236,7 +237,6 @@ void VPSlicePlaneViewportWidget::loadDatasetLUT() {
                        &(state->viewerState->neutralDatasetTable[0][0]),
                        RGB_LUTSIZE);
     }
-
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsClicked(bool checked) {
@@ -286,7 +286,6 @@ void VPSlicePlaneViewportWidget::biasChanged(int value) {
     MainWindow::datasetColorAdjustmentsChanged();
 }
 
-
 void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSpinBox->setValue(value);
@@ -303,11 +302,10 @@ void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
     state->viewerState->drawVPCrosshairs = on;
 }
 
-
 void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
     state->viewerState->showVPLabels = on;
 }
 
 void VPSlicePlaneViewportWidget::updateIntersection() {
-    this->drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
+    drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
 }

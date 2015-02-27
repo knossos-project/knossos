@@ -130,12 +130,12 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::oc_reslice_notify);
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
 
@@ -429,32 +429,45 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // slice relevant to the texture for this viewport.
     //
     // Rounding should be explicit!
+    bool dc_reslice, oc_reslice;
     switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
                    * (currPosTrans.z - state->cubeEdgeLength
                    * currentPosition_dc.z);
-        if(!dc_xy_changed) {
+        if(!dc_xy_changed && !oc_xy_changed) {
             return true;
         }
+        dc_reslice = dc_xy_changed;
+        oc_reslice = oc_xy_changed;
+
         dc_xy_changed = false;
+        oc_xy_changed = false;
         break;
     case SLICE_XZ:
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
-        if(!dc_xz_changed) {
+        if(!dc_xz_changed && !oc_xz_changed) {
             return true;
         }
+        dc_reslice = dc_xz_changed;
+        oc_reslice = oc_xz_changed;
+
         dc_xz_changed = false;
+        oc_xz_changed = false;
         break;
     case SLICE_YZ:
         dcOffset = currPosTrans.x - state->cubeEdgeLength
                    * currentPosition_dc.x;
-        if(!dc_zy_changed) {
+        if(!dc_zy_changed && !oc_zy_changed) {
             return true;
         }
+        dc_reslice = dc_zy_changed;
+        oc_reslice = oc_zy_changed;
+
         dc_zy_changed = false;
+        oc_zy_changed = false;
         break;
     default:
         qDebug("No such slice view: %d.", currentVp.type);
@@ -504,51 +517,53 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
 
             // Take care of the data textures.
 
-            glBindTexture(GL_TEXTURE_2D,
-                          currentVp.texture.texHandle);
-
-            // This is used to index into the texture. overlayData[index] is the first
-            // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
             Coordinate cubePosInAbsPx = {currentDc.x * state->magnification * state->cubeEdgeLength,
                                          currentDc.y * state->magnification * state->cubeEdgeLength,
                                          currentDc.z * state->magnification * state->cubeEdgeLength};
+            if (dc_reslice) {
+                glBindTexture(GL_TEXTURE_2D,
+                              currentVp.texture.texHandle);
 
-            if(datacube == nullptr) {
-                glTexSubImage2D(GL_TEXTURE_2D,
-                                0,
-                                x_px,
-                                y_px,
-                                state->cubeEdgeLength,
-                                state->cubeEdgeLength,
-                                GL_RGB,
-                                GL_UNSIGNED_BYTE,
-                                state->viewerState->defaultTexData);
-            } else {
-                dcSliceExtract(datacube,
-                               cubePosInAbsPx,
-                               state->viewerState->texData + index,
-                               dcOffset,
-                               &currentVp,
-                               state->viewerState->datasetAdjustmentOn);
-                glTexSubImage2D(GL_TEXTURE_2D,
-                                0,
-                                x_px,
-                                y_px,
-                                state->cubeEdgeLength,
-                                state->cubeEdgeLength,
-                                GL_RGB,
-                                GL_UNSIGNED_BYTE,
-                                state->viewerState->texData + index);
+                // This is used to index into the texture. overlayData[index] is the first
+                // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+                index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
+
+                if(datacube == nullptr) {
+                    glTexSubImage2D(GL_TEXTURE_2D,
+                                    0,
+                                    x_px,
+                                    y_px,
+                                    state->cubeEdgeLength,
+                                    state->cubeEdgeLength,
+                                    GL_RGB,
+                                    GL_UNSIGNED_BYTE,
+                                    state->viewerState->defaultTexData);
+                } else {
+                    dcSliceExtract(datacube,
+                                   cubePosInAbsPx,
+                                   state->viewerState->texData + index,
+                                   dcOffset,
+                                   &currentVp,
+                                   state->viewerState->datasetAdjustmentOn);
+                    glTexSubImage2D(GL_TEXTURE_2D,
+                                    0,
+                                    x_px,
+                                    y_px,
+                                    state->cubeEdgeLength,
+                                    state->cubeEdgeLength,
+                                    GL_RGB,
+                                    GL_UNSIGNED_BYTE,
+                                    state->viewerState->texData + index);
+                }
             }
             //Take care of the overlay textures.
-            if(state->overlay) {
+            if (state->overlay && oc_reslice) {
                 glBindTexture(GL_TEXTURE_2D, currentVp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
 
-                if(overlayCube == nullptr) {
+                if (overlayCube == nullptr) {
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
@@ -558,8 +573,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                     GL_RGBA,
                                     GL_UNSIGNED_BYTE,
                                     state->viewerState->defaultOverlayData);
-                }
-                else {
+                } else {
                     ocSliceExtract(overlayCube,
                                    cubePosInAbsPx,
                                    state->viewerState->overlayData + index,
@@ -1074,6 +1088,9 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
     emit updateDatasetOptionsWidgetSignal();
 
+    dc_reslice_notify();
+    oc_reslice_notify();
+
     return true;
 }
 
@@ -1292,9 +1309,18 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     Coordinate lastPosition_dc;
     Coordinate newPosition_dc;
 
-    if(std::abs(z) > 0) dc_xy_changed = true;
-    if(std::abs(x) > 0) dc_zy_changed = true;
-    if(std::abs(y) > 0) dc_xz_changed = true;
+    if (z != 0) {
+        dc_xy_changed = true;
+        oc_xy_changed = true;
+    }
+    if (x != 0) {
+        dc_zy_changed = true;
+        oc_zy_changed = true;
+    }
+    if (y != 0) {
+        dc_xz_changed = true;
+        oc_xz_changed = true;
+    }
 
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
@@ -1322,9 +1348,8 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
-        dc_xy_changed = true;
-        dc_xz_changed = true;
-        dc_zy_changed = true;
+        dc_reslice_notify();
+        oc_reslice_notify();
 
         state->loaderUserMoveType = userMoveType;
         Coordinate direction;
@@ -1361,10 +1386,16 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     return true;
 }
 
-void Viewer::reslice_notify() {
+void Viewer::dc_reslice_notify() {
     dc_xy_changed = true;
     dc_xz_changed = true;
     dc_zy_changed = true;
+}
+
+void Viewer::oc_reslice_notify() {
+    oc_xy_changed = true;
+    oc_xz_changed = true;
+    oc_zy_changed = true;
 }
 
 bool Viewer::userMove_arb(float x, float y, float z) {
@@ -1870,6 +1901,8 @@ void Viewer::setVPOrientation(bool arbitrary) {
         window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
         window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
         resetRotation();
+        dc_reslice_notify();
+        oc_reslice_notify();
     }
 }
 

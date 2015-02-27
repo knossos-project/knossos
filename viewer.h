@@ -187,9 +187,12 @@ public:
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
-    bool dc_xy_changed;
-    bool dc_xz_changed;
-    bool dc_zy_changed;
+    bool dc_xy_changed = true;
+    bool dc_xz_changed = true;
+    bool dc_zy_changed = true;
+    bool oc_xy_changed = true;
+    bool oc_xz_changed = true;
+    bool oc_zy_changed = true;
 
 signals:
     void loadSignal();
@@ -222,7 +225,8 @@ public slots:
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
     void setVPOrientation(bool arbitrary);
-    void reslice_notify();
+    void dc_reslice_notify();
+    void oc_reslice_notify();
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

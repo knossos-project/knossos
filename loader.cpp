@@ -386,7 +386,9 @@ uint lll_put(C_Element *destElement, coord2bytep_map_t *currentLoadedHash, Coord
 }
 
 Loader::Loader(QObject *parent) : QThread(parent) {
-    QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::reslice_notify);
+    //loader manages dc and oc cubes together
+    QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::dc_reslice_notify);
+    QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::oc_reslice_notify);
 }
 
 int calc_nonzero_sign(float x) {

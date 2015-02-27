@@ -167,6 +167,7 @@ public:
     static Segmentation & singleton();
     Segmentation();
     //rendering
+    void setRenderAllObjs(bool);
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
     //data query

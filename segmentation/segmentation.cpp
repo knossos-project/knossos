@@ -192,6 +192,11 @@ void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
     obj.addExistingSubObject(subobjectIt->second);
 }
 
+void Segmentation::setRenderAllObjs(bool all) {
+    renderAllObjs = all;
+    emit renderAllObjsChanged(renderAllObjs);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
@@ -547,9 +552,8 @@ void Segmentation::jobSave(QIODevice &file) const {
 
 void Segmentation::startJobMode() {
     alpha = 37;
-    renderAllObjs = false;
     Segmentation::singleton().selectNextTodoObject();
-    emit renderAllObjsChanged(renderAllObjs);
+    setRenderAllObjs(false);
 }
 
 void Segmentation::deleteSelectedObjects() {

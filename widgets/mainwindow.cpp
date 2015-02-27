@@ -389,50 +389,52 @@ void MainWindow::treeColorAdjustmentsChanged() {
 
 void MainWindow::datasetColorAdjustmentsChanged() {
     bool doAdjust = false;
-        int i = 0;
-        int dynIndex;
-        GLuint tempTable[3][256];
+    int i = 0;
+    int dynIndex;
+    GLuint tempTable[3][256];
 
-        if(state->viewerState->datasetColortableOn) {
-            memcpy(state->viewerState->datasetAdjustmentTable,
-                   state->viewerState->datasetColortable,
-                   RGB_LUTSIZE * sizeof(GLuint));
-            doAdjust = true;
-        } else {
-            memcpy(state->viewerState->datasetAdjustmentTable,
-                   state->viewerState->neutralDatasetTable,
-                   RGB_LUTSIZE * sizeof(GLuint));
+    if(state->viewerState->datasetColortableOn) {
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->datasetColortable,
+               RGB_LUTSIZE * sizeof(GLuint));
+        doAdjust = true;
+    } else {
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->neutralDatasetTable,
+               RGB_LUTSIZE * sizeof(GLuint));
+    }
+
+    /*
+     * Apply the dynamic range settings to the adjustment table
+     *
+     */
+    if((state->viewerState->luminanceBias != 0) ||
+       (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
+        for(i = 0; i < 256; i++) {
+            dynIndex = (int)((i - state->viewerState->luminanceBias) /
+                                 (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
+
+            if(dynIndex < 0)
+                dynIndex = 0;
+            if(dynIndex > MAX_COLORVAL)
+                dynIndex = MAX_COLORVAL;
+
+            tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
+            tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
+            tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
         }
 
-        /*
-         * Apply the dynamic range settings to the adjustment table
-         *
-         */
-        if((state->viewerState->luminanceBias != 0) ||
-           (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
-            for(i = 0; i < 256; i++) {
-                dynIndex = (int)((i - state->viewerState->luminanceBias) /
-                                     (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
-
-                if(dynIndex < 0)
-                    dynIndex = 0;
-                if(dynIndex > MAX_COLORVAL)
-                    dynIndex = MAX_COLORVAL;
-
-                tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
-                tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
-                tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
-            }
-
-            for(i = 0; i < 256; i++) {
-                state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
-                state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
-                state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
-            }
-
-            doAdjust = true;
+        for(i = 0; i < 256; i++) {
+            state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
+            state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
+            state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
         }
-       state->viewerState->datasetAdjustmentOn = doAdjust;
+
+        doAdjust = true;
+    }
+    state->viewerState->datasetAdjustmentOn = doAdjust;
+
+    state->viewer->dc_reslice_notify();
 }
 
 /** This slot is called if one of the entries is clicked in the recent file menue */
