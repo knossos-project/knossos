@@ -60,6 +60,10 @@ public:
         return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
     }
 
+    constexpr Coordinate legacy2Global(const int cubeEdgeLength) const {
+        return {x * cubeEdgeLength, y * cubeEdgeLength, z * cubeEdgeLength};
+    }
+
     CoordOfCube cube(const int size) const {
         return {x / size, y / size, z / size};
     }

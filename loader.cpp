@@ -48,6 +48,33 @@ extern "C" {
 #include <turbojpeg.h>
 #endif
 
+bool inRange(const int value, const int min, const int max) {
+    return value >= min && value < max;
+}
+
+bool insideCurrentSupercube(const Coordinate & coord) {
+    const int halfSupercube = state->cubeEdgeLength * static_cast<int>(std::trunc(state->M * 0.5) + 1);
+    const int xcube = state->currentPositionX.x - state->currentPositionX.x % state->cubeEdgeLength;
+    const int ycube = state->currentPositionX.y - state->currentPositionX.y % state->cubeEdgeLength;
+    const int zcube = state->currentPositionX.z - state->currentPositionX.z % state->cubeEdgeLength;
+    bool valid = true;
+    valid &= inRange(coord.x, xcube - halfSupercube, xcube + halfSupercube);
+    valid &= inRange(coord.y, ycube - halfSupercube, ycube + halfSupercube);
+    valid &= inRange(coord.z, zcube - halfSupercube, zcube + halfSupercube);
+    return valid;
+}
+
+bool currentlyVisible(const Coordinate & coord) {
+    bool valid = insideCurrentSupercube(coord);
+    const int xmin = state->currentPositionX.x - state->currentPositionX.x % state->cubeEdgeLength;
+    const int ymin = state->currentPositionX.y - state->currentPositionX.y % state->cubeEdgeLength;
+    const int zmin = state->currentPositionX.z - state->currentPositionX.z % state->cubeEdgeLength;
+    const bool xvalid = valid & inRange(coord.x, xmin, xmin + state->cubeEdgeLength);
+    const bool yvalid = valid & inRange(coord.y, ymin, ymin + state->cubeEdgeLength);
+    const bool zvalid = valid & inRange(coord.z, zmin, zmin + state->cubeEdgeLength);
+    return xvalid || yvalid || zvalid;
+}
+
 C_Element *lll_new()
 {
     C_Element *lll = NULL;
@@ -833,7 +860,9 @@ loadcube_manage:
      *
      */
 
-    emit reslice_notify();
+    if (currentlyVisible(lts->currentCube->coordinate.legacy2Global(state->cubeEdgeLength))) {
+        emit reslice_notify();
+    }
     if (!retVal) {
         goto loadcube_ret;
     }
