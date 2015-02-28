@@ -24,6 +24,8 @@
 
 #include "session.h"
 
+#include "stateInfo.h"
+
 #include <QApplication>
 
 class Session::ActivityEventFilter : public QObject {
@@ -50,15 +52,15 @@ Session::Session() : annotationMode(SkeletonizationMode) {
     lastTimeSlice.start();
 }
 
-bool Session::outsideMovementArea(Coordinate pos) {
+bool Session::outsideMovementArea(const Coordinate & pos) {
     return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
            pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
            pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
 }
 
-void Session::updateMovementArea(Coordinate min, Coordinate max) {
-    movementAreaMin = min;
-    movementAreaMax = max;
+void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
+    movementAreaMin = min.cap(0, state->boundary);
+    movementAreaMax = max.cap(0, state->boundary);
     emit movementAreaChanged();
 }
 

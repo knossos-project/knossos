@@ -78,6 +78,14 @@ public:
         y = rhs.y;
         z = rhs.z;
     }
+
+    Coordinate cap(const Coordinate & min, const Coordinate & max) const {
+        Coordinate copy{*this};
+        copy.x = std::max(min.x, std::min(copy.x, max.x));
+        copy.y = std::max(min.y, std::min(copy.y, max.y));
+        copy.z = std::max(min.z, std::min(copy.z, max.z));
+        return copy;
+    }
 };
 using Coordinate = Coord<>;
 using CoordOfCube = Coord<1>;

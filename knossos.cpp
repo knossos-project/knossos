@@ -171,7 +171,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::breakLoaderSignal, knossos.get(), &Knossos::breakLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);

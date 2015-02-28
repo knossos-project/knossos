@@ -138,6 +138,7 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::oc_reslice_notify);
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
+    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify);
 
     baseTime.start();//keyRepeat timer
 }
@@ -1875,7 +1876,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     //  -- end dataset options signals
     // dataset load signals --
-    QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, &Session::singleton(), &Session::updateMovementArea);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);

@@ -64,8 +64,7 @@ signals:
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetCompression();
-    void datasetChanged(Coordinate min, Coordinate max, bool showOverlays);
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
+    void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
     void breakLoaderSignal();
