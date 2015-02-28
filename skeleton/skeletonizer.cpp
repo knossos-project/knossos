@@ -503,6 +503,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     QXmlStreamReader xml(&file);
     bool minuteFile = false;//skeleton time in minutes and node time in seconds, TODO remove after transition time
 
+    QString experimentName;
     std::vector<uint> branchVector;
     std::vector<std::pair<uint, QString>> commentsVector;
     std::vector<std::pair<uint, uint>> edgeVector;
@@ -520,12 +521,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 QXmlStreamAttributes attributes = xml.attributes();
 
                 if (xml.name() == "experiment") {
-                    QStringRef attribute = attributes.value("name");
-                    QString experimentName = attribute.isNull() ? "" : attribute.toString();
-                    if (experimentName != state->name) {
-                        const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
-                        QMessageBox::information(state->viewer->window, tr("Wrong dataset"), text);
-                    }
+                    experimentName = attributes.value("name").toString();
                 } else if (xml.name() == "createdin") {
                     QStringRef attribute = attributes.value("version");
                     if(attribute.isNull() == false) {
@@ -902,6 +898,11 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if(xml.hasError()) {
         qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
         return false;
+    }
+
+    if (!experimentName.isEmpty() && experimentName != state->name) {
+        const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
+        QMessageBox::information(state->viewer->window, tr("Wrong dataset"), text);
     }
 
     for (const auto & elem : edgeVector) {
