@@ -1302,10 +1302,10 @@ bool Viewer::updateZoomCube() {
 
 void Viewer::updateCurrentPosition() {
     auto & session = Session::singleton();
-    if(session.outsideMovementArea(state->viewerState->currentPosition)) {
-        Coordinate currPos = state->viewerState->currentPosition;
-        userMove(session.movementAreaMin.x - currPos.x, session.movementAreaMin.y - currPos.y, session.movementAreaMin.z - currPos.z,
-                 USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    if (session.outsideMovementArea(state->viewerState->currentPosition)) {
+        const Coordinate currPos = state->viewerState->currentPosition;
+        const Coordinate newPos = state->viewerState->currentPosition.cap(session.movementAreaMin, session.movementAreaMax);
+        userMove(newPos.x - currPos.x, newPos.y - currPos.y, newPos.z - currPos.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }
 
