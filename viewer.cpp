@@ -176,16 +176,15 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     int pixelsPerLine = state->cubeEdgeLength*state->magnification;
     for(std::size_t y = 0; y < outerLoopBoundary; y++) {
         for(std::size_t x = 0; x < innerLoopBoundary; x++) {
-            char r, g, b;
+            uint8_t r, g, b;
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
-                const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[0];
+                const uint8_t adjustIndex = reinterpret_cast<uint8_t*>(datacube)[0];
                 r = state->viewerState->datasetAdjustmentTable[0][adjustIndex];
                 g = state->viewerState->datasetAdjustmentTable[1][adjustIndex];
                 b = state->viewerState->datasetAdjustmentTable[2][adjustIndex];
-            }
-            else {
-                r = g = b = *datacube;
+            } else {
+                r = g = b = reinterpret_cast<uint8_t*>(datacube)[0];
             }
             if(partlyInMovementArea) {
                 if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
@@ -199,7 +198,9 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                     r /= 1.25, g /= 1.25, b /= 1.25;
                 }
             }
-            slice[0] = r, slice[1] = g, slice[2] = b;
+            reinterpret_cast<uint8_t*>(slice)[0] = r;
+            reinterpret_cast<uint8_t*>(slice)[1] = g;
+            reinterpret_cast<uint8_t*>(slice)[2] = b;
 
             datacube += voxelIncrement;
             slice += 3;
