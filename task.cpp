@@ -1,8 +1,11 @@
-#include <stdio.h>
+#include "task.h"
 
+#include "stateInfo.h"
+
+#include <QDebug>
 #include <QFile>
 
-#include "knossos-global.h"
+#include <cstdio>
 
 // for looking up CURLcode: http://curl.haxx.se/libcurl/c/libcurl-errors.html
 

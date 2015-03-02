@@ -21,16 +21,18 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "task.h"//because curl wants to be first on win
+
 #include "knossos.h"
 
+#include "eventmodel.h"
 #include "file_io.h"
-#include "knossos-global.h"
 #include "loader.h"
 #include "network.h"
 #include "remote.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "scriptengine/scripting.h"
-#include "skeletonizer.h"
+#include "skeleton/skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"
@@ -169,7 +171,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::breakLoaderSignal, knossos.get(), &Knossos::breakLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
@@ -193,7 +194,7 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     remote.start();
 
-    viewer.window->widgetContainer->datasetLoadWidget->loadDataset(false);
+    viewer.window->widgetContainer->datasetLoadWidget->loadDataset();
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
@@ -243,6 +244,17 @@ bool Knossos::commonInitStates() {
     state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
 
+    //reset viewerState texture properties
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+    }
+
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
     if(state->path[0] == '\0') {
@@ -290,14 +302,14 @@ bool Knossos::initStates() {
    SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
    curl_global_init(CURL_GLOBAL_DEFAULT);
-   state->loadFtpCachePath = (char*)malloc(MAX_PATH);
+   state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
 
 #ifdef Q_OS_UNIX
    const char *tmp = "/tmp/";
    strcpy(state->loadFtpCachePath, tmp);
 #endif
 #ifdef Q_OS_WIN32
-    GetTempPathA(MAX_PATH, state->loadFtpCachePath);
+    GetTempPathA(CSTRING_SIZE, state->loadFtpCachePath);
 #endif
 
    return commonInitStates();
@@ -403,7 +415,7 @@ bool Knossos::readConfigFile(const char *path) {
             for (ti = 0; ti < FTP_PARAMS_NUM; ti++) {
                 token = tokenList.at(ti + 1);
                 stdString = token.toStdString();
-                strncpy(ftp_conf_strings[ti], stdString.c_str(), MAX_PATH);
+                strncpy(ftp_conf_strings[ti], stdString.c_str(), CSTRING_SIZE);
             }
             state->ftpFileTimeout = tokenList.at(ti + 1).toInt();
 
@@ -451,11 +463,9 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 stateInfo *Knossos::emptyState() {
-
     stateInfo *state = new stateInfo();
 
     state->viewerState = new viewerState();
-    state->viewerState->gui = new guiConfig();
 
     state->skeletonState = new skeletonState();
     state->taskState = new taskState();

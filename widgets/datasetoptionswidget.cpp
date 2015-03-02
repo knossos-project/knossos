@@ -21,9 +21,14 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
 #include "datasetoptionswidget.h"
+
 #include "GuiConstants.h"
+#include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
+#include "viewer.h"
+#include "widgets/viewport.h"
+
 #include <QGridLayout>
 #include <QDoubleSpinBox>
 #include <QVBoxLayout>
@@ -34,7 +39,6 @@
 #include <QSpacerItem>
 #include <QApplication>
 #include <QDesktopWidget>
-#include "knossos-global.h"
 
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true) {

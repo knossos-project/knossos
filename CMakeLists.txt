@@ -19,9 +19,11 @@ file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
 
 file(GLOB root *.cpp *.h *.qrc *.h.in)
 file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
+file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
+file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
-set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${widgets})
+set(SRC_LIST ${openjpeg} ${root} ${segmentation} ${scriptengine} ${skeleton} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
@@ -70,7 +72,10 @@ add_custom_command(OUTPUT versioncreator ${CMAKE_CURRENT_BINARY_DIR}/version.h
 )
 
 
-add_executable(${PROJECT_NAME} WIN32 ${SRC_LIST} version.h)
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+    ${SRC_LIST} version.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} version)#main target needs version
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
 #custom adjustments

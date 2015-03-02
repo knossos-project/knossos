@@ -23,7 +23,8 @@
  */
 
 #include "knossos.h"
-#include "knossos-global.h"
+
+#include "viewer.h"
 
 void Knossos::loadTreeLUTFallback() {
     qDebug() << "entered load tree LUT fallback";

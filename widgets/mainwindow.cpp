@@ -27,14 +27,15 @@
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "knossos.h"
-#include "knossos-global.h"
 #include "mainwindow.h"
 #include "network.h"
-#include "skeletonizer.h"
+#include "skeleton/node.h"
 #include "version.h"
 #include "viewer.h"
 #include "viewport.h"
 #include "scriptengine/scripting.h"
+#include "skeleton/skeletonizer.h"
+#include "task.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgetcontainer.h"
@@ -61,6 +62,10 @@
 #include <QToolButton>
 #include <QQueue>
 
+// default position of xy viewport and default viewport size
+#define DEFAULT_VP_MARGIN 5
+#define DEFAULT_VP_SIZE 350
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
@@ -68,34 +73,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    state->viewerState->gui->oneShiftedCurrPos.x =
-        state->viewerState->currentPosition.x + 1;
-    state->viewerState->gui->oneShiftedCurrPos.y =
-        state->viewerState->currentPosition.y + 1;
-    state->viewerState->gui->oneShiftedCurrPos.z =
-        state->viewerState->currentPosition.z + 1;
-
-    // for task management
-    QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
-    taskDir.mkpath(".");
-    state->taskState->cookieFile = taskDir.absolutePath() + "/cookie";
-    state->taskState->taskFile = "";
-    state->taskState->taskName = "";
-    state->taskState->host = "heidelbrain.org";
-
-    state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
-    memset(state->viewerState->gui->commentSearchBuffer, '\0', 2048 * sizeof(char));
-
-    state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
-    memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
-
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
-    QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged,
-                     [this](Coordinate, Coordinate, bool showOverlays) {
+    QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         skelEditSegModeAction->setEnabled(showOverlays);
         if(showOverlays == false && Session::singleton().annotationMode == SegmentationMode) {
             setAnnotationMode(SkeletonizationMode);
@@ -420,50 +400,52 @@ void MainWindow::treeColorAdjustmentsChanged() {
 
 void MainWindow::datasetColorAdjustmentsChanged() {
     bool doAdjust = false;
-        int i = 0;
-        int dynIndex;
-        GLuint tempTable[3][256];
+    int i = 0;
+    int dynIndex;
+    GLuint tempTable[3][256];
 
-        if(state->viewerState->datasetColortableOn) {
-            memcpy(state->viewerState->datasetAdjustmentTable,
-                   state->viewerState->datasetColortable,
-                   RGB_LUTSIZE * sizeof(GLuint));
-            doAdjust = true;
-        } else {
-            memcpy(state->viewerState->datasetAdjustmentTable,
-                   state->viewerState->neutralDatasetTable,
-                   RGB_LUTSIZE * sizeof(GLuint));
+    if(state->viewerState->datasetColortableOn) {
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->datasetColortable,
+               RGB_LUTSIZE * sizeof(GLuint));
+        doAdjust = true;
+    } else {
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->neutralDatasetTable,
+               RGB_LUTSIZE * sizeof(GLuint));
+    }
+
+    /*
+     * Apply the dynamic range settings to the adjustment table
+     *
+     */
+    if((state->viewerState->luminanceBias != 0) ||
+       (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
+        for(i = 0; i < 256; i++) {
+            dynIndex = (int)((i - state->viewerState->luminanceBias) /
+                                 (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
+
+            if(dynIndex < 0)
+                dynIndex = 0;
+            if(dynIndex > MAX_COLORVAL)
+                dynIndex = MAX_COLORVAL;
+
+            tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
+            tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
+            tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
         }
 
-        /*
-         * Apply the dynamic range settings to the adjustment table
-         *
-         */
-        if((state->viewerState->luminanceBias != 0) ||
-           (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
-            for(i = 0; i < 256; i++) {
-                dynIndex = (int)((i - state->viewerState->luminanceBias) /
-                                     (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
-
-                if(dynIndex < 0)
-                    dynIndex = 0;
-                if(dynIndex > MAX_COLORVAL)
-                    dynIndex = MAX_COLORVAL;
-
-                tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
-                tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
-                tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
-            }
-
-            for(i = 0; i < 256; i++) {
-                state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
-                state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
-                state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
-            }
-
-            doAdjust = true;
+        for(i = 0; i < 256; i++) {
+            state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
+            state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
+            state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
         }
-       state->viewerState->datasetAdjustmentOn = doAdjust;
+
+        doAdjust = true;
+    }
+    state->viewerState->datasetAdjustmentOn = doAdjust;
+
+    state->viewer->dc_reslice_notify();
 }
 
 /** This slot is called if one of the entries is clicked in the recent file menue */
@@ -793,7 +775,11 @@ void MainWindow::newAnnotationSlot() {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
+#ifdef Q_OS_MAC
+    QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
+#else
     QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
+#endif
     QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
@@ -842,7 +828,12 @@ void MainWindow::saveAsSlot() {
         return;
     }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
+
+#ifdef Q_OS_MAC
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
+#else
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
+#endif
     if (!fileName.isEmpty()) {
         if (!fileName.contains(".k.zip")) {
             fileName += ".k.zip";
@@ -1325,11 +1316,11 @@ void MainWindow::newTreeSlot() {
 }
 
 void MainWindow::nextCommentNodeSlot() {
-    Skeletonizer::singleton().nextComment(state->viewerState->gui->commentSearchBuffer);
+    Skeletonizer::singleton().nextComment(state->skeletonState->nodeCommentFilter);
 }
 
 void MainWindow::previousCommentNodeSlot() {
-    Skeletonizer::singleton().previousComment(state->viewerState->gui->commentSearchBuffer);
+    Skeletonizer::singleton().previousComment(state->skeletonState->nodeCommentFilter);
 }
 
 void MainWindow::pushBranchNodeSlot() {

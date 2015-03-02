@@ -1,5 +1,8 @@
 #include "functions.h"
-#include <math.h>
+
+#include <boost/math/constants/constants.hpp>
+
+#include <cmath>
 
 /** this file contains function which are not dependent from any state */
 
@@ -36,11 +39,11 @@ int sgn(float number) {
 
 //Some math helper functions
 float radToDeg(float rad) {
-    return ((180. * rad) / PI);
+    return ((180. * rad) / boost::math::constants::pi<float>());
 }
 
 float degToRad(float deg) {
-    return ((deg / 180.) * PI);
+    return ((deg / 180.) * boost::math::constants::pi<float>());
 }
 
 floatCoordinate crossProduct(floatCoordinate *v1, floatCoordinate *v2) {

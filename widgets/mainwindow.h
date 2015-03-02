@@ -24,9 +24,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
+#include "color4F.h"
 #include "viewport.h"
-#include "knossos-global.h"
 #include "session.h"
 #include "widgetcontainer.h"
 

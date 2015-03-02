@@ -1,3 +1,10 @@
+#include "toolscommandstab.h"
+
+#include "skeleton/node.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
+#include "viewer.h"
+
 #include <QLabel>
 #include <QPushButton>
 #include <QCheckBox>
@@ -6,9 +13,6 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-
-#include "skeletonizer.h"
-#include "toolscommandstab.h"
 
 ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QWidget(parent)
@@ -261,7 +265,7 @@ void ToolsCommandsTab::defaultRadiusSpinChanged(double value) {
 void ToolsCommandsTab::commentLockingCheckChanged(bool on) {
     state->skeletonState->positionLocked = on;
     if(on and commentLockEdit->text().isEmpty() == false) {
-        state->viewerState->gui->lockComment = commentLockEdit->text();
+        state->viewerState->lockComment = commentLockEdit->text();
     }
 }
 
@@ -270,7 +274,7 @@ void ToolsCommandsTab::lockingRadiusSpinChanged(int value) {
 }
 
 void ToolsCommandsTab::commentLockEditChanged(QString comment) {
-    state->viewerState->gui->lockComment = comment;
+    state->viewerState->lockComment = comment;
 }
 
 void ToolsCommandsTab::locktoActiveButtonClicked() {

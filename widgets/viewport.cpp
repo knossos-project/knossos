@@ -21,19 +21,19 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "viewport.h"
+
+#include "eventmodel.h"
+#include "functions.h"
+#include "renderer.h"
+#include "segmentation/segmentation.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QPushButton>
 #include <QVBoxLayout>
-
-#include "eventmodel.h"
-#include "functions.h"
-#include "knossos-global.h"
-#include "renderer.h"
-#include "viewer.h"
-#include "viewport.h"
-#include "segmentation.h"
 
 bool Viewport::showNodeComments = false;
 bool Viewport::arbitraryOrientation = false;
@@ -527,7 +527,6 @@ void Viewport::zoomOrthogonals(float step){
    emit recalcTextureOffsetsSignal();
    emit updateDatasetOptionsWidget();
 
-   state->viewer->reslice_notify();
 }
 
 void Viewport::zoomOutSkeletonVP() {

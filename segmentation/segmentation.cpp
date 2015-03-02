@@ -2,6 +2,7 @@
 
 #include "knossos.h"
 #include "loader.h"
+#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QTextStream>
@@ -221,6 +222,11 @@ void Segmentation::newSubObject(Object & obj, uint64_t subObjID, const bool & to
         job.todolist.push_back(subobjectIt->second.id);
     }
     obj.addExistingSubObject(subobjectIt->second);
+}
+
+void Segmentation::setRenderAllObjs(bool all) {
+    renderAllObjs = all;
+    emit renderAllObjsChanged(renderAllObjs);
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {

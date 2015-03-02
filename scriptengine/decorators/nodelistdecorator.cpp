@@ -1,12 +1,6 @@
 #include "nodelistdecorator.h"
-#include "knossos-global.h"
 
-
-NodeListDecorator::NodeListDecorator(QObject *parent) :
-    QObject(parent)
-{
-
-}
+NodeListDecorator::NodeListDecorator(QObject *parent) : QObject(parent) {}
 
 int NodeListDecorator::node_id(nodeListElement *self) {
     return self->nodeID;

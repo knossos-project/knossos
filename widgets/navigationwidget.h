@@ -41,6 +41,7 @@ enum class navigationMode {
 class QRadioButton;
 class NavigationWidget : public QDialog {
     Q_OBJECT
+    void updateMovementArea();
 public:
     explicit NavigationWidget(QWidget *parent = 0);
     void loadSettings();
@@ -51,7 +52,6 @@ signals:
     void movementAreaChanged();
     void sendLoadSignal(int magChanged);
 public slots:
-    void updateAreaMaxField(QSpinBox &box);
     void resetMovementArea();
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);

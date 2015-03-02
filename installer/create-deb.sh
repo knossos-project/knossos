@@ -1,5 +1,5 @@
 #!/bin/bash
-appname=knossos-nightly
+appname=knossos
 mkdir -p $appname/opt/$appname/platforms
 mkdir -p $appname/opt/$appname/sqldrivers
 cp -v /home/knossos/Dokumente/build-knossos-release-Desktop-Default/knossos $appname/opt/$appname/

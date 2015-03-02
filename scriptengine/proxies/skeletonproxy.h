@@ -1,10 +1,11 @@
 #ifndef SKELETONPROXY_H
 #define SKELETONPROXY_H
 
-#include <QObject>
+#include "skeleton/node.h"
+
 #include <QList>
+#include <QObject>
 #include <QVBoxLayout>
-#include "knossos-global.h"
 
 class QMenuBar;
 class QToolBar;
@@ -16,7 +17,7 @@ signals:
     void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
     void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z, Byte userMoveType, Byte viewportType);
+    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
 };
 
 extern SkeletonProxySignalDelegate *signalDelegate;
@@ -64,7 +65,7 @@ public slots:
     bool set_active_node(int node_id);
     nodeListElement *active_node();
     bool add_node(int node_id, int x, int y, int z, int parent_tree_id = 0,
-                  float radius = 1.5, int inVp = 0, int inMag = 1,
+                  float radius = 1.5, ViewportType inVp = ViewportType::VIEWPORT_UNDEFINED, int inMag = 1,
                   int time = 0);
     bool set_branch_node(int node_id);
     bool add_segment(int source_id, int target_id);

@@ -1,6 +1,6 @@
 #include "segmentationtab.h"
 
-#include "knossos-global.h"
+#include "viewer.h"
 
 #include <QApplication>
 #include <QHeaderView>
@@ -363,9 +363,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
-    QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
-        Segmentation::singleton().renderAllObjs = value;
-    });
+    QObject::connect(&showAllChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderAllObjs);
 
     QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);});
 

@@ -21,6 +21,11 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "vpgeneraltabwidget.h"
+
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
+#include "widgets/mainwindow.h"
 
 #include <QDoubleSpinBox>
 #include <QFrame>
@@ -29,10 +34,6 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
-
-#include "knossos-global.h"
-#include "vpgeneraltabwidget.h"
-#include "widgets/mainwindow.h"
 
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QWidget(parent)

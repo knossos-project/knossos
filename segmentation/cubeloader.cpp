@@ -2,7 +2,6 @@
 
 #include "coordinate.h"
 #include "knossos.h"
-#include "knossos-global.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
 
@@ -13,7 +12,7 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
     state->protectCube2Pointer->unlock();
 
-    if (rawcube == HT_FAILURE) {
+    if (rawcube == nullptr) {
         rawcube = loader->bogusOc;
     }
     auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];

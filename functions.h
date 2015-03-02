@@ -1,7 +1,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "knossos-global.h"
+#include "coordinate.h"
 
 /* This header contains functions that only use stateInfo independent data types.
  * They can be used every-where.

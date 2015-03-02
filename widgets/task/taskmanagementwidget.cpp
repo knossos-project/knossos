@@ -1,8 +1,6 @@
-#include <curl/curl.h>
-
-#include "knossos-global.h"
-#include "skeletonizer.h"
 #include "taskmanagementwidget.h"
+
+#include "task.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
@@ -80,6 +78,20 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
     QObject::connect(submitButton, &QPushButton::clicked, submitDialog, &QDialog::exec);
 }
 
+void handleError(TaskManagementWidget * instance, bool success, CURLcode code, long httpCode, const char * const response) {
+    if (success == false) {
+        instance->resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
+    } else if (code != CURLE_OK) {
+        instance->setResponse(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response));
+        taskState::removeCookie();
+    } else if (httpCode == 400) {
+        instance->setResponse(QString("<font color='red'>Not available.</font><br />%0").arg(response));
+    } else if(httpCode == 403) {
+        instance->setResponse(QString("<font color='red'>You are not authenticated. Permission denied.</font><br />%0").arg(response));
+    } else if(httpCode != 200){
+        instance->setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response));
+    }
+}
 
 void TaskManagementWidget::logoutButtonClicked() {
     auto url = state->taskState->host + "/knossos/session/";
@@ -96,25 +108,10 @@ void TaskManagementWidget::logoutButtonClicked() {
     if (success && code == CURLE_OK && httpCode == 200) {
         resetSession("<font color='green'>Logged out successfully.</font>");
     } else {
-        handleError(success, code, httpCode, response.content);
+        handleError(this, success, code, httpCode, response.content);
     }
 
     free(response.content);
-}
-
-void TaskManagementWidget::handleError(bool success, CURLcode code, long httpCode, const char * const response) {
-    if (success == false) {
-        resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
-    } else if (code != CURLE_OK) {
-        setResponse(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response));
-        taskState::removeCookie();
-    } else if (httpCode == 400) {
-        setResponse(QString("<font color='red'>Not available.</font><br />%0").arg(response));
-    } else if(httpCode == 403) {
-        setResponse(QString("<font color='red'>You are not authenticated. Permission denied.</font><br />%0").arg(response));
-    } else if(httpCode != 200){
-        setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response));
-    }
 }
 
 void TaskManagementWidget::saveAndLoadFile(httpResponse & header, httpResponse & response) {
@@ -169,7 +166,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     if (success && code == CURLE_OK && httpCode == 200) {
         saveAndLoadFile(header, response);
     } else {
-        handleError(success, code, httpCode, response.content);
+        handleError(this, success, code, httpCode, response.content);
     }
 
     free(header.content);
@@ -215,7 +212,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
         setDescription(description);
         setComment(comment);
     } else {
-        handleError(success, code, httpCode, response.content);
+        handleError(this, success, code, httpCode, response.content);
     }
 
     free(header.content);

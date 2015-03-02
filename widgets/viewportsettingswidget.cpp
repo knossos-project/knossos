@@ -21,15 +21,16 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
-#include "knossos-global.h"
-
 #include "viewportsettingswidget.h"
+
+#include "GuiConstants.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 #include "viewportsettings/vpgeneraltabwidget.h"
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
 #include "viewportsettings/vpskeletonviewportwidget.h"
+
 #include <QSettings>
-#include "GuiConstants.h"
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QLabel>

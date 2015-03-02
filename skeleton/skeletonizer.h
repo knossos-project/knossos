@@ -25,11 +25,120 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "mesh.h"
+#include "widgets/viewport.h"
 
-#include <unordered_map>
 #include <QObject>
 #include <QtCore>
-#include "knossos-global.h"
+
+#include <unordered_map>
+
+class nodeListElement;
+class segmentListElement;
+class treeListElement;
+
+struct skeletonState {
+    uint skeletonRevision;
+
+    //    skeletonTime is the time spent on the current skeleton in all previous
+    //    instances of knossos that worked with the skeleton.
+
+    bool unsavedChanges;
+    int skeletonTime;
+
+    struct treeListElement *firstTree;
+    struct treeListElement *activeTree;
+    struct nodeListElement *activeNode;
+
+    std::vector<treeListElement *> selectedTrees;
+    std::vector<nodeListElement *> selectedNodes;
+
+    struct commentListElement *currentComment;
+    char *commentBuffer;
+    char *searchStrBuffer;
+
+    struct stack *branchStack;
+
+    std::unordered_map<uint, nodeListElement *> nodesByNodeID;
+
+    uint volBoundary;
+
+    uint totalComments;
+    uint totalBranchpoints;
+
+    bool userCommentColoringOn;
+    uint commentNodeRadiusOn;
+
+    bool lockPositions;
+    bool positionLocked;
+    char onCommentLock[1024];
+    Coordinate lockedPosition;
+    long unsigned int lockRadius;
+
+    float rotdx;
+    float rotdy;
+    int rotationcounter;
+
+    int definedSkeletonVpView;
+
+    float translateX, translateY;
+
+    // Stores the model view matrix for user performed VP rotations.
+    float skeletonVpModelView[16];
+
+    // Stores the angles of the cube in the SkeletonVP
+    float rotationState[16];
+    // The next three flags cause recompilation of the above specified display lists.
+
+    uint displayMode;
+
+    float segRadiusToNodeRadius;
+    int overrideNodeRadiusBool;
+    float overrideNodeRadiusVal;
+
+    int highlightActiveTree;
+    int showIntersections;
+    int rotateAroundActiveNode;
+    int showXYplane;
+    int showXZplane;
+    int showYZplane;
+    int showNodeIDs;
+    bool autoFilenameIncrementBool;
+
+    int treeElements;
+    int totalNodeElements;
+    int totalSegmentElements;
+
+    uint greatestNodeID;
+    int greatestTreeID;
+
+    nodeListElement *selectedCommentNode;
+
+    //If true, loadSkeleton merges the current skeleton with the provided
+    bool mergeOnLoadFlag;
+
+    uint lastSaveTicks;
+    bool autoSaveBool;
+    uint autoSaveInterval;
+
+    float defaultNodeRadius;
+
+    // Current zoom level. 0: no zoom; near 1: maximum zoom.
+    float zoomLevel;
+
+    // temporary vertex buffers that are available for rendering, get cleared
+    // every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
+
+    bool branchpointUnresolved;
+
+    char skeletonCreatedInVersion[32];
+    char skeletonLastSavedInVersion[32];
+
+    QString nodeCommentFilter;
+    QString treeCommentFilter;
+};
 
 class Skeletonizer : public QObject {
     Q_OBJECT
@@ -63,7 +172,7 @@ public slots:
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
-    uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, Byte VPtype, int inMag, int time, int respectLocks);
+    uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, ViewportType VPtype, int inMag, int time, int respectLocks);
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
@@ -85,8 +194,7 @@ public slots:
     bool delTree(int treeID);
     bool clearSkeleton(int loadingSkeleton);
     void autoSaveIfElapsed();
-    bool genTestNodes(uint number);
-    bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
+    bool UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
@@ -126,7 +234,7 @@ public slots:
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
-    uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
+    uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
     static bool updateCircRadius(struct nodeListElement *node);

@@ -25,7 +25,9 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
+#include "stateInfo.h"
+#include "widgets/viewport.h"
+
 #include <QObject>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -50,8 +52,11 @@
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
 void merging(QMouseEvent *event, const int vp);
 
-class EventModel : public QObject
-{
+class commentListElement;
+class nodeListElement;
+class segmentListElement;
+
+class EventModel : public QObject {
     Q_OBJECT
     bool mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound);
 
@@ -98,8 +103,6 @@ signals:
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
-
-    void genTestNodesSignal(uint number);
 
     void setRecenteringPositionSignal(float x, float y, float z);
     void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);

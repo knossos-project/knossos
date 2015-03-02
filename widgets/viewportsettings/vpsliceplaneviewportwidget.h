@@ -25,8 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
-
+#include <qgl.h>
 #include <QLabel>
 #include <QSpinBox>
 #include <QHBoxLayout>

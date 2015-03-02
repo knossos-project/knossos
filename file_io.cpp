@@ -8,9 +8,8 @@
 
 #include <quazip/quazipfile.h>
 
-#include "knossos-global.h"
-#include "segmentation.h"
-#include "skeletonizer.h"
+#include "segmentation/segmentation.h"
+#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 QString annotationFileDefaultName() {

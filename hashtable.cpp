@@ -22,29 +22,29 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
+#include "hashtable.h"
 
 bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const Coordinate &c) {
     return (h.end() != h.find(c));
 }
 
-Byte* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c)
+char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c)
 {
     coord2bytep_map_t::const_iterator got = h.find(c);
     if (got == h.end()) {
-        return HT_FAILURE;
+        return nullptr;
     }
 
     return got->second;
 }
 
-void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, const coord2bytep_map_t &source, Byte *v) {
+void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, const coord2bytep_map_t &source, char *v) {
     for (auto kv : source) {
         target[kv.first] = v;
     }
 }
 
-void Coordinate2BytePtr_hash_union_keys_default_value(coord2bytep_map_t &m, const coord2bytep_map_t &a, const coord2bytep_map_t &b, Byte *v) {
+void Coordinate2BytePtr_hash_union_keys_default_value(coord2bytep_map_t &m, const coord2bytep_map_t &a, const coord2bytep_map_t &b, char *v) {
     Coordinate2BytePtr_hash_copy_keys_default_value(m, a, v);
     Coordinate2BytePtr_hash_copy_keys_default_value(m, b, v);
 }

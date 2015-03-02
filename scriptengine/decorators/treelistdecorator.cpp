@@ -1,6 +1,7 @@
 #include "treelistdecorator.h"
-#include "knossos-global.h"
+
 #include "scriptengine/proxies/skeletonproxy.h"
+#include "skeleton/tree.h"
 
 extern SkeletonProxySignalDelegate *signalDelegate;
 

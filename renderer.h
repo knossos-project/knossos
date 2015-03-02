@@ -24,13 +24,21 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "knossos-global.h"
 #include "scriptengine/decorators/meshdecorator.h"
+#include "widgets/viewport.h"
 
 #include <QList>
 #include <QObject>
 
 #include <boost/multi_array.hpp>
+
+// skeleton vp orientation
+#define SKELVP_XY_VIEW 0
+#define SKELVP_XZ_VIEW 1
+#define SKELVP_YZ_VIEW 2
+#define SKELVP_R90 3
+#define SKELVP_R180 4
+#define SKELVP_RESET 5
 
 class Viewport;
 

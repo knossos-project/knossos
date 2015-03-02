@@ -21,14 +21,20 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#define GLUT_DISABLE_ATEXIT_HACK
 #include "renderer.h"
-#include "functions.h"
+
+#include "eventmodel.h"
+#include "segmentation/segmentation.h"
 #include "session.h"
+#include "skeleton/node.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
+#include "viewer.h"
 #include "widgets/viewport.h"
-#include <math.h>
 
 #include <qgl.h>
+
+#define GLUT_DISABLE_ATEXIT_HACK
 #ifdef Q_OS_MAC
     #include <glu.h>
     #include <GLUT/glut.h>
@@ -42,12 +48,17 @@
     #include <GL/glu.h>
     #include <GL/glut.h>
 #endif
-#include "skeletonizer.h"
-#include "segmentation.h"
-#include "viewer.h"
+
+#include <boost/math/constants/constants.hpp>
+
+#include <cmath>
+
+#define ROTATIONSTATEXY    0
+#define ROTATIONSTATEXZ    1
+#define ROTATIONSTATEYZ    2
+#define ROTATIONSTATERESET 3
 
 Renderer::Renderer(QObject *parent) : QObject(parent) {
-    uint i;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     /* Initialize the basic model view matrix for the skeleton VP
     Perform basic coordinate system rotations */
@@ -922,14 +933,14 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
         floatCoordinate axis = crossProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
         if(normalizeVector(&axis)) {
-            glRotatef(-(angle*180/PI), axis.x, axis.y, axis.z);
+            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         } // second rotation also aligns the plane vectors with the camera
         rotateAndNormalize(vec1, axis, angle);
         scalar = scalarProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
         angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
         axis = crossProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
         if(normalizeVector(&axis)) {
-            glRotatef(-(angle*180/PI), axis.x, axis.y, axis.z);
+            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         }
 
         glLoadName(3);
@@ -1656,7 +1667,6 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
     auto bsize = seg.brush.getRadius();
-    const auto bdim = seg.brush.getMode();
     const auto bview = seg.brush.getView();
     const int circleLines = 64;
     const float twicePi = 2*3.1415;
@@ -2163,7 +2173,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 /* This sets the current color for the segment rendering */
                 if((currentTree->treeID == state->skeletonState->activeTree->treeID)
                     && (state->skeletonState->highlightActiveTree)) {
-                        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 1.f);
+                        currentColor = {1.f, 0.f, 0.f, 1.f};
                 }
                 else {
                     currentColor = currentTree->color;
@@ -2246,7 +2256,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 if(currentNode->selected) { // highlight selected nodes
                     /* Set the default color for selected nodes */
-                    SET_COLOR(currentColor, 0.f, 1.f, 0.f, 0.5f);
+                    currentColor = {0.f, 1.f, 0.f, 0.5f};
 
                     if(state->skeletonState->overrideNodeRadiusBool) {
                         renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
@@ -2329,7 +2339,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                && state->skeletonState->activeNode->correspondingTree->selected))) {
         nodeListElement *active = state->skeletonState->activeNode;
         /* Set the default color for the active node */
-        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
+        currentColor = {1.f, 0.f, 0.f, 0.2f};
 
         /* Color gets changes in case there is a comment & conditional comment
         highlighting */

@@ -2,7 +2,6 @@
 #define CUBELOADER_H
 
 #include "coordinate.h"
-#include "knossos-global.h"
 #include "segmentationsplit.h"
 
 #include <boost/multi_array.hpp>

@@ -22,31 +22,29 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "cubeloader.h"
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
 #include "session.h"
-#include "skeletonizer.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
 #include "renderer.h"
-#include "segmentation.h"
-#include "segmentationsplit.h"
+#include "segmentation/cubeloader.h"
+#include "segmentation/segmentation.h"
+#include "segmentation/segmentationsplit.h"
 #include "viewer.h"
 #include "renderer.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
-#include "segmentationsplit.h"
+
+#include <boost/math/constants/constants.hpp>
 
 #include <cstdlib>
 #include <unordered_set>
 
-EventModel::EventModel(QObject *parent) :
-    QObject(parent)
-{
-
-}
+EventModel::EventModel(QObject *parent) : QObject(parent) {}
 
 uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewportId) {
     return readVoxel(getCoordinateFromOrthogonalClick(x, y, viewportId));
@@ -71,7 +69,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         state->viewer->window->notifyUnsavedChanges();
     }
 
-    state->viewer->reslice_notify();
+    state->viewer->oc_reslice_notify();
 }
 
 void merging(QMouseEvent *event, const int vp) {
@@ -660,10 +658,6 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
                  , state->skeletonState->activeNode->position.y
                  , state->skeletonState->activeNode->position.z
                  , state->magnification);
-
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
-           state->skeletonState->defaultNodeRadius = radius;
-        }
     } else if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0) {
@@ -1007,16 +1001,16 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         else {
             switch(event->key()) {
             case Qt::Key_K:
-                emit rotationSignal(0., 0., 1., PI/180);
+                emit rotationSignal(0., 0., 1., boost::math::constants::pi<float>()/180);
                 break;
             case Qt::Key_L:
-                emit rotationSignal(0., 1., 0., PI/180);
+                emit rotationSignal(0., 1., 0., boost::math::constants::pi<float>()/180);
                 break;
             case Qt::Key_M:
-                emit rotationSignal(0., 0., 1., -PI/180);
+                emit rotationSignal(0., 0., 1., -boost::math::constants::pi<float>()/180);
                 break;
             case Qt::Key_Comma:
-                emit rotationSignal(0., 1., 0., -PI/180);
+                emit rotationSignal(0., 1., 0., -boost::math::constants::pi<float>()/180);
                 break;
             }
         }
@@ -1089,6 +1083,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
+        state->viewer->oc_reslice_notify();
     } else if(event->key() == Qt::Key_Delete) {
         if(control) {
             if(state->skeletonState->activeTree) {
@@ -1143,7 +1138,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->overlay = true;
-        state->viewer->reslice_notify();
+        state->viewer->oc_reslice_notify();
     }
     if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;

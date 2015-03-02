@@ -1,7 +1,8 @@
 #include "annotationwidget.h"
 
-#include "knossos-global.h"
 #include "GuiConstants.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
 
 #include <QLineEdit>
 #include <QDoubleSpinBox>
@@ -93,12 +94,12 @@ void AnnotationWidget::loadSettings() {
     commandsTab.lockingRadiusSpin->setValue(state->skeletonState->lockRadius);
 
     if(settings.value(LOCK_TO_NODES_WITH_COMMENT).isNull() == false) {
-        state->viewerState->gui->lockComment = settings.value(LOCK_TO_NODES_WITH_COMMENT).toString();
+        state->viewerState->lockComment = settings.value(LOCK_TO_NODES_WITH_COMMENT).toString();
     }
     else {
-        state->viewerState->gui->lockComment = "seed";
+        state->viewerState->lockComment = "seed";
     }
-    commandsTab.commentLockEdit->setText(QString(state->viewerState->gui->lockComment));
+    commandsTab.commentLockEdit->setText(state->viewerState->lockComment);
 
     settings.endGroup();
     if(visible) {

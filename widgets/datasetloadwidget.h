@@ -1,8 +1,8 @@
 #ifndef DATASETLOADWIDGET_H
 #define DATASETLOADWIDGET_H
 
-#include "knossos-global.h"
 #include "coordinate.h"
+#include "widgets/viewport.h"
 
 #include <QCheckBox>
 #include <QDialog>
@@ -29,12 +29,13 @@ class DatasetLoadWidget : public QDialog {
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    bool loadDataset(bool isGUI, bool loadOverlay = false, QString path = "");
+    bool loadDataset(bool loadOverlay = false, QString path = "");
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();
-    void processTableWidgetClicked();
-    void addRow(int row, int col);
+    void updateDatasetInfo();
+    void insertDatasetRow(const QString & dataset, const int pos);
+    void datasetCellChanged(int row, int col);
     void addClicked();
     void delClicked();
     struct Datasetinfo{
@@ -57,15 +58,13 @@ protected:
     QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
-    void MessageBoxInformation(QString message);
 
 signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetCompression();
-    void datasetChanged(Coordinate min, Coordinate max, bool showOverlays);
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
+    void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
     void breakLoaderSignal();
