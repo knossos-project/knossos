@@ -29,7 +29,8 @@
 
 #include <cstddef>
 
-struct floatCoordinate {
+class floatCoordinate {
+public:
     float x;
     float y;
     float z;

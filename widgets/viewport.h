@@ -131,7 +131,7 @@ struct vpConfig {
 
     uint edgeLength;
 
-    struct nodeListElement *draggedNode;
+    class nodeListElement *draggedNode;
 
     /* Stores the current view frustum planes */
     float frustum[6][4];

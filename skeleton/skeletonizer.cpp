@@ -107,12 +107,12 @@ nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
      *
      */
 
-    newElement = (nodeListElement*) malloc(sizeof(struct nodeListElement));
+    newElement = (nodeListElement*) malloc(sizeof(nodeListElement));
     if(newElement == NULL) {
         qDebug() << "Out of memory while trying to allocate memory for a new nodeListElement.";
         return NULL;
     }
-    memset(newElement, '\0', sizeof(struct nodeListElement));
+    memset(newElement, '\0', sizeof(nodeListElement));
 
     if((*currentNode) == NULL) {
         // Requested to add a node to a list that hasn't yet been started.
@@ -154,12 +154,12 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
     * has to be called from functions that do lock and NEVER directly.
     */
 
-    newElement = (segmentListElement*) malloc(sizeof(struct segmentListElement));
+    newElement = (segmentListElement*) malloc(sizeof(segmentListElement));
     if(newElement == NULL) {
         qDebug() << "Out of memory while trying to allocate memory for a new segmentListElement.";
         return NULL;
     }
-    memset(newElement, '\0', sizeof(struct segmentListElement));
+    memset(newElement, '\0', sizeof(segmentListElement));
     if(*currentSegment == NULL) {
         // Requested to start a new list
         *currentSegment = newElement;
@@ -1711,12 +1711,12 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
         return newElement;
     }
 
-    newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
+    newElement = (treeListElement*)malloc(sizeof(treeListElement));
     if(newElement == NULL) {
         qDebug() << "Out of memory while trying to allocate memory for a new treeListElement.";
         return NULL;
     }
-    memset(newElement, '\0', sizeof(struct treeListElement));
+    memset(newElement, '\0', sizeof(treeListElement));
 
     state->skeletonState->treeElements++;
 
@@ -2050,7 +2050,7 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     auto newTree = addTreeListElement(0, treeCol);
     // Splitting the connected component.
     std::vector<int> deletedTrees;
-    struct nodeListElement *last = NULL;
+    nodeListElement *last = NULL;
     for(auto node : visitedNodes) {
         // Removing node list element from its old position
         --node->correspondingTree->size;
@@ -2093,8 +2093,8 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeI
     std::string content_stdstr = content.toStdString();
     const char *content_cstr = content_stdstr.c_str();
 
-    newComment = (commentListElement*)malloc(sizeof(struct commentListElement));
-    memset(newComment, '\0', sizeof(struct commentListElement));
+    newComment = (commentListElement*)malloc(sizeof(commentListElement));
+    memset(newComment, '\0', sizeof(commentListElement));
 
     newComment->content = (char*)malloc(strlen(content_cstr) * sizeof(char) + 1);
     memset(newComment->content, '\0', strlen(content_cstr) * sizeof(char) + 1);
@@ -2529,7 +2529,7 @@ bool Skeletonizer::updateTreeColors() {
  * @return
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
-    struct segmentListElement *currentSegment = NULL;
+    segmentListElement *currentSegment = NULL;
     node->circRadius = node->radius;
 
     /* Any segment longer than the current circ radius?*/
@@ -2577,8 +2577,8 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
 #define RETVAL_MACRO(val, ptr) {if(NULL != ptr) {*ptr = val;} return;}
 
 void Skeletonizer::moveToPrevTree(bool *isSuccess) {
-    struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
-    struct nodeListElement *node;
+    treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
+    nodeListElement *node;
     if(state->skeletonState->activeTree == NULL) {
         RETVAL_MACRO(false, isSuccess);
     }
@@ -2611,9 +2611,8 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
 
 
 void Skeletonizer::moveToNextTree(bool *isSuccess) {
-
-    struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
-    struct nodeListElement *node;
+    treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
+    nodeListElement *node;
 
     if(state->skeletonState->activeTree == NULL) {
         RETVAL_MACRO(false, isSuccess);
@@ -2646,7 +2645,7 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
 }
 
 bool Skeletonizer::moveToPrevNode() {
-    struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
+    nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(prevNode, prevNode->nodeID);
         emit setRecenteringPositionSignal(prevNode->position.x,
@@ -2659,7 +2658,7 @@ bool Skeletonizer::moveToPrevNode() {
 }
 
 bool Skeletonizer::moveToNextNode() {
-    struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
+    nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(nextNode, nextNode->nodeID);
         emit setRecenteringPositionSignal(nextNode->position.x,

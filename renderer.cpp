@@ -227,7 +227,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str) {
     }
 }
 
-uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
+uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
     if(!state->skeletonState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
@@ -2038,9 +2038,9 @@ bool Renderer::setRotationState(uint setTo) {
  */
 
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
-    struct treeListElement *currentTree;
-    struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
-    struct segmentListElement *currentSegment;
+    treeListElement *currentTree;
+    nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
+    segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
     floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;

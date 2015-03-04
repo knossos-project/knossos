@@ -35,7 +35,10 @@
 
 class nodeListElement;
 class segmentListElement;
+class commentListElement;
 class treeListElement;
+
+struct stack;
 
 struct skeletonState {
     uint skeletonRevision;
@@ -46,18 +49,18 @@ struct skeletonState {
     bool unsavedChanges;
     int skeletonTime;
 
-    struct treeListElement *firstTree;
-    struct treeListElement *activeTree;
-    struct nodeListElement *activeNode;
+    treeListElement *firstTree;
+    treeListElement *activeTree;
+    nodeListElement *activeNode;
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
-    struct commentListElement *currentComment;
+    commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
 
-    struct stack *branchStack;
+    stack *branchStack;
 
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
@@ -182,8 +185,8 @@ public slots:
     static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
-    static void setColorFromNode(struct nodeListElement *node, color4F *color);
-    static void setRadiusFromNode(struct nodeListElement *node, float *radius);
+    static void setColorFromNode(nodeListElement *node, color4F *color);
+    static void setRadiusFromNode(nodeListElement *node, float *radius);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
@@ -237,7 +240,7 @@ public slots:
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
-    static bool updateCircRadius(struct nodeListElement *node);
+    static bool updateCircRadius(nodeListElement *node);
 
 public:
     enum TracingMode {

@@ -41,6 +41,7 @@
 #define SKELVP_RESET 5
 
 class Viewport;
+class segmentListElement;
 
 class Renderer : public QObject {
     Q_OBJECT
@@ -59,7 +60,7 @@ protected:
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     uint renderViewportBorders(uint currentVP);
 
-    uint renderSegPlaneIntersection(struct segmentListElement *segment);
+    uint renderSegPlaneIntersection(segmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);

@@ -23,9 +23,9 @@ class QSpinBox;
 class QSplitter;
 class QMenu;
 
-struct treeListElement;
-struct nodeListElement;
-struct segmentListElement;
+class treeListElement;
+class nodeListElement;
+class segmentListElement;
 
 class ToolsTreeviewTab : public QWidget
 {
