@@ -38,16 +38,17 @@ public:
 
 #include <boost/functional/hash.hpp>
 
-template<std::size_t = 0>
+template<std::size_t = 0>//tag
 class Coord {
+public:
     using Coordinate = Coord<>;
     using CoordOfCube = Coord<1>;
     using CoordInCube = Coord<2>;
-public:
     int x;
     int y;
     int z;
-    Coord(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
+
+    constexpr Coord(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
 
     bool operator==(const Coord & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
@@ -57,7 +58,7 @@ public:
      * This function calculates the coordinates of the datacube from pixel coordinates
      */
     static Coordinate Px2DcCoord(Coordinate pxCoordinate, int cubeEdgeLength) {
-        auto cubeCoord = pxCoordinate.cube(cubeEdgeLength);
+        const auto cubeCoord = pxCoordinate.cube(cubeEdgeLength);
         return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
     }
 
@@ -71,13 +72,6 @@ public:
 
     CoordInCube insideCube(const int size) const {
         return {x % size, y % size, z % size};
-    }
-
-    /** test with overloadable operator, maybe obsolet */
-    void operator=(Coordinate const&rhs) {
-        x = rhs.x;
-        y = rhs.y;
-        z = rhs.z;
     }
 
     Coordinate cap(const Coordinate & min, const Coordinate & max) const {
