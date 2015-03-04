@@ -36,9 +36,6 @@
 #include <queue>
 #include <set>
 
-#define SEGMENT_FORWARD true
-#define SEGMENT_BACKWARD false
-
 #define CATCH_RADIUS 10
 
 struct stack {

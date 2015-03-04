@@ -2202,7 +2202,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 while(currentSegment) {
 
                     //2 indicates a backward connection, which should not be rendered.
-                    if(currentSegment->flag == 2){
+                    if(currentSegment->flag == SEGMENT_BACKWARD){
                         currentSegment = currentSegment->next;
                         continue;
                     }

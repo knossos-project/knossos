@@ -43,6 +43,9 @@ public:
     QList<segmentListElement *> *getSegments();
 };
 
+#define SEGMENT_FORWARD true
+#define SEGMENT_BACKWARD false
+
 class segmentListElement {
 public:
     segmentListElement() {}
@@ -52,7 +55,6 @@ public:
     //Contains the reference to the segment inside the target node
     segmentListElement *reverseSegment;
 
-    // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
     bool flag;
     float length;
