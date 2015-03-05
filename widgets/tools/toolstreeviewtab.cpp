@@ -932,7 +932,7 @@ void ToolsTreeviewTab::recreateTreesTable() {
 
         treeTable->setRow(treeIndex, QString::number(currentTree->treeID)
                 , QColor(currentTree->color.r*255, currentTree->color.g*255, currentTree->color.b*255, 0.6*255)
-                , currentTree->comment == nullptr ? "" : currentTree->comment);
+                , currentTree->comment);
 
         treeIndex++;//this is here so it doesn’t get incremented on continue
     }
@@ -1169,9 +1169,6 @@ void ToolsTreeviewTab::insertTree(treeListElement *tree, TreeTable *table) {
     }
 
     if (table == treeTable && treeSearchField->text().length() > 0) {
-        if (tree->comment == nullptr) {
-            return;
-        }
         if (!matchesSearchString(treeSearchField->text(), tree->comment, treeRegExCheck->isChecked())) {
             return;
         }
@@ -1180,7 +1177,7 @@ void ToolsTreeviewTab::insertTree(treeListElement *tree, TreeTable *table) {
     table->insertRow(0);
     table->setRow(0, QString::number(tree->treeID)
             , QColor(tree->color.r*255, tree->color.g*255, tree->color.b*255, 0.6*255)
-            , tree->comment == nullptr ? "" : tree->comment);
+            , tree->comment);
 }
 
 void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table) {

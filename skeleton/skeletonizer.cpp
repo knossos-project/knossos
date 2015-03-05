@@ -400,7 +400,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("color.b", QString("-1."));
             xml.writeAttribute("color.a", QString("1."));
         }
-        if (currentTree->comment) {
+        if (currentTree->comment[0] != '\0') {
             xml.writeAttribute("comment", QString(currentTree->comment));
         }
 
