@@ -38,6 +38,7 @@
 #include "widgets/widgetcontainer.h"
 
 #include <QApplication>
+#include <QFileInfo>
 
 #include <cmath>
 #include <iostream>
@@ -77,7 +78,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
     }
-    QString txt = QString("[%1:%2 %3] \t%4%5").arg(context.file).arg(context.line).arg(context.function).arg(intro).arg(msg);
+    QString txt = QString("[%1:%2] \t%4%5").arg(QFileInfo(context.file).fileName()).arg(context.line).arg(intro).arg(msg);
     //open the file once
     static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
     outFile   << txt.toStdString() << std::endl;
