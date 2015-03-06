@@ -140,8 +140,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify);
 
-    QObject::connect(this, &Viewer::loadSignal, &Loader::Controller::singleton(), &Loader::Controller::load);
-
     baseTime.start();//keyRepeat timer
 }
 
@@ -1083,7 +1081,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     /* necessary? */
     recalcTextureOffsets();
 
-    sendLoadSignal();
+    loader_notify();
 
     emit updateDatasetOptionsWidgetSignal();
 
@@ -1374,7 +1372,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             break;
         }
         CPY_COORDINATE(state->loaderUserMoveViewportDirection, direction);
-        sendLoadSignal();
+        loader_notify();
     }
 
     emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
@@ -1775,7 +1773,7 @@ bool Viewer::recalcTextureOffsets() {
     return true;
 }
 
-void Viewer::sendLoadSignal() {
+void Viewer::loader_notify() {
     state->previousPositionX = state->currentPositionX;
 
     // Convert the coordinate to the right mag. The loader
