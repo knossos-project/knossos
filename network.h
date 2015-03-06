@@ -13,15 +13,6 @@ struct FtpElement {
     C_Element *cube;
 };
 
-class FtpThread : public QThread
-{
-public:
-    FtpThread(void *ctx);
-    void run();
-protected:
-    void *ctx;
-};
-
 class Network : public QObject {
 Q_OBJECT
     QNetworkAccessManager manager;

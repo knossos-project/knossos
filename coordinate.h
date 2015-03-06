@@ -62,6 +62,10 @@ public:
         return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
     }
 
+    Coordinate global2Legacy(int cubeEdgeLength) {
+        return Px2DcCoord(*this, cubeEdgeLength);
+    }
+
     constexpr Coordinate legacy2Global(const int cubeEdgeLength) const {
         return {x * cubeEdgeLength, y * cubeEdgeLength, z * cubeEdgeLength};
     }

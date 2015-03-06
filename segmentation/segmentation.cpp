@@ -86,7 +86,7 @@ Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFo
 }
 
 void Segmentation::clear() {
-    state->skeletonState->unsavedChanges |= hasObjects() || !loader->snappyCache.empty();//we will change smth
+    state->skeletonState->unsavedChanges |= hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
 
     selectedObjectIndices.clear();
     objects.clear();
@@ -96,7 +96,9 @@ void Segmentation::clear() {
     subobjects.clear();
     touched_subobject_id = 0;
 
-    loader->snappyCacheClear();
+    if (Loader::Controller::singleton().worker != nullptr) {
+        Loader::Controller::singleton().worker->snappyCacheClear();
+    }
     state->viewer->changeDatasetMag(DATA_SET);//reload segmentation cubes
 
     emit resetData();

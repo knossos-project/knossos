@@ -140,6 +140,8 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify);
 
+    QObject::connect(this, &Viewer::loadSignal, &Loader::Controller::singleton(), &Loader::Controller::load);
+
     baseTime.start();//keyRepeat timer
 }
 
@@ -1079,18 +1081,9 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     }
 
     /* necessary? */
-    state->viewerState->userMove = true;
     recalcTextureOffsets();
 
-    /*for(i = 0; i < Viewport::numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            qDebug("left upper tex px of VP %d is: %d, %d, %d",i,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
-        }
-    }*/
-    sendLoadSignal(upOrDownFlag);
+    sendLoadSignal();
 
     emit updateDatasetOptionsWidgetSignal();
 
@@ -1220,14 +1213,12 @@ void Viewer::run() {
             disableVsync();
             vpLowerRight->updateGL();
             disableVsync();
-
-            state->viewerState->userMove = false;
         }
     }
 }
 
 bool Viewer::updateViewerState() {
-   uint i;
+    uint i;
 
     for(i = 0; i < Viewport::numberViewports; i++) {
 
@@ -1333,7 +1324,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
 
     lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
-    viewerState->userMove = true;
     auto newPos = Coordinate(viewerState->currentPosition.x + x, viewerState->currentPosition.y + y, viewerState->currentPosition.z + z);
     if (Session::singleton().outsideMovementArea(newPos) == false) {
             viewerState->currentPosition.x += x;
@@ -1384,7 +1374,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             break;
         }
         CPY_COORDINATE(state->loaderUserMoveViewportDirection, direction);
-        sendLoadSignal(NO_MAG_CHANGE);
+        sendLoadSignal();
     }
 
     emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
@@ -1785,25 +1775,18 @@ bool Viewer::recalcTextureOffsets() {
     return true;
 }
 
-bool Viewer::sendLoadSignal(int magChanged) {
-    state->protectLoadSignal->lock();
-    state->loadSignal = true;
-    state->datasetChangeSignal = magChanged;
-
+void Viewer::sendLoadSignal() {
     state->previousPositionX = state->currentPositionX;
 
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
     // The int division is hopefully not too much of an issue here
-    SET_COORDINATE(state->currentPositionX,
-                   state->viewerState->currentPosition.x / state->magnification,
-                   state->viewerState->currentPosition.y / state->magnification,
-                   state->viewerState->currentPosition.z / state->magnification);
+    state->currentPositionX = state->viewerState->currentPosition;
+    state->currentPositionX.x /= state->magnification;
+    state->currentPositionX.y /= state->magnification;
+    state->currentPositionX.z /= state->magnification;
 
-    state->conditionLoadSignal->wakeOne();//wake up loader if it’s sleeping
-    state->protectLoadSignal->unlock();
-
-    return true;
+    Loader::Controller::singleton().startLoading();
 }
 
 /** Global interfaces  */
@@ -1884,9 +1867,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::loadAnnotationFiles, window, &MainWindow::openFileDispatch);
     QObject::connect(window->widgetContainer->taskManagementWidget, &TaskManagementWidget::autosaveSignal, window, &MainWindow::autosaveSlot);
     // -- end task management signals
-    // navigation widget signals --
-    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::sendLoadSignal, this, &Viewer::sendLoadSignal);
-    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::movementAreaChanged, this, &Viewer::updateCurrentPosition);
     // --- end widget signals
 }
 

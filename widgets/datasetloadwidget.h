@@ -29,6 +29,7 @@ class DatasetLoadWidget : public QDialog {
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
+    void gatherHeidelbrainDatasetInformation(QString &);
     bool loadDataset(QString path = "");
     void saveSettings();
     void loadSettings();
@@ -46,7 +47,7 @@ public:
         std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
     };
     Datasetinfo datasetinfo;
-    Datasetinfo getConfigFileInfo(const char *path);
+    Datasetinfo getConfigFileInfo(const QString &path);
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QStringList getRecentPathItems();
     QSpinBox *supercubeEdgeSpin;
@@ -66,8 +67,6 @@ signals:
     void updateDatasetCompression();
     void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();
-    void startLoaderSignal();
-    void breakLoaderSignal();
 public slots:
     void adaptMemoryConsumption();
     void cancelButtonClicked();

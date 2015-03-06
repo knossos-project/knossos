@@ -94,6 +94,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     localLayout->addLayout(hLayoutLine0);
     localLayout->addWidget(hDatasetInfoSplitter, 1);
     localLayout->addLayout(hLayoutLine1);
+    localLayout->addLayout(hLayoutCubeSize);
     localLayout->addLayout(hLayout2);
     localLayout->addWidget(&segmentationOverlayCheckbox);
     localLayout->addLayout(hLayout3);
@@ -176,10 +177,20 @@ void DatasetLoadWidget::delClicked(){
 void DatasetLoadWidget::updateDatasetInfo() {
     if (tableWidget->selectedItems().empty()) return;
 
+    const auto dataset = tableWidget->selectedItems().front()->text();
+
+    if (dataset.contains("google") || dataset.contains("oxalis")) {
+        infolabel->setText("wip loader");
+        return;
+    } else {//make sure supercubeedge is small again
+        supercubeEdgeSpin->setValue(supercubeEdgeSpin->value() * cubeEdgeSpin.value() / 128);
+        cubeEdgeSpin.setValue(128);
+        adaptMemoryConsumption();
+    }
+
     QString infotext;
-    const auto dataset = tableWidget->item(tableWidget->selectedItems().front()->row(), 0)->text();
     if (dataset != "") {
-        datasetinfo = getConfigFileInfo(dataset.toUtf8());
+        datasetinfo = getConfigFileInfo(dataset);
 
         if (datasetinfo.remote) {
             infotext = QString("<b>Remote Dataset</b><br>URL: %0%1<br>Boundary (x y z): %2 %3 %4<br>Compression: %5<br>cubeEdgeLength: %6<br>Magnification: %7<br>Scale (x y z): %8 %9 %10")
@@ -245,24 +256,12 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
-/* dataset can be selected in three ways:
- * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
- * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
- * 3. by specifying a .conf directly.
- */
-bool DatasetLoadWidget::loadDataset(QString path) {
-    if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
-        show();
-        return false;
-    } else if (path.isEmpty()) {
-        path = datasetPath;
-    }
-
+void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
     //check if we have a remote conf
     if(path.startsWith("http", Qt::CaseInsensitive)) {
         std::string tmp = downloadRemoteConfFile(path);
         path = QString::fromStdString(tmp);
-        if(path.isEmpty()) return false;
+        if(path.isEmpty()) return;
     }
 
     QFileInfo pathInfo;
@@ -298,7 +297,7 @@ bool DatasetLoadWidget::loadDataset(QString path) {
             }
             if(foundConf == false) {
                 QMessageBox::information(this, "Unable to load", "Could not find a dataset file (*.conf)");
-                return false;
+                return;
             }
         }
         else {
@@ -311,19 +310,9 @@ bool DatasetLoadWidget::loadDataset(QString path) {
         }
     }
 
-    state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
-    if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
-        return false;
-    }
-
-    // actually load the dataset
-    datasetPath = path;
-
-    emit breakLoaderSignal();
-
     if (!Knossos::readConfigFile(filePath.toStdString().c_str())) {
         QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(filePath));
-        return false;
+        return;
     }
 
     // we want state->path to hold the path to the dataset folder
@@ -335,15 +324,49 @@ bool DatasetLoadWidget::loadDataset(QString path) {
     strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
 
     knossos->commonInitStates();
+}
+
+/* dataset can be selected in three ways:
+ * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
+ * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
+ * 3. by specifying a .conf directly.
+ */
+bool DatasetLoadWidget::loadDataset(QString path) {
+    if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
+        show();
+        return false;
+    } else if (path.isEmpty()) {
+        path = datasetPath;
+    }
+
+    state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
+    if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
+        return false;
+    }
+
+    Loader::Controller::singleton().waitForWorkerThread();//we change variables the loader uses
+
+    // actually load the dataset
+    datasetPath = path;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = supercubeEdgeSpin->value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
 
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+    Loader::API api;
+    QString url;
+    Loader::CubeType raw_compression;
+    {
+        api = Loader::API::Heidelbrain;
+        gatherHeidelbrainDatasetInformation(path);
+        if (std::string(state->ftpHostName) != "") {//FIXME hack to check for remoteness of dataset
+            url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
+        } else {
+            url = QString("file://%1").arg(state->path);
+        }
+        raw_compression = state->compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : state->compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
+                : state->compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
     }
 
     applyGeometrySettings();
@@ -351,11 +374,11 @@ bool DatasetLoadWidget::loadDataset(QString path) {
     emit datasetSwitchZoomDefaults();
 
     // reset skeleton viewport
-    if(state->skeletonState->rotationcounter == 0) {
+    if (state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    emit startLoaderSignal();
+    Loader::Controller::singleton().restart(url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, state->name);
 
     emit updateDatasetCompression();
 
@@ -369,7 +392,7 @@ bool DatasetLoadWidget::loadDataset(QString path) {
     return true;
 }
 
-DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const char *path) {
+DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const QString & path) {
     Datasetinfo info;
     QString qpath{path};
 
