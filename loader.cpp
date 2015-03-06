@@ -375,12 +375,13 @@ void finishDecompression(Work & work, Func keep) {
 template<typename Func>
 void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func keep) {
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "before abortion";
-    worker.skipDownloads = true;//prevent start of new (non slice plane cube) downloads
+    worker.skipDownloads = true;//prevent start of new (non slice plane cube) downloads and decomps
     abortDownloads(worker.dcDownload, keep);
     abortDownloads(worker.ocDownload, keep);
     finishDecompression(worker.dcDecompression, keep);
     finishDecompression(worker.ocDecompression, keep);
     worker.skipDownloads = false;
+    QCoreApplication::processEvents();
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "after abortion";
 }
 
@@ -546,7 +547,7 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
             ++keepCount;
         }
     }
-    qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded";
+    qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
 }
 
 void Loader::Worker::cleanup() {
@@ -576,8 +577,8 @@ void Loader::Worker::cleanup() {
 
 void Loader::Controller::startLoading() {
     if (canStart) {
-        emit load();
         canStart = false;
+        emit load();
     }
 }
 
@@ -595,9 +596,13 @@ void Loader::Worker::downloadAndLoadCubes() {
     for (auto && todo : Dcoi) {//first elem of Dcoi is contentless
         if (--i >= 0) {
             Coordinate globalCoord(todo.x * state->cubeEdgeLength, todo.y * state->cubeEdgeLength, todo.z * state->cubeEdgeLength);
-            if (currentlyVisible(globalCoord)) {
+            state->protectCube2Pointer->lock();
+            const auto * const dcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
+            const auto * const ocCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
+            state->protectCube2Pointer->unlock();
+            if (currentlyVisible(globalCoord) && dcCubePtr == nullptr) {
                 visibleCubes.emplace_back(globalCoord);
-            } else {
+            } else if (ocCubePtr == nullptr){
                 cacheCubes.emplace_back(globalCoord);
             }
         }
@@ -626,7 +631,7 @@ void Loader::Worker::downloadAndLoadCubes() {
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord].reset(reply);
-            QObject::connect(reply, &QNetworkReply::finished, [this, &ping, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, ping, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (reply->error() == QNetworkReply::NoError) {
                     auto fini = ping.elapsed();
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "ping" << fini;
@@ -673,7 +678,7 @@ void Loader::Worker::downloadAndLoadCubes() {
                                 freeSlots.emplace_back(currentSlot);
                             }
 
-                            qDebug() << static_cast<int>(type) << cubeHash.size();
+                            qDebug() << static_cast<int>(type) << cubeHash.size() << "hash" << freeSlots.size() << "free";
                             decompressions.erase(globalCoord);
                         });
                         decompressions[globalCoord].reset(watcher);
@@ -684,7 +689,7 @@ void Loader::Worker::downloadAndLoadCubes() {
                     }
                 } else {
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
-                    //downloads.erase(globalCoord);
+                    //downloads.erase(globalCoord);//evil³
                 }
             });
         } else {
@@ -694,19 +699,8 @@ void Loader::Worker::downloadAndLoadCubes() {
 
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : visibleCubes) {
-        state->protectCube2Pointer->lock();
-        auto * delDcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
-        auto * delOcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
-        state->protectCube2Pointer->unlock();
-
-        if (delDcCubePtr == nullptr) {
-            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
-        } else {
-            qDebug() << "dc already loaded";
-        }
-        if (state->overlay && delOcCubePtr == nullptr) {
-            state->protectCube2Pointer->lock();
-            state->protectCube2Pointer->unlock();
+        startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
+        if (state->overlay) {
             startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
         }
     }
@@ -716,15 +710,13 @@ void Loader::Worker::downloadAndLoadCubes() {
     for (auto globalCoord : cacheCubes) {
         //don’t continue downloads if they were interrupted
         //causes a stack underflow in LoaderWorker::abortDownloadsFinishDecompression
-        if (!skipDownloads) {
-            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
-            if (state->overlay) {
-                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
-            }
+        startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
+        if (state->overlay) {
+            startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
         }
     }
 
-    qDebug() << "starting done" << visibleCubes.size() << cacheCubes.size() << time.elapsed();
-    qDebug() << "current" << state->Dc2Pointer[state->loaderMagnification].size() << state->Oc2Pointer[state->loaderMagnification].size();
+    qDebug() << "starting done" << visibleCubes.size() << "+" << cacheCubes.size() << time.elapsed() << "ms";
+    qDebug() << "current hash" << state->Dc2Pointer[state->loaderMagnification].size() << state->Oc2Pointer[state->loaderMagnification].size();
     Loader::Controller::singleton().canStart = true;
 }
