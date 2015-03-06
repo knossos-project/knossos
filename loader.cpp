@@ -53,7 +53,7 @@ bool inRange(const int value, const int min, const int max) {
 }
 
 bool insideCurrentSupercube(const Coordinate & coord) {
-    const int halfSupercube = state->cubeEdgeLength * static_cast<int>(std::trunc(state->M * 0.5) + 1);
+    const int halfSupercube = state->cubeEdgeLength * state->M * 0.5;
     const int xcube = state->currentPositionX.x - state->currentPositionX.x % state->cubeEdgeLength;
     const int ycube = state->currentPositionX.y - state->currentPositionX.y % state->cubeEdgeLength;
     const int zcube = state->currentPositionX.z - state->currentPositionX.z % state->cubeEdgeLength;
