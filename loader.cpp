@@ -385,25 +385,25 @@ void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func kee
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "after abortion";
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QNetworkReply & reply, const Loader::CubeType type, const std::atomic_bool & skipDownloads) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, const std::atomic_bool & skipDownloads) {
     bool success = false;
     if (skipDownloads) {
         return {success, currentSlot};
     }
+    QBuffer buffer(&data);
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
-        const auto actualSize = reply.read(reinterpret_cast<char*>(currentSlot), expectedSize);
+        const auto actualSize = buffer.read(reinterpret_cast<char *>(currentSlot), expectedSize);
         success = actualSize == expectedSize;
         qDebug() << "raw cube" << success;
     } else if (type == Loader::CubeType::RAW_JPG) {
-        auto buffer = reply.readAll();
         int width, height, jpegSubsamp;
 
         auto jpegDecompressor = tjInitDecompress();
         const bool doFirst = jpegDecompressor != nullptr;
-        const bool doSecond = doFirst && (tjDecompressHeader2(jpegDecompressor, reinterpret_cast<unsigned char *>(buffer.data()), buffer.size(), &width, &height, &jpegSubsamp) == 0);
-        const bool doThird = doSecond && (tjDecompress2(jpegDecompressor, reinterpret_cast<unsigned char *>(buffer.data()), buffer.size(), reinterpret_cast<unsigned char *>(currentSlot), width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT) == 0);
+        const bool doSecond = doFirst && (tjDecompressHeader2(jpegDecompressor, reinterpret_cast<unsigned char *>(data.data()), data.size(), &width, &height, &jpegSubsamp) == 0);
+        const bool doThird = doSecond && (tjDecompress2(jpegDecompressor, reinterpret_cast<unsigned char *>(data.data()), data.size(), reinterpret_cast<unsigned char *>(currentSlot), width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT) == 0);
 
         if (doThird) {
             success = true;
@@ -418,20 +418,17 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QNetworkReply & reply,
     } else if (type == Loader::CubeType::RAW_J2K || type == Loader::CubeType::RAW_JP2_6) {
         QTemporaryFile file(QDir::tempPath() + "/XXXXXX.jp2");
         success = file.open();
-        const auto size = reply.size();
-        success &= file.write(reply.readAll()) == size;
+        success &= file.write(data) == data.size();
         file.close();
         success &= EXIT_SUCCESS == jp2_decompress_main(file.fileName().toUtf8().data(), reinterpret_cast<char*>(currentSlot), state->cubeBytes);
         qDebug() << "jpeg2000" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
-        const auto actualSize = reply.read(reinterpret_cast<char*>(currentSlot), expectedSize);
+        const auto actualSize = buffer.read(reinterpret_cast<char*>(currentSlot), expectedSize);
         success = actualSize == expectedSize;
         qDebug() << "seg cube" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
-        QByteArray data = reply.readAll();
-        QBuffer buffer(&data);//QuaZip needs a random access QIODevice
-        QuaZip archive(&buffer);
+        QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
         if (archive.open(QuaZip::mdUnzip)) {
             archive.goToFirstFile();
             QuaZipFile file(&archive);
@@ -649,7 +646,7 @@ void Loader::Worker::downloadAndLoadCubes() {
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
 
-                        auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(*reply), type, std::cref(skipDownloads)));
+                        auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::cref(skipDownloads)));
 
                         auto * watcher = new QFutureWatcher<DecompressionResult>;
                         QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
