@@ -157,6 +157,7 @@ void DatasetLoadWidget::addClicked(){
                 }
 
                 state->viewerState->renderInterval = FAST;
+                return;
             }
         }
     }
@@ -168,6 +169,7 @@ void DatasetLoadWidget::delClicked(){
             if(sender() == tableWidget->cellWidget(row, col)) {
                 //delete row
                 tableWidget->removeRow(row);
+                return;
             }
         }
     }
