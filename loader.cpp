@@ -573,12 +573,11 @@ void Loader::Worker::cleanup() {
 
 void Loader::Controller::startLoading() {
     if (worker != nullptr) {
-        worker->skipDownloads = true;//interrupt workings
-        emit load();
+        emit load(++loadingNr);
     }
 }
 
-void Loader::Worker::downloadAndLoadCubes() {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     QTime time;
     time.start();
 
@@ -635,13 +634,10 @@ void Loader::Worker::downloadAndLoadCubes() {
             downloads[globalCoord].reset(reply);
             QObject::connect(reply, &QNetworkReply::finished, [this, ping, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (reply->error() == QNetworkReply::NoError) {
-                    auto fini = ping.elapsed();
+                    const auto fini = ping.elapsed();
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "ping" << fini;
-                    //return;
 
-                    const bool freeSlotsAvailable = !freeSlots.empty();
-
-                    if (freeSlotsAvailable) {
+                    if (!freeSlots.empty()) {
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
 
@@ -701,7 +697,7 @@ void Loader::Worker::downloadAndLoadCubes() {
 
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : visibleCubes) {
-        if (!skipDownloads) {
+        if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
             if (state->overlay) {
                 startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
@@ -714,7 +710,7 @@ void Loader::Worker::downloadAndLoadCubes() {
     for (auto globalCoord : cacheCubes) {
         //don’t continue downloads if they were interrupted
         //causes a stack underflow in LoaderWorker::abortDownloadsFinishDecompression
-        if (!skipDownloads) {
+        if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
             if (state->overlay) {
                 startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
@@ -722,6 +718,6 @@ void Loader::Worker::downloadAndLoadCubes() {
         }
     }
 
-    qDebug() << "starting done" << visibleCubes.size() << "+" << cacheCubes.size() << time.elapsed() << "ms" << skipDownloads << "skip";
+    qDebug() << "starting done" << visibleCubes.size() << "+" << cacheCubes.size() << time.elapsed() << "ms";
     qDebug() << "current hash" << state->Dc2Pointer[state->loaderMagnification].size() << state->Oc2Pointer[state->loaderMagnification].size();
 }

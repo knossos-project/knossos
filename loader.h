@@ -172,7 +172,7 @@ signals:
 
 public slots:
     void cleanup();
-    void downloadAndLoadCubes();
+    void downloadAndLoadCubes(const unsigned int loadingNr);
 };
 
 class Controller : public QObject {
@@ -181,6 +181,7 @@ class Controller : public QObject {
     friend class Loader::Worker;
 public:
     std::unique_ptr<Loader::Worker> worker;
+    std::atomic_uint loadingNr{0};
     static Controller & singleton(){
         static Loader::Controller loader;
         return loader;
@@ -202,7 +203,7 @@ public:
     }
     void startLoading();
 signals:
-    void load();
+    void load(const unsigned int loadingNr);
 };
 
 }
