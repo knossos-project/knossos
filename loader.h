@@ -148,11 +148,11 @@ private:
     template<typename Func>
     friend void abortDownloadsFinishDecompression(Loader::Worker&, Func);
 
-    QUrl baseUrl;
-    API api;
-    CubeType typeDc;
-    CubeType typeOc;
-    QString experimentName;
+    const QUrl baseUrl;
+    const API api;
+    const CubeType typeDc;
+    const CubeType typeOc;
+    const QString experimentName;
 public://matsch
     std::atomic_bool skipDownloads{false};
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;

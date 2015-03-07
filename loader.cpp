@@ -606,17 +606,18 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     }
 
     auto startDownload = [this](const Coordinate globalCoord, const CubeType type, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
-        auto apiSwitch = [](const Coordinate globalCoord, const CubeType type, const QUrl & baseUrl){
-            if (baseUrl.host().contains(QString("heidelbrain")) || baseUrl.scheme() == "file") {
-                return knossosCubeUrl(baseUrl, QString(state->name), globalCoord.cube(state->cubeEdgeLength), state->magnification, type);
-            } else if (baseUrl.host().contains(QString("googleapis"))) {
+        auto apiSwitch = [this](const Coordinate globalCoord, const CubeType type){
+            switch (api) {
+            case Loader::API::GoogleBrainmaps:
                 return googleCubeUrl(baseUrl, globalCoord, state->loaderMagnification, state->cubeEdgeLength, type);
-            } else if (baseUrl.host().contains(QString("oxalis"))) {
-                return webKnossosCubeUrl(baseUrl, globalCoord, state->loaderMagnification+1, state->cubeEdgeLength, type);
+            case Loader::API::Heidelbrain:
+                return knossosCubeUrl(baseUrl, QString(state->name), globalCoord.cube(state->cubeEdgeLength), state->magnification, type);
+            case Loader::API::WebKnossos:
+                return webKnossosCubeUrl(baseUrl, globalCoord, state->loaderMagnification + 1, state->cubeEdgeLength, type);
             }
-            return QUrl();
+            throw std::runtime_error("unknown value for Loader::API");
         };
-        QUrl dcUrl = apiSwitch(globalCoord, type, baseUrl);
+        QUrl dcUrl = apiSwitch(globalCoord, type);
         qDebug() << "url: " << dcUrl.toString();
 
         state->protectCube2Pointer->lock();
