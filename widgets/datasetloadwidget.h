@@ -36,8 +36,6 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
-    void addClicked();
-    void delClicked();
     struct Datasetinfo{
         Coordinate boundary;
         floatCoordinate scale{0,0,0};
