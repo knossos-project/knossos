@@ -118,11 +118,19 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     tableWidget->insertRow(row);
 
     QPushButton *addDs = new QPushButton("…");
-    QObject::connect(addDs, &QPushButton::clicked, this, &DatasetLoadWidget::addClicked);
+    QObject::connect(addDs, &QPushButton::clicked, [this, row](){
+        QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+
+        if (!selectFile.isEmpty()) {
+            QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
+            tableWidget->setItem(row, 0, t);
+        }
+    });
 
     QPushButton *delDs = new QPushButton("Del");
-    QObject::connect(delDs, &QPushButton::clicked, this, &DatasetLoadWidget::delClicked);
-
+    QObject::connect(delDs, &QPushButton::clicked, [this, row](){
+        tableWidget->removeRow(row);
+    });
     QTableWidgetItem *t = new QTableWidgetItem(dataset);
     tableWidget->setItem(row, 0, t);
     tableWidget->setCellWidget(row, 1, addDs);
@@ -139,38 +147,6 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
         tableWidget->selectRow(row);//select new item
 
         tableWidget->blockSignals(false);
-    }
-}
-
-void DatasetLoadWidget::addClicked(){
-    for(int row = 0; row < tableWidget->rowCount(); ++row) {
-        for(int col = 0; col < tableWidget->columnCount(); ++col) {
-            if(sender() == tableWidget->cellWidget(row, col)) {
-                //open dialog
-                state->viewerState->renderInterval = SLOW;
-                QApplication::processEvents();
-                QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
-
-                if(selectFile != "") {
-                    qDebug() << selectFile;
-                    QTableWidgetItem *t = new QTableWidgetItem(selectFile);
-                    tableWidget->setItem(row, 0, t);
-                }
-
-                state->viewerState->renderInterval = FAST;
-            }
-        }
-    }
-}
-
-void DatasetLoadWidget::delClicked(){
-    for(int row = 0; row < tableWidget->rowCount(); ++row) {
-        for(int col = 0; col < tableWidget->columnCount(); ++col) {
-            if(sender() == tableWidget->cellWidget(row, col)) {
-                //delete row
-                tableWidget->removeRow(row);
-            }
-        }
     }
 }
 

@@ -113,10 +113,11 @@ std::string downloadRemoteConfFile(QString url) {
     curl_easy_setopt(eh, CURLOPT_CONNECTTIMEOUT, 10);
 
     curl_easy_perform(eh);
-    curl_easy_cleanup(eh);
 
     long httpCode;
     curl_easy_getinfo(eh, CURLINFO_HTTP_CODE , &httpCode);
+
+    curl_easy_cleanup(eh);
 
     if(elem->cube->ftp_data_fh != NULL) {
         fclose(elem->cube->ftp_data_fh);
