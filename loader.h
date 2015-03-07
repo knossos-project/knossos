@@ -180,7 +180,6 @@ class Controller : public QObject {
     QThread workerThread;
     friend class Loader::Worker;
 public:
-    std::atomic_bool canStart{true};
     std::unique_ptr<Loader::Worker> worker;
     static Controller & singleton(){
         static Loader::Controller loader;
@@ -199,7 +198,6 @@ public:
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         worker->moveToThread(&workerThread);
         QObject::connect(this, &Loader::Controller::load, worker.get(), &Loader::Worker::downloadAndLoadCubes);
-        canStart = true;
         workerThread.start();
     }
     void startLoading();
