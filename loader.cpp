@@ -597,13 +597,15 @@ void Loader::Worker::downloadAndLoadCubes() {
         if (--i >= 0) {
             Coordinate globalCoord(todo.x * state->cubeEdgeLength, todo.y * state->cubeEdgeLength, todo.z * state->cubeEdgeLength);
             state->protectCube2Pointer->lock();
-            const auto * const dcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
-            const auto * const ocCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength));
+            const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+            const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
             state->protectCube2Pointer->unlock();
-            if (currentlyVisible(globalCoord) && dcCubePtr == nullptr) {
-                visibleCubes.emplace_back(globalCoord);
-            } else if (ocCubePtr == nullptr){
-                cacheCubes.emplace_back(globalCoord);
+            if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
+                if (currentlyVisible(globalCoord)) {
+                    visibleCubes.emplace_back(globalCoord);
+                } else {
+                    cacheCubes.emplace_back(globalCoord);
+                }
             }
         }
     }
@@ -622,7 +624,11 @@ void Loader::Worker::downloadAndLoadCubes() {
         QUrl dcUrl = apiSwitch(globalCoord, type, baseUrl);
         qDebug() << "url: " << dcUrl.toString();
 
-        if (downloads.find(globalCoord) == std::end(downloads)) {
+        state->protectCube2Pointer->lock();
+        const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+        state->protectCube2Pointer->unlock();
+
+        if (downloads.find(globalCoord) == std::end(downloads) && cubeNotAlreadyLoaded) {
             QTime ping;
             ping.start();
             auto request = QNetworkRequest(dcUrl);
