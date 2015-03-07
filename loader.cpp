@@ -389,12 +389,11 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
     if (skipDownloads) {
         return {success, currentSlot};
     }
-    QBuffer buffer(&data);
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
-        const auto actualSize = buffer.read(reinterpret_cast<char *>(currentSlot), expectedSize);
-        success = actualSize == expectedSize;
+        std::copy(std::begin(data), std::end(data), currentSlot);
+        success = data.size() == expectedSize;
         qDebug() << "raw cube" << success;
     } else if (type == Loader::CubeType::RAW_JPG) {
         int width, height, jpegSubsamp;
@@ -423,10 +422,11 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
         qDebug() << "jpeg2000" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
-        const auto actualSize = buffer.read(reinterpret_cast<char*>(currentSlot), expectedSize);
-        success = actualSize == expectedSize;
+        std::copy(std::begin(data), std::end(data), currentSlot);
+        success = data.size() == expectedSize;
         qDebug() << "seg cube" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
+        QBuffer buffer(&data);
         QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
         if (archive.open(QuaZip::mdUnzip)) {
             archive.goToFirstFile();
