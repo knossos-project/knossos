@@ -54,15 +54,15 @@ extern "C" {
 #include <turbojpeg.h>
 #endif
 
-bool inRange(const int value, const int min, const int max) {
+constexpr bool inRange(const int value, const int min, const int max) {
     return value >= min && value < max;
 }
 
-bool insideCurrentSupercube(const Coordinate & coord) {
-    const int halfSupercube = state->cubeEdgeLength * state->M * 0.5;
-    const int xcube = state->currentPositionX.x - state->currentPositionX.x % state->cubeEdgeLength;
-    const int ycube = state->currentPositionX.y - state->currentPositionX.y % state->cubeEdgeLength;
-    const int zcube = state->currentPositionX.z - state->currentPositionX.z % state->cubeEdgeLength;
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
+    const int halfSupercube = cubeSize * cubesPerDimension * 0.5;
+    const int xcube = center.x - center.x % cubeSize;
+    const int ycube = center.y - center.y % cubeSize;
+    const int zcube = center.z - center.z % cubeSize;
     bool valid = true;
     valid &= inRange(coord.x, xcube - halfSupercube, xcube + halfSupercube);
     valid &= inRange(coord.y, ycube - halfSupercube, ycube + halfSupercube);
@@ -70,16 +70,23 @@ bool insideCurrentSupercube(const Coordinate & coord) {
     return valid;
 }
 
-bool currentlyVisible(const Coordinate & coord) {
-    bool valid = insideCurrentSupercube(coord);
-    const int xmin = state->currentPositionX.x - state->currentPositionX.x % state->cubeEdgeLength;
-    const int ymin = state->currentPositionX.y - state->currentPositionX.y % state->cubeEdgeLength;
-    const int zmin = state->currentPositionX.z - state->currentPositionX.z % state->cubeEdgeLength;
-    const bool xvalid = valid & inRange(coord.x, xmin, xmin + state->cubeEdgeLength);
-    const bool yvalid = valid & inRange(coord.y, ymin, ymin + state->cubeEdgeLength);
-    const bool zvalid = valid & inRange(coord.z, zmin, zmin + state->cubeEdgeLength);
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
+    bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
+    const int xmin = center.x - center.x % cubeSize;
+    const int ymin = center.y - center.y % cubeSize;
+    const int zmin = center.z - center.z % cubeSize;
+    const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize);
+    const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize);
+    const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize);
     return xvalid || yvalid || zvalid;
 }
+//generalizing this needs polymorphic lambdas or return type deduction
+auto currentlyVisibleWrap = [](const Coordinate & coord){
+    return currentlyVisible(coord, state->currentPositionX, state->M, state->cubeEdgeLength);
+};
+auto insideCurrentSupercubeWrap = [](const Coordinate & coord){
+    return insideCurrentSupercube(coord, state->currentPositionX, state->M, state->cubeEdgeLength);
+};
 
 int calc_nonzero_sign(float x) {
     if (x > 0) {
@@ -552,12 +559,11 @@ void Loader::Worker::cleanup() {
     // the protectLoadSignal mutex.
     // DcoiFromPos fills the Dcoi list with all datacubes that
     // we want to be in memory, given our current position.
-
-    abortDownloadsFinishDecompression(*this, &currentlyVisible);
+    abortDownloadsFinishDecompression(*this, currentlyVisibleWrap);
     //[](const CoordOfCube &){return false;}
     //&currentlyVisible
-    unloadCubes(state->Dc2Pointer[prevLoaderMagnification], freeDcSlots, &insideCurrentSupercube);
-    unloadCubes(state->Oc2Pointer[prevLoaderMagnification], freeOcSlots, &insideCurrentSupercube, [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
+    unloadCubes(state->Dc2Pointer[prevLoaderMagnification], freeDcSlots, insideCurrentSupercubeWrap);
+    unloadCubes(state->Oc2Pointer[prevLoaderMagnification], freeOcSlots, insideCurrentSupercubeWrap, [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
             snappyCacheAdd(cubeCoord, remSlotPtr);
             //remove from work queue
@@ -591,7 +597,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
             const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
             state->protectCube2Pointer->unlock();
             if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
-                if (currentlyVisible(globalCoord)) {
+                if (currentlyVisibleWrap(globalCoord)) {
                     visibleCubes.emplace_back(globalCoord);
                 } else {
                     cacheCubes.emplace_back(globalCoord);
@@ -649,7 +655,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                                     state->protectCube2Pointer->lock();
                                     cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = result.second;
                                     state->protectCube2Pointer->unlock();
-                                    if (currentlyVisible(globalCoord)) {
+                                    if (currentlyVisibleWrap(globalCoord)) {
                                         switch (type) {
                                         case Loader::CubeType::RAW_UNCOMPRESSED:
                                         case Loader::CubeType::RAW_JPG:
