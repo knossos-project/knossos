@@ -154,7 +154,6 @@ private:
     const CubeType typeOc;
     const QString experimentName;
 public://matsch
-    std::atomic_bool skipDownloads{false};
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
     std::vector<char> bogusOc;

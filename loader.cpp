@@ -375,20 +375,15 @@ void finishDecompression(Work & work, Func keep) {
 template<typename Func>
 void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func keep) {
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "before abortion";
-    worker.skipDownloads = true;//prevent start of new (non slice plane cube) downloads and decomps
     abortDownloads(worker.dcDownload, keep);
     abortDownloads(worker.ocDownload, keep);
     finishDecompression(worker.dcDecompression, keep);
     finishDecompression(worker.ocDecompression, keep);
-    worker.skipDownloads = false;
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "after abortion";
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, const std::atomic_bool & skipDownloads) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type) {
     bool success = false;
-    if (skipDownloads) {
-        return {success, currentSlot};
-    }
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
@@ -642,7 +637,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
 
-                        auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::cref(skipDownloads)));
+                        auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type));
 
                         auto * watcher = new QFutureWatcher<DecompressionResult>;
                         QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
