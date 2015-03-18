@@ -12,6 +12,7 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QJsonDocument>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -192,6 +193,77 @@ void DatasetLoadWidget::updateDatasetInfo() {
     }
 
     infolabel->setText(infotext);
+}
+
+bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
+    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
+
+    auto jmap = json_conf.object();
+    auto boundary_json = jmap["geometrys"].toArray()[0].toObject()["volumeSize"].toObject();
+
+    auto bx = boundary_json["x"].toString().toInt();
+    auto by = boundary_json["y"].toString().toInt();
+    auto bz = boundary_json["z"].toString().toInt();
+
+    auto scale_json = jmap["geometrys"].toArray()[0].toObject()["pixelSize"].toObject();
+
+    auto sx = static_cast<float>(scale_json["x"].toDouble());
+    auto sy = static_cast<float>(scale_json["y"].toDouble());
+    auto sz = static_cast<float>(scale_json["z"].toDouble());
+
+    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
+        return false;
+    }
+
+    state->boundary = {bx, by, bz};
+    state->scale = {sx, sy, sz};
+
+    state->path[0] = '\0'; //dont't check for other mags
+    knossos->commonInitStates();
+    state->highestAvailableMag = std::pow(2,(jmap["geometrys"].toArray().size()-1)); //highest google mag
+    qDebug() << "POWER: " << std::pow(2,(jmap["geometrys"].toArray().size()-1));
+
+    state->compressionRatio = 1000;
+
+    state->overlay = false; //google does not have this
+
+    return true;
+}
+
+bool DatasetLoadWidget::parseWebKnossosJson(const QString & json_raw) {
+    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
+
+    auto jmap = json_conf.object();
+
+    auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
+
+    auto bx = boundary_json["width"].toInt();
+    auto by = boundary_json["height"].toInt();
+    auto bz = boundary_json["depth"].toInt();
+
+    auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
+
+    auto sx = static_cast<float>(scale_json[0].toDouble());
+    auto sy = static_cast<float>(scale_json[1].toDouble());
+    auto sz = static_cast<float>(scale_json[2].toDouble());
+
+    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
+        return false;
+    }
+
+    state->boundary = {bx, by, bz};
+
+    state->scale = {sx, sy, sz};
+
+    state->path[0] = '\0'; //dont't check for other mags
+    knossos->commonInitStates();
+    state->highestAvailableMag = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toObject()[0].toInt();
+
+    state->compressionRatio = 0;
+
+    state->overlay = false; //webknossos does not have this
+
+    return true;
 }
 
 QStringList DatasetLoadWidget::getRecentPathItems() {

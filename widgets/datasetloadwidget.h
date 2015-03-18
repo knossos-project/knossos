@@ -2,6 +2,7 @@
 #define DATASETLOADWIDGET_H
 
 #include "coordinate.h"
+#include "loader.h"
 #include "widgets/viewport.h"
 
 #include <QCheckBox>
@@ -37,6 +38,8 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
+    bool parseGoogleJson(const QString & json_raw);
+    bool parseWebKnossosJson(const QString & json_raw);
     struct Datasetinfo{
         Coordinate boundary;
         floatCoordinate scale{0,0,0};
