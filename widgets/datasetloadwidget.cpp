@@ -408,7 +408,7 @@ bool DatasetLoadWidget::loadDataset(QString path) {
     {
         api = Loader::API::Heidelbrain;
         gatherHeidelbrainDatasetInformation(path);
-        if (std::string(state->ftpHostName) != "") {//FIXME hack to check for remoteness of dataset
+        if (state->loadMode == LM_FTP) {
             url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
         } else {
             url = QString("file:///%1").arg(state->path);
