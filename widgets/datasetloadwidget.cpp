@@ -411,7 +411,7 @@ bool DatasetLoadWidget::loadDataset(QString path) {
         if (std::string(state->ftpHostName) != "") {//FIXME hack to check for remoteness of dataset
             url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
         } else {
-            url = QString("file://%1").arg(state->path);
+            url = QString("file:///%1").arg(state->path);
         }
         raw_compression = state->compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : state->compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
                 : state->compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
