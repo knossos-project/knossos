@@ -455,7 +455,7 @@ QUrl knossosCubeUrl(QUrl base, QString && experimentName, const CoordOfCube & co
             .arg(coord.y, 4, 10, QChar('0'))
             .arg(coord.z, 4, 10, QChar('0'));
     auto filename = QString(("%1_mag%2_x%3_y%4_z%5%6"))//2012-03-07_AreaX14_mag1_x0000_y0000_z0000.j2k
-            .arg(experimentName.remove("_mag1"))
+            .arg(experimentName.section(QString("_mag"), 0, 0))
             .arg(magnification)
             .arg(coord.x, 4, 10, QChar('0'))
             .arg(coord.y, 4, 10, QChar('0'))
