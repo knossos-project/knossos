@@ -7,6 +7,7 @@
 #include <QHttpMultiPart>
 #include <QMessageBox>
 #include <QNetworkReply>
+#include <QProgressDialog>
 #include <QSemaphore>
 
 #include <curl/curl.h>
@@ -19,7 +20,26 @@
 #include <unistd.h>
 #endif
 
-Network::Network(const QObject *) {}
+QString Network::downloadFileProgressDialog(const QUrl & url, QWidget * parent = nullptr) {
+    auto * reply = manager.get(QNetworkRequest(url));
+    QString content;
+    QEventLoop pause;
+    QObject::connect(reply, &QNetworkReply::finished, [reply, content, &pause]() {
+        reply->deleteLater();
+        pause.exit();
+    });
+    QProgressDialog progress("Downloading files...", "Abort", 0, 100, parent);
+    progress.setModal(true);
+    QObject::connect(&progress, &QProgressDialog::canceled, reply, &QNetworkReply::abort);
+    QObject::connect(reply, &QNetworkReply::downloadProgress, &progress, &QProgressDialog::setValue);
+    progress.show();
+    pause.exec();
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << url << reply->errorString();
+        return "";
+    }
+    return reply->readAll();
+}
 
 void Network::submitSegmentationJob(const QString & path) {
    QHttpPart part;
@@ -38,7 +58,7 @@ void Network::submitSegmentationJob(const QString & path) {
    QNetworkRequest request(QUrl(job.submitPath));
    auto reply = manager.post(request, multiPart);
    multiPart->setParent(reply);
-   connect(reply, &QNetworkReply::finished, [reply]() {
+   QObject::connect(reply, &QNetworkReply::finished, [reply]() {
        QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
        QMessageBox verificationBox(QMessageBox::Information, "Your verification", content);
        verificationBox.exec();

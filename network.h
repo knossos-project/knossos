@@ -13,18 +13,15 @@ struct FtpElement {
     C_Element *cube;
 };
 
-class Network : public QObject {
-Q_OBJECT
+class Network {
     QNetworkAccessManager manager;
-
 public:
-    explicit Network(const QObject *parent = nullptr);
-
     static Network & singleton() {
         static Network network;
         return network;
     }
 
+    QString downloadFileProgressDialog(const QUrl & url, QWidget *parent);
     void submitSegmentationJob(const QString &filename);
 };
 
