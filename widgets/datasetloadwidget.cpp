@@ -118,20 +118,31 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row) {
     tableWidget->insertRow(row);
 
-    QPushButton *addDs = new QPushButton("…");
-    QObject::connect(addDs, &QPushButton::clicked, [this, row](){
-        QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+    auto rowFromCell = [this](int column, QPushButton * const button){
+        for(int row = 0; row < tableWidget->rowCount(); ++row) {
+            if (button == tableWidget->cellWidget(row, column)) {
+                return row;
+            }
+        }
+        return -1;
+    };
 
+    QPushButton *addDs = new QPushButton("…");
+    QObject::connect(addDs, &QPushButton::clicked, [this, rowFromCell, addDs](){
+        QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
         if (!selectFile.isEmpty()) {
             QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
+            const int row = rowFromCell(1, addDs);
             tableWidget->setItem(row, 0, t);
         }
     });
 
     QPushButton *delDs = new QPushButton("Del");
-    QObject::connect(delDs, &QPushButton::clicked, [this, row](){
+    QObject::connect(delDs, &QPushButton::clicked, [this, rowFromCell, delDs](){
+        const int row = rowFromCell(2, delDs);
         tableWidget->removeRow(row);
     });
+
     QTableWidgetItem *t = new QTableWidgetItem(dataset);
     tableWidget->setItem(row, 0, t);
     tableWidget->setCellWidget(row, 1, addDs);
