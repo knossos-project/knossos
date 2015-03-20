@@ -88,6 +88,19 @@ auto insideCurrentSupercubeWrap = [](const Coordinate & coord){
     return insideCurrentSupercube(coord, state->currentPositionX, state->M, state->cubeEdgeLength);
 };
 
+decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
+    if (worker != nullptr) {
+        worker->snappyMutex.lock();
+        //signal to run in loader thread
+        QTimer::singleShot(0, worker.get(), &Loader::Worker::snappyCacheFlush);
+        worker->snappyFlushCondition.wait(&worker->snappyMutex);
+        worker->snappyMutex.unlock();
+        return worker->snappyCache;
+    } else {
+        return decltype(Loader::Worker::snappyCache)();//{} is not working
+    }
+}
+
 int calc_nonzero_sign(float x) {
     if (x > 0) {
         return 1;
@@ -281,7 +294,62 @@ Loader::Worker::~Worker() {
     freeOcSlots.clear();
 }
 
-void Loader::Worker::snappyCacheAdd(const CoordOfCube & cubeCoord, const char * cube) {
+template<typename CubeHash, typename Slots, typename Keep>
+void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep) {
+    unloadCubes(loadedCubes, freeSlots, keep, [](const CoordOfCube &, char *){});
+}
+
+template<typename CubeHash, typename Slots, typename Keep, typename UnloadHook>
+void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHook todo) {
+    int totalCount = 0, unloadCount = 0, keepCount = 0;
+
+    auto copy = loadedCubes;
+    for (auto && elem : copy) {
+//        qDebug() << "cube" << elem.first.x << elem.first.y << elem.first.z;
+        ++totalCount;
+        if (!keep(elem.first.legacy2Global(state->cubeEdgeLength))) {
+            todo(CoordOfCube(elem.first.x, elem.first.y, elem.first.z), elem.second);
+//            qDebug() << "unload" << elem.first.x << elem.first.y << elem.first.z;
+            ++unloadCount;
+            auto * slot = elem.second;
+            state->protectCube2Pointer->lock();
+            loadedCubes.erase(elem.first);
+            state->protectCube2Pointer->unlock();
+
+            freeSlots.emplace_back(slot);
+        } else {
+//            qDebug() << "keep" << state->currentPositionX.x/128. << state->currentPositionX.y/128. << state->currentPositionX.z/128. << elem.first.x << elem.first.y << elem.first.z;
+            ++keepCount;
+        }
+    }
+    qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
+}
+
+void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube & cubeCoord, const char * cube) {
+    snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
+
+    if (insideCurrentSupercubeWrap(cubeCoord.legacy2Global(state->cubeEdgeLength))) {
+        state->protectCube2Pointer->lock();
+        auto ocIt = state->Oc2Pointer[state->loaderMagnification].find(cubeCoord.cube2Legacy());
+        char * currentSlot = nullptr;
+        if (ocIt != std::end(state->Oc2Pointer[state->loaderMagnification])) {
+            currentSlot = ocIt->second;
+        } else if (!freeOcSlots.empty()) {
+            currentSlot = freeOcSlots.front();
+            freeOcSlots.pop_front();
+            state->Oc2Pointer[state->loaderMagnification][cubeCoord.cube2Legacy()] = currentSlot;
+        } else {
+            qDebug() << "no slots for snappy add";
+        }
+        std::copy(cube, cube + state->cubeBytes * OBJID_BYTES, currentSlot);
+        state->protectCube2Pointer->unlock();
+        if (currentlyVisibleWrap(cubeCoord.legacy2Global(state->cubeEdgeLength))) {
+            emit oc_reslice_notify();
+        }
+    }
+}
+
+void Loader::Worker::snappyCacheAddRaw(const CoordOfCube & cubeCoord, const char * cube) {
     //insert empty string into snappy cache
     auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
@@ -289,21 +357,33 @@ void Loader::Worker::snappyCacheAdd(const CoordOfCube & cubeCoord, const char * 
 }
 
 void Loader::Worker::snappyCacheClear() {
+    //unload all modified cubes
+    unloadCubes(state->Oc2Pointer[state->loaderMagnification], freeOcSlots, [this](const Coordinate & cubeCoord){
+        const bool unflushed = OcModifiedCacheQueue.find(cubeCoord.cube(state->cubeEdgeLength)) != std::end(OcModifiedCacheQueue);
+        const bool flushed = snappyCache.find(cubeCoord.cube(state->cubeEdgeLength)) != std::end(snappyCache);
+        return !unflushed && !flushed;//only keep cubes which are neither in snappy cache nor in modified queue
+    });
     OcModifiedCacheQueue.clear();
     snappyCache.clear();
+    Loader::Controller::singleton().startLoading();//a bit of a detour…
 }
 
 void Loader::Worker::snappyCacheFlush() {
+    snappyMutex.lock();
+
     for (const auto & cubeCoord : OcModifiedCacheQueue) {
         state->protectCube2Pointer->lock();
         auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
         state->protectCube2Pointer->unlock();
         if (cube != nullptr) {
-            snappyCacheAdd(cubeCoord, cube);
+            snappyCacheAddRaw(cubeCoord, cube);
         }
     }
     //clear work queue
     OcModifiedCacheQueue.clear();
+
+    snappyFlushCondition.wakeAll();
+    snappyMutex.unlock();
 }
 
 void Loader::Worker::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification) {
@@ -317,14 +397,8 @@ void Loader::Worker::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHas
         auto * delDcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[prevLoaderMagnification], coord);
         auto * delOcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[prevLoaderMagnification], coord);
         state->protectCube2Pointer->unlock();
-/*
-        //keep cubes only if both are available
-        if (delDcCubePtr != nullptr && (!state->overlay || delOcCubePtr != nullptr)) {
-            continue;
-        }
-*/
-        //reclaim cube slots from
 
+        //reclaim cube slots from
         //data
         if(delDcCubePtr != nullptr) {
             state->protectCube2Pointer->lock();
@@ -332,12 +406,11 @@ void Loader::Worker::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHas
             state->protectCube2Pointer->unlock();
             freeDcSlots.emplace_back(delDcCubePtr);
         }
-
         //overlay
         if(delOcCubePtr != nullptr) {
             const auto cubeCoord = CoordOfCube(coord.x, coord.y, coord.z);
             if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-                snappyCacheAdd(cubeCoord, delOcCubePtr);
+                snappyCacheAddRaw(cubeCoord, delOcCubePtr);
                 //remove from work queue
                 OcModifiedCacheQueue.erase(cubeCoord);
             }
@@ -518,37 +591,6 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
     return base;
 }
 
-template<typename CubeHash, typename Slots, typename Keep>
-void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep) {
-    unloadCubes(loadedCubes, freeSlots, keep, [](const CoordOfCube &, char *){});
-}
-
-template<typename CubeHash, typename Slots, typename Keep, typename UnloadHook>
-void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHook todo) {
-    int totalCount = 0, unloadCount = 0, keepCount = 0;
-
-    auto copy = loadedCubes;
-    for (auto && elem : copy) {
-//        qDebug() << "cube" << elem.first.x << elem.first.y << elem.first.z;
-        ++totalCount;
-        if (!keep(elem.first.legacy2Global(state->cubeEdgeLength))) {
-            todo(CoordOfCube(elem.first.x, elem.first.y, elem.first.z), elem.second);
-//            qDebug() << "unload" << elem.first.x << elem.first.y << elem.first.z;
-            ++unloadCount;
-            auto * slot = elem.second;
-            state->protectCube2Pointer->lock();
-            loadedCubes.erase(elem.first);
-            state->protectCube2Pointer->unlock();
-
-            freeSlots.emplace_back(slot);
-        } else {
-//            qDebug() << "keep" << state->currentPositionX.x/128. << state->currentPositionX.y/128. << state->currentPositionX.z/128. << elem.first.x << elem.first.y << elem.first.z;
-            ++keepCount;
-        }
-    }
-    qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
-}
-
 void Loader::Worker::cleanup() {
     qDebug() << "cleanup";
 
@@ -566,7 +608,7 @@ void Loader::Worker::cleanup() {
     unloadCubes(state->Dc2Pointer[prevLoaderMagnification], freeDcSlots, insideCurrentSupercubeWrap);
     unloadCubes(state->Oc2Pointer[prevLoaderMagnification], freeOcSlots, insideCurrentSupercubeWrap, [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-            snappyCacheAdd(cubeCoord, remSlotPtr);
+            snappyCacheAddRaw(cubeCoord, remSlotPtr);
             //remove from work queue
             OcModifiedCacheQueue.erase(cubeCoord);
         }
@@ -575,8 +617,22 @@ void Loader::Worker::cleanup() {
 
 void Loader::Controller::startLoading() {
     if (worker != nullptr) {
-        emit load(++loadingNr);
+        emit loadSignal(++loadingNr);
     }
+}
+
+bool isOverlay(const Loader::CubeType type) {
+    switch (type) {
+    case Loader::CubeType::RAW_UNCOMPRESSED:
+    case Loader::CubeType::RAW_JPG:
+    case Loader::CubeType::RAW_J2K:
+    case Loader::CubeType::RAW_JP2_6:
+        return false;
+    case Loader::CubeType::SEGMENTATION_UNCOMPRESSED:
+    case Loader::CubeType::SEGMENTATION_SZ_ZIP:
+        return true;
+    };
+    throw std::runtime_error("unknown value for Loader::CubeType");
 }
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
@@ -589,25 +645,44 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     //split dcoi into slice planes and rest
     std::vector<Coordinate> visibleCubes;
     std::vector<Coordinate> cacheCubes;
-    int i = 10000;
     for (auto && todo : Dcoi) {//first elem of Dcoi is contentless
-        if (--i >= 0) {
-            Coordinate globalCoord(todo.x * state->cubeEdgeLength, todo.y * state->cubeEdgeLength, todo.z * state->cubeEdgeLength);
-            state->protectCube2Pointer->lock();
-            const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
-            const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
-            state->protectCube2Pointer->unlock();
-            if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
-                if (currentlyVisibleWrap(globalCoord)) {
-                    visibleCubes.emplace_back(globalCoord);
-                } else {
-                    cacheCubes.emplace_back(globalCoord);
-                }
+        Coordinate globalCoord(todo.x * state->cubeEdgeLength, todo.y * state->cubeEdgeLength, todo.z * state->cubeEdgeLength);
+        state->protectCube2Pointer->lock();
+        const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+        const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+        state->protectCube2Pointer->unlock();
+        if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
+            if (currentlyVisibleWrap(globalCoord)) {
+                visibleCubes.emplace_back(globalCoord);
+            } else {
+                cacheCubes.emplace_back(globalCoord);
             }
         }
     }
 
     auto startDownload = [this](const Coordinate globalCoord, const CubeType type, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
+        if (isOverlay(type)) {
+            auto snappyIt = snappyCache.find(globalCoord.cube(state->cubeEdgeLength));
+            if (snappyIt != std::end(snappyCache)) {
+                if (!freeSlots.empty()) {
+                    auto * currentSlot = freeSlots.front();
+                    freeSlots.pop_front();
+                    //directly uncompress snappy cube into the OC slot
+                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract";
+                    snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
+                    state->protectCube2Pointer->lock();
+                    cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = currentSlot;
+                    state->protectCube2Pointer->unlock();
+                    if (currentlyVisibleWrap(globalCoord)) {
+                        emit oc_reslice_notify();
+                    };
+                } else {
+                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "no slots";
+                }
+                return;
+            }
+        }
+
         auto apiSwitch = [this](const Coordinate globalCoord, const CubeType type){
             switch (api) {
             case Loader::API::GoogleBrainmaps:
@@ -636,60 +711,57 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord].reset(reply);
             QObject::connect(reply, &QNetworkReply::finished, [this, ping, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
+                if (freeSlots.empty()) {
+                    qDebug() << "no slots";
+                    downloads.erase(globalCoord);
+                    return;
+                }
+                auto * currentSlot = freeSlots.front();
+                freeSlots.pop_front();
                 if (reply->error() == QNetworkReply::NoError) {
                     const auto fini = ping.elapsed();
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "ping" << fini;
 
-                    if (!freeSlots.empty()) {
-                        auto * currentSlot = freeSlots.front();
-                        freeSlots.pop_front();
+                    auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type));
 
-                        auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type));
+                    auto * watcher = new QFutureWatcher<DecompressionResult>;
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, &downloads, globalCoord, watcher, type, currentSlot](){
+                        downloads.erase(globalCoord);
+                        if (!watcher->isCanceled()) {
+                            auto result = watcher->result();
 
-                        auto * watcher = new QFutureWatcher<DecompressionResult>;
-                        QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
-                            if (!watcher->isCanceled()) {
-                                auto result = watcher->result();
-
-                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << result.first << static_cast<void*>(result.second);
-                                if (result.first) {//decompression successful
-                                    state->protectCube2Pointer->lock();
-                                    cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = result.second;
-                                    state->protectCube2Pointer->unlock();
-                                    if (currentlyVisibleWrap(globalCoord)) {
-                                        switch (type) {
-                                        case Loader::CubeType::RAW_UNCOMPRESSED:
-                                        case Loader::CubeType::RAW_JPG:
-                                        case Loader::CubeType::RAW_J2K:
-                                        case Loader::CubeType::RAW_JP2_6:
-                                            emit dc_reslice_notify();
-                                            break;
-                                        case Loader::CubeType::SEGMENTATION_UNCOMPRESSED:
-                                        case Loader::CubeType::SEGMENTATION_SZ_ZIP:
-                                            emit oc_reslice_notify();
-                                            break;
-                                        };
+                            qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << result.first << static_cast<void*>(result.second);
+                            if (result.first) {//decompression successful
+                                state->protectCube2Pointer->lock();
+                                cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = result.second;
+                                state->protectCube2Pointer->unlock();
+                                if (currentlyVisibleWrap(globalCoord)) {
+                                    if (isOverlay(type)) {
+                                        emit oc_reslice_notify();
+                                    } else {
+                                        emit dc_reslice_notify();
                                     }
-                                } else {
-                                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "put back";
-                                    freeSlots.emplace_back(result.second);
                                 }
                             } else {
-                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
-                                freeSlots.emplace_back(currentSlot);
+                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "failed → fill";
+                                freeSlots.emplace_back(result.second);
                             }
+                        } else {
+                            qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
+                            freeSlots.emplace_back(currentSlot);
+                        }
 
-                            qDebug() << static_cast<int>(type) << cubeHash.size() << "hash" << freeSlots.size() << "free";
-                            decompressions.erase(globalCoord);
-                        });
-                        decompressions[globalCoord].reset(watcher);
-                        watcher->setFuture(future);
-                    } else {
-                        qDebug() << "no slots";
-                        downloads.erase(globalCoord);
-                    }
-                } else {
+                        qDebug() << static_cast<int>(type) << cubeHash.size() << "hash" << freeSlots.size() << "free";
+                        decompressions.erase(globalCoord);
+                    });
+                    decompressions[globalCoord].reset(watcher);
+                    watcher->setFuture(future);
+                } else {//download error → fill
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                    std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
+                    state->protectCube2Pointer->lock();
+                    cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = currentSlot;
+                    state->protectCube2Pointer->unlock();
                     //downloads.erase(globalCoord);//evil³
                 }
             });

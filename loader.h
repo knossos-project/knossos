@@ -29,6 +29,7 @@
 
 #include <QCoreApplication>
 #include <QFutureWatcher>
+#include <QMutex>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QObject>
@@ -36,6 +37,7 @@
 #include <QThread>
 #include <QThreadPool>
 #include <QTimer>
+#include <QWaitCondition>
 
 #include <boost/multi_array.hpp>
 
@@ -119,7 +121,7 @@ private:
     QThreadPool decompressionPool;//let pool be alive just after ~Worker
     QNetworkAccessManager qnam;
 
-    template <typename T>
+    template<typename T>
     using ptr = std::unique_ptr<T>;
     using ReplyPtr = ptr<QNetworkReply>;
     using DecompressionResult = std::pair<bool, char*>;
@@ -142,7 +144,7 @@ private:
     std::vector<Coordinate> DcoiFromPos();
     void removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
-    void snappyCacheAdd(const CoordOfCube &, const char *cube);
+    void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
 
     template<typename Func>
@@ -157,9 +159,12 @@ public://matsch
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
     std::vector<char> bogusOc;
+    QMutex snappyMutex;
+    QWaitCondition snappyFlushCondition;
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
+    void snappyCacheAddSnappy(const CoordOfCube &, const char *cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
@@ -197,14 +202,20 @@ public:
         waitForWorkerThread();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         worker->moveToThread(&workerThread);
-        QObject::connect(this, &Loader::Controller::load, worker.get(), &Loader::Worker::downloadAndLoadCubes);
+        QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
+        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy);
         workerThread.start();
     }
     void startLoading();
+    template<typename... Args>
+    void snappyCacheAddSnappy(Args&&... args) {
+        emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
+    }
+    decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
-    void load(const unsigned int loadingNr);
+    void loadSignal(const unsigned int loadingNr);
+    void snappyCacheAddSnappySignal(const CoordOfCube &, const char *cube);
 };
+}//namespace Loader
 
-}
-
-#endif // LOADER_H
+#endif//LOADER_H

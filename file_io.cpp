@@ -52,12 +52,10 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             if (cubeRegEx.exactMatch(fileInside)) {
                 file.open(QIODevice::ReadOnly);
                 auto cube = file.readAll();
-                qDebug() << "cube size" << cube.size();
                 const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
-                Loader::Controller::singleton().worker->snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
+                Loader::Controller::singleton().snappyCacheAddSnappy(cubeCoord, cube.data());
             }
         }
-        state->viewer->changeDatasetMag(DATA_SET);//load from snappy cache
     } else {
         qDebug() << "opening" << filename << "for reading failed";
     }
@@ -107,9 +105,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
         }
         QTime time;
         time.start();
-        Loader::Controller::singleton().worker->snappyCacheFlush();
-        qDebug() << "flush" << time.restart();
-        for (const auto & pair : Loader::Controller::singleton().worker->snappyCache) {
+        for (const auto & pair : Loader::Controller::singleton().getAllModifiedCubes()) {
             QuaZipFile file_write(&archive_write);
             const auto cubeCoord = pair.first;
             const auto name = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(state->name).arg(1).arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);

@@ -97,9 +97,9 @@ void Segmentation::clear() {
     touched_subobject_id = 0;
 
     if (Loader::Controller::singleton().worker != nullptr) {
-        Loader::Controller::singleton().worker->snappyCacheClear();
+        //dispatch to loader thread, original cubes are reloaded automatically
+        QTimer::singleShot(0, Loader::Controller::singleton().worker.get(), &Loader::Worker::snappyCacheClear);
     }
-    state->viewer->changeDatasetMag(DATA_SET);//reload segmentation cubes
 
     emit resetData();
     emit resetSelection();

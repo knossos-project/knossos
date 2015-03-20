@@ -70,6 +70,10 @@ public:
         return {x * cubeEdgeLength, y * cubeEdgeLength, z * cubeEdgeLength};
     }
 
+    constexpr Coordinate cube2Legacy() const {
+        return {x, y, z};
+    }
+
     CoordOfCube cube(const int size) const {
         return {x / size, y / size, z / size};
     }
@@ -91,6 +95,7 @@ using CoordOfCube = Coord<1>;
 using CoordInCube = Coord<2>;
 
 Q_DECLARE_METATYPE(Coordinate)
+Q_DECLARE_METATYPE(CoordOfCube)
 Q_DECLARE_METATYPE(floatCoordinate)
 
 namespace std {
