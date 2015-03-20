@@ -83,13 +83,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(tru
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
     memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
 
-    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y))
-        state->skeletonState->volBoundary = state->boundary.y * 2;
-    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-
     state->skeletonState->unsavedChanges = false;
 }
 

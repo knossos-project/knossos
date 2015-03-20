@@ -427,6 +427,16 @@ bool DatasetLoadWidget::loadDataset(QString path) {
         raw_compression = state->compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : state->compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
                 : state->compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
     }
+    //skeleton vp boundary
+    if ((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+    }
+    if ((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y)) {
+        state->skeletonState->volBoundary = state->boundary.y * 2;
+    }
+    if ((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+    }
 
     applyGeometrySettings();
 
