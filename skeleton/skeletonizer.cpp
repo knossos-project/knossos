@@ -1735,6 +1735,7 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
         }
     }
     clearTreeSelection();
+    newElement->render = true;
     newElement->selected = true;
     state->skeletonState->selectedTrees.push_back(newElement);
 

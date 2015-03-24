@@ -1,6 +1,7 @@
 #include "treetable.h"
 
 #include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
 
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -23,6 +24,40 @@ void TreeTable::setRow(const int row, const QString & treeId, const QColor & tre
     item->setBackgroundColor(treeColor);
     setItem(row, TreeTable::TREE_COLOR, item);
     setItem(row, TreeTable::TREE_COMMENT, new QTableWidgetItem(cmt));
+    QWidget *pWidget = new QWidget();
+    QCheckBox *pCheckBox = new QCheckBox();
+    pCheckBox->setChecked(Skeletonizer::singleton().findTreeByTreeID(treeId.toInt())->render);
+    QHBoxLayout *pLayout = new QHBoxLayout(pWidget);
+    pLayout->addWidget(pCheckBox);
+    pLayout->setAlignment(Qt::AlignCenter);
+    pWidget->setLayout(pLayout);
+
+    QTableWidget::setCellWidget(row, TreeTable::TREE_COMMENT + 1, pWidget);
+
+    auto rowFromCell = [this](int column, QCheckBox * const checkbox) {
+        for(int row = 0; row < this->rowCount(); ++row) {
+            if(checkbox == this->cellWidget(row, column)->layout()->itemAt(0)->widget()) {
+                return row;
+            }
+
+        }
+
+        return -1;
+    };
+
+    QObject::connect(pCheckBox, &QCheckBox::clicked, [this, rowFromCell, pCheckBox](){
+        const int row = rowFromCell(TreeTable::TREE_RENDER, pCheckBox);
+        if(row == -1) {
+            qDebug() << "Checkbox couldn't be located!";
+            return;
+        }
+
+        const int treeID = this->item(row, 0)->text().toInt();
+        auto a = Skeletonizer::singleton().findTreeByTreeID(treeID);
+        a->render = pCheckBox->isChecked();
+
+        emit cellClicked(row, TreeTable::TREE_RENDER);
+    });
 }
 
 void TreeTable::dropEvent(QDropEvent * event) {

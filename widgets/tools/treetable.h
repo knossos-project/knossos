@@ -7,7 +7,7 @@ class TreeTable : public QTableWidget {
     Q_OBJECT
 public:
     enum {
-        TREE_ID, TREE_COLOR, TREE_COMMENT, TREE_COLS
+        TREE_ID, TREE_COLOR, TREE_COMMENT, TREE_RENDER,TREE_COLS
     };
     explicit TreeTable(QWidget *parent);
     int droppedOnTreeID;

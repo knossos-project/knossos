@@ -138,6 +138,9 @@ public slots:
 
     void updateLabels();
     void resetData();
+
+    void showSelectedTrees();
+    void hideSelectedTrees();
 };
 
 #endif // TREEVIEWTAB_H
