@@ -1136,52 +1136,28 @@ void MainWindow::resizeEvent(QResizeEvent *) {
     }
 }
 
-
 void MainWindow::dropEvent(QDropEvent *event) {
-    if(event->mimeData()->hasFormat("text/uri-list")) {
-        QList<QUrl> urls = event->mimeData()->urls();
-        QStringList fileNames;
-        QStringList skippedFiles;
-        for(QUrl url : urls) {
-            QString fileName(url.toLocalFile());
-
-            if (fileName.endsWith("k.zip") || fileName.endsWith(".nml")) {
-                fileNames.append(fileName);
-            } else {
-                skippedFiles.append(fileName);
-            }
-        }
-        if(skippedFiles.empty() == false) {
-            QString info = "Skipped following files with invalid type (must be *.k.zip or *.nml):<ul>";
-            int count = 0;
-            for(QString file : skippedFiles) {
-                if(count == 10) {
-                    info += "...";
-                    break;
-                }
-                count++;
-                info += "<li>" + file + "</li>";
-            }
-            info += "</ul>";
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText(info);
-            prompt.exec();
-        }
-        if(fileNames.empty() == false) {
-            openFileDispatch(fileNames);
-            event->accept();
-        }
+    QStringList files;
+    for (auto && url : event->mimeData()->urls()) {
+        files.append(url.toLocalFile());
     }
-}
-
-void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
+    openFileDispatch(files);
     event->accept();
 }
 
-void MainWindow::dragLeaveEvent(QDragLeaveEvent *) {
+void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
+    if(event->mimeData()->hasUrls()) {
+        QList<QUrl> urls = event->mimeData()->urls();
+        for (auto && url : urls) {
+            qDebug() << url;//in case its no working
+            if (url.isLocalFile()) {
+                const auto fileName(url.toLocalFile());
+                if (fileName.endsWith(".k.zip") || fileName.endsWith(".nml")) {
+                    event->accept();
+                }
+            }
+        }
+    }
 }
 
 void MainWindow::taskSlot() {

@@ -58,7 +58,6 @@ class MainWindow : public QMainWindow {
 
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
-    void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
 
