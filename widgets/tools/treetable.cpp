@@ -16,6 +16,8 @@ void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
 }
 
 void TreeTable::setRow(const int row, const QString & treeId, const QColor & treeColor, const QString & cmt) {
+    this->setRowHeight(row, 34);
+
     auto item = new QTableWidgetItem(treeId);
     item->setFlags(item->flags() & ~Qt::ItemIsEditable);
     setItem(row, TreeTable::TREE_ID, item);
