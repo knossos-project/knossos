@@ -4,7 +4,13 @@
 #include "taskloginwidget.h"
 
 #include <QDialog>
+#include <QFormLayout>
+#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
 #include <QWidget>
 
 class QPushButton;
@@ -24,36 +30,43 @@ public:
     void resetSession(QString message);
 
 protected:
-    QLabel *statusLabel;
-    QLabel *loggedAsLabel;
-    QLabel *currentTaskLabel;
-    QPushButton *logoutButton;
-    QPushButton *loadLastSubmitButton;
-    QPushButton *startNewTaskButton;
-    QPushButton *submitButton;
-    TaskLoginWidget *taskLoginWidget;
+    QLabel statusLabel;
 
-    QDialog *submitDialog;
-    QLineEdit *submitDialogCommentField;
-    QCheckBox *submitDialogFinalCheckbox;
-    QPushButton *submitDialogCancelButton;
-    QPushButton *submitDialogOkButton;
+    QVBoxLayout mainLayout;
+    QHBoxLayout hLayout;
+    QHBoxLayout userNameLayout;
+    QFormLayout formLayout;
+    QGridLayout gridLayout;
 
-    QLabel categoryDescriptionLabel;
-    QLabel taskCommentLabel;
+    QLabel userNameLabel;
+    QLabel taskLabel;
+    QLabel descriptionLabel;
+    QLabel commentLabel;
+
+    QPushButton logoutButton{"Logout"};
+    QPushButton startNewTaskButton{"Start new Task"};
+    QPushButton loadLastSubmitButton{"Load last Submit"};
+    QLineEdit submitCommentEdit;
+    QPushButton submitButton{"Submit"};
+    QPushButton submitFinalButton{"Final Submit"};
+
+    TaskLoginWidget * const taskLoginWidget;
 
 signals:
     void autosaveSignal();
     bool loadAnnotationFiles(QStringList fileNames);
 
 public slots:
+    void refresh();
     void setDescription(QString description);
     void setComment(QString comment);
 
-    void submitDialogOk();
+    void submitFinal();
+    void submit(const bool final = false);
 
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
+    void loginButtonClicked(const QString & username, const QString & password);
     void logoutButtonClicked();
 };
 

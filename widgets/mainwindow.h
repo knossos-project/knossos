@@ -174,9 +174,6 @@ public slots:
     void saveCustomPreferencesSlot();
     void defaultPreferencesSlot();
 
-    /* window menu */
-    void taskSlot();
-
     /* toolbar slots */
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();

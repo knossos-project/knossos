@@ -162,7 +162,7 @@ void MainWindow::createToolbars() {
     addToolBar(basicToolbar);
     addToolBar(&defaultToolbar);
 
-    defaultToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    defaultToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(refresh()));
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
@@ -620,7 +620,7 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(refresh()));
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
 
@@ -1159,93 +1159,6 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
         }
     }
 }
-
-void MainWindow::taskSlot() {
-    CURLcode code;
-    long httpCode = 0;
-
-    // build url to send to
-    const auto url = state->taskState->host + "/knossos/session/";
-    // prepare http response object
-    httpResponse response;
-    response.length = 0;
-    response.content = (char*)calloc(1, response.length+1);
-    setCursor(Qt::WaitCursor);
-    bool result = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 2);
-    setCursor(Qt::ArrowCursor);
-    if(result == false) {
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    if(code != CURLE_OK) {
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    if(httpCode != 200) {
-        widgetContainer->taskLoginWidget->setResponse(QString("<font color='red'>%1</font>").arg(response.content));
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    // find out, which user is logged in
-    QXmlStreamReader xml(response.content);
-    if(xml.hasError()) { // response is broke.
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        return;
-    }
-    xml.readNextStartElement();
-    if(xml.isStartElement() == false) { // response is broke.
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    bool activeUser = false;
-    if(xml.name() == "session") {
-        QXmlStreamAttributes attributes = xml.attributes();
-        QString attribute = attributes.value("username").toString();
-        if(attribute.isNull() == false) {
-            activeUser = true;
-            widgetContainer->taskManagementWidget->setActiveUser(attribute);
-            widgetContainer->taskManagementWidget->setResponse("Hello " + attribute + "!");
-        }
-        attribute = attributes.value("task").toString();
-        if(attribute.isNull() == false) {
-            widgetContainer->taskManagementWidget->setTask(attribute);
-        }
-        attribute = attributes.value("taskFile").toString();
-        if(attribute.isNull() == false) {
-            state->taskState->taskFile = attribute;
-        }
-        attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
-        if(attribute.isNull() == false) {
-            emit updateTaskDescriptionSignal(attribute);
-        }
-        attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
-        if(attribute.isNull() == false) {
-            emit updateTaskCommentSignal(attribute);
-        }
-    }
-    if(activeUser) {
-        widgetContainer->taskManagementWidget->show();
-        free(response.content);
-        return;
-    }
-    widgetContainer->taskLoginWidget->setResponse("Please login.");
-    widgetContainer->taskLoginWidget->show();
-    this->widgetContainer->taskLoginWidget->adjustSize();
-    if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
-        this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(centralWidget()->pos()));
-
-    free(response.content);
-    return;
-}
-
 
 void MainWindow::resetViewports() {
     resizeViewports(centralWidget()->width(), centralWidget()->height());

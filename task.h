@@ -6,15 +6,18 @@
 #include <curl/curl.h>
 
 struct httpResponse {
-    char *content;
-    size_t length;
+    char * content = static_cast<char*>(calloc(1, sizeof(char)));//realloc in writeHttpResponse
+    size_t length = 0;
+    ~httpResponse() {
+        free(content);
+    }
     // for retrieving information from response headers. Useful for responses with file content
     // the information should be terminated with a ';' for sucessful parsing
     QString copyInfoFromHeader(const QString & info) const {
         QString value(content);
         value.remove(0, value.indexOf(info));//remove everything before the key
         value.remove(0, value.indexOf('=')+1);//remove key and equals sign
-        return value.mid(0, value.indexOf(';'));//return everythin before the semicolon
+        return value.mid(0, value.indexOf(';'));//return everything before the semicolon
     }
 };
 

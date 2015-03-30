@@ -5,80 +5,51 @@
 #include "widgets/mainwindow.h"
 
 #include <QByteArray>
-#include <QCheckBox>
 #include <QDir>
-#include <QFormLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QVBoxLayout>
 
 #include <fstream>
 
-TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent) : QDialog(parent) {
+TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent)
+        : QDialog(parent), taskLoginWidget(taskLoginWidget) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");
 
-    this->taskLoginWidget = taskLoginWidget;
-    statusLabel = new QLabel("");
-    statusLabel->setWordWrap(true);
-    loggedAsLabel = new QLabel("Logged in As: ");
-   // loggedAsLabel->setWordWrap(true);
-    logoutButton = new QPushButton("Logout");
-    currentTaskLabel = new QLabel("Current: ");
-    currentTaskLabel->setWordWrap(true);
-    loadLastSubmitButton = new QPushButton("Load Last Submit");
-    startNewTaskButton = new QPushButton("Start new Task");
+    statusLabel.setWordWrap(true);
+    descriptionLabel.setWordWrap(true);
+    commentLabel.setWordWrap(true);
 
-    categoryDescriptionLabel.setText("Category description: ");
-    categoryDescriptionLabel.setWordWrap(true);
-    taskCommentLabel.setText("Task comment: ");
-    taskCommentLabel.setWordWrap(true);
+    userNameLayout.addWidget(&userNameLabel);
+    userNameLayout.addWidget(&logoutButton);
+    formLayout.addRow("Logged in As: ", &userNameLayout);
+    formLayout.addRow("Current Task: ", &taskLabel);
+    formLayout.addRow("Description: ", &descriptionLabel);
+    formLayout.addRow("Comment: ", &commentLabel);
 
-    submitButton = new QPushButton("Submit");
+    //first row is added in refresh
+    gridLayout.addWidget(&submitCommentEdit, 1, 0, 1, 2);
+    gridLayout.addWidget(&submitButton, 2, 0, 1, 1);
+    gridLayout.addWidget(&submitFinalButton, 2, 1, 1, 1);
 
+    hLayout.addLayout(&formLayout);
+    hLayout.addLayout(&gridLayout);
+    mainLayout.addWidget(&statusLabel);
+    mainLayout.addLayout(&hLayout);
+    setLayout(&mainLayout);
 
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(loggedAsLabel, logoutButton);
-    formLayout->addRow(loadLastSubmitButton, startNewTaskButton);
-    formLayout->addRow(currentTaskLabel);
-    formLayout->addRow(submitButton);
+    submitCommentEdit.setPlaceholderText("submission comment (optional)");
+    submitFinalButton.setToolTip("marks your work as finished.");
 
-    formLayout->addRow(&categoryDescriptionLabel);
-    formLayout->addRow(&taskCommentLabel);
+    QObject::connect(&startNewTaskButton, &QPushButton::clicked, this, &TaskManagementWidget::startNewTaskButtonClicked);
+    QObject::connect(&loadLastSubmitButton, &QPushButton::clicked, this, &TaskManagementWidget::loadLastSubmitButtonClicked);
+    QObject::connect(&submitButton, &QPushButton::clicked, this, &TaskManagementWidget::submit);
+    QObject::connect(&submitFinalButton, &QPushButton::clicked, this, &TaskManagementWidget::submitFinal);
 
-    auto mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(statusLabel);
-    mainLayout->addLayout(formLayout);
-    setLayout(mainLayout);
-
-    // prepare the work submission dialog
-    submitDialog = new QDialog(this);
-    submitDialog->setWindowTitle("Submit Your Work");
-    submitDialogCommentField = new QLineEdit();
-    submitDialogCommentField->setPlaceholderText("submission comment (optional)");
-    submitDialogFinalCheckbox = new QCheckBox("final");
-    submitDialogFinalCheckbox->setToolTip("marks your work as finished.");
-    submitDialogCancelButton = new QPushButton("Cancel");
-    submitDialogOkButton = new QPushButton("Submit");
-
-    formLayout = new QFormLayout();
-    formLayout->addRow(submitDialogCommentField);
-    formLayout->addRow(submitDialogFinalCheckbox);
-    formLayout->addRow(submitDialogCancelButton, submitDialogOkButton);
-    submitDialog->setLayout(formLayout);
-
-    connect(submitDialogOkButton, SIGNAL(clicked()), this, SLOT(submitDialogOk()));
-
-    connect(logoutButton, SIGNAL(clicked()), this, SLOT(logoutButtonClicked()));
-    connect(loadLastSubmitButton, SIGNAL(clicked()), this, SLOT(loadLastSubmitButtonClicked()));
-    connect(startNewTaskButton, SIGNAL(clicked()), this, SLOT(startNewTaskButtonClicked()));
-    QObject::connect(submitButton, &QPushButton::clicked, submitDialog, &QDialog::exec);
+    QObject::connect(&logoutButton, &QPushButton::clicked, this, &TaskManagementWidget::logoutButtonClicked);
 }
 
-void handleError(TaskManagementWidget * instance, bool success, CURLcode code, long httpCode, const char * const response) {
+template<typename Widget>
+void handleError(Widget * instance, bool success, CURLcode code, long httpCode, const char * const response) {
     if (success == false) {
         instance->resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
     } else if (code != CURLE_OK) {
@@ -91,13 +62,83 @@ void handleError(TaskManagementWidget * instance, bool success, CURLcode code, l
     } else if(httpCode != 200){
         instance->setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response));
     }
+    instance->show();
+}
+
+void TaskManagementWidget::refresh() {
+    const auto url = state->taskState->host + "/knossos/session/";
+    long httpCode = 0;
+    httpResponse response;
+    CURLcode code;
+
+    setCursor(Qt::WaitCursor);
+    bool success = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 2);
+    setCursor(Qt::ArrowCursor);
+
+    qDebug() << "refresh: " << response.content;
+
+    if (success && code == CURLE_OK && httpCode == 200) {
+        QXmlStreamReader xml(response.content);
+        QString username;
+        if (xml.readNextStartElement() && xml.name() == "session") {
+            QXmlStreamAttributes attributes = xml.attributes();
+            username = attributes.value("username").toString();
+            setActiveUser(username);
+            setResponse("Hello " + username + "!");
+            setTask(attributes.value("task").toString());
+            state->taskState->taskFile = attributes.value("taskFile").toString();
+            setDescription(QByteArray::fromBase64(attributes.value("description").toUtf8()));
+            setComment(QByteArray::fromBase64(attributes.value("comment").toUtf8()));
+        }
+        if (!username.isEmpty()) {
+            const bool hasTask = !state->taskState->taskName.isEmpty();
+            if (hasTask) {
+                gridLayout.removeWidget(&loadLastSubmitButton);
+                gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
+            } else {
+                gridLayout.removeWidget(&startNewTaskButton);
+                gridLayout.addWidget(&startNewTaskButton, 0, 0, 1, 2);
+            }
+            submitCommentEdit.setEnabled(hasTask);
+            submitButton.setEnabled(hasTask);
+            submitFinalButton.setEnabled(hasTask);
+            show();
+        } else {
+            taskLoginWidget->getReady("Please login.");
+            hide();
+        }
+    } else {
+        handleError(taskLoginWidget, success, code, httpCode, response.content);
+    }
+}
+
+void TaskManagementWidget::loginButtonClicked(const QString & username, const QString & password) {
+    // remove contents of cookie file to fill it with new cookie
+    QFile cookie(state->taskState->cookieFile);
+    cookie.open(QIODevice::WriteOnly);
+    cookie.close();
+
+    const auto url = state->taskState->host + "/knossos/session/";
+    const auto postdata = QString("<login><username>%1</username><password>%2</password></login>").arg(username, password);
+    long httpCode;
+    httpResponse response;
+    CURLcode code;
+
+    setCursor(Qt::WaitCursor);
+    bool success = taskState::httpPOST(url.toUtf8().data(), postdata.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
+    setCursor(Qt::ArrowCursor);
+
+    if (success && code == CURLE_OK && httpCode == 200) {
+        refresh();
+        taskLoginWidget->hide();
+    } else {
+        handleError(taskLoginWidget, success, code, httpCode, response.content);
+    }
 }
 
 void TaskManagementWidget::logoutButtonClicked() {
-    auto url = state->taskState->host + "/knossos/session/";
+    const auto url = state->taskState->host + "/knossos/session/";
     httpResponse response;
-    response.length = 0;
-    response.content = (char *)calloc(1, 10240);
     long httpCode;
     CURLcode code;
 
@@ -110,8 +151,6 @@ void TaskManagementWidget::logoutButtonClicked() {
     } else {
         handleError(this, success, code, httpCode, response.content);
     }
-
-    free(response.content);
 }
 
 void TaskManagementWidget::saveAndLoadFile(httpResponse & header, httpResponse & response) {
@@ -122,7 +161,7 @@ void TaskManagementWidget::saveAndLoadFile(httpResponse & header, httpResponse &
     QFile tmpFile(tmpFilename);
     const auto sucess = tmpFile.open(QIODevice::WriteOnly) && (tmpFile.write(response.content, response.length) != -1);
     if (!sucess) {
-        statusLabel->setText("<font color='red'>Cannot write »" + tmpFilename + "«.</font>");
+        statusLabel.setText("<font color='red'>Cannot write »" + tmpFilename + "«.</font>");
         return;
     }
     tmpFile.close();
@@ -135,29 +174,18 @@ void TaskManagementWidget::saveAndLoadFile(httpResponse & header, httpResponse &
         qDebug() << "temp rename" << tmpFilename << actualFilename << QFile::rename(tmpFilename, actualFilename);
         if (loadAnnotationFiles(QStringList(actualFilename))) {//BUG signals shall not be used to return something
             state->taskState->taskFile = actualFilename;
-            statusLabel->setText("<font color='green'>Loaded annotation successfully.</font>");
+            statusLabel.setText("<font color='green'>Loaded annotation successfully.</font>");
         } else {
-            statusLabel->setText("<font color='red'>Failed to load »" + actualFilename + "«.</font>");
+            statusLabel.setText("<font color='red'>Failed to load »" + actualFilename + "«.</font>");
         }
     }
 }
 
-void initRequest(httpResponse & header, httpResponse & response) {
-    header.length = 0;
-    header.content = (char*)calloc(1, header.length + 1);
-
-    response.length = 0;
-    response.content = (char *)calloc(1, 10240);
-}
-
 void TaskManagementWidget::loadLastSubmitButtonClicked() {
+    const auto url = state->taskState->host + "/knossos/activeTask/lastSubmit/";
     httpResponse header, response;
-    initRequest(header, response);
-
     long httpCode;
     CURLcode code;
-
-    auto url = state->taskState->host + "/knossos/activeTask/lastSubmit/";
 
     setCursor(Qt::WaitCursor);
     bool success = taskState::httpFileGET(url.toUtf8().data(), nullptr, &response, &header, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 100);
@@ -168,21 +196,14 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     } else {
         handleError(this, success, code, httpCode, response.content);
     }
-
-    free(header.content);
-    free(response.content);
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
+    const auto url = state->taskState->host + "/knossos/newTask/";
+    const auto postdata = QString("csrfmiddlewaretoken=%0&data=<currentTask>%1</currentTask>").arg(taskState::CSRFToken(), state->taskState->taskFile);
     httpResponse header, response;
-    initRequest(header, response);
-
     long httpCode;
     CURLcode code;
-
-    auto postdata = QString("csrfmiddlewaretoken=%0&data=<currentTask>%1</currentTask>").arg(taskState::CSRFToken(), state->taskState->taskFile);
-
-    auto url = state->taskState->host + "/knossos/newTask/";
 
     setCursor(Qt::WaitCursor);
     bool success = taskState::httpFileGET(url.toUtf8().data(), postdata.toUtf8().data(), &response, &header, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
@@ -190,44 +211,19 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
 
     if (success && code == CURLE_OK && httpCode == 200) {
         saveAndLoadFile(header, response);
-
-        // get task name
-        const auto taskname = header.copyInfoFromHeader("taskname");
-        state->taskState->taskName = taskname;
-        setTask(state->taskState->taskName);
-
-        // get task category description and task comment
-        const auto descriptionBuffer = header.copyInfoFromHeader("description");
-        const auto commentBuffer = header.copyInfoFromHeader("comment");
-        QString description = QByteArray::fromBase64(descriptionBuffer.toUtf8());
-        QString comment = QByteArray::fromBase64(commentBuffer.toUtf8());
-
-        QMessageBox::information(this, state->taskState->taskName,
-            QString("<p style='width:200px;'><b>Category %1:</b> %2<br><br><b>Task %3:</b> %4</p>")
-               .arg(taskState::getCategory())
-               .arg(description)
-               .arg(taskState::getTask())
-               .arg(comment));
-
-        setDescription(description);
-        setComment(comment);
+        refresh();
     } else {
         handleError(this, success, code, httpCode, response.content);
     }
-
-    free(header.content);
-    free(response.content);
 }
 
-void TaskManagementWidget::setDescription(QString description) {
-    categoryDescriptionLabel.setText(QString("<b>Category</b> <i>%1</i>: %2").arg(taskState::getCategory()).arg(description));
+void TaskManagementWidget::submitFinal() {
+    submit(true);
+    refresh();
+    state->viewer->window->newAnnotationSlot();
 }
 
-void TaskManagementWidget::setComment(QString comment) {
-    taskCommentLabel.setText(QString("<b>Task</b> <i>%1</i>: %2").arg(taskState::getTask()).arg(comment));
-}
-
-void TaskManagementWidget::submitDialogOk() {
+void TaskManagementWidget::submit(const bool final) {
     // TDItem: write a function for multipart posts
     // for building the multipart formpost
     CURL *handle;
@@ -239,7 +235,7 @@ void TaskManagementWidget::submitDialogOk() {
     static const char buf[] = "Expect:";
     CURLMcode code;
     long httpCode;
-    struct httpResponse response;
+    httpResponse response;
     //for checks during the transmission
     struct timeval timeout;
     int rc; // select() return code
@@ -260,9 +256,6 @@ void TaskManagementWidget::submitDialogOk() {
     // save first, in case of errors during transmission
     emit autosaveSignal(); //increment true
 
-    //prompt for entering a comment for the submission
-
-
     handle = curl_easy_init();
     multihandle = curl_multi_init();
     if(handle == NULL || multihandle == NULL) {
@@ -278,14 +271,13 @@ void TaskManagementWidget::submitDialogOk() {
                  CURLFORM_FILE, skeletonFileAsQString_stdstr.c_str(), CURLFORM_END);
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename",
                  CURLFORM_COPYCONTENTS, skeletonFileAsQString_stdstr.c_str(), CURLFORM_END);
-    std::string submitDialogCommentField_stdstr = submitDialogCommentField->text().toStdString();
+    std::string submitDialogCommentField_stdstr = submitCommentEdit.text().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_comment",
                  CURLFORM_COPYCONTENTS, submitDialogCommentField_stdstr.c_str(), CURLFORM_END);
-    if(submitDialogFinalCheckbox->isChecked()) {
+    if (final) {
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal",
                      CURLFORM_COPYCONTENTS, "True", CURLFORM_END);
-    }
-    else {
+    } else {
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal",
                      CURLFORM_COPYCONTENTS, "False", CURLFORM_END);
     }
@@ -297,9 +289,6 @@ void TaskManagementWidget::submitDialogOk() {
     }
 
     auto url = state->taskState->host + "/knossos/activeTask/";
-
-    response.length = 0;
-    response.content =(char *) calloc(1, response.length + 1);
 
     curl_easy_setopt(handle, CURLOPT_URL, url.toUtf8().data());
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headerlist);
@@ -336,7 +325,6 @@ void TaskManagementWidget::submitDialogOk() {
             curl_easy_cleanup(handle);
             curl_formfree(formpost);
             curl_slist_free_all (headerlist);
-            free(response.content);
             return;
         }
         // if maxfd is -1, it means libcurl is busy and we have to wait.
@@ -350,7 +338,6 @@ void TaskManagementWidget::submitDialogOk() {
             curl_easy_cleanup(handle);
             curl_formfree(formpost);
             curl_slist_free_all (headerlist);
-            free(response.content);
             return;
         case 0:
         default:
@@ -373,18 +360,16 @@ void TaskManagementWidget::submitDialogOk() {
     curl_easy_cleanup(handle);
     curl_formfree(formpost);
     curl_slist_free_all (headerlist);
-    free(response.content);
 
-    submitDialog->hide();
-    submitDialogCommentField->clear();
+    submitCommentEdit.clear();
 }
 
 void TaskManagementWidget::resetSession(QString message) {
     taskState::removeCookie();
     state->taskState->taskFile = "";
     taskLoginWidget->setResponse(message);
-    setTask("");
     setActiveUser("");
+    setTask("");
     setDescription("");
     setComment("");
 
@@ -393,14 +378,23 @@ void TaskManagementWidget::resetSession(QString message) {
 }
 
 void TaskManagementWidget::setResponse(QString message) {
-    statusLabel->setText(message);
+    statusLabel.setText(message);
 }
 
 void TaskManagementWidget::setActiveUser(QString username) {
-    loggedAsLabel->setText("Logged in as: <font color='green'>" + username + "</font>");
+    userNameLabel.setText("<font color='green'>" + username + "</font>");
 }
 
 void TaskManagementWidget::setTask(QString task) {
     state->taskState->taskName = task;
-    currentTaskLabel->setText("Current task: <font color='green'>" + task + "</font>");
+    taskLabel.setText("<font color='green'>" + task + "</font>");
+    taskLabel.setText(task);
+}
+
+void TaskManagementWidget::setDescription(QString description) {
+    descriptionLabel.setText(description);
+}
+
+void TaskManagementWidget::setComment(QString comment) {
+    commentLabel.setText(comment);
 }

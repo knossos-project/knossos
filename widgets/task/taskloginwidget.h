@@ -15,6 +15,8 @@ public:
     explicit TaskLoginWidget(QWidget *parent = 0);
     void setResponse(QString message);
     void setTaskManagementWidget(TaskManagementWidget *management);
+    void resetSession(const QString & message);
+    void getReady(const QString & message);
 protected:
     QLabel *serverStatus;
     QLineEdit *urlField;
