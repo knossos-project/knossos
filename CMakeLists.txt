@@ -100,7 +100,6 @@ if(NOT BUILD_SHARED_LIBS)
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv -lWs2_32)
         set(GLUT_LIBRARIES freeglut_static -lWinmm)
-        set(static_runtime -static stdc++ gomp winpthread)
     endif()
 endif()
 if(WIN32)
@@ -127,8 +126,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
-    Qt5Python27
-    TurboJPEG::TurboJPEG
+    TurboJPEG::TurboJPEG#turbojpeg is partly included in QtGui, multiple definition if you try to link it afterwards
     Qt5::Core
     Qt5::Gui
     Qt5::Help
@@ -136,9 +134,9 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Widgets
     Qt5::Network
+    Qt5Python27
     QuaZip::QuaZip
     Snappy::Snappy
-    ${static_runtime}
 )
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
