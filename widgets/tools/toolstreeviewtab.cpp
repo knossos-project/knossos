@@ -538,20 +538,43 @@ void ToolsTreeviewTab::linkNodesAction() {
 }
 
 void ToolsTreeviewTab::extractConnectedComponentAction() {
-    const QString msg("Do you really want to extract all nodes in this component into a new tree?");
-    const int confirm = 0;
-    const auto res = QMessageBox::question(this, "Extract connected component", msg, "Extract", "Cancel", QString(), confirm, 1);
+
+    int res = QMessageBox::Ok;
+
+    if(askExtractConnectedComponent) {
+        const QString msg("Do you really want to extract all nodes in this component into a new tree?");
+
+        QMessageBox msgBox;
+        msgBox.setText(msg);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.addButton(QMessageBox::Ok);
+        msgBox.addButton(QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        QCheckBox dontShowCheckBox("Hide message until restart");
+        dontShowCheckBox.blockSignals(true);
+        msgBox.addButton(&dontShowCheckBox, QMessageBox::ResetRole);
+        res = msgBox.exec();
+
+        if(dontShowCheckBox.checkState() == Qt::Checked) {
+            askExtractConnectedComponent = false;
+        }
+    }
+
     const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
-    if (res == confirm) {
+
+    if (res == QMessageBox::Ok) {
+
         const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
         if (!extracted) {
             QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
         } else {
-            auto msg = QString("The connected component was extracted into tree %1.").arg(state->skeletonState->firstTree->treeID);
+            auto msg = QString("Extracted from %1").arg(treeID);
+
             if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
-                msg += " \nTrees have become empty and were deleted.";
+                msg = QString("Extracted from deleted %1").arg(treeID);
             }
-            QMessageBox::information(this, "Component extracted successfully", msg);
+            Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
+
         }
     }
 }
