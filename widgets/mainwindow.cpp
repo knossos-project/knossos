@@ -747,7 +747,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
 void MainWindow::newAnnotationSlot() {
     if (state->skeletonState->unsavedChanges) {
-        const auto text = tr("There’re unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
+        const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
         const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
         if (button == 1) {
             return;
