@@ -54,6 +54,8 @@ extern "C" {
 #include <turbojpeg.h>
 #endif
 
+bool isOverlay(const Loader::CubeType type);
+
 constexpr bool inRange(const int value, const int min, const int max) {
     return value >= min && value < max;
 }
@@ -447,7 +449,7 @@ template<typename Work, typename Func>//you really don’t wanna spell out the t
 void finishDecompression(Work & work, Func keep) {
     for (auto && elem : work) {
         if (!keep(elem.first) && elem.second != nullptr) {
-            elem.second->cancel();
+            //elem.second->cancel();
             elem.second->waitForFinished();
         }
     }
@@ -463,7 +465,7 @@ void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func kee
     qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "after abortion";
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate & globalCoord) {
     bool success = false;
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
@@ -516,6 +518,19 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
         }
     }  else {
         qDebug() << "unsupported format";
+    }
+
+    if (success) {
+        state->protectCube2Pointer->lock();
+        cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = currentSlot;
+        state->protectCube2Pointer->unlock();
+        if (currentlyVisibleWrap(globalCoord)) {
+            if (isOverlay(type)) {
+                QTimer::singleShot(0, state->viewer, &Viewer::oc_reslice_notify);
+            } else {
+                QTimer::singleShot(0, state->viewer, &Viewer::dc_reslice_notify);
+            }
+        }
     }
 
     return {success, currentSlot};
@@ -722,7 +737,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                     const auto fini = ping.elapsed();
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "ping" << fini;
 
-                    auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type));
+                    auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::ref(cubeHash), globalCoord));
 
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
                     QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, &downloads, globalCoord, watcher, type, currentSlot](){
@@ -731,19 +746,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                             auto result = watcher->result();
 
                             qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << result.first << static_cast<void*>(result.second);
-                            if (result.first) {//decompression successful
-                                state->protectCube2Pointer->lock();
-                                cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = result.second;
-                                state->protectCube2Pointer->unlock();
-                                if (currentlyVisibleWrap(globalCoord)) {
-                                    if (isOverlay(type)) {
-                                        emit oc_reslice_notify();
-                                    } else {
-                                        emit dc_reslice_notify();
-                                    }
-                                }
-                            } else {
-                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "failed → fill";
+                            if (!result.first) {//decompression unsuccessful
+                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "failed → no fill";
                                 freeSlots.emplace_back(result.second);
                             }
                         } else {
