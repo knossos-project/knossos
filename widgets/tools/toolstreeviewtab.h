@@ -72,6 +72,8 @@ public:
     int draggedNodeID;
     int displayedNodes;
 
+    bool askExtractConnectedComponent = true;
+
     void updateTreeColorCell(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
 
@@ -138,6 +140,9 @@ public slots:
 
     void updateLabels();
     void resetData();
+
+    void showSelectedTrees();
+    void hideSelectedTrees();
 };
 
 #endif // TREEVIEWTAB_H

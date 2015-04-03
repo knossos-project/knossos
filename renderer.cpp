@@ -2054,7 +2054,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     state->skeletonState->pointVertBuffer.vertsIndex = 0;
     state->skeletonState->pointVertBuffer.normsIndex = 0;
     state->skeletonState->pointVertBuffer.colsIndex = 0;
-    color4F currentColor;
+    color4F currentColor = {1.f, 0.f, 0.f, 1.f};
 
     if((state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
         if(viewportType != VIEWPORT_SKELETON) {
@@ -2084,6 +2084,12 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     currentTree = state->skeletonState->firstTree;
 
     while(currentTree) {
+
+        /* Render only trees we want to be rendered*/
+        if(!currentTree->render) {
+            currentTree = currentTree->next;
+            continue;
+        }
 
         lastNode = NULL;
         lastRenderedNode = NULL;

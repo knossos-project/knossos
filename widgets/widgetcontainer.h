@@ -17,15 +17,14 @@ struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
-        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent), taskLoginWidgetObject(parent)
-        , taskManagementWidgetObject(&taskLoginWidgetObject, parent), viewportSettingsWidgetObject(parent)
+        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent)
+        , taskManagementWidgetObject(parent), viewportSettingsWidgetObject(parent)
 
         , annotationWidget(&annotationWidgetObject), datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
-        , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskLoginWidget(&taskLoginWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
+        , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
         , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
-        taskLoginWidgetObject.setTaskManagementWidget(&taskManagementWidgetObject);
         QObject::connect(this->datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults
         , &this->datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
     }
@@ -38,7 +37,6 @@ struct WidgetContainer {
     NavigationWidget navigationWidgetObject;
     PythonPropertyWidget pythonPropertyWidgetObject;
     SplashScreenWidget splashWidgetObject;
-    TaskLoginWidget taskLoginWidgetObject;
     TaskManagementWidget taskManagementWidgetObject;
     ViewportSettingsWidget viewportSettingsWidgetObject;
 
@@ -52,7 +50,6 @@ struct WidgetContainer {
     NavigationWidget * const navigationWidget;
     PythonPropertyWidget * const pythonPropertyWidget;
     SplashScreenWidget * const splashWidget;
-    TaskLoginWidget * const taskLoginWidget;
     TaskManagementWidget * const taskManagementWidget;
     ViewportSettingsWidget * const viewportSettingsWidget;
 
@@ -66,7 +63,6 @@ struct WidgetContainer {
         pythonPropertyWidget->hide();
         pythonPropertyWidget->closeTerminal();
         splashWidget->hide();
-        taskLoginWidget->hide();
         taskManagementWidget->hide();
         viewportSettingsWidget->hide();
     }

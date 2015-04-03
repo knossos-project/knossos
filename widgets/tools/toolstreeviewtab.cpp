@@ -106,7 +106,8 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_ID, new QTableWidgetItem("Tree ID"));
     activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_COLOR, new QTableWidgetItem("Color"));
     activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_COMMENT, new QTableWidgetItem("Comment"));
-    activeTreeTable->horizontalHeader()->setStretchLastSection(true);
+    activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_RENDER, new QTableWidgetItem("Show"));
+    activeTreeTable->horizontalHeader()->setSectionResizeMode(TreeTable::TREE_COMMENT, QHeaderView::Stretch);
     activeTreeTable->resizeColumnsToContents();
     activeTreeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     activeTreeTable->setDragDropMode(QAbstractItemView::DropOnly);//enables acceptDrops
@@ -121,13 +122,13 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     treeTable->setHorizontalHeaderItem(TreeTable::TREE_ID, new QTableWidgetItem("Tree ID"));
     treeTable->setHorizontalHeaderItem(TreeTable::TREE_COLOR, new QTableWidgetItem("Color"));
     treeTable->setHorizontalHeaderItem(TreeTable::TREE_COMMENT, new QTableWidgetItem("Comment"));
-    treeTable->horizontalHeader()->setStretchLastSection(true);
+    treeTable->setHorizontalHeaderItem(TreeTable::TREE_RENDER, new QTableWidgetItem("Show"));
+    treeTable->horizontalHeader()->setSectionResizeMode(TreeTable::TREE_COMMENT, QHeaderView::Stretch);
     treeTable->resizeColumnsToContents();
     treeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     treeTable->setDragDropMode(QAbstractItemView::DropOnly);//enables acceptDrops
     treeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     treeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
-
 
     // active node table
     activeNodeTable = new NodeTable(this);
@@ -248,11 +249,33 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(activeTreeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
     QObject::connect(activeTreeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::activeTreeTableSelectionChanged);
 
+    QObject::connect(activeTreeTable, &TreeTable::cellClicked, [this](int row, int column) {
+        if(column == TreeTable::TREE_RENDER) {
+            auto actTreeID = activeTreeTable->item(0, 0)->text();
+            for(int i = 0; i < treeTable->rowCount(); ++i) {
+                auto TreeID = treeTable->item(i, 0)->text();
+                if(actTreeID == TreeID) {
+                    QCheckBox *checkbox= treeTable->cellWidget(i, TreeTable::TREE_RENDER)->findChild<QCheckBox *>();
+                    QCheckBox *actcheckbox= activeTreeTable->cellWidget(0, TreeTable::TREE_RENDER)->findChild<QCheckBox *>();
+                    checkbox->setChecked(actcheckbox->isChecked());
+                    break;
+                }
+            }
+        }
+    });
+
+
     QObject::connect(treeTable, &TreeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
     QObject::connect(treeTable, &TreeTable::deleteTreesSignal, this, &ToolsTreeviewTab::deleteTreesAction);
     QObject::connect(treeTable, &TreeTable::itemChanged, this, &ToolsTreeviewTab::treeItemChanged);
     QObject::connect(treeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
     QObject::connect(treeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::treeTableSelectionChanged);
+
+    QObject::connect(treeTable, &TreeTable::cellClicked, [this](int row, int column) {
+        if(column == TreeTable::TREE_RENDER) {
+                activeTreeTableSelectionChanged();
+        }
+    });
 
     QObject::connect(activeNodeTable, &NodeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
     QObject::connect(activeNodeTable, &NodeTable::deleteNodesSignal, this, &ToolsTreeviewTab::deleteNodesAction);
@@ -396,6 +419,9 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
         QObject::connect(treeContextMenu.addAction("Merge trees"), &QAction::triggered, this, &ToolsTreeviewTab::mergeTreesAction);
         QObject::connect(treeContextMenu.addAction("Set comment for tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
+        QObject::connect(treeContextMenu.addAction("Show selected tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::showSelectedTrees);
+        QObject::connect(treeContextMenu.addAction("Hide selected tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::hideSelectedTrees);
+
         QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
         QObject::connect(treeContextMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Delete tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
@@ -406,6 +432,38 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         treeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeTable->viewport()->mapToGlobal(pos));
+    }
+}
+
+void ToolsTreeviewTab::showSelectedTrees() {
+    if(state->skeletonState->selectedTrees.size() == 0) {
+        qDebug() << "no trees";
+        return;
+    }
+    for(int i = 0; i < treeTable->rowCount(); ++i) {
+        QCheckBox *checkbox= treeTable->cellWidget(i, TreeTable::TREE_RENDER)->findChild<QCheckBox *>();
+        const int treeID = treeTable->item(i, 0)->text().toInt();
+        auto a = Skeletonizer::singleton().findTreeByTreeID(treeID);
+        if(treeTable->item(i,0)->isSelected()) {
+            checkbox->setChecked(true);
+            a->render = true;
+        }
+    }
+}
+
+void ToolsTreeviewTab::hideSelectedTrees() {
+    if(state->skeletonState->selectedTrees.size() == 0) {
+        qDebug() << "no trees";
+        return;
+    }
+    for(int i = 0; i < treeTable->rowCount(); ++i) {
+        QCheckBox *checkbox= treeTable->cellWidget(i, TreeTable::TREE_RENDER)->findChild<QCheckBox *>();
+        const int treeID = treeTable->item(i, 0)->text().toInt();
+        auto a = Skeletonizer::singleton().findTreeByTreeID(treeID);
+        if(treeTable->item(i,0)->isSelected()) {
+            checkbox->setChecked(false);
+            a->render = false;
+        }
     }
 }
 
@@ -480,20 +538,43 @@ void ToolsTreeviewTab::linkNodesAction() {
 }
 
 void ToolsTreeviewTab::extractConnectedComponentAction() {
-    const QString msg("Do you really want to extract all nodes in this component into a new tree?");
-    const int confirm = 0;
-    const auto res = QMessageBox::question(this, "Extract connected component", msg, "Extract", "Cancel", QString(), confirm, 1);
+
+    int res = QMessageBox::Ok;
+
+    if(askExtractConnectedComponent) {
+        const QString msg("Do you really want to extract all nodes in this component into a new tree?");
+
+        QMessageBox msgBox;
+        msgBox.setText(msg);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.addButton(QMessageBox::Ok);
+        msgBox.addButton(QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        QCheckBox dontShowCheckBox("Hide message until restart");
+        dontShowCheckBox.blockSignals(true);
+        msgBox.addButton(&dontShowCheckBox, QMessageBox::ResetRole);
+        res = msgBox.exec();
+
+        if(dontShowCheckBox.checkState() == Qt::Checked) {
+            askExtractConnectedComponent = false;
+        }
+    }
+
     const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
-    if (res == confirm) {
+
+    if (res == QMessageBox::Ok) {
+
         const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
         if (!extracted) {
             QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
         } else {
-            auto msg = QString("The connected component was extracted into tree %1.").arg(state->skeletonState->firstTree->treeID);
+            auto msg = QString("Extracted from %1").arg(treeID);
+
             if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
-                msg += " \nTrees have become empty and were deleted.";
+                msg = QString("Extracted from deleted %1").arg(treeID);
             }
-            QMessageBox::information(this, "Component extracted successfully", msg);
+            Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
+
         }
     }
 }

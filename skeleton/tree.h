@@ -18,6 +18,8 @@ public:
     treeListElement *previous;
     nodeListElement *firstNode;
 
+    bool render=true;
+
     int treeID;
     color4F color;
     bool selected;

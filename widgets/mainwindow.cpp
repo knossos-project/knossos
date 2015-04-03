@@ -162,8 +162,6 @@ void MainWindow::createToolbars() {
     addToolBar(basicToolbar);
     addToolBar(&defaultToolbar);
 
-    defaultToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
-
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
@@ -172,15 +170,24 @@ void MainWindow::createToolbars() {
         defaultToolbar.addWidget(button);
         return button;
     };
+    auto taskManagementButton = createToolToogleButton(":/resources/icons/task.png", "Task Management");
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
     auto viewportSettingsButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Viewport Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
+    QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
+        if (down) {
+            widgetContainer->taskManagementWidget->refresh();
+        } else {
+            widgetContainer->taskManagementWidget->hide();
+        }
+    });
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
+    QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
@@ -620,7 +627,7 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(refresh()));
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
 
@@ -740,7 +747,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
 void MainWindow::newAnnotationSlot() {
     if (state->skeletonState->unsavedChanges) {
-        const auto text = tr("There’re unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
+        const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
         const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
         if (button == 1) {
             return;
@@ -1136,140 +1143,29 @@ void MainWindow::resizeEvent(QResizeEvent *) {
     }
 }
 
-
 void MainWindow::dropEvent(QDropEvent *event) {
-    if(event->mimeData()->hasFormat("text/uri-list")) {
-        QList<QUrl> urls = event->mimeData()->urls();
-        QStringList fileNames;
-        QStringList skippedFiles;
-        for(QUrl url : urls) {
-            QString fileName(url.toLocalFile());
-
-            if (fileName.endsWith("k.zip") || fileName.endsWith(".nml")) {
-                fileNames.append(fileName);
-            } else {
-                skippedFiles.append(fileName);
-            }
-        }
-        if(skippedFiles.empty() == false) {
-            QString info = "Skipped following files with invalid type (must be *.k.zip or *.nml):<ul>";
-            int count = 0;
-            for(QString file : skippedFiles) {
-                if(count == 10) {
-                    info += "...";
-                    break;
-                }
-                count++;
-                info += "<li>" + file + "</li>";
-            }
-            info += "</ul>";
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText(info);
-            prompt.exec();
-        }
-        if(fileNames.empty() == false) {
-            openFileDispatch(fileNames);
-            event->accept();
-        }
+    QStringList files;
+    for (auto && url : event->mimeData()->urls()) {
+        files.append(url.toLocalFile());
     }
-}
-
-void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
+    openFileDispatch(files);
     event->accept();
 }
 
-void MainWindow::dragLeaveEvent(QDragLeaveEvent *) {
+void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
+    if(event->mimeData()->hasUrls()) {
+        QList<QUrl> urls = event->mimeData()->urls();
+        for (auto && url : urls) {
+            qDebug() << url;//in case its no working
+            if (url.isLocalFile()) {
+                const auto fileName(url.toLocalFile());
+                if (fileName.endsWith(".k.zip") || fileName.endsWith(".nml")) {
+                    event->accept();
+                }
+            }
+        }
+    }
 }
-
-void MainWindow::taskSlot() {
-    CURLcode code;
-    long httpCode = 0;
-
-    // build url to send to
-    const auto url = state->taskState->host + "/knossos/session/";
-    // prepare http response object
-    httpResponse response;
-    response.length = 0;
-    response.content = (char*)calloc(1, response.length+1);
-    setCursor(Qt::WaitCursor);
-    bool result = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 2);
-    setCursor(Qt::ArrowCursor);
-    if(result == false) {
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    if(code != CURLE_OK) {
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    if(httpCode != 200) {
-        widgetContainer->taskLoginWidget->setResponse(QString("<font color='red'>%1</font>").arg(response.content));
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    // find out, which user is logged in
-    QXmlStreamReader xml(response.content);
-    if(xml.hasError()) { // response is broke.
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        return;
-    }
-    xml.readNextStartElement();
-    if(xml.isStartElement() == false) { // response is broke.
-        widgetContainer->taskLoginWidget->setResponse("Please login.");
-        widgetContainer->taskLoginWidget->show();
-        free(response.content);
-        return;
-    }
-    bool activeUser = false;
-    if(xml.name() == "session") {
-        QXmlStreamAttributes attributes = xml.attributes();
-        QString attribute = attributes.value("username").toString();
-        if(attribute.isNull() == false) {
-            activeUser = true;
-            widgetContainer->taskManagementWidget->setActiveUser(attribute);
-            widgetContainer->taskManagementWidget->setResponse("Hello " + attribute + "!");
-        }
-        attribute = attributes.value("task").toString();
-        if(attribute.isNull() == false) {
-            widgetContainer->taskManagementWidget->setTask(attribute);
-        }
-        attribute = attributes.value("taskFile").toString();
-        if(attribute.isNull() == false) {
-            state->taskState->taskFile = attribute;
-        }
-        attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
-        if(attribute.isNull() == false) {
-            emit updateTaskDescriptionSignal(attribute);
-        }
-        attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
-        if(attribute.isNull() == false) {
-            emit updateTaskCommentSignal(attribute);
-        }
-    }
-    if(activeUser) {
-        widgetContainer->taskManagementWidget->show();
-        free(response.content);
-        return;
-    }
-    widgetContainer->taskLoginWidget->setResponse("Please login.");
-    widgetContainer->taskLoginWidget->show();
-    this->widgetContainer->taskLoginWidget->adjustSize();
-    if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
-        this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(centralWidget()->pos()));
-
-    free(response.content);
-    return;
-}
-
 
 void MainWindow::resetViewports() {
     resizeViewports(centralWidget()->width(), centralWidget()->height());

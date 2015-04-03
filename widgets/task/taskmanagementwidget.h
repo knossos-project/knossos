@@ -4,57 +4,76 @@
 #include "taskloginwidget.h"
 
 #include <QDialog>
+#include <QFormLayout>
+#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <QWidget>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
 
-class QPushButton;
-class QCheckBox;
-class QLineEdit;
 struct httpResponse;
-class TaskManagementWidget : public QDialog
-{
+class TaskManagementWidget : public QDialog {
     Q_OBJECT
     friend class TaskLoginWidget;
     void saveAndLoadFile(httpResponse &, httpResponse &);
 public:
-    explicit TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent = 0);
-    void setResponse(QString message);
-    void setActiveUser(QString username);
-    void setTask(QString task);
-    void resetSession(QString message);
+    explicit TaskManagementWidget(QWidget *parent = nullptr);
+    void setResponse(const QString & message);
+    void setActiveUser(const QString & username);
+    void setTask(const QString & task);
+    void resetSession(const QString & message);
 
 protected:
-    QLabel *statusLabel;
-    QLabel *loggedAsLabel;
-    QLabel *currentTaskLabel;
-    QPushButton *logoutButton;
-    QPushButton *loadLastSubmitButton;
-    QPushButton *startNewTaskButton;
-    QPushButton *submitButton;
-    TaskLoginWidget *taskLoginWidget;
+    QLabel statusLabel;
 
-    QDialog *submitDialog;
-    QLineEdit *submitDialogCommentField;
-    QCheckBox *submitDialogFinalCheckbox;
-    QPushButton *submitDialogCancelButton;
-    QPushButton *submitDialogOkButton;
+    QVBoxLayout mainLayout;
+    QHBoxLayout hLayout;
+    QHBoxLayout userNameLayout;
+    QFormLayout formLayout;
+    QGridLayout gridLayout;
 
-    QLabel categoryDescriptionLabel;
-    QLabel taskCommentLabel;
+    QLabel userNameLabel;
+    QLabel taskLabel;
+    QLabel descriptionLabel;
+    QLabel commentLabel;
+
+    QPushButton logoutButton{"Logout"};
+    QPushButton startNewTaskButton{"Start new Task"};
+    QPushButton loadLastSubmitButton{"Load last Submit"};
+    QLineEdit submitCommentEdit;
+    QPushButton submitButton{"Submit"};
+    QPushButton submitFinalButton{"Final Submit"};
+
+    TaskLoginWidget taskLoginWidget;
+
+public slots:
+    void refresh();
+    void setDescription(const QString & description);
+    void setComment(const QString & comment);
+
+    void submitFinal();
+    void submit(const bool final = false);
+
+    void startNewTaskButtonClicked();
+    void loadLastSubmitButtonClicked();
+    void loginButtonClicked(const QString &host, const QString & username, const QString & password);
+    void logoutButtonClicked();
 
 signals:
     void autosaveSignal();
     bool loadAnnotationFiles(QStringList fileNames);
+    void visibilityChanged(bool);
 
-public slots:
-    void setDescription(QString description);
-    void setComment(QString comment);
-
-    void submitDialogOk();
-
-    void startNewTaskButtonClicked();
-    void loadLastSubmitButtonClicked();
-    void logoutButtonClicked();
+private:
+    void showEvent(QShowEvent * showEvent) override {
+        QDialog::showEvent(showEvent);
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent * hideEvent) override {
+        QDialog::hideEvent(hideEvent);
+        emit visibilityChanged(false);
+    }
 };
 
 #endif//TASKMANAGEMENTWIDGET_H

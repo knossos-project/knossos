@@ -2,35 +2,30 @@
 #define TASKLOGINWIDGET_H
 
 #include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QFrame>
+#include <QLabel>
+#include <QLineEdit>
 
-class QLabel;
-class QLineEdit;
-class QPushButton;
-class TaskManagementWidget;
-class TaskLoginWidget : public QDialog
-{
+class TaskLoginWidget : public QDialog {
     Q_OBJECT
 
+    QFormLayout formLayout;
+    QLabel response;
+    QLabel hostLabel{"Host:"};
+    QFrame line;
+    QLabel usernameLabel{"Username:"};
+    QLabel passwordLabel{"Password"};
+    QDialogButtonBox box;
 public:
-    explicit TaskLoginWidget(QWidget *parent = 0);
-    void setResponse(QString message);
-    void setTaskManagementWidget(TaskManagementWidget *management);
-protected:
-    QLabel *serverStatus;
-    QLineEdit *urlField;
-    QLineEdit *usernameField;
-    QLineEdit *passwordField;
-    QPushButton *loginButton;
-    TaskManagementWidget *taskManagementWidget;
-    void closeEvent(QCloseEvent *event);
+    QLineEdit urlField;
+    QLineEdit usernameField;
+    QLineEdit passwordField;
 
-signals:
-    void taskResponseChanged();
-    void loginResponseChanged();
-
-public slots:
-    void loginButtonClicked();
-    void urlEditingFinished();
+    explicit TaskLoginWidget(QWidget * parent = nullptr);
+    void setResponse(const QString & message);
+    void resetSession(const QString & message);
 };
 
 #endif // TASKLOGINWIDGET_H

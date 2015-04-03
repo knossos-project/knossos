@@ -7,7 +7,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
-option(BUILD_SHARED_LIBS "try to find static versions of all libraries" ON)
+option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
@@ -27,6 +27,7 @@ set(SRC_LIST ${openjpeg} ${root} ${segmentation} ${scriptengine} ${skeleton} ${w
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
+set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Boost 1.50 REQUIRED)
@@ -81,7 +82,6 @@ set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CM
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
     #these definitions remove the dllimport directives from the includes
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "QT_STATIC")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
     find_program(CURL_CONFIG curl-config)
@@ -100,22 +100,23 @@ if(NOT BUILD_SHARED_LIBS)
     if(WIN32)
         set(CURL_LIBRARIES ${CURL_LIBRARIES} -lidn -lssl -lcrypto -lintl -liconv -lWs2_32)
         set(GLUT_LIBRARIES freeglut_static -lWinmm)
-        set(static_runtime -static stdc++ gomp winpthread)
     endif()
 endif()
 if(WIN32)
     set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)
 endif()
-option(PythonQt_QtAll OFF)
+option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
     find_package(Qt5Python27_QtAll REQUIRED)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
     target_link_libraries(${PROJECT_NAME} Qt5Python27_QtAll)
 endif()
+#on static build, need to make sure the root include of a dynamic Qt is not added i.e. /mingw64/include
+#or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${Boost_INCLUDE_DIRS}
+    #${Boost_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
-    ${GLUT_INCLUDE_DIR}
+    #${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIR}
 )
@@ -125,8 +126,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
-    Qt5Python27
-    TurboJPEG::TurboJPEG
+    TurboJPEG::TurboJPEG#turbojpeg is partly included in QtGui, multiple definition if you try to link it afterwards
     Qt5::Core
     Qt5::Gui
     Qt5::Help
@@ -134,9 +134,9 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Widgets
     Qt5::Network
+    Qt5Python27
     QuaZip::QuaZip
     Snappy::Snappy
-    ${static_runtime}
 )
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
