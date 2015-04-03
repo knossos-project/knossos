@@ -162,8 +162,6 @@ void MainWindow::createToolbars() {
     addToolBar(basicToolbar);
     addToolBar(&defaultToolbar);
 
-    defaultToolbar.addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(refresh()));
-
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
@@ -172,15 +170,24 @@ void MainWindow::createToolbars() {
         defaultToolbar.addWidget(button);
         return button;
     };
+    auto taskManagementButton = createToolToogleButton(":/resources/icons/task.png", "Task Management");
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
     auto viewportSettingsButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Viewport Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
+    QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
+        if (down) {
+            widgetContainer->taskManagementWidget->refresh();
+        } else {
+            widgetContainer->taskManagementWidget->hide();
+        }
+    });
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
+    QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);

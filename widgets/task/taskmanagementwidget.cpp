@@ -9,8 +9,7 @@
 
 #include <fstream>
 
-TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWidget *parent)
-        : QDialog(parent), taskLoginWidget(taskLoginWidget) {
+TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), taskLoginWidget(this) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");
@@ -46,23 +45,26 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *taskLoginWidget, QWi
     QObject::connect(&submitFinalButton, &QPushButton::clicked, this, &TaskManagementWidget::submitFinal);
 
     QObject::connect(&logoutButton, &QPushButton::clicked, this, &TaskManagementWidget::logoutButtonClicked);
+
+    QObject::connect(&taskLoginWidget, &TaskLoginWidget::accepted, [this]{
+        loginButtonClicked(taskLoginWidget.urlField.text(), taskLoginWidget.usernameField.text(), taskLoginWidget.passwordField.text());
+    });
 }
 
 template<typename Widget>
-void handleError(Widget * instance, bool success, CURLcode code, long httpCode, const char * const response) {
+void handleError(Widget & instance, bool success, CURLcode code, long httpCode, const char * const response) {
     if (success == false) {
-        instance->resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
+        instance.resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response));
     } else if (code != CURLE_OK) {
-        instance->setResponse(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response));
+        instance.setResponse(QString("<font color='red'>Request failed. Please check your connection.<br />CURL code %1<br />%2</font><br />%3").arg(code).arg(curl_easy_strerror(code)).arg(response));
         taskState::removeCookie();
     } else if (httpCode == 400) {
-        instance->setResponse(QString("<font color='red'>Not available.</font><br />%0").arg(response));
+        instance.setResponse(QString("<font color='red'>Not available.</font><br />%0").arg(response));
     } else if(httpCode == 403) {
-        instance->setResponse(QString("<font color='red'>You are not authenticated. Permission denied.</font><br />%0").arg(response));
+        instance.setResponse(QString("<font color='red'>You are not authenticated. Permission denied.</font><br />%0").arg(response));
     } else if(httpCode != 200){
-        instance->setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response));
+        instance.setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response));
     }
-    instance->show();
 }
 
 void TaskManagementWidget::refresh() {
@@ -104,21 +106,22 @@ void TaskManagementWidget::refresh() {
             submitFinalButton.setEnabled(hasTask);
             show();
         } else {
-            taskLoginWidget->getReady("Please login.");
-            hide();
+            emit visibilityChanged(false);
+            taskLoginWidget.setResponse("Please login.");
         }
     } else {
+        emit visibilityChanged(false);
         handleError(taskLoginWidget, success, code, httpCode, response.content);
     }
 }
 
-void TaskManagementWidget::loginButtonClicked(const QString & username, const QString & password) {
+void TaskManagementWidget::loginButtonClicked(const QString & host, const QString & username, const QString & password) {
     // remove contents of cookie file to fill it with new cookie
     QFile cookie(state->taskState->cookieFile);
     cookie.open(QIODevice::WriteOnly);
     cookie.close();
 
-    const auto url = state->taskState->host + "/knossos/session/";
+    const auto url = host + "/knossos/session/";
     const auto postdata = QString("<login><username>%1</username><password>%2</password></login>").arg(username, password);
     long httpCode;
     httpResponse response;
@@ -129,9 +132,10 @@ void TaskManagementWidget::loginButtonClicked(const QString & username, const QS
     setCursor(Qt::ArrowCursor);
 
     if (success && code == CURLE_OK && httpCode == 200) {
+        state->taskState->host = host;
         refresh();
-        taskLoginWidget->hide();
     } else {
+        hide();
         handleError(taskLoginWidget, success, code, httpCode, response.content);
     }
 }
@@ -149,7 +153,7 @@ void TaskManagementWidget::logoutButtonClicked() {
     if (success && code == CURLE_OK && httpCode == 200) {
         resetSession("<font color='green'>Logged out successfully.</font>");
     } else {
-        handleError(this, success, code, httpCode, response.content);
+        handleError(*this, success, code, httpCode, response.content);
     }
 }
 
@@ -194,7 +198,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     if (success && code == CURLE_OK && httpCode == 200) {
         saveAndLoadFile(header, response);
     } else {
-        handleError(this, success, code, httpCode, response.content);
+        handleError(*this, success, code, httpCode, response.content);
     }
 }
 
@@ -213,7 +217,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
         saveAndLoadFile(header, response);
         refresh();
     } else {
-        handleError(this, success, code, httpCode, response.content);
+        handleError(*this, success, code, httpCode, response.content);
     }
 }
 
@@ -364,37 +368,36 @@ void TaskManagementWidget::submit(const bool final) {
     submitCommentEdit.clear();
 }
 
-void TaskManagementWidget::resetSession(QString message) {
+void TaskManagementWidget::resetSession(const QString &message) {
     taskState::removeCookie();
     state->taskState->taskFile = "";
-    taskLoginWidget->setResponse(message);
+    setResponse("");
     setActiveUser("");
     setTask("");
     setDescription("");
     setComment("");
 
     hide();
-    taskLoginWidget->show();
+    taskLoginWidget.setResponse(message);
 }
 
-void TaskManagementWidget::setResponse(QString message) {
+void TaskManagementWidget::setResponse(const QString &message) {
     statusLabel.setText(message);
 }
 
-void TaskManagementWidget::setActiveUser(QString username) {
+void TaskManagementWidget::setActiveUser(const QString &username) {
     userNameLabel.setText("<font color='green'>" + username + "</font>");
 }
 
-void TaskManagementWidget::setTask(QString task) {
+void TaskManagementWidget::setTask(const QString & task) {
     state->taskState->taskName = task;
     taskLabel.setText("<font color='green'>" + task + "</font>");
-    taskLabel.setText(task);
 }
 
-void TaskManagementWidget::setDescription(QString description) {
+void TaskManagementWidget::setDescription(const QString & description) {
     descriptionLabel.setText(description);
 }
 
-void TaskManagementWidget::setComment(QString comment) {
+void TaskManagementWidget::setComment(const QString & comment) {
     commentLabel.setText(comment);
 }
