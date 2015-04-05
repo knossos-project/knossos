@@ -1107,6 +1107,12 @@ bool Skeletonizer::delTree(int treeID) {
         }
     }
 
+    //remove if active tree
+    if (treeToDel == state->skeletonState->activeTree) {
+        state->skeletonState->activeTree = nullptr;
+    }
+
+    //no references to tree left
     emit treeRemovedSignal(treeID);
 
     state->viewer->skeletonizer->setActiveNode(state->skeletonState->activeNode, 0);//set active tree through node
