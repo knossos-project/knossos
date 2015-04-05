@@ -568,15 +568,14 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
-
-        state->boundary.x *= state->magnification;
-        state->boundary.y *= state->magnification;
-        state->boundary.z *= state->magnification;
-
-        state->scale.x /= (float)state->magnification;
-        state->scale.y /= (float)state->magnification;
-        state->scale.z /= (float)state->magnification;
     }
+    state->boundary.x *= state->magnification;
+    state->boundary.y *= state->magnification;
+    state->boundary.z *= state->magnification;
+
+    state->scale.x /= (float)state->magnification;
+    state->scale.y /= (float)state->magnification;
+    state->scale.z /= (float)state->magnification;
     // update the volume boundary
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
         state->skeletonState->volBoundary = state->boundary.x * 2;
