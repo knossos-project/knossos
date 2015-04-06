@@ -29,29 +29,82 @@
 
 #include <cstddef>
 
-class floatCoordinate {
-public:
-    float x;
-    float y;
-    float z;
-};
-
 #include <boost/functional/hash.hpp>
 
-template<std::size_t = 0>//tag
+template<typename ComponentType = int, std::size_t = 0>//tag
 class Coord {
 public:
-    using Coordinate = Coord<>;
-    using CoordOfCube = Coord<1>;
-    using CoordInCube = Coord<2>;
-    int x;
-    int y;
-    int z;
+    using Coordinate = Coord<int>;
+    using CoordOfCube = Coord<int, 1>;
+    using CoordInCube = Coord<int, 2>;
+    using floatCoordinate = Coord<float>;
+    ComponentType x;
+    ComponentType y;
+    ComponentType z;
 
-    constexpr Coord(int x = 0, int y = 0, int z = 0) : x(x), y(y), z(z) {}
+    constexpr Coord(ComponentType x = 0, ComponentType y = 0, ComponentType z = 0) : x(x), y(y), z(z) {}
+    template<typename T, typename = typename std::enable_if<std::is_convertible<ComponentType, T>::value>::type>
+    constexpr Coord(const Coord<T> & rhs) : x(rhs.x), y(rhs.y), z(rhs.z) {}
 
-    bool operator==(const Coord & rhs) const {
+    constexpr bool operator==(const Coord & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
+    }
+    constexpr bool operator!=(const Coord & rhs) const {
+        return !(*this == rhs);
+    }
+
+    constexpr Coord operator+(const Coord & rhs) const {
+        return Coord(x + rhs.x, y + rhs.y, z  + rhs.z);
+    }
+    Coord & operator+=(const Coord & rhs) {
+        return *this = *this + rhs;
+    }
+
+    constexpr Coord operator-(const Coord & rhs) const {
+        return Coord(x - rhs.x, y - rhs.y, z  - rhs.z);
+    }
+    Coord & operator-=(const Coord & rhs) {
+        return *this = *this - rhs;
+    }
+
+    constexpr Coord operator*(const Coord & rhs) const {
+        return Coord(x * rhs.x, y * rhs.y, z  * rhs.z);
+    }
+    Coord & operator*=(const Coord & rhs) {
+        return *this = *this * rhs;
+    }
+
+    constexpr Coord operator/(const Coord & rhs) const {
+        return Coord(x / rhs.x, y / rhs.y, z  / rhs.z);
+    }
+    Coord & operator/=(const Coord & rhs) {
+        return *this = *this / rhs;
+    }
+
+    template<typename T>
+    constexpr auto operator*(const T factor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
+        return Coord(x * factor, y * factor, z * factor);
+    }
+    template<typename T>
+    auto operator*=(const T factor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
+        return *this = *this * factor;
+    }
+
+    template<typename T>
+    constexpr auto operator/(const T divisor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
+        return Coord(x / divisor, y / divisor, z / divisor);
+    }
+    template<typename T>
+    auto operator/=(const T divisor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
+        return *this = *this / divisor;
+    }
+
+    constexpr CoordOfCube cube(const int size) const {
+        return {x / size, y / size, z / size};
+    }
+
+    constexpr CoordInCube insideCube(const int size) const {
+        return {x % size, y % size, z % size};
     }
 
     /**
@@ -66,33 +119,26 @@ public:
         return {x * cubeEdgeLength, y * cubeEdgeLength, z * cubeEdgeLength};
     }
 
-    CoordOfCube cube(const int size) const {
-        return {x / size, y / size, z / size};
-    }
-
-    CoordInCube insideCube(const int size) const {
-        return {x % size, y % size, z % size};
-    }
-
-    Coordinate cap(const Coordinate & min, const Coordinate & max) const {
-        Coordinate copy{*this};
-        copy.x = std::max(min.x, std::min(copy.x, max.x));
-        copy.y = std::max(min.y, std::min(copy.y, max.y));
-        copy.z = std::max(min.z, std::min(copy.z, max.z));
-        return copy;
+    constexpr Coordinate capped(const Coordinate & min, const Coordinate & max) const {
+        return {
+            std::max(min.x, std::min(x, max.x))
+            , std::max(min.y, std::min(y, max.y))
+            , std::max(min.z, std::min(z, max.z))
+        };
     }
 };
-using Coordinate = Coord<>;
-using CoordOfCube = Coord<1>;
-using CoordInCube = Coord<2>;
+using Coordinate = Coord<>::Coordinate;
+using CoordOfCube = Coord<>::CoordOfCube;
+using CoordInCube = Coord<>::CoordInCube;
+using floatCoordinate = Coord<>::floatCoordinate;
 
 Q_DECLARE_METATYPE(Coordinate)
 Q_DECLARE_METATYPE(floatCoordinate)
 
 namespace std {
-template<std::size_t x>
-struct hash<Coord<x>> {
-    std::size_t operator()(const Coord<x> & cord) const {
+template<typename T, std::size_t x>
+struct hash<Coord<T, x>> {
+    std::size_t operator()(const Coord<T, x> & cord) const {
         return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
     }
 };

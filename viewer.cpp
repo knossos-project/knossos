@@ -1304,7 +1304,7 @@ void Viewer::updateCurrentPosition() {
     auto & session = Session::singleton();
     if (session.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
-        const Coordinate newPos = state->viewerState->currentPosition.cap(session.movementAreaMin, session.movementAreaMax);
+        const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
         userMove(newPos.x - currPos.x, newPos.y - currPos.y, newPos.z - currPos.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }
