@@ -95,6 +95,7 @@ void Segmentation::clear() {
     SubObject::highestId = 0;
     subobjects.clear();
     touched_subobject_id = 0;
+    categories = prefixed_categories;
 
     loader->snappyCacheClear();
     state->viewer->changeDatasetMag(DATA_SET);//reload segmentation cubes
@@ -185,6 +186,18 @@ void Segmentation::removeObject(Object & object) {
     objects.pop_back();
     emit removedRow();
     --Object::highestIndex;
+}
+
+void Segmentation::changeCategory(Object & obj, const QString & category) {
+    obj.category = category;
+    emit changedRow(obj.index);
+    categories.insert(category);
+    emit categoriesChanged();
+}
+
+void Segmentation::changeComment(Object & obj, const QString & comment) {
+    obj.comment = comment;
+    emit changedRow(obj.index);
 }
 
 void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
@@ -514,7 +527,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
                 newSubObject(obj, objId);
             }
             std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
-            obj.category = category;
+            changeCategory(obj, category);
             obj.comment = comment;
         } else {
             qDebug() << "mergelistLoad fail";
