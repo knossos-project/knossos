@@ -5,7 +5,9 @@
 #include <QObject>
 
 class color4F;
-class floatCoordinate;
+template<typename T, std::size_t N>
+class Coord;
+using floatCoordinate = Coord<float, 0>;
 class mesh;
 
 class MeshDecorator : public QObject

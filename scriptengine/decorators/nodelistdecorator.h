@@ -10,13 +10,13 @@
 
 class NodeListDecorator : public QObject
 {
-    template<std::size_t> friend class Coord;
+    template<typename, std::size_t> friend class Coord;
     Q_OBJECT
 public:
     explicit NodeListDecorator(QObject *parent = 0);
-    
+
 signals:
-    
+
 public slots:
 
     int node_id(nodeListElement *self);

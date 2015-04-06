@@ -255,10 +255,7 @@ void Viewport::resizeGL(int w, int h) {
     glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
     glMatrixMode(GL_MODELVIEW);
 
-    SET_COORDINATE(state->viewerState->vpConfigs[id].upperLeftCorner,
-                   geometry().topLeft().x(),
-                   geometry().topLeft().y(),
-                   0);
+    state->viewerState->vpConfigs[id].upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
     state->viewerState->vpConfigs[id].edgeLength = width();
 }
 

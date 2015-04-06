@@ -100,6 +100,14 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
         return worker->snappyCache;
     } else {
         return decltype(Loader::Worker::snappyCache)();//{} is not working
+
+#define SET_COORDINATE(coordinate, a, b, c) \
+{ \
+(coordinate).x = (a); \
+(coordinate).y = (b); \
+(coordinate).z = (c); \
+}
+
     }
 }
 
@@ -209,7 +217,7 @@ std::vector<Coordinate> Loader::Worker::DcoiFromPos() {
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int)floorf(floatHalfSc);
 
-    CPY_COORDINATE(direction, state->loaderUserMoveViewportDirection);
+    direction = state->loaderUserMoveViewportDirection;
 
     cubeElemCount = state->cubeSetElements;
     DcArray = (LO_Element*)malloc(sizeof(DcArray[0]) * cubeElemCount);

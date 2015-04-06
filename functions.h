@@ -13,16 +13,16 @@ public:
     float alpha;
 
     Rotation() {
-        SET_COORDINATE(axis, 0, 0, 0);
+        axis = {};
         alpha = 0;
     }
 
     Rotation(float x, float y, float z, float alpha) : alpha(alpha){
-        SET_COORDINATE(axis, x, y, z);
+        axis = {x, y, z};
     }
 
     void setRotation(float x, float y, float z, float alpha) {
-        SET_COORDINATE(axis, x, y, z);
+        axis = {x, y, z};
         this->alpha = alpha;
     }
 };

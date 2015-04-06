@@ -48,9 +48,7 @@ float degToRad(float deg) {
 
 floatCoordinate crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
     floatCoordinate result;
-    SET_COORDINATE(result, v1->y * v2->z - v1->z * v2->y,
-                   v1->z * v2->x - v1->x * v2->z,
-                   v1->x * v2->y - v1->y * v2->x);
+    result = {v1->y * v2->z - v1->z * v2->y, v1->z * v2->x - v1->x * v2->z, v1->x * v2->y - v1->y * v2->x};
     return result;
 }
 
@@ -78,7 +76,7 @@ void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
     const auto x = matrix[0][0]*v.x + matrix[0][1]*v.y + matrix[0][2]*v.z;
     const auto y = matrix[1][0]*v.x + matrix[1][1]*v.y + matrix[1][2]*v.z;
     const auto z = matrix[2][0]*v.x + matrix[2][1]*v.y + matrix[2][2]*v.z;
-    SET_COORDINATE(v, x, y, z);
+    v = {x, y, z};
     normalizeVector(&v);
 }
 

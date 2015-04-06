@@ -118,17 +118,17 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                     / 2)
                 *2;
     }
-    SET_COORDINATE(moveCache, 0, 0, 0);
+    moveCache = {};
     resetRotation();
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].n , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v2 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].n , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
+    state->viewerState->vpConfigs[VIEWPORT_XY].v1 = v1;
+    state->viewerState->vpConfigs[VIEWPORT_XY].v2 = v2;
+    state->viewerState->vpConfigs[VIEWPORT_XY].n = v3;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].v1 = v1;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].v2 = v3;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].n = v2;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].v1 = v3;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].v2 = v2;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].n = v1;
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify);
@@ -220,9 +220,7 @@ bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, float
     int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(viewPort->v2);
 
-    SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
-                                  roundFloat(currentPxInDc_float->y),
-                                  roundFloat(currentPxInDc_float->z));
+    currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
 
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= state->cubeEdgeLength) || (currentPxInDc.y >= state->cubeEdgeLength) || (currentPxInDc.z >= state->cubeEdgeLength)) {
@@ -236,7 +234,7 @@ bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, float
             // it is totally ignored (i.e. not read, then overwritten) by the calling function.
             // But to keep the functionality here compatible after this bugfix, we also replicate
             // this update here - from the originial below
-            ADD_COORDINATE(*currentPxInDc_float, *v2);
+            *currentPxInDc_float += *v2;
         }
         return true;
     }
@@ -266,10 +264,8 @@ bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, float
         if(*t >= viewPort->t_max) {
             break;
         }
-        ADD_COORDINATE(*currentPxInDc_float, *v2);
-        SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
-                                      roundFloat(currentPxInDc_float->y),
-                                      roundFloat(currentPxInDc_float->z));
+        *currentPxInDc_float += *v2;
+        currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     }
     return true;
 }
@@ -412,18 +408,15 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
-    uint x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
 
     char *datacube = NULL, *overlayCube = NULL;
     int dcOffset = 0, index = 0;
 
-    CPY_COORDINATE(currPosTrans, state->viewerState->currentPosition);
-    DIV_COORDINATE(currPosTrans, state->magnification);
+    currPosTrans = state->viewerState->currentPosition / state->magnification;
 
-    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
-    DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
+    leftUpperPxInAbsPxTrans = currentVp.texture.leftUpperPxInAbsPx / state->magnification;
 
     currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
@@ -481,10 +474,10 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     }
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
-    for(x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
-        for(y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
-            x_px = x_dc * state->cubeEdgeLength;
-            y_px = y_dc * state->cubeEdgeLength;
+    for(int x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
+        for(int y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
+            const int x_px = x_dc * state->cubeEdgeLength;
+            const int y_px = y_dc * state->cubeEdgeLength;
 
             switch(currentVp.type) {
             // With an x/y-coordinate system in a viewport, we get the following
@@ -494,22 +487,13 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             // XZ-slice: x local is x global, y local is z global
             // YZ-slice: x local is y global, y local is z global.
             case SLICE_XY:
-                SET_COORDINATE(currentDc,
-                               upperLeftDc.x + x_dc,
-                               upperLeftDc.y + y_dc,
-                               upperLeftDc.z);
+                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
                 break;
             case SLICE_XZ:
-                SET_COORDINATE(currentDc,
-                               upperLeftDc.x + x_dc,
-                               upperLeftDc.y,
-                               upperLeftDc.z + y_dc);
+                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
                 break;
             case SLICE_YZ:
-                SET_COORDINATE(currentDc,
-                               upperLeftDc.x,
-                               upperLeftDc.y + x_dc,
-                               upperLeftDc.z + y_dc);
+                currentDc = {upperLeftDc.x, upperLeftDc.y + x_dc, upperLeftDc.z + y_dc};
                 break;
             default:
                 qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp.type);
@@ -613,9 +597,8 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
 
     floatCoordinate *v1 = &currentVp.v1;
     floatCoordinate *v2 = &currentVp.v2;
-    CPY_COORDINATE(rowPx_float, currentVp.texture.leftUpperPxInAbsPx);
-    DIV_COORDINATE(rowPx_float, state->magnification);
-    CPY_COORDINATE(currentPx_float, rowPx_float);
+    rowPx_float = currentVp.texture.leftUpperPxInAbsPx / state->magnification;
+    currentPx_float = rowPx_float;
 
     glBindTexture(GL_TEXTURE_2D, currentVp.texture.texHandle);
 
@@ -623,12 +606,8 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     while(s < currentVp.s_max) {
         t = 0;
         while(t < currentVp.t_max) {
-            SET_COORDINATE(currentPx, roundFloat(currentPx_float.x),
-                                      roundFloat(currentPx_float.y),
-                                      roundFloat(currentPx_float.z));
-            SET_COORDINATE(currentDc, currentPx.x/state->cubeEdgeLength,
-                                      currentPx.y/state->cubeEdgeLength,
-                                      currentPx.z/state->cubeEdgeLength);
+            currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
+            currentDc = currentPx / state->cubeEdgeLength;
 
             if(currentPx.x < 0) { currentDc.x -= 1; }
             if(currentPx.y < 0) { currentDc.y -= 1; }
@@ -638,22 +617,18 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
-            SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,
-                                                currentPx_float.y-currentDc.y*state->cubeEdgeLength,
-                                                currentPx_float.z-currentDc.z*state->cubeEdgeLength);
+            currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
             t_old = t;
             dcSliceExtract_arb(datacube,
                                &currentVp,
                                &currentPxInDc_float,
                                s, &t,
                                state->viewerState->datasetAdjustmentOn);
-            SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
-                                            currentPx_float.y + v2->y * (t - t_old),
-                                            currentPx_float.z + v2->z * (t - t_old));
+            currentPx_float = currentPx_float + *v2 * (t - t_old);
         }
         s++;
-        ADD_COORDINATE(rowPx_float, *v1);
-        CPY_COORDINATE(currentPx_float, rowPx_float);
+        rowPx_float += *v1;
+        currentPx_float = rowPx_float;
     }
 
     glTexSubImage2D(GL_TEXTURE_2D,
@@ -679,8 +654,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     viewerState *viewerState = state->viewerState;
 
     /* why div first by mag and then multiply again with it?? */
-    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
-    DIV_COORDINATE(currPosTrans, state->magnification);
+    currPosTrans = viewerState->currentPosition / state->magnification;
 
     currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
@@ -695,13 +669,12 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             //viewerState->vpConfigs[i].texture.usedTexLengthDc is state->M and even int.. very funny
             // this guy is always in mag1, even if a different mag dataset is active!!!
             // this might be buggy for very high mags, test that!
-            SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
-                           (currentPosition_dc.x - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification,
-                           (currentPosition_dc.y - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification,
-                           currentPosition_dc.z
-                           * state->cubeEdgeLength * state->magnification);
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx = {
+                currentPosition_dc.x - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+                , currentPosition_dc.y - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+                , currentPosition_dc.z
+            };
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx *= state->cubeEdgeLength * state->magnification;
             //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x >1000000){ qDebug("uninit x %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x);}
             //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ qDebug("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y);}
             //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ qDebug("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);}
@@ -709,95 +682,66 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
-            SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
-                           viewerState->currentPosition.x
-                           - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.y -
-                           (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.z);
+            state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen = {
+                viewerState->currentPosition.x - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+                , viewerState->currentPosition.y - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+                , viewerState->currentPosition.z
+            };
             break;
         case VIEWPORT_XZ:
             //Set the coordinate of left upper data pixel currently stored in the texture
-            SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
-                           (currentPosition_dc.x - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification,
-                           currentPosition_dc.y * state->cubeEdgeLength  * state->magnification,
-                           (currentPosition_dc.z - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification);
-
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx = {
+                currentPosition_dc.x - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+                , currentPosition_dc.y
+                , currentPosition_dc.z - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+            };
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx *= state->cubeEdgeLength * state->magnification;
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
-            SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
-                           viewerState->currentPosition.x
-                           - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.y ,
-                           viewerState->currentPosition.z
-                           - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
+            state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen = {
+                viewerState->currentPosition.x - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+                , viewerState->currentPosition.y
+                , viewerState->currentPosition.z - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+            };
             break;
         case VIEWPORT_YZ:
             //Set the coordinate of left upper data pixel currently stored in the texture
-            SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
-                           currentPosition_dc.x * state->cubeEdgeLength   * state->magnification,
-                           (currentPosition_dc.y - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification,
-                           (currentPosition_dc.z - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
-                           * state->cubeEdgeLength * state->magnification);
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx = {
+                currentPosition_dc.x
+                , currentPosition_dc.y - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+                , currentPosition_dc.z - static_cast<int>(viewerState->vpConfigs[i].texture.usedTexLengthDc / 2)
+            };
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx *= state->cubeEdgeLength   * state->magnification;
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
-            SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
-                           viewerState->currentPosition.x ,
-                           viewerState->currentPosition.y
-                           - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.z
-                           - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
+            state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen = {
+                viewerState->currentPosition.x
+                , viewerState->currentPosition.y - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+                , viewerState->currentPosition.z - static_cast<int>((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+            };
             break;
         case VIEWPORT_ARBITRARY:
-            CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
-            CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
-            SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
-                           viewerState->currentPosition.x - state->magnification * (v1.x * viewerState->vpConfigs[i].s_max/2 + v2.x * viewerState->vpConfigs[i].t_max/2),
-                           viewerState->currentPosition.y - state->magnification * (v1.y * viewerState->vpConfigs[i].s_max/2 + v2.y * viewerState->vpConfigs[i].t_max/2),
-                           viewerState->currentPosition.z - state->magnification * (v1.z * viewerState->vpConfigs[i].s_max/2 + v2.z * viewerState->vpConfigs[i].t_max/2));
+            v1 = viewerState->vpConfigs[i].v1;
+            v2 = viewerState->vpConfigs[i].v2;
+            viewerState->vpConfigs[i].leftUpperPxInAbsPx_float = viewerState->currentPosition - (v1 * viewerState->vpConfigs[i].s_max/2 + v2 * viewerState->vpConfigs[i].t_max/2) * state->magnification;
 
-            SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.x),
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.y),
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.z));
+            viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx = viewerState->vpConfigs[i].leftUpperPxInAbsPx_float;
 
-            SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen_float,
-                           viewerState->currentPosition.x
-                           - v1.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+            state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen_float =
+                viewerState->currentPosition
+                - v1 * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+                - v2 * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.) / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+            ;
 
 
-                           - v2.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.y
-
-                           - v1.y * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
-                           - v2.y * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.z
-
-                           - v1.z * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
-                           - v2.z * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
-                            / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
-
-            SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
-                           roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.x),
-                           roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.y),
-                           roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.z));
+            state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen = {
+                roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.x)
+                , roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.y)
+                , roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.z)
+            };
             break;
         default:
             viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x = 0;
@@ -1144,15 +1088,15 @@ void Viewer::run() {
         rotateAndNormalize(v1, rotation.axis, rotation.alpha);
         rotateAndNormalize(v2, rotation.axis, rotation.alpha);
         rotateAndNormalize(v3, rotation.axis, rotation.alpha);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v1 , v1);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v2 , v3);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].n , v2);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 , v3);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 , v2);
-        CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
+        state->viewerState->vpConfigs[VP_UPPERLEFT].v1 = v1;
+        state->viewerState->vpConfigs[VP_UPPERLEFT].v2 = v2;
+        state->viewerState->vpConfigs[VP_UPPERLEFT].n = v3;
+        state->viewerState->vpConfigs[VP_LOWERLEFT].v1 = v1;
+        state->viewerState->vpConfigs[VP_LOWERLEFT].v2 = v3;
+        state->viewerState->vpConfigs[VP_LOWERLEFT].n = v2;
+        state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 = v3;
+        state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 = v2;
+        state->viewerState->vpConfigs[VP_UPPERRIGHT].n = v1;
         rotation = Rotation();
         alphaCache = 0;
     }
@@ -1293,7 +1237,7 @@ void Viewer::updateCurrentPosition() {
     auto & session = Session::singleton();
     if (session.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
-        const Coordinate newPos = state->viewerState->currentPosition.cap(session.movementAreaMin, session.movementAreaMax);
+        const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
         userMove(newPos.x - currPos.x, newPos.y - currPos.y, newPos.z - currPos.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }
@@ -1327,7 +1271,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             viewerState->currentPosition.x += x;
             viewerState->currentPosition.y += y;
             viewerState->currentPosition.z += z;
-            SET_COORDINATE(state->currentDirections[state->currentDirectionsIndex], x, y, z);
+            state->currentDirections[state->currentDirectionsIndex] = {x, y, z};
             state->currentDirectionsIndex = (state->currentDirectionsIndex + 1) % LL_CURRENT_DIRECTIONS_SIZE;
     }
     else {
@@ -1341,7 +1285,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
-    if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
+    if (newPosition_dc != lastPosition_dc) {
         dc_reslice_notify();
         oc_reslice_notify();
 
@@ -1349,29 +1293,29 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
         Coordinate direction;
         switch (userMoveType) {
         case USERMOVE_DRILL:
-            SET_COORDINATE(direction, x, y, z);
+            direction = {x, y, z};
             break;
         case USERMOVE_HORIZONTAL:
             switch (viewportType) {
             case VIEWPORT_XZ:
-                SET_COORDINATE(direction, 0, 1, 0);
+                direction = {0, 1, 0};
                 break;
             case VIEWPORT_YZ:
-                SET_COORDINATE(direction, 1, 0, 0);
+                direction = {1, 0, 0};
                 break;
             case VIEWPORT_XY:
             default:
-                SET_COORDINATE(direction, 0, 0, 1);
+                direction = {0, 0, 1};
                 break;
             }
             break;
         case USERMOVE_NEUTRAL:
-            SET_COORDINATE(direction, 0, 0, 0);
+            direction = {0, 0, 0};
             break;
         default:
             break;
         }
-        CPY_COORDINATE(state->loaderUserMoveViewportDirection, direction);
+        state->loaderUserMoveViewportDirection = direction;
         loader_notify();
     }
 
@@ -1400,7 +1344,7 @@ bool Viewer::userMove_arb(float x, float y, float z) {
     step.x = roundFloat(moveCache.x);
     step.y = roundFloat(moveCache.y);
     step.z = roundFloat(moveCache.z);
-    SUB_COORDINATE(moveCache, step);
+    moveCache -= step;
     // In fact the movement most likely is not neutral, but since arbitrary horizontal or drilling movement
     // makes little difference for the (currently) orthogonal loading order, we leave it as such
     return userMove(step.x, step.y, step.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
@@ -1779,10 +1723,7 @@ void Viewer::loader_notify() {
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
     // The int division is hopefully not too much of an issue here
-    state->currentPositionX = state->viewerState->currentPosition;
-    state->currentPositionX.x /= state->magnification;
-    state->currentPositionX.y /= state->magnification;
-    state->currentPositionX.z /= state->magnification;
+    state->currentPositionX = state->viewerState->currentPosition / state->magnification;
 
     Loader::Controller::singleton().startLoading();
 }
@@ -1892,16 +1833,16 @@ void Viewer::setVPOrientation(bool arbitrary) {
 void Viewer::resetRotation() {
     alphaCache = 0;
     rotation = Rotation();
-    SET_COORDINATE(v1, 1, 0, 0);
-    SET_COORDINATE(v2, 0, 1, 0);
-    SET_COORDINATE(v3, 0, 0, 1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].v2 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_LOWERLEFT].n , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
+    v1 = {1, 0, 0};
+    v2 = {0, 1, 0};
+    v3 = {0, 0, 1};
+    state->viewerState->vpConfigs[VP_UPPERLEFT].v1 = v1;
+    state->viewerState->vpConfigs[VP_UPPERLEFT].v2 = v2;
+    state->viewerState->vpConfigs[VP_UPPERLEFT].n = v3;
+    state->viewerState->vpConfigs[VP_LOWERLEFT].v1 = v1;
+    state->viewerState->vpConfigs[VP_LOWERLEFT].v2 = v3;
+    state->viewerState->vpConfigs[VP_LOWERLEFT].n = v2;
+    state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 = v3;
+    state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 = v2;
+    state->viewerState->vpConfigs[VP_UPPERRIGHT].n = v1;
 }

@@ -99,8 +99,8 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
                 doubleMeshCapacity(&(state->skeletonState->lineVertBuffer));
 
-            SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex], (float)base->x, (float)base->y, (float)base->z);
-            SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1], (float)top->x, (float)top->y, (float)top->z);
+            state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
+            state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
 
             state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex] = color;
             state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex + 1] = color;
@@ -180,7 +180,7 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
                 if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
                     doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
 
-                SET_COORDINATE(state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex], (float)pos->x, (float)pos->y, (float)pos->z);
+                state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex] = Coordinate{pos->x, pos->y, pos->z};
                 state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
                 state->skeletonState->pointVertBuffer.vertsIndex++;
             }
@@ -437,7 +437,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glColor4f(0, 0, 0, 1);
         float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
-        SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
+        pos = {15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1};
 
         renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width));
     }
@@ -912,21 +912,21 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         floatCoordinate vec1;
         if (currentVP == 0) {
             glRotatef(180., 1.,0.,0.);
-            SET_COORDINATE(normal, 0, 0, 1);
-            SET_COORDINATE(vec1, 1, 0, 0);
+            normal = {0, 0, 1};
+            vec1 = {1, 0, 0};
         }
 
         else if (currentVP == 1) {
             glRotatef(90., 1., 0., 0.);
-            SET_COORDINATE(normal, 0, 1, 0);
-            SET_COORDINATE(vec1, 1, 0, 0);
+            normal = {0, 1, 0};
+            vec1 = {1, 0, 0};
         }
 
         else if (currentVP == 2){
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
-            SET_COORDINATE(normal, 1, 0, 0);
-            SET_COORDINATE(vec1, 0, 0, 1);
+            normal = {1, 0, 0};
+            vec1 = {0, 0, 1};
         }
         // first rotation makes the viewport face the camera
         float scalar = scalarProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);

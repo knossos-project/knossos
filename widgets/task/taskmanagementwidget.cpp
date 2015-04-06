@@ -30,8 +30,11 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     gridLayout.addWidget(&submitButton, 2, 0, 1, 1);
     gridLayout.addWidget(&submitFinalButton, 2, 1, 1, 1);
 
+    vLayout.addLayout(&gridLayout);
+    vLayout.addStretch();
+
     hLayout.addLayout(&formLayout);
-    hLayout.addLayout(&gridLayout);
+    hLayout.addLayout(&vLayout);
     mainLayout.addWidget(&statusLabel);
     mainLayout.addLayout(&hLayout);
     setLayout(&mainLayout);

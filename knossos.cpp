@@ -264,8 +264,8 @@ bool Knossos::initStates() {
 
    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
    state->currentDirectionsIndex = 0;
-   SET_COORDINATE(state->previousPositionX, 0, 0, 0);
-   SET_COORDINATE(state->currentPositionX, 0, 0, 0);
+   state->previousPositionX = {};
+   state->currentPositionX = {};
 
    curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
@@ -519,14 +519,23 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
+    }
+    state->boundary.x *= state->magnification;
+    state->boundary.y *= state->magnification;
+    state->boundary.z *= state->magnification;
 
-        state->boundary.x *= state->magnification;
-        state->boundary.y *= state->magnification;
-        state->boundary.z *= state->magnification;
-
-        state->scale.x /= (float)state->magnification;
-        state->scale.y /= (float)state->magnification;
-        state->scale.z /= (float)state->magnification;
+    state->scale.x /= (float)state->magnification;
+    state->scale.y /= (float)state->magnification;
+    state->scale.z /= (float)state->magnification;
+    // update the volume boundary
+    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+    }
+    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y)) {
+        state->skeletonState->volBoundary = state->boundary.y * 2;
+    }
+    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
+        state->skeletonState->volBoundary = state->boundary.x * 2;
     }
 
     return true;
@@ -542,7 +551,7 @@ bool Knossos::configDefaults() {
         state = Knossos::emptyState();
 
         state->loaderUserMoveType = USERMOVE_NEUTRAL;
-        SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
+        state->loaderUserMoveViewportDirection = {};
         state->remoteSignal = false;
         state->quitSignal = false;
         state->conditionRemoteSignal = new QWaitCondition();
@@ -582,8 +591,8 @@ bool Knossos::configDefaults() {
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;
     state->viewerState->nodeSelectSquareVpId = -1;
-    SET_COORDINATE(state->viewerState->nodeSelectionSquare.first, 0, 0, 0);
-    SET_COORDINATE(state->viewerState->nodeSelectionSquare.second, 0, 0, 0);
+    state->viewerState->nodeSelectionSquare.first = {};
+    state->viewerState->nodeSelectionSquare.second = {};
 
     state->viewerState->filterType = GL_LINEAR;
     state->viewerState->currentPosition.x = 0;
@@ -613,22 +622,22 @@ bool Knossos::configDefaults() {
             switch(i) {
             case VP_UPPERLEFT:
                 state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
-                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
                 state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
                 break;
             case VP_LOWERLEFT:
                 state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
-                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
                 state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
                 break;
             case VP_UPPERRIGHT:
                 state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
-                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
                 state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
                 break;
             case VP_LOWERRIGHT:
                 state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
-                SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
                 state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
                 break;
             }

@@ -31,6 +31,7 @@ protected:
     QHBoxLayout hLayout;
     QHBoxLayout userNameLayout;
     QFormLayout formLayout;
+    QVBoxLayout vLayout;
     QGridLayout gridLayout;
 
     QLabel userNameLabel;
