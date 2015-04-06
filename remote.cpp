@@ -57,10 +57,8 @@ void Remote::run() {
         if(state->quitSignal) {
             break;
         }
-        floatCoordinate currToNext; //distance vector
-        SET_COORDINATE (currToNext, recenteringPosition.x - state->viewerState->currentPosition.x,
-                                    recenteringPosition.y - state->viewerState->currentPosition.y,
-                                    recenteringPosition.z - state->viewerState->currentPosition.z);
+        //distance vector
+        floatCoordinate currToNext = recenteringPosition - state->viewerState->currentPosition;
         if(euclidicNorm(&currToNext) > jumpThreshold) {
             remoteJump(recenteringPosition.x, recenteringPosition.y, recenteringPosition.z);
         } else {
@@ -174,11 +172,10 @@ bool Remote::remoteWalk(int x, int y, int z) {
         if(rotate && lastRecenterings.empty() == false) {
             // calculate avg of last x recentering positions
             floatCoordinate avg;
-            SET_COORDINATE(avg, 0, 0, 0);
             for(const auto coord : lastRecenterings) {
-                ADD_COORDINATE(avg, coord);
+                avg += coord;
             }
-            DIV_COORDINATE(avg, lastRecenterings.size());
+            avg /= lastRecenterings.size();
 
             floatCoordinate delta;
             delta.x = recenteringPosition.x - avg.x;
@@ -192,8 +189,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         }
     }
 
-    floatCoordinate walkVector;
-    SET_COORDINATE(walkVector, x, y, z);
+    floatCoordinate walkVector = Coordinate{x, y, z};
 
     uint recenteringTime = 0;
     if (state->viewerState->recenteringTime > 5000){
@@ -222,12 +218,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
     float walkLength = std::max(10.f, euclidicNorm(&walkVector));
     uint timePerStep = std::max(10u, recenteringTime / ((uint)walkLength));
     float totalMoves = std::max(std::max(abs(x), abs(y)), abs(z)) / state->magnification;
-    floatCoordinate singleMove;
-    singleMove.x = walkVector.x / (float)totalMoves;
-    singleMove.y = walkVector.y / (float)totalMoves;
-    singleMove.z = walkVector.z / (float)totalMoves;
+    floatCoordinate singleMove = walkVector / totalMoves;
     floatCoordinate residuals;
-    SET_COORDINATE(residuals, 0, 0, 0);
     float anglesPerStep = 0;
     if(Viewport::arbitraryOrientation) {
         anglesPerStep = rotation.alpha/totalMoves;
@@ -237,8 +229,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             emit rotationSignal(rotation.axis.x, rotation.axis.y, rotation.axis.z, anglesPerStep);
         }
         Coordinate doMove;
-        SET_COORDINATE(doMove, 0, 0, 0);
-        ADD_COORDINATE(residuals, singleMove);
+        residuals += singleMove;
 
         if(residuals.x >= state->magnification) {
             doMove.x = state->magnification;

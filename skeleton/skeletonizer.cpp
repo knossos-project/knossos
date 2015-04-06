@@ -129,7 +129,7 @@ nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
         }
     }
 
-    SET_COORDINATE(newElement->position, position->x, position->y, position->z);
+    newElement->position = *position;
     //Assign radius
     newElement->radius = radius;
     //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
@@ -469,7 +469,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     treeListElement *currentTree;
 
     Coordinate loadedPosition;
-    SET_COORDINATE(loadedPosition, 0, 0, 0);
 
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");
@@ -936,10 +935,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         if((loadedPosition.x != 0) &&
            (loadedPosition.y != 0) &&
            (loadedPosition.z != 0)) {
-            Coordinate jump;
-            SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
-                                 loadedPosition.y - 1 - state->viewerState->currentPosition.y,
-                                 loadedPosition.z - 1 - state->viewerState->currentPosition.z);
+            Coordinate jump = loadedPosition - 1 - state->viewerState->currentPosition;
             emit userMoveSignal(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
         }
     }
@@ -1909,7 +1905,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
     if(!((newXPos < 0) || (newXPos > state->boundary.x)
        || (newYPos < 0) || (newYPos > state->boundary.y)
        || (newZPos < 0) || (newZPos > state->boundary.z))) {
-        SET_COORDINATE(node->position, newXPos, newYPos, newZPos);
+        node->position = {newXPos, newYPos, newZPos};
     }
 
     if(newRadius != 0.) {
@@ -2380,10 +2376,7 @@ bool Skeletonizer::unlockPosition() {
 bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     qDebug("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
     state->skeletonState->positionLocked = true;
-    SET_COORDINATE(state->skeletonState->lockedPosition,
-                   lockCoordinate.x,
-                   lockCoordinate.y,
-                   lockCoordinate.z);
+    state->skeletonState->lockedPosition = lockCoordinate;
 
     return true;
 }

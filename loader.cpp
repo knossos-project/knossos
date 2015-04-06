@@ -75,6 +75,13 @@ bool currentlyVisible(const Coordinate & coord) {
     return xvalid || yvalid || zvalid;
 }
 
+#define SET_COORDINATE(coordinate, a, b, c) \
+{ \
+(coordinate).x = (a); \
+(coordinate).y = (b); \
+(coordinate).z = (c); \
+}
+
 C_Element *lll_new()
 {
     C_Element *lll = NULL;
@@ -548,7 +555,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, coord2bytep_map_t *currentLoadedHash) 
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int)floorf(floatHalfSc);
 
-    CPY_COORDINATE(direction, state->loaderUserMoveViewportDirection);
+    direction = state->loaderUserMoveViewportDirection;
     /*
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
         dx += (float)state->currentDirections[i].x;

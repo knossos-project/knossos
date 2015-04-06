@@ -469,20 +469,13 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                 if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                    SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->vpConfigs[i].userMouseSlideX,
-                        state->viewerState->vpConfigs[i].userMouseSlideY, 0);
+                    newDraggedNodePos = {
+                        state->viewerState->vpConfigs[i].draggedNode->position.x - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
+                        , state->viewerState->vpConfigs[i].draggedNode->position.y - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
+                        , state->viewerState->vpConfigs[i].draggedNode->position.z
+                    };
                     state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                     state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                            - newDraggedNodePos.z;
 
                     Skeletonizer::singleton().editNode(
                              0,
@@ -505,20 +498,14 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                 if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                    SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                        state->viewerState->vpConfigs[i].userMouseSlideY);
+                    newDraggedNodePos = {
+                        state->viewerState->vpConfigs[i].draggedNode->position.x - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
+                        , state->viewerState->vpConfigs[i].draggedNode->position.y
+                        , state->viewerState->vpConfigs[i].draggedNode->position.z - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
+                    };
                     state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                     state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                        - newDraggedNodePos.z;
+
                     Skeletonizer::singleton().editNode(
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
@@ -539,21 +526,15 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/
                     / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
                 if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-                    SET_COORDINATE(newDraggedNodePos,
-                        0, state->viewerState->vpConfigs[i].userMouseSlideY,
-                        state->viewerState->vpConfigs[i].userMouseSlideX);
 
+                    newDraggedNodePos = {
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
+                        , state->viewerState->vpConfigs[i].draggedNode->position.y - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
+                        , state->viewerState->vpConfigs[i].draggedNode->position.z - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
+                    };
                     state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                     state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                        - newDraggedNodePos.z;
+
                     Skeletonizer::singleton().editNode(
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
@@ -1234,8 +1215,7 @@ void EventModel::startNodeSelection(int x, int y, int vpId) {
     state->viewerState->nodeSelectionSquare.first.y = y;
 
     // reset second point from a possible previous selection square.
-    CPY_COORDINATE(state->viewerState->nodeSelectionSquare.second,
-                   state->viewerState->nodeSelectionSquare.first);
+    state->viewerState->nodeSelectionSquare.second = state->viewerState->nodeSelectionSquare.first;
     state->viewerState->nodeSelectSquareVpId = vpId;
 }
 
