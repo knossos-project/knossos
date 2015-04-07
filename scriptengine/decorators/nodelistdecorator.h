@@ -29,6 +29,7 @@ public slots:
     Coordinate coordinate(nodeListElement *self);
     int mag(nodeListElement *self);
     int viewport(nodeListElement *self);
+    bool selected(nodeListElement *self);
     QString static_Node_help();
 };
 

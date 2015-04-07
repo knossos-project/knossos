@@ -43,6 +43,10 @@ int NodeListDecorator::viewport(nodeListElement *self) {
     return self->createdInVp;
 }
 
+bool NodeListDecorator::selected(nodeListElement *self) {
+    return self->selected;
+}
+
 QString NodeListDecorator::static_Node_help() {
     return QString("A read-only class representing a tree node of the KNOSSOS skeleton. Access to attributes only via getter." \
             "\n node_id() : returns the id of the current node" \
