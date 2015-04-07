@@ -157,6 +157,10 @@ int main(int argc, char *argv[]) {
     Viewer viewer;
     Remote remote;
 
+    qRegisterMetaType<Coordinate>();
+    qRegisterMetaType<CoordOfCube>();
+    qRegisterMetaType<floatCoordinate>();
+
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
 
