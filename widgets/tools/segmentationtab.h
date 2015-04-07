@@ -13,17 +13,29 @@
 #include <QSpinBox>
 #include <QSortFilterProxyModel>
 #include <QSplitter>
+#include <QStyledItemDelegate>
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
 
 #include <functional>
 
+class NonRemovableQComboBox : public QComboBox {
+    bool event(QEvent * event) override;
+};
+
+class CategoryDelegate : public QStyledItemDelegate {
+    mutable NonRemovableQComboBox box;
+public:
+    CategoryDelegate(class CategoryModel & categoryModel);
+    QWidget * createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+};
+
 class SegmentationObjectModel : public QAbstractListModel {
 Q_OBJECT
     friend class SegmentationTab;//selection
 protected:
-    const std::vector<QString> header{"", "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
+    const std::vector<QString> header{""/*color*/, "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -54,7 +66,7 @@ public:
 
 class CategoryModel : public QAbstractListModel {
     Q_OBJECT
-    std::vector<QString> categories;
+    std::vector<QString> categoriesCache;
 public:
     virtual int rowCount(const QModelIndex &parent) const override;
     virtual QVariant data(const QModelIndex &index, int role) const override;
@@ -90,6 +102,8 @@ Q_OBJECT
     QSortFilterProxyModel objectProxyModelComment;
     TouchedObjectModel touchedObjectModel;
 
+    CategoryDelegate categoryDelegate;
+
     QTreeView touchedObjsTable;
     QSplitter splitter;
     QTreeView objectsTable;
@@ -110,7 +124,6 @@ public:
     void updateLabels();
 public slots:
     void filter();
-    void updateCategories();
     void contextMenu(const QAbstractScrollArea & widget, const QPoint & pos);
 };
 

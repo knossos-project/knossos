@@ -6,13 +6,13 @@
 #include "segmentationsplit.h"
 
 #include <QDebug>
+#include <QSet>
 #include <QString>
 #include <QObject>
 
 #include <array>
 #include <functional>
 #include <random>
-#include <set>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +23,7 @@ Q_OBJECT
     friend void verticalSplittingPlane(const Coordinate & seed);
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
+    friend class CategoryDelegate;
     friend class CategoryModel;
     friend class SegmentationTab;
 
@@ -89,7 +90,8 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::vector<Object> objects;
     hash_list<uint64_t> selectedObjectIndices;
-    std::set<QString> categories = {"mito", "myelin", "neuron", "synapse", "ecs"};
+    const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
+    QSet<QString> categories = prefixed_categories;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
@@ -133,6 +135,8 @@ Q_OBJECT
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
+    void changeCategory(Object & obj, const QString & category);
+    void changeComment(Object & obj, const QString & comment);
     void newSubObject(Object & obj, uint64_t subObjID);
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
@@ -219,6 +223,7 @@ signals:
     void resetTouchedObjects();
     void renderAllObjsChanged(bool all);
     void setRecenteringPositionSignal(float x, float y, float z);
+    void categoriesChanged();
     void todosLeftChanged();
 public slots:
     void clear();

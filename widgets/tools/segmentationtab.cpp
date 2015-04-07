@@ -3,6 +3,7 @@
 #include "viewer.h"
 
 #include <QApplication>
+#include <QEvent>
 #include <QHeaderView>
 #include <QMenu>
 #include <QMessageBox>
@@ -11,6 +12,30 @@
 #include <QString>
 
 #include <chrono>
+
+bool NonRemovableQComboBox::event(QEvent * event) {
+    //disable implicit deletion
+    if (event->type() == QEvent::DeferredDelete) {
+        setParent(nullptr);
+        event->accept();
+        return true;
+    } else {
+        return QComboBox::event(event);
+    }
+}
+
+CategoryDelegate::CategoryDelegate(CategoryModel & categoryModel) {
+    box.setModel(&categoryModel);
+    box.setEditable(true);//support custom categories
+    //we don’t wanna insert values here, they get added in Segmentation::changeCategory
+    //ENTER after typing a non-existent value doesn’t work otherwise
+    box.setInsertPolicy(QComboBox::NoInsert);
+}
+
+QWidget * CategoryDelegate::createEditor(QWidget * parent, const QStyleOptionViewItem &, const QModelIndex &) const {
+    box.setParent(parent);//parent is needed for proper placement
+    return &box;
+}
 
 int TouchedObjectModel::rowCount(const QModelIndex &) const {
     return objectCache.size();
@@ -111,8 +136,8 @@ bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModel
         }
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
-        case 3: obj.category = value.toString(); break;
-        case 4: obj.comment  = value.toString(); break;
+        case 3: Segmentation::singleton().changeCategory(obj, value.toString()); break;
+        case 4: Segmentation::singleton().changeComment(obj, value.toString()); break;
         default:
             return false;
         }
@@ -167,26 +192,26 @@ void SegmentationObjectModel::changeRow(int id) {
 
 void CategoryModel::recreate() {
     beginResetModel();
-    categories.clear();
-    categories.emplace_back("<category>");
+    categoriesCache.clear();
     for (auto & category : Segmentation::singleton().categories) {
-        categories.emplace_back(category);
+        categoriesCache.emplace_back(category);
     }
+    std::sort(std::begin(categoriesCache), std::end(categoriesCache));
     endResetModel();
 }
 
 int CategoryModel::rowCount(const QModelIndex &) const {
-    return categories.size();
+    return categoriesCache.size();
 }
 
 QVariant CategoryModel::data(const QModelIndex &index, int role) const {
-    if(role == Qt::DisplayRole) {
-        return categories[index.row()];
+    if (role == Qt::DisplayRole || role == Qt::EditRole) {
+        return categoriesCache[index.row()];
     }
     return QVariant();
 }
 
-SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
+SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
     toolGroup.addButton(&mergeBtn, 0);
     toolGroup.addButton(&paintBtn, 1);
     modeGroup.addButton(&twodBtn, 0);
@@ -218,9 +243,10 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     toolsLayout.addWidget(&threedBtn);
     layout.addLayout(&toolsLayout);
 
-    categoryFilter.setModel(&categoryModel);
     categoryModel.recreate();
-    categoryFilter.setCurrentIndex(0);
+    categoryFilter.setModel(&categoryModel);
+    categoryFilter.setEditable(true);
+    categoryFilter.lineEdit()->setPlaceholderText("category");
     commentFilter.setPlaceholderText("Filter for comment...");
     showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
 
@@ -230,6 +256,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     touchedObjsTable.setRootIsDecorated(false);
     touchedObjsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
     touchedObjsTable.setUniformRowHeights(true);//perf hint from doc
+    touchedObjsTable.setItemDelegateForColumn(3, &categoryDelegate);
 
     //proxy model chaining, so we can filter twice
     objectProxyModelCategory.setSourceModel(&objectModel);
@@ -245,6 +272,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     //sorting seems pretty slow concerning selection and scroll to
 //    objectsTable.setSortingEnabled(true);
 //    objectsTable.sortByColumn(1, Qt::DescendingOrder);
+    objectsTable.setItemDelegateForColumn(3, &categoryDelegate);
 
     filterLayout.addWidget(&categoryFilter);
     filterLayout.addWidget(&commentFilter);
@@ -358,6 +386,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
 
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(objectsTable, point);});
     QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});
@@ -484,7 +513,7 @@ void SegmentationTab::updateSelection() {
 }
 
 void SegmentationTab::filter() {
-    if (categoryFilter.currentText() != "<category>") {
+    if (!categoryFilter.currentText().isEmpty()) {
         objectProxyModelCategory.setFilterFixedString(categoryFilter.currentText());
     } else {
         objectProxyModelCategory.setFilterFixedString("");
@@ -496,11 +525,6 @@ void SegmentationTab::filter() {
     }
     updateSelection();
     updateTouchedObjSelection();
-}
-
-void SegmentationTab::updateCategories() {
-    categoryModel.recreate();
-    categoryFilter.setCurrentIndex(0);
 }
 
 void SegmentationTab::updateLabels() {
