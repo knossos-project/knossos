@@ -54,7 +54,7 @@ public slots:
     void setComment(const QString & comment);
 
     void submitFinal();
-    void submit(const bool final = false);
+    bool submit(const bool final = false);
 
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();

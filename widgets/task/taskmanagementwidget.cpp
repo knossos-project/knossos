@@ -225,12 +225,13 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
 }
 
 void TaskManagementWidget::submitFinal() {
-    submit(true);
-    refresh();
-    state->viewer->window->newAnnotationSlot();
+    if (submit(true)) {
+        refresh();
+        state->viewer->window->newAnnotationSlot();
+    }
 }
 
-void TaskManagementWidget::submit(const bool final) {
+bool TaskManagementWidget::submit(const bool final) {
     // TDItem: write a function for multipart posts
     // for building the multipart formpost
     CURL *handle;
@@ -256,7 +257,7 @@ void TaskManagementWidget::submit(const bool final) {
     cookie = fopen(state->taskState->cookieFile.toUtf8().constData(), "r");
     if(cookie == NULL) {
         resetSession("<font color='red'>Could not find session cookie. Please login again.</font>");
-        return;
+        return false;
     }
     fclose(cookie);
 
@@ -267,7 +268,7 @@ void TaskManagementWidget::submit(const bool final) {
     multihandle = curl_multi_init();
     if(handle == NULL || multihandle == NULL) {
         setResponse("<font color='red'>Connection error!</font>");
-        return;
+        return false;
     }
     // fill the multipart post form. TDItem: comments are not supported, yet.
     std::string CSRFToken_stdstr = taskState::CSRFToken().toStdString();
@@ -292,7 +293,7 @@ void TaskManagementWidget::submit(const bool final) {
     headerlist = curl_slist_append(headerlist, buf);
     if(handle == NULL || multihandle == NULL) {
         setResponse("<font color='red'>Failed to initialize request. Please tell the developers!</font>");
-        return;
+        return false;
     }
 
     auto url = state->taskState->host + "/knossos/activeTask/";
@@ -332,7 +333,7 @@ void TaskManagementWidget::submit(const bool final) {
             curl_easy_cleanup(handle);
             curl_formfree(formpost);
             curl_slist_free_all (headerlist);
-            return;
+            return false;
         }
         // if maxfd is -1, it means libcurl is busy and we have to wait.
         // In that case calling select with maxfd+1 (== 0) is equal to sleep timeout seconds.
@@ -345,7 +346,7 @@ void TaskManagementWidget::submit(const bool final) {
             curl_easy_cleanup(handle);
             curl_formfree(formpost);
             curl_slist_free_all (headerlist);
-            return;
+            return false;
         case 0:
         default:
             /* timeout or readable/writable sockets */
@@ -369,6 +370,7 @@ void TaskManagementWidget::submit(const bool final) {
     curl_slist_free_all (headerlist);
 
     submitCommentEdit.clear();
+    return true;
 }
 
 void TaskManagementWidget::resetSession(const QString &message) {
