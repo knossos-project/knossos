@@ -32,9 +32,10 @@
 #include "viewer.h"
 
 #include <cstring>
-#include <vector>
 #include <queue>
 #include <set>
+#include <unordered_set>
+#include <vector>
 
 #define CATCH_RADIUS 10
 
@@ -2752,13 +2753,21 @@ void Skeletonizer::selectNodes(const std::vector<nodeListElement*> & nodes) {
 
 void Skeletonizer::toggleNodeSelection(const std::vector<nodeListElement*> & nodes) {
     auto & selectedNodes = state->skeletonState->selectedNodes;
-    selectedNodes.clear();
-    //mark all found nodes as selected
+
+    std::unordered_set<decltype(nodeListElement::nodeID)> removeNodes;
     for (auto & elem : nodes) {
-        elem->selected = !elem->selected;
+        elem->selected = !elem->selected;//toggle
         if (elem->selected) {
             selectedNodes.emplace_back(elem);
+        } else {
+            removeNodes.emplace(elem->nodeID);
         }
+    }
+    auto eraseIt = std::remove_if(std::begin(selectedNodes), std::end(selectedNodes), [&removeNodes](nodeListElement const * const node){
+        return removeNodes.find(node->nodeID) != std::end(removeNodes);
+    });
+    if (eraseIt != std::end(selectedNodes)) {
+        selectedNodes.erase(eraseIt);
     }
 
     if (selectedNodes.size() == 1) {
