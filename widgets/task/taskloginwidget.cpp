@@ -27,7 +27,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     line.setFrameShape(QFrame::HLine);
     line.setFrameShadow(QFrame::Sunken);
 
-    box.addButton("Login", QDialogButtonBox::AcceptRole)->setDefault(true);
+    box.addButton("Login", QDialogButtonBox::AcceptRole)->setAutoDefault(true);//default only did not work
     box.addButton("Cancel", QDialogButtonBox::RejectRole);
 
     QObject::connect(&box, &QDialogButtonBox::accepted, this, &QDialog::accept);
