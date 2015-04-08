@@ -97,13 +97,17 @@ void TaskManagementWidget::refresh() {
         }
         if (!username.isEmpty()) {
             const bool hasTask = !state->taskState->taskName.isEmpty();
+            gridLayout.removeWidget(&loadLastSubmitButton);
+            gridLayout.removeWidget(&startNewTaskButton);
             if (hasTask) {
-                gridLayout.removeWidget(&loadLastSubmitButton);
                 gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
             } else {
-                gridLayout.removeWidget(&startNewTaskButton);
                 gridLayout.addWidget(&startNewTaskButton, 0, 0, 1, 2);
             }
+            //buttons would still be shown after removing them from the layout
+            loadLastSubmitButton.setVisible(hasTask);
+            startNewTaskButton.setVisible(!hasTask);
+
             submitCommentEdit.setEnabled(hasTask);
             submitButton.setEnabled(hasTask);
             submitFinalButton.setEnabled(hasTask);
