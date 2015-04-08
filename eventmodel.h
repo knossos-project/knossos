@@ -77,7 +77,7 @@ public:
     void handleKeyPress(QKeyEvent *event, int VPfound);
     void handleKeyRelease(QKeyEvent *event);
     void startNodeSelection(int x, int y, int vpId);
-    void nodeSelection(int x, int y, int vpId);
+    std::vector<nodeListElement *> nodeSelection(int x, int y, int vpId);
     Coordinate getMouseCoordinate(int VPfound);
     int xrel(int x);
     int yrel(int y);

@@ -121,22 +121,8 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     mouseDownX = event->x();
     mouseDownY = event->y();
-    auto & skel = Skeletonizer::singleton();
-    //new active node selected
-    if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
-        //first assume that user managed to hit the node
-        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
-
-        if(clickedNode) {
-            skel.setActiveNode(NULL, clickedNode);
-            return true;
-        }
-
-        if(VPfound == VIEWPORT_SKELETON) {
-            return false;
-        }
-        return false;
-    } else if (QApplication::keyboardModifiers() == Qt::ControlModifier && Session::singleton().annotationMode == SkeletonizationMode) {
+    const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
+    if (Session::singleton().annotationMode == SkeletonizationMode && selection) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
     } else if(state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
         // check click mode of orthogonal viewports
@@ -149,13 +135,13 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         }
     }
 
-
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::ALT) {
         auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
             auto activeNode = state->skeletonState->activeNode;
             if(activeNode) {
+                auto & skel = Skeletonizer::singleton();
                 if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
                 } else if (skel.findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
@@ -591,19 +577,24 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         return;
     }
 
+    std::vector<nodeListElement*> selectedNodes;
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
         auto nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
-        if (nodeID != 0) {
-            nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
-            if (selectedNode != nullptr) {
-                Skeletonizer::singleton().toggleNodeSelection({selectedNode});
-            }
+        nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
+        if (nodeID != 0 && selectedNode != nullptr) {
+            selectedNodes = {selectedNode};
         }
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
-        nodeSelection(event->pos().x(), event->pos().y(), VPfound);
+        selectedNodes = nodeSelection(event->pos().x(), event->pos().y(), VPfound);
+    }
+    state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
+    if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+        Skeletonizer::singleton().selectNodes(selectedNodes);
+    } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
     }
 }
 
@@ -1219,7 +1210,7 @@ void EventModel::startNodeSelection(int x, int y, int vpId) {
     state->viewerState->nodeSelectSquareVpId = vpId;
 }
 
-void EventModel::nodeSelection(int x, int y, int vpId) {
+std::vector<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) {
     // node selection square
     state->viewerState->nodeSelectionSquare.second.x = x;
     state->viewerState->nodeSelectionSquare.second.y = y;
@@ -1235,9 +1226,7 @@ void EventModel::nodeSelection(int x, int y, int vpId) {
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    auto nodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
-    Skeletonizer::singleton().selectNodes(nodes);
-    state->viewerState->nodeSelectSquareVpId = -1;
+    return state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
 }
 
 int EventModel::xrel(int x) {
