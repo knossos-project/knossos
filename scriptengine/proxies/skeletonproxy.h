@@ -17,10 +17,9 @@ signals:
     void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
     void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
 };
 
-extern SkeletonProxySignalDelegate *signalDelegate;
+extern SkeletonProxySignalDelegate *skeletonProxySignalDelegate;
 
 class SkeletonProxy : public QObject
 {
@@ -73,20 +72,12 @@ public slots:
     segmentListElement *find_segment(int source_id, int target_id);
     bool delete_comment(int node_id);
     bool set_comment(int node_id, char *comment);
-    QByteArray readDc2Pointer(int x, int y, int z);
-    int readDc2PointerPos(int x, int y, int z, int pos);
-    bool writeDc2Pointer(int x, int y, int z, char *bytes);
-    bool writeDc2PointerPos(int x, int y, int z, int pos, int val);
-    QByteArray readOc2Pointer(int x, int y, int z);
-    quint64 readOc2PointerPos(int x, int y, int z, int pos);
-    bool writeOc2Pointer(int x, int y, int z, char *bytes);
-    bool writeOc2PointerPos(int x, int y, int z, int pos, quint64 val);
 
     void export_converter(const QString &path);
 
-    bool loadStyleSheet(const QString &path);
-    void set_current_position(int x, int y, int z);
-    Coordinate get_current_position();
+    QList<nodeListElement *> *selectedNodes();
+    void selectNodes(QList<nodeListElement *> nodes);
+
     static QString help();
 };
 

@@ -1,6 +1,6 @@
 #include "skeletonproxy.h"
 
-#include "eventmodel.h"
+#include "stateInfo.h"
 #include "functions.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
@@ -11,7 +11,7 @@
 #include <QApplication>
 #include <QFile>
 
-SkeletonProxySignalDelegate *signalDelegate = new SkeletonProxySignalDelegate();
+SkeletonProxySignalDelegate *skeletonProxySignalDelegate = new SkeletonProxySignalDelegate();
 
 SkeletonProxy::SkeletonProxy(QObject *parent) :
     QObject(parent)
@@ -121,7 +121,7 @@ bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {
     bool isMergePrevValue = state->skeletonState->mergeOnLoadFlag;
     QString tmpStr("");
     state->skeletonState->mergeOnLoadFlag = isMerge;
-    emit signalDelegate->loadSkeleton(filename, tmpStr, &isSuccess);
+    emit skeletonProxySignalDelegate->loadSkeleton(filename, tmpStr, &isSuccess);
     state->skeletonState->mergeOnLoadFlag = isMergePrevValue;
     if (!isSuccess) {
         emit echo(QString("could not load from %1").arg(filename));
@@ -132,7 +132,7 @@ bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {
 
 bool SkeletonProxy::annotation_save(const QString &filename) {
     bool isSuccess = false;
-    emit signalDelegate->saveSkeleton(filename, &isSuccess);
+    emit skeletonProxySignalDelegate->saveSkeleton(filename, &isSuccess);
     if (!isSuccess) {
         emit echo(QString("could not save to %1").arg(filename));
         return false;
@@ -186,7 +186,7 @@ bool SkeletonProxy::has_unsaved_changes() {
 }
 
 void SkeletonProxy::delete_skeleton() {
-    emit signalDelegate->clearSkeletonSignal();
+    emit skeletonProxySignalDelegate->clearSkeletonSignal();
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {
@@ -292,123 +292,13 @@ bool SkeletonProxy::set_branch_node(int node_id) {
     return true;
 }
 
-
-QByteArray SkeletonProxy::readDc2Pointer(int x, int y, int z) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return QByteArray();
-    }
-
-    return QByteArray::fromRawData((const char*)data, state->cubeBytes);
+QList<nodeListElement *> *SkeletonProxy::selectedNodes() {
+    return new QList<nodeListElement *>(QVector<nodeListElement *>::fromStdVector(state->skeletonState->selectedNodes).toList());
 }
 
-int SkeletonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return -1;
-    }
-
-    return data[pos];
+void SkeletonProxy::selectNodes(QList<nodeListElement *> nodes) {
+    Skeletonizer::singleton().selectNodes(nodes.toVector().toStdVector());
 }
-
-bool SkeletonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return false;
-    }
-
-    memcpy(data, bytes, state->cubeBytes);
-    return true;
-}
-
-bool SkeletonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return false;
-    }
-
-    data[pos] = val;
-    return true;
-}
-
-QByteArray SkeletonProxy::readOc2Pointer(int x, int y, int z) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return QByteArray();
-    }
-
-    return QByteArray::fromRawData((const char*)data, state->cubeBytes * OBJID_BYTES);
-}
-
-quint64 SkeletonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
-    Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return -1;
-    }
-
-    return data[pos];
-}
-
-bool SkeletonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return false;
-    }
-
-    memcpy(data, bytes, state->cubeBytes * OBJID_BYTES);
-    return true;
-}
-
-bool SkeletonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) {
-    Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
-    if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return false;
-    }
-
-    data[pos] = val;
-    return true;
-}
-
-void SkeletonProxy::set_current_position(int x, int y, int z) {
-    emit signalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
-}
-
-Coordinate SkeletonProxy::get_current_position() {
-    return state->viewerState->currentPosition;
-}
-
-// UNTESTED
-bool SkeletonProxy::loadStyleSheet(const QString &filename) {
-    QFile file(filename);
-    if(!file.open(QIODevice::ReadOnly)) {
-        emit echo("Error reading the style sheet file");
-        return false;
-    }
-
-    QString design(file.readAll());
-
-    qApp->setStyleSheet(design);
-    file.close();
-    return true;
-}
-
-
 
 QString SkeletonProxy::help() {
     return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \

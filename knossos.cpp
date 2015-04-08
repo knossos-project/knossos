@@ -31,6 +31,7 @@
 #include "network.h"
 #include "remote.h"
 #include "scriptengine/proxies/skeletonproxy.h"
+#include "scriptengine/proxies/pythonproxy.h"
 #include "scriptengine/scripting.h"
 #include "skeleton/skeletonizer.h"
 #include "version.h"
@@ -192,10 +193,10 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
 
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
-    QObject::connect(signalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
+    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
+    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
+    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
     return a.exec();
 }

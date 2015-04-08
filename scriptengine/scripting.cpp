@@ -17,6 +17,7 @@
 #include "decorators/transformdecorator.h"
 #include "decorators/pointdecorator.h"
 #include "proxies/skeletonproxy.h"
+#include "proxies/pythonproxy.h"
 
 #include "geometry/render.h"
 #include "geometry/point.h"
@@ -38,6 +39,7 @@ Scripting::Scripting() {
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
+    pythonProxy = new PythonProxy();
 
     colorDecorator = new ColorDecorator();
     coordinateDecorator = new CoordinateDecorator();
@@ -58,7 +60,8 @@ Scripting::Scripting() {
 #endif
     ctx.evalScript("plugin_container = []");
 
-    ctx.addObject("knossos", skeletonProxy);
+    ctx.addObject("skeleton", skeletonProxy);
+    ctx.addObject("knossos", pythonProxy);
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);
     ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);

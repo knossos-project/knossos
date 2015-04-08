@@ -20,6 +20,7 @@ class NodeCommentDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
 class SkeletonProxy;
+class PythonProxy;
 class TransformDecorator;
 class PointDecorator;
 class Highlighter;
@@ -43,6 +44,7 @@ public:
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
     SkeletonProxy *skeletonProxy;
+    PythonProxy *pythonProxy;
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
