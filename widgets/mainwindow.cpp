@@ -585,7 +585,7 @@ void MainWindow::createMenus() {
         state->viewerState->penmode = penmodechkBox->isChecked();
     });
 
-    viewMenu->addActions({dragDatasetAction, recenterOnClickAction, penmodeAction});
+    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
 
     viewMenu->addActions({penmodechkBoxAction});
 
