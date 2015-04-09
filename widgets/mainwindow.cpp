@@ -309,6 +309,11 @@ void MainWindow::updateTitlebar() {
         unsavedChangesLabel.show();
         annotationTimeLabel.show();
     }
+
+    if(!state->skeletonState->autoSaveBool) {
+        title.append(" Autosave: OFF");
+    }
+
     setWindowTitle(title);
 }
 
