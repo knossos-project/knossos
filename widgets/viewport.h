@@ -152,8 +152,9 @@ signals:
     void vpResize(QMouseEvent * event);
 };
 
-class Viewport : public QGLWidget
-{
+#include <QOpenGLFunctions_2_0>
+
+class Viewport : public QGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
     QElapsedTimer timeDBase;
@@ -165,6 +166,8 @@ public:
     void drawSkeletonViewport();
     void hideButtons();
     void showButtons();
+    bool renderVolumeVP(uint currentVP);
+
     EventModel *eventDelegate;
     static bool arbitraryOrientation;
     static bool showNodeComments;

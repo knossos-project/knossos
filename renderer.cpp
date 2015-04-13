@@ -36,7 +36,6 @@
 
 #include <QMatrix4x4>
 #include <QVector3D>
-#include <QOpenGLFunctions_1_4>
 #include "profiler.h"
 
 #define GLUT_DISABLE_ATEXIT_HACK
@@ -1056,12 +1055,11 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         break;
     }
     glDisable(GL_BLEND);
-    renderViewportBorders(currentVP);
 
     return true;
 }
 
-bool Renderer::renderVolumeVP(uint currentVP) {
+bool Viewport::renderVolumeVP(uint currentVP) {
     static float volumeClippingAdjust = 1.73f;
     static float translationSpeedAdjust = 1.0 / 500.0f;
     static int texLen = 128;
@@ -1328,7 +1326,6 @@ bool Renderer::renderVolumeVP(uint currentVP) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
-    renderViewportBorders(currentVP);
 
     render_profiler.end(); // ----------------------------------------------------------- profiling
 
@@ -1952,7 +1949,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
-    renderViewportBorders(currentVP);
     return true;
 }
 

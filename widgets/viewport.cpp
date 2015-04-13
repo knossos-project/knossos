@@ -133,6 +133,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 }
 
 void Viewport::initializeGL() {
+    initializeOpenGLFunctions();
     oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
@@ -268,6 +269,7 @@ void Viewport::paintGL() {
         } else {
            this->drawSkeletonViewport();
         }
+        state->viewer->renderer->renderViewportBorders(id);
     }
 }
 
@@ -480,10 +482,11 @@ void Viewport::drawViewport(int vpID) {
 }
 
 void Viewport::drawSkeletonViewport() {
-    if(Segmentation::singleton().volume_render_toggle)
-        state->viewer->renderer->renderVolumeVP(VIEWPORT_SKELETON);
-    else
+    if (Segmentation::singleton().volume_render_toggle) {
+        renderVolumeVP(VIEWPORT_SKELETON);
+    } else {
         state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+    }
 }
 
 void Viewport::zoomOrthogonals(float step){

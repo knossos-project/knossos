@@ -54,11 +54,11 @@ public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     void renderBrush(uint viewportType, Coordinate coord);
+    uint renderViewportBorders(uint currentVP);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
-    uint renderViewportBorders(uint currentVP);
 
     uint renderSegPlaneIntersection(segmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str);
@@ -75,7 +75,6 @@ public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
-    bool renderVolumeVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };
 
