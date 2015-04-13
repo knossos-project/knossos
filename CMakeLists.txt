@@ -154,20 +154,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra" "-Wpedantic")
 
 #set(CMAKE_C_COMPILER "clang")
 #set(CMAKE_CXX_COMPILER "clang++")
-if(CMAKE_CXX_COMPILER MATCHES "clang")#sadly there’s no recent libc++ for travis
-    if(DEFINED ENV{TRAVIS})#there’s no libc++ for 12.04
-        #(stupid) clang #defines (wrongly) disable boost features
-        target_compile_definitions(${PROJECT_NAME} PRIVATE "__GNUC_MINOR__=8")#evil workaround
-        #see https://svn.boost.org/trac/boost/ticket/7473
-    else()
-        target_compile_options(${PROJECT_NAME} PRIVATE "-stdlib=libc++")#use clangs own std library
-        target_link_libraries(${PROJECT_NAME} "c++abi")#available abi implementation differs per system
-    endif()
-endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
