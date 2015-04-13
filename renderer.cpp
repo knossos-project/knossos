@@ -34,9 +34,10 @@
 
 #include <qgl.h>
 
- #include <QMatrix4x4>
- #include <QVector3D>
- #include "profiler.h"
+#include <QMatrix4x4>
+#include <QVector3D>
+#include <QOpenGLFunctions_1_4>
+#include "profiler.h"
 
 #define GLUT_DISABLE_ATEXIT_HACK
 #ifdef Q_OS_MAC
@@ -1332,19 +1333,19 @@ bool Renderer::renderVolumeVP(uint currentVP) {
     render_profiler.end(); // ----------------------------------------------------------- profiling
 
     // --------------------- display some profiling information ------------------------
-    static auto timer = std::chrono::steady_clock::now();
-    std::chrono::duration<double> duration = std::chrono::steady_clock::now() - timer;
-    if(duration.count() > 1.0) {
-        qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
-        qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
-        qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
-        qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
-        qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
-        qDebug() << "render  avg time: " <<  render_profiler.average_time()*1000 << "ms";
-        qDebug() << "---------------------------------------------";
+    // static auto timer = std::chrono::steady_clock::now();
+    // std::chrono::duration<double> duration = std::chrono::steady_clock::now() - timer;
+    // if(duration.count() > 1.0) {
+    //     qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "render  avg time: " <<  render_profiler.average_time()*1000 << "ms";
+    //     qDebug() << "---------------------------------------------";
 
-        timer = std::chrono::steady_clock::now();
-    }
+    //     timer = std::chrono::steady_clock::now();
+    // }
 
     return true;
 }
