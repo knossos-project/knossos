@@ -52,6 +52,7 @@ class VPSkeletonViewportWidget : public QWidget
     QLabel view3dlabel{"3D View"};
     QFrame line3;
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
+    QCheckBox VolumeRenderFlagCheckBox{"Render Volume instead of Skeleton"};
 
 //slots
 public:

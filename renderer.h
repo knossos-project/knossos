@@ -75,6 +75,7 @@ public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
+    bool renderVolumeVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };
 

@@ -345,14 +345,20 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     switch(state->viewerState->vpConfigs[VPfound].type) {
     // the user wants to drag the skeleton inside the VP
     case VIEWPORT_SKELETON:
-    state->skeletonState->translateX += -xrel(event->x()) * 2.
-            * ((float)state->skeletonState->volBoundary
-            * (0.5 - state->skeletonState->zoomLevel))
-            / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
-    state->skeletonState->translateY += -yrel(event->y()) * 2.
-            * ((float)state->skeletonState->volBoundary
-            * (0.5 - state->skeletonState->zoomLevel))
-            / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
+        if(Segmentation::singleton().volume_render_toggle) {
+            auto & seg = Segmentation::singleton();
+            seg.volume_mouse_move_x -= xrel(event->x());
+            seg.volume_mouse_move_y -= yrel(event->y());
+        } else {
+            state->skeletonState->translateX += -xrel(event->x()) * 2.
+                * ((float)state->skeletonState->volBoundary
+                * (0.5 - state->skeletonState->zoomLevel))
+                / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
+            state->skeletonState->translateY += -yrel(event->y()) * 2.
+                * ((float)state->skeletonState->volBoundary
+                * (0.5 - state->skeletonState->zoomLevel))
+                / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
+        }
         break;
     case VIEWPORT_XY:
         if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
@@ -636,10 +642,15 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
             seg.brush.setRadius(0);
         }
     } else if (VPfound == VIEWPORT_SKELETON) {
-        if (directionSign == -1) {
-            emit zoomInSkeletonVPSignal();
+        if(Segmentation::singleton().volume_render_toggle) {
+            auto& seg = Segmentation::singleton();
+            seg.volume_mouse_zoom += -directionSign;
         } else {
-            emit zoomOutSkeletonVPSignal();
+            if (directionSign == -1) {
+                emit zoomInSkeletonVPSignal();
+            } else {
+                emit zoomOutSkeletonVPSignal();
+            }
         }
     } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
         emit zoomOrthoSignal(directionSign * 0.1);

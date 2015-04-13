@@ -21,6 +21,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "segmentation/segmentation.h"
 #include "vpskeletonviewportwidget.h"
 
 #include <skeleton/skeletonizer.h>
@@ -46,6 +47,7 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     gridLayout.addWidget(&view3dlabel, currentGridColumn++, 0);
     gridLayout.addWidget(&line3, currentGridColumn++, 0);
     gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentGridColumn++, 0);
+    gridLayout.addWidget(&VolumeRenderFlagCheckBox, currentGridColumn++, 0);
 
     mainLayout.addLayout(&gridLayout);
     mainLayout.addStretch(1);//expand vertically with empty space
@@ -55,4 +57,5 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showYZplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
+    QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [](bool checked){Segmentation::singleton().volume_render_toggle = checked; });
 }

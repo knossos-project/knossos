@@ -174,6 +174,11 @@ public:
     void setRenderAllObjs(bool);
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
+    //volume rendering
+    bool volume_render_toggle = false;
+    int volume_mouse_move_x = 0;
+    int volume_mouse_move_y = 0;
+    float volume_mouse_zoom = 1.0f;
     //data query
     bool hasObjects() const;
     bool subobjectExists(const uint64_t & subobjectId) const;

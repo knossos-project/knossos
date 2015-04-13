@@ -480,7 +480,10 @@ void Viewport::drawViewport(int vpID) {
 }
 
 void Viewport::drawSkeletonViewport() {
-    state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+    if(Segmentation::singleton().volume_render_toggle)
+        state->viewer->renderer->renderVolumeVP(VIEWPORT_SKELETON);
+    else
+        state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 void Viewport::zoomOrthogonals(float step){
