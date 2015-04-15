@@ -102,6 +102,7 @@ void AnnotationWidget::loadSettings() {
     commandsTab.commentLockEdit->setText(state->viewerState->lockComment);
 
     settings.endGroup();
+
     if(visible) {
         show();
     }
@@ -113,7 +114,6 @@ void AnnotationWidget::loadSettings() {
     list.append(310);
     list.append(390);
     treeviewTab.splitter->setSizes(list);
-    settings.endGroup();
 
     commentsTab.loadSettings();
 }
