@@ -16,13 +16,15 @@ struct httpResponse;
 class TaskManagementWidget : public QDialog {
     Q_OBJECT
     friend class TaskLoginWidget;
-    void saveAndLoadFile(httpResponse &, httpResponse &);
+    void saveAndLoadFile(const QString & filename, const QByteArray content);
 public:
     explicit TaskManagementWidget(QWidget *parent = nullptr);
     void setResponse(const QString & message);
     void setActiveUser(const QString & username);
     void setTask(const QString & task);
     void resetSession(const QString & message);
+
+    TaskLoginWidget taskLoginWidget;
 
 protected:
     QLabel statusLabel;
@@ -46,10 +48,8 @@ protected:
     QPushButton submitButton{"Submit"};
     QPushButton submitFinalButton{"Final Submit"};
 
-    TaskLoginWidget taskLoginWidget;
-
 public slots:
-    void refresh();
+    void updateAndRefreshWidget();
     void setDescription(const QString & description);
     void setComment(const QString & comment);
 
@@ -67,6 +67,8 @@ signals:
     void visibilityChanged(bool);
 
 private:
+    bool handleError(QPair<bool, QString> res);
+
     void showEvent(QShowEvent * showEvent) override {
         QDialog::showEvent(showEvent);
         emit visibilityChanged(true);

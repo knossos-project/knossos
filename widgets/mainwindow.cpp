@@ -35,7 +35,6 @@
 #include "viewport.h"
 #include "scriptengine/scripting.h"
 #include "skeleton/skeletonizer.h"
-#include "task.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
@@ -178,7 +177,7 @@ void MainWindow::createToolbars() {
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
         if (down) {
-            widgetContainer->taskManagementWidget->refresh();
+            widgetContainer->taskManagementWidget->updateAndRefreshWidget();
         } else {
             widgetContainer->taskManagementWidget->hide();
         }
@@ -1064,6 +1063,7 @@ void MainWindow::saveSettings() {
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
     widgetContainer->pythonPropertyWidget->saveSettings();
+    widgetContainer->taskManagementWidget->taskLoginWidget.saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
 

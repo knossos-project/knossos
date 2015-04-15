@@ -21,8 +21,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "task.h"//because curl wants to be first on win
-
 #include "knossos.h"
 
 #include "eventmodel.h"
@@ -298,7 +296,6 @@ bool Knossos::initStates() {
    state->previousPositionX = {};
    state->currentPositionX = {};
 
-   curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
 
 #ifdef Q_OS_UNIX
@@ -461,11 +458,8 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 
 stateInfo *Knossos::emptyState() {
     stateInfo *state = new stateInfo();
-
     state->viewerState = new viewerState();
-
     state->skeletonState = new skeletonState();
-    state->taskState = new taskState();
     return state;
 }
 
