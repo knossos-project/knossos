@@ -7,6 +7,7 @@
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
+#include <QString>
 
 class TaskLoginWidget : public QDialog {
     Q_OBJECT
@@ -19,11 +20,13 @@ class TaskLoginWidget : public QDialog {
     QLabel passwordLabel{"Password"};
     QDialogButtonBox box;
 public:
+    QString host;
     QLineEdit urlField;
     QLineEdit usernameField;
     QLineEdit passwordField;
 
     explicit TaskLoginWidget(QWidget * parent = nullptr);
+    void saveSettings();
     void setResponse(const QString & message);
     void resetSession(const QString & message);
 };

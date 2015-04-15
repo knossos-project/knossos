@@ -181,7 +181,6 @@ public:
     struct viewerState *viewerState;
     class Viewer *viewer;
     struct skeletonState *skeletonState;
-    struct taskState *taskState;
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;
     bool viewerKeyRepeat;

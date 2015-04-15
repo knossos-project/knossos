@@ -12,6 +12,7 @@ const QString NAVIGATION_WIDGET = "navigation_widget";
 const QString TOOLS_WIDGET = "tools_widget";
 const QString TRACING_TIME_WIDGET = "tracing_time_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
+const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
 /* General attributes appropriate for most widgets */
 const QString WIDTH  = "width";
@@ -152,5 +153,9 @@ const QString PYTHON_INTERPRETER = "python_interpreter";
 const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
 const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
+
+// Heidelbrain Integration
+const QString HEIDELBRAIN_HOST = "heidelbrain_host";
+const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
 
 #endif // GUICONSTANTS_H

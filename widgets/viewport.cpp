@@ -133,6 +133,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 }
 
 void Viewport::initializeGL() {
+    initializeOpenGLFunctions();
     oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
@@ -268,6 +269,7 @@ void Viewport::paintGL() {
         } else {
            this->drawSkeletonViewport();
         }
+        state->viewer->renderer->renderViewportBorders(id);
     }
 }
 
@@ -306,7 +308,10 @@ void Viewport::leaveEvent(QEvent *) {
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
     bool clickEvent = false;
 
-    if(QApplication::mouseButtons() == Qt::LeftButton) {
+    auto mouseBtn = QApplication::mouseButtons();
+    auto penmode = state->viewerState->penmode;
+
+    if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
         Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
         bool alt = modifiers.testFlag(Qt::AltModifier);
@@ -317,10 +322,10 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
             eventDelegate->handleMouseMotionLeftHold(event, id);
             clickEvent = true;
         }
-    } else if(QApplication::mouseButtons() == Qt::MidButton) {
+    } else if(mouseBtn == Qt::MidButton) {
         eventDelegate->handleMouseMotionMiddleHold(event, id);
         clickEvent = true;
-    } else if(QApplication::mouseButtons() == Qt::RightButton) {
+    } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
         eventDelegate->handleMouseMotionRightHold(event, id);
         clickEvent = true;
     }
@@ -344,7 +349,9 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     eventDelegate->mouseX = event->x();
     eventDelegate->mouseY = event->y();
 
-    if(event->button() == Qt::LeftButton) {
+    auto penmode = state->viewerState->penmode;
+
+    if((penmode && event->button() == Qt::RightButton) || (!penmode && event->button() == Qt::LeftButton)) {
         Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
         const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
         const auto alt = modifiers.testFlag(Qt::AltModifier);
@@ -358,7 +365,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
         }
     } else if(event->button() == Qt::MiddleButton) {
         eventDelegate->handleMouseButtonMiddle(event, id);
-    } else if(event->button() == Qt::RightButton) {
+    } else if((penmode && event->button() == Qt::LeftButton) || (!penmode && event->button() == Qt::RightButton)) {
         eventDelegate->handleMouseButtonRight(event, id);
     }
 }
@@ -475,7 +482,11 @@ void Viewport::drawViewport(int vpID) {
 }
 
 void Viewport::drawSkeletonViewport() {
-    state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+    if (Segmentation::singleton().volume_render_toggle) {
+        renderVolumeVP(VIEWPORT_SKELETON);
+    } else {
+        state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+    }
 }
 
 void Viewport::zoomOrthogonals(float step){

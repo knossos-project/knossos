@@ -35,7 +35,6 @@
 #include "viewport.h"
 #include "scriptengine/scripting.h"
 #include "skeleton/skeletonizer.h"
-#include "task.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
@@ -178,7 +177,7 @@ void MainWindow::createToolbars() {
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
         if (down) {
-            widgetContainer->taskManagementWidget->refresh();
+            widgetContainer->taskManagementWidget->updateAndRefreshWidget();
         } else {
             widgetContainer->taskManagementWidget->hide();
         }
@@ -309,6 +308,11 @@ void MainWindow::updateTitlebar() {
         unsavedChangesLabel.show();
         annotationTimeLabel.show();
     }
+
+    if(!state->skeletonState->autoSaveBool) {
+        title.append(" Autosave: OFF");
+    }
+
     setWindowTitle(title);
 }
 
@@ -560,6 +564,12 @@ void MainWindow::createMenus() {
     recenterOnClickAction = workModeViewMenuGroup->addAction(tr("Recenter on Click"));
     recenterOnClickAction->setCheckable(true);
 
+    QCheckBox *penmodechkBox = new QCheckBox("Pen-Mode");
+    penmodechkBox->setToolTip("Swap right and left click");
+    QWidgetAction *penmodechkBoxAction = new QWidgetAction(this);
+    penmodechkBoxAction->setDefaultWidget(penmodechkBox);
+    penmodechkBox->setStyleSheet("padding-left: 3px");
+
     if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
     } else if(state->viewerState->clickReaction == ON_CLICK_RECENTER) {
@@ -569,7 +579,14 @@ void MainWindow::createMenus() {
     QObject::connect(dragDatasetAction, &QAction::triggered, this, &MainWindow::dragDatasetSlot);
     QObject::connect(recenterOnClickAction, &QAction::triggered, this, &MainWindow::recenterOnClickSlot);
 
+
+    QObject::connect(penmodechkBox, &QCheckBox::clicked, [this, penmodechkBox]() {
+        state->viewerState->penmode = penmodechkBox->isChecked();
+    });
+
     viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
+
+    viewMenu->addActions({penmodechkBoxAction});
 
     viewMenu->addSeparator();
 
@@ -1046,6 +1063,7 @@ void MainWindow::saveSettings() {
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
     widgetContainer->pythonPropertyWidget->saveSettings();
+    widgetContainer->taskManagementWidget->taskLoginWidget.saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
 

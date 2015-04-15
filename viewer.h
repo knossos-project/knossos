@@ -144,6 +144,9 @@ struct viewerState {
     bool defaultVPSizeAndPos;
     uint renderInterval;
 
+    //In pennmode right and left click are switched
+    bool penmode = false;
+
     QString lockComment;
 };
 

@@ -54,11 +54,11 @@ public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     void renderBrush(uint viewportType, Coordinate coord);
+    uint renderViewportBorders(uint currentVP);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
-    uint renderViewportBorders(uint currentVP);
 
     uint renderSegPlaneIntersection(segmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str);
