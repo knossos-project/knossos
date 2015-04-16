@@ -63,8 +63,6 @@
 
 #define FTP_RETRY_NUM 3
 
-using CURL = void;
-
 struct C_Element {
     Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
 
@@ -75,8 +73,6 @@ struct C_Element {
     char *fullpath_overlay_filename;
     char *local_data_filename;
     char *local_overlay_filename;
-    CURL *curlDataHandle;
-    CURL *curlOverlayHandle;
     FILE *ftp_data_fh;
     FILE *ftp_overlay_fh;
     bool hasError;

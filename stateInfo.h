@@ -162,7 +162,6 @@ public:
 
     // Cube loader affairs
     int    loadMode;
-    char       *loadFtpCachePath;
     char       ftpBasePath[CSTRING_SIZE];
     char       ftpHostName[CSTRING_SIZE];
     char       ftpUsername[CSTRING_SIZE];

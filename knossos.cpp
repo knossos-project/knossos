@@ -238,50 +238,38 @@ bool Knossos::commonInitStates() {
  * Beyond it allocates the dynamic data structures
  */
 bool Knossos::initStates() {
+    // For the viewer
+    state->viewerState->autoTracingMode = navigationMode::recenter;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
 
-   // For the viewer
-   state->viewerState->autoTracingMode = navigationMode::recenter;
-   state->viewerState->autoTracingDelay = 50;
-   state->viewerState->autoTracingSteps = 10;
+    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
+    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
+    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
+    loadDefaultTreeLUT();
 
-   state->viewerState->depthCutOff = state->viewerState->depthCutOff;
-   state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
-   Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-   loadDefaultTreeLUT();
+    state->viewerState->treeLutSet = false;
 
-   state->viewerState->treeLutSet = false;
+    /* @todo todo emitting signals out of class seems to be problematic
+    emit knossos->calcDisplayedEdgeLengthSignal();
+    */
 
-   /* @todo todo emitting signals out of class seems to be problematic
-   emit knossos->calcDisplayedEdgeLengthSignal();
-   */
+    // For the skeletonizer
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
 
-   // For the skeletonizer
-   strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+    state->time.start();
 
-   state->time.start();
+    // Those values can be calculated from given parameters
+    state->magnification = 1;
+    state->lowestAvailableMag = 1;
+    state->highestAvailableMag = 1;
 
-   // Those values can be calculated from given parameters
-   state->magnification = 1;
-   state->lowestAvailableMag = 1;
-   state->highestAvailableMag = 1;
+    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
+    state->currentDirectionsIndex = 0;
+    state->previousPositionX = {};
+    state->currentPositionX = {};
 
-   memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
-   state->currentDirectionsIndex = 0;
-   state->previousPositionX = {};
-   state->currentPositionX = {};
-
-   state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
-
-#ifdef Q_OS_UNIX
-   const char *tmp = "/tmp/";
-   strcpy(state->loadFtpCachePath, tmp);
-#endif
-#ifdef Q_OS_WIN32
-    GetTempPathA(CSTRING_SIZE, state->loadFtpCachePath);
-#endif
-
-   return commonInitStates();
-
+    return commonInitStates();
 }
 
 bool Knossos::sendRemoteSignal() {
@@ -464,7 +452,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             QString currentPath;
             if(LM_FTP == state->loadMode) {
                 currentPath = QString("%1mag%2/knossos.conf").arg(state->ftpBasePath).arg(currMag);
-                if (EXIT_SUCCESS == downloadFile(currentPath.toStdString().c_str(), NULL)) {
+                if (!Network::singleton().downloadFileProgressDialog(currentPath, nullptr).isEmpty()) {
                     currMagExists = true;
                 }
             }

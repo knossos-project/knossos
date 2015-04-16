@@ -22,8 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <curl/curl.h>
-
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "knossos.h"
