@@ -1,10 +1,11 @@
 #include "pythonproxy.h"
 
-#include "stateInfo.h"
 #include "functions.h"
+#include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
@@ -14,6 +15,14 @@
 PythonProxySignalDelegate *pythonProxySignalDelegate = new PythonProxySignalDelegate();
 
 PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
+
+QString PythonProxy::getKnossosVersion() {
+    return KVERSION;
+}
+
+QString PythonProxy::getKnossosRevision() {
+    return KREVISION;
+}
 
 QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
     char *cube = (char*)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], Coordinate(Dc[0], Dc[1], Dc[2]));

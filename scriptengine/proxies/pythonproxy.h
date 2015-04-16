@@ -24,6 +24,8 @@ signals:
     void echo(QString message);
 
 public slots:
+    QString getKnossosVersion();
+    QString getKnossosRevision();
     QList<int> getOcPixel(QList<int> Dc, QList<int> pxInDc);
     QList<int> getPosition();
     QList<float> getScale();
