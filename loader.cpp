@@ -335,28 +335,17 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
     qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
 }
 
-void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube & cubeCoord, const char * cube) {
+void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std::string cube) {
     snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
-    if (insideCurrentSupercubeWrap(cubeCoord.legacy2Global(state->cubeEdgeLength))) {
-        state->protectCube2Pointer->lock();
-        auto ocIt = state->Oc2Pointer[state->loaderMagnification].find(cubeCoord.cube2Legacy());
-        char * currentSlot = nullptr;
-        if (ocIt != std::end(state->Oc2Pointer[state->loaderMagnification])) {
-            currentSlot = ocIt->second;
-        } else if (!freeOcSlots.empty()) {
-            currentSlot = freeOcSlots.front();
-            freeOcSlots.pop_front();
-            state->Oc2Pointer[state->loaderMagnification][cubeCoord.cube2Legacy()] = currentSlot;
-        } else {
-            qDebug() << "no slots for snappy add";
-        }
-        std::copy(cube, cube + state->cubeBytes * OBJID_BYTES, currentSlot);
-        state->protectCube2Pointer->unlock();
-        if (currentlyVisibleWrap(cubeCoord.legacy2Global(state->cubeEdgeLength))) {
-            emit oc_reslice_notify();
-        }
+    state->protectCube2Pointer->lock();
+    const auto coord = cubeCoord.cube2Legacy();
+    auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], coord);
+    if (cubePtr != nullptr) {
+        freeOcSlots.emplace_back(cubePtr);
+        state->Oc2Pointer[state->loaderMagnification].erase(coord);
     }
+    state->protectCube2Pointer->unlock();
 }
 
 void Loader::Worker::snappyCacheAddRaw(const CoordOfCube & cubeCoord, const char * cube) {

@@ -160,7 +160,7 @@ public://matsch
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
-    void snappyCacheAddSnappy(const CoordOfCube &, const char *cube);
+    void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
@@ -210,7 +210,7 @@ public:
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
     void loadSignal(const unsigned int loadingNr);
-    void snappyCacheAddSnappySignal(const CoordOfCube &, const char *cube);
+    void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
 };
 }//namespace Loader
 

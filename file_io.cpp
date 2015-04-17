@@ -53,9 +53,10 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
                 file.open(QIODevice::ReadOnly);
                 auto cube = file.readAll();
                 const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
-                Loader::Controller::singleton().snappyCacheAddSnappy(cubeCoord, cube.data());
+                Loader::Controller::singleton().snappyCacheAddSnappy(cubeCoord, std::string{cube.data(), static_cast<std::string::size_type>(cube.size())});
             }
         }
+        state->viewer->loader_notify();
     } else {
         qDebug() << "opening" << filename << "for reading failed";
     }

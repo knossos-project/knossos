@@ -128,6 +128,8 @@ void Knossos::applyDefaultConfig() {
     }
 }
 
+Q_DECLARE_METATYPE(std::string)
+
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     QApplication a(argc, argv);
@@ -156,6 +158,7 @@ int main(int argc, char *argv[]) {
     Viewer viewer;
     Remote remote;
 
+    qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
     qRegisterMetaType<floatCoordinate>();
