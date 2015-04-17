@@ -69,9 +69,9 @@ Scripting::Scripting() {
     ctx.addObject("knossos_global_viewer", state->viewer);
     ctx.addObject("knossos_global_mainwindow", state->viewer->window);
     ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
-    ctx.addObject("knossos_global_skeletonizer", state->viewer->skeletonizer);
+    ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     ctx.addObject("knossos_global_knossos", knossos.get());
-    ctx.addObject("knossos_global_loader", loader.get());
+    ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);
     ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
