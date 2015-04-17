@@ -1238,6 +1238,14 @@ void MainWindow::placeComment(const int index) {
     }
     CommentSetting comment = CommentSetting::comments[index];
     if (!comment.text.isEmpty()) {
+        if(comment.appendComment) {
+            if(state->skeletonState->activeNode->comment) {
+                QString text(state->skeletonState->activeNode->comment->content);
+                text.append(' ');
+                comment.text.prepend(text);
+            }
+        }
+
         Skeletonizer::singleton().setComment(comment.text, state->skeletonState->activeNode, 0);
     }
 }

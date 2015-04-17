@@ -2,6 +2,7 @@
 
 bool CommentSetting::useCommentColors;
 bool CommentSetting::useCommentNodeRadius;
+bool CommentSetting::appendComment;
 std::vector<CommentSetting> CommentSetting::comments;
 
 CommentSetting::CommentSetting(const QString shortcut, const QString text, const QColor color, const float nodeRadius) :
