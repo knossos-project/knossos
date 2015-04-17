@@ -528,7 +528,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     QStringRef attribute = attributes.value("path");
                     QString path = attribute.isNull() ? "" : attribute.toString();
                     if (experimentName != state->name) {
-                        state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path);
+                        state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path, true);
                     }
                 } else if(xml.name() == "magnification" and xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");

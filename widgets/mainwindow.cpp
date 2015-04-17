@@ -562,11 +562,9 @@ void MainWindow::createMenus() {
     recenterOnClickAction = workModeViewMenuGroup->addAction(tr("Recenter on Click"));
     recenterOnClickAction->setCheckable(true);
 
-    QCheckBox *penmodechkBox = new QCheckBox("Pen-Mode");
-    penmodechkBox->setToolTip("Swap right and left click");
-    QWidgetAction *penmodechkBoxAction = new QWidgetAction(this);
-    penmodechkBoxAction->setDefaultWidget(penmodechkBox);
-    penmodechkBox->setStyleSheet("padding-left: 3px");
+    QAction * penmodeAction = new QAction("Pen-Mode", this);
+
+    penmodeAction->setCheckable(true);
 
     if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
@@ -578,13 +576,13 @@ void MainWindow::createMenus() {
     QObject::connect(recenterOnClickAction, &QAction::triggered, this, &MainWindow::recenterOnClickSlot);
 
 
-    QObject::connect(penmodechkBox, &QCheckBox::clicked, [this, penmodechkBox]() {
-        state->viewerState->penmode = penmodechkBox->isChecked();
+    QObject::connect(penmodeAction, &QAction::triggered, [this, penmodeAction]() {
+        state->viewerState->penmode = penmodeAction->isChecked();
     });
 
     viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
 
-    viewMenu->addActions({penmodechkBoxAction});
+    viewMenu->addActions({penmodeAction});
 
     viewMenu->addSeparator();
 
@@ -1238,6 +1236,14 @@ void MainWindow::placeComment(const int index) {
     }
     CommentSetting comment = CommentSetting::comments[index];
     if (!comment.text.isEmpty()) {
+        if(comment.appendComment) {
+            if(state->skeletonState->activeNode->comment) {
+                QString text(state->skeletonState->activeNode->comment->content);
+                text.append(' ');
+                comment.text.prepend(text);
+            }
+        }
+
         Skeletonizer::singleton().setComment(comment.text, state->skeletonState->activeNode, 0);
     }
 }

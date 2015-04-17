@@ -29,6 +29,7 @@
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
+#include "profiler.h"
 
 #include <QHBoxLayout>
 #include <QPainter>
@@ -482,7 +483,12 @@ void Viewport::drawViewport(int vpID) {
 }
 
 void Viewport::drawSkeletonViewport() {
-    if (Segmentation::singleton().volume_render_toggle) {
+    auto& seg = Segmentation::singleton();
+    if (seg.volume_render_toggle) {
+        if(seg.volume_update_required) {
+            updateVolumeTexture();
+            seg.volume_update_required = false;
+        }
         renderVolumeVP(VIEWPORT_SKELETON);
     } else {
         state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
@@ -607,6 +613,166 @@ void Viewport::showButtons() {
         r180Button->show();
         resetButton->show();
     }
+}
+
+void Viewport::updateVolumeTexture() {
+    auto& seg = Segmentation::singleton();
+    int texLen = seg.volume_tex_len;
+    if(seg.volume_tex_id == 0) {
+        glGenTextures(1, &seg.volume_tex_id);
+        glBindTexture(GL_TEXTURE_3D, seg.volume_tex_id);
+
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, texLen, texLen, texLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    }
+
+    static Profiler tex_gen_profiler;
+    static Profiler dcfetch_profiler;
+    static Profiler colorfetch_profiler;
+    static Profiler occlusion_profiler;
+    static Profiler tex_transfer_profiler;
+
+    tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
+    auto currentPosDc = Coordinate::Px2DcCoord(state->viewerState->currentPosition, state->cubeEdgeLength);
+    int cubeLen = state->cubeEdgeLength;
+    int M = state->M;
+    int M_radius = (M - 1) / 2;
+    GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
+    std::unordered_map<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> selectedIdColors;
+    std::tuple<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> lastIdColor;
+
+    state->protectCube2Pointer->lock();
+
+    dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
+    uint64_t** rawcubes = new uint64_t*[M*M*M];
+    for(int z = 0; z < M; ++z)
+    for(int y = 0; y < M; ++y)
+    for(int x = 0; x < M; ++x) {
+        auto cubeIndex = z*M*M + y*M + x;
+        Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
+        rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
+            Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], 
+            {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
+    }
+    dcfetch_profiler.end(); // ----------------------------------------------------------- profiling
+
+    colorfetch_profiler.start(); // ----------------------------------------------------------- profiling
+
+    for(int z = 0; z < texLen; ++z)
+    for(int y = 0; y < texLen; ++y)
+    for(int x = 0; x < texLen; ++x) {
+        Coordinate DcCoord{(x * M)/cubeLen, (y * M)/cubeLen, (z * M)/cubeLen};
+        auto cubeIndex = DcCoord.z*M*M + DcCoord.y*M + DcCoord.x;
+        auto& rawcube = rawcubes[cubeIndex];
+
+        if(rawcube != nullptr) {
+            auto indexInDc  = ((z * M)%cubeLen)*cubeLen*cubeLen + ((y * M)%cubeLen)*cubeLen + (x * M)%cubeLen;
+            auto indexInTex = z*texLen*texLen + y*texLen + x;
+            auto subobjectId = rawcube[indexInDc];
+            if(subobjectId == std::get<0>(lastIdColor)) {
+                auto idColor = std::get<1>(lastIdColor);
+                colcube[4*indexInTex+0] = std::get<0>(idColor);
+                colcube[4*indexInTex+1] = std::get<1>(idColor);
+                colcube[4*indexInTex+2] = std::get<2>(idColor);
+                colcube[4*indexInTex+3] = std::get<3>(idColor);
+            } else if (seg.isSubObjectIdSelected(subobjectId)) {
+                auto idColor = seg.colorObjectFromId(subobjectId);
+                colcube[4*indexInTex+0] = std::get<0>(idColor);
+                colcube[4*indexInTex+1] = std::get<1>(idColor);
+                colcube[4*indexInTex+2] = std::get<2>(idColor);
+                colcube[4*indexInTex+3] = std::get<3>(idColor);
+                lastIdColor = std::make_tuple(subobjectId, idColor);
+            } else {
+                colcube[4*indexInTex+0] = 0;
+                colcube[4*indexInTex+1] = 0;
+                colcube[4*indexInTex+2] = 0;
+                colcube[4*indexInTex+3] = 0;
+            }
+        } else {
+            auto indexInTex = z*texLen*texLen + y*texLen + x;
+            colcube[4*indexInTex+0] = 0;
+            colcube[4*indexInTex+1] = 0;
+            colcube[4*indexInTex+2] = 0;
+            colcube[4*indexInTex+3] = 0;
+        }
+    }
+
+    delete[] rawcubes;
+
+    state->protectCube2Pointer->unlock();
+
+    colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
+
+    occlusion_profiler.start(); // ----------------------------------------------------------- profiling
+    for(int z = 1; z < texLen - 1; ++z)
+    for(int y = 1; y < texLen - 1; ++y)
+    for(int x = 1; x < texLen - 1; ++x) {
+        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
+        if(colcube[4*indexInTex+3] != 0) {
+            for(int xi = -1; xi <= 1; ++xi) {
+                auto othrIndexInTex = (z)*texLen*texLen + (y)*texLen + x+xi;
+                if((xi != 0) && colcube[4*othrIndexInTex+3] != 0) {
+                    colcube[4*indexInTex+0] *= 0.95f;
+                    colcube[4*indexInTex+1] *= 0.95f;
+                    colcube[4*indexInTex+2] *= 0.95f;
+                }
+            }
+        }
+    }
+
+    for(int z = 1; z < texLen - 1; ++z)
+    for(int y = 1; y < texLen - 1; ++y)
+    for(int x = 1; x < texLen - 1; ++x) {
+        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
+        if(colcube[4*indexInTex+3] != 0) {
+            for(int yi = -1; yi <= 1; ++yi) {
+                auto othrIndexInTex = (z)*texLen*texLen + (y+yi)*texLen + x;
+                if((yi != 0) && colcube[4*othrIndexInTex+3] != 0) {
+                    colcube[4*indexInTex+0] *= 0.95f;
+                    colcube[4*indexInTex+1] *= 0.95f;
+                    colcube[4*indexInTex+2] *= 0.95f;
+                }
+            }
+        }
+    }
+
+    for(int z = 1; z < texLen - 1; ++z)
+    for(int y = 1; y < texLen - 1; ++y)
+    for(int x = 1; x < texLen - 1; ++x) {
+        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
+        if(colcube[4*indexInTex+3] != 0) {
+            for(int zi = -1; zi <= 1; ++zi) {
+                auto othrIndexInTex = (z+zi)*texLen*texLen + (y)*texLen + x;
+                if((zi != 0) && colcube[4*othrIndexInTex+3] != 0) {
+                    colcube[4*indexInTex+0] *= 0.95f;
+                    colcube[4*indexInTex+1] *= 0.95f;
+                    colcube[4*indexInTex+2] *= 0.95f;
+                }
+            }
+        }
+    }
+    occlusion_profiler.end(); // ----------------------------------------------------------- profiling
+
+    tex_transfer_profiler.start(); // ----------------------------------------------------------- profiling
+    glBindTexture(GL_TEXTURE_3D, seg.volume_tex_id);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, texLen, texLen, texLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, colcube);
+    delete[] colcube;
+    tex_transfer_profiler.end(); // ----------------------------------------------------------- profiling
+
+    tex_gen_profiler.end(); // ----------------------------------------------------------- profiling
+
+    // --------------------- display some profiling information ------------------------
+    qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
+    qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
+    qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
+    qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
+    qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
+    qDebug() << "---------------------------------------------";
 }
 
 void Viewport::xyButtonClicked() {

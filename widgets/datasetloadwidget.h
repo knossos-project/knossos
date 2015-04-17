@@ -31,7 +31,7 @@ public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
     void gatherHeidelbrainDatasetInformation(QString &);
-    bool loadDataset(QString path = "");
+    bool loadDataset(QString path = "", const bool keepAnnotation = false);
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();

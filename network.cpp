@@ -122,7 +122,7 @@ QHttpPart addFormDataPart(const QString & header, const QByteArray & body) {
     part.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form_data; name=\"%1\"").arg(header));
     part.setBody(body);
     return part;
-};
+}
 
 QPair<bool, QPair<QString, QByteArray>> Network::getPost(const QUrl & url) {
     QHttpMultiPart multipart(QHttpMultiPart::FormDataType);

@@ -125,6 +125,7 @@ const QString LOCK_TO_NODES_WITH_COMMENT = "lock_to_nodes_with_comment";
 /* Comments Highlighting */
 const QString CUSTOM_COMMENT_COLOR = "use_custom_comment_color";
 const QString CUSTOM_COMMENT_NODERADIUS = "use_custom_comment_node_radius";
+const QString CUSTOM_COMMENT_APPEND = "append_comment";
 
 /* Tracing Time Widget */
 const QString RUNNING_TIME = "running_time";

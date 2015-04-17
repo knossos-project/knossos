@@ -249,7 +249,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(activeTreeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
     QObject::connect(activeTreeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::activeTreeTableSelectionChanged);
 
-    QObject::connect(activeTreeTable, &TreeTable::cellClicked, [this](int row, int column) {
+    QObject::connect(activeTreeTable, &TreeTable::cellClicked, [this](int, int column) {
         if(column == TreeTable::TREE_RENDER) {
             auto actTreeID = activeTreeTable->item(0, 0)->text();
             for(int i = 0; i < treeTable->rowCount(); ++i) {
@@ -271,7 +271,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(treeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
     QObject::connect(treeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::treeTableSelectionChanged);
 
-    QObject::connect(treeTable, &TreeTable::cellClicked, [this](int row, int column) {
+    QObject::connect(treeTable, &TreeTable::cellClicked, [this](int, int column) {
         if(column == TreeTable::TREE_RENDER) {
                 activeTreeTableSelectionChanged();
         }

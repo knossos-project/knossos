@@ -388,7 +388,7 @@ void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(QString path) {
+bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
         show();
         return false;
@@ -396,7 +396,9 @@ bool DatasetLoadWidget::loadDataset(QString path) {
         path = datasetPath;
     }
 
-    state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
+    if (!keepAnnotation) {
+        state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
+    }
     if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
         return false;
     }

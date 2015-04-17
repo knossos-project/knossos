@@ -33,6 +33,7 @@ class CommentsTab : public QWidget
 
     QCheckBox useCommentColorsCheckbox{"Use custom comment colors"};
     QCheckBox useCommentRadiusCheckbox{"Use custom comment radius"};
+    QCheckBox appendCommentCheckbox{"Append comments"};
     CommentsModel commentModel;
     QTreeView commentsTable;
 

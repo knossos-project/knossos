@@ -1334,6 +1334,9 @@ void Viewer::oc_reslice_notify() {
     oc_xy_changed = true;
     oc_xz_changed = true;
     oc_zy_changed = true;
+
+    // if anything has changed, update the volume texture data
+    Segmentation::singleton().volume_update_required = true;
 }
 
 bool Viewer::userMove_arb(float x, float y, float z) {

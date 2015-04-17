@@ -1060,289 +1060,143 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 }
 
 bool Viewport::renderVolumeVP(uint currentVP) {
-    static float volumeClippingAdjust = 1.73f;
-    static float translationSpeedAdjust = 1.0 / 500.0f;
-    static int texLen = 128;
-    static GLuint volTexId = 0;
-    if(volTexId == 0) {
-        glGenTextures(1, &volTexId);
-        glBindTexture(GL_TEXTURE_3D, volTexId);
-
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, texLen, texLen, texLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    }
-
-    static Profiler tex_gen_profiler;
-    static Profiler dcfetch_profiler;
-    static Profiler colorfetch_profiler;
-    static Profiler occlusion_profiler;
-    static Profiler tex_transfer_profiler;
-    static Profiler render_profiler;
-
-    tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
-    auto currentPosDc = Coordinate::Px2DcCoord(state->viewerState->currentPosition, state->cubeEdgeLength);
     auto& seg = Segmentation::singleton();
-    int cubeLen = state->cubeEdgeLength;
-    int M = state->M;
-    int M_radius = (state->M - 1) / 2;
-    GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
-    std::unordered_map<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> selectedIdColors;
-    std::tuple<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> lastIdColor;
 
-    state->protectCube2Pointer->lock();
-
-    dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
-    uint64_t** rawcubes = new uint64_t*[M*M*M];
-    for(int z = 0; z < M; ++z)
-    for(int y = 0; y < M; ++y)
-    for(int x = 0; x < M; ++x) {
-        auto cubeIndex = z*M*M + y*M + x;
-        Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
-        rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
-            Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], 
-            {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
-    }
-    dcfetch_profiler.end(); // ----------------------------------------------------------- profiling
-
-    colorfetch_profiler.start(); // ----------------------------------------------------------- profiling
-
-    for(int z = 0; z < texLen; ++z)
-    for(int y = 0; y < texLen; ++y)
-    for(int x = 0; x < texLen; ++x) {
-        Coordinate DcCoord{(x * M)/cubeLen, (y * M)/cubeLen, (z * M)/cubeLen};
-        auto cubeIndex = DcCoord.z*M*M + DcCoord.y*M + DcCoord.x;
-        auto& rawcube = rawcubes[cubeIndex];
-
-        if(rawcube != nullptr) {
-            auto indexInDc  = ((z * M)%cubeLen)*cubeLen*cubeLen + ((y * M)%cubeLen)*cubeLen + (x * M)%cubeLen;
-            auto indexInTex = z*texLen*texLen + y*texLen + x;
-            auto subobjectId = rawcube[indexInDc];
-            if(subobjectId == std::get<0>(lastIdColor)) {
-                auto idColor = std::get<1>(lastIdColor);
-                colcube[4*indexInTex+0] = std::get<0>(idColor);
-                colcube[4*indexInTex+1] = std::get<1>(idColor);
-                colcube[4*indexInTex+2] = std::get<2>(idColor);
-                colcube[4*indexInTex+3] = std::get<3>(idColor);
-            } else if (seg.isSubObjectIdSelected(subobjectId)) {
-                auto idColor = seg.colorObjectFromId(subobjectId);
-                colcube[4*indexInTex+0] = std::get<0>(idColor);
-                colcube[4*indexInTex+1] = std::get<1>(idColor);
-                colcube[4*indexInTex+2] = std::get<2>(idColor);
-                colcube[4*indexInTex+3] = std::get<3>(idColor);
-                lastIdColor = std::make_tuple(subobjectId, idColor);
-            } else {
-                colcube[4*indexInTex+0] = 0;
-                colcube[4*indexInTex+1] = 0;
-                colcube[4*indexInTex+2] = 0;
-                colcube[4*indexInTex+3] = 0;
-            }
-        } else {
-            auto indexInTex = z*texLen*texLen + y*texLen + x;
-            colcube[4*indexInTex+0] = 0;
-            colcube[4*indexInTex+1] = 0;
-            colcube[4*indexInTex+2] = 0;
-            colcube[4*indexInTex+3] = 0;
-        }
-    }
-
-    delete[] rawcubes;
-
-    colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
-
-    state->protectCube2Pointer->unlock();
-
-    occlusion_profiler.start(); // ----------------------------------------------------------- profiling
-    for(int z = 1; z < texLen - 1; ++z)
-    for(int y = 1; y < texLen - 1; ++y)
-    for(int x = 1; x < texLen - 1; ++x) {
-        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
-        if(colcube[4*indexInTex+3] != 0) {
-            for(int xi = -1; xi <= 1; ++xi) {
-                auto othrIndexInTex = (z)*texLen*texLen + (y)*texLen + x+xi;
-                if((xi != 0) && colcube[4*othrIndexInTex+3] != 0) {
-                    colcube[4*indexInTex+0] *= 0.95f;
-                    colcube[4*indexInTex+1] *= 0.95f;
-                    colcube[4*indexInTex+2] *= 0.95f;
-                }
-            }
-        }
-    }
-
-    for(int z = 1; z < texLen - 1; ++z)
-    for(int y = 1; y < texLen - 1; ++y)
-    for(int x = 1; x < texLen - 1; ++x) {
-        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
-        if(colcube[4*indexInTex+3] != 0) {
-            for(int yi = -1; yi <= 1; ++yi) {
-                auto othrIndexInTex = (z)*texLen*texLen + (y+yi)*texLen + x;
-                if((yi != 0) && colcube[4*othrIndexInTex+3] != 0) {
-                    colcube[4*indexInTex+0] *= 0.95f;
-                    colcube[4*indexInTex+1] *= 0.95f;
-                    colcube[4*indexInTex+2] *= 0.95f;
-                }
-            }
-        }
-    }
-
-    for(int z = 1; z < texLen - 1; ++z)
-    for(int y = 1; y < texLen - 1; ++y)
-    for(int x = 1; x < texLen - 1; ++x) {
-        auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
-        if(colcube[4*indexInTex+3] != 0) {
-            for(int zi = -1; zi <= 1; ++zi) {
-                auto othrIndexInTex = (z+zi)*texLen*texLen + (y)*texLen + x;
-                if((zi != 0) && colcube[4*othrIndexInTex+3] != 0) {
-                    colcube[4*indexInTex+0] *= 0.95f;
-                    colcube[4*indexInTex+1] *= 0.95f;
-                    colcube[4*indexInTex+2] *= 0.95f;
-                }
-            }
-        }
-    }
-    occlusion_profiler.end(); // ----------------------------------------------------------- profiling
-
-    tex_transfer_profiler.start(); // ----------------------------------------------------------- profiling
-    glBindTexture(GL_TEXTURE_3D, volTexId);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, texLen, texLen, texLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, colcube);
-    delete[] colcube;
-    tex_transfer_profiler.end(); // ----------------------------------------------------------- profiling
-
-    tex_gen_profiler.end(); // ----------------------------------------------------------- profiling
-
-    render_profiler.start(); // ----------------------------------------------------------- profiling
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f);
-
-    // volume viewport rotation
-    static QMatrix4x4 volRotMatrix;
-    float rotdx = state->skeletonState->rotdx;
-    float rotdy = state->skeletonState->rotdy;
-    state->skeletonState->rotdx = 0;
-    state->skeletonState->rotdy = 0;
-
-    if(rotdx || rotdy) {
-        QVector3D xRotAxis{0.0f, 1.0f, 0.0f};
-        QVector3D yRotAxis{1.0f, 0.0f, 0.0f};
-
-        volRotMatrix.rotate(-rotdx, xRotAxis);
-        volRotMatrix.rotate( rotdy, yRotAxis);
-    }
-
-    // volume viewport translation
-    static float transx = 0.0f;
-    static float transy = 0.0f;
-    transx += seg.volume_mouse_move_x * translationSpeedAdjust;
-    transy += seg.volume_mouse_move_y * translationSpeedAdjust;
-    seg.volume_mouse_move_x = 0;
-    seg.volume_mouse_move_y = 0;
-    
-    // volume viewport zoom
-    static float zoom = 1.0f;
-    zoom = (seg.volume_mouse_zoom >= 0.0f) ? 1.0f + (seg.volume_mouse_zoom / 4.0f) : sqrt(1.0f / -(seg.volume_mouse_zoom - 1.0f));
-
-    // dataset scaling adjustment
-    auto datascale = state->scale;
-    float biggestScale = 0.0f;
-    if(datascale.x > datascale.y) {
-        biggestScale = datascale.x;
-    } else {
-        biggestScale = datascale.y;
-    }
-    if(datascale.z > biggestScale) {
-        biggestScale = datascale.z;
-    }
-
-    float smallestScale = 0.0f;
-    if(datascale.x < datascale.y) {
-        smallestScale = datascale.x;
-    } else {
-        smallestScale = datascale.y;
-    }
-    if(datascale.z < smallestScale) {
-        smallestScale = datascale.z;
-    }
-    float maxScaleRatio = biggestScale / smallestScale;
-    float scalex = 1.0f / (datascale.x / biggestScale);
-    float scaley = 1.0f / (datascale.y / biggestScale);
-    float scalez = 1.0f / (datascale.z / biggestScale);
-
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-
-    // dataset translation adjustment
-    glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M, 
-                 (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M, 
-                 (static_cast<float>(state->viewerState->currentPosition.z % cubeLen) / cubeLen - 0.5f) / state->M);
-
-    glTranslatef(0.5f, 0.5f, 0.5f);
-    glScalef(volumeClippingAdjust, volumeClippingAdjust, volumeClippingAdjust); // scale to remove cube corner clipping
-    glScalef(scalex, scaley, scalez); // dataset scaling adjustment
-    glMultMatrixf(volRotMatrix.data()); // volume viewport rotation
-    glScalef(1.0f/zoom, 1.0f/zoom, 1.0f/zoom*2.0f); // volume viewport zoom
-    glTranslatef(-0.5f, -0.5f, -0.5f);
-    glTranslatef(transx, transy, 0.0f); // volume viewport translation
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_3D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindTexture(GL_TEXTURE_3D, volTexId);
-    for(int i = 0; i < texLen * volumeClippingAdjust * maxScaleRatio; ++i) {
-        float depth = i/(texLen * volumeClippingAdjust * maxScaleRatio);
-        glColor4f(depth, depth, depth, 1.0f);
-        glBegin(GL_QUADS);
-            glTexCoord3f(0.0f, 1.0f, depth);
-            glVertex3f(-1.0f, -1.0f,  1.0f-depth*2.0f);
-            glTexCoord3f(1.0f, 1.0f, depth);
-            glVertex3f( 1.0f, -1.0f,  1.0f-depth*2.0f);
-            glTexCoord3f(1.0f, 0.0f, depth);
-            glVertex3f( 1.0f,  1.0f,  1.0f-depth*2.0f);
-            glTexCoord3f(0.0f, 0.0f, depth);
-            glVertex3f(-1.0f,  1.0f,  1.0f-depth*2.0f);
-        glEnd();
+    if(seg.volume_tex_id != 0) {
+        static float volumeClippingAdjust = 1.73f;
+        static float translationSpeedAdjust = 1.0 / 500.0f;
+        auto cubeLen = state->cubeEdgeLength;
+        int texLen = seg.volume_tex_len;
+        GLuint volTexId = seg.volume_tex_id;
+
+        static Profiler render_profiler;
+        
+        render_profiler.start(); // ----------------------------------------------------------- profiling
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f);
+
+        // volume viewport rotation
+        static QMatrix4x4 volRotMatrix;
+        float rotdx = state->skeletonState->rotdx;
+        float rotdy = state->skeletonState->rotdy;
+        state->skeletonState->rotdx = 0;
+        state->skeletonState->rotdy = 0;
+
+        if(rotdx || rotdy) {
+            QVector3D xRotAxis{0.0f, 1.0f, 0.0f};
+            QVector3D yRotAxis{1.0f, 0.0f, 0.0f};
+
+            volRotMatrix.rotate(-rotdx, xRotAxis);
+            volRotMatrix.rotate( rotdy, yRotAxis);
+        }
+
+        // volume viewport translation
+        static float transx = 0.0f;
+        static float transy = 0.0f;
+        transx += seg.volume_mouse_move_x * translationSpeedAdjust;
+        transy += seg.volume_mouse_move_y * translationSpeedAdjust;
+        seg.volume_mouse_move_x = 0;
+        seg.volume_mouse_move_y = 0;
+        
+        // volume viewport zoom
+        static float zoom = seg.volume_mouse_zoom;
+        zoom = seg.volume_mouse_zoom;
+
+        // dataset scaling adjustment
+        auto datascale = state->scale;
+        float biggestScale = 0.0f;
+        if(datascale.x > datascale.y) {
+            biggestScale = datascale.x;
+        } else {
+            biggestScale = datascale.y;
+        }
+        if(datascale.z > biggestScale) {
+            biggestScale = datascale.z;
+        }
+
+        float smallestScale = 0.0f;
+        if(datascale.x < datascale.y) {
+            smallestScale = datascale.x;
+        } else {
+            smallestScale = datascale.y;
+        }
+        if(datascale.z < smallestScale) {
+            smallestScale = datascale.z;
+        }
+        float maxScaleRatio = biggestScale / smallestScale;
+        float scalex = 1.0f / (datascale.x / biggestScale);
+        float scaley = 1.0f / (datascale.y / biggestScale);
+        float scalez = 1.0f / (datascale.z / biggestScale);
+
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+
+        // dataset translation adjustment
+        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M, 
+                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M, 
+                     (static_cast<float>(state->viewerState->currentPosition.z % cubeLen) / cubeLen - 0.5f) / state->M);
+
+        glTranslatef(0.5f, 0.5f, 0.5f);
+        glScalef(volumeClippingAdjust, volumeClippingAdjust, volumeClippingAdjust); // scale to remove cube corner clipping
+        glScalef(scalex, scaley, scalez); // dataset scaling adjustment
+        glMultMatrixf(volRotMatrix.data()); // volume viewport rotation
+        glScalef(1.0f/zoom, 1.0f/zoom, 1.0f/zoom*2.0f); // volume viewport zoom
+        glTranslatef(-0.5f, -0.5f, -0.5f);
+        glTranslatef(transx, transy, 0.0f); // volume viewport translation
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_3D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glBindTexture(GL_TEXTURE_3D, volTexId);
+        for(int i = 0; i < texLen * volumeClippingAdjust * maxScaleRatio; ++i) {
+            float depth = i/(texLen * volumeClippingAdjust * maxScaleRatio);
+            glColor4f(depth, depth, depth, 1.0f);
+            glBegin(GL_QUADS);
+                glTexCoord3f(0.0f, 1.0f, depth);
+                glVertex3f(-1.0f, -1.0f,  1.0f-depth*2.0f);
+                glTexCoord3f(1.0f, 1.0f, depth);
+                glVertex3f( 1.0f, -1.0f,  1.0f-depth*2.0f);
+                glTexCoord3f(1.0f, 0.0f, depth);
+                glVertex3f( 1.0f,  1.0f,  1.0f-depth*2.0f);
+                glTexCoord3f(0.0f, 0.0f, depth);
+                glVertex3f(-1.0f,  1.0f,  1.0f-depth*2.0f);
+            glEnd();
+        }
+
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+
+        // Reset previously changed OGL parameters
+        glDisable(GL_TEXTURE_3D);
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+
+        render_profiler.end(); // ----------------------------------------------------------- profiling
+
+        // --------------------- display some profiling information ------------------------
+        // static auto timer = std::chrono::steady_clock::now();
+        // std::chrono::duration<double> duration = std::chrono::steady_clock::now() - timer;
+        // if(duration.count() > 1.0) {
+        //     qDebug() << "render  avg time: " <<  render_profiler.average_time()*1000 << "ms";
+        //     qDebug() << "---------------------------------------------";
+
+        //     timer = std::chrono::steady_clock::now();
+        // }
     }
-
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-
-    // Reset previously changed OGL parameters
-    glDisable(GL_TEXTURE_3D);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-
-    render_profiler.end(); // ----------------------------------------------------------- profiling
-
-    // --------------------- display some profiling information ------------------------
-    // static auto timer = std::chrono::steady_clock::now();
-    // std::chrono::duration<double> duration = std::chrono::steady_clock::now() - timer;
-    // if(duration.count() > 1.0) {
-    //     qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "render  avg time: " <<  render_profiler.average_time()*1000 << "ms";
-    //     qDebug() << "---------------------------------------------";
-
-    //     timer = std::chrono::steady_clock::now();
-    // }
 
     return true;
 }
