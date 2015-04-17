@@ -167,6 +167,7 @@ public:
     void hideButtons();
     void showButtons();
     bool renderVolumeVP(uint currentVP);
+    void updateVolumeTexture();
 
     EventModel *eventDelegate;
     static bool arbitraryOrientation;

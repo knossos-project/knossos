@@ -644,7 +644,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     } else if (VPfound == VIEWPORT_SKELETON) {
         if(Segmentation::singleton().volume_render_toggle) {
             auto& seg = Segmentation::singleton();
-            seg.volume_mouse_zoom += -directionSign;
+            seg.volume_mouse_zoom *= (directionSign == -1) ? 1.1f : 0.9f;
         } else {
             if (directionSign == -1) {
                 emit zoomInSkeletonVPSignal();
