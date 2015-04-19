@@ -1108,23 +1108,18 @@ bool Skeletonizer::delTree(int treeID) {
     if (treeToDel == state->skeletonState->activeTree) {
         state->skeletonState->activeTree = nullptr;
     }
-
-    //no references to tree left
-    emit treeRemovedSignal(treeID);
-
-    state->viewer->skeletonizer->setActiveNode(state->skeletonState->activeNode, 0);//set active tree through node
-    if (treeToDel == state->skeletonState->activeTree && state->skeletonState->firstTree != nullptr) {
-        setActiveTreeByID(state->skeletonState->firstTree->treeID);//if there is no node but a tree
-    }
-    if (state->skeletonState->firstTree == nullptr) {
-        state->skeletonState->activeTree = nullptr;//no trees
-    }
     free(treeToDel);
-
     state->skeletonState->treeElements--;
 
-    state->skeletonState->unsavedChanges = true;
+    //no references to tree left
+    emit treeRemovedSignal(treeID);//updates tools
 
+    //if the active tree was not set through the active node but another tree exists
+    if (state->skeletonState->activeTree == nullptr && state->skeletonState->firstTree != nullptr) {
+        setActiveTreeByID(state->skeletonState->firstTree->treeID);//updates tools too
+    }
+
+    state->skeletonState->unsavedChanges = true;
     return true;
 }
 
