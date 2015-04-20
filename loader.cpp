@@ -423,6 +423,7 @@ Loader::Loader(QObject *parent) : QThread(parent) {
     //loader manages dc and oc cubes together
     QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::dc_reslice_notify);
     QObject::connect(this, &Loader::reslice_notify, state->viewer, &Viewer::oc_reslice_notify);
+    QObject::connect(this, &Loader::volume_notify, state->viewer, &Viewer::set_volume_update_required);
 }
 
 int calc_nonzero_sign(float x) {
@@ -870,6 +871,8 @@ loadcube_manage:
     if (currentlyVisible(lts->currentCube->coordinate.legacy2Global(state->cubeEdgeLength))) {
         emit reslice_notify();
     }
+    emit volume_notify();
+
     if (!retVal) {
         goto loadcube_ret;
     }

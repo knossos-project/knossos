@@ -767,12 +767,12 @@ void Viewport::updateVolumeTexture() {
     tex_gen_profiler.end(); // ----------------------------------------------------------- profiling
 
     // --------------------- display some profiling information ------------------------
-    qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
-    qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
-    qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
-    qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
-    qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
-    qDebug() << "---------------------------------------------";
+    // qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
+    // qDebug() << "---------------------------------------------";
 }
 
 void Viewport::xyButtonClicked() {

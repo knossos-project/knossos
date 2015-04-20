@@ -230,6 +230,7 @@ public slots:
     void setVPOrientation(bool arbitrary);
     void dc_reslice_notify();
     void oc_reslice_notify();
+    void set_volume_update_required();
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

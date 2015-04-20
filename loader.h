@@ -172,6 +172,7 @@ public:
 signals:
     void finished();
     void reslice_notify();
+    void volume_notify();
 public slots:
     bool load();
 };

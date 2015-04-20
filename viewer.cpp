@@ -1346,8 +1346,10 @@ void Viewer::oc_reslice_notify() {
     oc_xy_changed = true;
     oc_xz_changed = true;
     oc_zy_changed = true;
+    set_volume_update_required();
+}
 
-    // if anything has changed, update the volume texture data
+void Viewer::set_volume_update_required() {
     Segmentation::singleton().volume_update_required = true;
 }
 
