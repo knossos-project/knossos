@@ -2,6 +2,5 @@
 #define VERSION_H
 
 #define KVERSION "4.1.1"
-#define KREVISION "@KREVISION@"
 
 #endif//VERSION_H

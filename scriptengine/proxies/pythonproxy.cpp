@@ -1,5 +1,6 @@
 #include "pythonproxy.h"
 
+#include "buildinfo.h"
 #include "functions.h"
 #include "stateInfo.h"
 #include "skeleton/node.h"

@@ -24,6 +24,7 @@
 
 #include "splashscreenwidget.h"
 
+#include "buildinfo.h"
 #include "version.h"
 
 #include <QPixmap>
@@ -33,11 +34,13 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
 
     versionLabel.setText(KVERSION);
     revisionLabel.setText(KREVISION);
+    buildDateLabel.setText(KBUILDDATE);
 
     splash.setPixmap(QPixmap(":/resources/splash"));
 
     mainLayout.addRow(QString("Knossos Version: "), &versionLabel);
     mainLayout.addRow(QString("Revision: "), &revisionLabel);
+    mainLayout.addRow(QString("Build Date: "), &buildDateLabel);
     mainLayout.addRow(&splash);
     mainLayout.setSizeConstraint(QLayout::SetFixedSize);
     setLayout(&mainLayout);

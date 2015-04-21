@@ -4,4 +4,5 @@ execute_process(
     WORKING_DIRECTORY ${GIT}
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-configure_file(${SRC} ${DST} @ONLY)#substitute revision in version.h.in
+string(TIMESTAMP KBUILDDATE %Y-%m-%d UTC)
+configure_file(${SRC} ${DST} @ONLY)
