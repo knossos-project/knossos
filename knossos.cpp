@@ -75,7 +75,10 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     QString txt = QString("[%1:%2] \t%4%5").arg(QFileInfo(context.file).fileName()).arg(context.line).arg(intro).arg(msg);
     //open the file once
     static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
-    outFile   << txt.toStdString() << std::endl;
+    static int64_t file_debug_output_limit = 5000;
+    if (type != QtDebugMsg || --file_debug_output_limit > 0) {
+        outFile   << txt.toStdString() << std::endl;
+    }
     std::cout << txt.toStdString() << std::endl;
 
     if (type == QtFatalMsg) {
