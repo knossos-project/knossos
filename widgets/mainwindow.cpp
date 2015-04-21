@@ -992,11 +992,10 @@ void MainWindow::copyClipboardCoordinates() {
 }
 
 void MainWindow::pasteClipboardCoordinates(){
-    QString clipboardContent = QApplication::clipboard()->text();
+    const QString clipboardContent = QApplication::clipboard()->text();
 
-    //match 3 groups of digits separated by 1 or 2 non-digits (as opposed to exactly », «, because the old parse was also lax)
-    const QRegExp clipboardRegEx("^([0-9]+)[^0-9]{1,2}([0-9]+)[^0-9]{1,2}([0-9]+)$");
-    if (clipboardRegEx.exactMatch(clipboardContent)) {//also fails if clipboard is empty
+    const QRegExp clipboardRegEx(R"regex((\d+)\D+(\d+)\D+(\d+))regex");//match 3 groups of digits separated by non-digits
+    if (clipboardRegEx.indexIn(clipboardContent) != -1) {//also fails if clipboard is empty
         const auto x = clipboardRegEx.cap(1).toInt();//index 0 is the whole matched text
         const auto y = clipboardRegEx.cap(2).toInt();
         const auto z = clipboardRegEx.cap(3).toInt();
@@ -1007,7 +1006,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
         coordinateEditingFinished();
     } else {
-        qDebug() << "Unable to fetch text from clipboard";
+        qDebug() << "Unable to extract coordinates from clipboard content" << clipboardContent;
     }
 }
 
