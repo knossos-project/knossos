@@ -78,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         if(showOverlays == false && Session::singleton().annotationMode == SegmentationMode) {
             setAnnotationMode(SkeletonizationMode);
         }
+        widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);

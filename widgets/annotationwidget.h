@@ -21,6 +21,7 @@ public:
     ToolsCommandsTab commandsTab;
     CommentsTab commentsTab;
     explicit AnnotationWidget(QWidget *parent = 0);
+    void setSegmentationVisibility(const bool visible);
     void saveSettings();
     void loadSettings();
 
