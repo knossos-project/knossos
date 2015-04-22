@@ -438,7 +438,6 @@ void abortDownloads(Work & work, Func keep) {
     for (auto && elem : abortQueue) {
         qDebug() << "abort" << elem.x << elem.y << elem.z;
         work[elem]->abort();//abort running downloads
-        work.erase(elem);
     }
 }
 
@@ -713,8 +712,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
         state->protectCube2Pointer->lock();
         const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
         state->protectCube2Pointer->unlock();
+        const bool cubeNotDownloading = downloads.find(globalCoord) == std::end(downloads);
+        const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
-        if (downloads.find(globalCoord) == std::end(downloads) && cubeNotAlreadyLoaded) {
+        if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
             QTime ping;
             ping.start();
             auto request = QNetworkRequest(dcUrl);
@@ -722,10 +723,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
-            downloads[globalCoord].reset(reply);
+            downloads[globalCoord] = reply;
             QObject::connect(reply, &QNetworkReply::finished, [this, ping, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qDebug() << "no slots";
+                    reply->deleteLater();
                     downloads.erase(globalCoord);
                     return;
                 }
@@ -738,8 +740,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                     auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::ref(cubeHash), globalCoord));
 
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, &downloads, globalCoord, watcher, type, currentSlot](){
-                        downloads.erase(globalCoord);
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {
                             auto result = watcher->result();
 
@@ -758,17 +759,23 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
                     });
                     decompressions[globalCoord].reset(watcher);
                     watcher->setFuture(future);
-                } else {//download error → fill
-                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                } else if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
                     std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
                     state->protectCube2Pointer->lock();
                     cubeHash[globalCoord.global2Legacy(state->cubeEdgeLength)] = currentSlot;
                     state->protectCube2Pointer->unlock();
-                    //downloads.erase(globalCoord);//evil³
+                    emit oc_reslice_notify();
+                } else {
+                    if (reply->error() != QNetworkReply::OperationCanceledError) {
+                        qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                    }
+                    state->protectCube2Pointer->lock();
+                    freeSlots.emplace_back(currentSlot);
+                    state->protectCube2Pointer->unlock();
                 }
+                downloads[globalCoord]->deleteLater();
+                downloads.erase(globalCoord);
             });
-        } else {
-            qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "already working";
         }
     };
 

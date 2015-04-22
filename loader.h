@@ -119,11 +119,10 @@ private:
 
     template<typename T>
     using ptr = std::unique_ptr<T>;
-    using ReplyPtr = ptr<QNetworkReply>;
     using DecompressionResult = std::pair<bool, char*>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
-    std::unordered_map<Coordinate, ReplyPtr> dcDownload;
-    std::unordered_map<Coordinate, ReplyPtr> ocDownload;
+    std::unordered_map<Coordinate, QNetworkReply*> dcDownload;
+    std::unordered_map<Coordinate, QNetworkReply*> ocDownload;
     std::unordered_map<Coordinate, DecompressionOperationPtr> dcDecompression;
     std::unordered_map<Coordinate, DecompressionOperationPtr> ocDecompression;
     std::list<std::vector<char>> DcSetChunk;
