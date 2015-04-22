@@ -143,15 +143,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     baseTime.start();//keyRepeat timer
 }
 
-bool Viewer::resetViewPortData(vpConfig *viewport) {
-    // for arbitrary vp orientation
-    memset(viewport->viewPortData,
-           state->viewerState->defaultTexData[0],
-           TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
-    viewport->s_max = viewport->t_max  = -1;
-    return true;
-}
-
 bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
     datacube += dcOffset;
     const auto & session = Session::singleton();

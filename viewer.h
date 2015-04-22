@@ -201,8 +201,6 @@ signals:
     void coordinateChangedSignal(int x, int y, int z);
     void updateDatasetOptionsWidgetSignal();
 protected:
-    bool resetViewPortData(vpConfig *viewport);
-
     bool vpGenerateTexture_arb(vpConfig &currentVp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
