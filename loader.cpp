@@ -463,6 +463,7 @@ void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func kee
 }
 
 std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate & globalCoord) {
+    QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
