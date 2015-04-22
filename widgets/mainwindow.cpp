@@ -565,10 +565,6 @@ void MainWindow::createMenus() {
     recenterOnClickAction = workModeViewMenuGroup->addAction(tr("Recenter on Click"));
     recenterOnClickAction->setCheckable(true);
 
-    QAction * penmodeAction = new QAction("Pen-Mode", this);
-
-    penmodeAction->setCheckable(true);
-
     if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
     } else if(state->viewerState->clickReaction == ON_CLICK_RECENTER) {
@@ -578,12 +574,17 @@ void MainWindow::createMenus() {
     QObject::connect(dragDatasetAction, &QAction::triggered, this, &MainWindow::dragDatasetSlot);
     QObject::connect(recenterOnClickAction, &QAction::triggered, this, &MainWindow::recenterOnClickSlot);
 
+    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
+
+    viewMenu->addSeparator();
+
+    QAction * penmodeAction = new QAction("Pen-Mode", this);
+
+    penmodeAction->setCheckable(true);
 
     QObject::connect(penmodeAction, &QAction::triggered, [this, penmodeAction]() {
         state->viewerState->penmode = penmodeAction->isChecked();
     });
-
-    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
 
     viewMenu->addActions({penmodeAction});
 
