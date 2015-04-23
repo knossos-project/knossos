@@ -1807,13 +1807,14 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 }
 
 void Renderer::renderBrush(uint viewportType, Coordinate coord) {
-    glPushMatrix();
-    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     auto & seg = Segmentation::singleton();
     auto bsize = seg.brush.getRadius();
     const auto bview = seg.brush.getView();
-    const int circleLines = 64;
-    const float twicePi = 2*3.1415;
+    static const int circleLines = 64;
+    static const float twicePi = 2.0f * boost::math::constants::pi<float>();
+
+    glPushMatrix();
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     glLineWidth(2.0f);
 
     auto drawCursor = [&]() {
@@ -1868,7 +1869,6 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     if (cursorNecessary) {
         drawCursor();
     }
-
 
     // outer cursor
     ++bsize;
