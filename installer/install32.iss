@@ -1,5 +1,5 @@
 #define MyAppName "Knossos"
-#define MyAppVersion "4.1.1"
+#define MyAppVersion "4.1.2"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.knossostool.org"
 #define MyAppExeName "knossos32.exe"
