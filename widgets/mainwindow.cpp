@@ -176,16 +176,16 @@ void MainWindow::createToolbars() {
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
-    QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
+    QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
         if (down) {
             widgetContainer->taskManagementWidget->updateAndRefreshWidget();
         } else {
             widgetContainer->taskManagementWidget->hide();
         }
     });
-    QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
-    QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
+    QObject::connect(annotationButton, &QToolButton::clicked, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
+    QObject::connect(viewportSettingsButton, &QToolButton::clicked, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
+    QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
