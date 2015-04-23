@@ -13,13 +13,13 @@ if(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(CMAKE_PREFIX_PATH
         "${CMAKE_PREFIX_PATH}"
         "C:/msys64/mingw64/qt5-static"
-        "C:/dev/curl-7.40.0/_build_64/_install"
+        "C:/dev/curl-7.41.0/_install64"
     )
 elseif(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "x32 static build")
     set(CMAKE_PREFIX_PATH
         "${CMAKE_PREFIX_PATH}"
         "C:/msys64/mingw32/qt5-static"
-        "C:/dev/curl-7.40.0/_build_32/_install"
+        "C:/dev/curl-7.41.0/_install32"
     )
 endif()
