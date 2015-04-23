@@ -297,7 +297,8 @@ void MainWindow::updateTitlebar() {
     }
     if (state->skeletonState->unsavedChanges) {
         title.append("*");
-        unsavedChangesLabel.setText("unsaved changes");
+        const auto autosave = tr(" (") + (!state->skeletonState->autoSaveBool ? "<b>NOT</b>" : "") + " autosaving)";
+        unsavedChangesLabel.setText(tr("unsaved changes") + autosave);
     } else {
         unsavedChangesLabel.setText("saved");
     }
