@@ -27,7 +27,6 @@ set(SRC_LIST ${openjpeg} ${root} ${segmentation} ${scriptengine} ${skeleton} ${w
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
-set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Boost 1.50 REQUIRED)
@@ -84,6 +83,7 @@ add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
+	set(CMAKE_AUTOSTATICPLUGINS ON)#https://github.com/Alexpux/MINGW-packages/issues/577
     #these definitions remove the dllimport directives from the includes
     target_compile_definitions(${PROJECT_NAME} PRIVATE "CURL_STATICLIB")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
