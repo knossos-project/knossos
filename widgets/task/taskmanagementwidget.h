@@ -6,6 +6,7 @@
 #include <QDialog>
 #include <QFormLayout>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -31,22 +32,23 @@ protected:
 
     QVBoxLayout mainLayout;
     QHBoxLayout hLayout;
-    QHBoxLayout userNameLayout;
     QFormLayout formLayout;
     QVBoxLayout vLayout;
     QGridLayout gridLayout;
 
-    QLabel userNameLabel;
+    QGroupBox taskInfoGroupBox{"Task Info"};
     QLabel taskLabel;
     QLabel descriptionLabel;
     QLabel commentLabel;
 
-    QPushButton logoutButton{"Logout"};
+    QGroupBox taskManagementGroupBox{"Task Management"};
     QPushButton startNewTaskButton{"Start new Task"};
     QPushButton loadLastSubmitButton{"Load last Submit"};
     QLineEdit submitCommentEdit;
     QPushButton submitButton{"Submit"};
     QPushButton submitFinalButton{"Final Submit"};
+
+    QPushButton logoutButton{"Logout"};
 
 public slots:
     void updateAndRefreshWidget();
