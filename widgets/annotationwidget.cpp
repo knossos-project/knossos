@@ -21,6 +21,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
     setWindowTitle("Annotation");
 
     tabs.addTab(&treeviewTab, "Tree View");
+    tabs.addTab(&skeletonTab, "Skeleton");
     tabs.addTab(&segmentationTab, "Segmentation");
     tabs.addTab(&commandsTab, "Commands");
     tabs.addTab(&commentsTab, "Comments");
