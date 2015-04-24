@@ -122,16 +122,15 @@ void MainWindow::createViewports() {
 }
 
 void MainWindow::createToolbars() {
-    auto basicToolbar = new QToolBar();
-    basicToolbar->setMovable(false);
-    basicToolbar->setFloatable(false);
-    basicToolbar->setMaximumHeight(45);
+    basicToolbar.setMovable(false);
+    basicToolbar.setFloatable(false);
+    basicToolbar.setMaximumHeight(45);
 
-    basicToolbar->addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
-    basicToolbar->addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
-    basicToolbar->addSeparator();
-    basicToolbar->addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
-    basicToolbar->addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
+    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar.addSeparator();
+    basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
+    basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
     xField->setRange(1, 1000000);
@@ -152,14 +151,14 @@ void MainWindow::createToolbars() {
     QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
     QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
 
-    basicToolbar->addWidget(new QLabel("<font color='black'>x</font>"));
-    basicToolbar->addWidget(xField);
-    basicToolbar->addWidget(new QLabel("<font color='black'>y</font>"));
-    basicToolbar->addWidget(yField);
-    basicToolbar->addWidget(new QLabel("<font color='black'>z</font>"));
-    basicToolbar->addWidget(zField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>x</font>"));
+    basicToolbar.addWidget(xField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>y</font>"));
+    basicToolbar.addWidget(yField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>z</font>"));
+    basicToolbar.addWidget(zField);
 
-    addToolBar(basicToolbar);
+    addToolBar(&basicToolbar);
     addToolBar(&defaultToolbar);
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
