@@ -335,6 +335,28 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
     qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
 }
 
+void Loader::Worker::unload() {
+    abortDownloadsFinishDecompression(*this, [](const Coordinate &){return false;});
+
+    state->protectCube2Pointer->lock();
+    for (auto &elem : state->Dc2Pointer[loaderMagnification]) {
+        freeDcSlots.emplace_back(elem.second);
+    }
+    state->Dc2Pointer[loaderMagnification].clear();
+    for (auto &elem : state->Oc2Pointer[loaderMagnification]) {
+        const auto cubeCoord = elem.first.cube2Legacy();
+        const auto remSlotPtr = elem.second;
+        freeOcSlots.emplace_back(elem.second);
+        if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
+            snappyCacheAddRaw(cubeCoord, remSlotPtr);
+            //remove from work queue
+            OcModifiedCacheQueue.erase(cubeCoord);
+        }
+    }
+    state->Oc2Pointer[loaderMagnification].clear();
+    state->protectCube2Pointer->unlock();
+}
+
 void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std::string cube) {
     snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 

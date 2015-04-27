@@ -1016,11 +1016,12 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     //necessary? – the question remains
     recalcTextureOffsets();
 
+    Loader::Controller::singleton().unload();//unload all the cubes
     //clear the viewports
     dc_reslice_notify_visible();
     oc_reslice_notify_visible();
 
-    loader_notify();
+    loader_notify();//start loading
 
     emit updateDatasetOptionsWidgetSignal();
 

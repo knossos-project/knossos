@@ -160,6 +160,7 @@ public://matsch
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
+    void unload();
     void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
@@ -189,11 +190,15 @@ public:
     ~Controller() {
         waitForWorkerThread();
     }
+    void unload() {
+        emit unloadSignal();
+    }
     template<typename... Args>
     void restart(Args&&... args) {
         waitForWorkerThread();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         worker->moveToThread(&workerThread);
+        QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy);
         workerThread.start();
@@ -205,6 +210,7 @@ public:
     }
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
+    void unloadSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
     void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
 };
