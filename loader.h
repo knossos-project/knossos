@@ -197,6 +197,7 @@ public:
     void restart(Args&&... args) {
         waitForWorkerThread();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+        workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
         QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
