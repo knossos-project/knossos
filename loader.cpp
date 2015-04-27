@@ -652,11 +652,16 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     freeSlots.pop_front();
                     //directly uncompress snappy cube into the OC slot
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract";
-                    snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
-                    state->protectCube2Pointer->lock();
-                    cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
-                    state->protectCube2Pointer->unlock();
-                    state->viewer->oc_reslice_notify_all(globalCoord);
+                    const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
+                    if (success) {
+                        state->protectCube2Pointer->lock();
+                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
+                        state->protectCube2Pointer->unlock();
+                        state->viewer->oc_reslice_notify_all(globalCoord);
+                    } else {
+                        freeSlots.emplace_back(currentSlot);
+                        qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract" << snappyIt->second.size() << "failed";
+                    }
                 } else {
                     qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "no slots";
                 }
