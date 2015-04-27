@@ -99,8 +99,8 @@ public:
         return *this = *this / divisor;
     }
 
-    constexpr CoordOfCube cube(const int size) const {
-        return {x / size, y / size, z / size};
+    constexpr CoordOfCube cube(const int size, const int mag) const {
+        return {x / size / mag, y / size / mag, z / size / mag};
     }
 
     constexpr CoordInCube insideCube(const int size) const {
@@ -111,16 +111,16 @@ public:
      * This function calculates the coordinates of the datacube from pixel coordinates
      */
     static Coordinate Px2DcCoord(Coordinate pxCoordinate, int cubeEdgeLength) {
-        const auto cubeCoord = pxCoordinate.cube(cubeEdgeLength);
+        const auto cubeCoord = pxCoordinate.cube(cubeEdgeLength, 1);
         return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
     }
 
-    constexpr Coordinate global2Legacy(int cubeEdgeLength) const {
-        return Px2DcCoord(*this, cubeEdgeLength);
+    constexpr Coordinate global2Legacy(int cubeEdgeLength, const int magnification) const {
+        return cube(cubeEdgeLength, magnification);
     }
 
-    constexpr Coordinate legacy2Global(const int cubeEdgeLength) const {
-        return {x * cubeEdgeLength, y * cubeEdgeLength, z * cubeEdgeLength};
+    constexpr Coordinate legacy2Global(const int cubeEdgeLength, const int magnification) const {
+        return {x * cubeEdgeLength * magnification, y * cubeEdgeLength * magnification, z * cubeEdgeLength * magnification};
     }
 
     constexpr Coordinate cube2Legacy() const {

@@ -148,13 +148,6 @@ public:
     Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
     int currentDirectionsIndex;
 
-    // This gives the current position ONLY when the reload
-    // boundary has been crossed. Change it through
-    // sendLoadSignal() exclusively. It has to be locked by
-    // protectLoadSignal.
-    Coordinate currentPositionX;
-    Coordinate previousPositionX;
-
     // Cube loader affairs
     int    loadMode;
     char       ftpBasePath[CSTRING_SIZE];

@@ -69,7 +69,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         state->viewer->window->notifyUnsavedChanges();
     }
 
-    state->viewer->oc_reslice_notify();
+    state->viewer->oc_reslice_notify_visible();
 }
 
 void merging(QMouseEvent *event, const int vp) {
@@ -1066,7 +1066,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if(control) {
             if(state->skeletonState->activeTree) {
@@ -1121,7 +1121,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->overlay = true;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     }
     if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;

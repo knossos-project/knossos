@@ -40,7 +40,7 @@ QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
 
 QList<int> PythonProxy::getPosition() {
     QList<int> l;
-    Coordinate c = state->currentPositionX;
+    Coordinate c = state->viewerState->currentPosition;
     l.append(c.x);
     l.append(c.y);
     l.append(c.z);

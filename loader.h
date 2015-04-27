@@ -63,6 +63,8 @@
 
 #define FTP_RETRY_NUM 3
 
+bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord);
+
 struct C_Element {
     Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
 
@@ -136,7 +138,7 @@ private:
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
-    std::vector<Coordinate> DcoiFromPos();
+    std::vector<Coordinate> DcoiFromPos(const Coordinate &center);
     uint loadCubes();
     void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
@@ -164,13 +166,9 @@ public://matsch
     ~Worker();
     int CompareLoadOrderMetric(const void * a, const void * b);
 
-signals:
-    void dc_reslice_notify();
-    void oc_reslice_notify();
-
 public slots:
-    void cleanup();
-    void downloadAndLoadCubes(const unsigned int loadingNr);
+    void cleanup(const Coordinate center);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
 };
 
 class Controller : public QObject {
@@ -200,14 +198,14 @@ public:
         QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy);
         workerThread.start();
     }
-    void startLoading();
+    void startLoading(const Coordinate &center);
     template<typename... Args>
     void snappyCacheAddSnappy(Args&&... args) {
         emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
     }
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
-    void loadSignal(const unsigned int loadingNr);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center);
     void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
 };
 }//namespace Loader

@@ -28,7 +28,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 void writeVoxel(const Coordinate & pos, const uint64_t value) {
     const auto inCube = pos.insideCube(state->cubeEdgeLength);
     getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    Loader::Controller::singleton().worker->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    Loader::Controller::singleton().worker->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength, state->magnification));
 }
 
 bool isInsideCircle(int x, int y, int z, int radius) {

@@ -269,8 +269,6 @@ bool Knossos::initStates() {
 
     memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
     state->currentDirectionsIndex = 0;
-    state->previousPositionX = {};
-    state->currentPositionX = {};
 
     return commonInitStates();
 }

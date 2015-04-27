@@ -442,7 +442,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
     }
     state->viewerState->datasetAdjustmentOn = doAdjust;
 
-    state->viewer->dc_reslice_notify();
+    state->viewer->dc_reslice_notify_visible();
 }
 
 /** This slot is called if one of the entries is clicked in the recent file menue */
