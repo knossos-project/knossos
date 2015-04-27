@@ -399,23 +399,22 @@ void Loader::Worker::moveToThread(QThread *targetThread) {
     QObject::moveToThread(targetThread);
 }
 
-template<typename Work, typename Func>//you really don’t wanna spell out the type of dcWork
-void abortDownloads(Work & work, Func keep) {
+template<typename Downloads, typename Func>
+void abortDownloads(Downloads & downloads, Func keep) {
     std::vector<Coordinate> abortQueue;
-    for (auto && elem : work) {
+    for (auto && elem : downloads) {
         if (!keep(elem.first)) {
             abortQueue.emplace_back(elem.first);
         }
     }
     for (auto && elem : abortQueue) {
-        qDebug() << "abort" << elem.x << elem.y << elem.z;
-        work[elem]->abort();//abort running downloads
+        downloads[elem]->abort();//abort running downloads
     }
 }
 
-template<typename Work, typename Func>//you really don’t wanna spell out the type of dcWork
-void finishDecompression(Work & work, Func keep) {
-    for (auto && elem : work) {
+template<typename Decomp, typename Func>
+void finishDecompression(Decomp & decompressions, Func keep) {
+    for (auto && elem : decompressions) {
         if (!keep(elem.first)) {
             //elem.second->cancel();
             elem.second->waitForFinished();
@@ -425,12 +424,10 @@ void finishDecompression(Work & work, Func keep) {
 
 template<typename Func>
 void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func keep) {
-    qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "before abortion";
     abortDownloads(worker.dcDownload, keep);
     abortDownloads(worker.ocDownload, keep);
     finishDecompression(worker.dcDecompression, keep);
     finishDecompression(worker.ocDecompression, keep);
-    qDebug() << worker.dcDownload.size() << worker.dcDecompression.size() << worker.ocDownload.size() << worker.ocDecompression.size() << "after abortion";
 }
 
 std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
@@ -441,7 +438,6 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
         const qint64 expectedSize = state->cubeBytes;
         std::copy(std::begin(data), std::end(data), currentSlot);
         success = data.size() == expectedSize;
-        qDebug() << "raw cube" << success;
     } else if (type == Loader::CubeType::RAW_JPG) {
         int width, height, jpegSubsamp;
 
@@ -452,7 +448,6 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
 
         if (doThird) {
             success = true;
-            qDebug() << "decompressed cube";
         } else {
             qDebug() << tjGetErrorStr();
         }
@@ -466,12 +461,10 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
         success &= file.write(data) == data.size();
         file.close();
         success &= EXIT_SUCCESS == jp2_decompress_main(file.fileName().toUtf8().data(), reinterpret_cast<char*>(currentSlot), state->cubeBytes);
-        qDebug() << "jpeg2000" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
         std::copy(std::begin(data), std::end(data), currentSlot);
         success = data.size() == expectedSize;
-        qDebug() << "seg cube" << success;
     } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
         QBuffer buffer(&data);
         QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
@@ -481,7 +474,6 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, con
             if (file.open(QIODevice::ReadOnly)) {
                 auto data = file.readAll();
                 success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
-                qDebug() << "seg.sz.zip cube" << success;
             }
             archive.close();
         }
@@ -575,16 +567,8 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
 }
 
 void Loader::Worker::cleanup(const Coordinate center) {
-    qDebug() << "cleanup";
-
-    // currentPositionX is updated only when the boundary is
-    // crossed. Access to currentPositionX is synchronized through
-    // the protectLoadSignal mutex.
-    // DcoiFromPos fills the Dcoi list with all datacubes that
-    // we want to be in memory, given our current position.
     abortDownloadsFinishDecompression(*this, currentlyVisibleWrap(center));
-    //[](const CoordOfCube &){return false;}
-    //&currentlyVisible
+    state->protectCube2Pointer->lock();
     unloadCubes(state->Dc2Pointer[loaderMagnification], freeDcSlots, insideCurrentSupercubeWrap(center));
     unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap(center), [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
@@ -593,6 +577,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
             OcModifiedCacheQueue.erase(cubeCoord);
         }
     });
+    state->protectCube2Pointer->unlock();
 }
 
 void Loader::Controller::startLoading(const Coordinate & center) {
@@ -651,7 +636,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
                     //directly uncompress snappy cube into the OC slot
-                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract";
                     const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
                     if (success) {
                         state->protectCube2Pointer->lock();
@@ -663,7 +647,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract" << snappyIt->second.size() << "failed";
                     }
                 } else {
-                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "no slots";
+                    qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "no slots";
                 }
                 return;
             }
@@ -681,7 +665,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             throw std::runtime_error("unknown value for Loader::API");
         };
         QUrl dcUrl = apiSwitch(globalCoord, type);
-        qDebug() << "url: " << dcUrl.toString();
 
         state->protectCube2Pointer->lock();
         const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
@@ -690,17 +673,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
         if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
-            QTime ping;
-            ping.start();
             auto request = QNetworkRequest(dcUrl);
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
-            QObject::connect(reply, &QNetworkReply::finished, [this, ping, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
-                    qDebug() << "no slots";
+                    qCritical() << "no slots" << static_cast<int>(type) << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
                     downloads.erase(globalCoord);
                     return;
@@ -708,8 +689,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 auto * currentSlot = freeSlots.front();
                 freeSlots.pop_front();
                 if (reply->error() == QNetworkReply::NoError) {
-                    const auto fini = ping.elapsed();
-                    qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "ping" << fini;
 
                     auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::ref(cubeHash), globalCoord, state->magnification));
 
@@ -718,17 +697,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         if (!watcher->isCanceled()) {
                             auto result = watcher->result();
 
-                            qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << result.first << static_cast<void*>(result.second);
                             if (!result.first) {//decompression unsuccessful
-                                qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "failed → no fill";
+                                qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "decompression" << static_cast<int>(type) << "failed → no fill";
                                 freeSlots.emplace_back(result.second);
                             }
                         } else {
-                            qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
+                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
                             freeSlots.emplace_back(currentSlot);
                         }
 
-                        qDebug() << static_cast<int>(type) << cubeHash.size() << "hash" << freeSlots.size() << "free";
                         decompressions.erase(globalCoord);
                     });
                     decompressions[globalCoord].reset(watcher);
@@ -741,7 +718,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     state->viewer->oc_reslice_notify_all(globalCoord);
                 } else {
                     if (reply->error() != QNetworkReply::OperationCanceledError) {
-                        qDebug() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                        qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
                     }
                     state->protectCube2Pointer->lock();
                     freeSlots.emplace_back(currentSlot);
