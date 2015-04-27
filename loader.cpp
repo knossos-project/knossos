@@ -624,15 +624,17 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
 
     const auto Dcoi = DcoiFromPos(center);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
+    std::vector<Coordinate> allCubes;
     std::vector<Coordinate> visibleCubes;
     std::vector<Coordinate> cacheCubes;
-    for (auto && todo : Dcoi) {//first elem of Dcoi is contentless
+    for (auto && todo : Dcoi) {
         const Coordinate globalCoord = todo.legacy2Global(state->cubeEdgeLength, state->magnification);
         state->protectCube2Pointer->lock();
         const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
         const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
         state->protectCube2Pointer->unlock();
         if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
+            allCubes.emplace_back(globalCoord);
             if (currentlyVisibleWrap(center)(globalCoord)) {
                 visibleCubes.emplace_back(globalCoord);
             } else {
@@ -747,7 +749,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     };
 
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
-    for (auto globalCoord : visibleCubes) {
+    for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
             if (state->overlay) {
@@ -755,20 +757,4 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
         }
     }
-
-    //start the rest of the downloads after finishing the slice planes
-    qDebug() << "adding additional cache cubes";
-    for (auto globalCoord : cacheCubes) {
-        //don’t continue downloads if they were interrupted
-        //causes a stack underflow in LoaderWorker::abortDownloadsFinishDecompression
-        if (loadingNr == Loader::Controller::singleton().loadingNr) {
-            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
-            if (state->overlay) {
-                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
-            }
-        }
-    }
-
-    qDebug() << "starting done" << visibleCubes.size() << "+" << cacheCubes.size() << time.elapsed() << "ms";
-    qDebug() << "current hash" << state->Dc2Pointer[loaderMagnification].size() << state->Oc2Pointer[loaderMagnification].size();
 }
