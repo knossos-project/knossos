@@ -6,7 +6,7 @@
 #include "segmentationsplit.h"
 
 boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
-    const auto posDc = Coordinate::Px2DcCoord(pos, state->cubeEdgeLength);
+    const auto posDc = pos / state->magnification / state->cubeEdgeLength;
 
     state->protectCube2Pointer->lock();
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
@@ -21,14 +21,16 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
-    const auto inCube = pos.insideCube(state->cubeEdgeLength);
+    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     return getCube(pos)[inCube.z][inCube.y][inCube.x];
 }
 
 void writeVoxel(const Coordinate & pos, const uint64_t value) {
-    const auto inCube = pos.insideCube(state->cubeEdgeLength);
-    getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    if (state->magnification == 1) {//snappy cache only mag1 capable
+        const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
+        getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
+        loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    }
 }
 
 bool isInsideCircle(int x, int y, int z, int radius) {
