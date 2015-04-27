@@ -429,7 +429,7 @@ void abortDownloads(Work & work, Func keep) {
 template<typename Work, typename Func>//you really don’t wanna spell out the type of dcWork
 void finishDecompression(Work & work, Func keep) {
     for (auto && elem : work) {
-        if (!keep(elem.first) && elem.second != nullptr) {
+        if (!keep(elem.first)) {
             //elem.second->cancel();
             elem.second->waitForFinished();
         }
