@@ -137,7 +137,6 @@ private:
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
     std::vector<Coordinate> DcoiFromPos();
-    void removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
     void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();

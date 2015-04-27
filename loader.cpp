@@ -385,43 +385,6 @@ void Loader::Worker::snappyCacheFlush() {
     snappyMutex.unlock();
 }
 
-void Loader::Worker::removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification) {
-    for (auto kv : currentLoadedHash) {
-        const auto coord = kv.first;
-        if (NULL != kv.second) {
-            continue;
-        }
-
-        state->protectCube2Pointer->lock();
-        auto * delDcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[prevLoaderMagnification], coord);
-        auto * delOcCubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[prevLoaderMagnification], coord);
-        state->protectCube2Pointer->unlock();
-
-        //reclaim cube slots from
-        //data
-        if(delDcCubePtr != nullptr) {
-            state->protectCube2Pointer->lock();
-            state->Dc2Pointer[prevLoaderMagnification].erase(coord);
-            state->protectCube2Pointer->unlock();
-            freeDcSlots.emplace_back(delDcCubePtr);
-        }
-        //overlay
-        if(delOcCubePtr != nullptr) {
-            const auto cubeCoord = CoordOfCube(coord.x, coord.y, coord.z);
-            if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-                snappyCacheAddRaw(cubeCoord, delOcCubePtr);
-                //remove from work queue
-                OcModifiedCacheQueue.erase(cubeCoord);
-            }
-
-            state->protectCube2Pointer->lock();
-            state->Oc2Pointer[prevLoaderMagnification].erase(coord);
-            state->protectCube2Pointer->unlock();
-            freeOcSlots.emplace_back(delOcCubePtr);
-        }
-    }
-}
-
 void Loader::Worker::moveToThread(QThread *targetThread) {
     qnam.moveToThread(targetThread);
     QObject::moveToThread(targetThread);
