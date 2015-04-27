@@ -311,28 +311,15 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep) {
 
 template<typename CubeHash, typename Slots, typename Keep, typename UnloadHook>
 void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHook todo) {
-    int totalCount = 0, unloadCount = 0, keepCount = 0;
-
-    auto copy = loadedCubes;
-    for (auto && elem : copy) {
-//        qDebug() << "cube" << elem.first.x << elem.first.y << elem.first.z;
-        ++totalCount;
-        if (!keep(elem.first.legacy2Global(state->cubeEdgeLength, state->magnification))) {
-            todo(CoordOfCube(elem.first.x, elem.first.y, elem.first.z), elem.second);
-//            qDebug() << "unload" << elem.first.x << elem.first.y << elem.first.z;
-            ++unloadCount;
-            auto * slot = elem.second;
-            state->protectCube2Pointer->lock();
-            loadedCubes.erase(elem.first);
-            state->protectCube2Pointer->unlock();
-
-            freeSlots.emplace_back(slot);
+    for (auto it = std::begin(loadedCubes); it != std::end(loadedCubes);) {
+        if (!keep(it->first.legacy2Global(state->cubeEdgeLength, state->magnification))) {
+            todo(CoordOfCube(it->first.x, it->first.y, it->first.z), it->second);
+            freeSlots.emplace_back(it->second);
+            it = loadedCubes.erase(it);
         } else {
-//            qDebug() << "keep" << state->currentPositionX.x/128. << state->currentPositionX.y/128. << state->currentPositionX.z/128. << elem.first.x << elem.first.y << elem.first.z;
-            ++keepCount;
+            ++it;
         }
     }
-    qDebug() << totalCount << "total:" << keepCount << "kept" << unloadCount << "unloaded" << freeSlots.size() << "free";
 }
 
 void Loader::Worker::unload() {
