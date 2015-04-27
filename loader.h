@@ -132,7 +132,7 @@ private:
     std::vector<char> bogusDc;
     int currentMaxMetric;
 
-    uint prevLoaderMagnification;
+    uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);

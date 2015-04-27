@@ -87,11 +87,6 @@ public:
     uint highestAvailableMag;
     uint lowestAvailableMag;
 
-    // This variable is used only by the loader.
-    // It is filled by the viewer and contains
-    // log2uint32(state->magnification)
-    uint loaderMagnification;
-
     // Bytes in one datacube: 2^3N
     std::size_t cubeBytes;
 

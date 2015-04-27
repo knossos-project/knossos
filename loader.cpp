@@ -284,9 +284,6 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader
         }
     }
 
-    state->loaderMagnification = std::log2(state->magnification);
-    prevLoaderMagnification = state->loaderMagnification;
-
     QObject::connect(this, &Loader::Worker::dc_reslice_notify, state->viewer, &Viewer::dc_reslice_notify);
     QObject::connect(this, &Loader::Worker::oc_reslice_notify, state->viewer, &Viewer::oc_reslice_notify);
 }
@@ -340,10 +337,10 @@ void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std
 
     state->protectCube2Pointer->lock();
     const auto coord = cubeCoord.cube2Legacy();
-    auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], coord);
+    auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], coord);
     if (cubePtr != nullptr) {
         freeOcSlots.emplace_back(cubePtr);
-        state->Oc2Pointer[state->loaderMagnification].erase(coord);
+        state->Oc2Pointer[loaderMagnification].erase(coord);
     }
     state->protectCube2Pointer->unlock();
 }
@@ -357,7 +354,7 @@ void Loader::Worker::snappyCacheAddRaw(const CoordOfCube & cubeCoord, const char
 
 void Loader::Worker::snappyCacheClear() {
     //unload all modified cubes
-    unloadCubes(state->Oc2Pointer[state->loaderMagnification], freeOcSlots, [this](const Coordinate & cubeCoord){
+    unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, [this](const Coordinate & cubeCoord){
         const bool unflushed = OcModifiedCacheQueue.find(cubeCoord.cube(state->cubeEdgeLength)) != std::end(OcModifiedCacheQueue);
         const bool flushed = snappyCache.find(cubeCoord.cube(state->cubeEdgeLength)) != std::end(snappyCache);
         return !unflushed && !flushed;//only keep cubes which are neither in snappy cache nor in modified queue
@@ -372,7 +369,7 @@ void Loader::Worker::snappyCacheFlush() {
 
     for (const auto & cubeCoord : OcModifiedCacheQueue) {
         state->protectCube2Pointer->lock();
-        auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+        auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
         state->protectCube2Pointer->unlock();
         if (cube != nullptr) {
             snappyCacheAddRaw(cubeCoord, cube);
@@ -569,9 +566,6 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
 void Loader::Worker::cleanup() {
     qDebug() << "cleanup";
 
-    prevLoaderMagnification = state->loaderMagnification;
-    state->loaderMagnification = std::log(state->magnification)/std::log(2);
-
     // currentPositionX is updated only when the boundary is
     // crossed. Access to currentPositionX is synchronized through
     // the protectLoadSignal mutex.
@@ -580,8 +574,8 @@ void Loader::Worker::cleanup() {
     abortDownloadsFinishDecompression(*this, currentlyVisibleWrap);
     //[](const CoordOfCube &){return false;}
     //&currentlyVisible
-    unloadCubes(state->Dc2Pointer[prevLoaderMagnification], freeDcSlots, insideCurrentSupercubeWrap);
-    unloadCubes(state->Oc2Pointer[prevLoaderMagnification], freeOcSlots, insideCurrentSupercubeWrap, [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
+    unloadCubes(state->Dc2Pointer[loaderMagnification], freeDcSlots, insideCurrentSupercubeWrap);
+    unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap, [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
             snappyCacheAddRaw(cubeCoord, remSlotPtr);
             //remove from work queue
@@ -615,6 +609,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     time.start();
 
     cleanup();
+    loaderMagnification = std::log2(state->magnification);
 
     const auto Dcoi = DcoiFromPos();
     //split dcoi into slice planes and rest
@@ -623,8 +618,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     for (auto && todo : Dcoi) {//first elem of Dcoi is contentless
         Coordinate globalCoord(todo.x * state->cubeEdgeLength, todo.y * state->cubeEdgeLength, todo.z * state->cubeEdgeLength);
         state->protectCube2Pointer->lock();
-        const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
-        const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[state->loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+        const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
+        const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], globalCoord.global2Legacy(state->cubeEdgeLength)) == nullptr;
         state->protectCube2Pointer->unlock();
         if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
             if (currentlyVisibleWrap(globalCoord)) {
@@ -661,11 +656,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
         auto apiSwitch = [this](const Coordinate globalCoord, const CubeType type){
             switch (api) {
             case Loader::API::GoogleBrainmaps:
-                return googleCubeUrl(baseUrl, globalCoord, state->loaderMagnification, state->cubeEdgeLength, type);
+                return googleCubeUrl(baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
             case Loader::API::Heidelbrain:
                 return knossosCubeUrl(baseUrl, QString(state->name), globalCoord.cube(state->cubeEdgeLength), state->magnification, type);
             case Loader::API::WebKnossos:
-                return webKnossosCubeUrl(baseUrl, globalCoord, state->loaderMagnification + 1, state->cubeEdgeLength, type);
+                return webKnossosCubeUrl(baseUrl, globalCoord, loaderMagnification + 1, state->cubeEdgeLength, type);
             }
             throw std::runtime_error("unknown value for Loader::API");
         };
@@ -745,9 +740,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : visibleCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
-            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
+            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
             if (state->overlay) {
-                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
+                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
             }
         }
     }
@@ -758,13 +753,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr) {
         //don’t continue downloads if they were interrupted
         //causes a stack underflow in LoaderWorker::abortDownloadsFinishDecompression
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
-            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[state->loaderMagnification]);
+            startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
             if (state->overlay) {
-                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[state->loaderMagnification]);
+                startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
             }
         }
     }
 
     qDebug() << "starting done" << visibleCubes.size() << "+" << cacheCubes.size() << time.elapsed() << "ms";
-    qDebug() << "current hash" << state->Dc2Pointer[state->loaderMagnification].size() << state->Oc2Pointer[state->loaderMagnification].size();
+    qDebug() << "current hash" << state->Dc2Pointer[loaderMagnification].size() << state->Oc2Pointer[loaderMagnification].size();
 }
