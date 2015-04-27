@@ -1,0 +1,7 @@
+#ifndef BUILDINFO_H
+#define BUILDINFO_H
+
+#define KREVISION "@KREVISION@"
+#define KBUILDDATE "@KBUILDDATE@"
+
+#endif//BUILDINFO_H

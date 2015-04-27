@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         if(showOverlays == false && Session::singleton().annotationMode == SegmentationMode) {
             setAnnotationMode(SkeletonizationMode);
         }
+        widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -119,16 +120,15 @@ void MainWindow::createViewports() {
 }
 
 void MainWindow::createToolbars() {
-    auto basicToolbar = new QToolBar();
-    basicToolbar->setMovable(false);
-    basicToolbar->setFloatable(false);
-    basicToolbar->setMaximumHeight(45);
+    basicToolbar.setMovable(false);
+    basicToolbar.setFloatable(false);
+    basicToolbar.setMaximumHeight(45);
 
-    basicToolbar->addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
-    basicToolbar->addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
-    basicToolbar->addSeparator();
-    basicToolbar->addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
-    basicToolbar->addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
+    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar.addSeparator();
+    basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
+    basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
     xField->setRange(1, 1000000);
@@ -149,14 +149,14 @@ void MainWindow::createToolbars() {
     QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
     QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
 
-    basicToolbar->addWidget(new QLabel("<font color='black'>x</font>"));
-    basicToolbar->addWidget(xField);
-    basicToolbar->addWidget(new QLabel("<font color='black'>y</font>"));
-    basicToolbar->addWidget(yField);
-    basicToolbar->addWidget(new QLabel("<font color='black'>z</font>"));
-    basicToolbar->addWidget(zField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>x</font>"));
+    basicToolbar.addWidget(xField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>y</font>"));
+    basicToolbar.addWidget(yField);
+    basicToolbar.addWidget(new QLabel("<font color='black'>z</font>"));
+    basicToolbar.addWidget(zField);
 
-    addToolBar(basicToolbar);
+    addToolBar(&basicToolbar);
     addToolBar(&defaultToolbar);
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
@@ -173,16 +173,16 @@ void MainWindow::createToolbars() {
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
-    QObject::connect(taskManagementButton, &QToolButton::toggled, [this, &taskManagementButton](const bool down){
+    QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
         if (down) {
             widgetContainer->taskManagementWidget->updateAndRefreshWidget();
         } else {
             widgetContainer->taskManagementWidget->hide();
         }
     });
-    QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(viewportSettingsButton, &QToolButton::toggled, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
-    QObject::connect(zoomAndMultiresButton, &QToolButton::toggled, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
+    QObject::connect(annotationButton, &QToolButton::clicked, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
+    QObject::connect(viewportSettingsButton, &QToolButton::clicked, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
+    QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
@@ -294,7 +294,8 @@ void MainWindow::updateTitlebar() {
     }
     if (state->skeletonState->unsavedChanges) {
         title.append("*");
-        unsavedChangesLabel.setText("unsaved changes");
+        const auto autosave = tr(" (") + (!state->skeletonState->autoSaveBool ? "<b>NOT</b> " : "") + "autosaving)";
+        unsavedChangesLabel.setText(tr("unsaved changes") + autosave);
     } else {
         unsavedChangesLabel.setText("saved");
     }
@@ -562,10 +563,6 @@ void MainWindow::createMenus() {
     recenterOnClickAction = workModeViewMenuGroup->addAction(tr("Recenter on Click"));
     recenterOnClickAction->setCheckable(true);
 
-    QAction * penmodeAction = new QAction("Pen-Mode", this);
-
-    penmodeAction->setCheckable(true);
-
     if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
     } else if(state->viewerState->clickReaction == ON_CLICK_RECENTER) {
@@ -575,12 +572,17 @@ void MainWindow::createMenus() {
     QObject::connect(dragDatasetAction, &QAction::triggered, this, &MainWindow::dragDatasetSlot);
     QObject::connect(recenterOnClickAction, &QAction::triggered, this, &MainWindow::recenterOnClickSlot);
 
+    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
+
+    viewMenu->addSeparator();
+
+    QAction * penmodeAction = new QAction("Pen-Mode", this);
+
+    penmodeAction->setCheckable(true);
 
     QObject::connect(penmodeAction, &QAction::triggered, [this, penmodeAction]() {
         state->viewerState->penmode = penmodeAction->isChecked();
     });
-
-    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
 
     viewMenu->addActions({penmodeAction});
 
@@ -990,11 +992,10 @@ void MainWindow::copyClipboardCoordinates() {
 }
 
 void MainWindow::pasteClipboardCoordinates(){
-    QString clipboardContent = QApplication::clipboard()->text();
+    const QString clipboardContent = QApplication::clipboard()->text();
 
-    //match 3 groups of digits separated by 1 or 2 non-digits (as opposed to exactly », «, because the old parse was also lax)
-    const QRegExp clipboardRegEx("^([0-9]+)[^0-9]{1,2}([0-9]+)[^0-9]{1,2}([0-9]+)$");
-    if (clipboardRegEx.exactMatch(clipboardContent)) {//also fails if clipboard is empty
+    const QRegExp clipboardRegEx(R"regex((\d+)\D+(\d+)\D+(\d+))regex");//match 3 groups of digits separated by non-digits
+    if (clipboardRegEx.indexIn(clipboardContent) != -1) {//also fails if clipboard is empty
         const auto x = clipboardRegEx.cap(1).toInt();//index 0 is the whole matched text
         const auto y = clipboardRegEx.cap(2).toInt();
         const auto z = clipboardRegEx.cap(3).toInt();
@@ -1005,7 +1006,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
         coordinateEditingFinished();
     } else {
-        qDebug() << "Unable to fetch text from clipboard";
+        qDebug() << "Unable to extract coordinates from clipboard content" << clipboardContent;
     }
 }
 

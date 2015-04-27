@@ -18,22 +18,24 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     descriptionLabel.setWordWrap(true);
     commentLabel.setWordWrap(true);
 
-    userNameLayout.addWidget(&userNameLabel);
-    userNameLayout.addWidget(&logoutButton);
-    formLayout.addRow("Logged in As: ", &userNameLayout);
     formLayout.addRow("Current Task: ", &taskLabel);
     formLayout.addRow("Description: ", &descriptionLabel);
     formLayout.addRow("Comment: ", &commentLabel);
+
+    taskInfoGroupBox.setLayout(&formLayout);
 
     //first row is added in refresh
     gridLayout.addWidget(&submitCommentEdit, 1, 0, 1, 2);
     gridLayout.addWidget(&submitButton, 2, 0, 1, 1);
     gridLayout.addWidget(&submitFinalButton, 2, 1, 1, 1);
 
-    vLayout.addLayout(&gridLayout);
-    vLayout.addStretch();
+    taskManagementGroupBox.setLayout(&gridLayout);
 
-    hLayout.addLayout(&formLayout);
+    vLayout.addWidget(&taskManagementGroupBox);
+    vLayout.addStretch();
+    vLayout.addWidget(&logoutButton);
+
+    hLayout.addWidget(&taskInfoGroupBox);
     hLayout.addLayout(&vLayout);
     mainLayout.addWidget(&statusLabel);
     mainLayout.addLayout(&hLayout);
@@ -228,7 +230,7 @@ void TaskManagementWidget::setResponse(const QString &message) {
 }
 
 void TaskManagementWidget::setActiveUser(const QString &username) {
-    userNameLabel.setText("<font color='green'>" + username + "</font>");
+    logoutButton.setText("Logout »" + username + "«");
 }
 
 void TaskManagementWidget::setTask(const QString & task) {

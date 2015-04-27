@@ -3,7 +3,7 @@ Version: 4.2alpha
 Section: misc
 Priority: extra
 Architecture: amd64
-Installed-Size: 73604
+Installed-Size: 
 Maintainer: Norbert Pfeiler <norbert.pfeiler@googlemail.com>
 Description: 3D image visualisation and annotation tool
 Homepage: http://www.knossostool.org

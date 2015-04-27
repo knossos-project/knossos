@@ -325,9 +325,13 @@ void ToolsTreeviewTab::mergeTreesAction() {
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
     if (prompt.clickedButton() == confirmButton) {
-        int treeID1 = state->skeletonState->selectedTrees[0]->treeID;
-        int treeID2 = state->skeletonState->selectedTrees[1]->treeID;
-        Skeletonizer::singleton().mergeTrees(treeID1, treeID2);
+        auto initiallySelectedTrees = state->skeletonState->selectedTrees;//HACK mergeTrees clears the selection by setting the merge result active
+        while (initiallySelectedTrees.size() >= 2) {//2 at a time
+            const int treeID1 = initiallySelectedTrees[0]->treeID;
+            const int treeID2 = initiallySelectedTrees[1]->treeID;
+            initiallySelectedTrees.erase(std::begin(initiallySelectedTrees)+1);//HACK mergeTrees deletes tree2
+            Skeletonizer::singleton().mergeTrees(treeID1, treeID2);
+        }
     }
 }
 
@@ -426,7 +430,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         QObject::connect(treeContextMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Delete tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
         treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
-        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 2);//merge trees action
+        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() >= 2);//merge trees action
         treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         treeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         treeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedTrees.size() > 0);

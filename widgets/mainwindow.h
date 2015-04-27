@@ -71,10 +71,11 @@ class MainWindow : public QMainWindow {
 
     std::vector<QAction*> commentActions;
 
-    QToolBar defaultToolbar;
+    QToolBar basicToolbar{"Basic Functionality"};
+    QToolBar defaultToolbar{"Tools"};
 
     // segmentation job mode
-    QToolBar segJobModeToolbar;
+    QToolBar segJobModeToolbar{"Job Navigation"};
     QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
     void updateTodosLeft();
 

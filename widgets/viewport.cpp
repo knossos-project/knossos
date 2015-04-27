@@ -141,8 +141,6 @@ void Viewport::initializeGL() {
     });
     if (oglDebug) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    } else {
-        oglLogger.startLogging();
     }
 
     if(viewportType != VIEWPORT_SKELETON) {
@@ -656,7 +654,7 @@ void Viewport::updateVolumeTexture() {
         auto cubeIndex = z*M*M + y*M + x;
         Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
         rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
-            Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], 
+            Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)],
             {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
     }
     dcfetch_profiler.end(); // ----------------------------------------------------------- profiling
@@ -767,12 +765,12 @@ void Viewport::updateVolumeTexture() {
     tex_gen_profiler.end(); // ----------------------------------------------------------- profiling
 
     // --------------------- display some profiling information ------------------------
-    qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
-    qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
-    qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
-    qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
-    qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
-    qDebug() << "---------------------------------------------";
+    // qDebug() << "tex gen avg time: " << tex_gen_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    dc fetch    : " << dcfetch_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    color fetch : " << colorfetch_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
+    // qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
+    // qDebug() << "---------------------------------------------";
 }
 
 void Viewport::xyButtonClicked() {

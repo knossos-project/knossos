@@ -29,7 +29,7 @@ extern stateInfo * state;
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
 
-#define TEXTURE_EDGE_LEN 2048
+#define TEXTURE_EDGE_LEN 1024
 
 // UserMove type
 enum UserMoveType {USERMOVE_DRILL, USERMOVE_HORIZONTAL, USERMOVE_NEUTRAL};

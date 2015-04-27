@@ -23,6 +23,9 @@
  */
 #include "datasavingwidget.h"
 
+#include "viewer.h"
+#include "mainwindow.h"
+
 #include "GuiConstants.h"
 #include "skeleton/skeletonizer.h"
 
@@ -133,6 +136,7 @@ void DataSavingWidget::autosaveCheckboxChecked(bool on) {
     } else {
         state->skeletonState->autoSaveBool = false;
     }
+    state->viewer->window->updateTitlebar();
 }
 
 void DataSavingWidget::autonincrementFileNameButtonPushed(bool on) {

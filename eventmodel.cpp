@@ -74,8 +74,8 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    const auto subobjectIds = readVoxels(getCoordinateFromOrthogonalClick(event->x(), event->y(), vp), seg.brush);
     Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+    const auto subobjectIds = readVoxels(clickPos, seg.brush);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
@@ -561,7 +561,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-            const auto subobjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
+            const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);

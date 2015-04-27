@@ -3,8 +3,8 @@
 # KNOSSOS saves its user preferences in $HOME/.config/MPIMF/
 
 pkgname=knossos
-pkgver=4.1.1
-pkgrel=2
+pkgver=4.1.2
+pkgrel=1
 arch=('x86_64')
 pkgdesc="A software tool for the visualization and annotation of 3D image data. It was developed for the rapid reconstruction of neural morphology and connectivity."
 url="http://www.knossostool.org/"
@@ -19,23 +19,19 @@ depends=("boost"
     "quazip-qt5"
     "snappy"
 )
-makedepends=("cmake"
-    "ninja"
-)
-source=("https://github.com/knossos-project/knossos/archive/v${pkgver}.tar.gz"
-    "knossos.desktop"
-)
-sha256sums=()
+makedepends=("cmake")
+source=("git+https://github.com/knossos-project/knossos.git#tag=v${pkgver}")
+sha256sums=('SKIP')
 
 build() {
-    cd "$srcdir/$pkgname-$pkgver"
-    cmake -G Ninja .
-    ninja
+	mkdir -p "$srcdir/build-$CHOST-$pkgname-$pkgver"
+	cd "$srcdir/build-$CHOST-$pkgname-$pkgver"
+	cmake ../knossos
+	make
 }
 
 package() {
-    cd "$srcdir/$pkgname-$pkgver"
-    install -Dm755 knossos "$pkgdir/usr/bin/knossos"
-    install -Dm644 resources/icons/logo.ico "$pkgdir/usr/share/pixmaps/knossos.ico"
-    install -Dm644 ../knossos.desktop "$pkgdir/usr/share/applications/knossos.desktop"
+	install -Dm755 "$srcdir/build-$CHOST-$pkgname-$pkgver/knossos" "$pkgdir/usr/bin/knossos"
+	install -Dm644 "$srcdir/knossos/resources/icons/knossos.png" "$pkgdir/usr/share/pixmaps/knossos.png"
+	install -Dm644 "$srcdir/knossos/installer/aur/knossos.desktop" "$pkgdir/usr/share/applications/knossos.desktop"
 }

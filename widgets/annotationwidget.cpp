@@ -31,6 +31,13 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
+void AnnotationWidget::setSegmentationVisibility(const bool visible) {
+    const auto index = tabs.indexOf(&segmentationTab);
+    tabs.setTabEnabled(index, visible);
+    const QString tooltip = "Enable the segmentation overlay when loading a dataset";
+    tabs.setTabToolTip(index, visible ? "" : tooltip);
+}
+
 void AnnotationWidget::loadSettings() {
     int width, height, x, y;
     bool visible;

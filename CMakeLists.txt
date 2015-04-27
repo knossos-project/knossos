@@ -27,7 +27,6 @@ set(SRC_LIST ${openjpeg} ${root} ${segmentation} ${scriptengine} ${skeleton} ${w
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
-set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Boost 1.50 REQUIRED)
@@ -61,25 +60,29 @@ add_custom_command(
     ${docimages}
 )
 
-add_custom_target(version DEPENDS versioncreator)#forces the pseudo target to be generated
-#is always triggered by the pseudo target which is never actually created, creates version.h instead
-add_custom_command(OUTPUT versioncreator ${CMAKE_CURRENT_BINARY_DIR}/version.h
-    COMMAND
-    ${CMAKE_COMMAND} -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/version.h.in
-                     -D DST=${CMAKE_CURRENT_BINARY_DIR}/version.h
-                     -D GIT=${CMAKE_CURRENT_SOURCE_DIR}
-                     -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+add_custom_target(buildinfo DEPENDS buildinfocreator)#forces the pseudo target to be generated
+#is always triggered by the pseudo target which is never actually created, creates buildinfo.h instead
+add_custom_command(
+    OUTPUT
+        buildinfocreator
+        ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h
+    COMMAND ${CMAKE_COMMAND}
+        -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.h.in
+        -D DST=${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h
+        -D GIT=${CMAKE_CURRENT_SOURCE_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
 
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
-    ${SRC_LIST} version.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
+    ${SRC_LIST} buildinfo.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
-add_dependencies(${PROJECT_NAME} version)#main target needs version
+add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
 #custom adjustments
 if(NOT BUILD_SHARED_LIBS)
+	set(CMAKE_AUTOSTATICPLUGINS ON)#https://github.com/Alexpux/MINGW-packages/issues/577
     #these definitions remove the dllimport directives from the includes
     target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
     if(WIN32)
