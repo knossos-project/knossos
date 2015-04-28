@@ -56,7 +56,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 
     if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
-    } else {//paint and erase
+    } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
