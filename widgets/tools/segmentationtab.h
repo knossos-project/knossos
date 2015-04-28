@@ -75,19 +75,11 @@ public:
 
 class SegmentationTab : public QWidget {
 Q_OBJECT
-    QString mergeToolTip{"Merge objects with right click.\nHold SHIFT for unmerging.\nAdditionally hold CTRL to work on a more fine grained level."};
-    QString unmergeToolTip{"Unmerge objects with right click.\nAdditionally hold CTRL to work on a more fine grained level."};
-    QString paintToolTip{"Create new overlay data for the currently selected object.\nHold SHIFT to erase from selected objects.\nA new object is created, when none is selected"};
-    QString eraseToolTip{"Erase voxels from selected objects.\nErase all if none is selected. "};
-
     QVBoxLayout layout;
     QHBoxLayout toolsLayout;
     QButtonGroup modeGroup;
-    QPushButton mergeBtn{"Merge"};
-    QPushButton paintBtn{"Paint"};
     QLabel brushRadiusLabel{"Brush Radius"};
     QSpinBox brushRadiusEdit;
-    QButtonGroup toolGroup;
     QPushButton twodBtn{"2D"};
     QPushButton threedBtn{"3D"};
     QCheckBox showAllChck{"Show all objects"};

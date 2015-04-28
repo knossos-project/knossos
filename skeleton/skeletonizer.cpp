@@ -197,7 +197,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return NULL;
 }
 
-bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
+uint64_t Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
     color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
@@ -220,7 +220,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportTyp
                           true);
     if(!addedNodeID) {
         qDebug() << "Error: Could not add new node!";
-        return false;
+        return 0;
     }
 
     setActiveNode(NULL, addedNodeID);
@@ -230,7 +230,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportTyp
         pushBranchNode(true, true, NULL, addedNodeID);
         addComment("First Node", NULL, addedNodeID);
     }
-    return true;
+    return addedNodeID;
 }
 
 uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
@@ -1004,12 +1004,12 @@ bool Skeletonizer::delSegment(uint sourceNodeID, uint targetNodeID, segmentListE
 bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     if (!nodeToDel) {
         nodeToDel = findNodeByNodeID(nodeID);
-        nodeID = nodeToDel->nodeID;
     }
     if (!nodeToDel) {
         qDebug("The given node %u doesn't exist. Unable to delete it.", nodeID);
         return false;
     }
+    nodeID = nodeToDel->nodeID;
     if (nodeToDel->comment) {
         delComment(nodeToDel->comment, 0);
     }
@@ -2378,7 +2378,7 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
 }
 
 /* @todo loader gets out of sync (endless loop) */
-bool Skeletonizer::popBranchNode() {
+nodeListElement* Skeletonizer::popBranchNode() {
     nodeListElement *branchNode = NULL;
     std::size_t branchNodeID = 0;
 
@@ -2422,7 +2422,7 @@ bool Skeletonizer::popBranchNode() {
 exit_popbranchnode:
     state->skeletonState->unsavedChanges = true;
     state->skeletonState->totalBranchpoints--;
-    return true;
+    return branchNode;
 }
 
 bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint,
@@ -2469,22 +2469,22 @@ void Skeletonizer::jumpToActiveNode(bool *isSuccess) {
     }
 }
 
-void Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
+nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
     if (state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
         QMessageBox prompt(parent);
         prompt.setIcon(QMessageBox::Question);
-        prompt.setText("No node was added after jumping to the last branch point.");
+        prompt.setText("Nothing has been modified after jumping to the last branch point.");
         prompt.setInformativeText("Do you really want to jump?");
         prompt.addButton("Jump", QMessageBox::AcceptRole);
         auto * cancel = prompt.addButton("Cancel", QMessageBox::RejectRole);
 
         prompt.exec();
         if (prompt.clickedButton() == cancel) {
-            return;
+            return nullptr;
         }
     }
 
-    popBranchNode();
+    return popBranchNode();
 }
 
 void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {

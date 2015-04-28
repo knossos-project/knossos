@@ -53,6 +53,7 @@ uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewp
 void segmentation_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto& seg = Segmentation::singleton();
+    state->skeletonState->branchpointUnresolved = false;
 
     if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
@@ -195,17 +196,20 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(mouseEventAtValidDatasetPosition(event, VPfound) == false) {
         return;
     }
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
-             rightMouseDownX = event->x();
-             rightMouseDownY = event->y();
-             segmentation_work(event, VPfound);
+        if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::branch) {
+            const auto newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeId);
+        } else if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
+            rightMouseDownX = event->x();
+            rightMouseDownY = event->y();
+            segmentation_work(event, VPfound);
         }
         return;
     }
     Coordinate movement, lastPos;
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
 
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
@@ -610,7 +614,9 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             segmentation_work(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
-        return;
+    }
+    if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::branch) {//reset
+        Segmentation::singleton().brush.setTool(Segmentation::singleton().previousBrushTool);
     }
 }
 

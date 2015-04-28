@@ -1857,13 +1857,17 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
         }
     };
 
+    const auto cursorNecessary = seg.brush.getTool() == brush_t::tool_t::merge || seg.brush.getTool() == brush_t::tool_t::add;
+
     // inner cursor
     if (seg.brush.isInverse()) {
         glColor4f(0.6f, 0.1f, 0.1f, 1.0f);
     } else {
         glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     }
-    drawCursor();
+    if (cursorNecessary) {
+        drawCursor();
+    }
 
 
     // outer cursor
@@ -1873,7 +1877,9 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     } else {
         glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
     }
-    drawCursor();
+    if (cursorNecessary) {
+        drawCursor();
+    }
 
     glPopMatrix();
 }
