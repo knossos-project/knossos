@@ -1040,9 +1040,10 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
-    settings.setValue(TRACING_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
+    settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
-    settings.setValue(ANNOTATION_MODE, static_cast<uint>(Session::singleton().annotationMode));
+    settings.setValue(ANNOTATION_MODE, static_cast<int>(Session::singleton().annotationMode));
+    settings.setValue(SEGMENTATION_TOOL, static_cast<int>(Segmentation::singleton().brush.getTool()));
 
     int i = 0;
     for (const auto & path : *skeletonFileHistory) {
@@ -1104,11 +1105,14 @@ void MainWindow::loadSettings() {
 
     saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY, autosaveLocation).toString();
 
-    const auto tracingMode = settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(tracingMode));
+    const auto tracingMode = static_cast<Skeletonizer::TracingMode>(settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toInt());
+    state->viewer->skeletonizer->setTracingMode(tracingMode);
     setSimpleTracing(settings.value(SIMPLE_TRACING, true).toBool());
 
-    setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toUInt()));
+    setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toInt()));
+
+    const auto segmentationTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL, static_cast<int>(brush_t::tool_t::merge)).toInt());
+    Segmentation::singleton().brush.setTool(segmentationTool);
 
     updateRecentFile(settings.value(LOADED_FILE1, "").toString());
     updateRecentFile(settings.value(LOADED_FILE2, "").toString());
@@ -1122,7 +1126,7 @@ void MainWindow::loadSettings() {
     updateRecentFile(settings.value(LOADED_FILE10, "").toString());
 
     settings.endGroup();
-    this->setGeometry(x, y, width, height);
+    setGeometry(x, y, width, height);
 
     widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
