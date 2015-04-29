@@ -55,7 +55,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
     auto& seg = Segmentation::singleton();
     state->skeletonState->branchpointUnresolved = false;
 
-    if (seg.brush.getTool() == brush_t::tool_t::merge) {
+    if (seg.brush.getTool() == brush_t::tool_t::hybrid || seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
     } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
@@ -107,6 +107,8 @@ void merging(QMouseEvent *event, const int vp) {
                 }
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
+                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+                    Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
                 }
             }
             seg.touchObjects(subobjectId);
@@ -199,10 +201,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::branch) {
-            const auto newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-            Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeId);
-        } else if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
+        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
             rightMouseDownX = event->x();
             rightMouseDownY = event->y();
             segmentation_work(event, VPfound);
@@ -614,9 +613,6 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             segmentation_work(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
-    }
-    if (Segmentation::singleton().brush.getTool() == brush_t::tool_t::branch) {//reset
-        Segmentation::singleton().brush.setTool(Segmentation::singleton().previousBrushTool);
     }
 }
 

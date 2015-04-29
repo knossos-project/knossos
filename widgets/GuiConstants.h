@@ -149,7 +149,6 @@ const QString ANNOTATION_MODE = "annotation_mode";
 const QString TRACING_MODE = "tracing_mode";
 const QString SIMPLE_TRACING = "simple_tracing";
 const QString SEGMENTATION_TOOL = "segmentation_tool";
-const QString SEGMENTATION_TOOL_PREVIOUS = "segmentation_tool_previous";
 
 /* Python Property Widget */
 const QString PYTHON_INTERPRETER = "python_interpreter";

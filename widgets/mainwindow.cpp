@@ -489,52 +489,45 @@ void MainWindow::createMenus() {
     segEditMenu->addSeparator();
 
 
-    const QString branchToolTip{"Set one branch point with right click.\nSwitches to previous mode afterwards"};
-    const QString mergeToolTip{"Merge objects with right click.\nHold SHIFT for unmerging.\nAdditionally hold CTRL to work on a more fine grained level."};
-    const QString unmergeToolTip{"Unmerge objects with right click.\nAdditionally hold CTRL to work on a more fine grained level."};
-    const QString paintToolTip{"Create new overlay data for the currently selected object.\nHold SHIFT to erase from selected objects.\nA new object is created, when none is selected"};
-    const QString eraseToolTip{"Erase voxels from selected objects.\nErase all if none is selected. "};
+    const QString branchToolTip{"Create Nodes when merging."};
+    const QString mergeToolTip{"Right click to merge.\nHold SHIFT to unmerge.\nHold CTRL to work on object parts only."};
+    const QString paintToolTip{"Create overlay data for the selected object.\nHold SHIFT to erase.\nErase any if none is selected."};
 
     auto & brushModeGroup = *new QActionGroup(this);
-    auto & branchModeAction = *brushModeGroup.addAction(tr("Set one branch point"));
-    branchModeAction.setCheckable(true);
-    branchModeAction.setToolTip(branchToolTip);
-    branchModeAction.setShortcut(QKeySequence(Qt::Key_B));
-    branchModeAction.setShortcutContext(Qt::ApplicationShortcut);
-    auto & mergeModeAction = *brushModeGroup.addAction(tr("Merge mode"));
+    auto & hybridModeAction = *brushModeGroup.addAction(tr("Hybrid Mode"));
+    hybridModeAction.setCheckable(true);
+    hybridModeAction.setStatusTip(branchToolTip);
+    auto & mergeModeAction = *brushModeGroup.addAction(tr("Merge/Unmerge Mode"));
     mergeModeAction.setCheckable(true);
-    mergeModeAction.setToolTip(mergeToolTip);
-    auto & paintModeAction = *brushModeGroup.addAction(tr("Paint mode"));
+    mergeModeAction.setStatusTip(mergeToolTip);
+    auto & paintModeAction = *brushModeGroup.addAction(tr("Paint/Erase Mode"));
     paintModeAction.setCheckable(true);
-    paintModeAction.setToolTip(paintToolTip);
+    paintModeAction.setStatusTip(paintToolTip);
 
-    segEditMenu->addActions({&branchModeAction, &mergeModeAction, &paintModeAction});
+    segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
     segEditMenu->addSeparator();
+
+    auto & pushBranchAction = *segEditMenu->addAction(QIcon(""), "Push Branch");
+    QObject::connect(&pushBranchAction, &QAction::triggered, [this](){
+        Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
+    });
+    pushBranchAction.setShortcut(QKeySequence(Qt::Key_B));
+    pushBranchAction.setShortcutContext(Qt::ApplicationShortcut);
 
     auto & popBranchAction = *segEditMenu->addAction(QIcon(""), "Pop Branch");
     QObject::connect(&popBranchAction, &QAction::triggered, [this](){
-        auto & node = *Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
-        Skeletonizer::singleton().delNode(0, &node);
+        Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
     });
     popBranchAction.setShortcut(QKeySequence(Qt::Key_J));
     popBranchAction.setShortcutContext(Qt::ApplicationShortcut);
 
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::inverseChanged, [&mergeModeAction, mergeToolTip, unmergeToolTip, &paintModeAction, paintToolTip, eraseToolTip](bool value){
-        mergeModeAction.setText(value ? "UnMerge mode" : "Merge mode");
-        mergeModeAction.setToolTip(value ? unmergeToolTip : mergeToolTip);
-        paintModeAction.setText(value ? "Erase Mode" : "Paint Mode");
-        paintModeAction.setToolTip(value ? eraseToolTip : paintToolTip);
-    });
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&branchModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
-        branchModeAction.setChecked(value == brush_t::tool_t::branch);
+    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
+        hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
         mergeModeAction.setChecked(value == brush_t::tool_t::merge);
         paintModeAction.setChecked(value == brush_t::tool_t::add);
     });
-    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&branchModeAction, &mergeModeAction, &paintModeAction](QAction * action){
-        const auto tool = action == &branchModeAction ? brush_t::tool_t::branch : action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
-        if (Segmentation::singleton().brush.getTool() != brush_t::tool_t::branch) {//don’t save branch as previous
-            Segmentation::singleton().previousBrushTool = Segmentation::singleton().brush.getTool();
-        }
+    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&hybridModeAction, &mergeModeAction, &paintModeAction](QAction * action){
+        const auto tool = action == &hybridModeAction ? brush_t::tool_t::hybrid : action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
         if (tool != Segmentation::singleton().brush.getTool()) {//no ping pong
             Segmentation::singleton().brush.setTool(tool);
         }
@@ -1098,7 +1091,6 @@ void MainWindow::saveSettings() {
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
     settings.setValue(ANNOTATION_MODE, static_cast<int>(Session::singleton().annotationMode));
     settings.setValue(SEGMENTATION_TOOL, static_cast<int>(Segmentation::singleton().brush.getTool()));
-    settings.setValue(SEGMENTATION_TOOL_PREVIOUS, static_cast<int>(Segmentation::singleton().previousBrushTool));
 
     int i = 0;
     for (const auto & path : *skeletonFileHistory) {
@@ -1168,7 +1160,6 @@ void MainWindow::loadSettings() {
 
     const auto segmentationTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL, static_cast<int>(brush_t::tool_t::merge)).toInt());
     Segmentation::singleton().brush.setTool(segmentationTool);
-    Segmentation::singleton().previousBrushTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL_PREVIOUS, static_cast<int>(brush_t::tool_t::merge)).toInt());
 
     updateRecentFile(settings.value(LOADED_FILE1, "").toString());
     updateRecentFile(settings.value(LOADED_FILE2, "").toString());
@@ -1190,7 +1181,6 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
-    //widgetContainer->tracingTimeWidget->loadSettings();
 }
 
 void MainWindow::clearSettings() {
