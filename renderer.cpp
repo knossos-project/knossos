@@ -1073,7 +1073,7 @@ bool Viewport::renderVolumeVP(uint currentVP) {
         GLuint volTexId = seg.volume_tex_id;
 
         static Profiler render_profiler;
-        
+
         render_profiler.start(); // ----------------------------------------------------------- profiling
 
         glMatrixMode(GL_PROJECTION);
@@ -1102,7 +1102,7 @@ bool Viewport::renderVolumeVP(uint currentVP) {
         transy += seg.volume_mouse_move_y * translationSpeedAdjust;
         seg.volume_mouse_move_x = 0;
         seg.volume_mouse_move_y = 0;
-        
+
         // volume viewport zoom
         static float zoom = seg.volume_mouse_zoom;
         zoom = seg.volume_mouse_zoom;
