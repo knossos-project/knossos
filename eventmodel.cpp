@@ -53,10 +53,11 @@ uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewp
 void segmentation_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto& seg = Segmentation::singleton();
+    state->skeletonState->branchpointUnresolved = false;
 
-    if (seg.brush.getTool() == brush_t::tool_t::merge) {
+    if (seg.brush.getTool() == brush_t::tool_t::hybrid || seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
-    } else {//paint and erase
+    } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
@@ -106,6 +107,8 @@ void merging(QMouseEvent *event, const int vp) {
                 }
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
+                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+                    Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
                 }
             }
             seg.touchObjects(subobjectId);
@@ -195,17 +198,17 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(mouseEventAtValidDatasetPosition(event, VPfound) == false) {
         return;
     }
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
-             rightMouseDownX = event->x();
-             rightMouseDownY = event->y();
-             segmentation_work(event, VPfound);
+            rightMouseDownX = event->x();
+            rightMouseDownY = event->y();
+            segmentation_work(event, VPfound);
         }
         return;
     }
     Coordinate movement, lastPos;
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
 
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
@@ -610,7 +613,6 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             segmentation_work(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
-        return;
     }
 }
 

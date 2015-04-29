@@ -14,7 +14,7 @@ public:
         two_dim, three_dim
     };
     enum class tool_t {
-        merge, add
+        hybrid, merge, add
     };
     enum class view_t {
         xy, xz, yz

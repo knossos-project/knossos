@@ -636,7 +636,7 @@ void Viewport::updateVolumeTexture() {
     static Profiler tex_transfer_profiler;
 
     tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
-    auto currentPosDc = Coordinate::Px2DcCoord(state->viewerState->currentPosition, state->cubeEdgeLength);
+    auto currentPosDc = state->viewerState->currentPosition / state->magnification / state->cubeEdgeLength;
     int cubeLen = state->cubeEdgeLength;
     int M = state->M;
     int M_radius = (M - 1) / 2;

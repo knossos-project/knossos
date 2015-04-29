@@ -485,6 +485,53 @@ void MainWindow::createMenus() {
     connect(segEditSkelModeAction, &QAction::triggered, [this]() { setAnnotationMode(SkeletonizationMode); });
     segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
     segEditMenu->addSeparator();
+
+
+    const QString branchToolTip{"Create Nodes when merging."};
+    const QString mergeToolTip{"Right click to merge.\nHold SHIFT to unmerge.\nHold CTRL to work on object parts only."};
+    const QString paintToolTip{"Create overlay data for the selected object.\nHold SHIFT to erase.\nErase any if none is selected."};
+
+    auto & brushModeGroup = *new QActionGroup(this);
+    auto & hybridModeAction = *brushModeGroup.addAction(tr("Hybrid Mode"));
+    hybridModeAction.setCheckable(true);
+    hybridModeAction.setStatusTip(branchToolTip);
+    auto & mergeModeAction = *brushModeGroup.addAction(tr("Merge/Unmerge Mode"));
+    mergeModeAction.setCheckable(true);
+    mergeModeAction.setStatusTip(mergeToolTip);
+    auto & paintModeAction = *brushModeGroup.addAction(tr("Paint/Erase Mode"));
+    paintModeAction.setCheckable(true);
+    paintModeAction.setStatusTip(paintToolTip);
+
+    segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
+    segEditMenu->addSeparator();
+
+    auto & pushBranchAction = *segEditMenu->addAction(QIcon(""), "Push Branch");
+    QObject::connect(&pushBranchAction, &QAction::triggered, [this](){
+        Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
+    });
+    pushBranchAction.setShortcut(QKeySequence(Qt::Key_B));
+    pushBranchAction.setShortcutContext(Qt::ApplicationShortcut);
+
+    auto & popBranchAction = *segEditMenu->addAction(QIcon(""), "Pop Branch");
+    QObject::connect(&popBranchAction, &QAction::triggered, [this](){
+        Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
+    });
+    popBranchAction.setShortcut(QKeySequence(Qt::Key_J));
+    popBranchAction.setShortcutContext(Qt::ApplicationShortcut);
+
+    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
+        hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
+        mergeModeAction.setChecked(value == brush_t::tool_t::merge);
+        paintModeAction.setChecked(value == brush_t::tool_t::add);
+    });
+    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&hybridModeAction, &mergeModeAction, &paintModeAction](QAction * action){
+        const auto tool = action == &hybridModeAction ? brush_t::tool_t::hybrid : action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
+        if (tool != Segmentation::singleton().brush.getTool()) {//no ping pong
+            Segmentation::singleton().brush.setTool(tool);
+        }
+    });
+
+    segEditMenu->addSeparator();
     segEditMenu->addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
 
     skelEditMenu = new QMenu("Edit Skeleton");
@@ -1038,9 +1085,10 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
-    settings.setValue(TRACING_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
+    settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
-    settings.setValue(ANNOTATION_MODE, static_cast<uint>(Session::singleton().annotationMode));
+    settings.setValue(ANNOTATION_MODE, static_cast<int>(Session::singleton().annotationMode));
+    settings.setValue(SEGMENTATION_TOOL, static_cast<int>(Segmentation::singleton().brush.getTool()));
 
     int i = 0;
     for (const auto & path : *skeletonFileHistory) {
@@ -1102,11 +1150,14 @@ void MainWindow::loadSettings() {
 
     saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY, autosaveLocation).toString();
 
-    const auto tracingMode = settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(tracingMode));
+    const auto tracingMode = static_cast<Skeletonizer::TracingMode>(settings.value(TRACING_MODE, Skeletonizer::TracingMode::linkedNodes).toInt());
+    state->viewer->skeletonizer->setTracingMode(tracingMode);
     setSimpleTracing(settings.value(SIMPLE_TRACING, true).toBool());
 
-    setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toUInt()));
+    setAnnotationMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, SkeletonizationMode).toInt()));
+
+    const auto segmentationTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL, static_cast<int>(brush_t::tool_t::merge)).toInt());
+    Segmentation::singleton().brush.setTool(segmentationTool);
 
     updateRecentFile(settings.value(LOADED_FILE1, "").toString());
     updateRecentFile(settings.value(LOADED_FILE2, "").toString());
@@ -1120,7 +1171,7 @@ void MainWindow::loadSettings() {
     updateRecentFile(settings.value(LOADED_FILE10, "").toString());
 
     settings.endGroup();
-    this->setGeometry(x, y, width, height);
+    setGeometry(x, y, width, height);
 
     widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
@@ -1128,7 +1179,6 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
-    //widgetContainer->tracingTimeWidget->loadSettings();
 }
 
 void MainWindow::clearSettings() {

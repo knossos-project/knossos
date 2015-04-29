@@ -84,7 +84,7 @@ std::unordered_set<uint64_t> readVoxels(const Coordinate & centerPos, const brus
 }
 
 void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t & brush) {
-    if (brush.getTool() != brush_t::tool_t::merge) {
+    if (brush.getTool() == brush_t::tool_t::add) {
         traverseBrush(centerPos, brush, [&brush, &centerPos, &value](const Coordinate & pos){
             if (brush.isInverse()) {
                 //if there’re selected objects, we only want to erase these
