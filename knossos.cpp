@@ -461,7 +461,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             QString currentPath;
             if(LM_FTP == state->loadMode) {
                 currentPath = QString("http://%1:%2@%3/%4/mag%5/knossos.conf").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath).arg(currMag);
-                if (!Network::singleton().downloadFileProgressDialog(currentPath, nullptr).isEmpty()) {
+                if (Network::singleton().refresh(currentPath).first) {
                     currMagExists = true;
                 }
             }

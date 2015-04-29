@@ -16,27 +16,6 @@
 #include <QSettings>
 #include <QVariantList>
 
-QString Network::downloadFileProgressDialog(const QUrl & url, QWidget * parent = nullptr) {
-    auto * reply = manager.get(QNetworkRequest(url));
-    QString content;
-    QEventLoop pause;
-    QObject::connect(reply, &QNetworkReply::finished, [reply, content, &pause]() {
-        reply->deleteLater();
-        pause.exit();
-    });
-    QProgressDialog progress("Downloading files...", "Abort", 0, 100, parent);
-    progress.setModal(true);
-    QObject::connect(&progress, &QProgressDialog::canceled, reply, &QNetworkReply::abort);
-    QObject::connect(reply, &QNetworkReply::downloadProgress, &progress, &QProgressDialog::setValue);
-    progress.show();
-    pause.exec();
-    if (reply->error() != QNetworkReply::NoError) {
-        qDebug() << url << reply->errorString();
-        return "";
-    }
-    return reply->readAll();
-}
-
 Network::Network(const QObject *) {
     manager.setCookieJar(&cookieJar);
 }

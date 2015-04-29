@@ -318,7 +318,7 @@ void DatasetLoadWidget::processButtonClicked() {
 void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
     //check if we have a remote conf
     if(path.startsWith("http", Qt::CaseInsensitive)) {
-        if(Network::singleton().downloadFileProgressDialog(path, this).isEmpty()) return;
+        if(!Network::singleton().refresh(path).first) return;
     }
 
     QFileInfo pathInfo;
@@ -466,7 +466,7 @@ DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const QStrin
     QString qpath{path};
 
     if(qpath.startsWith("http", Qt::CaseInsensitive)) {
-        if(Network::singleton().downloadFileProgressDialog(qpath, this).isEmpty()) return info;
+        if(!Network::singleton().refresh(qpath).first) return info;
     }
 
     QFile file(qpath);

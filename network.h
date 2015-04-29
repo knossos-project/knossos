@@ -26,7 +26,6 @@ public:
         return network;
     }
 
-    QString downloadFileProgressDialog(const QUrl & url, QWidget *parent);
     QPair<bool, QString> login(const QUrl & url, const QString & username, const QString & password);
     QPair<bool, QString> logout(const QUrl & url);
     QPair<bool, QString> refresh(const QUrl & url);
