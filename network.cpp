@@ -11,8 +11,10 @@
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
 #include <QNetworkReply>
+#include <QProgressDialog>
 #include <QSemaphore>
 #include <QSettings>
+#include <QTimer>
 #include <QVariantList>
 
 #include <curl/curl.h>
@@ -48,6 +50,16 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
        pause.exit();
     });
+
+    QProgressDialog progress("Downloading files...", "Abort", 0, 100);
+    progress.setModal(true);
+    QObject::connect(&progress, &QProgressDialog::canceled, &reply, &QNetworkReply::abort);
+    QObject::connect(&reply, &QNetworkReply::downloadProgress, &progress, &QProgressDialog::setValue);
+
+    QTimer timer;
+    timer.setInterval(400);
+    QObject::connect(&timer, &QTimer::timeout, &progress, &QProgressDialog::show);
+
     pause.exec();
 
     if (reply.error() != QNetworkReply::NoError) {
