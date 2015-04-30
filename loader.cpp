@@ -430,10 +430,11 @@ void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func kee
     finishDecompression(worker.ocDecompression, keep);
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QByteArray & data, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QNetworkReply & reply, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
+    auto data = reply.readAll();
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
         std::copy(std::begin(data), std::end(data), currentSlot);
@@ -690,10 +691,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 freeSlots.pop_front();
                 if (reply->error() == QNetworkReply::NoError) {
 
-                    auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, reply->readAll(), type, std::ref(cubeHash), globalCoord, state->magnification));
+                    auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(*reply), type, std::ref(cubeHash), globalCoord, state->magnification));
 
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {
                             auto result = watcher->result();
 
@@ -706,26 +707,30 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                             freeSlots.emplace_back(currentSlot);
                         }
 
+                        downloads[globalCoord]->deleteLater();
+                        downloads.erase(globalCoord);
                         decompressions.erase(globalCoord);
                     });
                     decompressions[globalCoord].reset(watcher);
                     watcher->setFuture(future);
-                } else if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
-                    std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
-                    state->protectCube2Pointer->lock();
-                    cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
-                    state->protectCube2Pointer->unlock();
-                    state->viewer->oc_reslice_notify_all(globalCoord);
                 } else {
-                    if (reply->error() != QNetworkReply::OperationCanceledError) {
-                        qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                    if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
+                        std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
+                        state->protectCube2Pointer->lock();
+                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
+                        state->protectCube2Pointer->unlock();
+                        state->viewer->oc_reslice_notify_all(globalCoord);
+                    } else {
+                        if (reply->error() != QNetworkReply::OperationCanceledError) {
+                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                        }
+                        state->protectCube2Pointer->lock();
+                        freeSlots.emplace_back(currentSlot);
+                        state->protectCube2Pointer->unlock();
                     }
-                    state->protectCube2Pointer->lock();
-                    freeSlots.emplace_back(currentSlot);
-                    state->protectCube2Pointer->unlock();
+                    downloads[globalCoord]->deleteLater();
+                    downloads.erase(globalCoord);
                 }
-                downloads[globalCoord]->deleteLater();
-                downloads.erase(globalCoord);
             });
         }
     };
