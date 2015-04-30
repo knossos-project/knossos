@@ -184,6 +184,7 @@ public:
         return loader;
     }
     void waitForWorkerThread() {
+        ++loadingNr;
         workerThread.quit();
         workerThread.wait();
     }
