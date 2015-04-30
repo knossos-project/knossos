@@ -430,11 +430,11 @@ void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func kee
     finishDecompression(worker.ocDecompression, keep);
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QNetworkReply & reply, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
-    auto data = reply.readAll();
+    auto data = reply.read(reply.bytesAvailable());//readAll can be very slow
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
         std::copy(std::begin(data), std::end(data), currentSlot);
