@@ -739,8 +739,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
+            QCoreApplication::processEvents();
             if (state->overlay) {
                 startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
+                QCoreApplication::processEvents();
             }
         }
     }
