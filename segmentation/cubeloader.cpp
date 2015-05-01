@@ -21,16 +21,22 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
+    if (Session::singleton().outsideMovementArea(pos)) {
+        return 0;
+    }
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     return getCube(pos)[inCube.z][inCube.y][inCube.x];
 }
 
-void writeVoxel(const Coordinate & pos, const uint64_t value) {
-    if (state->magnification == 1) {//snappy cache only mag1 capable
-        const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
-        getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-        loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+bool writeVoxel(const Coordinate & pos, const uint64_t value) {
+    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos)) {//snappy cache only mag1 capable
+        return false;
     }
+
+    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
+    getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
+    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    return true;
 }
 
 bool isInsideCircle(int x, int y, int z, int radius) {

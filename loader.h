@@ -133,7 +133,7 @@ int calc_nonzero_sign(float x);
 class Loader : public QThread {
     Q_OBJECT
     friend class LoadCubeThread;
-    friend void writeVoxel(const Coordinate &, const uint64_t);
+    friend bool writeVoxel(const Coordinate &, const uint64_t);
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
     friend void annotationFileLoad(const QString &, const QString &, bool *);
     friend void annotationFileSave(const QString &, bool *);

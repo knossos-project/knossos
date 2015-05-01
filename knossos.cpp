@@ -193,8 +193,8 @@ int main(int argc, char *argv[]) {
         // don't start loader, when there is no dataset, yet.
         loader->start();
     }
-    viewer.run();
     Scripting scripts;
+    viewer.run();
     remote.start();
 
     viewer.window->widgetContainer->datasetLoadWidget->loadDataset();
