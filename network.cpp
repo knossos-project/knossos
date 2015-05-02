@@ -71,10 +71,10 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
 
 // for retrieving information from response headers. Useful for responses with file content
 // the information should be terminated with a ';' for sucessful parsing
-QString copyInfoFromHeader(QString header, const QString & info) {
-    header.remove(0, header.indexOf(info));//remove everything before the key
-    header.remove(0, header.indexOf('=')+1);//remove key and equals sign
-    return header.mid(0, header.indexOf(';'));//return everything before the semicolon
+QString copyInfoFromHeader(const QString & header, const QString & info) {
+    const auto begin = header.indexOf('=', header.indexOf(info)) + 1;//index after key and equals sign
+    const auto length = header.indexOf(';', begin) - begin;//count to next semicolon
+    return header.mid(begin, length);
 }
 
 QPair<bool, QPair<QString, QByteArray>> blockDownloadExtractFilenameAndData(QNetworkReply & reply) {
