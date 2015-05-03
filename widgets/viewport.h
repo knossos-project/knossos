@@ -26,6 +26,7 @@
  */
 
 #include "coordinate.h"
+#include "scriptengine/scripting.h"
 #include "stateInfo.h"
 
 #include <QDebug>

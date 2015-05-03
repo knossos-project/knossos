@@ -39,11 +39,15 @@ void PythonQtInit() {
 }
 
 Scripting::Scripting() {
+    state->scripting = this;
+
     PythonQtInit();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
     pythonProxy = new PythonProxy();
+    signalRelay = new SignalRelay();
+    PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     colorDecorator = new ColorDecorator();
     coordinateDecorator = new CoordinateDecorator();
@@ -64,6 +68,7 @@ Scripting::Scripting() {
 #endif
     ctx.evalScript("plugin_container = []");
 
+    ctx.addObject("signalRelay", signalRelay);
     ctx.addObject("skeleton", skeletonProxy);
     ctx.addObject("knossos", pythonProxy);
     ctx.addObject("knossos_global_viewer", state->viewer);

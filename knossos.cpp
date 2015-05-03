@@ -191,8 +191,8 @@ int main(int argc, char *argv[]) {
 
     knossos->loadDefaultTreeLUT();
 
-    viewer.run();
     Scripting scripts;
+    viewer.run();
     remote.start();
 
     viewer.window->widgetContainer->datasetLoadWidget->loadDataset();

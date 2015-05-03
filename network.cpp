@@ -38,17 +38,20 @@ void Network::setCookies(const QVariantList & setting) {
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QEventLoop pause;
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
-       pause.exit();
+        pause.exit();
     });
 
-    QProgressDialog progress("Downloading files...", "Abort", 0, 100);
+    QProgressDialog progress("Network Operation…", "Abort", 0, 100);
     progress.setModal(true);
     QObject::connect(&progress, &QProgressDialog::canceled, &reply, &QNetworkReply::abort);
-    QObject::connect(&reply, &QNetworkReply::downloadProgress, &progress, &QProgressDialog::setValue);
+    auto processProgress = [&progress](qint64 bytesReceived, qint64 bytesTotal){
+        progress.setRange(0, bytesTotal);
+        progress.setValue(bytesReceived);
+    };
+    QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
+    QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
 
-    QTimer timer;
-    timer.setInterval(400);
-    QObject::connect(&timer, &QTimer::timeout, &progress, &QProgressDialog::show);
+    QTimer::singleShot(400, &progress, &QProgressDialog::show);
 
     pause.exec();
 
@@ -61,10 +64,10 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
 
 // for retrieving information from response headers. Useful for responses with file content
 // the information should be terminated with a ';' for sucessful parsing
-QString copyInfoFromHeader(QString header, const QString & info) {
-    header.remove(0, header.indexOf(info));//remove everything before the key
-    header.remove(0, header.indexOf('=')+1);//remove key and equals sign
-    return header.mid(0, header.indexOf(';'));//return everything before the semicolon
+QString copyInfoFromHeader(const QString & header, const QString & info) {
+    const auto begin = header.indexOf('=', header.indexOf(info)) + 1;//index after key and equals sign
+    const auto length = header.indexOf(';', begin) - begin;//count to next semicolon
+    return header.mid(begin, length);
 }
 
 QPair<bool, QPair<QString, QByteArray>> blockDownloadExtractFilenameAndData(QNetworkReply & reply) {

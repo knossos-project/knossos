@@ -29,8 +29,9 @@ public slots:
     QList<int> getOcPixel(QList<int> Dc, QList<int> pxInDc);
     QList<int> getPosition();
     QList<float> getScale();
-    void set_current_position(int x, int y, int z);
-    Coordinate get_current_position();
+    void setPosition(int x, int y, int z);
+    quint64 readOverlayVoxel(int x, int y, int z);
+    bool writeOverlayVoxel(int x, int y, int z, quint64 val);
     QByteArray readDc2Pointer(int x, int y, int z);
     int readDc2PointerPos(int x, int y, int z, int pos);
     bool writeDc2Pointer(int x, int y, int z, char *bytes);
