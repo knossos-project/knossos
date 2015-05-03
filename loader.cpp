@@ -735,9 +735,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     };
 
-    const auto workaroundProcessLocalImmediately = [this](){//https://bugreports.qt.io/browse/QTBUG-45925
-        return baseUrl.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
-    };
+    //https://bugreports.qt.io/browse/QTBUG-45925
+    const auto workaroundProcessLocalImmediately = baseUrl.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
