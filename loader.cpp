@@ -434,7 +434,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
-    auto data = reply.read(reply.bytesAvailable());//readAll can be very slow
+    auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
         const qint64 expectedSize = state->cubeBytes;
         std::copy(std::begin(data), std::end(data), currentSlot);
@@ -735,14 +735,17 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     };
 
+    const auto workaroundProcessLocalImmediately = [this](){//https://bugreports.qt.io/browse/QTBUG-45925
+        return baseUrl.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
+    };
     auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
-            QCoreApplication::processEvents();
+            workaroundProcessLocalImmediately();
             if (state->overlay) {
                 startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
-                QCoreApplication::processEvents();
+                workaroundProcessLocalImmediately();
             }
         }
     }

@@ -69,7 +69,8 @@ QString copyInfoFromHeader(QString header, const QString & info) {
 
 QPair<bool, QPair<QString, QByteArray>> blockDownloadExtractFilenameAndData(QNetworkReply & reply) {
     auto res = blockDownloadExtractData(reply);
-    auto filename = copyInfoFromHeader(reply.rawHeader("Content-Disposition"), "filename");//QNetworkRequest::ContentDispositionHeader is broken
+    //QNetworkRequest::ContentDispositionHeader is broken – https://bugreports.qt.io/browse/QTBUG-45610
+    auto filename = copyInfoFromHeader(reply.rawHeader("Content-Disposition"), "filename");
     return {res.first, {filename, res.second}};
 }
 
