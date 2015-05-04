@@ -683,7 +683,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qCritical() << "no slots" << static_cast<int>(type) << cubeHash.size() << freeSlots.size();
-                    reply->deleteLater();
+                    downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
                     return;
                 }
