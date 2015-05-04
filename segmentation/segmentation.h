@@ -11,6 +11,7 @@
 #include <QObject>
 
 #include <array>
+#include <atomic>
 #include <functional>
 #include <random>
 #include <tuple>
@@ -176,7 +177,7 @@ public:
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
     //volume rendering
     bool volume_render_toggle = false;
-    bool volume_update_required = false;
+    std::atomic_bool volume_update_required{false};
     uint volume_tex_id = 0;
     int volume_tex_len = 128;
     int volume_mouse_move_x = 0;

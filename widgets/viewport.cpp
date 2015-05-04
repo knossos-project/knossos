@@ -485,8 +485,8 @@ void Viewport::drawSkeletonViewport() {
     auto& seg = Segmentation::singleton();
     if (seg.volume_render_toggle) {
         if(seg.volume_update_required) {
-            updateVolumeTexture();
             seg.volume_update_required = false;
+            updateVolumeTexture();
         }
         renderVolumeVP(VIEWPORT_SKELETON);
     } else {
