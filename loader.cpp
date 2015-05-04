@@ -107,14 +107,6 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
         return worker->snappyCache;
     } else {
         return decltype(Loader::Worker::snappyCache)();//{} is not working
-
-#define SET_COORDINATE(coordinate, a, b, c) \
-{ \
-(coordinate).x = (a); \
-(coordinate).y = (b); \
-(coordinate).z = (c); \
-}
-
     }
 }
 
@@ -237,9 +229,9 @@ std::vector<Coordinate> Loader::Worker::DcoiFromPos(const Coordinate & center) {
     for (x = -halfSc; x < halfSc + 1; x++) {
         for (y = -halfSc; y < halfSc + 1; y++) {
             for (z = -halfSc; z < halfSc + 1; z++) {
-                SET_COORDINATE(DcArray[i].coordinate, currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z);
-                SET_COORDINATE(DcArray[i].offset, x, y, z);
-                SET_COORDINATE(currentMetricPos, (float)x, (float)y, (float)z);
+                DcArray[i].coordinate = {currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z};
+                DcArray[i].offset = {x, y, z};
+                currentMetricPos = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
                 CalcLoadOrderMetric(floatHalfSc, currentMetricPos, direction, &DcArray[i].loadOrderMetrics[0]);
                 i++;
             }
@@ -248,7 +240,7 @@ std::vector<Coordinate> Loader::Worker::DcoiFromPos(const Coordinate & center) {
 
     // Metrics are done, reset user-move variables
     state->loaderUserMoveType = USERMOVE_NEUTRAL;
-    SET_COORDINATE(state->loaderUserMoveViewportDirection, 0, 0, 0);
+    state->loaderUserMoveViewportDirection = {0, 0, 0};
 
     //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
     std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs){
