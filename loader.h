@@ -192,6 +192,7 @@ public:
         waitForWorkerThread();
     }
     void unload() {
+        ++loadingNr;
         emit unloadSignal();
     }
     template<typename... Args>
@@ -200,9 +201,9 @@ public:
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
-        QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
-        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy);
+        QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
     }
     void startLoading(const Coordinate &center);
