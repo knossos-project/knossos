@@ -48,10 +48,6 @@ QList<int> CoordToList(const Coordinate &c) {
     return l;
 }
 
-QList<int> PythonProxy::getPositionX() {
-    return CoordToList(state->currentPositionX);
-}
-
 QList<int> PythonProxy::getPosition() {
     return CoordToList(state->viewerState->currentPosition);
 }

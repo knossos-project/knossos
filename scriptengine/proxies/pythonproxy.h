@@ -28,7 +28,6 @@ public slots:
     QString getKnossosRevision();
     QList<int> getOcPixel(QList<int> Dc, QList<int> pxInDc);
     QList<int> getPosition();
-    QList<int> getPositionX();
     QList<float> getScale();
     void setPosition(int x, int y, int z);
     quint64 readOverlayVoxel(int x, int y, int z);

@@ -49,8 +49,6 @@ public:
 
 signals:
     void uncheckSignal();
-    void movementAreaChanged();
-    void sendLoadSignal(int magChanged);
 public slots:
     void resetMovementArea();
     void movementSpeedChanged(int value);

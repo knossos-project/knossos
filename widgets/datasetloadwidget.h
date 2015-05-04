@@ -2,6 +2,7 @@
 #define DATASETLOADWIDGET_H
 
 #include "coordinate.h"
+#include "loader.h"
 #include "widgets/viewport.h"
 
 #include <QCheckBox>
@@ -29,6 +30,7 @@ class DatasetLoadWidget : public QDialog {
 public:
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
+    void gatherHeidelbrainDatasetInformation(QString &);
     bool loadDataset(QString path = "", const bool keepAnnotation = false);
     void saveSettings();
     void loadSettings();
@@ -36,6 +38,8 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
+    bool parseGoogleJson(const QString & json_raw);
+    bool parseWebKnossosJson(const QString & json_raw);
     struct Datasetinfo{
         Coordinate boundary;
         floatCoordinate scale{0,0,0};
@@ -44,7 +48,7 @@ public:
         std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
     };
     Datasetinfo datasetinfo;
-    Datasetinfo getConfigFileInfo(const char *path);
+    Datasetinfo getConfigFileInfo(const QString &path);
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QStringList getRecentPathItems();
     QSpinBox *supercubeEdgeSpin;
@@ -64,8 +68,6 @@ signals:
     void updateDatasetCompression();
     void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();
-    void startLoaderSignal();
-    void breakLoaderSignal();
 public slots:
     void adaptMemoryConsumption();
     void cancelButtonClicked();

@@ -13,7 +13,7 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
     state->protectCube2Pointer->unlock();
 
     if (rawcube == nullptr) {
-        rawcube = loader->bogusOc;
+        rawcube = Loader::Controller::singleton().worker->bogusOc.data();
     }
     auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];
     boost::multi_array_ref<uint64_t, 3> cube(reinterpret_cast<uint64_t *>(rawcube), dims);
@@ -35,7 +35,7 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value) {
 
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    Loader::Controller::singleton().worker->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength, state->magnification));
     return true;
 }
 

@@ -58,7 +58,6 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 #endif
 
 std::unique_ptr<Knossos> knossos;
-std::unique_ptr<Loader> loader;
 
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
@@ -137,6 +136,8 @@ void Knossos::applyDefaultConfig() {
     }
 }
 
+Q_DECLARE_METATYPE(std::string)
+
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     QApplication a(argc, argv);
@@ -160,20 +161,21 @@ int main(int argc, char *argv[]) {
 
     knossos->applyDefaultConfig();
 
-    bool datasetLoaded = knossos->initStates();
+    knossos->initStates();
 
     Viewer viewer;
-    loader.reset(new Loader);
     Remote remote;
+
+    qRegisterMetaType<std::string>();
+    qRegisterMetaType<Coordinate>();
+    qRegisterMetaType<CoordOfCube>();
+    qRegisterMetaType<floatCoordinate>();
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
 
-    QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
     QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::breakLoaderSignal, knossos.get(), &Knossos::breakLoader);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
@@ -189,10 +191,6 @@ int main(int argc, char *argv[]) {
 
     knossos->loadDefaultTreeLUT();
 
-    if(datasetLoaded) {
-        // don't start loader, when there is no dataset, yet.
-        loader->start();
-    }
     Scripting scripts;
     viewer.run();
     remote.start();
@@ -210,27 +208,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
     return a.exec();
-}
-
-void Knossos::breakLoader() {
-    state->protectLoadSignal->lock();
-    if (state->loaderInitialized) {
-        state->loadSignal = true;
-        state->breakLoaderSignal = true;
-        state->conditionLoadSignal->wakeOne();
-    }
-    state->protectLoadSignal->unlock();
-    loader->wait();
-}
-
-void Knossos::startLoader() {
-    state->protectLoadSignal->lock();
-    state->breakLoaderSignal = false;
-    if(loader->isRunning() == false) {
-        loader->start();
-        state->conditionLoaderInitialized->wait(state->protectLoadSignal);
-    }
-    state->protectLoadSignal->unlock();
 }
 
 /**
@@ -272,50 +249,36 @@ bool Knossos::commonInitStates() {
  * Beyond it allocates the dynamic data structures
  */
 bool Knossos::initStates() {
+    // For the viewer
+    state->viewerState->autoTracingMode = navigationMode::recenter;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
 
-   // For the viewer
-   state->viewerState->autoTracingMode = navigationMode::recenter;
-   state->viewerState->autoTracingDelay = 50;
-   state->viewerState->autoTracingSteps = 10;
+    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
+    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
+    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
+    loadDefaultTreeLUT();
 
-   state->viewerState->depthCutOff = state->viewerState->depthCutOff;
-   state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
-   Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-   loadDefaultTreeLUT();
+    state->viewerState->treeLutSet = false;
 
-   state->viewerState->treeLutSet = false;
+    /* @todo todo emitting signals out of class seems to be problematic
+    emit knossos->calcDisplayedEdgeLengthSignal();
+    */
 
-   /* @todo todo emitting signals out of class seems to be problematic
-   emit knossos->calcDisplayedEdgeLengthSignal();
-   */
+    // For the skeletonizer
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
 
-   // For the skeletonizer
-   strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+    state->time.start();
 
-   state->time.start();
+    // Those values can be calculated from given parameters
+    state->magnification = 1;
+    state->lowestAvailableMag = 1;
+    state->highestAvailableMag = 1;
 
-   // Those values can be calculated from given parameters
-   state->magnification = 1;
-   state->lowestAvailableMag = 1;
-   state->highestAvailableMag = 1;
+    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
+    state->currentDirectionsIndex = 0;
 
-   memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
-   state->currentDirectionsIndex = 0;
-   state->previousPositionX = {};
-   state->currentPositionX = {};
-
-   state->loadFtpCachePath = (char*)malloc(CSTRING_SIZE);
-
-#ifdef Q_OS_UNIX
-   const char *tmp = "/tmp/";
-   strcpy(state->loadFtpCachePath, tmp);
-#endif
-#ifdef Q_OS_WIN32
-    GetTempPathA(CSTRING_SIZE, state->loadFtpCachePath);
-#endif
-
-   return commonInitStates();
-
+    return commonInitStates();
 }
 
 bool Knossos::sendRemoteSignal() {
@@ -332,10 +295,7 @@ bool Knossos::sendQuitSignal() {
 
     state->quitSignal = true;
     QApplication::processEvents(); //ensure everything’s done
-
-    knossos.get()->breakLoader();
-    loader->wait();
-
+    Loader::Controller::singleton().waitForWorkerThread();//suspend loader
     Knossos::sendRemoteSignal();
 
     return true;
@@ -446,8 +406,7 @@ bool Knossos::printConfigValues() {
                .arg(state->cubeSliceArea)
                .arg(state->M)
                .arg(state->cubeSetElements)
-               .arg(state->cubeSetBytes)
-               .arg(state->boergens);
+               .arg(state->cubeSetBytes);
     return true;
 }
 
@@ -501,8 +460,8 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             int currMagExists = false;
             QString currentPath;
             if(LM_FTP == state->loadMode) {
-                currentPath = QString("%1mag%2/knossos.conf").arg(state->ftpBasePath).arg(currMag);
-                if (EXIT_SUCCESS == downloadFile(currentPath.toStdString().c_str(), NULL)) {
+                currentPath = QString("http://%1:%2@%3/%4/mag%5/knossos.conf").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath).arg(currMag);
+                if (Network::singleton().refresh(currentPath).first) {
                     currMagExists = true;
                 }
             }
@@ -519,17 +478,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                     state->lowestAvailableMag = currMag;
                 }
                 state->highestAvailableMag = currMag;
-
-                // add dataset path to magPaths. magPaths is used by the loader
-                strcpy(state->magPaths[int_log(currMag)], currentPath.toStdString().c_str());
-                // save basename of .raw files,
-                // e.g. xxx_mag1_x0000_y0000_z0000.raw with "xxx_mag1" being the basename
-                QString fileBaseName(state->name);
-                int magIndex = fileBaseName.lastIndexOf(QRegExp("mag.*"));
-                if(magIndex != -1) {
-                    fileBaseName.remove(magIndex, fileBaseName.length() - magIndex);
-                }
-                sprintf(state->magNames[int_log(currMag)], "%smag%d", fileBaseName.toStdString().c_str(), currMag);
             }
         }
         qDebug("lowest Mag: %d, Highest Mag: %d", state->lowestAvailableMag, state->highestAvailableMag);
@@ -565,10 +513,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             state->path[pathLen + 1] = '\0';
         }
 
-        /* the loader uses only magNames and magPaths */
-        strcpy(state->magNames[int_log(state->magnification)], state->name);
-        strcpy(state->magPaths[int_log(state->magnification)], state->path);
-
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
     }
@@ -602,19 +546,11 @@ bool Knossos::configDefaults() {
     if (firstRun) {
         state = Knossos::emptyState();
 
-        state->loadSignal = false;
-        state->loaderInitialized = false;
         state->loaderUserMoveType = USERMOVE_NEUTRAL;
         state->loaderUserMoveViewportDirection = {};
-        state->loaderDecompThreadsNumber = QThread::idealThreadCount();
         state->remoteSignal = false;
         state->quitSignal = false;
-        state->breakLoaderSignal = false;
-        state->conditionLoadSignal = new QWaitCondition();
-        state->conditionLoaderInitialized = new QWaitCondition();
         state->conditionRemoteSignal = new QWaitCondition();
-        state->protectLoadSignal = new QMutex();
-        state->protectLoaderSlots = new QMutex();
         state->protectRemoteSignal = new QMutex();
         state->protectCube2Pointer = new QMutex();
     }
@@ -623,7 +559,6 @@ bool Knossos::configDefaults() {
     state->name[0] = '\0';
 
     // General stuff
-    state->boergens = false;
     state->boundary.x = 1000;
     state->boundary.y = 1000;
     state->boundary.z = 1000;

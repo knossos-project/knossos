@@ -25,17 +25,16 @@
 #include "hashtable.h"
 
 bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const Coordinate &c) {
-    return (h.end() != h.find(c));
+    return h.end() != h.find(c);
 }
 
-char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c)
-{
-    coord2bytep_map_t::const_iterator got = h.find(c);
-    if (got == h.end()) {
+char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c) {
+    const auto gotIt = h.find(c);
+    if (gotIt == std::end(h)) {
         return nullptr;
     }
 
-    return got->second;
+    return gotIt->second;
 }
 
 void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, const coord2bytep_map_t &source, char *v) {
@@ -43,9 +42,3 @@ void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, 
         target[kv.first] = v;
     }
 }
-
-void Coordinate2BytePtr_hash_union_keys_default_value(coord2bytep_map_t &m, const coord2bytep_map_t &a, const coord2bytep_map_t &b, char *v) {
-    Coordinate2BytePtr_hash_copy_keys_default_value(m, a, v);
-    Coordinate2BytePtr_hash_copy_keys_default_value(m, b, v);
-}
-
