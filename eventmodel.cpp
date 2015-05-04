@@ -120,7 +120,7 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     auto subObjectId = readVoxel(coord);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->scripting->signalRelay, coord, subObjectId, VPfound, event);
-    if(Segmentation::singleton().hoverVersion) {
+    if(Segmentation::singleton().hoverVersion && state->overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
     }
 }

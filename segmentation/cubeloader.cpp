@@ -21,7 +21,7 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
-    if (Session::singleton().outsideMovementArea(pos)) {
+    if (Session::singleton().outsideMovementArea(pos) || !state->overlay) {
         return 0;
     }
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
@@ -29,7 +29,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 }
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value) {
-    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos)) {//snappy cache only mag1 capable
+    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay) {//snappy cache only mag1 capable
         return false;
     }
 
