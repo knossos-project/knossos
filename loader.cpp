@@ -36,6 +36,7 @@
 
 #include <QFile>
 #include <QFuture>
+#include <QImage>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QtConcurrent/QtConcurrent>
@@ -432,22 +433,10 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
         std::copy(std::begin(data), std::end(data), currentSlot);
         success = data.size() == expectedSize;
     } else if (type == Loader::CubeType::RAW_JPG) {
-        int width, height, jpegSubsamp;
-
-        auto jpegDecompressor = tjInitDecompress();
-        const bool doFirst = jpegDecompressor != nullptr;
-        const bool doSecond = doFirst && (tjDecompressHeader2(jpegDecompressor, reinterpret_cast<unsigned char *>(data.data()), data.size(), &width, &height, &jpegSubsamp) == 0);
-        const bool doThird = doSecond && (tjDecompress2(jpegDecompressor, reinterpret_cast<unsigned char *>(data.data()), data.size(), reinterpret_cast<unsigned char *>(currentSlot), width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT) == 0);
-
-        if (doThird) {
-            success = true;
-        } else {
-            qDebug() << tjGetErrorStr();
-        }
-
-        if (doFirst) {
-            tjDestroy(jpegDecompressor);
-        }
+        const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
+        const qint64 expectedSize = state->cubeBytes;
+        std::copy(image.bits(), image.bits()+image.byteCount(), currentSlot);
+        success = image.byteCount() == expectedSize;
     } else if (type == Loader::CubeType::RAW_J2K || type == Loader::CubeType::RAW_JP2_6) {
         QTemporaryFile file(QDir::tempPath() + "/XXXXXX.jp2");
         success = file.open();

@@ -34,7 +34,6 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Qt5Python27 REQUIRED)
 find_package(Snappy REQUIRED)
-find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
 
@@ -108,7 +107,6 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
-    TurboJPEG::TurboJPEG#turbojpeg is partly included in QtGui, multiple definition if you try to link it afterwards
     Qt5::Core
     Qt5::Gui
     Qt5::Help
