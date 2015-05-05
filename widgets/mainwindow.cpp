@@ -699,6 +699,7 @@ void MainWindow::createMenus() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->scripting->signalRelay, event);
     saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
