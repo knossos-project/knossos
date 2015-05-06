@@ -56,45 +56,23 @@ public:
     //  Info about the data
     // Use overlay cubes to color the data.
     bool overlay;
-    // Tell the loading thread that it should interrupt its work /
-    // its sleep and do something new.
-    bool loadSignal;
-    // Is loader initialized
-    bool loaderInitialized;
     // How user movement was generated
     UserMoveType loaderUserMoveType;
     // Direction of user movement in case of drilling,
     // or normal to viewport plane in case of horizontal movement.
     // Left unset in neutral movement.
     Coordinate loaderUserMoveViewportDirection;
-    int loaderDecompThreadsNumber;
 
     bool quitSignal;
-
-    // If loadSignal is true and breakLoaderSignal is true, make the
-    // loading loop break. If quitSignal is also true, the loader thread
-    // would quit. Otherwise it would reinitialize.
-    // loadSignal == true means the loader
-    // has been signalled. If breakLoaderSignal != true, it will go on
-    // loading its stuff.
-    bool breakLoaderSignal;
 
     // These signals are used to communicate with the remote.
     bool remoteSignal;
 
-    // Cube hierarchy mode
-    bool boergens;
-
     // Path to the current cube files for the viewer and loader.
     char path[1024];
-    char loaderPath[1024];
-    // Paths to all available datasets of the 3-D image pyramid
-    char magPaths[int_log(NUM_MAG_DATASETS)+1][1024];
 
     // Current dataset identifier string
     char name[1024];
-    char loaderName[1024];
-    char magNames[int_log(NUM_MAG_DATASETS)+1][1024];
 
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
@@ -108,11 +86,6 @@ public:
 
     uint highestAvailableMag;
     uint lowestAvailableMag;
-
-    // This variable is used only by the loader.
-    // It is filled by the viewer and contains
-    // log2uint32(state->magnification)
-    uint loaderMagnification;
 
     // Bytes in one datacube: 2^3N
     std::size_t cubeBytes;
@@ -148,16 +121,6 @@ public:
 
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
 
-    // Tells the loading thread, that state->path and or state->name changed
-
-    int datasetChangeSignal;
-
-    // Tell the loading thread to wake up.
-    QWaitCondition *conditionLoadSignal;
-
-    // Tells another thread that loader has finished
-    QWaitCondition *conditionLoaderInitialized;
-
     // Tell the remote to wake up.
     QWaitCondition *conditionRemoteSignal;
 
@@ -166,9 +129,6 @@ public:
     // use sendLoadSignal() to signal to the loading thread.
 
     QMutex *protectLoadSignal;
-
-    // Protect slot list during loading
-    QMutex *protectLoaderSlots;
 
     // This should be accessed through sendRemoteSignal() only.
     QMutex *protectRemoteSignal;
@@ -188,16 +148,8 @@ public:
     Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
     int currentDirectionsIndex;
 
-    // This gives the current position ONLY when the reload
-    // boundary has been crossed. Change it through
-    // sendLoadSignal() exclusively. It has to be locked by
-    // protectLoadSignal.
-    Coordinate currentPositionX;
-    Coordinate previousPositionX;
-
     // Cube loader affairs
     int    loadMode;
-    char       *loadFtpCachePath;
     char       ftpBasePath[CSTRING_SIZE];
     char       ftpHostName[CSTRING_SIZE];
     char       ftpUsername[CSTRING_SIZE];
@@ -215,6 +167,7 @@ public:
 
     struct viewerState *viewerState;
     class Viewer *viewer;
+    class Scripting *scripting;
     struct skeletonState *skeletonState;
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;

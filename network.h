@@ -7,25 +7,12 @@
 #include <QNetworkAccessManager>
 #include <QThread>
 
-int downloadFile(const char *remote_path, char *local_filename);
-std::string downloadRemoteConfFile(QString url);
-
 struct FtpElement {
     bool isOverlay;
     C_Element *cube;
 };
 
-class FtpThread : public QThread
-{
-public:
-    FtpThread(void *ctx);
-    void run();
-protected:
-    void *ctx;
-};
-
-class Network : public QObject {
-Q_OBJECT
+class Network {
     QNetworkAccessManager manager;
     QNetworkCookieJar cookieJar;
 

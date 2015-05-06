@@ -53,10 +53,11 @@ uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewp
 void segmentation_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto& seg = Segmentation::singleton();
+    state->skeletonState->branchpointUnresolved = false;
 
-    if (seg.brush.getTool() == brush_t::tool_t::merge) {
+    if (seg.brush.getTool() == brush_t::tool_t::hybrid || seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
-    } else {//paint and erase
+    } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
@@ -69,13 +70,13 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         state->viewer->window->notifyUnsavedChanges();
     }
 
-    state->viewer->oc_reslice_notify();
+    state->viewer->oc_reslice_notify_visible();
 }
 
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    const auto subobjectIds = readVoxels(getCoordinateFromOrthogonalClick(event->x(), event->y(), vp), seg.brush);
     Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+    const auto subobjectIds = readVoxels(clickPos, seg.brush);
     for(const auto subobjectId : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
@@ -106,6 +107,8 @@ void merging(QMouseEvent *event, const int vp) {
                 }
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
+                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+                    Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
                 }
             }
             seg.touchObjects(subobjectId);
@@ -114,8 +117,12 @@ void merging(QMouseEvent *event, const int vp) {
 }
 
 void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
-    auto subObjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
-    Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
+    auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
+    auto subObjectId = readVoxel(coord);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->scripting->signalRelay, coord, subObjectId, VPfound, event);
+    if(Segmentation::singleton().hoverVersion && state->overlay) {
+        Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
+    }
 }
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
@@ -195,17 +202,17 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(mouseEventAtValidDatasetPosition(event, VPfound) == false) {
         return;
     }
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
-             rightMouseDownX = event->x();
-             rightMouseDownY = event->y();
-             segmentation_work(event, VPfound);
+            rightMouseDownX = event->x();
+            rightMouseDownY = event->y();
+            segmentation_work(event, VPfound);
         }
         return;
     }
     Coordinate movement, lastPos;
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
 
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
@@ -561,7 +568,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-            const auto subobjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
+            const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
@@ -610,14 +617,16 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
             segmentation_work(event, VPfound);
         }
         rightMouseDownX = rightMouseDownY = -1;
-        return;
     }
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
-    if (mouseEventAtValidDatasetPosition(event, VPfound) && Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+    if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-        connectedComponent(clickedCoordinate);
+        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->scripting->signalRelay, clickedCoordinate, VPfound, event);
+        if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+            connectedComponent(clickedCoordinate);
+        }
     }
 }
 
@@ -1066,7 +1075,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if(control) {
             if(state->skeletonState->activeTree) {
@@ -1121,7 +1130,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->overlay = true;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     }
     if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;

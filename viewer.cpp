@@ -130,26 +130,17 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewerState->vpConfigs[VIEWPORT_YZ].v2 = v2;
     state->viewerState->vpConfigs[VIEWPORT_YZ].n = v1;
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::oc_reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::oc_reslice_notify);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::oc_reslice_notify);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, this, &Viewer::oc_reslice_notify_visible);
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify);
+    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify_visible);
 
     baseTime.start();//keyRepeat timer
-}
-
-bool Viewer::resetViewPortData(vpConfig *viewport) {
-    // for arbitrary vp orientation
-    memset(viewport->viewPortData,
-           state->viewerState->defaultTexData[0],
-           TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
-    viewport->s_max = viewport->t_max  = -1;
-    return true;
 }
 
 bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
@@ -1022,24 +1013,17 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         }
     }
 
-    /* necessary? */
-    state->viewerState->userMove = true;
+    //necessary? – the question remains
     recalcTextureOffsets();
 
-    /*for(i = 0; i < Viewport::numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            qDebug("left upper tex px of VP %d is: %d, %d, %d",i,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
-        }
-    }*/
-    sendLoadSignal(upOrDownFlag);
+    Loader::Controller::singleton().unload();//unload all the cubes
+    //clear the viewports
+    dc_reslice_notify_visible();
+    oc_reslice_notify_visible();
+
+    loader_notify();//start loading
 
     emit updateDatasetOptionsWidgetSignal();
-
-    dc_reslice_notify();
-    oc_reslice_notify();
 
     return true;
 }
@@ -1164,14 +1148,12 @@ void Viewer::run() {
             disableVsync();
             vpLowerRight->updateGL();
             disableVsync();
-
-            state->viewerState->userMove = false;
         }
     }
 }
 
 bool Viewer::updateViewerState() {
-   uint i;
+    uint i;
 
     for(i = 0; i < Viewport::numberViewports; i++) {
 
@@ -1277,7 +1259,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
 
     lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
-    viewerState->userMove = true;
     auto newPos = Coordinate(viewerState->currentPosition.x + x, viewerState->currentPosition.y + y, viewerState->currentPosition.z + z);
     if (Session::singleton().outsideMovementArea(newPos) == false) {
             viewerState->currentPosition.x += x;
@@ -1298,8 +1279,8 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if (newPosition_dc != lastPosition_dc) {
-        dc_reslice_notify();
-        oc_reslice_notify();
+        dc_reslice_notify_visible();
+        oc_reslice_notify_visible();
 
         state->loaderUserMoveType = userMoveType;
         Coordinate direction;
@@ -1328,7 +1309,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             break;
         }
         state->loaderUserMoveViewportDirection = direction;
-        sendLoadSignal(NO_MAG_CHANGE);
+        loader_notify();
     }
 
     emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
@@ -1336,20 +1317,31 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     return true;
 }
 
-void Viewer::dc_reslice_notify() {
+void Viewer::dc_reslice_notify_all(const Coordinate coord) {
+    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
+        dc_reslice_notify_visible();
+    }
+}
+
+void Viewer::dc_reslice_notify_visible() {
     dc_xy_changed = true;
     dc_xz_changed = true;
     dc_zy_changed = true;
 }
 
-void Viewer::oc_reslice_notify() {
+void Viewer::oc_reslice_notify_all(const Coordinate coord) {
+    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
+        oc_reslice_notify_visible();
+    }
+    // if anything has changed, update the volume texture data
+    Segmentation::singleton().volume_update_required = true;
+}
+
+void Viewer::oc_reslice_notify_visible() {
     oc_xy_changed = true;
     oc_xz_changed = true;
     oc_zy_changed = true;
-    set_volume_update_required();
-}
-
-void Viewer::set_volume_update_required() {
+    // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;
 }
 
@@ -1734,22 +1726,8 @@ bool Viewer::recalcTextureOffsets() {
     return true;
 }
 
-bool Viewer::sendLoadSignal(int magChanged) {
-    state->protectLoadSignal->lock();
-    state->loadSignal = true;
-    state->datasetChangeSignal = magChanged;
-
-    state->previousPositionX = state->currentPositionX;
-
-    // Convert the coordinate to the right mag. The loader
-    // is agnostic to the different dataset magnifications.
-    // The int division is hopefully not too much of an issue here
-    state->currentPositionX = state->viewerState->currentPosition / state->magnification;
-
-    state->conditionLoadSignal->wakeOne();//wake up loader if it’s sleeping
-    state->protectLoadSignal->unlock();
-
-    return true;
+void Viewer::loader_notify() {
+    Loader::Controller::singleton().startLoading(state->viewerState->currentPosition);
 }
 
 /** Global interfaces  */
@@ -1826,9 +1804,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     QObject::connect(window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
      // -- end dataset load signals
-    // navigation widget signals --
-    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::sendLoadSignal, this, &Viewer::sendLoadSignal);
-    QObject::connect(window->widgetContainer->navigationWidget, &NavigationWidget::movementAreaChanged, this, &Viewer::updateCurrentPosition);
     // --- end widget signals
 }
 
@@ -1848,8 +1823,8 @@ void Viewer::setVPOrientation(bool arbitrary) {
         window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
         window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
         resetRotation();
-        dc_reslice_notify();
-        oc_reslice_notify();
+        dc_reslice_notify_visible();
+        oc_reslice_notify_visible();
     }
 }
 

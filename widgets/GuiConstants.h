@@ -148,6 +148,7 @@ const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
 const QString ANNOTATION_MODE = "annotation_mode";
 const QString TRACING_MODE = "tracing_mode";
 const QString SIMPLE_TRACING = "simple_tracing";
+const QString SEGMENTATION_TOOL = "segmentation_tool";
 
 /* Python Property Widget */
 const QString PYTHON_INTERPRETER = "python_interpreter";

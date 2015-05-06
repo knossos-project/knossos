@@ -197,7 +197,7 @@ public slots:
     bool delTree(int treeID);
     bool clearSkeleton(int loadingSkeleton);
     void autoSaveIfElapsed();
-    bool UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
+    uint64_t UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
@@ -217,8 +217,8 @@ public slots:
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
     bool saveXmlSkeleton(QIODevice &file) const;
 
-    void popBranchNodeAfterConfirmation(QWidget * const parent);
-    bool popBranchNode();
+    nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
+    nodeListElement *popBranchNode();
     bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
     void moveToNextTree(bool *isSuccess = NULL);
     void moveToPrevTree(bool *isSuccess = NULL);

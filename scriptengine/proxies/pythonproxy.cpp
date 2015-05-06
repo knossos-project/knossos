@@ -2,6 +2,7 @@
 
 #include "buildinfo.h"
 #include "functions.h"
+#include "segmentation/cubeloader.h"
 #include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
@@ -39,13 +40,16 @@ QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
     return charList;
 }
 
-QList<int> PythonProxy::getPosition() {
+QList<int> CoordToList(const Coordinate &c) {
     QList<int> l;
-    Coordinate c = state->currentPositionX;
     l.append(c.x);
     l.append(c.y);
     l.append(c.z);
     return l;
+}
+
+QList<int> PythonProxy::getPosition() {
+    return CoordToList(state->viewerState->currentPosition);
 }
 
 QList<float> PythonProxy::getScale() {
@@ -150,12 +154,16 @@ bool PythonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) 
     return true;
 }
 
-void PythonProxy::set_current_position(int x, int y, int z) {
-    emit pythonProxySignalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+quint64 PythonProxy::readOverlayVoxel(int x, int y, int z) {
+    return readVoxel(Coordinate(x,y,z));
 }
 
-Coordinate PythonProxy::get_current_position() {
-    return state->viewerState->currentPosition;
+bool PythonProxy::writeOverlayVoxel(int x, int y, int z, quint64 val) {
+    return writeVoxel(Coordinate(x,y,z), val);
+}
+
+void PythonProxy::setPosition(int x, int y, int z) {
+    emit pythonProxySignalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 // UNTESTED

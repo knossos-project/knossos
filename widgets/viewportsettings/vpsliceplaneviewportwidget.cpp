@@ -175,12 +175,12 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QObject::connect(&segmenationOverlaySlider, &QSlider::valueChanged, [&](int value){
         segmenationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     });
     QObject::connect(&segmenationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
         segmenationOverlaySlider.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify();
+        state->viewer->oc_reslice_notify_visible();
     });
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));

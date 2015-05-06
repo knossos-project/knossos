@@ -36,6 +36,8 @@
 #include <QElapsedTimer>
 #include <QLineEdit>
 
+#include <atomic>
+
 #define SLOW 1000
 #define FAST 10
 #define RGB_LUTSIZE 768
@@ -65,8 +67,7 @@ struct viewerState {
     uint splash;
     bool viewerReady;
     GLuint splashTexture;
-    //Flag to indicate user movement
-    bool userMove;
+
     int highlightVp;
     int vpKeyDirection[3];
 
@@ -190,20 +191,18 @@ public:
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
-    bool dc_xy_changed = true;
-    bool dc_xz_changed = true;
-    bool dc_zy_changed = true;
-    bool oc_xy_changed = true;
-    bool oc_xz_changed = true;
-    bool oc_zy_changed = true;
+    std::atomic_bool dc_xy_changed{true};
+    std::atomic_bool dc_xz_changed{true};
+    std::atomic_bool dc_zy_changed{true};
+    std::atomic_bool oc_xy_changed{true};
+    std::atomic_bool oc_xz_changed{true};
+    std::atomic_bool oc_zy_changed{true};
 
 signals:
     void loadSignal();
     void coordinateChangedSignal(int x, int y, int z);
     void updateDatasetOptionsWidgetSignal();
 protected:
-    bool resetViewPortData(vpConfig *viewport);
-
     bool vpGenerateTexture_arb(vpConfig &currentVp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
@@ -221,16 +220,17 @@ public slots:
     bool calcDisplayedEdgeLength();
     bool updateViewerState();
     void run();
-    bool sendLoadSignal(int magChanged);
+    void loader_notify();
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
     void setVPOrientation(bool arbitrary);
-    void dc_reslice_notify();
-    void oc_reslice_notify();
-    void set_volume_update_required();
+    void dc_reslice_notify_visible();
+    void dc_reslice_notify_all(const Coordinate coord);
+    void oc_reslice_notify_visible();
+    void oc_reslice_notify_all(const Coordinate coord);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

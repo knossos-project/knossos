@@ -39,11 +39,15 @@ void PythonQtInit() {
 }
 
 Scripting::Scripting() {
+    state->scripting = this;
+
     PythonQtInit();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
     pythonProxy = new PythonProxy();
+    signalRelay = new SignalRelay();
+    PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     colorDecorator = new ColorDecorator();
     coordinateDecorator = new CoordinateDecorator();
@@ -64,14 +68,15 @@ Scripting::Scripting() {
 #endif
     ctx.evalScript("plugin_container = []");
 
+    ctx.addObject("signalRelay", signalRelay);
     ctx.addObject("skeleton", skeletonProxy);
     ctx.addObject("knossos", pythonProxy);
     ctx.addObject("knossos_global_viewer", state->viewer);
     ctx.addObject("knossos_global_mainwindow", state->viewer->window);
     ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
-    ctx.addObject("knossos_global_skeletonizer", state->viewer->skeletonizer);
+    ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     ctx.addObject("knossos_global_knossos", knossos.get());
-    ctx.addObject("knossos_global_loader", loader.get());
+    ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);
     ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);

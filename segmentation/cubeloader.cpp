@@ -6,14 +6,14 @@
 #include "segmentationsplit.h"
 
 boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
-    const auto posDc = Coordinate::Px2DcCoord(pos, state->cubeEdgeLength);
+    const auto posDc = pos / state->magnification / state->cubeEdgeLength;
 
     state->protectCube2Pointer->lock();
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
     state->protectCube2Pointer->unlock();
 
     if (rawcube == nullptr) {
-        rawcube = loader->bogusOc;
+        rawcube = Loader::Controller::singleton().worker->bogusOc.data();
     }
     auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];
     boost::multi_array_ref<uint64_t, 3> cube(reinterpret_cast<uint64_t *>(rawcube), dims);
@@ -21,14 +21,22 @@ boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
-    const auto inCube = pos.insideCube(state->cubeEdgeLength);
+    if (Session::singleton().outsideMovementArea(pos) || !state->overlay) {
+        return 0;
+    }
+    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     return getCube(pos)[inCube.z][inCube.y][inCube.x];
 }
 
-void writeVoxel(const Coordinate & pos, const uint64_t value) {
-    const auto inCube = pos.insideCube(state->cubeEdgeLength);
+bool writeVoxel(const Coordinate & pos, const uint64_t value) {
+    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay) {//snappy cache only mag1 capable
+        return false;
+    }
+
+    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    loader->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength));
+    Loader::Controller::singleton().worker->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength, state->magnification));
+    return true;
 }
 
 bool isInsideCircle(int x, int y, int z, int radius) {
@@ -82,7 +90,7 @@ std::unordered_set<uint64_t> readVoxels(const Coordinate & centerPos, const brus
 }
 
 void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t & brush) {
-    if (brush.getTool() != brush_t::tool_t::merge) {
+    if (brush.getTool() == brush_t::tool_t::add) {
         traverseBrush(centerPos, brush, [&brush, &centerPos, &value](const Coordinate & pos){
             if (brush.isInverse()) {
                 //if there’re selected objects, we only want to erase these

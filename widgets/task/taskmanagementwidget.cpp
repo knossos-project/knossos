@@ -136,10 +136,8 @@ void TaskManagementWidget::logoutButtonClicked() {
     const auto res = Network::singleton().logout(url);
     setCursor(Qt::ArrowCursor);
 
-    if (res.first) {
+    if (handleError(res)) {
         resetSession("<font color='green'>Logged out successfully.</font>");
-    } else {
-        handleError(res);
     }
 }
 
@@ -169,10 +167,8 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     const auto res = Network::singleton().getFile(url);
     setCursor(Qt::ArrowCursor);
 
-    if (res.first) {
+    if (handleError({res.first, res.second.first})) {
         saveAndLoadFile(res.second.first, res.second.second);
-    } else {
-        handleError({res.first, res.second.first});
     }
 }
 
@@ -182,11 +178,9 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     const auto res = Network::singleton().getPost(url);
     setCursor(Qt::ArrowCursor);
 
-    if (res.first) {
+    if (handleError({res.first, res.second.first})) {
         saveAndLoadFile(res.second.first, res.second.second);
         updateAndRefreshWidget();//task infos changed
-    } else {
-        handleError({res.first, res.second.first});
     }
 }
 
@@ -205,11 +199,10 @@ bool TaskManagementWidget::submit(const bool final) {
     auto res = Network::singleton().submitHeidelbrain(url, state->viewer->window->annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);
 
-    if (res.first) {//clean comment if submit was successful
-        submitCommentEdit.clear();
+    if (handleError(res)) {
+        submitCommentEdit.clear();//clean comment if submit was successful
         return true;
     } else {
-        handleError(res);
         return false;
     }
 }

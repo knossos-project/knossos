@@ -27,12 +27,21 @@
 #include "hashtable.h"
 #include "segmentation/segmentation.h"
 
+#include <QCoreApplication>
+#include <QFutureWatcher>
+#include <QMutex>
+#include <QNetworkReply>
+#include <QNetworkAccessManager>
 #include <QObject>
 #include <QSemaphore>
 #include <QThread>
+#include <QThreadPool>
+#include <QTimer>
+#include <QWaitCondition>
 
 #include <boost/multi_array.hpp>
 
+#include <atomic>
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
@@ -54,7 +63,7 @@
 
 #define FTP_RETRY_NUM 3
 
-using CURL = void;
+bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord);
 
 struct C_Element {
     Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
@@ -66,8 +75,6 @@ struct C_Element {
     char *fullpath_overlay_filename;
     char *local_data_filename;
     char *local_overlay_filename;
-    CURL *curlDataHandle;
-    CURL *curlOverlayHandle;
     FILE *ftp_data_fh;
     FILE *ftp_overlay_fh;
     bool hasError;
@@ -88,93 +95,128 @@ struct C_Element {
     C_Element *next;
 };
 
-class Loader;
-
-struct ftp_thread_struct {
-/*
-    DWORD debugVal;
-    DWORD beginTickCount;
-*/
-    QSemaphore *ftpThreadSem;
-    QSemaphore *loaderThreadSem;
-    int cubeCount;
-    Loader* thisPtr;
-};
-
-struct loadcube_thread_struct {
-    //DWORD beginTickCount;
-    //DWORD decompTime;
-    int threadIndex = 0;
-    QSemaphore *loadCubeThreadSem = nullptr;
-    int isBusy = 0;
-    C_Element *currentCube = nullptr;
-    Loader* thisPtr = nullptr;
-    bool retVal = false;
-    int threadCount = 0;
-};
-
-class LoadCubeThread : public QThread
-{
-public:
-    LoadCubeThread(void *ctx);
-    void run();
-protected:
-    void *ctx;
-};
-
-struct LO_Element {
-        Coordinate coordinate;
-        Coordinate offset;
-        float loadOrderMetrics[LL_METRIC_NUM];
-};
+namespace Loader{
+class Controller;
+class Worker;
+}
 
 int calc_nonzero_sign(float x);
 
-class Loader : public QThread {
+namespace Loader {
+class Worker;
+enum class API {
+    Heidelbrain, WebKnossos, GoogleBrainmaps
+};
+enum class CubeType {
+    RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED, SEGMENTATION_SZ_ZIP
+};
+
+class Worker : public QObject {
     Q_OBJECT
-    friend class LoadCubeThread;
-    friend void writeVoxel(const Coordinate &, const uint64_t);
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
-    friend void annotationFileLoad(const QString &, const QString &, bool *);
-    friend void annotationFileSave(const QString &, bool *);
     friend void Segmentation::clear();
 private:
+    QThreadPool decompressionPool;//let pool be alive just after ~Worker
+    QNetworkAccessManager qnam;
+
+    template<typename T>
+    using ptr = std::unique_ptr<T>;
+    using DecompressionResult = std::pair<bool, char*>;
+    using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
+    std::unordered_map<Coordinate, QNetworkReply*> dcDownload;
+    std::unordered_map<Coordinate, QNetworkReply*> ocDownload;
+    std::unordered_map<Coordinate, DecompressionOperationPtr> dcDecompression;
+    std::unordered_map<Coordinate, DecompressionOperationPtr> ocDecompression;
     std::list<std::vector<char>> DcSetChunk;
     std::list<std::vector<char>> OcSetChunk;
     std::list<char*> freeDcSlots;
     std::list<char*> freeOcSlots;
-    std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
-    std::unordered_map<CoordOfCube, std::string> snappyCache;
-    char *bogusDc;
-    char *bogusOc;
-    bool magChange;
+    std::vector<char> bogusDc;
     int currentMaxMetric;
-    coord2bytep_map_t mergeCube2Pointer;
-    void run();
-    bool initLoader();
-    bool uninitLoader();
-    uint prevLoaderMagnification;
+
+    uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
-    uint DcoiFromPos(C_Element *Dcoi, coord2bytep_map_t *currentLoadedHash);
-    void loadCube(loadcube_thread_struct *lts);
-    uint removeLoadedCubes(const coord2bytep_map_t &currentLoadedHash, uint prevLoaderMagnification);
+    std::vector<Coordinate> DcoiFromPos(const Coordinate &center);
     uint loadCubes();
-    void snappyCacheAdd(const CoordOfCube &, const char *cube);
+    void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
+
+    template<typename Func>
+    friend void abortDownloadsFinishDecompression(Loader::Worker&, Func);
+
+    const QUrl baseUrl;
+    const API api;
+    const CubeType typeDc;
+    const CubeType typeOc;
+    const QString experimentName;
+public://matsch
+    std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
+    std::unordered_map<CoordOfCube, std::string> snappyCache;
+    std::vector<char> bogusOc;
+    QMutex snappyMutex;
+    QWaitCondition snappyFlushCondition;
+
+    void moveToThread(QThread * targetThread);//reimplement to move qnam
+
+    void unload();
+    void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
-public:
-    explicit Loader(QObject *parent = 0);
+    Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
+    ~Worker();
     int CompareLoadOrderMetric(const void * a, const void * b);
 
-    C_Element *Dcoi;
-signals:
-    void finished();
-    void reslice_notify();
-    void volume_notify();
 public slots:
-    bool load();
+    void cleanup(const Coordinate center);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
 };
 
-#endif // LOADER_H
+class Controller : public QObject {
+    Q_OBJECT
+    QThread workerThread;
+    friend class Loader::Worker;
+public:
+    std::unique_ptr<Loader::Worker> worker;
+    std::atomic_uint loadingNr{0};
+    static Controller & singleton(){
+        static Loader::Controller loader;
+        return loader;
+    }
+    void waitForWorkerThread() {
+        ++loadingNr;
+        workerThread.quit();
+        workerThread.wait();
+    }
+    ~Controller() {
+        waitForWorkerThread();
+    }
+    void unload() {
+        ++loadingNr;
+        emit unloadSignal();
+    }
+    template<typename... Args>
+    void restart(Args&&... args) {
+        waitForWorkerThread();
+        worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+        workerThread.setObjectName("Loader");
+        worker->moveToThread(&workerThread);
+        QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
+        QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy, Qt::BlockingQueuedConnection);
+        workerThread.start();
+    }
+    void startLoading(const Coordinate &center);
+    template<typename... Args>
+    void snappyCacheAddSnappy(Args&&... args) {
+        emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
+    }
+    decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
+signals:
+    void unloadSignal();
+    void loadSignal(const unsigned int loadingNr, const Coordinate center);
+    void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
+};
+}//namespace Loader
+
+#endif//LOADER_H

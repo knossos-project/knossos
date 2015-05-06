@@ -26,6 +26,7 @@
 #include "eventmodel.h"
 #include "functions.h"
 #include "renderer.h"
+#include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
@@ -328,9 +329,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         eventDelegate->handleMouseMotionRightHold(event, id);
         clickEvent = true;
     }
-    else if(Segmentation::singleton().hoverVersion){
-        eventDelegate->handleMouseHover(event, id);
-    }
+    eventDelegate->handleMouseHover(event, id);
 
     if(clickEvent) {
         eventDelegate->mouseX = event->x();
@@ -370,6 +369,8 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->scripting->signalRelay, this, event);
+
     Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
     const auto alt = modifiers.testFlag(Qt::AltModifier);
@@ -484,8 +485,8 @@ void Viewport::drawSkeletonViewport() {
     auto& seg = Segmentation::singleton();
     if (seg.volume_render_toggle) {
         if(seg.volume_update_required) {
-            updateVolumeTexture();
             seg.volume_update_required = false;
+            updateVolumeTexture();
         }
         renderVolumeVP(VIEWPORT_SKELETON);
     } else {
@@ -636,7 +637,7 @@ void Viewport::updateVolumeTexture() {
     static Profiler tex_transfer_profiler;
 
     tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
-    auto currentPosDc = Coordinate::Px2DcCoord(state->viewerState->currentPosition, state->cubeEdgeLength);
+    auto currentPosDc = state->viewerState->currentPosition / state->magnification / state->cubeEdgeLength;
     int cubeLen = state->cubeEdgeLength;
     int M = state->M;
     int M_radius = (M - 1) / 2;

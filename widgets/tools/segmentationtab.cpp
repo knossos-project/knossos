@@ -212,29 +212,20 @@ QVariant CategoryModel::data(const QModelIndex &index, int role) const {
 }
 
 SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
-    toolGroup.addButton(&mergeBtn, 0);
-    toolGroup.addButton(&paintBtn, 1);
     modeGroup.addButton(&twodBtn, 0);
     modeGroup.addButton(&threedBtn, 1);
 
-    mergeBtn.setCheckable(true);
-    paintBtn.setCheckable(true);
     twodBtn.setCheckable(true);
     threedBtn.setCheckable(true);
 
-    mergeBtn.setToolTip(mergeToolTip);
-    paintBtn.setToolTip(paintToolTip);
     twodBtn.setToolTip("Only work on one 2D slice.");
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
-    mergeBtn.setChecked(true);
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
     toolsLayout.addWidget(&showAllChck);
     toolsLayout.addStretch();
-    toolsLayout.addWidget(&mergeBtn);
-    toolsLayout.addWidget(&paintBtn);
     toolsLayout.addStretch();
     toolsLayout.addWidget(&brushRadiusLabel);
     toolsLayout.addWidget(&brushRadiusEdit);
@@ -290,29 +281,17 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
-    QObject::connect(&toolGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [](int id){
-        Segmentation::singleton().brush.setTool(static_cast<brush_t::tool_t>(id));
-    });
     QObject::connect(&brushRadiusEdit, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){
         Segmentation::singleton().brush.setRadius(value);
     });
     QObject::connect(&modeGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [](int id){
         Segmentation::singleton().brush.setMode(static_cast<brush_t::mode_t>(id));
     });
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::inverseChanged, [this](bool value){
-        mergeBtn.setText(value ? "Unmerge" : "Merge");
-        mergeBtn.setToolTip(value ? unmergeToolTip : mergeToolTip);
-        paintBtn.setText(value ? "Erase" : "Paint");
-        paintBtn.setToolTip(value ? eraseToolTip : paintToolTip);
-    });
     QObject::connect(&Segmentation::singleton().brush, &brush_t::modeChanged, [this](brush_t::mode_t value){
         modeGroup.button(static_cast<int>(value))->setChecked(true);
     });
     QObject::connect(&Segmentation::singleton().brush, &brush_t::radiusChanged, [this](int value){
         brushRadiusEdit.setValue(value);
-    });
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [this](brush_t::tool_t value){
-        toolGroup.button(static_cast<int>(value))->setChecked(true);
     });
 
     QObject::connect(&categoryFilter,  &QComboBox::currentTextChanged, this, &SegmentationTab::filter);

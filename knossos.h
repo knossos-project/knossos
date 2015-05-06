@@ -70,11 +70,8 @@ signals:
 
 public slots:
     void loadTreeLUTFallback();
-    void startLoader();
-    void breakLoader();
 };
 
 extern std::unique_ptr<Knossos> knossos;
-extern std::unique_ptr<Loader> loader;
 
 #endif
