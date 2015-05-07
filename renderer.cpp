@@ -719,13 +719,13 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glBegin(GL_QUADS);
                 glNormal3i(0,1,0);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                glVertex3f(-dataPxX, 0., -dataPxY);
+                glVertex3f(-dataPxX, -1., -dataPxY);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx, state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                glVertex3f(dataPxX, -0., -dataPxY);
+                glVertex3f(dataPxX, -1., -dataPxY);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx, state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                glVertex3f(dataPxX, -0., dataPxY);
+                glVertex3f(dataPxX, -1., dataPxY);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                glVertex3f(-dataPxX, -0., dataPxY);
+                glVertex3f(-dataPxX, -1., dataPxY);
             glEnd();
 
             /* Draw overlay */
@@ -988,16 +988,17 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
         glBegin(GL_QUADS);
             glNormal3i(n->x, n->y, n->z);
+            const auto offset = currentVP == 1 ? *n * -1 : *n;
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
-            glVertex3f(-dataPxX * v1->x - dataPxY * v2->x + n->x, -dataPxX * v1->y - dataPxY * v2->y + n->y, -dataPxX * v1->z - dataPxY * v2->z + n->z);
+            glVertex3f(-dataPxX * v1->x - dataPxY * v2->x + offset.x, -dataPxX * v1->y - dataPxY * v2->y + offset.y, -dataPxX * v1->z - dataPxY * v2->z + offset.z);
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx, state->viewerState->vpConfigs[currentVP].texture.texRUy);
-            glVertex3f(dataPxX * v1->x - dataPxY * v2->x + n->x, dataPxX * v1->y - dataPxY * v2->y + n->y, dataPxX * v1->z - dataPxY * v2->z + n->z);
+            glVertex3f(dataPxX * v1->x - dataPxY * v2->x + offset.x, dataPxX * v1->y - dataPxY * v2->y + offset.y, dataPxX * v1->z - dataPxY * v2->z + offset.z);
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx, state->viewerState->vpConfigs[currentVP].texture.texRLy);
 
-            glVertex3f(dataPxX * v1->x + dataPxY * v2->x + n->x, dataPxX * v1->y + dataPxY * v2->y + n->y, dataPxX * v1->z + dataPxY * v2->z + n->z);
+            glVertex3f(dataPxX * v1->x + dataPxY * v2->x + offset.x, dataPxX * v1->y + dataPxY * v2->y + offset.y, dataPxX * v1->z + dataPxY * v2->z + offset.z);
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
 
-            glVertex3f(-dataPxX * v1->x + dataPxY * v2->x + n->x, -dataPxX * v1->y + dataPxY * v2->y + n->y, -dataPxX * v1->z + dataPxY * v2->z + n->z);
+            glVertex3f(-dataPxX * v1->x + dataPxY * v2->x + offset.x, -dataPxX * v1->y + dataPxY * v2->y + offset.y, -dataPxX * v1->z + dataPxY * v2->z + offset.z);
         glEnd();
 
         // Draw the overlay textures
@@ -1005,26 +1006,27 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
             glBegin(GL_QUADS);
                 glNormal3i(n->x, n->y, n->z);
+                const auto offset = currentVP == 1 ? *n * 0.1 : *n * -0.1;
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
                              state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                glVertex3f(-dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
-                           -dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
-                           -dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
+                glVertex3f(-dataPxX * v1->x - dataPxY * v2->x + offset.x,
+                           -dataPxX * v1->y - dataPxY * v2->y + offset.y,
+                           -dataPxX * v1->z - dataPxY * v2->z + offset.z);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
                              state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                glVertex3f(dataPxX * v1->x - dataPxY * v2->x - 0.1 * n->x,
-                           dataPxX * v1->y - dataPxY * v2->y - 0.1 * n->y,
-                           dataPxX * v1->z - dataPxY * v2->z - 0.1 * n->z);
+                glVertex3f(dataPxX * v1->x - dataPxY * v2->x + offset.x,
+                           dataPxX * v1->y - dataPxY * v2->y + offset.y,
+                           dataPxX * v1->z - dataPxY * v2->z + offset.z);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
                              state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                glVertex3f(dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
-                           dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
-                           dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
+                glVertex3f(dataPxX * v1->x + dataPxY * v2->x + offset.x,
+                           dataPxX * v1->y + dataPxY * v2->y + offset.y,
+                           dataPxX * v1->z + dataPxY * v2->z + offset.z);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
                              state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                glVertex3f(-dataPxX * v1->x + dataPxY * v2->x - 0.1 * n->x,
-                           -dataPxX * v1->y + dataPxY * v2->y - 0.1 * n->y,
-                           -dataPxX * v1->z + dataPxY * v2->z - 0.1 * n->z);
+                glVertex3f(-dataPxX * v1->x + dataPxY * v2->x + offset.x,
+                           -dataPxX * v1->y + dataPxY * v2->y + offset.y,
+                           -dataPxX * v1->z + dataPxY * v2->z + offset.z);
             glEnd();
         }
 
@@ -1137,8 +1139,8 @@ bool Viewport::renderVolumeVP(uint currentVP) {
         glLoadIdentity();
 
         // dataset translation adjustment
-        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M, 
-                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M, 
+        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M,
+                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M,
                      (static_cast<float>(state->viewerState->currentPosition.z % cubeLen) / cubeLen - 0.5f) / state->M);
 
         glTranslatef(0.5f, 0.5f, 0.5f);
