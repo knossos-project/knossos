@@ -168,6 +168,7 @@ public:
     void hideButtons();
     void showButtons();
     bool renderVolumeVP(uint currentVP);
+    void updateOverlayTexture();
     void updateVolumeTexture();
 
     EventModel *eventDelegate;

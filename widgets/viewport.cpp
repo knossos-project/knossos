@@ -27,6 +27,7 @@
 #include "functions.h"
 #include "renderer.h"
 #include "scriptengine/scripting.h"
+#include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
@@ -264,10 +265,13 @@ void Viewport::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(state->viewerState->viewerReady) {
-        if (this->viewportType != VIEWPORT_SKELETON) {
-           this->drawViewport(id);
+        if (viewportType != VIEWPORT_SKELETON) {
+            if (viewportType == VIEWPORT_ARBITRARY) {
+                updateOverlayTexture();
+            }
+            drawViewport(id);
         } else {
-           this->drawSkeletonViewport();
+            drawSkeletonViewport();
         }
         state->viewer->renderer->renderViewportBorders(id);
     }
@@ -612,6 +616,31 @@ void Viewport::showButtons() {
         r180Button->show();
         resetButton->show();
     }
+}
+
+void Viewport::updateOverlayTexture() {
+    const int width = state->M * state->cubeEdgeLength;
+    const int height = width;
+    const auto & config = state->viewerState->vpConfigs[id];
+    const auto begin = config.leftUpperPxInAbsPx_float;
+    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
+    for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x) {
+        const auto dataPos = static_cast<Coordinate>(begin + config.v1 * state->magnification * x + config.v2 * state->magnification * y);
+        if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
+            viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
+        } else {
+            const auto soid = readVoxel(dataPos);
+            const auto color = Segmentation::singleton().colorObjectFromId(soid);
+            viewportView[y][x][0] = std::get<0>(color);
+            viewportView[y][x][1] = std::get<1>(color);
+            viewportView[y][x][2] = std::get<2>(color);
+            viewportView[y][x][3] = std::get<3>(color);
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->overlayData);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Viewport::updateVolumeTexture() {
