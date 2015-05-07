@@ -107,8 +107,10 @@ void merging(QMouseEvent *event, const int vp) {
                 }
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
-                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-                    Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
+                    if (seg.brush.getTool() == brush_t::tool_t::hybrid) {
+                        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+                        Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
+                    }
                 }
             }
             seg.touchObjects(subobjectId);
