@@ -1180,6 +1180,7 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
+    widgetContainer->pythonPropertyWidget->loadSettings();
 }
 
 void MainWindow::clearSettings() {

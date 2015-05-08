@@ -75,6 +75,7 @@ Scripting::Scripting() {
     ctx.addObject("knossos_global_mainwindow", state->viewer->window);
     ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
     ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
+    ctx.addObject("knossos_global_segmentation", &Segmentation::singleton());
     ctx.addObject("knossos_global_knossos", knossos.get());
     ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
     ctx.addVariable("GL_POINTS", GL_POINTS);
@@ -123,8 +124,26 @@ Scripting::Scripting() {
 #else
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
 #endif
-//    ctx.evalScript("import IPython");
-//    ctx.evalScript("IPython.embed_kernel()");
+
+    autoStartTerminal();
+}
+
+QVariant getSettingsValue(const QString &key) {
+    QSettings settings;
+    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
+    auto value = settings.value(key);
+    settings.endGroup();
+    return value;
+}
+
+void Scripting::autoStartTerminal() {
+    auto value = getSettingsValue(PYTHON_AUTOSTART_TERMINAL);
+    if (value.isNull()) { return; }
+    auto autoStartFolder = value.toBool();
+    if (autoStartFolder) {
+        qDebug() << "TRUE!";
+        state->viewer->window->widgetContainer->pythonPropertyWidget->openTerminal();
+    }
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
@@ -132,49 +151,36 @@ void Scripting::addScriptingObject(const QString &name, QObject *obj) {
     ctx.addObject(name, obj);
 }
 
-void Scripting::saveSettings(const QString &key, const QVariant &value) {
-    settings->setValue(key, value);
-}
-
 void Scripting::changeWorkingDirectory() {
-    QSettings settings;
-    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    QString path = settings.value(PYTHON_WORKING_DIRECTORY).toString();
-    settings.endGroup();
+    auto value = getSettingsValue(PYTHON_WORKING_DIRECTORY);
+    if (value.isNull()) { return; }
+    auto workingDir = value.toString();
+    if (workingDir.isEmpty()) { return; }
 
-    if(!path.isEmpty()) {
-        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-        ctx.evalScript("import os");
-        ctx.evalScript(QString("os.chdir('%1')").arg(path));
-    }
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    ctx.evalScript("import os");
+    ctx.evalScript(QString("os.chdir('%1')").arg(workingDir));
 }
 
 
 void Scripting::executeFromUserDirectory() {
-    QSettings settings;
-    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    QString path = settings.value(PYTHON_AUTOSTART_FOLDER).toString();
-    settings.endGroup();
+    auto value = getSettingsValue(PYTHON_AUTOSTART_FOLDER);
+    if (value.isNull()) { return; }
+    auto autoStartFolder = value.toString();
+    if (autoStartFolder.isEmpty()) { return; }
 
-    if(!path.isEmpty()) {
-        qDebug() << path;
-        QDir scriptDir(path);
-        QStringList endings;
-        endings << "*.py";
-        scriptDir.setNameFilters(endings);
-        QFileInfoList entries = scriptDir.entryInfoList();
-
-        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-        foreach(const QFileInfo &script, entries) {
-            QFile file(script.canonicalFilePath());
-
-            if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
-                continue;
-            }
-
-            ctx.evalFile(script.canonicalFilePath());
-
+    QDir scriptDir(autoStartFolder);
+    QStringList endings;
+    endings << "*.py";
+    scriptDir.setNameFilters(endings);
+    QFileInfoList entries = scriptDir.entryInfoList();
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    foreach(const QFileInfo &script, entries) {
+        QFile file(script.canonicalFilePath());
+        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
+            continue;
         }
+        ctx.evalFile(script.canonicalFilePath());
     }
 }
 

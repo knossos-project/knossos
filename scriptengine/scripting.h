@@ -106,16 +106,14 @@ public:
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
-signals:
-
-public slots:
+protected:
+    QSettings *settings;
+private:
     static void addScriptingObject(const QString &name, QObject *obj);
-    void saveSettings(const QString &key, const QVariant &value);
     void executeFromUserDirectory();
     void changeWorkingDirectory();
     void addWidgets(PythonQtObjectPtr &context);
-protected:
-    QSettings *settings;
+    void autoStartTerminal();
 };
 
 #endif // SCRIPTING_H

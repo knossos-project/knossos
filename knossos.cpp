@@ -200,8 +200,6 @@ int main(int argc, char *argv[]) {
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
 
-    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
-
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);

@@ -18,7 +18,7 @@ class PythonInterpreterWidget : public QDialog
 public:
     explicit PythonInterpreterWidget(QWidget *parent = 0);
 protected:
-    PythonQtScriptingConsole console;
+    PythonQtScriptingConsole *console;
 };
 
 class PythonPropertyWidget : public QDialog
@@ -29,29 +29,20 @@ public:
 protected:
     QPushButton *pythonInterpreterButton;
     QPushButton *autoStartFolderButton;
-    QPushButton *saveButton;
-    QPushButton *defaultPreferences;
     QPushButton *workingDirectoryButton;
-    QLineEdit *pythonInterpreterField;
-    QLineEdit *autoStartFolder;
-    QCheckBox *autoStartTerminal;
-    QLineEdit *workingDirectory;
+    QLineEdit *autoStartFolderEdit;
+    QCheckBox *autoStartTerminalCheckbox;
+    QLineEdit *workingDirectoryEdit;
     PythonInterpreterWidget *interpreter;
 
     void closeEvent(QCloseEvent *e);
 
-signals:
-    void executeUserScriptsSignal();
-    void changeWorkingDirectory();
 public slots:
-    void pythonInterpreterButtonClicked();
     void autoStartFolderButtonClicked();
-    void autoConf();
     void openTerminal();
     void closeTerminal();
     void saveSettings();
     void loadSettings();
-    void autoStartTerminalClicked(bool on);
     void workingDirectoryButtonClicked();
 
 
