@@ -11,6 +11,16 @@ class QPushButton;
 class QLineEdit;
 class QLabel;
 class QCheckBox;
+
+class PythonInterpreterWidget : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit PythonInterpreterWidget(QWidget *parent = 0);
+protected:
+    PythonQtScriptingConsole console;
+};
+
 class PythonPropertyWidget : public QDialog
 {
     Q_OBJECT
@@ -26,7 +36,7 @@ protected:
     QLineEdit *autoStartFolder;
     QCheckBox *autoStartTerminal;
     QLineEdit *workingDirectory;
-    PythonQtScriptingConsole *console;
+    PythonInterpreterWidget *interpreter;
 
     void closeEvent(QCloseEvent *e);
 

@@ -15,9 +15,18 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
+#include <QVBoxLayout>
+
+PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) :
+    QDialog(parent), console(parent, PythonQt::self()->getMainModule())
+{
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(&console);
+    setLayout(layout);
+}
 
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent), interpreter(NULL)
 {
 
     setWindowTitle("Python Properties");
@@ -46,8 +55,6 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     connect(pythonInterpreterButton, SIGNAL(clicked()), this, SLOT(pythonInterpreterButtonClicked()));
     connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
     connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
-
-    console = NULL;
 }
 
 void PythonPropertyWidget::closeEvent(QCloseEvent *) {
@@ -121,17 +128,14 @@ void PythonPropertyWidget::autoConf() {
 }
 
 void PythonPropertyWidget::openTerminal() {
-    if (NULL == console) {
-        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-        console = new PythonQtScriptingConsole(NULL, ctx);
+    if (NULL == interpreter) {
+        interpreter = new PythonInterpreterWidget((QWidget*)this->parent());
     }
-    console->show();
+    interpreter->show();
 }
 
 void PythonPropertyWidget::closeTerminal() {
-    if(console) {
-        console->hide();
-    }
+    interpreter->hide();
 }
 
 void PythonPropertyWidget::saveSettings() {
