@@ -40,6 +40,8 @@ public:
     void datasetCellChanged(int row, int col);
     bool parseGoogleJson(const QString & json_raw);
     bool parseWebKnossosJson(const QString & json_raw);
+    bool parseNewWebKnossosJson(const QString & json_raw);
+    QString extractWebKnossosToken(QString & json_raw);
     struct Datasetinfo{
         Coordinate boundary;
         floatCoordinate scale{0,0,0};
