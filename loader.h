@@ -161,6 +161,7 @@ public://matsch
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
     void unload();
+    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
@@ -203,6 +204,7 @@ public:
         worker->moveToThread(&workerThread);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
     }
@@ -211,10 +213,14 @@ public:
     void snappyCacheAddSnappy(Args&&... args) {
         emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
     }
+    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
+        emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
+    }
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
     void unloadSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
+    void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
 };
 }//namespace Loader

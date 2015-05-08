@@ -35,7 +35,7 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value) {
 
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
-    Loader::Controller::singleton().worker->OcModifiedCacheQueue.emplace(pos.cube(state->cubeEdgeLength, state->magnification));
+    Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
     return true;
 }
 

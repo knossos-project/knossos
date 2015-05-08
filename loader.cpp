@@ -337,6 +337,10 @@ void Loader::Worker::unload() {
     state->protectCube2Pointer->unlock();
 }
 
+void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int) {
+    OcModifiedCacheQueue.emplace(cubeCoord);
+}
+
 void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std::string cube) {
     snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
