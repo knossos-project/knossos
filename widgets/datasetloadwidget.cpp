@@ -230,7 +230,7 @@ bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
     state->scale = {sx, sy, sz};
 
     state->path[0] = '\0'; //dont't check for other mags
-    knossos->commonInitStates();
+    Knossos::commonInitStates();
     state->highestAvailableMag = std::pow(2,(jmap["geometrys"].toArray().size()-1)); //highest google mag
     qDebug() << "POWER: " << std::pow(2,(jmap["geometrys"].toArray().size()-1));
 
@@ -267,7 +267,7 @@ bool DatasetLoadWidget::parseWebKnossosJson(const QString & json_raw) {
     state->scale = {sx, sy, sz};
 
     state->path[0] = '\0'; //dont't check for other mags
-    knossos->commonInitStates();
+    Knossos::commonInitStates();
 
     auto mag = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
 
@@ -390,7 +390,7 @@ void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
     }
     strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
 
-    knossos->commonInitStates();
+    Knossos::commonInitStates();
 }
 
 /* dataset can be selected in three ways:

@@ -26,7 +26,6 @@
 
 #include "eventmodel.h"
 #include "highlighter.h"
-#include "knossos.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
@@ -76,7 +75,6 @@ Scripting::Scripting() {
     ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
     ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     ctx.addObject("knossos_global_segmentation", &Segmentation::singleton());
-    ctx.addObject("knossos_global_knossos", knossos.get());
     ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);

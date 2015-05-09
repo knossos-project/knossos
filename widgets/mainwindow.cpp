@@ -1024,7 +1024,7 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-        emit loadTreeLUTFallback();
+        Knossos::loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,

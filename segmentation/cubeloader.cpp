@@ -1,9 +1,11 @@
 #include "cubeloader.h"
 
 #include "coordinate.h"
-#include "knossos.h"
+#include "loader.h"
+#include "session.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
+#include "stateInfo.h"
 
 boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
     const auto posDc = pos / state->magnification / state->cubeEdgeLength;

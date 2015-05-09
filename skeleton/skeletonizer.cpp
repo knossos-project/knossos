@@ -27,9 +27,11 @@
 #include "functions.h"
 #include "knossos.h"
 #include "session.h"
+#include "skeleton/node.h"
 #include "skeleton/tree.h"
 #include "version.h"
 #include "viewer.h"
+#include "widgets/mainwindow.h"
 
 #include <cstring>
 #include <queue>

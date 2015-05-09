@@ -34,6 +34,7 @@
 #include "segmentation/segmentationsplit.h"
 #include "viewer.h"
 #include "renderer.h"
+#include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"

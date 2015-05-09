@@ -137,7 +137,6 @@ signals:
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);
     void updateTreeColorsSignal();
-    void loadTreeLUTFallback();
 
     treeListElement *addTreeListElementSignal(int treeID, color4F color);
 

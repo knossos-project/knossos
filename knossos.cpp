@@ -34,6 +34,7 @@
 #include "skeleton/skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
+#include "widgets/mainwindow.h"
 #include "widgets/widgetcontainer.h"
 
 #include <QApplication>
@@ -56,10 +57,6 @@
 #include <QtPlugin>
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 #endif
-
-std::unique_ptr<Knossos> knossos;
-
-Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 class Splash {
     QSplashScreen screen;
@@ -157,14 +154,12 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    knossos.reset(new Knossos);
-
     global_argc = argc;
     global_argv = argv;
 
-    knossos->applyDefaultConfig();
+    Knossos::applyDefaultConfig();
 
-    knossos->initStates();
+    Knossos::initStates();
 
     Viewer viewer;
     Remote remote;
@@ -174,11 +169,6 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<CoordOfCube>();
     qRegisterMetaType<floatCoordinate>();
 
-    QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
-    QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
-
-    QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
@@ -192,7 +182,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
     QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
-    knossos->loadDefaultTreeLUT();
+    Knossos::loadDefaultTreeLUT();
 
     Scripting scripts;
     viewer.run();
@@ -258,7 +248,6 @@ bool Knossos::initStates() {
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
     state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
     Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-    loadDefaultTreeLUT();
 
     state->viewerState->treeLutSet = false;
 
@@ -424,13 +413,6 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
     return true;
 }
 
-stateInfo *Knossos::emptyState() {
-    stateInfo *state = new stateInfo();
-    state->viewerState = new viewerState();
-    state->skeletonState = new skeletonState();
-    return state;
-}
-
 bool Knossos::findAndRegisterAvailableDatasets() {
     QDir datasetDir;
     QString baseMagDirName;
@@ -538,6 +520,13 @@ bool Knossos::findAndRegisterAvailableDatasets() {
     return true;
 }
 
+stateInfo * emptyState() {
+    stateInfo *state = new stateInfo();
+    state->viewerState = new viewerState();
+    state->skeletonState = new skeletonState();
+    return state;
+}
+
 bool Knossos::configDefaults() {
     bool firstRun = false;
     if (nullptr == state) {
@@ -545,7 +534,7 @@ bool Knossos::configDefaults() {
     }
 
     if (firstRun) {
-        state = Knossos::emptyState();
+        state = emptyState();
 
         state->loaderUserMoveType = USERMOVE_NEUTRAL;
         state->loaderUserMoveViewportDirection = {};
@@ -821,8 +810,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
   */
 
 void Knossos::loadDefaultTreeLUT() {
-    if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
+    if (!state->viewer->loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB)) {
         Knossos::loadTreeLUTFallback();
-        emit treeColorAdjustmentChangedSignal();
+        state->viewer->window->treeColorAdjustmentsChanged();
     }
 }

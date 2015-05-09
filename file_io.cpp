@@ -1,16 +1,15 @@
 #include "file_io.h"
 
-#include "knossos.h"
-
-#include <ctime>
-
-#include <QStandardPaths>
-
-#include <quazip/quazipfile.h>
-
+#include "loader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
+
+#include <quazip/quazipfile.h>
+
+#include <QStandardPaths>
+
+#include <ctime>
 
 QString annotationFileDefaultName() {
     // Generate a default file name based on date and time.

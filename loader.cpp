@@ -23,7 +23,6 @@
  */
 #include "loader.h"
 
-#include "knossos.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"

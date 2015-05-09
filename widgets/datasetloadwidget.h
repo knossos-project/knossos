@@ -65,7 +65,6 @@ protected:
 signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
-    void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetCompression();
     void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();
