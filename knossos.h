@@ -32,13 +32,6 @@
 #include <memory>
 
 
-class Splash {
-    QSplashScreen screen;
-    QTimer timer;
-public:
-    Splash(const QString & img_filename, const int timeout_msec);
-};
-
 class Knossos : public QObject {
     Q_OBJECT
 public:

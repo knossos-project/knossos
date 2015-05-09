@@ -61,12 +61,15 @@ std::unique_ptr<Knossos> knossos;
 
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
-Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
-    screen.show();
-    //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-    QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
-    timer.start(timeout_msec);
-}
+class Splash {
+    QSplashScreen screen;
+public:
+    Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+        screen.show();
+        //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
+        QTimer::singleShot(timeout_msec, &screen, &QSplashScreen::close);
+    }
+};
 
 void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
     QString intro;
