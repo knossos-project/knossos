@@ -291,19 +291,6 @@ bool Knossos::sendQuitSignal() {
     return true;
 }
 
-/* Removes the new line symbols from a string */
-bool Knossos::stripNewlines(char *string) {
-    int i = 0;
-
-    for(i = 0; string[i] != '\0'; i++) {
-        if(string[i] == '\n') // ? os specific ?
-            string[i] = ' ';
-        }
-
-    return true;
-
-}
-
 bool Knossos::readConfigFile(const char *path) {
     QFile file(path);
     if(!file.open(QIODevice::ReadOnly)) {

@@ -25,7 +25,6 @@
  */
 
 namespace Knossos {
-    bool stripNewlines(char *string);
     void applyDefaultConfig();
     bool readConfigFile(const char *path);
     bool printConfigValues();
