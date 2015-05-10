@@ -14,15 +14,8 @@
 #include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
 #include "decorators/meshdecorator.h"
-#include "decorators/transformdecorator.h"
-#include "decorators/pointdecorator.h"
 #include "proxies/skeletonproxy.h"
 #include "proxies/pythonproxy.h"
-
-#include "geometry/render.h"
-#include "geometry/point.h"
-#include "geometry/transform.h"
-#include "geometry/shape.h"
 
 #include "eventmodel.h"
 #include "highlighter.h"
@@ -56,8 +49,6 @@ Scripting::Scripting() {
     nodeCommentDecorator = new NodeCommentDecorator();
     segmentListDecorator = new SegmentListDecorator();
     treeListDecorator = new TreeListDecorator();
-//    transformDecorator = new TransformDecorator();
-//    pointDecorator = new PointDecorator();
 
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
