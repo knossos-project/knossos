@@ -35,6 +35,7 @@
 #include <QPushButton>
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
+#include <QDockWidget>
 #include <QWidget>
 
 class EventModel;
@@ -155,6 +156,11 @@ signals:
 
 #include <QOpenGLFunctions_2_0>
 
+class QViewportFloatWidget : public QWidget {
+public:
+    explicit QViewportFloatWidget(QWidget *parent, int id);
+};
+
 class Viewport : public QGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
@@ -163,14 +169,19 @@ class Viewport : public QGLWidget, protected QOpenGLFunctions_2_0 {
 public:
     const static uint numberViewports = 4;
     explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);
+    void move(int ax, int ay);
+    void move(QPoint p);
+    void resize(int w, int h);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
-    void hideButtons();
-    void showButtons();
+    void setDock(bool isDock);
+    void showHideButtons(bool isShow);
     bool renderVolumeVP(uint currentVP);
     void updateOverlayTexture();
     void updateVolumeTexture();
 
+    int dockSize;
+    QPoint dockPos;
     EventModel *eventDelegate;
     static bool arbitraryOrientation;
     static bool showNodeComments;
@@ -183,6 +194,7 @@ protected:
     void enterEvent(QEvent * event);
     void leaveEvent(QEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
@@ -194,6 +206,10 @@ protected:
     int baseEventX; //last x position
     int baseEventY; //last y position
 
+    bool isDocked;
+    bool isFullOrigDocked;
+    QWidget *dockParent;
+    QViewportFloatWidget *floatParent;
     ResizeButton *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
     QMenu *contextMenu;

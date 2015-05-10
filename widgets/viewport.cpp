@@ -25,13 +25,14 @@
 
 #include "eventmodel.h"
 #include "functions.h"
+#include "GuiConstants.h"
+#include "profiler.h"
 #include "renderer.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
-#include "profiler.h"
 
 #include <QHBoxLayout>
 #include <QPainter>
@@ -71,8 +72,16 @@ QGLContext * newFavoriteQGLContext(QGLWidget * shared) {
     return QGLContext::fromOpenGLContext(context);
 }
 
+QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
+    setWindowFlags(Qt::Window);
+    setWindowTitle(VP_TITLES[id]);
+    new QVBoxLayout(this);
+}
+
 Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
-        QGLWidget(newFavoriteQGLContext(shared), parent, shared), id(newId), viewportType(viewportType), resizeButtonHold(false) {
+        QGLWidget(newFavoriteQGLContext(shared), parent, shared), id(newId), viewportType(viewportType),
+        resizeButtonHold(false), isDocked(true), floatParent(NULL) {
+    dockParent = parent;
     setContextMenuPolicy(Qt::CustomContextMenu);
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
@@ -130,6 +139,8 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     vpLayout->addStretch(1);
     vpLayout->addWidget(resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
     setLayout(vpLayout);
+
+    setDock(true);
 
     timeDBase.start();
     timeFBase.start();
@@ -248,6 +259,24 @@ void Viewport::createOverlayTextures() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
+void Viewport::move(int ax, int ay) {
+    move(QPoint(ax,ay));
+}
+
+void Viewport::move(QPoint p) {
+    QWidget::move(p);
+    if (isDocked) {
+        dockPos = p;
+    }
+}
+
+void Viewport::resize (int w, int h) {
+    QWidget::resize(w,h);
+    if (isDocked) {
+        dockSize = size().width();
+    }
+}
+
 void Viewport::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -345,6 +374,37 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 }
 
+void Viewport::setDock(bool isDock) {
+    bool wasVisible = isVisible();
+    int curSize = size().width();
+    isDocked = isDock;
+    if (isDock) {
+        setParent(dockParent);
+        if (NULL != floatParent) {
+            delete floatParent;
+            floatParent = NULL;
+        }
+        resize(dockSize,dockSize);
+        move(dockPos);
+    }
+    else {
+        floatParent = new QViewportFloatWidget(dockParent, id);
+        floatParent->layout()->addWidget(this);
+        floatParent->resize(curSize,curSize);
+        if (wasVisible) {
+            floatParent->show();
+        }
+    }
+    if (wasVisible) {
+        show();
+        setFocus();
+    }
+}
+
+void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
+    setDock(!isDocked);
+}
+
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
 
@@ -440,6 +500,40 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
     if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
         state->viewerKeyRepeat = event->isAutoRepeat();
+    }
+    if (event->key() == Qt::Key_H) {
+        if (isDocked) {
+            hide();
+        }
+        else {
+            floatParent->hide();
+        }
+    }
+    if (event->key() == Qt::Key_U) {
+        if (isDocked) {
+            // Currently docked and normal
+            // Undock and go fullscreen from docked
+            setDock(false);
+            floatParent->setWindowState(Qt::WindowFullScreen);
+            isFullOrigDocked = true;
+        }
+        else {
+            // Currently undocked
+            if (floatParent->isFullScreen()) {
+                // Currently fullscreen
+                // Go normal and back to original docking state
+                floatParent->setWindowState(Qt::WindowNoState);
+                if (isFullOrigDocked) {
+                    setDock(isFullOrigDocked);
+                }
+            }
+            else {
+                // Currently not fullscreen
+                // Go fullscreen from undocked
+                floatParent->setWindowState(Qt::WindowFullScreen);
+                isFullOrigDocked = false;
+            }
+        }
     }
     if (!event->isAutoRepeat()) {
         //autorepeat emulation for systems where isAutoRepeat() does not work as expected
@@ -566,6 +660,10 @@ void Viewport::zoomInSkeletonVP() {
 }
 
 void Viewport::resizeVP(QMouseEvent *event) {
+    if (!isDocked) {
+        // Floating viewports are resized indirectly by container window
+        return;
+    }
     raise();//we come from the resize button
     //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
     const int MIN_VP_SIZE = 50;
@@ -580,6 +678,10 @@ void Viewport::resizeVP(QMouseEvent *event) {
 }
 
 void Viewport::moveVP(QMouseEvent *event) {
+    if (!isDocked) {
+        // Moving viewports is relevant only when docked
+        return;
+    }
     //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
     const auto position = mapFromGlobal(event->globalPos());
     const auto horizontalSpace = parentWidget()->width() - width();
@@ -594,27 +696,15 @@ void Viewport::moveVP(QMouseEvent *event) {
     state->viewerState->defaultVPSizeAndPos = false;
 }
 
-void Viewport::hideButtons() {
-    resizeButton->hide();
+void Viewport::showHideButtons(bool isShow) {
+    resizeButton->setVisible(isShow);
     if(viewportType == VIEWPORT_SKELETON) {
-        xyButton->hide();
-        xzButton->hide();
-        yzButton->hide();
-        r90Button->hide();
-        r180Button->hide();
-        resetButton->hide();
-    }
-}
-
-void Viewport::showButtons() {
-    resizeButton->show();
-    if(viewportType == VIEWPORT_SKELETON) {
-        xyButton->show();
-        xzButton->show();
-        yzButton->show();
-        r90Button->show();
-        r180Button->show();
-        resetButton->show();
+        xyButton->setVisible(isShow);
+        xzButton->setVisible(isShow);
+        yzButton->setVisible(isShow);
+        r90Button->setVisible(isShow);
+        r180Button->setVisible(isShow);
+        resetButton->setVisible(isShow);
     }
 }
 

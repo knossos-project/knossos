@@ -12,7 +12,7 @@ class QLineEdit;
 class QLabel;
 class QCheckBox;
 
-class PythonInterpreterWidget : public QDialog
+class PythonInterpreterWidget : public QWidget
 {
     Q_OBJECT
 public:

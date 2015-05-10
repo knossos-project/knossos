@@ -242,9 +242,6 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
-        for(uint i = 1; i < Viewport::numberViewports; ++i) {
-            viewports[i].get()->show();
-        }
         resetViewports();
     }
 }
@@ -1076,15 +1073,15 @@ void MainWindow::saveSettings() {
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->size().height());
-    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->size().height());
-    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->size().height());
-    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->size().height());
+    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->dockSize);
+    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->dockSize);
+    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->dockSize);
+    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->dockSize);
 
-    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->pos());
-    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->pos());
-    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
-    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
+    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->dockPos);
+    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->dockPos);
+    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos);
+    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos);
 
     settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
@@ -1235,20 +1232,16 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
+    setViewportsDock(true);
+    setViewportsVisible(true);
     resizeViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
 void MainWindow::showVPDecorationClicked() {
-    if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            viewports[i]->showButtons();
-        }
-    }
-    else {
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            viewports[i]->hideButtons();
-        }
+    bool isShow = widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked();
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
+        viewports[i]->showHideButtons(isShow);
     }
 }
 
@@ -1301,27 +1294,28 @@ void MainWindow::placeComment(const int index) {
     }
 }
 
+void MainWindow::setViewportsDock(bool isDock) {
+    for(int i = 0; i < 4; i++) {
+        viewports[i]->setDock(isDock);
+    }
+}
+
+void MainWindow::setViewportsVisible(bool isVisible) {
+    for(int i = 0; i < 4; i++) {
+        viewports[i]->setVisible(isVisible);
+    }
+}
+
 void MainWindow::resizeViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN) / 2;
     height = (height - DEFAULT_VP_MARGIN) / 2;
-
-    if(width < height) {
-        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + width);
-        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN + width);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(width-DEFAULT_VP_MARGIN, width-DEFAULT_VP_MARGIN);
-
-        }
-    } else if(width > height) {
-        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + height);
-        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN + height);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
-        }
+    int mindim = std::min(width, height);
+    viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+    viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
+    viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+    viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+    for(int i = 0; i < 4; i++) {
+        viewports[i]->resize(mindim-DEFAULT_VP_MARGIN, mindim-DEFAULT_VP_MARGIN);
     }
 }
 

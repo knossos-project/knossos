@@ -18,12 +18,14 @@
 #include <QVBoxLayout>
 
 PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) :
-    QDialog(parent), console(NULL)
+    QWidget(parent), console(NULL)
 {
+    setWindowFlags(Qt::Window);
     console = new PythonQtScriptingConsole(parent, PythonQt::self()->getMainModule());
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(console);
     setLayout(layout);
+    show();
 }
 
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
