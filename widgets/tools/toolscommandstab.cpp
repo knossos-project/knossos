@@ -264,7 +264,7 @@ void ToolsCommandsTab::defaultRadiusSpinChanged(double value) {
 
 void ToolsCommandsTab::commentLockingCheckChanged(bool on) {
     state->skeletonState->positionLocked = on;
-    if(on and commentLockEdit->text().isEmpty() == false) {
+    if(on && commentLockEdit->text().isEmpty() == false) {
         state->viewerState->lockComment = commentLockEdit->text();
     }
 }

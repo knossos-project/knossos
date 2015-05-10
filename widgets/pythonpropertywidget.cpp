@@ -104,7 +104,7 @@ void PythonPropertyWidget::loadSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
         y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
     }
@@ -125,12 +125,12 @@ void PythonPropertyWidget::loadSettings() {
     this->setVisible(visible);
 
     auto autoStartFolderValue = settings.value(PYTHON_AUTOSTART_FOLDER);
-    if(!autoStartFolderValue.isNull() and !autoStartFolderValue.toString().isEmpty()) {
+    if(!autoStartFolderValue.isNull() && !autoStartFolderValue.toString().isEmpty()) {
         autoStartFolderEdit->setText(settings.value(PYTHON_AUTOSTART_FOLDER).toString());
     }
 
     auto workingDirValue = settings.value(PYTHON_WORKING_DIRECTORY);
-    if(!workingDirValue.isNull() and !workingDirValue.toString().isEmpty()) {
+    if(!workingDirValue.isNull() && !workingDirValue.toString().isEmpty()) {
         workingDirectoryEdit->setText(settings.value(PYTHON_WORKING_DIRECTORY).toString());
     }
 

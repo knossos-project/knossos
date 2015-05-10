@@ -195,9 +195,9 @@ void Scripting::addWidgets(PythonQtObjectPtr &context) {
             if(name.at(i).isLower()) {
                 array.append(name.at(i));
             } else if(name.at(i).isUpper()) {
-                if(i == 0 and name.at(i) == 'Q') {
+                if(i == 0 && name.at(i) == 'Q') {
                     continue;
-                } else if(i == 0 and name.at(i) != 'Q') {
+                } else if(i == 0 && name.at(i) != 'Q') {
                     array.append(name.at(i).toLower());
                 } else {
                     array.append(QString("_%1").arg(name.at(i).toLower()));

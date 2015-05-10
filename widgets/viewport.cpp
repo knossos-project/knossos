@@ -307,7 +307,7 @@ void Viewport::paintGL() {
 }
 
 void Viewport::showContextMenu(const QPoint &point) {
-    if(viewportType == VIEWPORT_SKELETON and QApplication::keyboardModifiers() == Qt::ControlModifier) {
+    if(viewportType == VIEWPORT_SKELETON && QApplication::keyboardModifiers() == Qt::ControlModifier) {
         QMenu menu(this);
         QMenu *subMenu = menu.addMenu("Change view direction");
         subMenu->addAction("xy", this, SLOT(xyButtonClicked()));
@@ -349,7 +349,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
         bool alt = modifiers.testFlag(Qt::AltModifier);
 
-        if(ctrl and alt) { // drag viewport around
+        if(ctrl && alt) { // drag viewport around
             moveVP(event);
         } else {// delegate behaviour
             eventDelegate->handleMouseMotionLeftHold(event, id);
@@ -418,7 +418,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
         const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
         const auto alt = modifiers.testFlag(Qt::AltModifier);
 
-        if(ctrl and alt) { // user wants to drag vp
+        if(ctrl && alt) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
             baseEventX = event->x();
             baseEventY = event->y();

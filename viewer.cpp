@@ -89,7 +89,7 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     rewire();
     window->show();
     window->loadSettings();
-    if(window->pos().x() <= 0 or window->pos().y() <= 0) {
+    if(window->pos().x() <= 0 || window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
                             desktop->availableGeometry().topLeft().y() + 50,
                             1024, 800);

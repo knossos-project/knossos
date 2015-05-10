@@ -162,17 +162,17 @@ void DatasetOptionsWidget::orthogonalSpinBoxChanged(double value) {
 void DatasetOptionsWidget::skeletonSpinBoxChanged(double value) {
     if(userZoomSkel) {
         userZoomSkel = false;
-        if ( ((value > lastZoomSkel and value < lastZoomSkel + 2)
-                or (value < lastZoomSkel and value > lastZoomSkel - 2)) == false) {
+        if ( ((value > lastZoomSkel && value < lastZoomSkel + 2)
+                || (value < lastZoomSkel && value > lastZoomSkel - 2)) == false) {
             // difference at least greater than two,
             // so user entered a number instead of clicking the up and down buttons
             state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
         }
         else { // up or down button pressed, find out which.
-            if(value > lastZoomSkel and value < lastZoomSkel + 2) { // user wants to zoom in
+            if(value > lastZoomSkel && value < lastZoomSkel + 2) { // user wants to zoom in
                 emit zoomInSkeletonVPSignal();
             }
-            else if(value < lastZoomSkel and value > lastZoomSkel - 2) { // user wants to zoom out
+            else if(value < lastZoomSkel && value > lastZoomSkel - 2) { // user wants to zoom out
                 emit zoomOutSkeletonVPSignal();
             }
             // the following line will lead to signal emission and another call to this slot,
@@ -229,7 +229,7 @@ void DatasetOptionsWidget::loadSettings() {
     settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
     width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().center().x();
         y = QApplication::desktop()->screen()->rect().center().y();
     }

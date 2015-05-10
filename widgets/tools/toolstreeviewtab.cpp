@@ -623,7 +623,7 @@ void ToolsTreeviewTab::setNodeCommentAction() {
 }
 
 void ToolsTreeviewTab::treeSearchChanged() {
-    if(treeRegExCheck->isChecked() and treeSearchField->text().length() > 0) {
+    if(treeRegExCheck->isChecked() && treeSearchField->text().length() > 0) {
         QRegularExpression regex(treeSearchField->text());
         if(regex.isValid() == false) {
             QToolTip::showText(treeSearchField->mapToGlobal(treeSearchField->pos()), "Invalid regular expression.");
@@ -636,7 +636,7 @@ void ToolsTreeviewTab::treeSearchChanged() {
 }
 
 void ToolsTreeviewTab::nodeSearchChanged() {
-    if(nodeRegExCheck->isChecked() and nodeSearchField->text().length() > 0) {
+    if(nodeRegExCheck->isChecked() && nodeSearchField->text().length() > 0) {
         QRegularExpression regex(nodeSearchField->text());
         if(regex.isValid() == false) {
             QToolTip::showText(nodeSearchField->mapToGlobal(nodeSearchField->pos()), "Invalid regular expression.");
@@ -1045,7 +1045,7 @@ void ToolsTreeviewTab::applyTreeSelection() {
 void ToolsTreeviewTab::recreateNodesTable() {
     nodeTable->selectionProtection = true;
     nodeTable->clearContents();
-    if(displayedNodes > state->skeletonState->totalNodeElements or displayedNodes == DISPLAY_ALL) {
+    if(displayedNodes > state->skeletonState->totalNodeElements || displayedNodes == DISPLAY_ALL) {
         nodeTable->setRowCount(state->skeletonState->totalNodeElements);
     } else {
         nodeTable->setRowCount(displayedNodes);
@@ -1277,7 +1277,7 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
             }
         }
         // filter for nodes of selected trees
-        if (nodesOfSelectedTreesRadio->isChecked() and state->skeletonState->selectedTrees.size() > 0) {
+        if (nodesOfSelectedTreesRadio->isChecked() && state->skeletonState->selectedTrees.size() > 0) {
             if(node->correspondingTree->selected == false) {// node not in one of the selected trees
                 return;
             }

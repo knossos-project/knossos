@@ -532,7 +532,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if (experimentName != state->name) {
                         state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path, true);
                     }
-                } else if(xml.name() == "magnification" and xml.isStartElement()) {
+                } else if(xml.name() == "magnification" && xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.
                      // In the past, magnification was specified on a per-file basis
@@ -2666,7 +2666,7 @@ bool Skeletonizer::moveToNextNode() {
 bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
     treeListElement *newTree = findTreeByTreeID(treeID);
     for (auto * const node : state->skeletonState->selectedNodes) {
-        if(node == NULL or newTree == NULL) {
+        if(node == NULL || newTree == NULL) {
             return false;
         }
 

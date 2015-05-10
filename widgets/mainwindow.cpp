@@ -941,7 +941,7 @@ void MainWindow::setAnnotationMode(AnnotationMode mode) {
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    if(state->skeletonState->unsavedChanges or state->skeletonState->treeElements > 0) {
+    if(state->skeletonState->unsavedChanges || state->skeletonState->treeElements > 0) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);
@@ -1119,7 +1119,7 @@ void MainWindow::loadSettings() {
     int width = (settings.value(WIDTH).isNull())? 1024 : settings.value(WIDTH).toInt();
     int height = (settings.value(HEIGHT).isNull())? 800 : settings.value(HEIGHT).toInt();
     int x, y;
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().topLeft().x() + 20;
         y = QApplication::desktop()->screen()->rect().topLeft().y() + 50;
     }
