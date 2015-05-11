@@ -689,6 +689,7 @@ void MainWindow::createMenus() {
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(updateAndRefreshWidget()));
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(tr("Take a snapshot"), widgetContainer->snapshotWidget, SLOT(show()));
 
     auto helpMenu = menuBar()->addMenu("Help");
     helpMenu->addAction(QIcon(":/resources/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));
