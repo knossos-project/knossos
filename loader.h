@@ -131,7 +131,6 @@ private:
     std::list<std::vector<char>> OcSetChunk;
     std::list<char*> freeDcSlots;
     std::list<char*> freeOcSlots;
-    std::vector<char> bogusDc;
     int currentMaxMetric;
 
     uint loaderMagnification = 0;
@@ -154,7 +153,6 @@ private:
 public://matsch
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
-    std::vector<char> bogusOc;
     QMutex snappyMutex;
     QWaitCondition snappyFlushCondition;
 

@@ -259,8 +259,6 @@ std::vector<Coordinate> Loader::Worker::DcoiFromPos(const Coordinate & center) {
 Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader::CubeType typeDc, const Loader::CubeType typeOc, const QString & experimentName)
     : baseUrl{baseUrl}, api{api}, typeDc{typeDc}, typeOc{typeOc}, experimentName{experimentName}
 {
-    bogusDc = decltype(bogusDc)(state->cubeBytes, 127);
-    bogusOc = decltype(bogusOc)(state->cubeBytes * OBJID_BYTES, 0);
 
     // freeDcSlots / freeOcSlots are lists of pointers to locations that
     // can hold data or overlay cubes. Whenever we want to load a new

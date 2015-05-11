@@ -7,36 +7,37 @@
 #include "segmentationsplit.h"
 #include "stateInfo.h"
 
-boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos) {
+std::pair<bool, char *> getRawCube(const Coordinate & pos) {
     const auto posDc = pos / state->magnification / state->cubeEdgeLength;
 
     state->protectCube2Pointer->lock();
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
     state->protectCube2Pointer->unlock();
 
-    if (rawcube == nullptr) {
-        rawcube = Loader::Controller::singleton().worker->bogusOc.data();
-    }
-    auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];
-    boost::multi_array_ref<uint64_t, 3> cube(reinterpret_cast<uint64_t *>(rawcube), dims);
-    return cube;
+    return std::make_pair(rawcube != nullptr, rawcube);
+}
+
+boost::multi_array_ref<uint64_t, 3> getCube(char * const rawcube) {
+    const auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];
+    return boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(rawcube), dims);
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
-    if (Session::singleton().outsideMovementArea(pos) || !state->overlay) {
+    auto cubeIt = getRawCube(pos);
+    if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
         return 0;
     }
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
-    return getCube(pos)[inCube.z][inCube.y][inCube.x];
+    return getCube(cubeIt.second)[inCube.z][inCube.y][inCube.x];
 }
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value) {
-    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay) {//snappy cache only mag1 capable
+    auto cubeIt = getRawCube(pos);
+    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {//snappy cache only mag1 capable
         return false;
     }
-
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
-    getCube(pos)[inCube.z][inCube.y][inCube.x] = value;
+    getCube(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
     return true;
 }
