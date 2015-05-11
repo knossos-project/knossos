@@ -150,6 +150,8 @@ struct viewerState {
     bool penmode = false;
 
     QString lockComment;
+
+    float movementAreaFactor;
 };
 
 /**
@@ -202,6 +204,7 @@ signals:
     void loadSignal();
     void coordinateChangedSignal(int x, int y, int z);
     void updateDatasetOptionsWidgetSignal();
+    void movementAreaFactorChangedSignal();
 protected:
     bool vpGenerateTexture_arb(vpConfig &currentVp);
 
@@ -231,6 +234,7 @@ public slots:
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
+    void setMovementAreaFactor(float alpha);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

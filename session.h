@@ -54,6 +54,7 @@ public:
     Coordinate movementAreaMax; // Range around movement center for every dimension
     bool outsideMovementArea(const Coordinate &pos);
     void updateMovementArea(const Coordinate &min, const Coordinate &max);
+    void resetMovementArea();
 
     Session();
     static Session & singleton() {

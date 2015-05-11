@@ -166,6 +166,31 @@ void PythonProxy::setPosition(int x, int y, int z) {
     emit pythonProxySignalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
+void PythonProxy::resetMovementArea() {
+    Session::singleton().resetMovementArea();
+}
+
+void PythonProxy::setMovementArea(int minx, int miny, int minz, int maxx, int maxy, int maxz) {
+    Session::singleton().updateMovementArea(Coordinate(minx, miny, minz),Coordinate(maxx, maxy, maxz));
+}
+
+QList<int> PythonProxy::getMovementArea() {
+    Coordinate min = Session::singleton().movementAreaMin;
+    Coordinate max = Session::singleton().movementAreaMax;
+    QList<int> l;
+    l.append(min.x);
+    l.append(min.y);
+    l.append(min.z);
+    l.append(max.x);
+    l.append(max.y);
+    l.append(max.z);
+    return l;
+}
+
+float PythonProxy::getMovementAreaFactor() {
+    return state->viewerState->movementAreaFactor;
+}
+
 // UNTESTED
 bool PythonProxy::loadStyleSheet(const QString &filename) {
     QFile file(filename);

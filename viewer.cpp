@@ -138,8 +138,14 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify_visible);
+    QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
     baseTime.start();//keyRepeat timer
+}
+
+void Viewer::setMovementAreaFactor(float alpha) {
+    state->viewerState->movementAreaFactor = alpha;
+    emit movementAreaFactorChangedSignal();
 }
 
 bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT) {
@@ -178,15 +184,20 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 r = g = b = reinterpret_cast<uint8_t*>(datacube)[0];
             }
             if(partlyInMovementArea) {
+                bool factor = false;
                 if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
                     ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
-                    r /= 1.25, g /= 1.25, b /= 1.25;
+                    factor = true;
                 }
                 else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
                         (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
-                    r /= 1.25, g /= 1.25, b /= 1.25;
+                    factor = true;
+                }
+                if (factor) {
+                    float d = state->viewerState->movementAreaFactor * 1.0 / 100;
+                    r *= d; g *= d; b *= d;
                 }
             }
             reinterpret_cast<uint8_t*>(slice)[0] = r;
