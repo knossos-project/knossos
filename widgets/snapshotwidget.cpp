@@ -1,14 +1,13 @@
 #include "snapshotwidget.h"
+#include "GuiConstants.h"
+#include "stateInfo.h"
+#include "viewer.h"
 
 #include <QHBoxLayout>
 
-SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent) {
+SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), savePath(QDir::homePath() + "/knossos_viewport.png") {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowTitle("Snapshot Tool");
-
-    auto pathLayout = new QHBoxLayout();
-    pathLayout->addWidget(&pathEdit);
-    pathLayout->addWidget(&browsePathButton);
 
     auto viewportChoiceLayout = new QVBoxLayout();
     vpXYRadio.setChecked(true);
@@ -31,18 +30,83 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent) {
     settingsLayout->addWidget(line);
     settingsLayout->addLayout(imageOptionsLayout);
 
-    mainLayout.addLayout(pathLayout);
     mainLayout.addLayout(settingsLayout);
     mainLayout.addWidget(&snapshotButton);
 
     QObject::connect(&snapshotButton, QPushButton::clicked, [this]() {
-        auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
-                  vpXZRadio.isChecked() ? VIEWPORT_XZ :
-                  vpYZRadio.isChecked() ? VIEWPORT_YZ :
-                                          VIEWPORT_SKELETON;
-        emit snapshotRequest(pathEdit.text(), vp, withOverlayCheck.isChecked(), withScaleCheck.isChecked());
+        const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), savePath, tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
+        if(path.isEmpty() == false) {
+            savePath = path;
+            const auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
+                            vpXZRadio.isChecked() ? VIEWPORT_XZ :
+                            vpYZRadio.isChecked() ? VIEWPORT_YZ :
+                                                    VIEWPORT_SKELETON;
+            emit snapshotRequest(savePath, vp, withOverlayCheck.isChecked(), withScaleCheck.isChecked());
+        }
     });
 
     setLayout(&mainLayout);
 }
 
+ViewportType SnapshotWidget::getCheckedViewport() const {
+    return vpXYRadio.isChecked() ? VIEWPORT_XY :
+           vpXZRadio.isChecked() ? VIEWPORT_XZ :
+           vpYZRadio.isChecked() ? VIEWPORT_YZ :
+                                   VIEWPORT_SKELETON;
+}
+
+QString SnapshotWidget::defaultFilename() const {
+    const QString name = vpXYRadio.isChecked() ? "XY_" :
+                   vpXZRadio.isChecked() ? "XZvp_" :
+                   vpYZRadio.isChecked() ? "YZvp_" :
+                                           "3Dvp_";
+    auto pos = &state->viewerState->currentPosition;
+    return name + QString("%0_%1_%2_%3.png").arg(state->name).arg(pos->x).arg(pos->y).arg(pos->z);
+}
+
+void SnapshotWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(SNAPSHOT_WIDGET);
+    settings.setValue(WIDTH, geometry().width());
+    settings.setValue(HEIGHT, geometry().height());
+    settings.setValue(POS_X, geometry().x());
+    settings.setValue(POS_Y, geometry().y());
+    settings.setValue(VISIBLE, isVisible());
+
+    settings.setValue(VIEWPORT, getCheckedViewport());
+    settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
+    settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
+    settings.setValue(SAVE_PATH, savePath);
+    settings.endGroup();
+}
+
+void SnapshotWidget::loadSettings() {
+    QSettings settings;
+    settings.beginGroup(SNAPSHOT_WIDGET);
+
+    const auto w = settings.value(WIDTH, width()).toInt();
+    const auto h = settings.value(HEIGHT, height()).toInt();
+    const auto x = settings.value(POS_X, QApplication::desktop()->screen()->rect().topRight().x() - width() - 20).toInt();
+    const auto y = settings.value(POS_Y, QApplication::desktop()->screen()->rect().topRight().y() + height()).toInt();
+    auto visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
+
+    const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
+    switch((ViewportType)vp) {
+        case VIEWPORT_XY: vpXYRadio.setChecked(true); break;
+        case VIEWPORT_XZ: vpXZRadio.setChecked(true); break;
+        case VIEWPORT_YZ: vpYZRadio.setChecked(true); break;
+        default: vp3dRadio.setChecked(true); break;
+    }
+
+    withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
+    withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
+    savePath = settings.value(SAVE_PATH, defaultFilename()).toString();
+
+    settings.endGroup();
+    if(visible) {
+        show();
+    } else {
+        hide();
+    }
+    setGeometry(x, y, w, h);
+}

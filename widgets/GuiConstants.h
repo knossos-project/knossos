@@ -12,6 +12,7 @@ const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
 const QString VIEWPORT_SETTINGS_WIDGET = "viewport_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
+const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString TOOLS_WIDGET = "tools_widget";
 const QString TRACING_TIME_WIDGET = "tracing_time_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
@@ -167,5 +168,11 @@ const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
 // Heidelbrain Integration
 const QString HEIDELBRAIN_HOST = "heidelbrain_host";
 const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
+
+// Snapshot settings
+const QString VIEWPORT = "with_viewport";
+const QString WITH_OVERLAY = "with_overlay";
+const QString WITH_SCALE = "with_scale";
+const QString SAVE_PATH = "save_path";
 
 #endif // GUICONSTANTS_H

@@ -78,6 +78,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
+    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest, [this](QString path, ViewportType vp, bool withOverlay, bool withScale) {
+       viewports[vp]->takeSnapshot(path, withOverlay, withScale);
+    });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -1107,6 +1110,7 @@ void MainWindow::saveSettings() {
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
     widgetContainer->pythonPropertyWidget->saveSettings();
+    widgetContainer->snapshotWidget->saveSettings();
     widgetContainer->taskManagementWidget->taskLoginWidget.saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
@@ -1179,6 +1183,7 @@ void MainWindow::loadSettings() {
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
     widgetContainer->pythonPropertyWidget->loadSettings();
+    widgetContainer->snapshotWidget->loadSettings();
 }
 
 void MainWindow::clearSettings() {
