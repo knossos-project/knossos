@@ -932,16 +932,25 @@ void Viewport::resetButtonClicked() {
 void Viewport::takeSnapshot(QString path, bool withOverlay, bool withScale) {
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, 1024, 1024);
-    QGLFramebufferObject fbo(1024, 1024);
+    QOpenGLFramebufferObject fbo(1024, 1024, QOpenGLFramebufferObject::Depth);
+
     fbo.bind();
-    state->viewer->renderer->renderOrthogonalVP(id, withOverlay, false);
+    if(viewportType == VIEWPORT_SKELETON) {
+        drawSkeletonViewport();
+    }
+    else {
+        state->viewer->renderer->renderOrthogonalVP(id, withOverlay, false);
+    }
     if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
         state->viewer->renderer->renderSizeLabel(id, BIG);
     }
-    glPopAttrib(); // restore viewport setting
 
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
     image.save(path);
+    glPopAttrib(); // restore viewport setting
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
+    fbo.bindDefault();
+    fbo.release();
 }
