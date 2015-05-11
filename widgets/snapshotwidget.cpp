@@ -38,7 +38,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     mainLayout.addLayout(settingsLayout);
     mainLayout.addWidget(&snapshotButton);
 
-    QObject::connect(&snapshotButton, QPushButton::clicked, [this]() {
+    QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
         const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
         if(path.isEmpty() == false) {
             QFileInfo info(path);
