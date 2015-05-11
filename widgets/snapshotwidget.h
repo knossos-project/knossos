@@ -12,7 +12,7 @@
 class SnapshotWidget : public QDialog
 {
     Q_OBJECT
-    QString savePath;
+    QString saveDir;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpYZRadio{"YZ viewport"}, vp3dRadio{"3D viewport"};
     QCheckBox withOverlayCheck{"Segmentation overlay"}, withScaleCheck{"Physical scale"};
     QPushButton snapshotButton{"Take snapshot"};

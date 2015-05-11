@@ -5,7 +5,7 @@
 
 #include <QHBoxLayout>
 
-SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), savePath(QDir::homePath() + "/knossos_viewport.png") {
+SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowTitle("Snapshot Tool");
 
@@ -15,6 +15,10 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), savePath(QDir
     viewportChoiceLayout->addWidget(&vpXZRadio);
     viewportChoiceLayout->addWidget(&vpYZRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
+    QObject::connect(&vp3dRadio, &QRadioButton::toggled, [this](bool checked) {
+        withOverlayCheck.setDisabled(checked);
+        withScaleCheck.setDisabled(checked);
+    });
 
     auto imageOptionsLayout = new QVBoxLayout();
     withOverlayCheck.setChecked(true);
@@ -34,14 +38,15 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), savePath(QDir
     mainLayout.addWidget(&snapshotButton);
 
     QObject::connect(&snapshotButton, QPushButton::clicked, [this]() {
-        const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), savePath, tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
+        const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
         if(path.isEmpty() == false) {
-            savePath = path;
+            QFileInfo info(path);
+            saveDir = info.absolutePath() + "/";
             const auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpYZRadio.isChecked() ? VIEWPORT_YZ :
                                                     VIEWPORT_SKELETON;
-            emit snapshotRequest(savePath, vp, withOverlayCheck.isChecked(), withScaleCheck.isChecked());
+            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withScaleCheck.isChecked());
         }
     });
 
@@ -61,7 +66,7 @@ QString SnapshotWidget::defaultFilename() const {
                    vpYZRadio.isChecked() ? "YZvp_" :
                                            "3Dvp_";
     auto pos = &state->viewerState->currentPosition;
-    return name + QString("%0_%1_%2_%3.png").arg(state->name).arg(pos->x).arg(pos->y).arg(pos->z);
+    return QString("%0_%1_%2_%3_%4.png").arg(name).arg(state->name).arg(pos->x).arg(pos->y).arg(pos->z);
 }
 
 void SnapshotWidget::saveSettings() {
@@ -76,7 +81,7 @@ void SnapshotWidget::saveSettings() {
     settings.setValue(VIEWPORT, getCheckedViewport());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
-    settings.setValue(SAVE_PATH, savePath);
+    settings.setValue(SAVE_DIR, saveDir);
     settings.endGroup();
 }
 
@@ -100,7 +105,7 @@ void SnapshotWidget::loadSettings() {
 
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
-    savePath = settings.value(SAVE_PATH, defaultFilename()).toString();
+    saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 
     settings.endGroup();
     if(visible) {

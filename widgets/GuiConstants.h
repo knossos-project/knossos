@@ -170,9 +170,9 @@ const QString HEIDELBRAIN_HOST = "heidelbrain_host";
 const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
 
 // Snapshot settings
-const QString VIEWPORT = "with_viewport";
+const QString VIEWPORT = "viewport";
 const QString WITH_OVERLAY = "with_overlay";
 const QString WITH_SCALE = "with_scale";
-const QString SAVE_PATH = "save_path";
+const QString SAVE_DIR = "save_dir";
 
 #endif // GUICONSTANTS_H
