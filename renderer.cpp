@@ -216,13 +216,13 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
         return true;
 }
 
-void Renderer::renderText(const Coordinate & pos, const QString & str) {
+void Renderer::renderText(const Coordinate & pos, const QString & str, TextSize size) {
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos.x, pos.y, pos.z);
 
     for (const auto & elem : str) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, elem.unicode());
+        glutBitmapCharacter(size == SMALL ? GLUT_BITMAP_HELVETICA_12 : GLUT_BITMAP_HELVETICA_18, elem.unicode());
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -354,8 +354,7 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
 
 }
 
-uint Renderer::renderViewportBorders(uint currentVP) {
-    Coordinate pos;
+void Renderer::setFrontFacePerspective(uint currentVP) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -364,6 +363,10 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+}
+
+void Renderer::renderViewportFrontFace(uint currentVP) {
+    setFrontFacePerspective(currentVP);
 
     switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
@@ -411,6 +414,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             //glVertex3d(3, 3, -1);
         glEnd();
     }
+    glLineWidth(1.);
 
     // render node selection box
     if (state->viewerState->nodeSelectSquareVpId == static_cast<int>(currentVP)) {
@@ -436,26 +440,24 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glEnd();
         glDisable(GL_BLEND);
     }
-
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
-        glColor4f(0, 0, 0, 1);
-        float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
-        float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
-        pos = {15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1};
-
-        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width));
+        renderSizeLabel(currentVP);
     }
+}
 
-    glLineWidth(1.);
-
-    return true;
+void Renderer::renderSizeLabel(uint currentVP, TextSize size) {
+    glColor4f(0, 0, 0, 1);
+    float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
+    float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
+    Coordinate pos(15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1);
+    renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), size);
 }
 
 // Currently not used
 /* @todo update from trunk */
 //static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
-bool Renderer::renderOrthogonalVP(uint currentVP) {
+bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCrosshairs) {
     floatCoordinate * n = &(state->viewerState->vpConfigs[currentVP].n);
     floatCoordinate * v1 = &(state->viewerState->vpConfigs[currentVP].v1);
     floatCoordinate * v2 = &(state->viewerState->vpConfigs[currentVP].v2);
@@ -597,7 +599,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glVertex3f(-dataPxX, dataPxY, 1.);
             glEnd();
             /* Draw the overlay textures */
-            if(state->overlay) {
+            if(drawOverlay) {
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(0, 0, 1);
@@ -618,7 +620,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(drawCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(0., 1., 0., 0.3);
@@ -729,7 +731,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glEnd();
 
             /* Draw overlay */
-            if(state->overlay) {
+            if(drawOverlay) {
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(0,1,0);
@@ -750,7 +752,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(drawCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -851,7 +853,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glEnd();
 
             /* Draw overlay */
-            if(state->overlay) {
+            if(drawOverlay) {
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(1,0,0);
@@ -872,7 +874,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(drawCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -1002,7 +1004,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glEnd();
 
         // Draw the overlay textures
-        if(state->overlay) {
+        if(drawOverlay) {
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
             glBegin(GL_QUADS);
                 glNormal3i(n->x, n->y, n->z);
@@ -1032,7 +1034,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if (state->viewerState->drawVPCrosshairs) {
+        if (drawCrosshairs) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2->z, v2->y, v2->x, 0.3);
@@ -1965,7 +1967,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
         renderSkeletonVP(currentVP);
     } else {
         glDisable(GL_DEPTH_TEST);
-        renderOrthogonalVP(currentVP);
+        renderOrthogonalVP(currentVP, state->overlay, state->viewerState->drawVPCrosshairs);
     }
 
     GLint hits = glRenderMode(GL_RENDER);

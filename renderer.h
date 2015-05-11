@@ -43,6 +43,8 @@
 class Viewport;
 class segmentListElement;
 
+enum TextSize{SMALL, BIG};
+
 class Renderer : public QObject {
     Q_OBJECT
     friend class MeshDecorator;
@@ -54,14 +56,16 @@ public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     void renderBrush(uint viewportType, Coordinate coord);
-    uint renderViewportBorders(uint currentVP);
+    void setFrontFacePerspective(uint currentVP);
+    void renderViewportFrontFace(uint currentVP);
+    void renderSizeLabel(uint currentVP, TextSize size = SMALL);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
 
     uint renderSegPlaneIntersection(segmentListElement *segment);
-    void renderText(const Coordinate &pos, const QString &str);
+    void renderText(const Coordinate &pos, const QString &str, TextSize size = SMALL);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);
@@ -74,7 +78,7 @@ protected:
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
-    bool renderOrthogonalVP(uint currentVP);
+    bool renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCrosshairs);
     bool renderSkeletonVP(uint currentVP);
 };
 

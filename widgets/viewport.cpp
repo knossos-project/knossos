@@ -302,7 +302,7 @@ void Viewport::paintGL() {
         } else {
             drawSkeletonViewport();
         }
-        state->viewer->renderer->renderViewportBorders(id);
+        state->viewer->renderer->renderViewportFrontFace(id);
     }
 }
 
@@ -576,7 +576,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID);
+    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay, state->viewerState->drawVPCrosshairs);
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -927,4 +927,21 @@ void Viewport::resetButtonClicked() {
     if(state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
+}
+
+void Viewport::takeSnapshot(QString path, bool withOverlay, bool withScale) {
+    glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
+    glViewport(0, 0, 1024, 1024);
+    QGLFramebufferObject fbo(1024, 1024);
+    fbo.bind();
+    state->viewer->renderer->renderOrthogonalVP(id, withOverlay, false);
+    if(withScale) {
+        state->viewer->renderer->setFrontFacePerspective(id);
+        state->viewer->renderer->renderSizeLabel(id, BIG);
+    }
+    glPopAttrib(); // restore viewport setting
+
+    QImage fboImage(fbo.toImage());
+    QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
+    image.save(path);
 }
