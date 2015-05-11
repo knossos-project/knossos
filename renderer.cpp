@@ -457,7 +457,7 @@ void Renderer::renderSizeLabel(uint currentVP, TextSize size) {
 /* @todo update from trunk */
 //static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
-bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCrosshairs) {
+bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawSkeleton, bool drawCrosshairs) {
     floatCoordinate * n = &(state->viewerState->vpConfigs[currentVP].n);
     floatCoordinate * v1 = &(state->viewerState->vpConfigs[currentVP].v1);
     floatCoordinate * v2 = &(state->viewerState->vpConfigs[currentVP].v2);
@@ -570,8 +570,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCro
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
-
-            renderSkeleton(currentVP, VIEWPORT_XY);
+            if(drawSkeleton) {
+                renderSkeleton(currentVP, VIEWPORT_XY);
+            }
             if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false) {
                 renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
@@ -701,8 +702,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCro
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
-
-            renderSkeleton(currentVP, VIEWPORT_XZ);
+            if(drawSkeleton) {
+                renderSkeleton(currentVP, VIEWPORT_XZ);
+            }
             if (Session::singleton().annotationMode == SegmentationMode) {
                 renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
@@ -823,8 +825,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCro
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
-
-            renderSkeleton(currentVP, VIEWPORT_YZ);
+            if(drawSkeleton) {
+                renderSkeleton(currentVP, VIEWPORT_YZ);
+            }
             if (Session::singleton().annotationMode == SegmentationMode) {
                 renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
             }
@@ -976,9 +979,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCro
 
         glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
         glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
-
-        renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
-
+        if(drawSkeleton) {
+            renderSkeleton(currentVP, VIEWPORT_ARBITRARY);
+        }
         glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
         glLoadName(3);
@@ -1205,7 +1208,7 @@ bool Viewport::renderVolumeVP(uint currentVP) {
     return true;
 }
 
-bool Renderer::renderSkeletonVP(uint currentVP) {
+bool Renderer::renderSkeletonVP(uint currentVP, bool drawSkeleton) {
     //glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
 
     if(!state->viewerState->selectModeFlag) {
@@ -1780,7 +1783,9 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glPopMatrix();
 
     /* new position */
-    renderSkeleton(VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    if(drawSkeleton) {
+        renderSkeleton(VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    }
 
     // Draw axis description
     glColor4f(0., 0., 0., 1.);
@@ -1964,10 +1969,10 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
-        renderSkeletonVP(currentVP);
+        renderSkeletonVP(currentVP, true);
     } else {
         glDisable(GL_DEPTH_TEST);
-        renderOrthogonalVP(currentVP, state->overlay, state->viewerState->drawVPCrosshairs);
+        renderOrthogonalVP(currentVP, state->overlay, true, state->viewerState->drawVPCrosshairs);
     }
 
     GLint hits = glRenderMode(GL_RENDER);

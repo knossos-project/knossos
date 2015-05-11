@@ -24,6 +24,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     withOverlayCheck.setChecked(true);
     withScaleCheck.setChecked(true);
     imageOptionsLayout->addWidget(&withOverlayCheck);
+    imageOptionsLayout->addWidget(&withSkeletonCheck);
     imageOptionsLayout->addWidget(&withScaleCheck);
 
     auto settingsLayout = new QHBoxLayout();
@@ -46,7 +47,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpYZRadio.isChecked() ? VIEWPORT_YZ :
                                                     VIEWPORT_SKELETON;
-            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withScaleCheck.isChecked());
+            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked());
         }
     });
 
@@ -80,6 +81,7 @@ void SnapshotWidget::saveSettings() {
 
     settings.setValue(VIEWPORT, getCheckedViewport());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
+    settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
     settings.setValue(SAVE_DIR, saveDir);
     settings.endGroup();
@@ -104,6 +106,7 @@ void SnapshotWidget::loadSettings() {
     }
 
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
+    withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
     saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 

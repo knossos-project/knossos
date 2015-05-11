@@ -576,7 +576,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay, state->viewerState->drawVPCrosshairs);
+    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay, true, state->viewerState->drawVPCrosshairs);
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -588,7 +588,7 @@ void Viewport::drawSkeletonViewport() {
         }
         renderVolumeVP(VIEWPORT_SKELETON);
     } else {
-        state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+        state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON, true);
     }
 }
 
@@ -929,17 +929,27 @@ void Viewport::resetButtonClicked() {
     }
 }
 
-void Viewport::takeSnapshot(QString path, bool withOverlay, bool withScale) {
+void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, bool withScale) {
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, 1024, 1024);
     QOpenGLFramebufferObject fbo(1024, 1024, QOpenGLFramebufferObject::Depth);
 
     fbo.bind();
     if(viewportType == VIEWPORT_SKELETON) {
-        drawSkeletonViewport();
+        auto& seg = Segmentation::singleton();
+        if (seg.volume_render_toggle) {
+            if(seg.volume_update_required) {
+                seg.volume_update_required = false;
+                updateVolumeTexture();
+            }
+            renderVolumeVP(VIEWPORT_SKELETON);
+        }
+        else {
+            state->viewer->renderer->renderSkeletonVP(id, withSkeleton);
+        }
     }
     else {
-        state->viewer->renderer->renderOrthogonalVP(id, withOverlay, false);
+        state->viewer->renderer->renderOrthogonalVP(id, withOverlay, withSkeleton, false);
     }
     if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);

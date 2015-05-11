@@ -78,8 +78,8 @@ protected:
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
-    bool renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawCrosshairs);
-    bool renderSkeletonVP(uint currentVP);
+    bool renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawSkeleton, bool drawCrosshairs);
+    bool renderSkeletonVP(uint currentVP, bool drawSkeleton);
 };
 
 #endif // RENDERER_H
