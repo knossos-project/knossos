@@ -405,7 +405,9 @@ void Viewport::setDock(bool isDock) {
 }
 
 void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
-    setDock(!isDocked);
+    if (event->button() == Qt::MouseButton::LeftButton) {
+        setDock(!isDocked);
+    }
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
