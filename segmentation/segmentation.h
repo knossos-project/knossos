@@ -183,6 +183,7 @@ public:
     int volume_mouse_move_x = 0;
     int volume_mouse_move_y = 0;
     float volume_mouse_zoom = 1.0f;
+    uint8_t volume_opacity = 255;
     //data query
     bool hasObjects() const;
     bool subobjectExists(const uint64_t & subobjectId) const;

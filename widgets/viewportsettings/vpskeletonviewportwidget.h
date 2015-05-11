@@ -28,8 +28,11 @@
 #include <QCheckBox>
 #include <QFrame>
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
+#include <QSlider>
+#include <QSpinBox>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -53,6 +56,10 @@ class VPSkeletonViewportWidget : public QWidget
     QFrame line3;
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
     QCheckBox VolumeRenderFlagCheckBox{"Render Volume instead of Skeleton"};
+    QLabel VolumeOpaquenessLabel{"Volume Opaqueness"};
+    QSpinBox VolumeOpaquenessSpinBox;
+    QSlider VolumeOpaquenessSlider{Qt::Horizontal};
+    QHBoxLayout VolumeOpaquenessLayout;
 
 //slots
 public:

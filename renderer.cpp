@@ -1165,9 +1165,10 @@ bool Viewport::renderVolumeVP(uint currentVP) {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glBindTexture(GL_TEXTURE_3D, volTexId);
+        float volume_opacity = seg.volume_opacity / 255.0f;
         for(int i = 0; i < texLen * volumeClippingAdjust * maxScaleRatio; ++i) {
             float depth = i/(texLen * volumeClippingAdjust * maxScaleRatio);
-            glColor4f(depth, depth, depth, 1.0f);
+            glColor4f(depth, depth, depth, volume_opacity);
             glBegin(GL_QUADS);
                 glTexCoord3f(0.0f, 1.0f, depth);
                 glVertex3f(-1.0f, -1.0f,  1.0f-depth*2.0f);

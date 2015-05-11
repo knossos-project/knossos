@@ -800,6 +800,7 @@ void Viewport::updateVolumeTexture() {
                 colcube[4*indexInTex+3] = std::get<3>(idColor);
             } else if (seg.isSubObjectIdSelected(subobjectId)) {
                 auto idColor = seg.colorObjectFromId(subobjectId);
+                std::get<3>(idColor) = 255; // ignore color alpha
                 colcube[4*indexInTex+0] = std::get<0>(idColor);
                 colcube[4*indexInTex+1] = std::get<1>(idColor);
                 colcube[4*indexInTex+2] = std::get<2>(idColor);
