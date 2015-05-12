@@ -140,8 +140,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     vpLayout->addWidget(resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
     setLayout(vpLayout);
 
-    setDock(true);
-
     timeDBase.start();
     timeFBase.start();
 }
@@ -259,24 +257,6 @@ void Viewport::createOverlayTextures() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
-void Viewport::move(int ax, int ay) {
-    move(QPoint(ax,ay));
-}
-
-void Viewport::move(QPoint p) {
-    QWidget::move(p);
-    if (isDocked) {
-        dockPos = p;
-    }
-}
-
-void Viewport::resize (int w, int h) {
-    QWidget::resize(w,h);
-    if (isDocked) {
-        dockSize = size().width();
-    }
-}
-
 void Viewport::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -379,7 +359,6 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
 void Viewport::setDock(bool isDock) {
     bool wasVisible = isVisible();
-    int curSize = size().width();
     isDocked = isDock;
     if (isDock) {
         setParent(dockParent);
@@ -387,16 +366,18 @@ void Viewport::setDock(bool isDock) {
             delete floatParent;
             floatParent = NULL;
         }
-        resize(dockSize,dockSize);
         move(dockPos);
-    }
-    else {
+        resize(dockSize);
+    } else {
+        dockPos = pos();
+        dockSize = size();
         floatParent = new QViewportFloatWidget(dockParent, id);
         floatParent->layout()->addWidget(this);
-        floatParent->resize(curSize,curSize);
+        floatParent->resize(size());
         if (wasVisible) {
             floatParent->show();
         }
+        state->viewerState->defaultVPSizeAndPos = false;
     }
     if (wasVisible) {
         show();
@@ -677,7 +658,8 @@ void Viewport::resizeVP(QMouseEvent *event) {
     const auto verticalSpace = parentWidget()->height() - y();
     const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(position.x(), position.y())}));
 
-    resize(size, size);
+    dockSize = {size, size};
+    resize(dockSize);
 
     state->viewerState->defaultVPSizeAndPos = false;
 }

@@ -1077,15 +1077,15 @@ void MainWindow::saveSettings() {
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->dockSize);
-    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->dockSize);
-    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->dockSize);
-    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->dockSize);
+    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->dockSize.isEmpty() ? viewports[VIEWPORT_XY]->size() : viewports[VIEWPORT_XY]->dockSize);
+    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->dockSize.isEmpty() ? viewports[VIEWPORT_XZ]->size() : viewports[VIEWPORT_XZ]->dockSize);
+    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->dockSize.isEmpty() ? viewports[VIEWPORT_YZ]->size() : viewports[VIEWPORT_YZ]->dockSize);
+    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->dockSize.isEmpty() ? viewports[VIEWPORT_SKELETON]->size() : viewports[VIEWPORT_SKELETON]->dockSize);
 
-    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->dockPos);
-    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->dockPos);
-    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos);
-    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos);
+    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->dockPos.isNull() ? viewports[VIEWPORT_XY]->pos() : viewports[VIEWPORT_XY]->dockPos);
+    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->dockPos.isNull() ? viewports[VIEWPORT_XZ]->pos() : viewports[VIEWPORT_XZ]->dockPos);
+    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos.isNull() ? viewports[VIEWPORT_YZ]->pos() : viewports[VIEWPORT_YZ]->dockPos);
+    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos.isNull() ? viewports[VIEWPORT_SKELETON]->pos() : viewports[VIEWPORT_SKELETON]->dockPos);
 
     settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
@@ -1135,10 +1135,10 @@ void MainWindow::loadSettings() {
 
     state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
     if(state->viewerState->defaultVPSizeAndPos == false) {
-        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toInt(), settings.value(VPXY_SIZE).toInt());
-        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toInt(), settings.value(VPXZ_SIZE).toInt());
-        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toInt(), settings.value(VPYZ_SIZE).toInt());
-        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toInt(), settings.value(VPSKEL_SIZE).toInt());
+        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toSize());
+        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toSize());
+        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toSize());
+        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toSize());
 
         viewports[VIEWPORT_XY]->move(settings.value(VPXY_COORD).toPoint());
         viewports[VIEWPORT_XZ]->move(settings.value(VPXZ_COORD).toPoint());
@@ -1238,9 +1238,11 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    setViewportsDock(true);
-    setViewportsVisible(true);
-    resizeViewports(centralWidget()->width(), centralWidget()->height());
+    for (auto & vp : viewports) {
+        vp->setDock(true);
+        vp->setVisible(true);
+    }
+    resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
@@ -1300,19 +1302,7 @@ void MainWindow::placeComment(const int index) {
     }
 }
 
-void MainWindow::setViewportsDock(bool isDock) {
-    for(int i = 0; i < 4; i++) {
-        viewports[i]->setDock(isDock);
-    }
-}
-
-void MainWindow::setViewportsVisible(bool isVisible) {
-    for(int i = 0; i < 4; i++) {
-        viewports[i]->setVisible(isVisible);
-    }
-}
-
-void MainWindow::resizeViewports(int width, int height) {
+void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN) / 2;
     height = (height - DEFAULT_VP_MARGIN) / 2;
     int mindim = std::min(width, height);

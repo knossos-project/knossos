@@ -169,9 +169,6 @@ class Viewport : public QGLWidget, protected QOpenGLFunctions_2_0 {
 public:
     const static uint numberViewports = 4;
     explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);
-    void move(int ax, int ay);
-    void move(QPoint p);
-    void resize(int w, int h);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void setDock(bool isDock);
@@ -180,7 +177,7 @@ public:
     void updateOverlayTexture();
     void updateVolumeTexture();
 
-    int dockSize;
+    QSize dockSize;
     QPoint dockPos;
     EventModel *eventDelegate;
     static bool arbitraryOrientation;

@@ -59,9 +59,7 @@ class MainWindow : public QMainWindow {
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
-    void setViewportsDock(bool isDock);
-    void resizeViewports(int width, int height);
-    void setViewportsVisible(bool isVisible);
+    void resizeToFitViewports(int width, int height);
 
     QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"File"};
