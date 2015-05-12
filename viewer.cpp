@@ -548,7 +548,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                 }
             }
             //Take care of the overlay textures.
-            if (state->overlay && oc_reslice) {
+            if (state->overlay && oc_reslice && state->viewerState->showOverlay) {
                 glBindTexture(GL_TEXTURE_2D, currentVp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.

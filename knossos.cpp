@@ -242,6 +242,7 @@ bool Knossos::commonInitStates() {
 bool Knossos::initStates() {
     // For the viewer
     state->viewerState->movementAreaFactor = 80;
+    state->viewerState->showOverlay = true;
     state->viewerState->autoTracingMode = navigationMode::recenter;
     state->viewerState->autoTracingDelay = 50;
     state->viewerState->autoTracingSteps = 10;

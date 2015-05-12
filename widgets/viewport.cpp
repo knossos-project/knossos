@@ -562,7 +562,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay, true, state->viewerState->drawVPCrosshairs);
+    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay && state->viewerState->showOverlay, true, state->viewerState->drawVPCrosshairs);
 }
 
 void Viewport::drawSkeletonViewport() {

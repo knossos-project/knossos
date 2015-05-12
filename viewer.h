@@ -152,6 +152,7 @@ struct viewerState {
     QString lockComment;
 
     float movementAreaFactor;
+    bool showOverlay;
 };
 
 /**

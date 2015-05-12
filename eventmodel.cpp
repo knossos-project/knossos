@@ -1077,7 +1077,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Space) {
-        state->overlay = false;
+        state->viewerState->showOverlay = false;
         state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if(control) {
@@ -1132,7 +1132,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 
 void EventModel::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
-        state->overlay = true;
+        state->viewerState->showOverlay = true;
         state->viewer->oc_reslice_notify_visible();
     }
     if (event->key() == Qt::Key_5) {
