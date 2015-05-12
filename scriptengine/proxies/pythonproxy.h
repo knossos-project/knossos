@@ -32,6 +32,8 @@ public slots:
     void setPosition(int x, int y, int z);
     quint64 readOverlayVoxel(int x, int y, int z);
     bool writeOverlayVoxel(int x, int y, int z, quint64 val);
+    char *addrDcOc2Pointer(int x, int y, int z, bool isOc);
+    PyObject *PyBufferAddrDcOc2Pointer(int x, int y, int z, bool isOc);
     QByteArray readDc2Pointer(int x, int y, int z);
     int readDc2PointerPos(int x, int y, int z, int pos);
     bool writeDc2Pointer(int x, int y, int z, char *bytes);

@@ -73,9 +73,18 @@ QByteArray PythonProxy::readDc2Pointer(int x, int y, int z) {
     return QByteArray::fromRawData((const char*)data, state->cubeBytes);
 }
 
+char *PythonProxy::addrDcOc2Pointer(int x, int y, int z, bool isOc) {
+    coord2bytep_map_t *PointerMap = isOc ? state->Oc2Pointer : state->Dc2Pointer;
+    return Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(state->magnification)], Coordinate(x,y,z));
+}
+
+PyObject* PythonProxy::PyBufferAddrDcOc2Pointer(int x, int y, int z, bool isOc) {
+    void *data = addrDcOc2Pointer(x,y,z,isOc);
+    return PyBuffer_FromReadWriteMemory(data, state->cubeBytes*(isOc ? OBJID_BYTES : 1));
+}
+
 int PythonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    char *data = addrDcOc2Pointer(x,y,z, false);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
@@ -85,8 +94,7 @@ int PythonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
 }
 
 bool PythonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    char *data = addrDcOc2Pointer(x,y,z,false);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -97,8 +105,7 @@ bool PythonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
 }
 
 bool PythonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    char *data = addrDcOc2Pointer(x,y,z,false);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -109,8 +116,7 @@ bool PythonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
 }
 
 QByteArray PythonProxy::readOc2Pointer(int x, int y, int z) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    char *data = addrDcOc2Pointer(x,y,z,true);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return QByteArray();
@@ -120,8 +126,7 @@ QByteArray PythonProxy::readOc2Pointer(int x, int y, int z) {
 }
 
 quint64 PythonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
-    Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+    quint64 *data = (quint64*)addrDcOc2Pointer(x,y,z,true);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
@@ -131,8 +136,7 @@ quint64 PythonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
 }
 
 bool PythonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    char *data = addrDcOc2Pointer(x,y,z,true);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
@@ -143,8 +147,7 @@ bool PythonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
 }
 
 bool PythonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) {
-    Coordinate position(x, y, z);
-    quint64 *data = (quint64 *)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[(int)std::log2(state->magnification)], position);
+    quint64 *data = (quint64*)addrDcOc2Pointer(x,y,z,true);
     if(!data) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
