@@ -1,9 +1,15 @@
 #include "snapshotwidget.h"
+
 #include "GuiConstants.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QDir>
+#include <QFileDialog>
 #include <QHBoxLayout>
+#include <QSettings>
 
 SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);

@@ -34,7 +34,10 @@
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
+#include <QApplication>
 #include <QHBoxLayout>
+#include <QMenu>
+#include <QOpenGLFramebufferObject>
 #include <QPainter>
 #include <QPushButton>
 #include <QVBoxLayout>

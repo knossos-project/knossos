@@ -7,21 +7,16 @@
 
 #include <QCheckBox>
 #include <QDialog>
+#include <QLabel>
 #include <QTextDocument>
+#include <QSpinBox>
+#include <QString>
+#include <QStringList>
 #include <QListWidget>
 #include <QTableWidget>
 
-class QComboBox;
-class QGroupBox;
-class QLabel;
-class QLineEdit;
-class QPushButton;
-class QSpinBox;
-class QTextDocument;
-class QRadioBox;
-class QListWidget;
-class QTableWidget;
 class QScrollArea;
+class QPushButton;
 
 class DatasetLoadWidget : public QDialog {
     Q_OBJECT
