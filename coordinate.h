@@ -42,7 +42,8 @@ public:
     ComponentType y;
     ComponentType z;
 
-    constexpr Coord(ComponentType x = 0, ComponentType y = 0, ComponentType z = 0) : x(x), y(y), z(z) {}
+    constexpr Coord(ComponentType every = 0) : x(every), y(every), z(every) {}
+    constexpr Coord(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
     template<typename T, typename = typename std::enable_if<std::is_convertible<ComponentType, T>::value>::type>
     constexpr Coord(const Coord<T> & rhs) : x(rhs.x), y(rhs.y), z(rhs.z) {}
 
@@ -79,24 +80,6 @@ public:
     }
     Coord & operator/=(const Coord & rhs) {
         return *this = *this / rhs;
-    }
-
-    template<typename T>
-    constexpr auto operator*(const T factor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
-        return Coord(x * factor, y * factor, z * factor);
-    }
-    template<typename T>
-    auto operator*=(const T factor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
-        return *this = *this * factor;
-    }
-
-    template<typename T>
-    constexpr auto operator/(const T divisor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
-        return Coord(x / divisor, y / divisor, z / divisor);
-    }
-    template<typename T>
-    auto operator/=(const T divisor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
-        return *this = *this / divisor;
     }
 
     constexpr CoordOfCube cube(const int size, const int mag) const {
