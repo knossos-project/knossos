@@ -63,7 +63,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
             seg.createAndSelectObject(coord);
         }
         uint64_t soid = 0;
-        if (seg.selectedObjectsCount()) {
+        if (seg.selectedObjectsCount() != 0) {
             soid = seg.subobjectIdOfFirstSelectedObject();
             seg.updateLocationForFirstSelectedObject(coord);
         }
