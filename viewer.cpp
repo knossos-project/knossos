@@ -1107,7 +1107,7 @@ void Viewer::run() {
     recalcTextureOffsets();
 
     for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
-        vpConfig currentVp = state->viewerState->vpConfigs[drawCounter];
+        vpConfig & currentVp = state->viewerState->vpConfigs[drawCounter];
         // This condition relies on the ugly assumption, that the vpConfigs
         // index corresponds to the viewports vector index, which is ugly true
         if (state->viewer->window->viewports[drawCounter]->isVisible()) {
