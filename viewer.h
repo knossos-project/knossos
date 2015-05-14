@@ -144,6 +144,9 @@ struct viewerState {
     float cumDistRenderThres;
 
     bool defaultVPSizeAndPos;
+    //there’s a problem (intel drivers on linux only?)
+    //rendering knossos at full speed and displaying a file dialog
+    //so we reduce the rendering speed during display of said dialog
     uint renderInterval;
 
     //In pennmode right and left click are switched
