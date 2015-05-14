@@ -731,7 +731,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     if (fileNames.empty()) {
         return false;
     }
-    QApplication::processEvents();
 
     bool mergeSkeleton = false;
     bool mergeSegmentation = false;
@@ -830,18 +829,18 @@ void MainWindow::newAnnotationSlot() {
   *
   */
 void MainWindow::openSlot() {
-    state->viewerState->renderInterval = SLOW;
 #ifdef Q_OS_MAC
     QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
 #else
     QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
 #endif
+    state->viewerState->renderInterval = SLOW;
     QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
+    state->viewerState->renderInterval = FAST;
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
         openFileDispatch(fileNames);
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::autosaveSlot() {
@@ -875,9 +874,6 @@ void MainWindow::saveSlot() {
 }
 
 void MainWindow::saveAsSlot() {
-    state->viewerState->renderInterval = SLOW;
-    QApplication::processEvents();
-
     auto *seg = &Segmentation::singleton();
     if (!state->skeletonState->firstTree && !seg->hasObjects()) {
         QMessageBox::information(this, "No Save", "Neither segmentation nor skeletonization were found. Not saving!");
@@ -885,11 +881,14 @@ void MainWindow::saveAsSlot() {
     }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
+    state->viewerState->renderInterval = SLOW;
 #ifdef Q_OS_MAC
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
 #else
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
 #endif
+    state->viewerState->renderInterval = FAST;
+
     if (!fileName.isEmpty()) {
         if (!fileName.contains(".k.zip")) {
             fileName += ".k.zip";
@@ -903,12 +902,9 @@ void MainWindow::saveAsSlot() {
         updateRecentFile(annotationFilename);
         updateTitlebar();
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::exportToNml() {
-    state->viewerState->renderInterval = SLOW;
-    QApplication::processEvents();
     if(!state->skeletonState->firstTree) {
         QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
         return;
@@ -918,14 +914,15 @@ void MainWindow::exportToNml() {
     defaultpath.chop(6);
     defaultpath += ".nml";
     const auto & suggestedFilepath = annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    state->viewerState->renderInterval = SLOW;
     auto filename = QFileDialog::getSaveFileName(this, "Export to Skeleton file", suggestedFilepath, "KNOSSOS Skeleton file (*.nml)");
+    state->viewerState->renderInterval = FAST;
     if(filename.isEmpty() == false) {
         if(filename.endsWith(".nml") == false) {
             filename += ".nml";
         }
         nmlExport(filename);
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::setAnnotationMode(AnnotationMode mode) {

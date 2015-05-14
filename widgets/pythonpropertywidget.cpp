@@ -60,10 +60,10 @@ void PythonPropertyWidget::closeEvent(QCloseEvent *) {
 void PythonPropertyWidget::autoStartFolderButtonClicked() {
      state->viewerState->renderInterval = SLOW;
      QString selection = QFileDialog::getExistingDirectory(this, "select the autostart folder", QDir::homePath());
+     state->viewerState->renderInterval = FAST;
      if(!selection.isEmpty()) {
          autoStartFolderEdit->setText(selection);
      }
-     state->viewerState->renderInterval = FAST;
 }
 
 void PythonPropertyWidget::openTerminal() {
@@ -143,11 +143,10 @@ void PythonPropertyWidget::loadSettings() {
 }
 
 void PythonPropertyWidget::workingDirectoryButtonClicked() {
-    state->viewerState->renderInterval = SLOW;
+     state->viewerState->renderInterval = SLOW;
      QString selection = QFileDialog::getExistingDirectory(this, "select a working directory", QDir::homePath());
+     state->viewerState->renderInterval = FAST;
      if(!selection.isEmpty()) {
          workingDirectoryEdit->setText(selection);
      }
-
-     state->viewerState->renderInterval = FAST;
 }
