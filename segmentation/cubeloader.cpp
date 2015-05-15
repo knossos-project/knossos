@@ -182,3 +182,18 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
         }
     }
 }
+
+void processRegionByBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, const char *data, const Coordinate & strides, bool isWrite) {
+    if (isWrite) {
+        processRegion(globalFirst, globalLast,
+                [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
+                voxel = *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]);
+            });
+    }
+    else {
+        processRegion(globalFirst, globalLast,
+                [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
+                *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]) = voxel;
+            });
+    }
+}

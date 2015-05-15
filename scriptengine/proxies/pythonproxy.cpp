@@ -1,5 +1,4 @@
 #include "pythonproxy.h"
-
 #include "buildinfo.h"
 #include "functions.h"
 #include "segmentation/cubeloader.h"
@@ -11,6 +10,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <Python.h>
 #include <QApplication>
 #include <QFile>
 
@@ -40,16 +40,8 @@ QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
     return charList;
 }
 
-QList<int> CoordToList(const Coordinate &c) {
-    QList<int> l;
-    l.append(c.x);
-    l.append(c.y);
-    l.append(c.z);
-    return l;
-}
-
 QList<int> PythonProxy::getPosition() {
-    return CoordToList(state->viewerState->currentPosition);
+    return state->viewerState->currentPosition.list();
 }
 
 QList<float> PythonProxy::getScale() {
@@ -157,6 +149,11 @@ bool PythonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) 
     return true;
 }
 
+void PythonProxy::processRegionByBufProxy(QList<int> globalFirst, QList<int> size,
+                             quint64 dataPtr, QList<int> strides, bool isWrite) {
+    processRegionByBuf(Coordinate(globalFirst), Coordinate(globalFirst) + Coordinate(size) - 1, (char*)dataPtr, Coordinate(strides), isWrite);
+}
+
 quint64 PythonProxy::readOverlayVoxel(int x, int y, int z) {
     return readVoxel(Coordinate(x,y,z));
 }
@@ -178,16 +175,7 @@ void PythonProxy::setMovementArea(int minx, int miny, int minz, int maxx, int ma
 }
 
 QList<int> PythonProxy::getMovementArea() {
-    Coordinate min = Session::singleton().movementAreaMin;
-    Coordinate max = Session::singleton().movementAreaMax;
-    QList<int> l;
-    l.append(min.x);
-    l.append(min.y);
-    l.append(min.z);
-    l.append(max.x);
-    l.append(max.y);
-    l.append(max.z);
-    return l;
+    return  Session::singleton().movementAreaMin.list() + Session::singleton().movementAreaMax.list();
 }
 
 float PythonProxy::getMovementAreaFactor() {

@@ -42,6 +42,8 @@ public slots:
     quint64 readOc2PointerPos(int x, int y, int z, int pos);
     bool writeOc2Pointer(int x, int y, int z, char *bytes);
     bool writeOc2PointerPos(int x, int y, int z, int pos, quint64 val);
+    void processRegionByBufProxy(QList<int> globalFirst, QList<int> size,
+                                 quint64 dataPtr, QList<int> strides, bool isWrite);
     void setMovementArea(int minx, int miny, int minz, int maxx, int maxy, int maxz);
     void resetMovementArea();
     QList<int> getMovementArea();
