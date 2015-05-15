@@ -25,6 +25,7 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include <Qlist>
 #include <QMetaType>
 
 #include <cstddef>
@@ -43,10 +44,16 @@ public:
     ComponentType z;
 
     constexpr Coord(ComponentType every = 0) : x(every), y(every), z(every) {}
+    constexpr Coord(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr Coord(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
     template<typename T, typename = typename std::enable_if<std::is_convertible<ComponentType, T>::value>::type>
     constexpr Coord(const Coord<T> & rhs) : x(rhs.x), y(rhs.y), z(rhs.z) {}
-
+    constexpr ComponentType sum() const {
+        return x+y+z;
+    }
+    constexpr QList<ComponentType> list() const {
+        return QList<ComponentType>({x, y, z});
+    }
     constexpr bool operator==(const Coord & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
     }
