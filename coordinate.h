@@ -25,7 +25,7 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
-#include <Qlist>
+#include <QList>
 #include <QMetaType>
 
 #include <cstddef>
