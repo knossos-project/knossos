@@ -36,6 +36,7 @@
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
+#include <PythonQt/PythonQt.h>
 #include <QAction>
 #include <QCheckBox>
 #include <QDebug>
@@ -1337,6 +1338,5 @@ void MainWindow::pythonFileSlot() {
     s.append(textStream.readAll());
     pyFile.close();
 
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    ctx.evalScript(s, Py_file_input);
+    state->scripting->_ctx.evalScript(s, Py_file_input);
 }

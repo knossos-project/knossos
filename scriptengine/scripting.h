@@ -106,13 +106,13 @@ public:
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
+    PythonQtObjectPtr _ctx;
 protected:
     QSettings *settings;
 private:
-    static void addScriptingObject(const QString &name, QObject *obj);
     void executeFromUserDirectory();
     void changeWorkingDirectory();
-    void addWidgets(PythonQtObjectPtr &context);
+    void addWidgets();
     void autoStartTerminal();
 };
 

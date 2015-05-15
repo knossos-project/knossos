@@ -5,6 +5,7 @@
 #include "viewer.h"
 
 #include <Python.h>
+#include <PythonQt/PythonQt.h>
 #include <QApplication>
 #include <QCheckBox>
 #include <QDebug>
@@ -69,6 +70,7 @@ void PythonPropertyWidget::autoStartFolderButtonClicked() {
 void PythonPropertyWidget::openTerminal() {
     if (NULL == interpreter) {
         interpreter = new PythonInterpreterWidget((QWidget*)this->parent());
+        state->scripting->_ctx.addObject("knossos_global_interpreter", interpreter);
     }
     interpreter->show();
 }
