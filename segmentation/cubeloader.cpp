@@ -31,14 +31,16 @@ uint64_t readVoxel(const Coordinate & pos) {
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];
 }
 
-bool writeVoxel(const Coordinate & pos, const uint64_t value) {
+bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
     if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {//snappy cache only mag1 capable
         return false;
     }
     const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
     getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
-    Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
+    if (isMarkChanged) {
+        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
+    }
     return true;
 }
 
@@ -64,7 +66,13 @@ std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const 
     return std::make_pair(globalFirst, globalLast);
 }
 
-auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  globalLast, const uint64_t value) {
+void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
+    for (auto &cubeCoord : cubeChangeSet) {
+        Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, state->magnification);
+    }
+}
+
+auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  globalLast, const uint64_t value, CubeCoordSet &cubeChangeSet) {
     const auto wholeCubeBegin = (globalFirst + (state->cubeEdgeLength - 1)).cube(state->cubeEdgeLength, state->magnification);
     const auto wholeCubeEnd = globalLast.cube(state->cubeEdgeLength, state->magnification);
 
@@ -78,8 +86,7 @@ auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  global
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
             std::fill(cubeRef.data(), cubeRef.data() + cubeRef.num_elements(), value);
-
-            Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, state->magnification);
+            cubeChangeSet.emplace(cubeCoord);
         } else {
             qCritical() << x << y << z << "cube missing for (complete) writeVoxels";
         }
@@ -93,9 +100,10 @@ auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  global
 };
 
 template<typename Func, typename Skip>
-void processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
+CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
     const auto cubeBegin = globalFirst.cube(state->cubeEdgeLength, state->magnification);
     const auto cubeEnd = (globalLast + (state->cubeEdgeLength - 1)).cube(state->cubeEdgeLength, state->magnification);
+    CubeCoordSet cubeCoords;
 
     //traverse all remaining cubes
     for (int z = cubeBegin.z; z < cubeEnd.z; ++z)
@@ -116,16 +124,16 @@ void processRegion(const Coordinate & globalFirst, const Coordinate &  globalLas
             for (int x = localStart.x; x <= localEnd.x; ++x) {
                 func(cubeRef[z][y][x], Coordinate{globalCubeBegin.x + x, globalCubeBegin.y + y, globalCubeBegin.z + z});
             }
-
-            Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, state->magnification);
+            cubeCoords.emplace(cubeCoord);
         } else {
             qCritical() << x << y << z << "cube missing for (partial) writeVoxels";
         }
     }
+    return cubeCoords;
 }
 
 template<typename Func>//wrapper without Skip
-void processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func) {
+CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func) {
     return processRegion(globalFirst, globalLast, func, [](int &, int, int){});
 }
 
@@ -140,9 +148,11 @@ std::unordered_set<uint64_t> readVoxels(const Coordinate & centerPos, const brus
     return subobjects;
 }
 
-void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t & brush) {
+void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t & brush, bool isMarkChanged) {
     //all the different invocations here are listed explicitly so the compiler can inline the fuck out of it
     //the brush differentiations were moved outside the core lambda which is called for every voxel
+    CubeCoordSet cubeChangeSet;
+    CubeCoordSet cubeChangeSetWholeCube;
     if (brush.getTool() == brush_t::tool_t::add) {
         const auto region = getRegion(centerPos, brush);
         if (brush.getShape() == brush_t::shape_t::square) {
@@ -150,16 +160,16 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                 //for rectangular brushes no further range checks are needed
                 if (brush.getMode() == brush_t::mode_t::three_dim && brush.getShape() == brush_t::shape_t::square) {
                     //rarest special case: processes completely exclosed cubes first
-                    processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
                         voxel = value;
-                    }, wholeCubes(region.first, region.second, value));
+                    }, wholeCubes(region.first, region.second, value, cubeChangeSetWholeCube));
                 } else {
-                    processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
                         voxel = value;
                     });
                 }
             } else {//inverse but selected
-                processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
                     if (Segmentation::singleton().isSubObjectIdSelected(voxel)) {//if there’re selected objects, we only want to erase these
                         voxel = 0;
                     }
@@ -167,13 +177,13 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
             }
         } else if (!brush.isInverse() || Segmentation::singleton().selectedObjectsCount() == 0) {
             //voxel need to check if they are inside the circle
-            processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
                 if (isInsideCircle(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius()+1)) {
                     voxel = value;
                 }
             });
         } else {//circle, inverse and selected
-            processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
                 if (isInsideCircle(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius()+1)
                         && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
                     voxel = 0;
@@ -181,19 +191,30 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
             });
         }
     }
+    if (isMarkChanged) {
+        for (auto &elem : cubeChangeSetWholeCube) {
+            cubeChangeSet.emplace(elem);
+        }
+        coordCubesMarkChanged(cubeChangeSet);
+    }
 }
 
-void processRegionByBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, const char *data, const Coordinate & strides, bool isWrite) {
+CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, const char *data, const Coordinate & strides, bool isWrite, bool markChanged) {
+    CubeCoordSet cubeChangeSet;
     if (isWrite) {
-        processRegion(globalFirst, globalLast,
+        cubeChangeSet = processRegion(globalFirst, globalLast,
                 [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
                 voxel = *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]);
             });
+        if (markChanged) {
+            coordCubesMarkChanged(cubeChangeSet);
+        }
     }
     else {
-        processRegion(globalFirst, globalLast,
+        cubeChangeSet = processRegion(globalFirst, globalLast,
                 [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
                 *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]) = voxel;
             });
     }
+    return cubeChangeSet;
 }
