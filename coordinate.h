@@ -45,6 +45,7 @@ public:
 
     constexpr Coord(ComponentType every = 0) : x(every), y(every), z(every) {}
     constexpr Coord(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
+    constexpr Coord(QVector<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr Coord(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
     template<typename T, typename = typename std::enable_if<std::is_convertible<ComponentType, T>::value>::type>
     constexpr Coord(const Coord<T> & rhs) : x(rhs.x), y(rhs.y), z(rhs.z) {}
@@ -52,7 +53,10 @@ public:
         return x+y+z;
     }
     constexpr QList<ComponentType> list() const {
-        return QList<ComponentType>({x, y, z});
+        return {x, y, z};
+    }
+    constexpr QVector<ComponentType> vector() const {
+        return {x, y, z};
     }
     constexpr bool operator==(const Coord & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
