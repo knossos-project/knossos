@@ -45,50 +45,45 @@ QList<int> PythonProxy::getPosition() {
 }
 
 QList<float> PythonProxy::getScale() {
-    QList<float> l;
-    auto scale = state->scale;
-    l.append(scale.x);
-    l.append(scale.y);
-    l.append(scale.z);
-    return l;
+    return state->scale.list();
 }
 
 
-QByteArray PythonProxy::readDc2Pointer(int x, int y, int z) {
-    Coordinate position(x, y, z);
-    char *data = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+char *PythonProxy::addrDcOc2Pointer(QList<int> coord, bool isOc) {
+    coord2bytep_map_t *PointerMap = isOc ? state->Oc2Pointer : state->Dc2Pointer;
+    char *data = Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(state->magnification)], coord);
+    if (data == NULL) {
+        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(coord[0]).arg(coord[1]).arg(coord[2]));
+    }
+    return data;
+}
+
+QByteArray PythonProxy::readDc2Pointer(QList<int> coord) {
+    char *data = addrDcOc2Pointer(coord, false);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return QByteArray();
     }
 
     return QByteArray::fromRawData((const char*)data, state->cubeBytes);
 }
 
-char *PythonProxy::addrDcOc2Pointer(int x, int y, int z, bool isOc) {
-    coord2bytep_map_t *PointerMap = isOc ? state->Oc2Pointer : state->Dc2Pointer;
-    return Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(state->magnification)], Coordinate(x,y,z));
-}
-
-PyObject* PythonProxy::PyBufferAddrDcOc2Pointer(int x, int y, int z, bool isOc) {
-    void *data = addrDcOc2Pointer(x,y,z,isOc);
+PyObject* PythonProxy::PyBufferAddrDcOc2Pointer(QList<int> coord, bool isOc) {
+    void *data = addrDcOc2Pointer(coord,isOc);
     return PyBuffer_FromReadWriteMemory(data, state->cubeBytes*(isOc ? OBJID_BYTES : 1));
 }
 
-int PythonProxy::readDc2PointerPos(int x, int y, int z, int pos) {
-    char *data = addrDcOc2Pointer(x,y,z, false);
+int PythonProxy::readDc2PointerPos(QList<int> coord, int pos) {
+    char *data = addrDcOc2Pointer(coord, false);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
     }
 
     return data[pos];
 }
 
-bool PythonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
-    char *data = addrDcOc2Pointer(x,y,z,false);
+bool PythonProxy::writeDc2Pointer(QList<int> coord, char *bytes) {
+    char *data = addrDcOc2Pointer(coord,false);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
     }
 
@@ -96,10 +91,9 @@ bool PythonProxy::writeDc2Pointer(int x, int y, int z, char *bytes) {
     return true;
 }
 
-bool PythonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
-    char *data = addrDcOc2Pointer(x,y,z,false);
+bool PythonProxy::writeDc2PointerPos(QList<int> coord, int pos, int val) {
+    char *data = addrDcOc2Pointer(coord,false);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
     }
 
@@ -107,30 +101,27 @@ bool PythonProxy::writeDc2PointerPos(int x, int y, int z, int pos, int val) {
     return true;
 }
 
-QByteArray PythonProxy::readOc2Pointer(int x, int y, int z) {
-    char *data = addrDcOc2Pointer(x,y,z,true);
+QByteArray PythonProxy::readOc2Pointer(QList<int> coord) {
+    char *data = addrDcOc2Pointer(coord,true);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return QByteArray();
     }
 
     return QByteArray::fromRawData((const char*)data, state->cubeBytes * OBJID_BYTES);
 }
 
-quint64 PythonProxy::readOc2PointerPos(int x, int y, int z, int pos) {
-    quint64 *data = (quint64*)addrDcOc2Pointer(x,y,z,true);
+quint64 PythonProxy::readOc2PointerPos(QList<int> coord, int pos) {
+    quint64 *data = (quint64*)addrDcOc2Pointer(coord,true);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return -1;
     }
 
     return data[pos];
 }
 
-bool PythonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
-    char *data = addrDcOc2Pointer(x,y,z,true);
+bool PythonProxy::writeOc2Pointer(QList<int> coord, char *bytes) {
+    char *data = addrDcOc2Pointer(coord,true);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
     }
 
@@ -138,10 +129,9 @@ bool PythonProxy::writeOc2Pointer(int x, int y, int z, char *bytes) {
     return true;
 }
 
-bool PythonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) {
-    quint64 *data = (quint64*)addrDcOc2Pointer(x,y,z,true);
+bool PythonProxy::writeOc2PointerPos(QList<int> coord, int pos, quint64 val) {
+    quint64 *data = (quint64*)addrDcOc2Pointer(coord,true);
     if(!data) {
-        emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return false;
     }
 
@@ -149,29 +139,43 @@ bool PythonProxy::writeOc2PointerPos(int x, int y, int z, int pos, quint64 val) 
     return true;
 }
 
-void PythonProxy::processRegionByBufProxy(QList<int> globalFirst, QList<int> size,
-                             quint64 dataPtr, QList<int> strides, bool isWrite) {
-    processRegionByBuf(Coordinate(globalFirst), Coordinate(globalFirst) + Coordinate(size) - 1, (char*)dataPtr, Coordinate(strides), isWrite);
+QVector<int> PythonProxy::processRegionByStridedBufProxy(QList<int> globalFirst, QList<int> size,
+                             quint64 dataPtr, QList<int> strides, bool isWrite, bool isMarkChanged) {
+    auto cubeChangeSet = processRegionByStridedBuf(Coordinate(globalFirst), Coordinate(globalFirst) + Coordinate(size) - 1, (char*)dataPtr, Coordinate(strides), isWrite, isMarkChanged);
+    QVector<int> cubeChangeSetVector;
+    for (auto &elem : cubeChangeSet) {
+        cubeChangeSetVector += elem.vector();
+    }
+    return cubeChangeSetVector;
 }
 
-quint64 PythonProxy::readOverlayVoxel(int x, int y, int z) {
-    return readVoxel(Coordinate(x,y,z));
+void PythonProxy::coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList) {
+    CubeCoordSet cubeChangeSet;
+    auto elemNum = cubeChangeSetList.length();
+    for (int i = 0; i < elemNum; i += 3) {
+        cubeChangeSet.emplace(CoordOfCube(cubeChangeSetList[i],cubeChangeSetList[i+1],cubeChangeSetList[i+2]));
+    }
+    coordCubesMarkChanged(cubeChangeSet);
 }
 
-bool PythonProxy::writeOverlayVoxel(int x, int y, int z, quint64 val) {
-    return writeVoxel(Coordinate(x,y,z), val);
+quint64 PythonProxy::readOverlayVoxel(QList<int> coord) {
+    return readVoxel(coord);
 }
 
-void PythonProxy::setPosition(int x, int y, int z) {
-    emit pythonProxySignalDelegate->userMoveSignal(x, y, z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+bool PythonProxy::writeOverlayVoxel(QList<int> coord, quint64 val) {
+    return writeVoxel(coord, val);
+}
+
+void PythonProxy::setPosition(QList<int> coord) {
+    emit pythonProxySignalDelegate->userMoveSignal(coord[0], coord[1], coord[2], USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 void PythonProxy::resetMovementArea() {
     Session::singleton().resetMovementArea();
 }
 
-void PythonProxy::setMovementArea(int minx, int miny, int minz, int maxx, int maxy, int maxz) {
-    Session::singleton().updateMovementArea(Coordinate(minx, miny, minz),Coordinate(maxx, maxy, maxz));
+void PythonProxy::setMovementArea(QList<int> minCoord, QList<int> maxCoord) {
+    Session::singleton().updateMovementArea(minCoord,maxCoord);
 }
 
 QList<int> PythonProxy::getMovementArea() {
