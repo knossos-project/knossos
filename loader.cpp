@@ -659,6 +659,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto request = QNetworkRequest(dcUrl);
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+            if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).legacy2Global(state->cubeEdgeLength, state->magnification)) {
+                //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
+                request.setPriority(QNetworkRequest::HighPriority);
+            }
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
