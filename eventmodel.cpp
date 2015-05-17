@@ -68,10 +68,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
             seg.updateLocationForFirstSelectedObject(coord);
         }
         writeVoxels(coord, soid, seg.brush);
-        state->viewer->window->notifyUnsavedChanges();
     }
-
-    state->viewer->oc_reslice_notify_visible();
 }
 
 void merging(QMouseEvent *event, const int vp) {

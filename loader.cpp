@@ -26,7 +26,9 @@
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
+#include "skeleton/skeletonizer.h"
 #include "viewer.h"
+#include "widgets/mainwindow.h"
 
 #include <quazip/quazip.h>
 #include <quazip/quazipfile.h>
@@ -95,6 +97,28 @@ auto insideCurrentSupercubeWrap = [](const Coordinate & center){
 };
 bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord) {
     return currentlyVisibleWrap(center)(coord);
+}
+
+void Loader::Controller::waitForWorkerThread() {
+    ++loadingNr;
+    workerThread.quit();
+    workerThread.wait();
+}
+
+Loader::Controller::~Controller() {
+    waitForWorkerThread();
+}
+
+void Loader::Controller::unload() {
+    ++loadingNr;
+    emit unloadSignal();
+}
+
+void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
+    emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
+    state->viewer->window->notifyUnsavedChanges();
+    state->viewer->oc_reslice_notify_all(cubeCoord.legacy2Global(state->cubeEdgeLength, state->magnification));
+
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {

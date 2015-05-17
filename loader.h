@@ -182,18 +182,9 @@ public:
         static Loader::Controller loader;
         return loader;
     }
-    void waitForWorkerThread() {
-        ++loadingNr;
-        workerThread.quit();
-        workerThread.wait();
-    }
-    ~Controller() {
-        waitForWorkerThread();
-    }
-    void unload() {
-        ++loadingNr;
-        emit unloadSignal();
-    }
+    void waitForWorkerThread();
+    ~Controller();
+    void unload();
     template<typename... Args>
     void restart(Args&&... args) {
         waitForWorkerThread();
@@ -211,9 +202,7 @@ public:
     void snappyCacheAddSnappy(Args&&... args) {
         emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
     }
-    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
-        emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
-    }
+    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
     void unloadSignal();
