@@ -102,6 +102,7 @@ Q_OBJECT
     QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
+    QLabel subobjectHoveredLabel;
     QPushButton objectCreateButton{"Create new object"};
 
     bool objectSelectionProtection = false;

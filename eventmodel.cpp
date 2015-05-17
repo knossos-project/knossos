@@ -119,6 +119,7 @@ void merging(QMouseEvent *event, const int vp) {
 void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     auto subObjectId = readVoxel(coord);
+    Segmentation::singleton().hoverSubObject(subObjectId);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->scripting->signalRelay, coord, subObjectId, VPfound, event);
     if(Segmentation::singleton().hoverVersion && state->overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);

@@ -271,6 +271,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
 
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
+    bottomHLayout.addWidget(&subobjectHoveredLabel);
     bottomHLayout.addWidget(&objectCreateButton, 0, Qt::AlignRight);
 
     splitter.setOrientation(Qt::Vertical);
@@ -366,6 +367,9 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id){
+        subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %0").arg(subobject_id));
+    });
 
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(objectsTable, point);});
     QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});

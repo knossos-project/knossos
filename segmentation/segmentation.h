@@ -93,6 +93,7 @@ Q_OBJECT
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
+    uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
@@ -215,6 +216,7 @@ public:
 
     void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
+    void hoverSubObject(const uint64_t subobject_id);
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
@@ -235,6 +237,7 @@ signals:
     void setRecenteringPositionSignal(float x, float y, float z);
     void categoriesChanged();
     void todosLeftChanged();
+    void hoveredSubObjectChanged(const uint64_t subobject_id);
 public slots:
     void clear();
     void deleteSelectedObjects();

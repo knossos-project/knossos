@@ -299,6 +299,12 @@ uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmenta
     return objectIndex;
 }
 
+void Segmentation::hoverSubObject(const uint64_t subobject_id) {
+    if (subobject_id != hovered_subobject_id) {
+        emit hoveredSubObjectChanged(hovered_subobject_id = subobject_id);
+    }
+}
+
 void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
     emit resetTouchedObjects();
