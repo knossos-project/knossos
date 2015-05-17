@@ -1092,6 +1092,11 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos.isNull() ? viewports[VIEWPORT_YZ]->pos() : viewports[VIEWPORT_YZ]->dockPos);
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos.isNull() ? viewports[VIEWPORT_SKELETON]->pos() : viewports[VIEWPORT_SKELETON]->dockPos);
 
+    settings.setValue(VPXY_VISIBLE, viewports[VIEWPORT_XY]->isVisible());
+    settings.setValue(VPXZ_VISIBLE, viewports[VIEWPORT_XZ]->isVisible());
+    settings.setValue(VPYZ_VISIBLE, viewports[VIEWPORT_YZ]->isVisible());
+    settings.setValue(VPSKEL_VISIBLE, viewports[VIEWPORT_SKELETON]->isVisible());
+
     settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
     settings.setValue(ANNOTATION_MODE, static_cast<int>(Session::singleton().annotationMode));
@@ -1149,6 +1154,11 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_XZ]->move(settings.value(VPXZ_COORD).toPoint());
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
+
+        viewports[VIEWPORT_XY]->setVisible(settings.value(VPXY_VISIBLE).toBool());
+        viewports[VIEWPORT_XZ]->setVisible(settings.value(VPXZ_VISIBLE).toBool());
+        viewports[VIEWPORT_YZ]->setVisible(settings.value(VPYZ_VISIBLE).toBool());
+        viewports[VIEWPORT_SKELETON]->setVisible(settings.value(VPSKEL_VISIBLE).toBool());
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();

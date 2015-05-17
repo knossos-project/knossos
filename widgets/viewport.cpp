@@ -497,6 +497,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         else {
             floatParent->hide();
         }
+        state->viewerState->defaultVPSizeAndPos = false;
     }
     if (event->key() == Qt::Key_U) {
         if (isDocked) {
