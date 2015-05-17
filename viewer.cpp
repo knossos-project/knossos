@@ -589,7 +589,16 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     return true;
 }
 
-bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
+void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
+    if (!dc_xy_changed && !dc_xz_changed && !dc_zy_changed) {
+        return;
+    }
+    switch(currentVp.type) {
+    case SLICE_XY: dc_xy_changed = false; break;
+    case SLICE_XZ: dc_xz_changed = false; break;
+    case SLICE_YZ: dc_zy_changed = false; break;
+    }
+
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     Coordinate currentDc, currentPx;
@@ -644,8 +653,6 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
                     currentVp.viewPortData);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    return true;
 }
 
 /* this function calculates the mapping between the left upper texture pixel
@@ -1255,17 +1262,18 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     Coordinate lastPosition_dc;
     Coordinate newPosition_dc;
 
-    if (z != 0) {
-        dc_xy_changed = true;
-        oc_xy_changed = true;
-    }
-    if (x != 0) {
-        dc_zy_changed = true;
-        oc_zy_changed = true;
-    }
-    if (y != 0) {
-        dc_xz_changed = true;
-        oc_xz_changed = true;
+    if (Viewport::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
+        dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
+    } else {
+        if (z != 0) {
+            dc_xy_changed = oc_xy_changed = true;
+        }
+        if (x != 0) {
+            dc_zy_changed = oc_zy_changed = true;
+        }
+        if (y != 0) {
+            dc_xz_changed = oc_xz_changed = true;
+        }
     }
 
     // This determines whether the server will broadcast the coordinate change
@@ -1826,20 +1834,18 @@ void Viewer::setRotation(float x, float y, float z, float angle) {
     rotation = Rotation(x, y, z, alphaCache);
 }
 
-void Viewer::setVPOrientation(bool arbitrary) {
-    if(arbitrary) {
+void Viewer::setVPOrientation(const bool arbitrary) {
+    if (arbitrary) {
         window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
         window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
         window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_ARBITRARY);
-    }
-    else {
+    } else {
         window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
         window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
         window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
         resetRotation();
-        dc_reslice_notify_visible();
-        oc_reslice_notify_visible();
     }
+    dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
 }
 
 void Viewer::resetRotation() {

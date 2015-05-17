@@ -700,6 +700,15 @@ void Viewport::showHideButtons(bool isShow) {
 }
 
 void Viewport::updateOverlayTexture() {
+    if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
+        return;
+    }
+    switch(id) {
+    case SLICE_XY: state->viewer->oc_xy_changed = false; break;
+    case SLICE_XZ: state->viewer->oc_xz_changed = false; break;
+    case SLICE_YZ: state->viewer->oc_zy_changed = false; break;
+    }
+
     const int width = state->M * state->cubeEdgeLength;
     const int height = width;
     const auto & config = state->viewerState->vpConfigs[id];

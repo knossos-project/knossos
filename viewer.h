@@ -210,7 +210,7 @@ signals:
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();
 protected:
-    bool vpGenerateTexture_arb(vpConfig &currentVp);
+    void vpGenerateTexture_arb(vpConfig &currentVp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
     bool dcSliceExtract_arb(char *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
@@ -233,7 +233,7 @@ public slots:
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
-    void setVPOrientation(bool arbitrary);
+    void setVPOrientation(const bool arbitrary);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();
