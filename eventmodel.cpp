@@ -168,6 +168,10 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
+    if (Session::singleton().annotationMode != SkeletonizationMode) {
+        return true;
+    }
+
     auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
@@ -451,6 +455,9 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/) {
+    if (Session::singleton().annotationMode != SkeletonizationMode) {
+        return true;
+    }
 
     Coordinate newDraggedNodePos;
 
