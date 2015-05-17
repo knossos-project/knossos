@@ -19,6 +19,7 @@ const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
 /* General attributes appropriate for most widgets */
+const QString GEOMETRY = "geometry";
 const QString WIDTH  = "width";
 const QString HEIGHT = "height";
 const QString POS_X  = "x";

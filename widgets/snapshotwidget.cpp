@@ -79,10 +79,7 @@ QString SnapshotWidget::defaultFilename() const {
 void SnapshotWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(SNAPSHOT_WIDGET);
-    settings.setValue(WIDTH, geometry().width());
-    settings.setValue(HEIGHT, geometry().height());
-    settings.setValue(POS_X, geometry().x());
-    settings.setValue(POS_Y, geometry().y());
+    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(VIEWPORT, getCheckedViewport());
@@ -97,11 +94,8 @@ void SnapshotWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(SNAPSHOT_WIDGET);
 
-    const auto w = settings.value(WIDTH, width()).toInt();
-    const auto h = settings.value(HEIGHT, height()).toInt();
-    const auto x = settings.value(POS_X, QApplication::desktop()->screen()->rect().topRight().x() - width() - 20).toInt();
-    const auto y = settings.value(POS_Y, QApplication::desktop()->screen()->rect().topRight().y() + height()).toInt();
-    auto visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    setVisible(settings.value(VISIBLE, false).toBool());
 
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     switch((ViewportType)vp) {
@@ -117,10 +111,4 @@ void SnapshotWidget::loadSettings() {
     saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 
     settings.endGroup();
-    if(visible) {
-        show();
-    } else {
-        hide();
-    }
-    setGeometry(x, y, w, h);
 }
