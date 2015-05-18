@@ -85,8 +85,12 @@ Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFo
     loadOverlayLutFromFile();
 }
 
+bool Segmentation::hasSegData() const {
+    return hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
+}
+
 void Segmentation::clear() {
-    state->skeletonState->unsavedChanges |= hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
+    state->skeletonState->unsavedChanges |= hasSegData();
 
     selectedObjectIndices.clear();
     objects.clear();

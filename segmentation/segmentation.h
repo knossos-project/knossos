@@ -187,6 +187,7 @@ public:
     uint8_t volume_opacity = 255;
     //data query
     bool hasObjects() const;
+    bool hasSegData() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
     void createAndSelectObject(const Coordinate & position);
