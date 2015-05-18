@@ -410,19 +410,8 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
-    Coordinate upperLeftDc, currentDc, currentPosition_dc;
-    Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
-
-    char *datacube = NULL, *overlayCube = NULL;
-    int dcOffset = 0, index = 0;
-
-    currPosTrans = state->viewerState->currentPosition / state->magnification;
-
-    leftUpperPxInAbsPxTrans = currentVp.texture.leftUpperPxInAbsPx / state->magnification;
-
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
-
-    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans, state->cubeEdgeLength);
+    const Coordinate currPosTrans = state->viewerState->currentPosition / state->magnification;
+    const Coordinate currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
 
     // We calculate the coordinate of the DC that holds the slice that makes up the upper left
     // corner of our texture.
@@ -431,6 +420,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     //
     // Rounding should be explicit!
     bool dc_reslice, oc_reslice;
+    int dcOffset;
     switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
@@ -474,12 +464,18 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         qDebug("No such slice view: %d.", currentVp.type);
         return false;
     }
+
+    const Coordinate leftUpperPxInAbsPxTrans = currentVp.texture.leftUpperPxInAbsPx / state->magnification;
+    const Coordinate upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans, state->cubeEdgeLength);
+
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
     for(int x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
         for(int y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
             const int x_px = x_dc * state->cubeEdgeLength;
             const int y_px = y_dc * state->cubeEdgeLength;
+
+            Coordinate currentDc;
 
             switch(currentVp.type) {
             // With an x/y-coordinate system in a viewport, we get the following
@@ -500,12 +496,10 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             default:
                 qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp.type);
             }
-
             state->protectCube2Pointer->lock();
-            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
-            overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], currentDc);
+            char * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            char * const overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
-
 
             // Take care of the data textures.
 
@@ -518,7 +512,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
 
                 // This is used to index into the texture. overlayData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
+                const int index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
                 if(datacube == nullptr) {
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -553,7 +547,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                 glBindTexture(GL_TEXTURE_2D, currentVp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
+                const int index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
 
                 if (overlayCube == nullptr) {
                     glTexSubImage2D(GL_TEXTURE_2D,
