@@ -766,8 +766,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
   *
   */
 bool Viewer::initViewer() {
-    calcLeftUpperTexAbsPx();
-
     Segmentation::singleton().loadOverlayLutFromFile();
 
     // This is the buffer that holds the actual texture data (for _all_ textures)
@@ -1031,9 +1029,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         }
     }
 
-    //necessary? – the question remains
-    recalcTextureOffsets();
-
     Loader::Controller::singleton().unload();//unload all the cubes
     //clear the viewports
     dc_reslice_notify_visible();
@@ -1111,7 +1106,6 @@ void Viewer::run() {
         rotation = Rotation();
         alphaCache = 0;
     }
-    recalcTextureOffsets();
 
     for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
         vpConfig & currentVp = state->viewerState->vpConfigs[drawCounter];
@@ -1137,7 +1131,6 @@ void Viewer::run() {
 
         if(drawCounter == 3) {
             updateViewerState();
-            recalcTextureOffsets();
             skeletonizer->autoSaveIfElapsed();
             window->updateTitlebar();//display changes after filename
 
@@ -1296,7 +1289,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             viewerState->currentPosition.z + z + 1);
     }
 
-    calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
@@ -1781,7 +1773,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::resetRotationSignal, this, &Viewer::resetRotation);
     QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(window, &MainWindow::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
     QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
@@ -1846,6 +1837,7 @@ void Viewer::setVPOrientation(const bool arbitrary) {
         resetRotation();
     }
     dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
+    recalcTextureOffsets();
 }
 
 void Viewer::resetRotation() {

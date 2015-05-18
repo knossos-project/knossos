@@ -130,7 +130,6 @@ public:
 
 signals:
     bool changeDatasetMagSignal(uint upOrDownFlag);
-    void recalcTextureOffsetsSignal();
     void recentFileSelectSignal(int index);
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
 
