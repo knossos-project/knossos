@@ -1155,10 +1155,11 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
 
-        viewports[VIEWPORT_XY]->setVisible(settings.value(VPXY_VISIBLE).toBool());
-        viewports[VIEWPORT_XZ]->setVisible(settings.value(VPXZ_VISIBLE).toBool());
-        viewports[VIEWPORT_YZ]->setVisible(settings.value(VPYZ_VISIBLE).toBool());
-        viewports[VIEWPORT_SKELETON]->setVisible(settings.value(VPSKEL_VISIBLE).toBool());
+        bool defaultViewportVisibility = true;
+        viewports[VIEWPORT_XY]->setVisible(settings.value(VPXY_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_XZ]->setVisible(settings.value(VPXZ_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_YZ]->setVisible(settings.value(VPYZ_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_SKELETON]->setVisible(settings.value(VPSKEL_VISIBLE,defaultViewportVisibility).toBool());
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
