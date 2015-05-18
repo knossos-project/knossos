@@ -30,12 +30,11 @@
 #include "stateInfo.h"
 
 #include <QDebug>
+#include <QDockWidget>
 #include <QFont>
 #include <QOpenGLDebugLogger>
+#include <QOpenGLWidget>
 #include <QPushButton>
-#include <QtOpenGL/QGLWidget>
-#include <QtOpenGL>
-#include <QDockWidget>
 #include <QWidget>
 
 class EventModel;
@@ -161,14 +160,14 @@ public:
     explicit QViewportFloatWidget(QWidget *parent, int id);
 };
 
-class Viewport : public QGLWidget, protected QOpenGLFunctions_2_0 {
+class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
     QElapsedTimer timeDBase;
     QElapsedTimer timeFBase;
 public:
     const static uint numberViewports = 4;
-    explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);
+    explicit Viewport(QWidget *parent, int viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void setDock(bool isDock);
@@ -181,6 +180,7 @@ public:
     QPoint dockPos;
     EventModel *eventDelegate;
     static bool arbitraryOrientation;
+    static bool oglDebug;
     static bool showNodeComments;
 
 protected:

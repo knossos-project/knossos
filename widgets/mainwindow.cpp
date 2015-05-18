@@ -112,15 +112,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 }
 
 void MainWindow::createViewports() {
-    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), nullptr, VIEWPORT_XY, VP_UPPERLEFT));
-    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    format.setMajorVersion(2);
+    format.setMinorVersion(0);
+    format.setDepthBufferSize(24);
+//    format.setSwapInterval(0);
+//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    if (Viewport::oglDebug) {
+        format.setOption(QSurfaceFormat::DebugContext);
+    }
+    QSurfaceFormat::setDefaultFormat(format);
 
-    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 }
 
 void MainWindow::createToolbars() {

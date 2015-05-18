@@ -42,37 +42,14 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-bool Viewport::showNodeComments = false;
 bool Viewport::arbitraryOrientation = false;
-
-const bool oglDebug = false;
+bool Viewport::oglDebug = false;
+bool Viewport::showNodeComments = false;
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event);
-}
-
-QGLContext * newFavoriteQGLContext(QGLWidget * shared) {
-    auto * context = new QOpenGLContext();//context is freed by QGLWidget
-
-    QSurfaceFormat format;
-    format.setMajorVersion(2);
-    format.setMinorVersion(0);
-    format.setDepthBufferSize(24);
-//    format.setSwapInterval(0);
-//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
-    format.setOption(QSurfaceFormat::DeprecatedFunctions);
-    if (oglDebug) {
-        format.setOption(QSurfaceFormat::DebugContext);
-    }
-    context->setFormat(format);
-    if (shared != nullptr) {//share textures for rendering in skeleton vp
-        context->setShareContext(shared->context()->contextHandle());
-    }
-    context->create();
-    return QGLContext::fromOpenGLContext(context);
 }
 
 QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
@@ -81,8 +58,8 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
     new QVBoxLayout(this);
 }
 
-Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
-        QGLWidget(newFavoriteQGLContext(shared), parent, shared), id(newId), viewportType(viewportType),
+Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
+        QOpenGLWidget(parent), id(newId), viewportType(viewportType),
         resizeButtonHold(false), isDocked(true), floatParent(NULL) {
     dockParent = parent;
     setContextMenuPolicy(Qt::CustomContextMenu);

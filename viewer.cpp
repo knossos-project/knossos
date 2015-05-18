@@ -39,23 +39,9 @@
 #include <qopengl.h>
 #include <QtConcurrent/QtConcurrentRun>
 
-#if defined(Q_OS_WIN)
-#include <GL/wglext.h>
-#elif defined(Q_OS_LINUX)
-#define WINAPI
-#include <GL/glx.h>
-#include <GL/glxext.h>
-#else
-#define WINAPI
-#endif
-
 #include <fstream>
 
 #include <cmath>
-
-static WINAPI int dummy(int) {
-    return 0;
-}
 
 //  For the Lookup tables
 #define RGBA_LUTSIZE 1024
@@ -1101,7 +1087,7 @@ void Viewer::run() {
         alphaCache = 0;
     }
 
-    for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
+    for (int drawCounter = 0; drawCounter < 3 && !state->quitSignal; ++drawCounter) {
         vpConfig & currentVp = state->viewerState->vpConfigs[drawCounter];
         // This condition relies on the ugly assumption, that the vpConfigs
         // index corresponds to the viewports vector index, which is ugly true
@@ -1114,50 +1100,22 @@ void Viewer::run() {
                 vpUpperRight->makeCurrent();
             }
 
-            if(currentVp.type != VIEWPORT_SKELETON) {
-                if(currentVp.type != VIEWPORT_ARBITRARY) {
-                    vpGenerateTexture(currentVp);
-                } else {
-                    vpGenerateTexture_arb(currentVp);
-                }
+            if(currentVp.type != VIEWPORT_ARBITRARY) {
+                vpGenerateTexture(currentVp);
+            } else {
+                vpGenerateTexture_arb(currentVp);
             }
         }
-
-        if(drawCounter == 3) {
-            updateViewerState();
-            skeletonizer->autoSaveIfElapsed();
-            window->updateTitlebar();//display changes after filename
-
-            static auto disableVsync = [this](){
-                void (*func)(int) = nullptr;
-#if defined(Q_OS_WIN)
-                func = (void(*)(int))wglGetProcAddress("wglSwapIntervalEXT");
-#elif defined(Q_OS_LINUX)
-                func = (void(*)(int))glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
-#endif
-                if (func != nullptr) {
-#if defined(Q_OS_WIN)
-                    return std::bind((PFNWGLSWAPINTERVALEXTPROC)func, 0);
-#elif defined(Q_OS_LINUX)
-                    return std::bind((PFNGLXSWAPINTERVALSGIPROC)func, 0);
-#endif
-                } else {
-                    qDebug() << "disabling vsync not available";
-                    return std::bind(&dummy, 0);
-                }
-            }();
-
-            disableVsync();
-            vpUpperLeft->updateGL();
-            disableVsync();
-            vpLowerLeft->updateGL();
-            disableVsync();
-            vpUpperRight->updateGL();
-            disableVsync();
-            vpLowerRight->updateGL();
-            disableVsync();
-        }
     }
+
+    updateViewerState();
+    skeletonizer->autoSaveIfElapsed();
+    window->updateTitlebar();//display changes after filename
+
+    vpUpperLeft->update();
+    vpLowerLeft->update();
+    vpUpperRight->update();
+    vpLowerRight->update();
 }
 
 bool Viewer::updateViewerState() {
