@@ -26,6 +26,7 @@
 #define COORDINATE_H
 
 #include <QList>
+#include <QVector>
 #include <QMetaType>
 
 #include <cstddef>
