@@ -27,6 +27,7 @@ signals:
 public slots:
     QString getKnossosVersion();
     QString getKnossosRevision();
+    int getCubeEdgeLength();
     QList<int> getOcPixel(QList<int> Dc, QList<int> pxInDc);
     QList<int> getPosition();
     QList<float> getScale();

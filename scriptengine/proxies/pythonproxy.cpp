@@ -26,6 +26,10 @@ QString PythonProxy::getKnossosRevision() {
     return KREVISION;
 }
 
+int PythonProxy::getCubeEdgeLength() {
+    return state->cubeEdgeLength;
+}
+
 QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
     char *cube = (char*)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], Coordinate(Dc[0], Dc[1], Dc[2]));
     if (NULL == cube) {
