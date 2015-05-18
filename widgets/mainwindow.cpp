@@ -884,10 +884,6 @@ void MainWindow::saveSlot() {
 
 void MainWindow::saveAsSlot() {
     auto *seg = &Segmentation::singleton();
-    if (!state->skeletonState->firstTree && !seg->hasObjects()) {
-        QMessageBox::information(this, "No Save", "Neither segmentation nor skeletonization were found. Not saving!");
-        return;
-    }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
     state->viewerState->renderInterval = SLOW;
