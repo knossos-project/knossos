@@ -186,6 +186,10 @@ float PythonProxy::getMovementAreaFactor() {
     return state->viewerState->movementAreaFactor;
 }
 
+void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
+    state->viewer->oc_reslice_notify_all(Coordinate(coord));
+}
+
 // UNTESTED
 bool PythonProxy::loadStyleSheet(const QString &filename) {
     QFile file(filename);

@@ -50,6 +50,7 @@ public slots:
     void resetMovementArea();
     QList<int> getMovementArea();
     float getMovementAreaFactor();
+    void oc_reslice_notify_all(QList<int> coord);
     bool loadStyleSheet(const QString &path);
 };
 
