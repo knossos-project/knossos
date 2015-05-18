@@ -1449,6 +1449,9 @@ bool Viewer::recalcTextureOffsets() {
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
+                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
+                calcLeftUpperTexAbsPx();
+
                 // scale to 0 - 1; midX is the current pos in tex coords
                 // leftUpperPxInAbsPx is in always in mag1, independent of
                 // the currently active mag
@@ -1461,9 +1464,6 @@ bool Viewer::recalcTextureOffsets() {
                        - state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y)
                      //(float)state->viewerState->vpConfigs[i].texture.edgeLengthPx;
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
-
-                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
-                calcLeftUpperTexAbsPx();
 
                 //Offsets for crosshair
                 state->viewerState->vpConfigs[i].texture.xOffset =
@@ -1522,15 +1522,15 @@ bool Viewer::recalcTextureOffsets() {
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
+                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
+                calcLeftUpperTexAbsPx();
+
                 midX = ((float)(state->viewerState->currentPosition.x
                                - state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x))
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx; //scale to 0 - 1
                 midY = ((float)(state->viewerState->currentPosition.z
                                - state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z))
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx; //scale to 0 - 1
-
-                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
-                calcLeftUpperTexAbsPx();
 
                 //Offsets for crosshair
                 state->viewerState->vpConfigs[i].texture.xOffset =
@@ -1591,6 +1591,9 @@ bool Viewer::recalcTextureOffsets() {
                         * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                         / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
+                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
+                calcLeftUpperTexAbsPx();
+
                 midX = ((float)(state->viewerState->currentPosition.y
                                 - state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y))
                                // / (float)state->viewerState->vpConfigs[i].texture.edgeLengthPx; //scale to 0 - 1
@@ -1599,9 +1602,6 @@ bool Viewer::recalcTextureOffsets() {
                                 - state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z))
                                // / (float)state->viewerState->vpConfigs[i].texture.edgeLengthPx; //scale to 0 - 1
                                * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
-
-                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
-                calcLeftUpperTexAbsPx();
 
                 //Offsets for crosshair
                 state->viewerState->vpConfigs[i].texture.xOffset =
@@ -1704,13 +1704,13 @@ bool Viewer::recalcTextureOffsets() {
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY /
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
+                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
+                calcLeftUpperTexAbsPx();
+
                 midX = state->viewerState->vpConfigs[i].s_max/2.
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
                 midY = state->viewerState->vpConfigs[i].t_max/2.
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
-
-                //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
-                calcLeftUpperTexAbsPx();
 
                 //Offsets for crosshair
                 state->viewerState->vpConfigs[i].texture.xOffset =
