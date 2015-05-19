@@ -30,15 +30,11 @@ treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
 }
 
 bool SkeletonProxy::move_to_next_tree() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().moveToNextTree(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().moveToNextTree();
 }
 
 bool SkeletonProxy::move_to_previous_tree() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().moveToPrevTree(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().moveToPrevTree();
 }
 
 treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
@@ -176,9 +172,7 @@ segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
 }
 
 bool SkeletonProxy::jump_to_active_node() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().jumpToActiveNode(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().jumpToActiveNode();
 }
 
 bool SkeletonProxy::has_unsaved_changes() {

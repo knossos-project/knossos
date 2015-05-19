@@ -465,24 +465,33 @@ void MainWindow::recentFileSelected() {
     }
 }
 
+template<typename Menu, typename Receiver, typename Slot>
+QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
+    auto & action = *menu.addAction(icon, caption);
+    action.setShortcut(keySequence);
+    action.setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(&action, &QAction::triggered, receiver, slot);
+    return action;
+};
+
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/resources/icons/graph.png"), "Create New Annotation", this, SLOT(newAnnotationSlot()), QKeySequence(tr("CTRL+C")));
-    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
+    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent Annotation File(s)"));
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
         elem->setVisible(false);
         QObject::connect(elem, &QAction::triggered, this, &MainWindow::recentFileSelected);
     }
-    fileMenu.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu.addAction(QIcon(":/resources/icons/document-save-as.png"), "Save Annotation As...", this, SLOT(saveAsSlot()));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save Annotation As…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
     fileMenu.addSeparator();
-    fileMenu.addAction("Export to NML...", this, SLOT(exportToNml()));
+    fileMenu.addAction(tr("Export to NML..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/resources/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     segEditMenu = new QMenu("Edit Segmentation");
     auto segAnnotationModeGroup = new QActionGroup(this);
@@ -514,19 +523,12 @@ void MainWindow::createMenus() {
     segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
     segEditMenu->addSeparator();
 
-    auto & pushBranchAction = *segEditMenu->addAction(QIcon(""), "Push Branch");
-    QObject::connect(&pushBranchAction, &QAction::triggered, [this](){
+    addApplicationShortcut(*segEditMenu, QIcon(), tr("Push Branch"), this, [this](){
         Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
-    });
-    pushBranchAction.setShortcut(QKeySequence(Qt::Key_B));
-    pushBranchAction.setShortcutContext(Qt::ApplicationShortcut);
-
-    auto & popBranchAction = *segEditMenu->addAction(QIcon(""), "Pop Branch");
-    QObject::connect(&popBranchAction, &QAction::triggered, [this](){
+    }, Qt::Key_B);
+    addApplicationShortcut(*segEditMenu, QIcon(), tr("Pop Branch"), this, [this](){
         Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
-    });
-    popBranchAction.setShortcut(QKeySequence(Qt::Key_J));
-    popBranchAction.setShortcutContext(Qt::ApplicationShortcut);
+    }, Qt::Key_J);
 
     QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
         hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
@@ -560,18 +562,8 @@ void MainWindow::createMenus() {
     skelEditMenu->addSeparator();
 
     auto workModeEditMenuGroup = new QActionGroup(this);
-    addNodeAction = workModeEditMenuGroup->addAction(tr("Add one unlinked Node"));
-    addNodeAction->setCheckable(true);
-    addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
-    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
-    linkWithActiveNodeAction->setCheckable(true);
-
-    dropNodesAction = workModeEditMenuGroup->addAction(tr("Add unlinked Nodes"));
-    dropNodesAction->setCheckable(true);
-
-    QObject::connect(addNodeAction, &QAction::triggered, [this](){
+    addNodeAction = &addApplicationShortcut(*workModeEditMenuGroup, QIcon(), tr("Add one unlinked Node"), this, [this](){
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
                                      "Please deactivate Simple Tracing under 'Edit Skeleton' for this function.");
@@ -579,7 +571,15 @@ void MainWindow::createMenus() {
             return;
         }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
-    });
+    }, Qt::Key_A);
+    addNodeAction->setCheckable(true);
+
+    linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
+    linkWithActiveNodeAction->setCheckable(true);
+
+    dropNodesAction = workModeEditMenuGroup->addAction(tr("Add unlinked Nodes"));
+    dropNodesAction->setCheckable(true);
+
     QObject::connect(linkWithActiveNodeAction, &QAction::triggered, [](){
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
     });
@@ -596,14 +596,9 @@ void MainWindow::createMenus() {
     skelEditMenu->addActions({addNodeAction, linkWithActiveNodeAction, dropNodesAction});//can’t add the group, must add all actions separately
     skelEditMenu->addSeparator();
 
-    auto newTreeAction = skelEditMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()), QKeySequence(tr("C")));
-    newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto pushBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()), QKeySequence(tr("B")));
-    pushBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto popBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()), QKeySequence(tr("J")));
-    popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
 
     skelEditMenu->addSeparator();
     skelEditMenu->addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
@@ -644,20 +639,11 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    auto jumpToActiveNodeAction = viewMenu->addAction(QIcon(""), "Jump To Active Node", &Skeletonizer::singleton(), SLOT(jumpToActiveNode()), QKeySequence(tr("S")));
-    jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToNextNodeAction = viewMenu->addAction(QIcon(""), "Move To Next Node", &Skeletonizer::singleton(), SLOT(moveToNextNode()), QKeySequence(tr("X")));
-    moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToPrevNodeAction = viewMenu->addAction(QIcon(""), "Move To Previous Node", &Skeletonizer::singleton(), SLOT(moveToPrevNode()), QKeySequence(tr("SHIFT+X")));
-    moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToNextTreeAction = viewMenu->addAction(QIcon(""), "Move To Next Tree", &Skeletonizer::singleton(), SLOT(moveToNextTree()), QKeySequence(tr("Z")));
-    moveToNextTreeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToPrevTreeAction = viewMenu->addAction(QIcon(""), "Move To Previous Tree", &Skeletonizer::singleton(), SLOT(moveToPrevTree()), QKeySequence(tr("SHIFT+Z")));
-    moveToPrevTreeAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), &Skeletonizer::jumpToActiveNode, Qt::Key_S);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextNode, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevNode, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
 
     viewMenu->addSeparator();
 
@@ -665,26 +651,18 @@ void MainWindow::createMenus() {
 
     auto commentsMenu = menuBar()->addMenu("Comments");
 
-    auto nextCommentAction = commentsMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()), QKeySequence(tr("N")));
-    nextCommentAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto previousCommentAction = commentsMenu->addAction(QIcon(""), "Previous Comment", this, SLOT(previousCommentNodeSlot()), QKeySequence(tr("P")));
-    previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, &MainWindow::nextCommentNodeSlot, Qt::Key_N);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previous Comment"), this, &MainWindow::previousCommentNodeSlot, Qt::Key_P);
 
     commentsMenu->addSeparator();
 
-    auto addCommentShortcut = [&](const int index, const QKeySequence key, const QString & description){
-        auto * action = commentsMenu->addAction(QIcon(""), description);
-        action->setShortcut(key);
-        action->setShortcutContext(Qt::ApplicationShortcut);
-        commentActions.push_back(action);
-        QObject::connect(action, &QAction::triggered, this, [this, index]() { placeComment(index); });
+    auto addCommentShortcut = [&](const int number, const QKeySequence key, const QString & description){
+        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), description, this, [this, number](){placeComment(number-1);}, key);
+        commentActions.push_back(&action);
     };
-    addCommentShortcut(0, QKeySequence("F1"), "1st Comment Shortcut");
-    addCommentShortcut(1, QKeySequence("F2"), "2nd Comment Shortcut");
-    addCommentShortcut(2, QKeySequence("F3"), "3rd Comment Shortcut");
-    for(int i = 4; i < 11; ++i) {
-        addCommentShortcut(i-1, QKeySequence(QString("F%0").arg(i)), QString("%0th Comment Shortcut").arg(i));
+    for (int number = 1; number < 11; ++number) {
+        const auto ith = number == 1 ? tr("1st") : number == 2 ? tr("2nd") : number == 3 ? tr("3rd") : "%1th";
+        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), ith + tr(" Comment Shortcut"));
     }
 
     commentsMenu->addSeparator();
@@ -704,7 +682,7 @@ void MainWindow::createMenus() {
     windowMenu->addAction(tr("Take a snapshot"), widgetContainer->snapshotWidget, SLOT(show()));
 
     auto helpMenu = menuBar()->addMenu("Help");
-    helpMenu->addAction(QIcon(":/resources/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));
+    addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), widgetContainer->docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
     helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", widgetContainer->splashWidget, SLOT(show()));
 }
 

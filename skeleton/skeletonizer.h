@@ -211,7 +211,7 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
-    void jumpToActiveNode(bool *isSuccess = NULL);
+    bool jumpToActiveNode();
     bool setActiveTreeByID(int treeID);
 
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
@@ -220,8 +220,8 @@ public slots:
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
     bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    void moveToNextTree(bool *isSuccess = NULL);
-    void moveToPrevTree(bool *isSuccess = NULL);
+    bool moveToNextTree();
+    bool moveToPrevTree();
     bool moveToPrevNode();
     bool moveToNextNode();
     bool moveSelectedNodesToTree(int treeID);

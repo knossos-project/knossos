@@ -2452,16 +2452,14 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
     return true;
 }
 
-void Skeletonizer::jumpToActiveNode(bool *isSuccess) {
+bool Skeletonizer::jumpToActiveNode() {
     if(state->skeletonState->activeNode) {
         emit userMoveSignal(state->skeletonState->activeNode->position.x - state->viewerState->currentPosition.x,
                             state->skeletonState->activeNode->position.y - state->viewerState->currentPosition.y,
                             state->skeletonState->activeNode->position.z - state->viewerState->currentPosition.z,
                             USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
-    if (NULL != isSuccess) {
-        *isSuccess = true;
-    }
+    return true;
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
@@ -2567,22 +2565,19 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
     }
 }
 
-#define RETVAL_MACRO(val, ptr) {if(NULL != ptr) {*ptr = val;} return;}
-
-void Skeletonizer::moveToPrevTree(bool *isSuccess) {
+bool Skeletonizer::moveToPrevTree() {
     treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     nodeListElement *node;
-    if(state->skeletonState->activeTree == NULL) {
-        RETVAL_MACRO(false, isSuccess);
+    if(state->skeletonState->activeTree == nullptr) {
+        return false;
     }
     if(prevTree) {
         setActiveTreeByID(prevTree->treeID);
         //set tree's first node to active node if existent
         node = state->skeletonState->activeTree->firstNode;
-        if(node == NULL) {
-            RETVAL_MACRO(true, isSuccess);
-        }
-        else {
+        if(node == nullptr) {
+            return true;
+        } else {
             setActiveNode(node, node->nodeID);
             emit setRecenteringPositionSignal(node->position.x,
                                          node->position.y,
@@ -2590,7 +2585,7 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
 
             Knossos::sendRemoteSignal();
         }
-        RETVAL_MACRO(true, isSuccess);
+        return true;
     }
     QMessageBox info;
     info.setIcon(QMessageBox::Information);
@@ -2599,24 +2594,24 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
     info.setText("You reached the first tree.");
     info.exec();
 
-    RETVAL_MACRO(false, isSuccess);
+    return false;
 }
 
 
-void Skeletonizer::moveToNextTree(bool *isSuccess) {
+bool Skeletonizer::moveToNextTree() {
     treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     nodeListElement *node;
 
-    if(state->skeletonState->activeTree == NULL) {
-        RETVAL_MACRO(false, isSuccess);
+    if(state->skeletonState->activeTree == nullptr) {
+        return false;
     }
     if(nextTree) {
         setActiveTreeByID(nextTree->treeID);
         //set tree's first node to active node if existent
         node = state->skeletonState->activeTree->firstNode;
 
-        if(node == NULL) {
-            RETVAL_MACRO(true, isSuccess);
+        if(node == nullptr) {
+            return true;
         } else {
             setActiveNode(node, node->nodeID);
 
@@ -2625,7 +2620,7 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
                                              node->position.z);
                 Knossos::sendRemoteSignal();
         }
-        RETVAL_MACRO(true, isSuccess);
+        return true;
     }
     QMessageBox info;
     info.setIcon(QMessageBox::Information);
@@ -2634,7 +2629,7 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
     info.setText("You reached the last tree.");
     info.exec();
 
-    RETVAL_MACRO(false, isSuccess);
+    return false;
 }
 
 bool Skeletonizer::moveToPrevNode() {
