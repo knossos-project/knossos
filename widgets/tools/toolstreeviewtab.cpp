@@ -373,9 +373,12 @@ void ToolsTreeviewTab::setTreeCommentAction() {
                 setText(treeTable, treeTable->item(row, TreeTable::TREE_COMMENT), treeCommentBuffer);
             }
         } else {
+            Skeletonizer::singleton().blockSignals(true);
             for (auto tree : state->skeletonState->selectedTrees) {
                 Skeletonizer::singleton().addTreeComment(tree->treeID, treeCommentBuffer);
             }
+            Skeletonizer::singleton().blockSignals(false);
+            treeAddedOrChanged();
         }
     }
 }

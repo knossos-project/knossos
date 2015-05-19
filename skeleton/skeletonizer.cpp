@@ -177,19 +177,9 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
     return newElement;
 }
 
-
 treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
-    treeListElement *currentTree;
-
-    currentTree = state->skeletonState->firstTree;
-
-    while(currentTree) {
-        if(currentTree->treeID == treeID) {
-            return currentTree;
-        }
-        currentTree = currentTree->next;
-    }
-    return NULL;
+    const auto treeIt = state->skeletonState->treesByID.find(treeID);
+    return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
 
 uint64_t Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
@@ -1091,6 +1081,8 @@ bool Skeletonizer::delTree(int treeID) {
         state->skeletonState->firstTree = treeToDel->next;
     }
 
+    state->skeletonState->treesByID.erase(treeToDel->treeID);
+
     if (treeToDel->selected) {
         auto & selectedTrees = state->skeletonState->selectedTrees;
         const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
@@ -1486,6 +1478,7 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->activeTree = NULL;
 
     skeletonState->nodesByNodeID.clear();
+    skeletonState->treesByID.clear();
     delStack(skeletonState->branchStack);
 
     //Generate empty tree structures
@@ -1761,6 +1754,8 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
     state->skeletonState->activeTree = newElement;
     //qDebug("Added new tree with ID: %d.", newElement->treeID);
 
+    state->skeletonState->treesByID.emplace(newElement->treeID, newElement);
+
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
     }
@@ -1848,12 +1843,12 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
 
     tree = findTreeByTreeID(treeID);
 
+
     if((!comment.isNull()) && tree) {
         strncpy(tree->comment, comment.toStdString().c_str(), 8192);
     }
 
     state->skeletonState->unsavedChanges = true;
-
     emit treeChangedSignal(*tree);
 
     return true;

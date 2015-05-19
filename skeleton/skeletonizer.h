@@ -53,6 +53,8 @@ struct skeletonState {
     treeListElement *activeTree;
     nodeListElement *activeNode;
 
+    std::unordered_map<int, treeListElement *> treesByID;
+
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
