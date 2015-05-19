@@ -140,6 +140,7 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
     QApplication a(argc, argv);
     qInstallMessageHandler(debugMessageHandler);
     /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
