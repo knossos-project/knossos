@@ -1358,7 +1358,7 @@ bool Renderer::renderSkeletonVP(uint currentVP, bool drawSkeleton) {
                 state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                 -500,
                 10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEYZ);
+        setRotationState(ROTATIONSTATEXZ);
         break;
     case SKELVP_YZ_VIEW:
         state->skeletonState->definedSkeletonVpView = -1;
@@ -1382,7 +1382,7 @@ bool Renderer::renderSkeletonVP(uint currentVP, bool drawSkeleton) {
                 state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                 -500,
                 10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEXZ);
+        setRotationState(ROTATIONSTATEYZ);
         break;
     case SKELVP_R90:
         state->skeletonState->rotdx = 10;
@@ -2121,59 +2121,59 @@ bool Renderer::setRotationState(uint setTo) {
             state->skeletonState->rotationState[14] = 0.0;
             state->skeletonState->rotationState[15] = 1.0;
         }
-        if (setTo == ROTATIONSTATEXY){
-            state->skeletonState->rotationState[0] = 1.0;
+        if (setTo == ROTATIONSTATEXY){//x @ 0°
+            state->skeletonState->rotationState[0] = 1.0;//1
             state->skeletonState->rotationState[1] = 0.0;
             state->skeletonState->rotationState[2] = 0.0;
             state->skeletonState->rotationState[3] = 0.0;
             state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = 1.0;
-            state->skeletonState->rotationState[6] = 0.0;
+            state->skeletonState->rotationState[5] = 1.0;//cos
+            state->skeletonState->rotationState[6] = 0.0;//-sin
             state->skeletonState->rotationState[7] = 0.0;
             state->skeletonState->rotationState[8] = 0.0;
-            state->skeletonState->rotationState[9] = 0.0;
-            state->skeletonState->rotationState[10] = 1.0;
+            state->skeletonState->rotationState[9] = 0.0;//sin
+            state->skeletonState->rotationState[10] = 1.0;//cos
             state->skeletonState->rotationState[11] = 0.0;
             state->skeletonState->rotationState[12] = 0.0;
             state->skeletonState->rotationState[13] = 0.0;
             state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;
+            state->skeletonState->rotationState[15] = 1.0;//1
         }
-        if (setTo == ROTATIONSTATEYZ){
-            state->skeletonState->rotationState[0] = 1.0;
+        if (setTo == ROTATIONSTATEXZ){//x @ 90°
+            state->skeletonState->rotationState[0] = 1.0;//1
             state->skeletonState->rotationState[1] = 0.0;
             state->skeletonState->rotationState[2] = 0.0;
             state->skeletonState->rotationState[3] = 0.0;
             state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = 0.0;
-            state->skeletonState->rotationState[6] = -1.0;
+            state->skeletonState->rotationState[5] = 0.0;//cos
+            state->skeletonState->rotationState[6] = -1.0;//-sin
             state->skeletonState->rotationState[7] = 0.0;
             state->skeletonState->rotationState[8] = 0.0;
-            state->skeletonState->rotationState[9] = 1.0;
-            state->skeletonState->rotationState[10] = 0.0;
+            state->skeletonState->rotationState[9] = 1.0;//sin
+            state->skeletonState->rotationState[10] = 0.0;//cos
             state->skeletonState->rotationState[11] = 0.0;
             state->skeletonState->rotationState[12] = 0.0;
             state->skeletonState->rotationState[13] = 0.0;
             state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;
+            state->skeletonState->rotationState[15] = 1.0;//1
         }
-        if (setTo == ROTATIONSTATEXZ){
-            state->skeletonState->rotationState[0] = 0.0;
+        if (setTo == ROTATIONSTATEYZ){//y @ -90°
+            state->skeletonState->rotationState[0] = 0.0;//cos
             state->skeletonState->rotationState[1] = 0.0;
-            state->skeletonState->rotationState[2] = -1.0;
+            state->skeletonState->rotationState[2] = -1.0;//sin
             state->skeletonState->rotationState[3] = 0.0;
             state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = -1.0;
+            state->skeletonState->rotationState[5] = 1.0;//1
             state->skeletonState->rotationState[6] = 0.0;
             state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = 1.0;
+            state->skeletonState->rotationState[8] = 1.0;//-sin
             state->skeletonState->rotationState[9] = 0.0;
-            state->skeletonState->rotationState[10] = 0.0;
+            state->skeletonState->rotationState[10] = 0.0;//cos
             state->skeletonState->rotationState[11] = 0.0;
             state->skeletonState->rotationState[12] = 0.0;
             state->skeletonState->rotationState[13] = 0.0;
             state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;
+            state->skeletonState->rotationState[15] = 1.0;//1
         }
     return true;
 }
