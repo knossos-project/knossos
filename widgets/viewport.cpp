@@ -66,9 +66,6 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
     setFocusPolicy(Qt::WheelFocus);
-#ifdef Q_OS_MAC
-    this->lower();
-#endif
 
     resizeButton = new ResizeButton(this);
     resizeButton->setCursor(Qt::SizeFDiagCursor);
@@ -287,18 +284,6 @@ void Viewport::showContextMenu(const QPoint &point) {
 
 void Viewport::enterEvent(QEvent *) {
     setFocus();//get the keyboard focus on first mouse move so we don’t need permanent mousetracking (e.g. for D/F Movement)
-#ifdef Q_OS_MAC
-    if (!this->isActiveWindow()) {
-        raise();
-        activateWindow();
-    }
-#endif
-}
-
-void Viewport::leaveEvent(QEvent *) {
-#ifdef Q_OS_MAC
-    lower();
-#endif
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
