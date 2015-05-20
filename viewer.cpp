@@ -573,10 +573,10 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     if (!dc_xy_changed && !dc_xz_changed && !dc_zy_changed) {
         return;
     }
-    switch(currentVp.type) {
-    case SLICE_XY: dc_xy_changed = false; break;
-    case SLICE_XZ: dc_xz_changed = false; break;
-    case SLICE_YZ: dc_zy_changed = false; break;
+    switch(currentVp.id) {
+    case VP_UPPERLEFT: dc_xy_changed = false; break;
+    case VP_LOWERLEFT: dc_xz_changed = false; break;
+    case VP_UPPERRIGHT: dc_zy_changed = false; break;
     }
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
@@ -1775,6 +1775,7 @@ void Viewer::rewire() {
 void Viewer::setRotation(float x, float y, float z, float angle) {
     alphaCache += angle; // angles are added up here until they are processed in the thread loop
     rotation = Rotation(x, y, z, alphaCache);
+    dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
 }
 
 void Viewer::setVPOrientation(const bool arbitrary) {
