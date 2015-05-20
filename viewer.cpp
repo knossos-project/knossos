@@ -1087,6 +1087,7 @@ void Viewer::run() {
         alphaCache = 0;
     }
 
+    recalcTextureOffsets();//should be in userMove and setVPOrientation but that’s infeasable because vp update is async
     for (int drawCounter = 0; drawCounter < 3 && !state->quitSignal; ++drawCounter) {
         vpConfig & currentVp = state->viewerState->vpConfigs[drawCounter];
         // This condition relies on the ugly assumption, that the vpConfigs
@@ -1241,7 +1242,6 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             viewerState->currentPosition.z + z + 1);
     }
 
-    recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
 
     if (newPosition_dc != lastPosition_dc) {
@@ -1789,7 +1789,6 @@ void Viewer::setVPOrientation(const bool arbitrary) {
         resetRotation();
     }
     dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
-    recalcTextureOffsets();
 }
 
 void Viewer::resetRotation() {
