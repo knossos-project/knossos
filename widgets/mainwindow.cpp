@@ -661,8 +661,8 @@ void MainWindow::createMenus() {
         commentActions.push_back(&action);
     };
     for (int number = 1; number < 11; ++number) {
-        const auto ith = number == 1 ? tr("1st") : number == 2 ? tr("2nd") : number == 3 ? tr("3rd") : "%1th";
-        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), ith + tr(" Comment Shortcut"));
+        const auto numberString = QString::number(number) + (number == 1 ? "st" : number == 2 ? "nd" : number == 3 ? "rd" : "th");
+        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), numberString + tr(" Comment Shortcut"));
     }
 
     commentsMenu->addSeparator();
