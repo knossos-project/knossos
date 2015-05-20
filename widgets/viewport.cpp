@@ -666,9 +666,9 @@ void Viewport::updateOverlayTexture() {
         return;
     }
     switch(id) {
-    case SLICE_XY: state->viewer->oc_xy_changed = false; break;
-    case SLICE_XZ: state->viewer->oc_xz_changed = false; break;
-    case SLICE_YZ: state->viewer->oc_zy_changed = false; break;
+    case VP_UPPERLEFT: state->viewer->oc_xy_changed = false; break;
+    case VP_LOWERLEFT: state->viewer->oc_xz_changed = false; break;
+    case VP_UPPERRIGHT: state->viewer->oc_zy_changed = false; break;
     }
 
     const int width = state->M * state->cubeEdgeLength;

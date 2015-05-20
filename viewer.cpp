@@ -150,10 +150,10 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
 
-    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
-    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength : 1;
-    const std::size_t sliceIncrement = vpConfig->type == SLICE_XY ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t innerLoopBoundary = vpConfig->type == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t outerLoopBoundary = vpConfig->type == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vpConfig->type == VIEWPORT_YZ ? state->cubeEdgeLength : 1;
+    const std::size_t sliceIncrement = vpConfig->type == VIEWPORT_XY ? state->cubeEdgeLength : state->cubeSliceArea;
     const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength;
 
     int offsetX = 0, offsetY = 0;
@@ -172,13 +172,13 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             }
             if(partlyInMovementArea) {
                 bool factor = false;
-                if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
-                    ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                if((vpConfig->type == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
+                    ((vpConfig->type == VIEWPORT_XZ || vpConfig->type == VIEWPORT_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
                     factor = true;
                 }
-                else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
-                        (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                else if(((vpConfig->type == VIEWPORT_XY || vpConfig->type == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
+                        (vpConfig->type == VIEWPORT_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
                     factor = true;
                 }
@@ -290,10 +290,10 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
 
-    const std::size_t innerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t outerLoopBoundary = vpConfig->type == SLICE_XZ ? state->cubeEdgeLength : 1;
-    const std::size_t voxelIncrement = vpConfig->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
-    const std::size_t sliceIncrement = vpConfig->type == SLICE_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
+    const std::size_t innerLoopBoundary = vpConfig->type == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
+    const std::size_t outerLoopBoundary = vpConfig->type == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vpConfig->type == VIEWPORT_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
+    const std::size_t sliceIncrement = vpConfig->type == VIEWPORT_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
     const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
 
     auto & seg = Segmentation::singleton();
@@ -311,14 +311,14 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
         for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
             bool hide = false;
             if(partlyInMovementArea) {
-                if((vpConfig->type == SLICE_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
-                    ((vpConfig->type == SLICE_XZ || vpConfig->type == SLICE_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                if((vpConfig->type == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
+                    ((vpConfig->type == VIEWPORT_XZ || vpConfig->type == VIEWPORT_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
                     slice[3] = 0;
                     hide = true;
                 }
-                else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
-                        (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                else if(((vpConfig->type == VIEWPORT_XY || vpConfig->type == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
+                        (vpConfig->type == VIEWPORT_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
                     slice[3] = 0;
                     hide = true;
@@ -408,7 +408,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     bool dc_reslice, oc_reslice;
     int dcOffset;
     switch(currentVp.type) {
-    case SLICE_XY:
+    case VIEWPORT_XY:
         dcOffset = state->cubeSliceArea
                    * (currPosTrans.z - state->cubeEdgeLength
                    * currentPosition_dc.z);
@@ -421,7 +421,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         dc_xy_changed = false;
         oc_xy_changed = false;
         break;
-    case SLICE_XZ:
+    case VIEWPORT_XZ:
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
@@ -434,7 +434,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         dc_xz_changed = false;
         oc_xz_changed = false;
         break;
-    case SLICE_YZ:
+    case VIEWPORT_YZ:
         dcOffset = currPosTrans.x - state->cubeEdgeLength
                    * currentPosition_dc.x;
         if(!dc_zy_changed && !oc_zy_changed) {
@@ -470,13 +470,13 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             // XY-slice: x local is x global, y local is y global
             // XZ-slice: x local is x global, y local is z global
             // YZ-slice: x local is y global, y local is z global.
-            case SLICE_XY:
+            case VIEWPORT_XY:
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
                 break;
-            case SLICE_XZ:
+            case VIEWPORT_XZ:
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
                 break;
-            case SLICE_YZ:
+            case VIEWPORT_YZ:
                 currentDc = {upperLeftDc.x, upperLeftDc.y + x_dc, upperLeftDc.z + y_dc};
                 break;
             default:

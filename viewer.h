@@ -42,11 +42,6 @@
 #define FAST 10
 #define RGB_LUTSIZE 768
 
-//	For the viewer.
-#define	SLICE_XY 0
-#define SLICE_XZ 1
-#define	SLICE_YZ 2
-
 // MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
 // a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
 // pixel size instead of 20 nm
