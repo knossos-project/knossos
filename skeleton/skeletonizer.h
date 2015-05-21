@@ -201,6 +201,7 @@ public slots:
     void autoSaveIfElapsed();
     uint64_t UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node, uint nodeID);
+    bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);

@@ -1838,11 +1838,23 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
     return nextTree;
 }
 
+bool Skeletonizer::addTreeCommentToSelectedTrees(QString comment) {
+    const auto blockState = signalsBlocked();
+    blockSignals(true);
+
+    for(const auto &tree : state->skeletonState->selectedTrees) {
+        addTreeComment(tree->treeID, comment);
+    }
+
+    blockSignals(blockState);
+
+    return true;
+}
+
 bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     treeListElement *tree = NULL;
 
     tree = findTreeByTreeID(treeID);
-
 
     if((!comment.isNull()) && tree) {
         strncpy(tree->comment, comment.toStdString().c_str(), 8192);
