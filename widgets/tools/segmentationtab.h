@@ -115,9 +115,13 @@ public:
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();
+    uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
+    uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
+
+    template<typename Model>
+    friend void contextMenu(const SegmentationTab & tab, const QTreeView & table, Model & model, const QPoint & pos);
 public slots:
     void filter();
-    void contextMenu(const QAbstractScrollArea & widget, const QPoint & pos);
 };
 
 #endif // SEGMENTATIONTAB_H
