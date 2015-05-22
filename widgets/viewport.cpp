@@ -898,6 +898,7 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
     QOpenGLFramebufferObject fbo(1024, 1024, QOpenGLFramebufferObject::Depth);
 
     fbo.bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
         auto& seg = Segmentation::singleton();
         if (seg.volume_render_toggle) {
@@ -914,7 +915,7 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
     else {
         state->viewer->renderer->renderOrthogonalVP(id, withOverlay, withSkeleton, false);
     }
-    if(withScale) {
+    if(id != VIEWPORT_SKELETON && withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
         state->viewer->renderer->renderSizeLabel(id, BIG);
     }
@@ -923,7 +924,6 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
     image.save(path);
     glPopAttrib(); // restore viewport setting
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     fbo.bindDefault();
     fbo.release();
 }
