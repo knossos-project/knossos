@@ -32,6 +32,7 @@ const QString SAVING_INTERVAL = "saving_interval";
 const QString AUTOINC_FILENAME = "autoinc_filename";
 
 /* DataSet Switch */
+const QString DATASET_GEOMETRY = "dataset_geometry";
 const QString DATASET_MRU = "dataset_mru";
 const QString DATASET_SUPERCUBE_EDGE = "supercube_edge";
 const QString DATASET_OVERLAY = "overlay";

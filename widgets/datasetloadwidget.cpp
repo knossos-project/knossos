@@ -544,6 +544,7 @@ void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
+    settings.setValue(DATASET_GEOMETRY, saveGeometry());
     settings.setValue(DATASET_LAST_USED, datasetPath);
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
@@ -576,6 +577,7 @@ void DatasetLoadWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
+    restoreGeometry(settings.value(DATASET_GEOMETRY, "").toByteArray());
     datasetPath = settings.value(DATASET_LAST_USED, "").toString();
 
     auto appendRowSelectIfLU = [this](const QString & dataset){
