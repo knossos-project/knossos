@@ -122,14 +122,16 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {
     if (col == 0 && row == tableWidget.rowCount() - 1 && tableWidget.item(row, 0)->text() != "") {
         const auto dataset = tableWidget.item(row, 0)->text();
-        tableWidget.blockSignals(true);
+        const auto blockState = tableWidget.signalsBlocked();
+        tableWidget.blockSignals(true);//changing an item would land here again
 
         tableWidget.item(row, 0)->setText("");//clear edit row
         insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
         tableWidget.selectRow(row);//select new item
 
-        tableWidget.blockSignals(false);
+        tableWidget.blockSignals(blockState);
     }
+    updateDatasetInfo();
 }
 
 void DatasetLoadWidget::updateDatasetInfo() {
