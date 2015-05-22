@@ -1223,7 +1223,9 @@ void MainWindow::dropEvent(QDropEvent *event) {
     for (auto && url : event->mimeData()->urls()) {
         files.append(url.toLocalFile());
     }
-    openFileDispatch(files);
+    QTimer::singleShot(0, [this, files](){
+        openFileDispatch(files);
+    });
     event->accept();
 }
 
