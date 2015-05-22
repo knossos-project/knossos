@@ -30,97 +30,65 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     cubeEdgeSpin.setRange(1, 256);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    supercubeEdgeSpin = new QSpinBox;
-    supercubeEdgeSpin->setMinimum(3);
-    supercubeEdgeSpin->setSingleStep(2);
-    supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    supercubeSizeLabel = new QLabel();
+    superCubeEdgeSpin.setMinimum(3);
+    superCubeEdgeSpin.setSingleStep(2);
+    superCubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    cancelButton = new QPushButton("Cancel");
-    processButton = new QPushButton("Use");
+    tableWidget.setColumnCount(3);
 
-    QFrame* line0 = new QFrame();
-    line0->setFrameShape(QFrame::HLine);
-    line0->setFrameShadow(QFrame::Sunken);
-    auto hLayoutLine0 = new QHBoxLayout;
-    hLayoutLine0->addWidget(line0);
+    tableWidget.verticalHeader()->setVisible(false);
+    tableWidget.horizontalHeader()->setVisible(false);
 
-    auto hDatasetInfoSplitter = new QSplitter();
-    tableWidget = new QTableWidget();
-    tableWidget->setColumnCount(3);
+    tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
+    tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
+    tableWidget.horizontalHeader()->resizeSection(1, 20);
+    tableWidget.horizontalHeader()->resizeSection(2, 40);
+    tableWidget.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-    tableWidget->verticalHeader()->setVisible(false);
-    tableWidget->horizontalHeader()->setVisible(false);
+    infoLabel.setWordWrap(true);//allows shrinking below minimum width
 
-    tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    tableWidget->horizontalHeader()->resizeSection(1, 20);
-    tableWidget->horizontalHeader()->resizeSection(2, 40);
-    tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    line.setFrameShape(QFrame::HLine);
+    line.setFrameShadow(QFrame::Sunken);
 
+    superCubeEdgeSpin.setAlignment(Qt::AlignLeft);
+    superCubeEdgeHLayout.addWidget(&superCubeEdgeSpin);
+    superCubeEdgeHLayout.addWidget(&superCubeSizeLabel);
 
-    infolabel = new QLabel();
+    cubeEdgeHLayout.addWidget(&cubeEdgeSpin);
+    cubeEdgeHLayout.addWidget(&cubeEdgeLabel);
 
-    scrollarea = new QScrollArea();
-    scrollarea->setWidgetResizable(true);
-    scrollarea->setWidget(infolabel);
+    buttonHLayout.addWidget(&processButton);
+    buttonHLayout.addWidget(&cancelButton);
 
-    hDatasetInfoSplitter->addWidget(tableWidget);
-    hDatasetInfoSplitter->addWidget(scrollarea);
-    const auto splitterWidth = hDatasetInfoSplitter->size().width();
-    hDatasetInfoSplitter->setSizes({splitterWidth/2, splitterWidth/2});
+    mainLayout.addWidget(&tableWidget);
+    mainLayout.addWidget(&infoLabel);
+    mainLayout.addWidget(&line);
+    mainLayout.addLayout(&superCubeEdgeHLayout);
+    mainLayout.addLayout(&cubeEdgeHLayout);
+    mainLayout.addWidget(&segmentationOverlayCheckbox);
+    mainLayout.addLayout(&buttonHLayout);
 
-    QFrame* line1 = new QFrame();
-    line1->setFrameShape(QFrame::HLine);
-    line1->setFrameShadow(QFrame::Sunken);
+    setLayout(&mainLayout);
 
-    auto hLayoutLine1 = new QHBoxLayout;
-    hLayoutLine1->addWidget(line1);
-
-    auto hLayout2 = new QHBoxLayout;
-    hLayout2->addWidget(supercubeEdgeSpin);
-    supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
-    hLayout2->addWidget(supercubeSizeLabel);
-
-    auto hLayoutCubeSize = new QHBoxLayout;
-    hLayoutCubeSize->addWidget(&cubeEdgeSpin);
-    hLayoutCubeSize->addWidget(&cubeEdgeLabel);
-
-    auto hLayout3 = new QHBoxLayout;
-    hLayout3->addWidget(processButton);
-    hLayout3->addWidget(cancelButton);
-
-    auto localLayout = new QVBoxLayout();
-
-    localLayout->addLayout(hLayoutLine0);
-    localLayout->addWidget(hDatasetInfoSplitter, 1);
-    localLayout->addLayout(hLayoutLine1);
-    localLayout->addLayout(hLayoutCubeSize);
-    localLayout->addLayout(hLayout2);
-    localLayout->addWidget(&segmentationOverlayCheckbox);
-    localLayout->addLayout(hLayout3);
-
-    auto mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(localLayout);
-    setLayout(mainLayout);
-
-    QObject::connect(tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
-    QObject::connect(tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::updateDatasetInfo);
+    QObject::connect(&tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
+    QObject::connect(&tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::updateDatasetInfo);
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
+    QObject::connect(&superCubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
-    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
+    QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
+    QObject::connect(&cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
+
+    resize(512, 512);//random default size, will be overriden by settings if present
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row) {
-    tableWidget->insertRow(row);
+    tableWidget.insertRow(row);
 
     auto rowFromCell = [this](int column, QPushButton * const button){
-        for(int row = 0; row < tableWidget->rowCount(); ++row) {
-            if (button == tableWidget->cellWidget(row, column)) {
+        for(int row = 0; row < tableWidget.rowCount(); ++row) {
+            if (button == tableWidget.cellWidget(row, column)) {
                 return row;
             }
         }
@@ -135,42 +103,42 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
         if (!selectFile.isEmpty()) {
             QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
             const int row = rowFromCell(1, addDs);
-            tableWidget->setItem(row, 0, t);
+            tableWidget.setItem(row, 0, t);
         }
     });
 
     QPushButton *delDs = new QPushButton("Del");
     QObject::connect(delDs, &QPushButton::clicked, [this, rowFromCell, delDs](){
         const int row = rowFromCell(2, delDs);
-        tableWidget->removeRow(row);
+        tableWidget.removeRow(row);
     });
 
     QTableWidgetItem *t = new QTableWidgetItem(dataset);
-    tableWidget->setItem(row, 0, t);
-    tableWidget->setCellWidget(row, 1, addDs);
-    tableWidget->setCellWidget(row, 2, delDs);
+    tableWidget.setItem(row, 0, t);
+    tableWidget.setCellWidget(row, 1, addDs);
+    tableWidget.setCellWidget(row, 2, delDs);
 }
 
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {
-    if (col == 0 && row == tableWidget->rowCount() - 1 && tableWidget->item(row, 0)->text() != "") {
-        const auto dataset = tableWidget->item(row, 0)->text();
-        tableWidget->blockSignals(true);
+    if (col == 0 && row == tableWidget.rowCount() - 1 && tableWidget.item(row, 0)->text() != "") {
+        const auto dataset = tableWidget.item(row, 0)->text();
+        tableWidget.blockSignals(true);
 
-        tableWidget->item(row, 0)->setText("");//clear edit row
-        insertDatasetRow(dataset, tableWidget->rowCount() - 1);//insert before edit row
-        tableWidget->selectRow(row);//select new item
+        tableWidget.item(row, 0)->setText("");//clear edit row
+        insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
+        tableWidget.selectRow(row);//select new item
 
-        tableWidget->blockSignals(false);
+        tableWidget.blockSignals(false);
     }
 }
 
 void DatasetLoadWidget::updateDatasetInfo() {
-    if (tableWidget->selectedItems().empty()) return;
+    if (tableWidget.selectedItems().empty()) return;
 
-    const auto dataset = tableWidget->selectedItems().front()->text();
+    const auto dataset = tableWidget.selectedItems().front()->text();
 
     //make sure supercubeedge is small again
-    supercubeEdgeSpin->setValue(supercubeEdgeSpin->value() * cubeEdgeSpin.value() / 128);
+    superCubeEdgeSpin.setValue(superCubeEdgeSpin.value() * cubeEdgeSpin.value() / 128);
     cubeEdgeSpin.setValue(128);
     adaptMemoryConsumption();
 
@@ -201,7 +169,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
         }
     }
 
-    infolabel->setText(infotext);
+    infoLabel.setText(infotext);
 }
 
 bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
@@ -288,9 +256,9 @@ QString DatasetLoadWidget::extractWebKnossosToken(QString & json_raw) {
 QStringList DatasetLoadWidget::getRecentPathItems() {
     QStringList recentPaths;
 
-    for(int row = 0; row < tableWidget->rowCount() - 1; ++row) {
-        if(tableWidget->item(row, 0)->text() != "") {
-            recentPaths.append(tableWidget->item(row, 0)->text());
+    for(int row = 0; row < tableWidget.rowCount() - 1; ++row) {
+        if(tableWidget.item(row, 0)->text() != "") {
+            recentPaths.append(tableWidget.item(row, 0)->text());
         }
     }
 
@@ -299,15 +267,15 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto cubeEdge = cubeEdgeSpin.value();
-    const auto superCubeEdge = supercubeEdgeSpin->value();
+    const auto superCubeEdge = superCubeEdgeSpin.value();
     auto mibibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
     mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
     const auto fov = cubeEdge * (superCubeEdge - 1);
     auto text = QString("Data cache cube edge length (%1 MiB RAM)\nFOV %2 pixel per dimension").arg(mibibytes).arg(fov);
-    supercubeSizeLabel->setText(text);
+    superCubeSizeLabel.setText(text);
     const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
     //make sure it’s an odd number
-    supercubeEdgeSpin->setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
+    superCubeEdgeSpin.setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
@@ -315,7 +283,7 @@ void DatasetLoadWidget::cancelButtonClicked() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    const auto dataset = tableWidget->item(tableWidget->currentRow(), 0)->text();
+    const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
     } else if (loadDataset(dataset)) {
@@ -418,7 +386,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
-    state->M = supercubeEdgeSpin->value();
+    state->M = superCubeEdgeSpin.value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
 
     Loader::API api;
@@ -581,13 +549,13 @@ void DatasetLoadWidget::loadSettings() {
     datasetPath = settings.value(DATASET_LAST_USED, "").toString();
 
     auto appendRowSelectIfLU = [this](const QString & dataset){
-        insertDatasetRow(dataset, tableWidget->rowCount());
+        insertDatasetRow(dataset, tableWidget.rowCount());
         if (dataset == datasetPath) {
-            tableWidget->selectRow(tableWidget->rowCount() - 1);
+            tableWidget.selectRow(tableWidget.rowCount() - 1);
         }
     };
 
-    tableWidget->blockSignals(true);
+    tableWidget.blockSignals(true);
 
     //add datasets from file
     for(const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
@@ -596,15 +564,15 @@ void DatasetLoadWidget::loadSettings() {
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
-        if (tableWidget->findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
+        if (tableWidget.findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
             appendRowSelectIfLU(dataset.absoluteFilePath());
         }
     }
     //add Empty row at the end
     appendRowSelectIfLU("");
-    tableWidget->cellWidget(tableWidget->rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
+    tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
 
-    tableWidget->blockSignals(false);
+    tableWidget.blockSignals(false);
     updateDatasetInfo();
 
 
@@ -616,7 +584,7 @@ void DatasetLoadWidget::loadSettings() {
     }
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);
-    supercubeEdgeSpin->setValue(state->M);
+    superCubeEdgeSpin.setValue(state->M);
     segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
     adaptMemoryConsumption();
 

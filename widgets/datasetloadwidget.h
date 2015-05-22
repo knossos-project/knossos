@@ -7,22 +7,48 @@
 
 #include <QCheckBox>
 #include <QDialog>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QListWidget>
 #include <QTextDocument>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
-#include <QListWidget>
 #include <QTableWidget>
+#include <QVBoxLayout>
 
 class QScrollArea;
 class QPushButton;
 
 class DatasetLoadWidget : public QDialog {
     Q_OBJECT
+
+    QVBoxLayout mainLayout;
+    QTableWidget tableWidget;
+    QLabel infoLabel;
+    QFrame line;
+    QHBoxLayout superCubeEdgeHLayout;
+    QSpinBox superCubeEdgeSpin;
+    QLabel superCubeSizeLabel;
+    QHBoxLayout cubeEdgeHLayout;
     QLabel cubeEdgeLabel{"Cubesize"};
     QSpinBox cubeEdgeSpin;
+    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
+    QHBoxLayout buttonHLayout;
+    QPushButton processButton{"Load Dataset"};
+    QPushButton cancelButton{"Close"};
+
+    struct Datasetinfo{
+        Coordinate boundary;
+        floatCoordinate scale{0,0,0};
+        int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
+        bool remote = false;
+        std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
+    };
+    Datasetinfo datasetinfo;
 public:
+    QString datasetPath;//meh
+
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
     void gatherHeidelbrainDatasetInformation(QString &);
@@ -36,26 +62,8 @@ public:
     bool parseGoogleJson(const QString & json_raw);
     bool parseWebKnossosJson(const QString & json_raw);
     QString extractWebKnossosToken(QString & json_raw);
-    struct Datasetinfo{
-        Coordinate boundary;
-        floatCoordinate scale{0,0,0};
-        int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
-        bool remote = false;
-        std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
-    };
-    Datasetinfo datasetinfo;
     Datasetinfo getConfigFileInfo(const QString &path);
-    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
     QStringList getRecentPathItems();
-    QSpinBox *supercubeEdgeSpin;
-    QLabel *infolabel;
-    QScrollArea *scrollarea;
-    QString datasetPath;
-    QTableWidget *tableWidget;
-protected:
-    QLabel *supercubeSizeLabel;
-    QPushButton *cancelButton;
-    QPushButton *processButton;
 
 signals:
     void clearSkeletonSignalGUI();
