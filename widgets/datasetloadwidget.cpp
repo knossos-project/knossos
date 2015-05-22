@@ -169,14 +169,10 @@ void DatasetLoadWidget::updateDatasetInfo() {
 
     const auto dataset = tableWidget->selectedItems().front()->text();
 
-    if (dataset.contains("google") || dataset.contains("oxalis")) {
-        infolabel->setText("wip loader");
-        return;
-    } else {//make sure supercubeedge is small again
-        supercubeEdgeSpin->setValue(supercubeEdgeSpin->value() * cubeEdgeSpin.value() / 128);
-        cubeEdgeSpin.setValue(128);
-        adaptMemoryConsumption();
-    }
+    //make sure supercubeedge is small again
+    supercubeEdgeSpin->setValue(supercubeEdgeSpin->value() * cubeEdgeSpin.value() / 128);
+    cubeEdgeSpin.setValue(128);
+    adaptMemoryConsumption();
 
     QString infotext;
     if (dataset != "") {
