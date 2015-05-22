@@ -129,7 +129,9 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
 
     QPushButton *addDs = new QPushButton("…");
     QObject::connect(addDs, &QPushButton::clicked, [this, rowFromCell, addDs](){
+        state->viewerState->renderInterval = SLOW;
         QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+        state->viewerState->renderInterval = FAST;
         if (!selectFile.isEmpty()) {
             QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
             const int row = rowFromCell(1, addDs);
