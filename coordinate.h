@@ -102,18 +102,6 @@ public:
         return {(x / mag) % size, (y / mag) % size, (z / mag) % size};
     }
 
-    /**
-     * This function calculates the coordinates of the datacube from pixel coordinates
-     */
-    static Coordinate Px2DcCoord(Coordinate pxCoordinate, int cubeEdgeLength) {
-        const auto cubeCoord = pxCoordinate.cube(cubeEdgeLength, 1);
-        return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
-    }
-
-    constexpr Coordinate global2Legacy(int cubeEdgeLength, const int magnification) const {
-        return cube(cubeEdgeLength, magnification);
-    }
-
     constexpr Coordinate legacy2Global(const int cubeEdgeLength, const int magnification) const {
         return {x * cubeEdgeLength * magnification, y * cubeEdgeLength * magnification, z * cubeEdgeLength * magnification};
     }

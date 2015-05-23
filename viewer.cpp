@@ -396,22 +396,13 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
-    const Coordinate currPosTrans = state->viewerState->currentPosition / state->magnification;
-    const Coordinate currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
+    const CoordInCube currentPosition_dc = state->viewerState->currentPosition.insideCube(state->cubeEdgeLength, state->magnification);
 
-    // We calculate the coordinate of the DC that holds the slice that makes up the upper left
-    // corner of our texture.
-    // dcOffset is the offset by which we can index into a datacube to extract the first byte of
-    // slice relevant to the texture for this viewport.
-    //
-    // Rounding should be explicit!
     bool dc_reslice, oc_reslice;
-    int dcOffset;
+    int slicePositionWithinCube;
     switch(currentVp.type) {
     case VIEWPORT_XY:
-        dcOffset = state->cubeSliceArea
-                   * (currPosTrans.z - state->cubeEdgeLength
-                   * currentPosition_dc.z);
+        slicePositionWithinCube = state->cubeSliceArea * currentPosition_dc.z;
         if(!dc_xy_changed && !oc_xy_changed) {
             return true;
         }
@@ -422,9 +413,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         oc_xy_changed = false;
         break;
     case VIEWPORT_XZ:
-        dcOffset = state->cubeEdgeLength
-                   * (currPosTrans.y  - state->cubeEdgeLength
-                   * currentPosition_dc.y);
+        slicePositionWithinCube = state->cubeEdgeLength * currentPosition_dc.y;
         if(!dc_xz_changed && !oc_xz_changed) {
             return true;
         }
@@ -435,8 +424,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         oc_xz_changed = false;
         break;
     case VIEWPORT_YZ:
-        dcOffset = currPosTrans.x - state->cubeEdgeLength
-                   * currentPosition_dc.x;
+        slicePositionWithinCube = currentPosition_dc.x;
         if(!dc_zy_changed && !oc_zy_changed) {
             return true;
         }
@@ -451,8 +439,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         return false;
     }
 
-    const Coordinate leftUpperPxInAbsPxTrans = currentVp.texture.leftUpperPxInAbsPx / state->magnification;
-    const Coordinate upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans, state->cubeEdgeLength);
+    const CoordOfCube upperLeftDc = currentVp.texture.leftUpperPxInAbsPx.cube(state->cubeEdgeLength, state->magnification);
 
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
@@ -514,7 +501,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                     dcSliceExtract(datacube,
                                    cubePosInAbsPx,
                                    state->viewerState->texData + index,
-                                   dcOffset,
+                                   slicePositionWithinCube,
                                    &currentVp,
                                    state->viewerState->datasetAdjustmentOn);
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -549,7 +536,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                     ocSliceExtract(overlayCube,
                                    cubePosInAbsPx,
                                    state->viewerState->overlayData + index,
-                                   dcOffset * OBJID_BYTES,
+                                   slicePositionWithinCube * OBJID_BYTES,
                                    &currentVp);
 
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -639,13 +626,9 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
  * and the real dataset pixel */
 bool Viewer::calcLeftUpperTexAbsPx() {
     uint i = 0;
-    Coordinate currentPosition_dc, currPosTrans;
     viewerState *viewerState = state->viewerState;
 
-    /* why div first by mag and then multiply again with it?? */
-    currPosTrans = viewerState->currentPosition / state->magnification;
-
-    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans, state->cubeEdgeLength);
+    CoordOfCube currentPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
@@ -1205,9 +1188,6 @@ void Viewer::updateCurrentPosition() {
 bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
     struct viewerState *viewerState = state->viewerState;
 
-    Coordinate lastPosition_dc;
-    Coordinate newPosition_dc;
-
     if (Viewport::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
         dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
     } else {
@@ -1225,7 +1205,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
-    lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
+    const auto lastPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
     auto newPos = Coordinate(viewerState->currentPosition.x + x, viewerState->currentPosition.y + y, viewerState->currentPosition.z + z);
     if (Session::singleton().outsideMovementArea(newPos) == false) {
@@ -1242,7 +1222,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
             viewerState->currentPosition.z + z + 1);
     }
 
-    newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition, state->cubeEdgeLength);
+    const auto newPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
     if (newPosition_dc != lastPosition_dc) {
         dc_reslice_notify_visible();
