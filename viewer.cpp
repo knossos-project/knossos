@@ -448,7 +448,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             const int x_px = x_dc * state->cubeEdgeLength;
             const int y_px = y_dc * state->cubeEdgeLength;
 
-            Coordinate currentDc;
+            CoordOfCube currentDc;
 
             switch(currentVp.type) {
             // With an x/y-coordinate system in a viewport, we get the following
@@ -568,7 +568,6 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
-    Coordinate currentDc, currentPx;
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
     char *datacube = NULL;
@@ -584,15 +583,15 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     while(s < currentVp.s_max) {
         t = 0;
         while(t < currentVp.t_max) {
-            currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
-            currentDc = currentPx / state->cubeEdgeLength;
+            Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
+            Coordinate currentDc = currentPx / state->cubeEdgeLength;
 
             if(currentPx.x < 0) { currentDc.x -= 1; }
             if(currentPx.y < 0) { currentDc.y -= 1; }
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer->lock();
-            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], {currentDc.x, currentDc.y, currentDc.z});
             state->protectCube2Pointer->unlock();
 
             currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;

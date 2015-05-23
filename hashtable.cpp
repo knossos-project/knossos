@@ -24,11 +24,11 @@
 
 #include "hashtable.h"
 
-bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const Coordinate &c) {
+bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const CoordOfCube &c) {
     return h.end() != h.find(c);
 }
 
-char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coordinate &c) {
+char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const CoordOfCube &c) {
     const auto gotIt = h.find(c);
     if (gotIt == std::end(h)) {
         return nullptr;

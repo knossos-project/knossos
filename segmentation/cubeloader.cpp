@@ -8,7 +8,7 @@
 #include "stateInfo.h"
 
 std::pair<bool, char *> getRawCube(const Coordinate & pos) {
-    const auto posDc = pos / state->magnification / state->cubeEdgeLength;
+    const auto posDc = pos.cube(state->cubeEdgeLength, state->magnification);
 
     state->protectCube2Pointer->lock();
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
@@ -72,8 +72,8 @@ void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
     }
 }
 
-auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  globalLast, const uint64_t value, CubeCoordSet &cubeChangeSet) {
-    const auto wholeCubeBegin = (globalFirst + (state->cubeEdgeLength - 1)).cube(state->cubeEdgeLength, state->magnification);
+auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLast, const uint64_t value, CubeCoordSet & cubeChangeSet) {
+    const auto wholeCubeBegin = (globalFirst + state->cubeEdgeLength - 1).cube(state->cubeEdgeLength, state->magnification);
     const auto wholeCubeEnd = globalLast.cube(state->cubeEdgeLength, state->magnification);
 
     //fill all whole cubes
@@ -81,7 +81,7 @@ auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  global
     for (int y = wholeCubeBegin.y; y < wholeCubeEnd.y; ++y)
     for (int x = wholeCubeBegin.x; x < wholeCubeEnd.x; ++x) {
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCoord = cubeCoord.legacy2Global(state->cubeEdgeLength, state->magnification);
+        const auto globalCoord = cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
         auto rawcube = getRawCube(globalCoord);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
@@ -111,7 +111,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     for (int x = cubeBegin.x; x < cubeEnd.x; ++x) {
         skip(x, y, z);//skip cubes which got processed before
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCubeBegin = cubeCoord.legacy2Global(state->cubeEdgeLength, state->magnification);
+        const auto globalCubeBegin = cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
@@ -122,7 +122,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                const auto globalCoord = Coordinate{globalCubeBegin.x + x * state->magnification, globalCubeBegin.y + y * state->magnification, globalCubeBegin.z + z * state->magnification};
+                const Coordinate globalCoord{globalCubeBegin.x + x * state->magnification, globalCubeBegin.y + y * state->magnification, globalCubeBegin.z + z * state->magnification};
                 func(cubeRef[z][y][x], globalCoord);
             }
             cubeCoords.emplace(cubeCoord);

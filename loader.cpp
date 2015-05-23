@@ -117,7 +117,7 @@ void Loader::Controller::unload() {
 void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
     emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
     state->viewer->window->notifyUnsavedChanges();
-    state->viewer->oc_reslice_notify_all(cubeCoord.legacy2Global(state->cubeEdgeLength, state->magnification));
+    state->viewer->oc_reslice_notify_all(cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification));
 
 }
 
@@ -198,7 +198,7 @@ void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMe
 }
 
 struct LO_Element {
-    Coordinate coordinate;
+    CoordOfCube coordinate;
     Coordinate offset;
     float loadOrderMetrics[LL_METRIC_NUM];
 };
@@ -226,7 +226,7 @@ int Loader::Worker::CompareLoadOrderMetric(const void * a, const void * b) {
     return 0;
 }
 
-std::vector<Coordinate> Loader::Worker::DcoiFromPos(const Coordinate & center) {
+std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) {
     floatCoordinate currentMetricPos, direction;
     LO_Element *DcArray;
     int cubeElemCount;
@@ -271,7 +271,7 @@ std::vector<Coordinate> Loader::Worker::DcoiFromPos(const Coordinate & center) {
         return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) < 0;
     });
 
-    std::vector<Coordinate> cubes;
+    std::vector<CoordOfCube> cubes;
     for (i = 0; i < cubeElemCount; i++) {
         cubes.emplace_back(DcArray[i].coordinate);
     }
@@ -326,7 +326,7 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep) {
 template<typename CubeHash, typename Slots, typename Keep, typename UnloadHook>
 void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHook todo) {
     for (auto it = std::begin(loadedCubes); it != std::end(loadedCubes);) {
-        if (!keep(it->first.legacy2Global(state->cubeEdgeLength, state->magnification))) {
+        if (!keep(it->first.cube2Global(state->cubeEdgeLength, state->magnification))) {
             todo(CoordOfCube(it->first.x, it->first.y, it->first.z), it->second);
             freeSlots.emplace_back(it->second);
             it = loadedCubes.erase(it);
@@ -345,7 +345,7 @@ void Loader::Worker::unload() {
     }
     state->Dc2Pointer[loaderMagnification].clear();
     for (auto &elem : state->Oc2Pointer[loaderMagnification]) {
-        const auto cubeCoord = elem.first.cube2Legacy();
+        const auto cubeCoord = elem.first;
         const auto remSlotPtr = elem.second;
         freeOcSlots.emplace_back(elem.second);
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
@@ -366,7 +366,7 @@ void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std
     snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
     state->protectCube2Pointer->lock();
-    const auto coord = cubeCoord.cube2Legacy();
+    const auto coord = cubeCoord;
     auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], coord);
     if (cubePtr != nullptr) {
         freeOcSlots.emplace_back(cubePtr);
@@ -490,7 +490,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
 
     if (success) {
         state->protectCube2Pointer->lock();
-        cubeHash[globalCoord.cube(state->cubeEdgeLength, magnification).cube2Legacy()] = currentSlot;
+        cubeHash[globalCoord.cube(state->cubeEdgeLength, magnification)] = currentSlot;
         state->protectCube2Pointer->unlock();
         if (isOverlay(type)) {
             state->viewer->oc_reslice_notify_all(globalCoord);
@@ -620,10 +620,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     std::vector<Coordinate> visibleCubes;
     std::vector<Coordinate> cacheCubes;
     for (auto && todo : Dcoi) {
-        const Coordinate globalCoord = todo.legacy2Global(state->cubeEdgeLength, state->magnification);
+        const Coordinate globalCoord = todo.cube2Global(state->cubeEdgeLength, state->magnification);
         state->protectCube2Pointer->lock();
-        const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
-        const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
+        const bool dcNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification)) == nullptr;
+        const bool ocNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], globalCoord.cube(state->cubeEdgeLength, state->magnification)) == nullptr;
         state->protectCube2Pointer->unlock();
         if (dcNotAlreadyLoaded || ocNotAlreadyLoaded) {//only queue downloads which are necessary
             allCubes.emplace_back(globalCoord);
@@ -646,7 +646,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
                     if (success) {
                         state->protectCube2Pointer->lock();
-                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
+                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer->unlock();
                         state->viewer->oc_reslice_notify_all(globalCoord);
                     } else {
@@ -674,7 +674,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         QUrl dcUrl = apiSwitch(globalCoord, type);
 
         state->protectCube2Pointer->lock();
-        const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()) == nullptr;
+        const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification)) == nullptr;
         state->protectCube2Pointer->unlock();
         const bool cubeNotDownloading = downloads.find(globalCoord) == std::end(downloads);
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
@@ -683,7 +683,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto request = QNetworkRequest(dcUrl);
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
-            if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).legacy2Global(state->cubeEdgeLength, state->magnification)) {
+            if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).cube2Global(state->cubeEdgeLength, state->magnification)) {
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
             }
@@ -727,7 +727,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
                         std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
                         state->protectCube2Pointer->lock();
-                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification).cube2Legacy()] = currentSlot;
+                        cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer->unlock();
                         state->viewer->oc_reslice_notify_all(globalCoord);
                     } else {
