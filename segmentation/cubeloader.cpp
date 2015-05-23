@@ -27,7 +27,7 @@ uint64_t readVoxel(const Coordinate & pos) {
     if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
         return 0;
     }
-    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
+    const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];
 }
 
@@ -36,7 +36,7 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {//snappy cache only mag1 capable
         return false;
     }
-    const auto inCube = (pos / state->magnification).insideCube(state->cubeEdgeLength);
+    const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
     getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
         Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
@@ -102,7 +102,7 @@ auto wholeCubes = [](const Coordinate &  globalFirst, const Coordinate &  global
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
     const auto cubeBegin = globalFirst.cube(state->cubeEdgeLength, state->magnification);
-    const auto cubeEnd = (globalLast + (state->cubeEdgeLength - 1)).cube(state->cubeEdgeLength, state->magnification);
+    const auto cubeEnd = globalLast.cube(state->cubeEdgeLength, state->magnification) + 1;
     CubeCoordSet cubeCoords;
 
     //traverse all remaining cubes
@@ -115,14 +115,15 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + state->cubeEdgeLength - 1;
-            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength);
-            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength);
+            const auto globalCubeEnd = globalCubeBegin + state->cubeEdgeLength * state->magnification - 1;
+            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength, state->magnification);
+            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength, state->magnification);
 
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                func(cubeRef[z][y][x], Coordinate{globalCubeBegin.x + x, globalCubeBegin.y + y, globalCubeBegin.z + z});
+                const auto globalCoord = Coordinate{globalCubeBegin.x + x * state->magnification, globalCubeBegin.y + y * state->magnification, globalCubeBegin.z + z * state->magnification};
+                func(cubeRef[z][y][x], globalCoord);
             }
             cubeCoords.emplace(cubeCoord);
         } else {

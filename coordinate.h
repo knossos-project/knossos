@@ -98,8 +98,8 @@ public:
         return {x / size / mag, y / size / mag, z / size / mag};
     }
 
-    constexpr CoordInCube insideCube(const int size) const {
-        return {x % size, y % size, z % size};
+    constexpr CoordInCube insideCube(const int size, const int mag) const {
+        return {(x / mag) % size, (y / mag) % size, (z / mag) % size};
     }
 
     /**
