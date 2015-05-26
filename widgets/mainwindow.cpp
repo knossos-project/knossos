@@ -880,16 +880,17 @@ void MainWindow::saveAsSlot() {
     state->viewerState->renderInterval = FAST;
 
     if (!fileName.isEmpty()) {
-        if (!fileName.contains(".k.zip")) {
-            fileName += ".k.zip";
+        const auto prevFilename = fileName;
+        QRegExp kzipRegex(R"regex((\.k)|(\.zip))regex"); // any occurance of .k and .zip
+        if (fileName.contains(kzipRegex)) {
+            fileName.remove(kzipRegex);
+
+            if (prevFilename != fileName + ".k.zip") {
+                const auto message = tr("The supplied filename has been changed: \n") + prevFilename + " to\n" + fileName + ".k.zip";
+                QMessageBox::information(this, tr("Fixed filename"), message);
+            }
         }
-        QRegExp wrongSuffixRegex(R"regex((\.k(?!\.zip$))|(?:[^k](\.zip)))regex");
-        if (fileName.contains(wrongSuffixRegex)) {
-            const auto prevFilename = fileName;
-            fileName.remove(wrongSuffixRegex);
-            const auto message = tr("The supplied filename has been changed: \n") + prevFilename + " → " + fileName;
-            QMessageBox::information(this, tr("Fixed filename"), message);
-        }
+        fileName += ".k.zip";
 
         annotationFilename = fileName;
         saveFileDirectory = QFileInfo(fileName).absolutePath();
