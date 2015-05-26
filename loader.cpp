@@ -640,14 +640,18 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto snappyIt = snappyCache.find(globalCoord.cube(state->cubeEdgeLength, state->magnification));
             if (snappyIt != std::end(snappyCache)) {
                 if (!freeSlots.empty()) {
-                    auto * currentSlot = freeSlots.front();
-                    freeSlots.pop_front();
+                    auto * currentSlot = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification));
+                    if (currentSlot == nullptr) {
+                        currentSlot = freeSlots.front();
+                        freeSlots.pop_front();
+                    }
                     //directly uncompress snappy cube into the OC slot
                     const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
                     if (success) {
                         state->protectCube2Pointer->lock();
                         cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer->unlock();
+
                         state->viewer->oc_reslice_notify_all(globalCoord);
                     } else {
                         freeSlots.emplace_back(currentSlot);
