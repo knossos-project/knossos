@@ -14,7 +14,7 @@ class SnapshotWidget : public QDialog
     Q_OBJECT
     QString saveDir;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpYZRadio{"YZ viewport"}, vp3dRadio{"3D viewport"};
-    QCheckBox withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"};
+    QCheckBox withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
     QVBoxLayout mainLayout;
     ViewportType getCheckedViewport() const;

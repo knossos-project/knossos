@@ -1,3 +1,6 @@
+#include "GuiConstants.h"
+#include "segmentation/segmentation.h"
+#include "session.h"
 #include "snapshotwidget.h"
 
 #include "GuiConstants.h"
@@ -22,16 +25,22 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     viewportChoiceLayout->addWidget(&vpYZRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
     QObject::connect(&vp3dRadio, &QRadioButton::toggled, [this](bool checked) {
-        withOverlayCheck.setDisabled(checked);
-        withScaleCheck.setDisabled(checked);
+        withOverlayCheck.setHidden(checked);
+        withScaleCheck.setHidden(checked);
+        if(Segmentation::singleton().volume_render_toggle == false) {
+            withVpPlanes.setVisible(checked);
+        }
     });
 
     auto imageOptionsLayout = new QVBoxLayout();
     withOverlayCheck.setChecked(true);
     withScaleCheck.setChecked(true);
+    withOverlayCheck.setHidden(true);
+    withVpPlanes.setHidden(true);
     imageOptionsLayout->addWidget(&withOverlayCheck);
     imageOptionsLayout->addWidget(&withSkeletonCheck);
     imageOptionsLayout->addWidget(&withScaleCheck);
+    imageOptionsLayout->addWidget(&withVpPlanes);
 
     auto settingsLayout = new QHBoxLayout();
     settingsLayout->addLayout(viewportChoiceLayout);
