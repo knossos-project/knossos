@@ -222,6 +222,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
+    brushRadiusEdit.setRange(0, 1000);
     twodBtn.setChecked(true);
 
     toolsLayout.addWidget(&showAllChck);
