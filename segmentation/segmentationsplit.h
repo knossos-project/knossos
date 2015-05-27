@@ -1,11 +1,9 @@
-#ifndef SEGMENTATION_SPLIT_H
-#define SEGMENTATION_SPLIT_H
+#ifndef SEGMENTATIONSPLIT_H
+#define SEGMENTATIONSPLIT_H
 
 #include "coordinate.h"
 
 #include <QObject>
-
-#include <set>
 
 class brush_t : public QObject {
     Q_OBJECT
@@ -82,4 +80,4 @@ private:
 void connectedComponent(const Coordinate & seed);
 void verticalSplittingPlane(const Coordinate & seed);
 
-#endif//SEGMENTATION_SPLIT_H
+#endif//SEGMENTATIONSPLIT_H

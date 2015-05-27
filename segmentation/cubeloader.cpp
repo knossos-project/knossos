@@ -1,11 +1,12 @@
 #include "cubeloader.h"
 
-#include "coordinate.h"
 #include "loader.h"
 #include "session.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
 #include "stateInfo.h"
+
+#include <boost/multi_array.hpp>
 
 std::pair<bool, char *> getRawCube(const Coordinate & pos) {
     const auto posDc = pos.cube(state->cubeEdgeLength, state->magnification);
