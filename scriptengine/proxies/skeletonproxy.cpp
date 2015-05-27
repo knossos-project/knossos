@@ -211,9 +211,9 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
-bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, ViewportType inVp, int inMag, int time) {
+bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
-    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false)) {
+    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, (ViewportType)inVp, inMag, time, false)) {
         emit echo(QString("could not add the node with node id %1").arg(node_id));
         return false;
     }
