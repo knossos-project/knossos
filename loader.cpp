@@ -349,7 +349,7 @@ void Loader::Worker::unload() {
         const auto remSlotPtr = elem.second;
         freeOcSlots.emplace_back(elem.second);
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-            snappyCacheAddRaw(cubeCoord, remSlotPtr);
+            snappyCacheBackupRaw(cubeCoord, remSlotPtr);
             //remove from work queue
             OcModifiedCacheQueue.erase(cubeCoord);
         }
@@ -362,9 +362,18 @@ void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const in
     OcModifiedCacheQueue.emplace(cubeCoord);
 }
 
-void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std::string cube) {
+void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const std::string cube) {
     snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
+    const auto globalCoord = cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+    auto downloadIt = ocDownload.find(globalCoord);
+    if (downloadIt != std::end(ocDownload)) {
+        downloadIt->second->abort();
+    }
+    auto decompressionIt = ocDecompression.find(globalCoord);
+    if (decompressionIt != std::end(ocDecompression)) {
+        decompressionIt->second->waitForFinished();
+    }
     state->protectCube2Pointer->lock();
     const auto coord = cubeCoord;
     auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], coord);
@@ -375,7 +384,7 @@ void Loader::Worker::snappyCacheAddSnappy(const CoordOfCube cubeCoord, const std
     state->protectCube2Pointer->unlock();
 }
 
-void Loader::Worker::snappyCacheAddRaw(const CoordOfCube & cubeCoord, const char * cube) {
+void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const char * cube) {
     //insert empty string into snappy cache
     auto snappyIt = snappyCache.emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
@@ -402,7 +411,7 @@ void Loader::Worker::snappyCacheFlush() {
         auto cube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[loaderMagnification], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
         state->protectCube2Pointer->unlock();
         if (cube != nullptr) {
-            snappyCacheAddRaw(cubeCoord, cube);
+            snappyCacheBackupRaw(cubeCoord, cube);
         }
     }
     //clear work queue
@@ -579,7 +588,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
     unloadCubes(state->Dc2Pointer[loaderMagnification], freeDcSlots, insideCurrentSupercubeWrap(center));
     unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap(center), [this](const CoordOfCube & cubeCoord, char * remSlotPtr){
         if (OcModifiedCacheQueue.find(cubeCoord) != std::end(OcModifiedCacheQueue)) {
-            snappyCacheAddRaw(cubeCoord, remSlotPtr);
+            snappyCacheBackupRaw(cubeCoord, remSlotPtr);
             //remove from work queue
             OcModifiedCacheQueue.erase(cubeCoord);
         }
@@ -640,7 +649,19 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto snappyIt = snappyCache.find(globalCoord.cube(state->cubeEdgeLength, state->magnification));
             if (snappyIt != std::end(snappyCache)) {
                 if (!freeSlots.empty()) {
-                    auto * currentSlot = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification));
+                    auto downloadIt = downloads.find(globalCoord);
+                    if (downloadIt != std::end(downloads)) {
+                        downloadIt->second->abort();
+                    }
+                    auto decompressionIt = decompressions.find(globalCoord);
+                    if (decompressionIt != std::end(decompressions)) {
+                        decompressionIt->second->waitForFinished();
+                    }
+                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                    state->protectCube2Pointer->lock();
+                    auto * currentSlot = Coordinate2BytePtr_hash_get_or_fail(cubeHash, cubeCoord);
+                    cubeHash.erase(cubeCoord);
+                    state->protectCube2Pointer->unlock();
                     if (currentSlot == nullptr) {
                         currentSlot = freeSlots.front();
                         freeSlots.pop_front();

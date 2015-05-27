@@ -50,9 +50,8 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             }
             if (cubeRegEx.exactMatch(fileInside)) {
                 file.open(QIODevice::ReadOnly);
-                auto cube = file.readAll();
                 const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
-                Loader::Controller::singleton().snappyCacheAddSnappy(cubeCoord, std::string{cube.data(), static_cast<std::string::size_type>(cube.size())});
+                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, file.readAll().toStdString());
             }
         }
         state->viewer->loader_notify();

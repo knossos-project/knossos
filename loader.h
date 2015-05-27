@@ -139,7 +139,7 @@ private:
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
     std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center);
     uint loadCubes();
-    void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
+    void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
 
     template<typename Func>
@@ -160,7 +160,7 @@ public://matsch
 
     void unload();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
+    void snappyCacheSupplySnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
@@ -194,13 +194,13 @@ public:
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
-        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
     }
     void startLoading(const Coordinate &center);
     template<typename... Args>
-    void snappyCacheAddSnappy(Args&&... args) {
-        emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
+    void snappyCacheSupplySnappy(Args&&... args) {
+        emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
     }
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
@@ -208,7 +208,7 @@ signals:
     void unloadSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
+    void snappyCacheSupplySnappySignal(const CoordOfCube, const std::string cube);
 };
 }//namespace Loader
 
