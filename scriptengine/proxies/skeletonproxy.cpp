@@ -109,7 +109,7 @@ int SkeletonProxy::skeleton_time() {
 }
 
 QString SkeletonProxy::skeleton_file() {
-    return state->viewer->window->annotationFilename;
+    return Session::singleton().annotationFilename;
 }
 
 bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {

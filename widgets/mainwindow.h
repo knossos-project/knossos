@@ -65,7 +65,6 @@ class MainWindow : public QMainWindow {
     QMenu fileMenu{"File"};
     QMenu *skelEditMenu;
     QMenu *segEditMenu;
-    QString annotationFilename;
     QString openFileDirectory;
     QString saveFileDirectory;
 

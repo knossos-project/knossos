@@ -56,6 +56,8 @@ public:
     void updateMovementArea(const Coordinate &min, const Coordinate &max);
     void resetMovementArea();
 
+    QString annotationFilename;
+
     Session();
     static Session & singleton() {
         static Session session;

@@ -303,7 +303,7 @@ void MainWindow::updateTodosLeft() {
                            QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Yes);
         if(msgBox.exec() == QMessageBox::Yes) {
-            auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
+            auto jobFilename = "final_" + QFileInfo(Session::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
             annotationFileSave(finishedJobPath, nullptr);
             Network::singleton().submitSegmentationJob(finishedJobPath);
@@ -318,8 +318,8 @@ void MainWindow::notifyUnsavedChanges() {
 
 void MainWindow::updateTitlebar() {
     QString title = qApp->applicationDisplayName() + " showing ";
-    if (!annotationFilename.isEmpty()) {
-        title.append(annotationFilename);
+    if (!Session::singleton().annotationFilename.isEmpty()) {
+        title.append(Session::singleton().annotationFilename);
     } else {
         title.append("no annotation file");
     }
@@ -331,7 +331,7 @@ void MainWindow::updateTitlebar() {
         unsavedChangesLabel.setText("saved");
     }
     //don’t display if there are no changes and no file is loaded
-    if (!state->skeletonState->unsavedChanges && annotationFilename.isEmpty()) {
+    if (!state->skeletonState->unsavedChanges && Session::singleton().annotationFilename.isEmpty()) {
         unsavedChangesLabel.hide();
         annotationTimeLabel.hide();
     } else {
@@ -808,9 +808,9 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
-    annotationFilename = "";
+    Session::singleton().annotationFilename = "";
     if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
-        annotationFilename = nmls.empty() ? zips.front() : nmls.front();
+        Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
 
@@ -832,7 +832,7 @@ void MainWindow::newAnnotationSlot() {
     Skeletonizer::singleton().clearSkeleton(false);
     Segmentation::singleton().clear();
     state->skeletonState->unsavedChanges = false;
-    annotationFilename = "";
+    Session::singleton().annotationFilename = "";
 }
 
 /**
@@ -857,13 +857,14 @@ void MainWindow::openSlot() {
 }
 
 void MainWindow::autosaveSlot() {
-    if (annotationFilename.isEmpty()) {
-        annotationFilename = annotationFileDefaultPath();
+    if (Session::singleton().annotationFilename.isEmpty()) {
+        Session::singleton().annotationFilename = annotationFileDefaultPath();
     }
     saveSlot();
 }
 
 void MainWindow::saveSlot() {
+    auto & annotationFilename = Session::singleton().annotationFilename;
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
@@ -910,12 +911,12 @@ void MainWindow::saveAsSlot() {
         }
         fileName += ".k.zip";
 
-        annotationFilename = fileName;
+        Session::singleton().annotationFilename = fileName;
         saveFileDirectory = QFileInfo(fileName).absolutePath();
 
-        annotationFileSave(annotationFilename);
+        annotationFileSave(Session::singleton().annotationFilename);
 
-        updateRecentFile(annotationFilename);
+        updateRecentFile(Session::singleton().annotationFilename);
         updateTitlebar();
     }
 }
@@ -925,11 +926,11 @@ void MainWindow::exportToNml() {
         QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
         return;
     }
-    auto info = QFileInfo(annotationFilename);
+    auto info = QFileInfo(Session::singleton().annotationFilename);
     auto defaultpath = annotationFileDefaultPath();
     defaultpath.chop(6);
     defaultpath += ".nml";
-    const auto & suggestedFilepath = annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    const auto & suggestedFilepath = Session::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
     state->viewerState->renderInterval = SLOW;
     auto filename = QFileDialog::getSaveFileName(this, "Export to Skeleton file", suggestedFilepath, "KNOSSOS Skeleton file (*.nml)");
     state->viewerState->renderInterval = FAST;

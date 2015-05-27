@@ -2,8 +2,6 @@
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "snapshotwidget.h"
-
-#include "GuiConstants.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
@@ -54,7 +52,9 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     mainLayout.addWidget(&snapshotButton);
 
     QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
+        state->viewerState->renderInterval = SLOW;
         const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
+        state->viewerState->renderInterval = FAST;
         if(path.isEmpty() == false) {
             QFileInfo info(path);
             saveDir = info.absolutePath() + "/";
@@ -77,12 +77,15 @@ ViewportType SnapshotWidget::getCheckedViewport() const {
 }
 
 QString SnapshotWidget::defaultFilename() const {
-    const QString name = vpXYRadio.isChecked() ? "XY_" :
-                   vpXZRadio.isChecked() ? "XZvp_" :
-                   vpYZRadio.isChecked() ? "YZvp_" :
-                                           "3Dvp_";
+    const QString vp = vpXYRadio.isChecked() ? "XY" :
+                   vpXZRadio.isChecked() ? "XZ" :
+                   vpYZRadio.isChecked() ? "YZ" :
+                                           "3D";
     auto pos = &state->viewerState->currentPosition;
-    return QString("%0_%1_%2_%3_%4.png").arg(name).arg(state->name).arg(pos->x).arg(pos->y).arg(pos->z);
+    auto annotationName = Session::singleton().annotationFilename;
+    annotationName.remove(0, annotationName.lastIndexOf("/") + 1); // remove directory structure from name
+    annotationName.chop(annotationName.endsWith(".k.zip") ? 6 : /* .nml */ 4); // remove file type
+    return QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? state->name : annotationName);
 }
 
 void SnapshotWidget::saveSettings() {

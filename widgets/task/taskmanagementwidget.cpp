@@ -196,7 +196,7 @@ bool TaskManagementWidget::submit(const bool final) {
 
     const auto url = taskLoginWidget.host + "/knossos/activeTask/";
     setCursor(Qt::BusyCursor);
-    auto res = Network::singleton().submitHeidelbrain(url, state->viewer->window->annotationFilename, submitCommentEdit.text(), final);
+    auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res)) {
