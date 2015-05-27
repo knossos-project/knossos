@@ -4,8 +4,8 @@
 #include <QToolBar>
 #include <QMenu>
 
-#include "widgets/GuiConstants.h"
 #include "scripting.h"
+#include "widgets/GuiConstants.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
 #include "decorators/colordecorator.h"
@@ -14,8 +14,9 @@
 #include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
 #include "decorators/meshdecorator.h"
-#include "proxies/skeletonproxy.h"
 #include "proxies/pythonproxy.h"
+#include "proxies/segmentationproxy.h"
+#include "proxies/skeletonproxy.h"
 
 #include "eventmodel.h"
 #include "highlighter.h"
@@ -37,6 +38,7 @@ Scripting::Scripting() : _ctx(NULL) {
     _ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
+    segmentationProxy = new SegmentationProxy();
     pythonProxy = new PythonProxy();
     signalRelay = new SignalRelay();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
@@ -59,8 +61,9 @@ Scripting::Scripting() : _ctx(NULL) {
     _ctx.evalScript("plugin_container = []");
 
     _ctx.addObject("signalRelay", signalRelay);
-    _ctx.addObject("skeleton", skeletonProxy);
     _ctx.addObject("knossos", pythonProxy);
+    _ctx.addObject("segmentation", segmentationProxy);
+    _ctx.addObject("skeleton", skeletonProxy);
     _ctx.addObject("knossos_global_viewer", state->viewer);
     _ctx.addObject("knossos_global_mainwindow", state->viewer->window);
     _ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);

@@ -1,7 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <widgets/viewport.h>
+#include "widgets/viewport.h"
 
 #include <cstddef>
 

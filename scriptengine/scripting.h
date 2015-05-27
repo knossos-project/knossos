@@ -24,6 +24,7 @@ class NodeListDecorator;
 class NodeCommentDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
+class SegmentationProxy;
 class SkeletonProxy;
 class PythonProxy;
 class TransformDecorator;
@@ -101,6 +102,7 @@ public:
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
     SkeletonProxy *skeletonProxy;
+    SegmentationProxy *segmentationProxy;
     SignalRelay *signalRelay;
     PythonProxy *pythonProxy;
     TransformDecorator *transformDecorator;
