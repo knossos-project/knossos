@@ -35,6 +35,7 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QPushButton>
 
 class VPSkeletonViewportWidget : public QWidget
 {
@@ -60,6 +61,9 @@ class VPSkeletonViewportWidget : public QWidget
     QSpinBox VolumeOpaquenessSpinBox;
     QSlider VolumeOpaquenessSlider{Qt::Horizontal};
     QHBoxLayout VolumeOpaquenessLayout;
+    QLabel VolumeColorLabel{"Volume Background Color"};
+    QPushButton VolumeColorBox;
+    QHBoxLayout VolumeColorLayout;
 
 //slots
 public:

@@ -1069,7 +1069,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawSke
 bool Viewport::renderVolumeVP(uint currentVP) {
     auto& seg = Segmentation::singleton();
 
-    glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+    std::array<double, 3> background_color;
+    seg.volume_background_color.getRgbF(&background_color[0], &background_color[1], &background_color[2]);
+    glClearColor(background_color[0], background_color[1], background_color[2], 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(seg.volume_tex_id != 0) {

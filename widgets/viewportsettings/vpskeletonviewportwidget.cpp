@@ -36,6 +36,10 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     line3.setFrameShape(QFrame::HLine);
     line3.setFrameShadow(QFrame::Sunken);
 
+    VolumeColorBox.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
+    VolumeColorLayout.addWidget(&VolumeColorLabel);
+    VolumeColorLayout.addWidget(&VolumeColorBox, 0, Qt::AlignRight);
+
     VolumeOpaquenessSpinBox.setMaximum(255);
     VolumeOpaquenessSpinBox.setSingleStep(1);
     VolumeOpaquenessSlider.setMaximum(255);
@@ -56,6 +60,7 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentGridColumn++, 0);
     gridLayout.addWidget(&VolumeRenderFlagCheckBox, currentGridColumn++, 0);
     gridLayout.addLayout(&VolumeOpaquenessLayout, currentGridColumn++, 0);
+    gridLayout.addLayout(&VolumeColorLayout, currentGridColumn++, 0);
 
     mainLayout.addLayout(&gridLayout);
     mainLayout.addStretch(1);//expand vertically with empty space
@@ -66,6 +71,13 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
     QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [](bool checked){Segmentation::singleton().volume_render_toggle = checked; });
+    QObject::connect(&VolumeColorBox, &QPushButton::clicked, [&](){
+        auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
+                if (color.isValid() == QColorDialog::Accepted) {
+                    Segmentation::singleton().volume_background_color = color;
+                    VolumeColorBox.setStyleSheet("background-color : " + color.name() + ";");
+                }
+    });
     QObject::connect(&VolumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
         VolumeOpaquenessSpinBox.setValue(value);
         Segmentation::singleton().volume_opacity = value;

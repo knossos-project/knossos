@@ -5,6 +5,7 @@
 #include "hash_list.h"
 #include "segmentationsplit.h"
 
+#include <QColor>
 #include <QDebug>
 #include <QSet>
 #include <QString>
@@ -185,6 +186,7 @@ public:
     int volume_mouse_move_y = 0;
     float volume_mouse_zoom = 1.0f;
     uint8_t volume_opacity = 255;
+    QColor volume_background_color{Qt::darkGray};
     //data query
     bool hasObjects() const;
     bool hasSegData() const;
