@@ -21,10 +21,12 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "segmentation/segmentation.h"
 #include "vpskeletonviewportwidget.h"
 
-#include <skeleton/skeletonizer.h>
+#include "skeleton/skeletonizer.h"
+#include "segmentation/segmentation.h"
+
+#include <QColorDialog>
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
     line.setFrameShape(QFrame::HLine);
