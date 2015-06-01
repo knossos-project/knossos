@@ -26,6 +26,7 @@ PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(console);
     setLayout(layout);
+    this->resize(QSize(500,300));
     show();
 }
 
