@@ -75,10 +75,10 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [](bool checked){Segmentation::singleton().volume_render_toggle = checked; });
     QObject::connect(&VolumeColorBox, &QPushButton::clicked, [&](){
         auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
-                if (color.isValid() == QColorDialog::Accepted) {
-                    Segmentation::singleton().volume_background_color = color;
-                    VolumeColorBox.setStyleSheet("background-color : " + color.name() + ";");
-                }
+        if (color.isValid() == QColorDialog::Accepted) {
+            Segmentation::singleton().volume_background_color = color;
+            VolumeColorBox.setStyleSheet("background-color : " + color.name() + ";");
+        }
     });
     QObject::connect(&VolumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
         VolumeOpaquenessSpinBox.setValue(value);
