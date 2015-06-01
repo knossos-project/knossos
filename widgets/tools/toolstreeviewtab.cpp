@@ -374,8 +374,6 @@ void ToolsTreeviewTab::setTreeCommentAction() {
             }
         } else {
             Skeletonizer::singleton().addTreeCommentToSelectedTrees(treeCommentBuffer);
-
-            treeAddedOrChanged();
         }
     }
 }

@@ -1848,6 +1848,8 @@ bool Skeletonizer::addTreeCommentToSelectedTrees(QString comment) {
 
     blockSignals(blockState);
 
+    emit resetData();
+
     return true;
 }
 
