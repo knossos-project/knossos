@@ -762,14 +762,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
 
+    const auto skeletonSignalBlockState = Skeletonizer::singleton().signalsBlocked();
+    Skeletonizer::singleton().blockSignals(true);
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
-    const auto blockState = state->viewer->skeletonizer->signalsBlocked();
     for (const auto & filename : nmls) {
-        if(filename == fileNames.last()) { //enable signals only at last element
-            state->viewer->skeletonizer->blockSignals(false);
-        } else {
-            state->viewer->skeletonizer->blockSignals(true);
-        }
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
         QFile file(filename);
         if (success &= state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad)) {
@@ -777,7 +773,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         }
         state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
     }
-    state->viewer->skeletonizer->blockSignals(blockState);
 
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
     for (const auto & filename : zips) {
@@ -786,6 +781,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         updateRecentFile(filename);
         state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
     }
+    Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
+    Skeletonizer::singleton().resetData();
 
     state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
