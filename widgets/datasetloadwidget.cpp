@@ -178,13 +178,13 @@ bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
     QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
 
     auto jmap = json_conf.object();
-    auto boundary_json = jmap["geometrys"].toArray()[0].toObject()["volumeSize"].toObject();
+    auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();
 
     auto bx = boundary_json["x"].toString().toInt();
     auto by = boundary_json["y"].toString().toInt();
     auto bz = boundary_json["z"].toString().toInt();
 
-    auto scale_json = jmap["geometrys"].toArray()[0].toObject()["pixelSize"].toObject();
+    auto scale_json = jmap["geometry"].toArray()[0].toObject()["pixelSize"].toObject();
 
     auto sx = static_cast<float>(scale_json["x"].toDouble());
     auto sy = static_cast<float>(scale_json["y"].toDouble());
@@ -199,8 +199,7 @@ bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
 
     state->path[0] = '\0'; //dont't check for other mags
     Knossos::commonInitStates();
-    state->highestAvailableMag = std::pow(2,(jmap["geometrys"].toArray().size()-1)); //highest google mag
-    qDebug() << "POWER: " << std::pow(2,(jmap["geometrys"].toArray().size()-1));
+    state->highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
 
     state->compressionRatio = 1000;
 
