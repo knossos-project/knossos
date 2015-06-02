@@ -545,26 +545,29 @@ QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coo
 }
 
 QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeEdgeLength, const Loader::CubeType type) {
-    auto query = QUrlQuery(base.query());
+    auto query = QUrlQuery(base);
+    auto path = base.path() + "/binary/subvolume";
 
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
-        query.addQueryItem("format", "raw");
+        path += "/format=raw";
     } else if (type == Loader::CubeType::RAW_JPG) {
-        query.addQueryItem("format", "singleimage");
+        path += "/format=singleimage";
     }
 
-    query.addQueryItem("scale", QString::number(scale));// >= 0
-    query.addQueryItem("size", QString("%1,%1,%1").arg(cubeEdgeLength));// <= 128³
-    query.addQueryItem("corner", QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z));
-    auto path = base.path() + ":subvolume";
+    path += "/scale=" + QString::number(scale);// >= 0
+    path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
+    path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
+
+    query.addQueryItem("alt", "media");
+
     base.setPath(path);
     base.setQuery(query);
-    //<volume_id>:subvolume?corner=10,10,10&size=50,50,50&scale=1&format=singleimage&key=<auth_key>
+    //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
     return base;
 }
 
 QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Loader::CubeType type) {
-    auto query = QUrlQuery(base.query());
+    auto query = QUrlQuery(base);
     query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
 
     QString layer;
@@ -705,7 +708,18 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
         if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
+            //transform googles oauth2 token from query item to request header
+            QUrlQuery originalQuery(dcUrl);
+            auto reducedQuery = originalQuery;
+            reducedQuery.removeQueryItem("access_token");
+            dcUrl.setQuery(reducedQuery);
+
             auto request = QNetworkRequest(dcUrl);
+
+            if (originalQuery.hasQueryItem("access_token")) {
+                const auto oautch2 = originalQuery.queryItemValue("access_token");
+                request.setRawHeader(QString("Authorization: Bearer").toUtf8(), oautch2.toUtf8());
+            }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
             if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).cube2Global(state->cubeEdgeLength, state->magnification)) {
