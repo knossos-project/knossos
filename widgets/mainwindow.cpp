@@ -865,7 +865,6 @@ void MainWindow::saveSlot() {
 }
 
 void MainWindow::saveAsSlot() {
-    auto *seg = &Segmentation::singleton();
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
     state->viewerState->renderInterval = SLOW;
