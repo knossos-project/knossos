@@ -717,8 +717,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto request = QNetworkRequest(dcUrl);
 
             if (originalQuery.hasQueryItem("access_token")) {
-                const auto oautch2 = originalQuery.queryItemValue("access_token");
-                request.setRawHeader(QString("Authorization: Bearer").toUtf8(), oautch2.toUtf8());
+                const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
+                request.setRawHeader("Authorization", authorization.toUtf8());
             }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
