@@ -1,6 +1,7 @@
 #include "pythonproxy.h"
 #include "buildinfo.h"
 #include "functions.h"
+#include "loader.h"
 #include "segmentation/cubeloader.h"
 #include "stateInfo.h"
 #include "skeleton/node.h"
@@ -192,6 +193,14 @@ float PythonProxy::getMovementAreaFactor() {
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
     state->viewer->oc_reslice_notify_all(Coordinate(coord));
+}
+
+int PythonProxy::loaderLoadingNr() {
+    return Loader::Controller::singleton().loadingNr;
+}
+
+int PythonProxy::loaderDownloadCount() {
+    return Loader::Controller::singleton().worker.get()->getDownloadCount();
 }
 
 // UNTESTED
