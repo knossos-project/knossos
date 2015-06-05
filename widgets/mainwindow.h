@@ -73,7 +73,8 @@ class MainWindow : public QMainWindow {
 
     QToolBar basicToolbar{"Basic Functionality"};
     QToolBar defaultToolbar{"Tools"};
-    QProgressBar *loaderProgressBar;
+    int loaderLastProgress;
+    QLabel *loaderProgress;
 
     // segmentation job mode
     QToolBar segJobModeToolbar{"Job Navigation"};
@@ -146,7 +147,7 @@ signals:
     void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
-    void updateLoaderProgressBar(int downloadCount, bool isIncrement);
+    void updateLoaderProgress(int downloadCount, bool isIncrement);
 
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);

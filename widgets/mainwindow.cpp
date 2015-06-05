@@ -39,6 +39,7 @@
 #include <PythonQt/PythonQt.h>
 #include <QAction>
 #include <QCheckBox>
+#include <QColor>
 #include <QDebug>
 #include <QDir>
 #include <QEvent>
@@ -51,7 +52,6 @@
 #include <QLayout>
 #include <QMenu>
 #include <QMessageBox>
-#include <QProgressBar>
 #include <QRegExp>
 #include <QSettings>
 #include <QSpinBox>
@@ -220,13 +220,13 @@ void MainWindow::createToolbars() {
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
 
-    defaultToolbar.addWidget(new QLabel("Loader Progress"));
-    loaderProgressBar = new QProgressBar();
-    loaderProgressBar->setMaximum(0);
-    loaderProgressBar->setMinimum(0);
-    loaderProgressBar->setValue(0);
-    defaultToolbar.addWidget(loaderProgressBar);
-    QObject::connect(state->signalRelay, &SignalRelay::Signal_LoaderWorker_downloadCountChange, this, &MainWindow::updateLoaderProgressBar);
+    defaultToolbar.addWidget(new QLabel("Loader cubes pending: "));
+    loaderProgress = new QLabel();
+    defaultToolbar.addWidget(loaderProgress);
+    loaderLastProgress = 0;
+    loaderProgress->setFixedWidth(25);
+    loaderProgress->setAlignment(Qt::AlignCenter);
+    QObject::connect(state->signalRelay, &SignalRelay::Signal_LoaderWorker_downloadCountChange, this, &MainWindow::updateLoaderProgress);
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
@@ -246,13 +246,17 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
-void MainWindow::updateLoaderProgressBar(int downloadCount, bool isIncrement) {
-    if (isIncrement) {
-        loaderProgressBar->setMaximum(downloadCount);
+void MainWindow::updateLoaderProgress(int downloadCount, bool isIncrement) {
+    if ((downloadCount % 5 > 0) && (loaderLastProgress > 0)) {
+        return;
     }
-    else {
-        loaderProgressBar->setValue(this->loaderProgressBar->maximum() - downloadCount);
-    }
+    loaderLastProgress = downloadCount;
+    QPalette pal;
+    pal.setColor(QPalette::WindowText, Qt::black);
+    pal.setColor(loaderProgress->backgroundRole(), QColor(downloadCount > 0 ? Qt::red : Qt::green).lighter());
+    loaderProgress->setAutoFillBackground(true);
+    loaderProgress->setPalette(pal);
+    loaderProgress->setText(QString::number(downloadCount));
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
