@@ -177,6 +177,7 @@ public slots:
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
+    uint findAvailableNodeID();
     uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, ViewportType VPtype, int inMag, int time, int respectLocks);
 
     static void *popStack(stack *stack);
@@ -235,6 +236,7 @@ public slots:
     static void restoreDefaultTreeColor();
 
     bool extractConnectedComponent(int nodeID);
+    int findAvailableTreeID();
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
     static bool updateTreeColors();

@@ -1294,6 +1294,15 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     return true;
 }
 
+uint Skeletonizer::findAvailableNodeID() {
+    uint nodeID = state->skeletonState->totalNodeElements;
+    //Test if node ID over node counter is available. If not, find a valid one.
+    while(findNodeByNodeID(nodeID)) {
+        nodeID++;
+    }
+    return std::max(nodeID,(uint)1);
+}
+
 uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *position,
                            ViewportType VPtype, int inMag, int time, int respectLocks) {
     nodeListElement *tempNode = NULL;
@@ -1351,11 +1360,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
     ++tempTree->size;
 
     if(nodeID == 0) {
-        nodeID = state->skeletonState->totalNodeElements;
-        //Test if node ID over node counter is available. If not, find a valid one.
-        while(findNodeByNodeID(nodeID)) {
-            nodeID++;
-        }
+        nodeID = findAvailableNodeID();
     }
 
     tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag);
@@ -1685,6 +1690,15 @@ nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
     return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
 }
 
+int Skeletonizer::findAvailableTreeID() {
+    int treeID = state->skeletonState->treeElements;
+    //Test if tree ID over tree counter is available. If not, find a valid one.
+    while(findTreeByTreeID(treeID)) {
+        treeID++;
+    }
+    return std::max(treeID,1);
+}
+
 treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
      // The variable sync is a workaround for the problem that this function
      // will sometimes be called by other syncable functions that themselves hold
@@ -1714,11 +1728,7 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
         newElement->treeID = treeID;
     }
     else {
-        newElement->treeID = state->skeletonState->treeElements;
-        //Test if tree ID over tree counter is available. If not, find a valid one.
-        while(findTreeByTreeID(newElement->treeID)) {
-            newElement->treeID++;
-        }
+        newElement->treeID = findAvailableTreeID();
     }
     clearTreeSelection();
     newElement->render = true;

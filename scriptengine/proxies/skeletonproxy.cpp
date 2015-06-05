@@ -211,6 +211,10 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
+int SkeletonProxy::findAvailableNodeID() {
+    return Skeletonizer::singleton().findAvailableNodeID();
+}
+
 bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
     if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, (ViewportType)inVp, inMag, time, false)) {
@@ -230,7 +234,10 @@ QList<treeListElement *> *SkeletonProxy::trees() {
     return trees;
 }
 
-// UNTESTED
+int SkeletonProxy::findAvailableTreeID() {
+    return Skeletonizer::singleton().findAvailableTreeID();
+}
+
 bool SkeletonProxy::add_tree(int tree_id, float r, float g, float b, float a) {
     color4F color(r, g, b, a);
     treeListElement *theTree = Skeletonizer::singleton().addTreeListElement(tree_id, color);
