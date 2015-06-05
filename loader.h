@@ -113,6 +113,7 @@ enum class CubeType {
 
 class Worker : public QObject {
     Q_OBJECT
+    friend class Loader::Controller;
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
     friend void Segmentation::clear();
 private:
@@ -142,6 +143,9 @@ private:
     void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
 
+    void incrementDownloadCounter();
+    void decrementDownloadCounter();
+
     template<typename Func>
     friend void abortDownloadsFinishDecompression(Loader::Worker&, Func);
 
@@ -150,6 +154,7 @@ private:
     const CubeType typeDc;
     const CubeType typeOc;
     const QString experimentName;
+    std::atomic_uint downloadCounter{0};
 public://matsch
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
@@ -158,6 +163,7 @@ public://matsch
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
+    uint getDownloadCount();
     void unload();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappy(const CoordOfCube, const std::string cube);
@@ -165,7 +171,6 @@ public://matsch
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
     int CompareLoadOrderMetric(const void * a, const void * b);
-
 public slots:
     void cleanup(const Coordinate center);
     void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
@@ -178,6 +183,7 @@ class Controller : public QObject {
 public:
     std::unique_ptr<Loader::Worker> worker;
     std::atomic_uint loadingNr{0};
+    std::atomic_uint downloadCounter{0};
     static Controller & singleton(){
         static Loader::Controller loader;
         return loader;
