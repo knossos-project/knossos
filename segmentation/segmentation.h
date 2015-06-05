@@ -3,6 +3,7 @@
 
 #include "coordinate.h"
 #include "hash_list.h"
+#include "scriptengine/proxies/segmentationproxy.h"
 #include "segmentationsplit.h"
 
 #include <QColor>
@@ -28,6 +29,7 @@ Q_OBJECT
     friend class CategoryDelegate;
     friend class CategoryModel;
     friend class SegmentationTab;
+    friend class SegmentationProxy;
 
     class Object;
     class SubObject {

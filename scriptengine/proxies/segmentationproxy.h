@@ -11,7 +11,9 @@ public:
     explicit SegmentationProxy(QObject *parent = 0);
 
 public slots:
-    void clickSubObj(quint64 subObjId, QList<int> coord);
+    void subobjectFromId(quint64 subObjId, QList<int> coord);
+    quint64 largestObjectContainingSubobject(quint64 subObjId, QList<int> coord);
+    void changeComment(quint64 objIndex, QString comment);
 };
 
 #endif // SEGMENTATIONPROXY_H
