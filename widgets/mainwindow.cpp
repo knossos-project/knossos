@@ -51,6 +51,7 @@
 #include <QLayout>
 #include <QMenu>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QRegExp>
 #include <QSettings>
 #include <QSpinBox>
@@ -219,6 +220,14 @@ void MainWindow::createToolbars() {
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
 
+    defaultToolbar.addWidget(new QLabel("Loader Progress"));
+    loaderProgressBar = new QProgressBar();
+    loaderProgressBar->setMaximum(0);
+    loaderProgressBar->setMinimum(0);
+    loaderProgressBar->setValue(0);
+    defaultToolbar.addWidget(loaderProgressBar);
+    QObject::connect(state->signalRelay, &SignalRelay::Signal_LoaderWorker_downloadCountChange, this, &MainWindow::updateLoaderProgressBar);
+
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
     auto nextBtn = new QPushButton("(N)ext >");
@@ -235,6 +244,15 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(splitBtn);
     segJobModeToolbar.addSeparator();
     segJobModeToolbar.addWidget(&todosLeftLabel);
+}
+
+void MainWindow::updateLoaderProgressBar(int downloadCount, bool isIncrement) {
+    if (isIncrement) {
+        loaderProgressBar->setMaximum(downloadCount);
+    }
+    else {
+        loaderProgressBar->setValue(this->loaderProgressBar->maximum() - downloadCount);
+    }
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
