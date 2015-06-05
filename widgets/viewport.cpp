@@ -384,7 +384,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->scripting->signalRelay, this, event);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->signalRelay, this, event);
 
     Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);

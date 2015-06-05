@@ -120,7 +120,7 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->scripting->signalRelay, coord, subObjectId, VPfound, event);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, VPfound, event);
     if(Segmentation::singleton().hoverVersion && state->overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
     }
@@ -631,7 +631,7 @@ void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->scripting->signalRelay, clickedCoordinate, VPfound, event);
+        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
         if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
             connectedComponent(clickedCoordinate);
         }

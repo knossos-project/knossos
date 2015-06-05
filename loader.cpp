@@ -625,11 +625,11 @@ uint Loader::Worker::getDownloadCount() {
 }
 
 void Loader::Worker::incrementDownloadCounter() {
-    emit state->scripting->signalRelay->Signal_LoaderWorker_downloadCountChange(++downloadCounter, true);
+    emit state->signalRelay->Signal_LoaderWorker_downloadCountChange(++downloadCounter, true);
 }
 
 void Loader::Worker::decrementDownloadCounter() {
-    emit state->scripting->signalRelay->Signal_LoaderWorker_downloadCountChange(--downloadCounter, false);
+    emit state->signalRelay->Signal_LoaderWorker_downloadCountChange(--downloadCounter, false);
 }
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center) {

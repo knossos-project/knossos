@@ -168,6 +168,7 @@ public:
     struct viewerState *viewerState;
     class Viewer *viewer;
     class Scripting *scripting;
+    class SignalRelay *signalRelay;
     struct skeletonState *skeletonState;
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;

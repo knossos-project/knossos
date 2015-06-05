@@ -40,7 +40,6 @@ Scripting::Scripting() : _ctx(NULL) {
     skeletonProxy = new SkeletonProxy();
     segmentationProxy = new SegmentationProxy();
     pythonProxy = new PythonProxy();
-    signalRelay = new SignalRelay();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     colorDecorator = new ColorDecorator();
@@ -60,7 +59,7 @@ Scripting::Scripting() : _ctx(NULL) {
 #endif
     _ctx.evalScript("plugin_container = []");
 
-    _ctx.addObject("signalRelay", signalRelay);
+    _ctx.addObject("signalRelay", state->signalRelay);
     _ctx.addObject("knossos", pythonProxy);
     _ctx.addObject("segmentation", segmentationProxy);
     _ctx.addObject("skeleton", skeletonProxy);

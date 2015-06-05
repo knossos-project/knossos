@@ -80,6 +80,7 @@ class SignalRelay : public QObject
 {
     Q_OBJECT
 public:
+    explicit SignalRelay() {state->signalRelay = this;}
 signals:
     void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int,QMouseEvent*);
     void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class Viewport*,QMouseEvent*);
@@ -104,7 +105,6 @@ public:
     MeshDecorator *meshDecorator;
     SkeletonProxy *skeletonProxy;
     SegmentationProxy *segmentationProxy;
-    SignalRelay *signalRelay;
     PythonProxy *pythonProxy;
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;

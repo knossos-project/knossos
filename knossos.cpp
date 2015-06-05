@@ -162,6 +162,7 @@ int main(int argc, char *argv[]) {
 
     Knossos::initStates();
 
+    SignalRelay signalRelay;
     Viewer viewer;
     Remote remote;
 
