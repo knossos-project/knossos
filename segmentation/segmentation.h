@@ -3,7 +3,6 @@
 
 #include "coordinate.h"
 #include "hash_list.h"
-#include "scriptengine/proxies/segmentationproxy.h"
 #include "segmentationsplit.h"
 
 #include <QColor>
