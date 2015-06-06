@@ -538,9 +538,9 @@ void Viewport::drawSkeletonViewport() {
             seg.volume_update_required = false;
             updateVolumeTexture();
         }
-        renderVolumeVP(VIEWPORT_SKELETON);
+        renderVolumeVP();
     } else {
-        state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON, true);
+        state->viewer->renderer->renderSkeletonVP();
     }
 }
 
@@ -906,10 +906,10 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
                 seg.volume_update_required = false;
                 updateVolumeTexture();
             }
-            renderVolumeVP(VIEWPORT_SKELETON);
+            renderVolumeVP();
         }
         else {
-            state->viewer->renderer->renderSkeletonVP(id, withSkeleton);
+            state->viewer->renderer->renderSkeletonVP(withSkeleton, withVpPlanes);
         }
     }
     else {

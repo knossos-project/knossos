@@ -62,7 +62,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpYZRadio.isChecked() ? VIEWPORT_YZ :
                                                     VIEWPORT_SKELETON;
-            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked());
+            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
     });
 

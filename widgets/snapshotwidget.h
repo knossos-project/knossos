@@ -24,7 +24,7 @@ public:
     void saveSettings();
     void loadSettings();
 signals:
-    void snapshotRequest(QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale);
+    void snapshotRequest(QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes);
 };
 
 #endif // SNAPSHOTWIDGET_H

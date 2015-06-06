@@ -80,8 +80,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
-    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest, [this](QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale) {
-       viewports[vp]->takeSnapshot(path, withOverlay, withSkeleton, withScale);
+    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest, [this](QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
+       viewports[vp]->takeSnapshot(path, withOverlay, withSkeleton, withScale, withVpPlanes);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);

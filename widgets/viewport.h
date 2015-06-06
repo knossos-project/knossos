@@ -172,7 +172,7 @@ public:
     void drawSkeletonViewport();
     void setDock(bool isDock);
     void showHideButtons(bool isShow);
-    bool renderVolumeVP(uint currentVP);
+    bool renderVolumeVP();
     void updateOverlayTexture();
     void updateVolumeTexture();
 
@@ -231,7 +231,7 @@ public slots:
     void resetButtonClicked();
     bool setOrientation(ViewportType orientation);
     void showContextMenu(const QPoint &point);
-    void takeSnapshot(QString path, const bool withOverlay, bool withSkeleton, const bool withScale);
+    void takeSnapshot(QString path, const bool withOverlay, bool withSkeleton, const bool withScale, bool withVpPlanes);
 };
 
 #endif // VIEWPORT_H
