@@ -892,10 +892,10 @@ void Viewport::resetButtonClicked() {
     }
 }
 
-void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, bool withScale) {
+void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
-    glViewport(0, 0, 1024, 1024);
-    QOpenGLFramebufferObject fbo(1024, 1024, QOpenGLFramebufferObject::Depth);
+    glViewport(0, 0, 2048, 2048);
+    QOpenGLFramebufferObject fbo(2048, 2048, QOpenGLFramebufferObject::Depth);
 
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
