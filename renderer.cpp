@@ -2351,6 +2351,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 Skeletonizer::setRadiusFromNode(currentNode, &currentRadius);
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
+                if(1.5 < currentRadius && viewportType != VIEWPORT_SKELETON) { // draw node center to make large nodes visible and clickable in ortho vps
+                    renderSphere(&(currentNode->position), 1.5, currentColor, currentVP, viewportType);
+                }
 
                 if(currentNode->selected) { // highlight selected nodes
                     /* Set the default color for selected nodes */
@@ -2361,7 +2364,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                                      currentColor, currentVP, viewportType);
                     }
                     else {
-                        renderSphere(&(currentNode->position), currentNode->radius * 2,
+                        renderSphere(&(currentNode->position), currentRadius * 2,
                                      currentColor, currentVP, viewportType);
                     }
                 }
@@ -2447,7 +2450,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         if(state->skeletonState->overrideNodeRadiusBool)
             renderSphere(&(active->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
         else
-            renderSphere(&(active->position), active->radius * 1.5, currentColor, currentVP, viewportType);
+            renderSphere(&(active->position),currentRadius * 1.5, currentColor, currentVP, viewportType);
 
         // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
         // Comment should only be rendered in orthogonal viewports.
