@@ -93,11 +93,9 @@ CommentsTab::CommentsTab(QWidget *parent) : QWidget(parent) {
     auto mainlayout = new QVBoxLayout();
 
     auto checkboxLayout = new QHBoxLayout();
-    checkboxLayout->addWidget(&useCommentColorsCheckbox);
     checkboxLayout->addWidget(&useCommentRadiusCheckbox);
     checkboxLayout->addWidget(&appendCommentCheckbox);
-    QObject::connect(&useCommentColorsCheckbox, &QCheckBox::stateChanged, [](bool checked) { CommentSetting::useCommentColors = checked; });
-    QObject::connect(&useCommentRadiusCheckbox, &QCheckBox::stateChanged, [](bool checked) { CommentSetting::useCommentNodeRadius = checked; });
+    QObject::connect(&useCommentRadiusCheckbox, &QCheckBox::stateChanged, [this](bool checked) { CommentSetting::useCommentNodeRadius = checked; commentsTable.header()->setSectionHidden(3, !checked); });
     QObject::connect(&appendCommentCheckbox, &QCheckBox::stateChanged, [](bool checked) { CommentSetting::appendComment = checked;});
 
     commentsTable.setModel(&commentModel);
@@ -127,7 +125,6 @@ void CommentsTab::loadSettings() {
         CommentSetting::comments[i].color = settings.value(QString("color%0").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
         CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%0").arg(i+1), 1.5).toFloat();
     }
-    useCommentColorsCheckbox.setChecked(settings.value(CUSTOM_COMMENT_COLOR, false).toBool());
     useCommentRadiusCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODERADIUS, false).toBool());
     appendCommentCheckbox.setChecked(settings.value(CUSTOM_COMMENT_APPEND, false).toBool());
     settings.endGroup();
@@ -142,7 +139,6 @@ void CommentsTab::saveSettings() {
         settings.setValue(QString("radius%0").arg(i+1), CommentSetting::comments[i].nodeRadius);
     }
 
-    settings.setValue(CUSTOM_COMMENT_COLOR, useCommentColorsCheckbox.isChecked());
     settings.setValue(CUSTOM_COMMENT_NODERADIUS, useCommentRadiusCheckbox.isChecked());
     settings.setValue(CUSTOM_COMMENT_APPEND, appendCommentCheckbox.isChecked());
     settings.endGroup();

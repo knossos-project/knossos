@@ -2562,11 +2562,9 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
         // default color for comment nodes
         *color = {1.f, 1.f, 0.f, 1.f};
 
-        if(CommentSetting::useCommentColors) {
-            auto newColor = CommentSetting::getColor(QString(node->comment->content));
-            if(newColor.alpha() != 0) {
-                *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
-            }
+        auto newColor = CommentSetting::getColor(QString(node->comment->content));
+        if(newColor.alpha() != 0) {
+            *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
         }
     }
 }

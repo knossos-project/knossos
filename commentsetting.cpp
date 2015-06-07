@@ -1,6 +1,5 @@
 #include "commentsetting.h"
 
-bool CommentSetting::useCommentColors;
 bool CommentSetting::useCommentNodeRadius;
 bool CommentSetting::appendComment;
 std::vector<CommentSetting> CommentSetting::comments;
