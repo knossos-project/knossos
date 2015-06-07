@@ -2540,8 +2540,7 @@ bool Skeletonizer::updateTreeColors() {
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     segmentListElement *currentSegment = NULL;
-    node->circRadius = node->radius;
-
+    node->circRadius = radius(*node);
     /* Any segment longer than the current circ radius?*/
     currentSegment = node->firstSegment;
     while(currentSegment) {
@@ -2569,17 +2568,14 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
     }
 }
 
-void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
-    *radius = node->radius;
-    if(state->skeletonState->overrideNodeRadiusBool) {
-        *radius = state->skeletonState->overrideNodeRadiusVal;
-    }
-    if(node->comment != NULL && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(QString(node->comment->content));
+float Skeletonizer::radius(const nodeListElement & node) {
+    if(node.comment && CommentSetting::useCommentNodeRadius) {
+        float newRadius = CommentSetting::getRadius(QString(node.comment->content));
         if(newRadius != 0) {
-            *radius = newRadius;
+            return newRadius;
         }
     }
+    return state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
 }
 
 bool Skeletonizer::moveToPrevTree() {

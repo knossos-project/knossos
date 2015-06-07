@@ -2267,7 +2267,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
             }
 
             if(renderNode) {
-
                 /* This sets the current color for the segment rendering */
                 if((currentTree->treeID == state->skeletonState->activeTree->treeID)
                     && (state->skeletonState->highlightActiveTree)) {
@@ -2283,13 +2282,13 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                     virtualSegRendered = true;
                     /* We need a "virtual" segment now */
 
-                    if(state->viewerState->selectModeFlag)
+                    if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
-
+                    }
                     renderCylinder(&(lastRenderedNode->position),
-                                   lastRenderedNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   Skeletonizer::radius(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentNode->position),
-                                   currentNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   Skeletonizer::radius(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
                                    currentColor,
                                    currentVP,
                                    viewportType);
@@ -2298,47 +2297,28 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 /* Second pass over segments needed... But only if node is actually rendered! */
                 currentSegment = currentNode->firstSegment;
                 while(currentSegment) {
-
-                    //2 indicates a backward connection, which should not be rendered.
                     if(currentSegment->flag == SEGMENT_BACKWARD){
                         currentSegment = currentSegment->next;
                         continue;
                     }
 
-                    if(virtualSegRendered
-                       && ((currentSegment->source == lastNode)
-                       || (currentSegment->target == lastNode))) {
+                    if(virtualSegRendered && (currentSegment->source == lastNode || currentSegment->target == lastNode)) {
                         currentSegment = currentSegment->next;
                         continue;
                     }
 
-                    if(state->viewerState->selectModeFlag)
+                    if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
-
-                    if(state->skeletonState->overrideNodeRadiusBool)
-                        renderCylinder(&(currentSegment->source->position),
-                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
-                            &(currentSegment->target->position),
-                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
-                            currentColor,
-                            currentVP,
-                            viewportType);
-                    else
-                        renderCylinder(&(currentSegment->source->position),
-                            currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
-                            &(currentSegment->target->position),
-                            currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
-                            currentColor,
-                            currentVP,
-                            viewportType);
+                    }
+                    renderCylinder(&(currentSegment->source->position), Skeletonizer::radius(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position), Skeletonizer::radius(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
+                        currentColor, currentVP, viewportType);
 
                     if(viewportType != VIEWPORT_SKELETON) {
                         if(state->skeletonState->showIntersections)
                             renderSegPlaneIntersection(currentSegment);
                     }
-
                     currentSegment = currentSegment->next;
-
                 }
 
                 if(state->viewerState->selectModeFlag) {
@@ -2348,7 +2328,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
                 Skeletonizer::setColorFromNode(currentNode, &currentColor);
-                Skeletonizer::setRadiusFromNode(currentNode, &currentRadius);
+                const float currentRadius = Skeletonizer::radius(*currentNode);
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
                 if(1.5 < currentRadius && viewportType != VIEWPORT_SKELETON) { // draw node center to make large nodes visible and clickable in ortho vps
@@ -2356,18 +2336,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 }
 
                 if(currentNode->selected) { // highlight selected nodes
-                    /* Set the default color for selected nodes */
                     currentColor = {0.f, 1.f, 0.f, 0.5f};
-
-                    if(state->skeletonState->overrideNodeRadiusBool) {
-                        renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
-                                     currentColor, currentVP, viewportType);
-                    }
-                    else {
-                        renderSphere(&(currentNode->position), currentRadius * 2,
-                                     currentColor, currentVP, viewportType);
-                    }
+                    renderSphere(&(currentNode->position), currentRadius * 2, currentColor, currentVP, viewportType);
                 }
+
                 // Render the node description
                 if(currentNode != state->skeletonState->activeNode) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
@@ -2446,11 +2418,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         highlighting */
         Skeletonizer::setColorFromNode(active, &currentColor);
         currentColor.a = 0.2f;
-
-        if(state->skeletonState->overrideNodeRadiusBool)
-            renderSphere(&(active->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
-        else
-            renderSphere(&(active->position),currentRadius * 1.5, currentColor, currentVP, viewportType);
+        renderSphere(&(active->position), Skeletonizer::radius(*active) * 1.5, currentColor, currentVP, viewportType);
 
         // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
         // Comment should only be rendered in orthogonal viewports.

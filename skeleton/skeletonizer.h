@@ -189,7 +189,7 @@ public slots:
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     static void setColorFromNode(nodeListElement *node, color4F *color);
-    static void setRadiusFromNode(nodeListElement *node, float *radius);
+    static float radius(const nodeListElement &node);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
