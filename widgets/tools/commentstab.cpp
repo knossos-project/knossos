@@ -126,6 +126,7 @@ void CommentsTab::loadSettings() {
         CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%0").arg(i+1), 1.5).toFloat();
     }
     useCommentRadiusCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODERADIUS, false).toBool());
+    useCommentRadiusCheckbox.stateChanged(useCommentRadiusCheckbox.isChecked());
     appendCommentCheckbox.setChecked(settings.value(CUSTOM_COMMENT_APPEND, false).toBool());
     settings.endGroup();
 }
