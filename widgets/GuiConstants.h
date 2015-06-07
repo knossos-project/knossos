@@ -170,6 +170,7 @@ const QString PYTHON_INTERPRETER = "python_interpreter";
 const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
 const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
+const QString PYTHON_CUSTOM_PATHS = "python_custom_paths";
 
 // Heidelbrain Integration
 const QString HEIDELBRAIN_HOST = "heidelbrain_host";

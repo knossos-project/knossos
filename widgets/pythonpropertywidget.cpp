@@ -11,7 +11,6 @@
 #include <QDebug>
 #include <QDesktopWidget>
 #include <QFileDialog>
-#include <QFormLayout>
 #include <QLineEdit>
 #include <QProcess>
 #include <QPushButton>
@@ -35,7 +34,7 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
 {
 
     setWindowTitle("Python Properties");
-    QFormLayout *layout = new QFormLayout();
+    QVBoxLayout *layout = new QVBoxLayout();
 
     workingDirectoryButton = new QPushButton("Select working directory");
     workingDirectoryEdit = new QLineEdit();
@@ -43,16 +42,23 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     autoStartFolderEdit->setToolTip("Scripts in this folder were automatically started with KNOSSOS");
     autoStartFolderButton = new QPushButton("Select Autostart Folder");
     autoStartTerminalCheckbox = new QCheckBox("Open Terminal On Start");
+    customPathsAppendButton = new QPushButton("Append Custom Path");
+    customPathsEdit = new QTextEdit();
 
-    layout->addRow(workingDirectoryEdit, workingDirectoryButton);
-    layout->addRow(autoStartFolderEdit, autoStartFolderButton);
-    layout->addRow(autoStartTerminalCheckbox);
+    layout->addWidget(workingDirectoryButton);
+    layout->addWidget(workingDirectoryEdit);
+    layout->addWidget(autoStartFolderButton);
+    layout->addWidget(autoStartFolderEdit);
+    layout->addWidget(autoStartTerminalCheckbox);
+    layout->addWidget(customPathsAppendButton);
+    layout->addWidget(customPathsEdit);
 
     setLayout(layout);
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
     connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
     connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
+    connect(customPathsAppendButton, SIGNAL(clicked()), this, SLOT(appendCustomPathButtonClicked()));
 }
 
 void PythonPropertyWidget::closeEvent(QCloseEvent *) {
@@ -90,10 +96,11 @@ void PythonPropertyWidget::saveSettings() {
     settings.setValue(VISIBLE, this->isVisible());
 
     if(!this->workingDirectoryEdit->text().isEmpty())
-        settings.setValue(PYTHON_WORKING_DIRECTORY, this->workingDirectoryEdit->text());
+        settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
     if(!this->autoStartFolderEdit->text().isEmpty())
-        settings.setValue(PYTHON_AUTOSTART_FOLDER, this->autoStartFolderEdit->text());
-    settings.setValue(PYTHON_AUTOSTART_TERMINAL, this->autoStartTerminalCheckbox->isChecked());
+        settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
+    settings.setValue(PYTHON_AUTOSTART_TERMINAL, autoStartTerminalCheckbox->isChecked());
+    settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit->toPlainText().split("\n"));
 
     settings.endGroup();
 
@@ -142,6 +149,11 @@ void PythonPropertyWidget::loadSettings() {
         autoStartTerminalCheckbox->setChecked(autoStartTerminalValue.toBool());
     }
 
+    auto customPathsValue = settings.value(PYTHON_CUSTOM_PATHS);
+    if(!customPathsValue.isNull()) {
+        customPathsEdit->setText(customPathsValue.toStringList().join("\n"));
+    }
+
     settings.endGroup();
 }
 
@@ -151,5 +163,14 @@ void PythonPropertyWidget::workingDirectoryButtonClicked() {
      state->viewerState->renderInterval = FAST;
      if(!selection.isEmpty()) {
          workingDirectoryEdit->setText(selection);
+     }
+}
+
+void PythonPropertyWidget::appendCustomPathButtonClicked() {
+     state->viewerState->renderInterval = SLOW;
+     QString selection = QFileDialog::getExistingDirectory(this, "select custom path directory", QDir::homePath());
+     state->viewerState->renderInterval = FAST;
+     if(!selection.isEmpty()) {
+         customPathsEdit->append(selection);
      }
 }

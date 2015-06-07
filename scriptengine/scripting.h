@@ -115,6 +115,7 @@ protected:
 private:
     void executeFromUserDirectory();
     void changeWorkingDirectory();
+    void addCustomPythonPath();
     void addWidgets();
     void autoStartTerminal();
 };

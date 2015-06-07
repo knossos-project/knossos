@@ -109,6 +109,7 @@ Scripting::Scripting() : _ctx(NULL) {
 
     changeWorkingDirectory();
     executeFromUserDirectory();
+    addCustomPythonPath();
 
 #ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
     _ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
@@ -147,6 +148,14 @@ void Scripting::changeWorkingDirectory() {
     _ctx.evalScript(QString("os.chdir('%1')").arg(workingDir));
 }
 
+void Scripting::addCustomPythonPath() {
+    auto value = getSettingsValue(PYTHON_CUSTOM_PATHS);
+    if (value.isNull()) { return; }
+    auto customPaths = value.toStringList();
+    for (const auto & customPath : customPaths) {
+        _ctx.evalScript(QString("sys.path.append('%1')").arg(customPath));
+    }
+}
 
 void Scripting::executeFromUserDirectory() {
     auto value = getSettingsValue(PYTHON_AUTOSTART_FOLDER);

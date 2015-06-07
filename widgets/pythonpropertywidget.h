@@ -33,6 +33,8 @@ protected:
     QLineEdit *autoStartFolderEdit;
     QCheckBox *autoStartTerminalCheckbox;
     QLineEdit *workingDirectoryEdit;
+    QPushButton *customPathsAppendButton;
+    QTextEdit *customPathsEdit;
     PythonInterpreterWidget *interpreter;
 
     void closeEvent(QCloseEvent *e);
@@ -44,6 +46,7 @@ public slots:
     void saveSettings();
     void loadSettings();
     void workingDirectoryButtonClicked();
+    void appendCustomPathButtonClicked();
 
 
 
