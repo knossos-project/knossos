@@ -86,7 +86,6 @@ signals:
     void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class Viewport*,QMouseEvent*);
     void Signal_EventModel_handleMouseReleaseMiddle(EmitOnCtorDtor*,Coordinate,int,QMouseEvent*);
     void Signal_MainWindow_closeEvent(EmitOnCtorDtor*,QCloseEvent*);
-    void Signal_LoaderWorker_downloadCountChange(int,bool);
 };
 
 /** This class intializes the python qt engine */

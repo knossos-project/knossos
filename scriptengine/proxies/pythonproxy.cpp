@@ -199,10 +199,6 @@ int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
 }
 
-int PythonProxy::loaderDownloadCount() {
-    return Loader::Controller::singleton().worker.get()->getDownloadCount();
-}
-
 // UNTESTED
 bool PythonProxy::loadStyleSheet(const QString &filename) {
     QFile file(filename);

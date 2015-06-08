@@ -220,13 +220,13 @@ void MainWindow::createToolbars() {
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
 
-    defaultToolbar.addWidget(new QLabel("Loader cubes pending: "));
+    defaultToolbar.addWidget(new QLabel(" Loader pending: "));
     loaderProgress = new QLabel();
     defaultToolbar.addWidget(loaderProgress);
     loaderLastProgress = 0;
     loaderProgress->setFixedWidth(25);
     loaderProgress->setAlignment(Qt::AlignCenter);
-    QObject::connect(state->signalRelay, &SignalRelay::Signal_LoaderWorker_downloadCountChange, this, &MainWindow::updateLoaderProgress);
+    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::refCountChange, this, &MainWindow::updateLoaderProgress);
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
@@ -246,17 +246,17 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
-void MainWindow::updateLoaderProgress(int downloadCount, bool isIncrement) {
-    if ((downloadCount % 5 > 0) && (loaderLastProgress > 0)) {
+void MainWindow::updateLoaderProgress(bool isIncrement, int refCount) {
+    if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
         return;
     }
-    loaderLastProgress = downloadCount;
+    loaderLastProgress = refCount;
     QPalette pal;
     pal.setColor(QPalette::WindowText, Qt::black);
-    pal.setColor(loaderProgress->backgroundRole(), QColor(downloadCount > 0 ? Qt::red : Qt::green).lighter());
+    pal.setColor(loaderProgress->backgroundRole(), QColor(refCount > 0 ? Qt::red : Qt::green).lighter());
     loaderProgress->setAutoFillBackground(true);
     loaderProgress->setPalette(pal);
-    loaderProgress->setText(QString::number(downloadCount));
+    loaderProgress->setText(QString::number(refCount));
 }
 
 void MainWindow::setJobModeUI(bool enabled) {

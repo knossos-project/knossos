@@ -281,7 +281,7 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) 
 }
 
 Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader::CubeType typeDc, const Loader::CubeType typeOc, const QString & experimentName)
-    : baseUrl{baseUrl}, api{api}, typeDc{typeDc}, typeOc{typeOc}, experimentName{experimentName}, downloadCounter(0)
+    : baseUrl{baseUrl}, api{api}, typeDc{typeDc}, typeOc{typeOc}, experimentName{experimentName}
 {
 
     // freeDcSlots / freeOcSlots are lists of pointers to locations that
@@ -599,10 +599,19 @@ void Loader::Worker::cleanup(const Coordinate center) {
     state->protectCube2Pointer->unlock();
 }
 
+int Loader::Controller::getRefCount() {
+    return (worker == nullptr) ? 0 : worker.get()->getRefCount();
+}
+
+void Loader::Controller::refCountChangeWorker(bool isIncrement, int refCount) {
+    emit refCountChange(isIncrement,refCount);
+}
+
 void Loader::Controller::startLoading(const Coordinate & center) {
     if (worker != nullptr) {
+        worker.get()->startLoadingBusy = true;
+        emit refCountChange(true,getRefCount());
         emit loadSignal(++loadingNr, center);
-        worker.get()->incrementDownloadCounter();
     }
 }
 
@@ -620,16 +629,8 @@ bool isOverlay(const Loader::CubeType type) {
     throw std::runtime_error("unknown value for Loader::CubeType");
 }
 
-uint Loader::Worker::getDownloadCount() {
-    return downloadCounter;
-}
-
-void Loader::Worker::incrementDownloadCounter() {
-    emit state->signalRelay->Signal_LoaderWorker_downloadCountChange(++downloadCounter, true);
-}
-
-void Loader::Worker::decrementDownloadCounter() {
-    emit state->signalRelay->Signal_LoaderWorker_downloadCountChange(--downloadCounter, false);
+int Loader::Worker::getRefCount() {
+    return dcDownload.size() + ocDownload.size() + (startLoadingBusy ? 1 : 0);
 }
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center) {
@@ -742,13 +743,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
-            incrementDownloadCounter();
+            emit refCountChange(true,getRefCount());
             QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qCritical() << "no slots" << static_cast<int>(type) << cubeHash.size() << freeSlots.size();
                     downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
-                    decrementDownloadCounter();
+                    emit refCountChange(false,getRefCount());
                     return;
                 }
                 auto * currentSlot = freeSlots.front();
@@ -774,7 +775,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         downloads[globalCoord]->deleteLater();
                         downloads.erase(globalCoord);
                         decompressions.erase(globalCoord);
-                        decrementDownloadCounter();
+                        emit refCountChange(false,getRefCount());
                     });
                     decompressions[globalCoord].reset(watcher);
                     watcher->setFuture(future);
@@ -795,7 +796,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     }
                     downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
-                    decrementDownloadCounter();
+                    emit refCountChange(false,getRefCount());
                 }
             });
         }
@@ -812,5 +813,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
         }
     }
-    decrementDownloadCounter();
+    startLoadingBusy = false;
+    emit refCountChange(false,getRefCount());
 }
