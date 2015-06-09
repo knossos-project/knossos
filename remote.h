@@ -31,6 +31,8 @@
 #include <QObject>
 #include <QThread>
 
+#include <deque>
+
 class Remote : public QThread {
     Q_OBJECT
 private:

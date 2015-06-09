@@ -48,7 +48,7 @@ void AnnotationWidget::loadSettings() {
 
     width = (settings.value(WIDTH).isNull())? 700 : settings.value(WIDTH).toInt();
     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().bottomRight().x() - width - 20;
         y = QApplication::desktop()->screen()->rect().bottomRight().y() - height - 50;
     }

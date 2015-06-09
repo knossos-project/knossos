@@ -7,6 +7,7 @@
 #include "datasavingwidget.h"
 #include "documentationwidget.h"
 #include "navigationwidget.h"
+#include "snapshotwidget.h"
 #include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
@@ -17,12 +18,12 @@ struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
-        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), splashWidgetObject(parent)
+        , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), snapshotWidgetObject(parent), splashWidgetObject(parent)
         , taskManagementWidgetObject(parent), viewportSettingsWidgetObject(parent)
 
         , annotationWidget(&annotationWidgetObject), datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
-        , pythonPropertyWidget(&pythonPropertyWidgetObject), splashWidget(&splashWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
+        , pythonPropertyWidget(&pythonPropertyWidgetObject), snapshotWidget(&snapshotWidgetObject), splashWidget(&splashWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
         , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         QObject::connect(this->datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults
@@ -36,6 +37,7 @@ struct WidgetContainer {
     DocumentationWidget docWidgetObject;
     NavigationWidget navigationWidgetObject;
     PythonPropertyWidget pythonPropertyWidgetObject;
+    SnapshotWidget snapshotWidgetObject;
     SplashScreenWidget splashWidgetObject;
     TaskManagementWidget taskManagementWidgetObject;
     ViewportSettingsWidget viewportSettingsWidgetObject;
@@ -49,6 +51,7 @@ struct WidgetContainer {
     DocumentationWidget * const docWidget;
     NavigationWidget * const navigationWidget;
     PythonPropertyWidget * const pythonPropertyWidget;
+    SnapshotWidget * const snapshotWidget;
     SplashScreenWidget * const splashWidget;
     TaskManagementWidget * const taskManagementWidget;
     ViewportSettingsWidget * const viewportSettingsWidget;
@@ -62,6 +65,7 @@ struct WidgetContainer {
         navigationWidget->hide();
         pythonPropertyWidget->hide();
         pythonPropertyWidget->closeTerminal();
+        snapshotWidget->hide();
         splashWidget->hide();
         taskManagementWidget->hide();
         viewportSettingsWidget->hide();

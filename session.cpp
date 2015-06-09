@@ -64,6 +64,10 @@ void Session::updateMovementArea(const Coordinate & min, const Coordinate & max)
     emit movementAreaChanged();
 }
 
+void Session::resetMovementArea() {
+    updateMovementArea({0, 0, 0}, state->boundary);
+}
+
 decltype(Session::annotationTimeMilliseconds) Session::annotationTime() const {
     return annotationTimeMilliseconds;
 }

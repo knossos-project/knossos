@@ -69,6 +69,8 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     areaMaxLayout->addWidget(&zMaxField);
     movementAreaLayout->addLayout(areaMinLayout);
     movementAreaLayout->addLayout(areaMaxLayout);
+    resetMovementAreaButton = new QPushButton("Reset");
+    movementAreaLayout->addWidget(resetMovementAreaButton);
     movementAreaGroup->setLayout(movementAreaLayout);
     mainLayout->addWidget(movementAreaGroup);
 
@@ -144,6 +146,9 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     QObject::connect(&xMaxField, &QSpinBox::editingFinished, this, &NavigationWidget::updateMovementArea);
     QObject::connect(&yMaxField, &QSpinBox::editingFinished, this, &NavigationWidget::updateMovementArea);
     QObject::connect(&zMaxField, &QSpinBox::editingFinished, this, &NavigationWidget::updateMovementArea);
+    QObject::connect(resetMovementAreaButton, &QPushButton::clicked, [this]() {
+        Session::singleton().resetMovementArea();
+    });
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
         auto & session = Session::singleton();
         xMinField.setValue(session.movementAreaMin.x + 1);
@@ -180,13 +185,6 @@ void NavigationWidget::updateMovementArea() {
     const Coordinate min{xMinField.value()-1, yMinField.value()-1, zMinField.value()-1};
     const Coordinate max{xMaxField.value()-1, yMaxField.value()-1, zMaxField.value()-1};
     Session::singleton().updateMovementArea(min, max);
-}
-
-void NavigationWidget::resetMovementArea() {
-    xMinField.setValue(1); yMinField.setValue(1); zMinField.setValue(1);
-    xMaxField.setValue(state->boundary.x + 1); yMaxField.setValue(state->boundary.y + 1); zMaxField.setValue(state->boundary.z + 1);
-    Session::singleton().movementAreaMin = { xMinField.value() - 1, yMinField.value() - 1, zMinField.value() - 1 };
-    Session::singleton().movementAreaMax = { xMaxField.value() - 1, yMaxField.value() - 1, zMaxField.value() - 1};
 }
 
 void NavigationWidget::movementSpeedChanged(int value) {
@@ -254,7 +252,7 @@ void NavigationWidget::loadSettings() {
     settings.beginGroup(NAVIGATION_WIDGET);
     width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
         y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
     }
@@ -273,7 +271,7 @@ void NavigationWidget::loadSettings() {
     }
     setGeometry(x, y, width, height);
 
-    resetMovementArea();
+    Session::singleton().resetMovementArea();
 
     movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
 
@@ -325,7 +323,7 @@ void NavigationWidget::loadSettings() {
 
     }
 
-    if(!normalModeButton->isChecked() and !additionalMirroredMoveButton->isChecked() and !additionalTracingDirectionMoveButton->isChecked() and !additionalTracingDirectionMoveButton->isChecked())
+    if(!normalModeButton->isChecked() && !additionalMirroredMoveButton->isChecked() && !additionalTracingDirectionMoveButton->isChecked() && !additionalTracingDirectionMoveButton->isChecked())
         normalModeButton->setChecked(true);
 
     if(!settings.value(DELAY_TIME_PER_STEP).isNull()) {

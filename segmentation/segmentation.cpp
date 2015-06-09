@@ -85,8 +85,12 @@ Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFo
     loadOverlayLutFromFile();
 }
 
+bool Segmentation::hasSegData() const {
+    return hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
+}
+
 void Segmentation::clear() {
-    state->skeletonState->unsavedChanges |= hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
+    state->skeletonState->unsavedChanges |= hasSegData();
 
     selectedObjectIndices.clear();
     objects.clear();
@@ -297,6 +301,12 @@ uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmenta
     auto comparitor = std::bind(&Segmentation::objectOrder, this, std::placeholders::_1, std::placeholders::_2);
     const auto objectIndex = *std::min_element(std::begin(subobject.objects), std::end(subobject.objects), comparitor);
     return objectIndex;
+}
+
+void Segmentation::hoverSubObject(const uint64_t subobject_id) {
+    if (subobject_id != hovered_subobject_id) {
+        emit hoveredSubObjectChanged(hovered_subobject_id = subobject_id);
+    }
 }
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {

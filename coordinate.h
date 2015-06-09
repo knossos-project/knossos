@@ -25,120 +25,133 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include <QList>
+#include <QVector>
 #include <QMetaType>
 
 #include <cstddef>
 
 #include <boost/functional/hash.hpp>
 
-template<typename ComponentType = int, std::size_t = 0>//tag
-class Coord {
+template<typename ComponentType, typename CoordinateDerived>
+class CoordinateBase {
 public:
-    using Coordinate = Coord<int>;
-    using CoordOfCube = Coord<int, 1>;
-    using CoordInCube = Coord<int, 2>;
-    using floatCoordinate = Coord<float>;
     ComponentType x;
     ComponentType y;
     ComponentType z;
 
-    constexpr Coord(ComponentType x = 0, ComponentType y = 0, ComponentType z = 0) : x(x), y(y), z(z) {}
-    template<typename T, typename = typename std::enable_if<std::is_convertible<ComponentType, T>::value>::type>
-    constexpr Coord(const Coord<T> & rhs) : x(rhs.x), y(rhs.y), z(rhs.z) {}
+    constexpr CoordinateBase(ComponentType every = 0) : x(every), y(every), z(every) {}
+    constexpr CoordinateBase(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
+    constexpr CoordinateBase(QVector<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
+    constexpr CoordinateBase(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
 
-    constexpr bool operator==(const Coord & rhs) const {
+    constexpr ComponentType sum() const {
+        return x+y+z;
+    }
+    constexpr QList<ComponentType> list() const {
+        return {x, y, z};
+    }
+    constexpr QVector<ComponentType> vector() const {
+        return {x, y, z};
+    }
+    constexpr bool operator==(const CoordinateDerived & rhs) const {
         return x == rhs.x && y == rhs.y && z == rhs.z;
     }
-    constexpr bool operator!=(const Coord & rhs) const {
+    constexpr bool operator!=(const CoordinateDerived & rhs) const {
         return !(*this == rhs);
     }
 
-    constexpr Coord operator+(const Coord & rhs) const {
-        return Coord(x + rhs.x, y + rhs.y, z  + rhs.z);
+    constexpr CoordinateDerived operator+(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(x + rhs.x, y + rhs.y, z  + rhs.z);
     }
-    Coord & operator+=(const Coord & rhs) {
-        return *this = *this + rhs;
-    }
-
-    constexpr Coord operator-(const Coord & rhs) const {
-        return Coord(x - rhs.x, y - rhs.y, z  - rhs.z);
-    }
-    Coord & operator-=(const Coord & rhs) {
-        return *this = *this - rhs;
+    CoordinateDerived & operator+=(const CoordinateDerived & rhs) {
+        return static_cast<CoordinateDerived&>(*this = *this + rhs);
     }
 
-    constexpr Coord operator*(const Coord & rhs) const {
-        return Coord(x * rhs.x, y * rhs.y, z  * rhs.z);
+    constexpr CoordinateDerived operator-(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(x - rhs.x, y - rhs.y, z  - rhs.z);
     }
-    Coord & operator*=(const Coord & rhs) {
-        return *this = *this * rhs;
-    }
-
-    constexpr Coord operator/(const Coord & rhs) const {
-        return Coord(x / rhs.x, y / rhs.y, z  / rhs.z);
-    }
-    Coord & operator/=(const Coord & rhs) {
-        return *this = *this / rhs;
+    CoordinateDerived & operator-=(const CoordinateDerived & rhs) {
+        return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
-    template<typename T>
-    constexpr auto operator*(const T factor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
-        return Coord(x * factor, y * factor, z * factor);
+    constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(x * rhs.x, y * rhs.y, z  * rhs.z);
     }
-    template<typename T>
-    auto operator*=(const T factor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
-        return *this = *this * factor;
+    CoordinateDerived & operator*=(const CoordinateDerived & rhs) {
+        return static_cast<CoordinateDerived&>(*this = *this * rhs);
     }
 
-    template<typename T>
-    constexpr auto operator/(const T divisor) const -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type {
-        return Coord(x / divisor, y / divisor, z / divisor);
+    constexpr CoordinateDerived operator/(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(x / rhs.x, y / rhs.y, z  / rhs.z);
     }
-    template<typename T>
-    auto operator/=(const T divisor) -> typename std::enable_if<std::is_arithmetic<T>::value, Coord>::type & {
-        return *this = *this / divisor;
+    CoordinateDerived & operator/=(const CoordinateDerived & rhs) {
+        return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
-    constexpr CoordOfCube cube(const int size, const int mag) const {
-        return {x / size / mag, y / size / mag, z / size / mag};
-    }
-
-    constexpr CoordInCube insideCube(const int size) const {
-        return {x % size, y % size, z % size};
-    }
-
-    /**
-     * This function calculates the coordinates of the datacube from pixel coordinates
-     */
-    static Coordinate Px2DcCoord(Coordinate pxCoordinate, int cubeEdgeLength) {
-        const auto cubeCoord = pxCoordinate.cube(cubeEdgeLength, 1);
-        return {cubeCoord.x, cubeCoord.y, cubeCoord.z};
-    }
-
-    constexpr Coordinate global2Legacy(int cubeEdgeLength, const int magnification) const {
-        return cube(cubeEdgeLength, magnification);
-    }
-
-    constexpr Coordinate legacy2Global(const int cubeEdgeLength, const int magnification) const {
-        return {x * cubeEdgeLength * magnification, y * cubeEdgeLength * magnification, z * cubeEdgeLength * magnification};
-    }
-
-    constexpr Coordinate cube2Legacy() const {
-        return {x, y, z};
-    }
-
-    constexpr Coordinate capped(const Coordinate & min, const Coordinate & max) const {
-        return {
+    constexpr CoordinateDerived capped(const CoordinateDerived & min, const CoordinateDerived & max) const {
+        return CoordinateDerived{
             std::max(min.x, std::min(x, max.x))
             , std::max(min.y, std::min(y, max.y))
             , std::max(min.z, std::min(z, max.z))
         };
     }
 };
-using Coordinate = Coord<>::Coordinate;
-using CoordOfCube = Coord<>::CoordOfCube;
-using CoordInCube = Coord<>::CoordInCube;
-using floatCoordinate = Coord<>::floatCoordinate;
+
+template<typename ComponentType = int, std::size_t tag = 0>
+class Coord : public CoordinateBase<ComponentType, Coord<ComponentType, tag>> {
+public:
+    using CoordinateBase<ComponentType, Coord<ComponentType, tag>>::CoordinateBase;
+    constexpr Coord() = default;
+    template<typename T>
+    constexpr Coord(const Coord<T, tag> & rhs) : CoordinateBase<ComponentType, Coord<ComponentType, tag>>(rhs.x, rhs.y, rhs.z) {}
+    template<typename T>
+    constexpr operator Coord<T, tag>() const {
+        return Coord<T, tag>(this->x, this->y, this->z);
+    }
+};
+
+using Coordinate = Coord<int, 0>;
+using CoordOfCube = Coord<int, 1>;
+using CoordInCube = Coord<int, 2>;
+using floatCoordinate = Coord<float>;
+
+template<>
+class Coord<int, 0> : public CoordinateBase<int, Coordinate> {
+public:
+    using CoordinateBase<int, Coordinate>::CoordinateBase;
+    constexpr CoordOfCube cube(const int size, const int mag) const;
+    constexpr CoordInCube insideCube(const int size, const int mag) const;
+};
+
+template<>
+class Coord<int, 1> : public CoordinateBase<int, CoordOfCube> {
+public:
+    using CoordinateBase<int, CoordOfCube>::CoordinateBase;
+    constexpr Coordinate cube2Global(const int cubeEdgeLength, const int magnification) const;
+};
+
+template<>
+class Coord<int, 2> : public CoordinateBase<int, CoordInCube> {
+public:
+    using CoordinateBase<int, CoordInCube>::CoordinateBase;
+    constexpr Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const int magnification) const;
+};
+
+constexpr CoordOfCube Coordinate::cube(const int size, const int mag) const {
+    return {this->x / size / mag, this->y / size / mag, this->z / size / mag};
+}
+constexpr CoordInCube Coordinate::insideCube(const int size, const int mag) const {
+    return {(this->x / mag) % size, (this->y / mag) % size, (this->z / mag) % size};
+}
+
+constexpr Coordinate CoordOfCube::cube2Global(const int cubeEdgeLength, const int magnification) const {
+    return {this->x * cubeEdgeLength * magnification, this->y * cubeEdgeLength * magnification, this->z * cubeEdgeLength * magnification};
+}
+
+constexpr Coordinate CoordInCube::insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const int magnification) const {
+    return cube.cube2Global(cubeEdgeLength, magnification) + Coord<int>{this->x * magnification, this->y * magnification, this->z * magnification};
+}
 
 Q_DECLARE_METATYPE(Coordinate)
 Q_DECLARE_METATYPE(CoordOfCube)

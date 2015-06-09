@@ -11,6 +11,16 @@ class QPushButton;
 class QLineEdit;
 class QLabel;
 class QCheckBox;
+
+class PythonInterpreterWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit PythonInterpreterWidget(QWidget *parent = 0);
+protected:
+    PythonQtScriptingConsole *console;
+};
+
 class PythonPropertyWidget : public QDialog
 {
     Q_OBJECT
@@ -19,30 +29,24 @@ public:
 protected:
     QPushButton *pythonInterpreterButton;
     QPushButton *autoStartFolderButton;
-    QPushButton *saveButton;
-    QPushButton *defaultPreferences;
     QPushButton *workingDirectoryButton;
-    QLineEdit *pythonInterpreterField;
-    QLineEdit *autoStartFolder;
-    QCheckBox *autoStartTerminal;
-    QLineEdit *workingDirectory;
-    PythonQtScriptingConsole *console;
+    QLineEdit *autoStartFolderEdit;
+    QCheckBox *autoStartTerminalCheckbox;
+    QLineEdit *workingDirectoryEdit;
+    QPushButton *customPathsAppendButton;
+    QTextEdit *customPathsEdit;
+    PythonInterpreterWidget *interpreter;
 
     void closeEvent(QCloseEvent *e);
 
-signals:
-    void executeUserScriptsSignal();
-    void changeWorkingDirectory();
 public slots:
-    void pythonInterpreterButtonClicked();
     void autoStartFolderButtonClicked();
-    void autoConf();
     void openTerminal();
     void closeTerminal();
     void saveSettings();
     void loadSettings();
-    void autoStartTerminalClicked(bool on);
     void workingDirectoryButtonClicked();
+    void appendCustomPathButtonClicked();
 
 
 

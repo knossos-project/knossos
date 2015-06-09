@@ -222,6 +222,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
+    brushRadiusEdit.setRange(0, 1000);
     twodBtn.setChecked(true);
 
     toolsLayout.addWidget(&showAllChck);
@@ -271,6 +272,7 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
 
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
+    bottomHLayout.addWidget(&subobjectHoveredLabel);
     bottomHLayout.addWidget(&objectCreateButton, 0, Qt::AlignRight);
 
     splitter.setOrientation(Qt::Vertical);
@@ -366,9 +368,27 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id){
+        subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %0").arg(subobject_id));
+    });
 
-    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(objectsTable, point);});
-    QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [&](QPoint point){contextMenu(touchedObjsTable, point);});
+    auto & deleteAction = *new QAction("delete", this);
+    addAction(&deleteAction);
+    deleteAction.setShortcut(Qt::Key_Delete);
+    QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
+
+    QObject::connect(&objectsTable, &QTreeView::doubleClicked, [this](const QModelIndex index){
+        if (index.column() == 1) {//only on id cell
+            Segmentation::singleton().jumpToObject(indexFromRow(objectModel, index));
+        }
+    });
+    QObject::connect(&touchedObjsTable, &QTreeView::doubleClicked, [this](const QModelIndex index){
+        if (index.column() == 1) {//only on id cell
+            Segmentation::singleton().jumpToObject(indexFromRow(touchedObjectModel, index));
+        }
+    });
+    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & point){contextMenu(*this, objectsTable, objectModel, point);});
+    QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & point){contextMenu(*this, touchedObjsTable, touchedObjectModel, point);});
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderAllObjs);
@@ -413,9 +433,6 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     });
     Segmentation::singleton().blockSignals(false);
     updateSelection();
-    if (selected.length() == 1) {
-        Segmentation::singleton().jumpToObject(touchedObjectModel.objectCache[selected.indexes().front().row()].get().index);
-    }
 }
 
 void SegmentationTab::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
@@ -428,10 +445,6 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     commitSelection(proxySelected, proxyDeselected);
     Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
-    //the proxy selection contains ranges for every cell of a line while the source selection consists of _one_ range per line
-    if (selected.length() == 1) {
-        Segmentation::singleton().jumpToObject(proxySelected.indexes().front().row());
-    }
 }
 
 template<typename Elem>
@@ -511,9 +524,25 @@ void SegmentationTab::updateLabels() {
     subobjectCountLabel.setText(QString("Subobjects: %0").arg(Segmentation::singleton().subobjects.size()));
 }
 
-void SegmentationTab::contextMenu(const QAbstractScrollArea & widget, const QPoint & pos) {
+uint64_t SegmentationTab::indexFromRow(const SegmentationObjectModel &, const QModelIndex index) const {
+    return objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource({index, index})).indexes().front().row();
+}
+uint64_t SegmentationTab::indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const {
+    return model.objectCache[index.row()].get().index;
+}
+
+template<typename Model>
+void contextMenu(const SegmentationTab & tab, const QTreeView & table, Model & model, const QPoint & pos) {
     QMenu contextMenu;
-    QObject::connect(contextMenu.addAction("merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
-    QObject::connect(contextMenu.addAction("delete"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
-    contextMenu.exec(widget.viewport()->mapToGlobal(pos));
+    auto & jumpAction = *contextMenu.addAction("jump to object");
+    auto & mergeAction = *contextMenu.addAction("merge");
+    auto & deleteAction = *contextMenu.addAction("delete");
+    deleteAction.setShortcut(Qt::Key_Delete);//a shortcut in a context menu doesn’t work but it _shows_ the shortcut used elsewhere
+    contextMenu.setDefaultAction(&jumpAction);
+    QObject::connect(&jumpAction, &QAction::triggered, [&tab, pos, &table, &model](){
+        Segmentation::singleton().jumpToObject(tab.indexFromRow(model, table.indexAt(pos)));
+    });
+    QObject::connect(&mergeAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
+    QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
+    contextMenu.exec(table.viewport()->mapToGlobal(pos));
 }

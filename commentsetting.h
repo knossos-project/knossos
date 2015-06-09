@@ -12,7 +12,6 @@ public:
     QColor color;
     float nodeRadius;
 
-    static bool useCommentColors;
     static bool useCommentNodeRadius;
     static bool appendComment;
     static std::vector<CommentSetting> comments;

@@ -1,16 +1,15 @@
 #include "file_io.h"
 
-#include "knossos.h"
-
-#include <ctime>
-
-#include <QStandardPaths>
-
-#include <quazip/quazipfile.h>
-
+#include "loader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
+
+#include <quazip/quazipfile.h>
+
+#include <QStandardPaths>
+
+#include <ctime>
 
 QString annotationFileDefaultName() {
     // Generate a default file name based on date and time.
@@ -51,9 +50,8 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             }
             if (cubeRegEx.exactMatch(fileInside)) {
                 file.open(QIODevice::ReadOnly);
-                auto cube = file.readAll();
                 const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
-                Loader::Controller::singleton().snappyCacheAddSnappy(cubeCoord, std::string{cube.data(), static_cast<std::string::size_type>(cube.size())});
+                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, file.readAll().toStdString());
             }
         }
         state->viewer->loader_notify();

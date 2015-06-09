@@ -30,15 +30,11 @@ treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
 }
 
 bool SkeletonProxy::move_to_next_tree() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().moveToNextTree(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().moveToNextTree();
 }
 
 bool SkeletonProxy::move_to_previous_tree() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().moveToPrevTree(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().moveToPrevTree();
 }
 
 treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
@@ -113,7 +109,7 @@ int SkeletonProxy::skeleton_time() {
 }
 
 QString SkeletonProxy::skeleton_file() {
-    return state->viewer->window->annotationFilename;
+    return Session::singleton().annotationFilename;
 }
 
 bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {
@@ -176,9 +172,7 @@ segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
 }
 
 bool SkeletonProxy::jump_to_active_node() {
-    bool isSuccess = false;
-    Skeletonizer::singleton().jumpToActiveNode(&isSuccess);
-    return isSuccess;
+    return Skeletonizer::singleton().jumpToActiveNode();
 }
 
 bool SkeletonProxy::has_unsaved_changes() {
@@ -217,9 +211,13 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
-bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, ViewportType inVp, int inMag, int time) {
+int SkeletonProxy::findAvailableNodeID() {
+    return Skeletonizer::singleton().findAvailableNodeID();
+}
+
+bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
-    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false)) {
+    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, (ViewportType)inVp, inMag, time, false)) {
         emit echo(QString("could not add the node with node id %1").arg(node_id));
         return false;
     }
@@ -236,7 +234,10 @@ QList<treeListElement *> *SkeletonProxy::trees() {
     return trees;
 }
 
-// UNTESTED
+int SkeletonProxy::findAvailableTreeID() {
+    return Skeletonizer::singleton().findAvailableTreeID();
+}
+
 bool SkeletonProxy::add_tree(int tree_id, float r, float g, float b, float a) {
     color4F color(r, g, b, a);
     treeListElement *theTree = Skeletonizer::singleton().addTreeListElement(tree_id, color);

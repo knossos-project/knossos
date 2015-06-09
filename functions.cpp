@@ -81,14 +81,14 @@ void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
 }
 
 bool checkTreeParameter(int id, float r, float g, float b, float a) {
-    if(id < 0 or r < 0 or r > 1 or g < 0 or g > 1 or b < 0 or b > 1 or a < 0 or a > 1) {
+    if(id < 0 || r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1) {
         return false;
     }
     return true;
 }
 
 bool checkNodeParameter(int id, int x, int y, int z) {
-    if(id < 0 or x < 0 or y < 0 or z < 0) {
+    if(id < 0 || x < 0 || y < 0 || z < 0) {
         return false;
     }
     return true;

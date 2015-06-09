@@ -1,6 +1,9 @@
 #ifndef GUICONSTANTS_H
 #define GUICONSTANTS_H
 
+#include <vector>
+#include <QString>
+
 /* Constants for Widget-identification */
 const QString MAIN_WINDOW = "main_window";
 const QString COMMENTS_TAB = "comments_tab";
@@ -9,12 +12,14 @@ const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
 const QString VIEWPORT_SETTINGS_WIDGET = "viewport_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
+const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString TOOLS_WIDGET = "tools_widget";
 const QString TRACING_TIME_WIDGET = "tracing_time_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
 /* General attributes appropriate for most widgets */
+const QString GEOMETRY = "geometry";
 const QString WIDTH  = "width";
 const QString HEIGHT = "height";
 const QString POS_X  = "x";
@@ -27,6 +32,7 @@ const QString SAVING_INTERVAL = "saving_interval";
 const QString AUTOINC_FILENAME = "autoinc_filename";
 
 /* DataSet Switch */
+const QString DATASET_GEOMETRY = "dataset_geometry";
 const QString DATASET_MRU = "dataset_mru";
 const QString DATASET_SUPERCUBE_EDGE = "supercube_edge";
 const QString DATASET_OVERLAY = "overlay";
@@ -53,12 +59,21 @@ const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 const QString VPXY_COORD = "vpxy_coord";
 const QString VPXY_SIZE = "vpxy_size";
+const QString VPXY_VISIBLE = "vpxy_visible";
+const QString VPXY_TITLE = "XY";
 const QString VPXZ_COORD = "vpxz_coord";
 const QString VPXZ_SIZE = "vpxz_size";
+const QString VPXZ_VISIBLE = "vpxz_visible";
+const QString VPXZ_TITLE = "XZ";
 const QString VPYZ_COORD = "vpyz_coord";
 const QString VPYZ_SIZE = "vpyz_size";
+const QString VPYZ_VISIBLE = "vpyz_visible";
+const QString VPYZ_TITLE = "YZ";
 const QString VPSKEL_COORD = "vpskel_coord";
 const QString VPSKEL_SIZE = "vpskel_size";
+const QString VPSKEL_VISIBLE = "vpskel_visible";
+const QString VPSKEL_TITLE = "Skeleton";
+const std::vector<QString> VP_TITLES{VPXY_TITLE, VPXZ_TITLE, VPYZ_TITLE, VPSKEL_TITLE};
 const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
@@ -155,9 +170,17 @@ const QString PYTHON_INTERPRETER = "python_interpreter";
 const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
 const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
+const QString PYTHON_CUSTOM_PATHS = "python_custom_paths";
 
 // Heidelbrain Integration
 const QString HEIDELBRAIN_HOST = "heidelbrain_host";
 const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
+
+// Snapshot settings
+const QString VIEWPORT = "viewport";
+const QString WITH_OVERLAY = "with_overlay";
+const QString WITH_SKELETON = "with_skeleton";
+const QString WITH_SCALE = "with_scale";
+const QString SAVE_DIR = "save_dir";
 
 #endif // GUICONSTANTS_H

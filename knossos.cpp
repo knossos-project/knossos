@@ -34,6 +34,7 @@
 #include "skeleton/skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
+#include "widgets/mainwindow.h"
 #include "widgets/widgetcontainer.h"
 
 #include <QApplication>
@@ -57,16 +58,15 @@
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 #endif
 
-std::unique_ptr<Knossos> knossos;
-
-Knossos::Knossos(QObject *parent) : QObject(parent) {}
-
-Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
-    screen.show();
-    //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-    QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
-    timer.start(timeout_msec);
-}
+class Splash {
+    QSplashScreen screen;
+public:
+    Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+        screen.show();
+        //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
+        QTimer::singleShot(timeout_msec, &screen, &QSplashScreen::close);
+    }
+};
 
 void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
     QString intro;
@@ -140,6 +140,7 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
     QApplication a(argc, argv);
     qInstallMessageHandler(debugMessageHandler);
     /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
@@ -154,15 +155,14 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    knossos.reset(new Knossos);
-
     global_argc = argc;
     global_argv = argv;
 
-    knossos->applyDefaultConfig();
+    Knossos::applyDefaultConfig();
 
-    knossos->initStates();
+    Knossos::initStates();
 
+    SignalRelay signalRelay;
     Viewer viewer;
     Remote remote;
 
@@ -171,11 +171,6 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<CoordOfCube>();
     qRegisterMetaType<floatCoordinate>();
 
-    QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
-    QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
-
-    QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
-    QObject::connect(viewer.window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
@@ -189,7 +184,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
     QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
-    knossos->loadDefaultTreeLUT();
+    Knossos::loadDefaultTreeLUT();
 
     Scripting scripts;
     viewer.run();
@@ -199,8 +194,6 @@ int main(int argc, char *argv[]) {
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
     Knossos::printConfigValues();
-
-    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, &PythonPropertyWidget::changeWorkingDirectory, &scripts, &Scripting::changeWorkingDirectory);
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
@@ -250,6 +243,8 @@ bool Knossos::commonInitStates() {
  */
 bool Knossos::initStates() {
     // For the viewer
+    state->viewerState->movementAreaFactor = 80;
+    state->viewerState->showOverlay = true;
     state->viewerState->autoTracingMode = navigationMode::recenter;
     state->viewerState->autoTracingDelay = 50;
     state->viewerState->autoTracingSteps = 10;
@@ -257,7 +252,6 @@ bool Knossos::initStates() {
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
     state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
     Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-    loadDefaultTreeLUT();
 
     state->viewerState->treeLutSet = false;
 
@@ -299,19 +293,6 @@ bool Knossos::sendQuitSignal() {
     Knossos::sendRemoteSignal();
 
     return true;
-}
-
-/* Removes the new line symbols from a string */
-bool Knossos::stripNewlines(char *string) {
-    int i = 0;
-
-    for(i = 0; string[i] != '\0'; i++) {
-        if(string[i] == '\n') // ? os specific ?
-            string[i] = ' ';
-        }
-
-    return true;
-
 }
 
 bool Knossos::readConfigFile(const char *path) {
@@ -423,13 +404,6 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
     return true;
 }
 
-stateInfo *Knossos::emptyState() {
-    stateInfo *state = new stateInfo();
-    state->viewerState = new viewerState();
-    state->skeletonState = new skeletonState();
-    return state;
-}
-
 bool Knossos::findAndRegisterAvailableDatasets() {
     QDir datasetDir;
     QString baseMagDirName;
@@ -537,6 +511,13 @@ bool Knossos::findAndRegisterAvailableDatasets() {
     return true;
 }
 
+stateInfo * emptyState() {
+    stateInfo *state = new stateInfo();
+    state->viewerState = new viewerState();
+    state->skeletonState = new skeletonState();
+    return state;
+}
+
 bool Knossos::configDefaults() {
     bool firstRun = false;
     if (nullptr == state) {
@@ -544,7 +525,7 @@ bool Knossos::configDefaults() {
     }
 
     if (firstRun) {
-        state = Knossos::emptyState();
+        state = emptyState();
 
         state->loaderUserMoveType = USERMOVE_NEUTRAL;
         state->loaderUserMoveViewportDirection = {};
@@ -820,8 +801,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
   */
 
 void Knossos::loadDefaultTreeLUT() {
-    if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
+    if (!state->viewer->loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB)) {
         Knossos::loadTreeLUTFallback();
-        emit treeColorAdjustmentChangedSignal();
+        state->viewer->window->treeColorAdjustmentsChanged();
     }
 }

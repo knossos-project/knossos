@@ -78,7 +78,7 @@ void DataSavingWidget::loadSettings() {
      settings.beginGroup(DATA_SAVING_WIDGET);
      width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
      height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-     if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+     if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
          x = QApplication::desktop()->screen()->rect().center().x();
          y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
      }

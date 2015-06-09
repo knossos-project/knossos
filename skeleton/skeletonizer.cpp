@@ -27,9 +27,11 @@
 #include "functions.h"
 #include "knossos.h"
 #include "session.h"
+#include "skeleton/node.h"
 #include "skeleton/tree.h"
 #include "version.h"
 #include "viewer.h"
+#include "widgets/mainwindow.h"
 
 #include <cstring>
 #include <queue>
@@ -175,19 +177,9 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
     return newElement;
 }
 
-
 treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
-    treeListElement *currentTree;
-
-    currentTree = state->skeletonState->firstTree;
-
-    while(currentTree) {
-        if(currentTree->treeID == treeID) {
-            return currentTree;
-        }
-        currentTree = currentTree->next;
-    }
-    return NULL;
+    const auto treeIt = state->skeletonState->treesByID.find(treeID);
+    return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
 
 uint64_t Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
@@ -530,7 +522,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if (experimentName != state->name) {
                         state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path, true);
                     }
-                } else if(xml.name() == "magnification" and xml.isStartElement()) {
+                } else if(xml.name() == "magnification" && xml.isStartElement()) {
                     QStringRef attribute = attributes.value("factor");
                      // This is for legacy skeleton files.
                      // In the past, magnification was specified on a per-file basis
@@ -1089,6 +1081,8 @@ bool Skeletonizer::delTree(int treeID) {
         state->skeletonState->firstTree = treeToDel->next;
     }
 
+    state->skeletonState->treesByID.erase(treeToDel->treeID);
+
     if (treeToDel->selected) {
         auto & selectedTrees = state->skeletonState->selectedTrees;
         const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
@@ -1300,6 +1294,15 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     return true;
 }
 
+uint Skeletonizer::findAvailableNodeID() {
+    uint nodeID = state->skeletonState->totalNodeElements;
+    //Test if node ID over node counter is available. If not, find a valid one.
+    while(findNodeByNodeID(nodeID)) {
+        nodeID++;
+    }
+    return std::max(nodeID,(uint)1);
+}
+
 uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *position,
                            ViewportType VPtype, int inMag, int time, int respectLocks) {
     nodeListElement *tempNode = NULL;
@@ -1357,11 +1360,7 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
     ++tempTree->size;
 
     if(nodeID == 0) {
-        nodeID = state->skeletonState->totalNodeElements;
-        //Test if node ID over node counter is available. If not, find a valid one.
-        while(findNodeByNodeID(nodeID)) {
-            nodeID++;
-        }
+        nodeID = findAvailableNodeID();
     }
 
     tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag);
@@ -1484,6 +1483,7 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
     skeletonState->activeTree = NULL;
 
     skeletonState->nodesByNodeID.clear();
+    skeletonState->treesByID.clear();
     delStack(skeletonState->branchStack);
 
     //Generate empty tree structures
@@ -1690,6 +1690,15 @@ nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
     return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
 }
 
+int Skeletonizer::findAvailableTreeID() {
+    int treeID = state->skeletonState->treeElements;
+    //Test if tree ID over tree counter is available. If not, find a valid one.
+    while(findTreeByTreeID(treeID)) {
+        treeID++;
+    }
+    return std::max(treeID,1);
+}
+
 treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
      // The variable sync is a workaround for the problem that this function
      // will sometimes be called by other syncable functions that themselves hold
@@ -1719,11 +1728,7 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
         newElement->treeID = treeID;
     }
     else {
-        newElement->treeID = state->skeletonState->treeElements;
-        //Test if tree ID over tree counter is available. If not, find a valid one.
-        while(findTreeByTreeID(newElement->treeID)) {
-            newElement->treeID++;
-        }
+        newElement->treeID = findAvailableTreeID();
     }
     clearTreeSelection();
     newElement->render = true;
@@ -1758,6 +1763,8 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     state->skeletonState->activeTree = newElement;
     //qDebug("Added new tree with ID: %d.", newElement->treeID);
+
+    state->skeletonState->treesByID.emplace(newElement->treeID, newElement);
 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
@@ -1841,6 +1848,21 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
     return nextTree;
 }
 
+bool Skeletonizer::addTreeCommentToSelectedTrees(QString comment) {
+    const auto blockState = signalsBlocked();
+    blockSignals(true);
+
+    for(const auto &tree : state->skeletonState->selectedTrees) {
+        addTreeComment(tree->treeID, comment);
+    }
+
+    blockSignals(blockState);
+
+    emit resetData();
+
+    return true;
+}
+
 bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     treeListElement *tree = NULL;
 
@@ -1851,7 +1873,6 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     }
 
     state->skeletonState->unsavedChanges = true;
-
     emit treeChangedSignal(*tree);
 
     return true;
@@ -2450,16 +2471,14 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
     return true;
 }
 
-void Skeletonizer::jumpToActiveNode(bool *isSuccess) {
+bool Skeletonizer::jumpToActiveNode() {
     if(state->skeletonState->activeNode) {
         emit userMoveSignal(state->skeletonState->activeNode->position.x - state->viewerState->currentPosition.x,
                             state->skeletonState->activeNode->position.y - state->viewerState->currentPosition.y,
                             state->skeletonState->activeNode->position.z - state->viewerState->currentPosition.z,
                             USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
-    if (NULL != isSuccess) {
-        *isSuccess = true;
-    }
+    return true;
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
@@ -2521,8 +2540,7 @@ bool Skeletonizer::updateTreeColors() {
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     segmentListElement *currentSegment = NULL;
-    node->circRadius = node->radius;
-
+    node->circRadius = radius(*node);
     /* Any segment longer than the current circ radius?*/
     currentSegment = node->firstSegment;
     while(currentSegment) {
@@ -2543,44 +2561,36 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
         // default color for comment nodes
         *color = {1.f, 1.f, 0.f, 1.f};
 
-        if(CommentSetting::useCommentColors) {
-            auto newColor = CommentSetting::getColor(QString(node->comment->content));
-            if(newColor.alpha() != 0) {
-                *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
-            }
+        auto newColor = CommentSetting::getColor(QString(node->comment->content));
+        if(newColor.alpha() != 0) {
+            *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
         }
     }
 }
 
-void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
-    *radius = node->radius;
-    if(state->skeletonState->overrideNodeRadiusBool) {
-        *radius = state->skeletonState->overrideNodeRadiusVal;
-    }
-    if(node->comment != NULL && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(QString(node->comment->content));
+float Skeletonizer::radius(const nodeListElement & node) {
+    if(node.comment && CommentSetting::useCommentNodeRadius) {
+        float newRadius = CommentSetting::getRadius(QString(node.comment->content));
         if(newRadius != 0) {
-            *radius = newRadius;
+            return newRadius;
         }
     }
+    return state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
 }
 
-#define RETVAL_MACRO(val, ptr) {if(NULL != ptr) {*ptr = val;} return;}
-
-void Skeletonizer::moveToPrevTree(bool *isSuccess) {
+bool Skeletonizer::moveToPrevTree() {
     treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     nodeListElement *node;
-    if(state->skeletonState->activeTree == NULL) {
-        RETVAL_MACRO(false, isSuccess);
+    if(state->skeletonState->activeTree == nullptr) {
+        return false;
     }
     if(prevTree) {
         setActiveTreeByID(prevTree->treeID);
         //set tree's first node to active node if existent
         node = state->skeletonState->activeTree->firstNode;
-        if(node == NULL) {
-            RETVAL_MACRO(true, isSuccess);
-        }
-        else {
+        if(node == nullptr) {
+            return true;
+        } else {
             setActiveNode(node, node->nodeID);
             emit setRecenteringPositionSignal(node->position.x,
                                          node->position.y,
@@ -2588,7 +2598,7 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
 
             Knossos::sendRemoteSignal();
         }
-        RETVAL_MACRO(true, isSuccess);
+        return true;
     }
     QMessageBox info;
     info.setIcon(QMessageBox::Information);
@@ -2597,24 +2607,24 @@ void Skeletonizer::moveToPrevTree(bool *isSuccess) {
     info.setText("You reached the first tree.");
     info.exec();
 
-    RETVAL_MACRO(false, isSuccess);
+    return false;
 }
 
 
-void Skeletonizer::moveToNextTree(bool *isSuccess) {
+bool Skeletonizer::moveToNextTree() {
     treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     nodeListElement *node;
 
-    if(state->skeletonState->activeTree == NULL) {
-        RETVAL_MACRO(false, isSuccess);
+    if(state->skeletonState->activeTree == nullptr) {
+        return false;
     }
     if(nextTree) {
         setActiveTreeByID(nextTree->treeID);
         //set tree's first node to active node if existent
         node = state->skeletonState->activeTree->firstNode;
 
-        if(node == NULL) {
-            RETVAL_MACRO(true, isSuccess);
+        if(node == nullptr) {
+            return true;
         } else {
             setActiveNode(node, node->nodeID);
 
@@ -2623,7 +2633,7 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
                                              node->position.z);
                 Knossos::sendRemoteSignal();
         }
-        RETVAL_MACRO(true, isSuccess);
+        return true;
     }
     QMessageBox info;
     info.setIcon(QMessageBox::Information);
@@ -2632,7 +2642,7 @@ void Skeletonizer::moveToNextTree(bool *isSuccess) {
     info.setText("You reached the last tree.");
     info.exec();
 
-    RETVAL_MACRO(false, isSuccess);
+    return false;
 }
 
 bool Skeletonizer::moveToPrevNode() {
@@ -2664,7 +2674,7 @@ bool Skeletonizer::moveToNextNode() {
 bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
     treeListElement *newTree = findTreeByTreeID(treeID);
     for (auto * const node : state->skeletonState->selectedNodes) {
-        if(node == NULL or newTree == NULL) {
+        if(node == NULL || newTree == NULL) {
             return false;
         }
 

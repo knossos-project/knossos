@@ -3,6 +3,8 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 
+#include <QCheckBox>
+#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QPushButton>

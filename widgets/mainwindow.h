@@ -59,13 +59,12 @@ class MainWindow : public QMainWindow {
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
-    void resizeViewports(int width, int height);
+    void resizeToFitViewports(int width, int height);
 
     QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"File"};
     QMenu *skelEditMenu;
     QMenu *segEditMenu;
-    QString annotationFilename;
     QString openFileDirectory;
     QString saveFileDirectory;
 
@@ -73,6 +72,8 @@ class MainWindow : public QMainWindow {
 
     QToolBar basicToolbar{"Basic Functionality"};
     QToolBar defaultToolbar{"Tools"};
+    int loaderLastProgress;
+    QLabel *loaderProgress;
 
     // segmentation job mode
     QToolBar segJobModeToolbar{"Job Navigation"};
@@ -130,14 +131,12 @@ public:
 
 signals:
     bool changeDatasetMagSignal(uint upOrDownFlag);
-    void recalcTextureOffsetsSignal();
     void recentFileSelectSignal(int index);
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
 
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);
     void updateTreeColorsSignal();
-    void loadTreeLUTFallback();
 
     treeListElement *addTreeListElementSignal(int treeID, color4F color);
 
@@ -147,6 +146,7 @@ signals:
     void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
+    void updateLoaderProgress(bool isIncrement, int refCount);
 
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);

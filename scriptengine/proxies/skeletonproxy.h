@@ -44,6 +44,7 @@ public slots:
     treeListElement *tree_with_previous_id(int tree_id);
     treeListElement *tree_with_next_id(int tree_id);
     QList<treeListElement *> *trees();
+    int findAvailableTreeID();
     bool add_tree(int tree_id = 0, float r = -1, float g = -1, float b = -1, float a = 1);
     bool set_tree_comment(int tree_id, const QString &comment);
     bool set_active_tree(int tree_id);
@@ -63,8 +64,9 @@ public slots:
     bool delete_node(int node_id);
     bool set_active_node(int node_id);
     nodeListElement *active_node();
+    int findAvailableNodeID();
     bool add_node(int node_id, int x, int y, int z, int parent_tree_id = 0,
-                  float radius = 1.5, ViewportType inVp = ViewportType::VIEWPORT_UNDEFINED, int inMag = 1,
+                  float radius = 1.5, int inVp = ViewportType::VIEWPORT_UNDEFINED, int inMag = 1,
                   int time = 0);
     bool set_branch_node(int node_id);
     bool add_segment(int source_id, int target_id);

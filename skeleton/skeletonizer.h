@@ -53,6 +53,8 @@ struct skeletonState {
     treeListElement *activeTree;
     nodeListElement *activeNode;
 
+    std::unordered_map<int, treeListElement *> treesByID;
+
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
@@ -175,6 +177,7 @@ public slots:
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
+    uint findAvailableNodeID();
     uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, ViewportType VPtype, int inMag, int time, int respectLocks);
 
     static void *popStack(stack *stack);
@@ -186,7 +189,7 @@ public slots:
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     static void setColorFromNode(nodeListElement *node, color4F *color);
-    static void setRadiusFromNode(nodeListElement *node, float *radius);
+    static float radius(const nodeListElement &node);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
@@ -199,6 +202,7 @@ public slots:
     void autoSaveIfElapsed();
     uint64_t UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node, uint nodeID);
+    bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
@@ -211,7 +215,7 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
-    void jumpToActiveNode(bool *isSuccess = NULL);
+    bool jumpToActiveNode();
     bool setActiveTreeByID(int treeID);
 
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
@@ -220,8 +224,8 @@ public slots:
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
     bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, uint branchNodeID);
-    void moveToNextTree(bool *isSuccess = NULL);
-    void moveToPrevTree(bool *isSuccess = NULL);
+    bool moveToNextTree();
+    bool moveToPrevTree();
     bool moveToPrevNode();
     bool moveToNextNode();
     bool moveSelectedNodesToTree(int treeID);
@@ -232,6 +236,7 @@ public slots:
     static void restoreDefaultTreeColor();
 
     bool extractConnectedComponent(int nodeID);
+    int findAvailableTreeID();
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
     static bool updateTreeColors();

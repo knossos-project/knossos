@@ -4,8 +4,8 @@
 #include <QToolBar>
 #include <QMenu>
 
-#include "widgets/GuiConstants.h"
 #include "scripting.h"
+#include "widgets/GuiConstants.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
 #include "decorators/colordecorator.h"
@@ -14,19 +14,12 @@
 #include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
 #include "decorators/meshdecorator.h"
-#include "decorators/transformdecorator.h"
-#include "decorators/pointdecorator.h"
-#include "proxies/skeletonproxy.h"
 #include "proxies/pythonproxy.h"
-
-#include "geometry/render.h"
-#include "geometry/point.h"
-#include "geometry/transform.h"
-#include "geometry/shape.h"
+#include "proxies/segmentationproxy.h"
+#include "proxies/skeletonproxy.h"
 
 #include "eventmodel.h"
 #include "highlighter.h"
-#include "knossos.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
@@ -38,15 +31,15 @@ void PythonQtInit() {
 #endif
 }
 
-Scripting::Scripting() {
+Scripting::Scripting() : _ctx(NULL) {
     state->scripting = this;
 
     PythonQtInit();
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    _ctx = PythonQt::self()->getMainModule();
 
     skeletonProxy = new SkeletonProxy();
+    segmentationProxy = new SegmentationProxy();
     pythonProxy = new PythonProxy();
-    signalRelay = new SignalRelay();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     colorDecorator = new ColorDecorator();
@@ -57,37 +50,36 @@ Scripting::Scripting() {
     nodeCommentDecorator = new NodeCommentDecorator();
     segmentListDecorator = new SegmentListDecorator();
     treeListDecorator = new TreeListDecorator();
-//    transformDecorator = new TransformDecorator();
-//    pointDecorator = new PointDecorator();
 
-    ctx.evalScript("import sys");
-    ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
+    _ctx.evalScript("import sys");
+    _ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
 #ifdef Q_OS_OSX
     // as ipython does not export it's sys paths after the installation we refer to that site-package
-    ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
+    _ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
-    ctx.evalScript("plugin_container = []");
+    _ctx.evalScript("plugin_container = []");
 
-    ctx.addObject("signalRelay", signalRelay);
-    ctx.addObject("skeleton", skeletonProxy);
-    ctx.addObject("knossos", pythonProxy);
-    ctx.addObject("knossos_global_viewer", state->viewer);
-    ctx.addObject("knossos_global_mainwindow", state->viewer->window);
-    ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
-    ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
-    ctx.addObject("knossos_global_knossos", knossos.get());
-    ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
-    ctx.addVariable("GL_POINTS", GL_POINTS);
-    ctx.addVariable("GL_LINES", GL_LINES);
-    ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
-    ctx.addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
-    ctx.addVariable("GL_TRIANGLES", GL_TRIANGLES);
-    ctx.addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
-    ctx.addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
-    ctx.addVariable("GL_QUADS", GL_QUADS);
-    ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
-    ctx.addVariable("GL_POLYGON", GL_POLYGON);
-    addWidgets(ctx);
+    _ctx.addObject("signalRelay", state->signalRelay);
+    _ctx.addObject("knossos", pythonProxy);
+    _ctx.addObject("segmentation", segmentationProxy);
+    _ctx.addObject("skeleton", skeletonProxy);
+    _ctx.addObject("knossos_global_viewer", state->viewer);
+    _ctx.addObject("knossos_global_mainwindow", state->viewer->window);
+    _ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
+    _ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
+    _ctx.addObject("knossos_global_segmentation", &Segmentation::singleton());
+    _ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
+    _ctx.addVariable("GL_POINTS", GL_POINTS);
+    _ctx.addVariable("GL_LINES", GL_LINES);
+    _ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
+    _ctx.addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
+    _ctx.addVariable("GL_TRIANGLES", GL_TRIANGLES);
+    _ctx.addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
+    _ctx.addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
+    _ctx.addVariable("GL_QUADS", GL_QUADS);
+    _ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
+    _ctx.addVariable("GL_POLYGON", GL_POLYGON);
+    addWidgets();
 
     QString module("internal");
 
@@ -117,71 +109,78 @@ Scripting::Scripting() {
 
     changeWorkingDirectory();
     executeFromUserDirectory();
+    addCustomPythonPath();
 
 #ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
-    ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
+    _ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
 #else
-    ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
+    _ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
 #endif
-//    ctx.evalScript("import IPython");
-//    ctx.evalScript("IPython.embed_kernel()");
+
+    autoStartTerminal();
 }
 
-void Scripting::addScriptingObject(const QString &name, QObject *obj) {
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    ctx.addObject(name, obj);
-}
-
-void Scripting::saveSettings(const QString &key, const QVariant &value) {
-    settings->setValue(key, value);
-}
-
-void Scripting::changeWorkingDirectory() {
+QVariant getSettingsValue(const QString &key) {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    QString path = settings.value(PYTHON_WORKING_DIRECTORY).toString();
+    auto value = settings.value(key);
     settings.endGroup();
+    return value;
+}
 
-    if(!path.isEmpty()) {
-        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-        ctx.evalScript("import os");
-        ctx.evalScript(QString("os.chdir('%1')").arg(path));
+void Scripting::autoStartTerminal() {
+    auto value = getSettingsValue(PYTHON_AUTOSTART_TERMINAL);
+    if (value.isNull()) { return; }
+    auto autoStartFolder = value.toBool();
+    if (autoStartFolder) {
+        qDebug() << "TRUE!";
+        state->viewer->window->widgetContainer->pythonPropertyWidget->openTerminal();
     }
 }
 
+void Scripting::changeWorkingDirectory() {
+    auto value = getSettingsValue(PYTHON_WORKING_DIRECTORY);
+    if (value.isNull()) { return; }
+    auto workingDir = value.toString();
+    if (workingDir.isEmpty()) { return; }
+
+    _ctx.evalScript("import os");
+    _ctx.evalScript(QString("os.chdir('%1')").arg(workingDir));
+}
+
+void Scripting::addCustomPythonPath() {
+    auto value = getSettingsValue(PYTHON_CUSTOM_PATHS);
+    if (value.isNull()) { return; }
+    auto customPaths = value.toStringList();
+    for (const auto & customPath : customPaths) {
+        _ctx.evalScript(QString("sys.path.append('%1')").arg(customPath));
+    }
+}
 
 void Scripting::executeFromUserDirectory() {
-    QSettings settings;
-    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    QString path = settings.value(PYTHON_AUTOSTART_FOLDER).toString();
-    settings.endGroup();
+    auto value = getSettingsValue(PYTHON_AUTOSTART_FOLDER);
+    if (value.isNull()) { return; }
+    auto autoStartFolder = value.toString();
+    if (autoStartFolder.isEmpty()) { return; }
 
-    if(!path.isEmpty()) {
-        qDebug() << path;
-        QDir scriptDir(path);
-        QStringList endings;
-        endings << "*.py";
-        scriptDir.setNameFilters(endings);
-        QFileInfoList entries = scriptDir.entryInfoList();
-
-        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-        foreach(const QFileInfo &script, entries) {
-            QFile file(script.canonicalFilePath());
-
-            if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
-                continue;
-            }
-
-            ctx.evalFile(script.canonicalFilePath());
-
+    QDir scriptDir(autoStartFolder);
+    QStringList endings;
+    endings << "*.py";
+    scriptDir.setNameFilters(endings);
+    QFileInfoList entries = scriptDir.entryInfoList();
+    foreach(const QFileInfo &script, entries) {
+        QFile file(script.canonicalFilePath());
+        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
+            continue;
         }
+        _ctx.evalFile(script.canonicalFilePath());
     }
 }
 
 /** This methods create a pep8-style object name for all knossos widget and
  *  adds them to the python-context. Widgets with a leading Q are ignored
 */
-void Scripting::addWidgets(PythonQtObjectPtr &context) {
+void Scripting::addWidgets() {
     QWidgetList list = QApplication::allWidgets();
     foreach(QWidget *widget, list) {
         QString name = widget->metaObject()->className();
@@ -191,9 +190,9 @@ void Scripting::addWidgets(PythonQtObjectPtr &context) {
             if(name.at(i).isLower()) {
                 array.append(name.at(i));
             } else if(name.at(i).isUpper()) {
-                if(i == 0 and name.at(i) == 'Q') {
+                if(i == 0 && name.at(i) == 'Q') {
                     continue;
-                } else if(i == 0 and name.at(i) != 'Q') {
+                } else if(i == 0 && name.at(i) != 'Q') {
                     array.append(name.at(i).toLower());
                 } else {
                     array.append(QString("_%1").arg(name.at(i).toLower()));
@@ -201,6 +200,6 @@ void Scripting::addWidgets(PythonQtObjectPtr &context) {
             }
         }
 
-        context.addObject("widget_" + QString(array), widget);
+        _ctx.addObject("widget_" + QString(array), widget);
     }
 }

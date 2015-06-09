@@ -21,10 +21,12 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "segmentation/segmentation.h"
 #include "vpskeletonviewportwidget.h"
 
-#include <skeleton/skeletonizer.h>
+#include "skeleton/skeletonizer.h"
+#include "segmentation/segmentation.h"
+
+#include <QColorDialog>
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
     line.setFrameShape(QFrame::HLine);
@@ -36,8 +38,19 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     line3.setFrameShape(QFrame::HLine);
     line3.setFrameShadow(QFrame::Sunken);
 
-    int currentGridColumn = 0;
+    VolumeColorBox.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
+    VolumeColorLayout.addWidget(&VolumeColorLabel);
+    VolumeColorLayout.addWidget(&VolumeColorBox, 0, Qt::AlignRight);
 
+    VolumeOpaquenessSpinBox.setMaximum(255);
+    VolumeOpaquenessSpinBox.setSingleStep(1);
+    VolumeOpaquenessSlider.setMaximum(255);
+    VolumeOpaquenessSlider.setSingleStep(1);
+    VolumeOpaquenessLayout.addWidget(&VolumeOpaquenessLabel);
+    VolumeOpaquenessLayout.addWidget(&VolumeOpaquenessSlider);
+    VolumeOpaquenessLayout.addWidget(&VolumeOpaquenessSpinBox);
+
+    int currentGridColumn = 0;
     gridLayout.addWidget(&datasetVisualizationLabel, currentGridColumn++, 0);
     gridLayout.addWidget(&line2, currentGridColumn++, 0);
     gridLayout.addWidget(&showXYPlaneCheckBox, currentGridColumn++, 0);
@@ -48,6 +61,8 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     gridLayout.addWidget(&line3, currentGridColumn++, 0);
     gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentGridColumn++, 0);
     gridLayout.addWidget(&VolumeRenderFlagCheckBox, currentGridColumn++, 0);
+    gridLayout.addLayout(&VolumeOpaquenessLayout, currentGridColumn++, 0);
+    gridLayout.addLayout(&VolumeColorLayout, currentGridColumn++, 0);
 
     mainLayout.addLayout(&gridLayout);
     mainLayout.addStretch(1);//expand vertically with empty space
@@ -58,4 +73,21 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
     QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [](bool checked){Segmentation::singleton().volume_render_toggle = checked; });
+    QObject::connect(&VolumeColorBox, &QPushButton::clicked, [&](){
+        auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
+        if (color.isValid() == QColorDialog::Accepted) {
+            Segmentation::singleton().volume_background_color = color;
+            VolumeColorBox.setStyleSheet("background-color : " + color.name() + ";");
+        }
+    });
+    QObject::connect(&VolumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
+        VolumeOpaquenessSpinBox.setValue(value);
+        Segmentation::singleton().volume_opacity = value;
+        Segmentation::singleton().volume_update_required = true;
+    });
+    QObject::connect(&VolumeOpaquenessSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+        VolumeOpaquenessSlider.setValue(value);
+        Segmentation::singleton().volume_opacity = value;
+        Segmentation::singleton().volume_update_required = true;
+    });
 }

@@ -42,11 +42,6 @@
 #define FAST 10
 #define RGB_LUTSIZE 768
 
-//	For the viewer.
-#define	SLICE_XY 0
-#define SLICE_XZ 1
-#define	SLICE_YZ 2
-
 // MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
 // a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
 // pixel size instead of 20 nm
@@ -144,12 +139,18 @@ struct viewerState {
     float cumDistRenderThres;
 
     bool defaultVPSizeAndPos;
+    //there’s a problem (intel drivers on linux only?)
+    //rendering knossos at full speed and displaying a file dialog
+    //so we reduce the rendering speed during display of said dialog
     uint renderInterval;
 
     //In pennmode right and left click are switched
     bool penmode = false;
 
     QString lockComment;
+
+    float movementAreaFactor;
+    bool showOverlay;
 };
 
 /**
@@ -202,8 +203,9 @@ signals:
     void loadSignal();
     void coordinateChangedSignal(int x, int y, int z);
     void updateDatasetOptionsWidgetSignal();
+    void movementAreaFactorChangedSignal();
 protected:
-    bool vpGenerateTexture_arb(vpConfig &currentVp);
+    void vpGenerateTexture_arb(vpConfig &currentVp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
     bool dcSliceExtract_arb(char *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
@@ -226,11 +228,12 @@ public slots:
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
-    void setVPOrientation(bool arbitrary);
+    void setVPOrientation(const bool arbitrary);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
+    void setMovementAreaFactor(float alpha);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

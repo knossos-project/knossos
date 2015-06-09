@@ -50,7 +50,6 @@ public:
 signals:
     void uncheckSignal();
 public slots:
-    void resetMovementArea();
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
     void walkFramesChanged(int value);
@@ -66,6 +65,7 @@ protected:
     void closeEvent(QCloseEvent *event);
 
     QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
+    QPushButton *resetMovementAreaButton;
 
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;
@@ -76,6 +76,7 @@ protected:
     QLabel *advanceTracingModesLabel;
     QLabel *delayTimePerStepLabel;
     QLabel *numberOfStepsLabel;
+
 
     QSpinBox *movementSpeedSpinBox;
     QSpinBox *jumpFramesSpinBox;

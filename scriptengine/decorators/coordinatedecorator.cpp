@@ -16,6 +16,10 @@ int CoordinateDecorator::z(Coordinate *self) {
     return self->z;
 }
 
+QVector<int> CoordinateDecorator::vector(Coordinate *self) {
+    return self->vector();
+}
+
 QString CoordinateDecorator::static_Coordinate_help() {
     return QString("An instanceable class which stores 3D Coordinate in integer values. Access to attributes only via getter and setter." \
                    "\n\n Constructors: " \

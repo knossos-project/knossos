@@ -24,6 +24,7 @@ class NodeListDecorator;
 class NodeCommentDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
+class SegmentationProxy;
 class SkeletonProxy;
 class PythonProxy;
 class TransformDecorator;
@@ -79,6 +80,7 @@ class SignalRelay : public QObject
 {
     Q_OBJECT
 public:
+    explicit SignalRelay() {state->signalRelay = this;}
 signals:
     void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int,QMouseEvent*);
     void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class Viewport*,QMouseEvent*);
@@ -101,21 +103,20 @@ public:
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
     SkeletonProxy *skeletonProxy;
-    SignalRelay *signalRelay;
+    SegmentationProxy *segmentationProxy;
     PythonProxy *pythonProxy;
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
-signals:
-
-public slots:
-    static void addScriptingObject(const QString &name, QObject *obj);
-    void saveSettings(const QString &key, const QVariant &value);
-    void executeFromUserDirectory();
-    void changeWorkingDirectory();
-    void addWidgets(PythonQtObjectPtr &context);
+    PythonQtObjectPtr _ctx;
 protected:
     QSettings *settings;
+private:
+    void executeFromUserDirectory();
+    void changeWorkingDirectory();
+    void addCustomPythonPath();
+    void addWidgets();
+    void autoStartTerminal();
 };
 
 #endif // SCRIPTING_H

@@ -36,8 +36,10 @@
 #include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
+#include <PythonQt/PythonQt.h>
 #include <QAction>
 #include <QCheckBox>
+#include <QColor>
 #include <QDebug>
 #include <QDir>
 #include <QEvent>
@@ -78,6 +80,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
+    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest, [this](QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
+       viewports[vp]->takeSnapshot(path, withOverlay, withSkeleton, withScale, withVpPlanes);
+    });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -108,15 +113,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 }
 
 void MainWindow::createViewports() {
-    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), nullptr, VIEWPORT_XY, VP_UPPERLEFT));
-    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    format.setMajorVersion(2);
+    format.setMinorVersion(0);
+    format.setDepthBufferSize(24);
+//    format.setSwapInterval(0);
+//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    if (Viewport::oglDebug) {
+        format.setOption(QSurfaceFormat::DebugContext);
+    }
+    QSurfaceFormat::setDefaultFormat(format);
 
-    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 }
 
 void MainWindow::createToolbars() {
@@ -207,6 +220,14 @@ void MainWindow::createToolbars() {
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
 
+    defaultToolbar.addWidget(new QLabel(" Loader pending: "));
+    loaderProgress = new QLabel();
+    defaultToolbar.addWidget(loaderProgress);
+    loaderLastProgress = 0;
+    loaderProgress->setFixedWidth(25);
+    loaderProgress->setAlignment(Qt::AlignCenter);
+    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::refCountChange, this, &MainWindow::updateLoaderProgress);
+
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
     auto nextBtn = new QPushButton("(N)ext >");
@@ -223,6 +244,19 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(splitBtn);
     segJobModeToolbar.addSeparator();
     segJobModeToolbar.addWidget(&todosLeftLabel);
+}
+
+void MainWindow::updateLoaderProgress(bool isIncrement, int refCount) {
+    if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
+        return;
+    }
+    loaderLastProgress = refCount;
+    QPalette pal;
+    pal.setColor(QPalette::WindowText, Qt::black);
+    pal.setColor(loaderProgress->backgroundRole(), QColor(refCount > 0 ? Qt::red : Qt::green).lighter());
+    loaderProgress->setAutoFillBackground(true);
+    loaderProgress->setPalette(pal);
+    loaderProgress->setText(QString::number(refCount));
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
@@ -242,9 +276,6 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
-        for(uint i = 1; i < Viewport::numberViewports; ++i) {
-            viewports[i].get()->show();
-        }
         resetViewports();
     }
 }
@@ -272,7 +303,7 @@ void MainWindow::updateTodosLeft() {
                            QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Yes);
         if(msgBox.exec() == QMessageBox::Yes) {
-            auto jobFilename = "final_" + QFileInfo(annotationFilename).fileName();
+            auto jobFilename = "final_" + QFileInfo(Session::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
             annotationFileSave(finishedJobPath, nullptr);
             Network::singleton().submitSegmentationJob(finishedJobPath);
@@ -287,8 +318,8 @@ void MainWindow::notifyUnsavedChanges() {
 
 void MainWindow::updateTitlebar() {
     QString title = qApp->applicationDisplayName() + " showing ";
-    if (!annotationFilename.isEmpty()) {
-        title.append(annotationFilename);
+    if (!Session::singleton().annotationFilename.isEmpty()) {
+        title.append(Session::singleton().annotationFilename);
     } else {
         title.append("no annotation file");
     }
@@ -300,7 +331,7 @@ void MainWindow::updateTitlebar() {
         unsavedChangesLabel.setText("saved");
     }
     //don’t display if there are no changes and no file is loaded
-    if (!state->skeletonState->unsavedChanges && annotationFilename.isEmpty()) {
+    if (!state->skeletonState->unsavedChanges && Session::singleton().annotationFilename.isEmpty()) {
         unsavedChangesLabel.hide();
         annotationTimeLabel.hide();
     } else {
@@ -456,24 +487,33 @@ void MainWindow::recentFileSelected() {
     }
 }
 
+template<typename Menu, typename Receiver, typename Slot>
+QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
+    auto & action = *menu.addAction(icon, caption);
+    action.setShortcut(keySequence);
+    action.setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(&action, &QAction::triggered, receiver, slot);
+    return action;
+};
+
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), "Choose Dataset...", this->widgetContainer->datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), this->widgetContainer->datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/resources/icons/graph.png"), "Create New Annotation", this, SLOT(newAnnotationSlot()), QKeySequence(tr("CTRL+C")));
-    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Load Annotation...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), QString("Recent Annotation File(s)"));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
+    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent Annotation File(s)"));
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
         elem->setVisible(false);
         QObject::connect(elem, &QAction::triggered, this, &MainWindow::recentFileSelected);
     }
-    fileMenu.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu.addAction(QIcon(":/resources/icons/document-save-as.png"), "Save Annotation As...", this, SLOT(saveAsSlot()));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save Annotation As…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
     fileMenu.addSeparator();
-    fileMenu.addAction("Export to NML...", this, SLOT(exportToNml()));
+    fileMenu.addAction(tr("Export to NML..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/resources/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     segEditMenu = new QMenu("Edit Segmentation");
     auto segAnnotationModeGroup = new QActionGroup(this);
@@ -505,19 +545,12 @@ void MainWindow::createMenus() {
     segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
     segEditMenu->addSeparator();
 
-    auto & pushBranchAction = *segEditMenu->addAction(QIcon(""), "Push Branch");
-    QObject::connect(&pushBranchAction, &QAction::triggered, [this](){
+    addApplicationShortcut(*segEditMenu, QIcon(), tr("Push Branch"), this, [this](){
         Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
-    });
-    pushBranchAction.setShortcut(QKeySequence(Qt::Key_B));
-    pushBranchAction.setShortcutContext(Qt::ApplicationShortcut);
-
-    auto & popBranchAction = *segEditMenu->addAction(QIcon(""), "Pop Branch");
-    QObject::connect(&popBranchAction, &QAction::triggered, [this](){
+    }, Qt::Key_B);
+    addApplicationShortcut(*segEditMenu, QIcon(), tr("Pop Branch"), this, [this](){
         Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
-    });
-    popBranchAction.setShortcut(QKeySequence(Qt::Key_J));
-    popBranchAction.setShortcutContext(Qt::ApplicationShortcut);
+    }, Qt::Key_J);
 
     QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
         hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
@@ -551,18 +584,8 @@ void MainWindow::createMenus() {
     skelEditMenu->addSeparator();
 
     auto workModeEditMenuGroup = new QActionGroup(this);
-    addNodeAction = workModeEditMenuGroup->addAction(tr("Add one unlinked Node"));
-    addNodeAction->setCheckable(true);
-    addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
-    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
-    linkWithActiveNodeAction->setCheckable(true);
-
-    dropNodesAction = workModeEditMenuGroup->addAction(tr("Add unlinked Nodes"));
-    dropNodesAction->setCheckable(true);
-
-    QObject::connect(addNodeAction, &QAction::triggered, [this](){
+    addNodeAction = &addApplicationShortcut(*workModeEditMenuGroup, QIcon(), tr("Add one unlinked Node"), this, [this](){
         if(Skeletonizer::singleton().simpleTracing) {
             QMessageBox::information(this, "Not available in Simple Tracing mode",
                                      "Please deactivate Simple Tracing under 'Edit Skeleton' for this function.");
@@ -570,7 +593,15 @@ void MainWindow::createMenus() {
             return;
         }
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
-    });
+    }, Qt::Key_A);
+    addNodeAction->setCheckable(true);
+
+    linkWithActiveNodeAction = workModeEditMenuGroup->addAction(tr("Add linked Nodes"));
+    linkWithActiveNodeAction->setCheckable(true);
+
+    dropNodesAction = workModeEditMenuGroup->addAction(tr("Add unlinked Nodes"));
+    dropNodesAction->setCheckable(true);
+
     QObject::connect(linkWithActiveNodeAction, &QAction::triggered, [](){
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
     });
@@ -587,14 +618,9 @@ void MainWindow::createMenus() {
     skelEditMenu->addActions({addNodeAction, linkWithActiveNodeAction, dropNodesAction});//can’t add the group, must add all actions separately
     skelEditMenu->addSeparator();
 
-    auto newTreeAction = skelEditMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()), QKeySequence(tr("C")));
-    newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto pushBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()), QKeySequence(tr("B")));
-    pushBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto popBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()), QKeySequence(tr("J")));
-    popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
+    addApplicationShortcut(*skelEditMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
 
     skelEditMenu->addSeparator();
     skelEditMenu->addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
@@ -635,20 +661,11 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    auto jumpToActiveNodeAction = viewMenu->addAction(QIcon(""), "Jump To Active Node", &Skeletonizer::singleton(), SLOT(jumpToActiveNode()), QKeySequence(tr("S")));
-    jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToNextNodeAction = viewMenu->addAction(QIcon(""), "Move To Next Node", &Skeletonizer::singleton(), SLOT(moveToNextNode()), QKeySequence(tr("X")));
-    moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToPrevNodeAction = viewMenu->addAction(QIcon(""), "Move To Previous Node", &Skeletonizer::singleton(), SLOT(moveToPrevNode()), QKeySequence(tr("SHIFT+X")));
-    moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToNextTreeAction = viewMenu->addAction(QIcon(""), "Move To Next Tree", &Skeletonizer::singleton(), SLOT(moveToNextTree()), QKeySequence(tr("Z")));
-    moveToNextTreeAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto moveToPrevTreeAction = viewMenu->addAction(QIcon(""), "Move To Previous Tree", &Skeletonizer::singleton(), SLOT(moveToPrevTree()), QKeySequence(tr("SHIFT+Z")));
-    moveToPrevTreeAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), &Skeletonizer::jumpToActiveNode, Qt::Key_S);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextNode, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevNode, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
 
     viewMenu->addSeparator();
 
@@ -656,26 +673,18 @@ void MainWindow::createMenus() {
 
     auto commentsMenu = menuBar()->addMenu("Comments");
 
-    auto nextCommentAction = commentsMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()), QKeySequence(tr("N")));
-    nextCommentAction->setShortcutContext(Qt::ApplicationShortcut);
-
-    auto previousCommentAction = commentsMenu->addAction(QIcon(""), "Previous Comment", this, SLOT(previousCommentNodeSlot()), QKeySequence(tr("P")));
-    previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, &MainWindow::nextCommentNodeSlot, Qt::Key_N);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previous Comment"), this, &MainWindow::previousCommentNodeSlot, Qt::Key_P);
 
     commentsMenu->addSeparator();
 
-    auto addCommentShortcut = [&](const int index, const QKeySequence key, const QString & description){
-        auto * action = commentsMenu->addAction(QIcon(""), description);
-        action->setShortcut(key);
-        action->setShortcutContext(Qt::ApplicationShortcut);
-        commentActions.push_back(action);
-        QObject::connect(action, &QAction::triggered, this, [this, index]() { placeComment(index); });
+    auto addCommentShortcut = [&](const int number, const QKeySequence key, const QString & description){
+        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), description, this, [this, number](){placeComment(number-1);}, key);
+        commentActions.push_back(&action);
     };
-    addCommentShortcut(0, QKeySequence("F1"), "1st Comment Shortcut");
-    addCommentShortcut(1, QKeySequence("F2"), "2nd Comment Shortcut");
-    addCommentShortcut(2, QKeySequence("F3"), "3rd Comment Shortcut");
-    for(int i = 4; i < 11; ++i) {
-        addCommentShortcut(i-1, QKeySequence(QString("F%0").arg(i)), QString("%0th Comment Shortcut").arg(i));
+    for (int number = 1; number < 11; ++number) {
+        const auto numberString = QString::number(number) + (number == 1 ? "st" : number == 2 ? "nd" : number == 3 ? "rd" : "th");
+        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), numberString + tr(" Comment Shortcut"));
     }
 
     commentsMenu->addSeparator();
@@ -692,14 +701,15 @@ void MainWindow::createMenus() {
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(updateAndRefreshWidget()));
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(tr("Take a snapshot"), widgetContainer->snapshotWidget, SLOT(show()));
 
     auto helpMenu = menuBar()->addMenu("Help");
-    helpMenu->addAction(QIcon(":/resources/icons/edit-select-all.png"), "Documentation", widgetContainer->docWidget, SLOT(show()), QKeySequence(tr("CTRL+H")));
+    addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), widgetContainer->docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
     helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", widgetContainer->splashWidget, SLOT(show()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->scripting->signalRelay, event);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
     saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
@@ -730,7 +740,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     if (fileNames.empty()) {
         return false;
     }
-    QApplication::processEvents();
 
     bool mergeSkeleton = false;
     bool mergeSegmentation = false;
@@ -775,6 +784,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
 
+    const auto skeletonSignalBlockState = Skeletonizer::singleton().signalsBlocked();
+    Skeletonizer::singleton().blockSignals(true);
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     for (const auto & filename : nmls) {
         const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
@@ -792,12 +803,14 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         updateRecentFile(filename);
         state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
     }
+    Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
+    Skeletonizer::singleton().resetData();
 
     state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
-    annotationFilename = "";
+    Session::singleton().annotationFilename = "";
     if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
-        annotationFilename = nmls.empty() ? zips.front() : nmls.front();
+        Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
 
@@ -819,7 +832,7 @@ void MainWindow::newAnnotationSlot() {
     Skeletonizer::singleton().clearSkeleton(false);
     Segmentation::singleton().clear();
     state->skeletonState->unsavedChanges = false;
-    annotationFilename = "";
+    Session::singleton().annotationFilename = "";
 }
 
 /**
@@ -829,28 +842,29 @@ void MainWindow::newAnnotationSlot() {
   *
   */
 void MainWindow::openSlot() {
-    state->viewerState->renderInterval = SLOW;
 #ifdef Q_OS_MAC
     QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
 #else
     QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
 #endif
+    state->viewerState->renderInterval = SLOW;
     QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
+    state->viewerState->renderInterval = FAST;
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
         openFileDispatch(fileNames);
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::autosaveSlot() {
-    if (annotationFilename.isEmpty()) {
-        annotationFilename = annotationFileDefaultPath();
+    if (Session::singleton().annotationFilename.isEmpty()) {
+        Session::singleton().annotationFilename = annotationFileDefaultPath();
     }
     saveSlot();
 }
 
 void MainWindow::saveSlot() {
+    auto & annotationFilename = Session::singleton().annotationFilename;
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
@@ -874,57 +888,58 @@ void MainWindow::saveSlot() {
 }
 
 void MainWindow::saveAsSlot() {
-    state->viewerState->renderInterval = SLOW;
-    QApplication::processEvents();
-
-    auto *seg = &Segmentation::singleton();
-    if (!state->skeletonState->firstTree && !seg->hasObjects()) {
-        QMessageBox::information(this, "No Save", "Neither segmentation nor skeletonization were found. Not saving!");
-        return;
-    }
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
+    state->viewerState->renderInterval = SLOW;
 #ifdef Q_OS_MAC
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
 #else
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
 #endif
-    if (!fileName.isEmpty()) {
-        if (!fileName.contains(".k.zip")) {
-            fileName += ".k.zip";
-        }
+    state->viewerState->renderInterval = FAST;
 
-        annotationFilename = fileName;
+    if (!fileName.isEmpty()) {
+        const auto prevFilename = fileName;
+        QRegExp kzipRegex(R"regex((\.k)|(\.zip))regex"); // any occurance of .k and .zip
+        if (fileName.contains(kzipRegex)) {
+            fileName.remove(kzipRegex);
+
+            if (prevFilename != fileName + ".k.zip") {
+                const auto message = tr("The supplied filename has been changed: \n") + prevFilename + " to\n" + fileName + ".k.zip";
+                QMessageBox::information(this, tr("Fixed filename"), message);
+            }
+        }
+        fileName += ".k.zip";
+
+        Session::singleton().annotationFilename = fileName;
         saveFileDirectory = QFileInfo(fileName).absolutePath();
 
-        annotationFileSave(annotationFilename);
+        annotationFileSave(Session::singleton().annotationFilename);
 
-        updateRecentFile(annotationFilename);
+        updateRecentFile(Session::singleton().annotationFilename);
         updateTitlebar();
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::exportToNml() {
-    state->viewerState->renderInterval = SLOW;
-    QApplication::processEvents();
     if(!state->skeletonState->firstTree) {
         QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
         return;
     }
-    auto info = QFileInfo(annotationFilename);
+    auto info = QFileInfo(Session::singleton().annotationFilename);
     auto defaultpath = annotationFileDefaultPath();
     defaultpath.chop(6);
     defaultpath += ".nml";
-    const auto & suggestedFilepath = annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    const auto & suggestedFilepath = Session::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    state->viewerState->renderInterval = SLOW;
     auto filename = QFileDialog::getSaveFileName(this, "Export to Skeleton file", suggestedFilepath, "KNOSSOS Skeleton file (*.nml)");
+    state->viewerState->renderInterval = FAST;
     if(filename.isEmpty() == false) {
         if(filename.endsWith(".nml") == false) {
             filename += ".nml";
         }
         nmlExport(filename);
     }
-    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::setAnnotationMode(AnnotationMode mode) {
@@ -944,7 +959,7 @@ void MainWindow::setAnnotationMode(AnnotationMode mode) {
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    if(state->skeletonState->unsavedChanges or state->skeletonState->treeElements > 0) {
+    if(state->skeletonState->unsavedChanges || state->skeletonState->treeElements > 0) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);
@@ -1024,7 +1039,7 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-        emit loadTreeLUTFallback();
+        Knossos::loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
@@ -1076,15 +1091,20 @@ void MainWindow::saveSettings() {
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->size().height());
-    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->size().height());
-    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->size().height());
-    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->size().height());
+    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->dockSize.isEmpty() ? viewports[VIEWPORT_XY]->size() : viewports[VIEWPORT_XY]->dockSize);
+    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->dockSize.isEmpty() ? viewports[VIEWPORT_XZ]->size() : viewports[VIEWPORT_XZ]->dockSize);
+    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->dockSize.isEmpty() ? viewports[VIEWPORT_YZ]->size() : viewports[VIEWPORT_YZ]->dockSize);
+    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->dockSize.isEmpty() ? viewports[VIEWPORT_SKELETON]->size() : viewports[VIEWPORT_SKELETON]->dockSize);
 
-    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->pos());
-    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->pos());
-    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
-    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
+    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->dockPos.isNull() ? viewports[VIEWPORT_XY]->pos() : viewports[VIEWPORT_XY]->dockPos);
+    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->dockPos.isNull() ? viewports[VIEWPORT_XZ]->pos() : viewports[VIEWPORT_XZ]->dockPos);
+    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos.isNull() ? viewports[VIEWPORT_YZ]->pos() : viewports[VIEWPORT_YZ]->dockPos);
+    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos.isNull() ? viewports[VIEWPORT_SKELETON]->pos() : viewports[VIEWPORT_SKELETON]->dockPos);
+
+    settings.setValue(VPXY_VISIBLE, viewports[VIEWPORT_XY]->isVisible());
+    settings.setValue(VPXZ_VISIBLE, viewports[VIEWPORT_XZ]->isVisible());
+    settings.setValue(VPYZ_VISIBLE, viewports[VIEWPORT_YZ]->isVisible());
+    settings.setValue(VPSKEL_VISIBLE, viewports[VIEWPORT_SKELETON]->isVisible());
 
     settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
@@ -1109,6 +1129,7 @@ void MainWindow::saveSettings() {
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
     widgetContainer->pythonPropertyWidget->saveSettings();
+    widgetContainer->snapshotWidget->saveSettings();
     widgetContainer->taskManagementWidget->taskLoginWidget.saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
@@ -1122,7 +1143,7 @@ void MainWindow::loadSettings() {
     int width = (settings.value(WIDTH).isNull())? 1024 : settings.value(WIDTH).toInt();
     int height = (settings.value(HEIGHT).isNull())? 800 : settings.value(HEIGHT).toInt();
     int x, y;
-    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
         x = QApplication::desktop()->screen()->rect().topLeft().x() + 20;
         y = QApplication::desktop()->screen()->rect().topLeft().y() + 50;
     }
@@ -1133,15 +1154,21 @@ void MainWindow::loadSettings() {
 
     state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
     if(state->viewerState->defaultVPSizeAndPos == false) {
-        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toInt(), settings.value(VPXY_SIZE).toInt());
-        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toInt(), settings.value(VPXZ_SIZE).toInt());
-        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toInt(), settings.value(VPYZ_SIZE).toInt());
-        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toInt(), settings.value(VPSKEL_SIZE).toInt());
+        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toSize());
+        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toSize());
+        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toSize());
+        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toSize());
 
         viewports[VIEWPORT_XY]->move(settings.value(VPXY_COORD).toPoint());
         viewports[VIEWPORT_XZ]->move(settings.value(VPXZ_COORD).toPoint());
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
+
+        bool defaultViewportVisibility = true;
+        viewports[VIEWPORT_XY]->setVisible(settings.value(VPXY_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_XZ]->setVisible(settings.value(VPXZ_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_YZ]->setVisible(settings.value(VPYZ_VISIBLE,defaultViewportVisibility).toBool());
+        viewports[VIEWPORT_SKELETON]->setVisible(settings.value(VPSKEL_VISIBLE,defaultViewportVisibility).toBool());
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
@@ -1180,6 +1207,8 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
+    widgetContainer->pythonPropertyWidget->loadSettings();
+    widgetContainer->snapshotWidget->loadSettings();
 }
 
 void MainWindow::clearSettings() {
@@ -1214,7 +1243,9 @@ void MainWindow::dropEvent(QDropEvent *event) {
     for (auto && url : event->mimeData()->urls()) {
         files.append(url.toLocalFile());
     }
-    openFileDispatch(files);
+    QTimer::singleShot(0, [this, files](){
+        openFileDispatch(files);
+    });
     event->accept();
 }
 
@@ -1234,20 +1265,18 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    resizeViewports(centralWidget()->width(), centralWidget()->height());
+    for (auto & vp : viewports) {
+        vp->setDock(true);
+        vp->setVisible(true);
+    }
+    resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
 void MainWindow::showVPDecorationClicked() {
-    if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked()) {
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            viewports[i]->showButtons();
-        }
-    }
-    else {
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            viewports[i]->hideButtons();
-        }
+    bool isShow = widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked();
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
+        viewports[i]->showHideButtons(isShow);
     }
 }
 
@@ -1300,27 +1329,16 @@ void MainWindow::placeComment(const int index) {
     }
 }
 
-void MainWindow::resizeViewports(int width, int height) {
+void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN) / 2;
     height = (height - DEFAULT_VP_MARGIN) / 2;
-
-    if(width < height) {
-        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + width);
-        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN + width);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(width-DEFAULT_VP_MARGIN, width-DEFAULT_VP_MARGIN);
-
-        }
-    } else if(width > height) {
-        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + height);
-        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN);
-        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN + height);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
-        }
+    int mindim = std::min(width, height);
+    viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+    viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
+    viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+    viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+    for(int i = 0; i < 4; i++) {
+        viewports[i]->resize(mindim-DEFAULT_VP_MARGIN, mindim-DEFAULT_VP_MARGIN);
     }
 }
 
@@ -1349,6 +1367,5 @@ void MainWindow::pythonFileSlot() {
     s.append(textStream.readAll());
     pyFile.close();
 
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    ctx.evalScript(s, Py_file_input);
+    state->scripting->_ctx.evalScript(s, Py_file_input);
 }

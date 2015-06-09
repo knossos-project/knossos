@@ -5,6 +5,7 @@
 #include "hash_list.h"
 #include "segmentationsplit.h"
 
+#include <QColor>
 #include <QDebug>
 #include <QSet>
 #include <QString>
@@ -27,6 +28,7 @@ Q_OBJECT
     friend class CategoryDelegate;
     friend class CategoryModel;
     friend class SegmentationTab;
+    friend class SegmentationProxy;
 
     class Object;
     class SubObject {
@@ -93,6 +95,7 @@ Q_OBJECT
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
+    uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
@@ -183,8 +186,11 @@ public:
     int volume_mouse_move_x = 0;
     int volume_mouse_move_y = 0;
     float volume_mouse_zoom = 1.0f;
+    uint8_t volume_opacity = 255;
+    QColor volume_background_color{Qt::darkGray};
     //data query
     bool hasObjects() const;
+    bool hasSegData() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
     //data access
     void createAndSelectObject(const Coordinate & position);
@@ -214,6 +220,7 @@ public:
 
     void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
+    void hoverSubObject(const uint64_t subobject_id);
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
@@ -234,6 +241,7 @@ signals:
     void setRecenteringPositionSignal(float x, float y, float z);
     void categoriesChanged();
     void todosLeftChanged();
+    void hoveredSubObjectChanged(const uint64_t subobject_id);
 public slots:
     void clear();
     void deleteSelectedObjects();

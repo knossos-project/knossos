@@ -113,6 +113,7 @@ enum class CubeType {
 
 class Worker : public QObject {
     Q_OBJECT
+    friend class Loader::Controller;
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
     friend void Segmentation::clear();
 private:
@@ -131,16 +132,16 @@ private:
     std::list<std::vector<char>> OcSetChunk;
     std::list<char*> freeDcSlots;
     std::list<char*> freeOcSlots;
-    std::vector<char> bogusDc;
     int currentMaxMetric;
 
+    bool startLoadingBusy = false;
     uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
-    std::vector<Coordinate> DcoiFromPos(const Coordinate &center);
+    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center);
     uint loadCubes();
-    void snappyCacheAddRaw(const CoordOfCube &, const char *cube);
+    void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
 
     template<typename Func>
@@ -154,19 +155,21 @@ private:
 public://matsch
     std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
     std::unordered_map<CoordOfCube, std::string> snappyCache;
-    std::vector<char> bogusOc;
     QMutex snappyMutex;
     QWaitCondition snappyFlushCondition;
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
+    int getRefCount();
     void unload();
-    void snappyCacheAddSnappy(const CoordOfCube, const std::string cube);
+    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
+    void snappyCacheSupplySnappy(const CoordOfCube, const std::string cube);
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
     int CompareLoadOrderMetric(const void * a, const void * b);
-
+signals:
+    void refCountChange(bool isIncrement, int refCount);
 public slots:
     void cleanup(const Coordinate center);
     void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
@@ -174,8 +177,8 @@ public slots:
 
 class Controller : public QObject {
     Q_OBJECT
-    QThread workerThread;
     friend class Loader::Worker;
+    QThread workerThread;
 public:
     std::unique_ptr<Loader::Worker> worker;
     std::atomic_uint loadingNr{0};
@@ -183,39 +186,39 @@ public:
         static Loader::Controller loader;
         return loader;
     }
-    void waitForWorkerThread() {
-        ++loadingNr;
-        workerThread.quit();
-        workerThread.wait();
-    }
-    ~Controller() {
-        waitForWorkerThread();
-    }
-    void unload() {
-        ++loadingNr;
-        emit unloadSignal();
-    }
+    void waitForWorkerThread();
+    ~Controller();
+    void unload();
     template<typename... Args>
     void restart(Args&&... args) {
         waitForWorkerThread();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
+        QObject::connect(worker.get(), &Loader::Worker::refCountChange, this, &Loader::Controller::refCountChangeWorker);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
-        QObject::connect(this, &Loader::Controller::snappyCacheAddSnappySignal, worker.get(), &Loader::Worker::snappyCacheAddSnappy, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
     }
     void startLoading(const Coordinate &center);
     template<typename... Args>
-    void snappyCacheAddSnappy(Args&&... args) {
-        emit snappyCacheAddSnappySignal(std::forward<Args>(args)...);
+    void snappyCacheSupplySnappy(Args&&... args) {
+        emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
     }
+    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 signals:
+    void refCountChange(bool isIncrement, int refCount);
     void unloadSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
-    void snappyCacheAddSnappySignal(const CoordOfCube, const std::string cube);
+    void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
+    void snappyCacheSupplySnappySignal(const CoordOfCube, const std::string cube);
+public slots:
+    int getRefCount();
+private slots:
+    void refCountChangeWorker(bool isIncrement, int refCount);
 };
 }//namespace Loader
 

@@ -24,54 +24,24 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "loader.h"
-#include "widgets/mainwindow.h"
-
-#include <QObject>
-
-#include <memory>
-
-
-class Splash {
-    QSplashScreen screen;
-    QTimer timer;
-public:
-    Splash(const QString & img_filename, const int timeout_msec);
-};
-
-class Knossos : public QObject {
-    Q_OBJECT
-public:
-    explicit Knossos(QObject *parent = 0);
-    bool stripNewlines(char *string);
-    static void applyDefaultConfig();
-    static bool readConfigFile(const char *path);
-    static bool printConfigValues();
-    static bool loadNeutralDatasetLUT(GLuint *datasetLut);
-    static bool readDataConfAndLocalConf();
-    static stateInfo *emptyState();
+namespace Knossos {
+    void applyDefaultConfig();
+    bool readConfigFile(const char *path);
+    bool printConfigValues();
+    bool loadNeutralDatasetLUT(unsigned int *datasetLut);
+    bool readDataConfAndLocalConf();
     bool findAndRegisterAvailableDatasets();
-    static bool configDefaults();
-    static bool configFromCli(int argCount, char *arguments[]);
+    bool configDefaults();
+    bool configFromCli(int argCount, char *arguments[]);
     bool initStates();
     bool commonInitStates();
 
-    static bool sendRemoteSignal();
-    static bool sendQuitSignal();
-    static bool sendServerSignal();
-    static void loadStyleSheet();
+    bool sendRemoteSignal();
+    bool sendQuitSignal();
+    bool sendServerSignal();
+    void loadStyleSheet();
     void loadDefaultTreeLUT();
-
-signals:
-    void calcDisplayedEdgeLengthSignal();
-    void treeColorAdjustmentChangedSignal();
-    bool loadTreeColorTableSignal(QString path, float *table, int type);
-    void lockDatasetMag(bool lock);
-
-public slots:
     void loadTreeLUTFallback();
-};
-
-extern std::unique_ptr<Knossos> knossos;
+}
 
 #endif
