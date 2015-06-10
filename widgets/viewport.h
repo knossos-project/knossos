@@ -184,18 +184,18 @@ public:
     static bool showNodeComments;
 
 protected:
-    void initializeGL();
+    void initializeGL() override;
     void createOverlayTextures();
     void paintGL() override;
-    void resizeGL(int w, int h);
-    void enterEvent(QEvent * event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mouseDoubleClickEvent(QMouseEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
+    void resizeGL(int w, int h) override;
+    void enterEvent(QEvent * event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
     uint id; // VP_UPPERLEFT, ...
     int viewportType; // XY_VIEWPORT, ...
