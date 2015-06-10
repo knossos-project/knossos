@@ -220,7 +220,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate movement, lastPos;
 
     bool newNode = false;
-    bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
         newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);

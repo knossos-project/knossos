@@ -60,7 +60,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
 
 Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
         QOpenGLWidget(parent), id(newId), viewportType(viewportType),
-        resizeButtonHold(false), isDocked(true), floatParent(NULL) {
+        isDocked(true), floatParent(nullptr), resizeButtonHold(false) {
     dockParent = parent;
     setContextMenuPolicy(Qt::CustomContextMenu);
     setCursor(Qt::CrossCursor);

@@ -2450,7 +2450,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
 
-                qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
+                qDebug() << "Branch point (node ID" << branchNode->nodeID << ") added.";
                 emit branchPushedSignal();
             }
 

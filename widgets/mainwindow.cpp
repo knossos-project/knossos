@@ -246,7 +246,7 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
-void MainWindow::updateLoaderProgress(bool isIncrement, int refCount) {
+void MainWindow::updateLoaderProgress(bool, int refCount) {
     if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
         return;
     }
