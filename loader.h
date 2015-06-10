@@ -51,7 +51,6 @@
 #define LL_CURRENT_DIRECTIONS_SIZE (20)
 /* Max number of metrics allowed for sorting loading order */
 #define LL_METRIC_NUM (20)
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 #define LM_LOCAL    0
 #define LM_FTP      1
@@ -62,8 +61,6 @@ namespace Loader{
 class Controller;
 class Worker;
 }
-
-int calc_nonzero_sign(float x);
 
 namespace Loader {
 class Worker;
@@ -129,7 +126,6 @@ public://matsch
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
-    int CompareLoadOrderMetric(const void * a, const void * b);
 signals:
     void refCountChange(bool isIncrement, int refCount);
 public slots:

@@ -134,30 +134,20 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
     }
 }
 
-int calc_nonzero_sign(float x) {
-    if (x > 0) {
-        return 1;
-    }
-    return -1;
-}
-
-#define ABS(x) (((x) >= 0) ? (x) : -(x))
-#define SQR(x) ((x)*(x))
-#define INNER_MULT_VECTOR(v) ((v).x * (v).y * (v).z)
-#define CALC_VECTOR_NORM(v) \
-    ( \
-        sqrt(SQR((v).x) + SQR((v).y) + SQR((v).z)) \
-    )
-#define CALC_DOT_PRODUCT(a, b) \
-    ( \
-        ((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z) \
-    )
-#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) \
-    ( \
-        ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
-    )
-
 void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
+    const auto INNER_MULT_VECTOR = [](const floatCoordinate v) {
+        return v.x * v.y * v.z;
+    };
+    const auto CALC_VECTOR_NORM = [](const floatCoordinate v) {
+        return std::sqrt(std::pow(v.x, 2) + std::pow(v.y, 2) + std::pow(v.z, 2));
+    };
+    const auto CALC_DOT_PRODUCT = [](const floatCoordinate a, const floatCoordinate b){
+        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+    };
+    const auto CALC_POINT_DISTANCE_FROM_PLANE = [CALC_VECTOR_NORM, CALC_DOT_PRODUCT](const floatCoordinate point, const floatCoordinate plane){
+        return std::abs(CALC_DOT_PRODUCT(point, plane)) / CALC_VECTOR_NORM(plane);
+    };
+
     float distance_from_plane, distance_from_origin, dot_product;
     int i = 0;
 
@@ -191,10 +181,7 @@ void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMe
     }
     metrics[i++] = distance_from_origin;
 
-    this->currentMaxMetric = MAX(this->currentMaxMetric, i);
-    /* qDebug("%f\t%f\t%f\t%f\t%f\t%f",
-        currentMetricPos.x, currentMetricPos.y, currentMetricPos.z,
-        metrics[0], metrics[1], metrics[2]); */
+    currentMaxMetric = std::max(this->currentMaxMetric, i);
 }
 
 struct LO_Element {
@@ -203,61 +190,24 @@ struct LO_Element {
     float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-int Loader::Worker::CompareLoadOrderMetric(const void * a, const void * b) {
-    LO_Element *elem_a, *elem_b;
-    float m_a, m_b;
-    int metric_index;
-
-    elem_a = (LO_Element *)a;
-    elem_b = (LO_Element *)b;
-
-    for (metric_index = 0; metric_index < this->currentMaxMetric; metric_index++) {
-        m_a = elem_a->loadOrderMetrics[metric_index];
-        m_b = elem_b->loadOrderMetrics[metric_index];
-        /* qDebug("i %d\ta\t%d,%d,%d\t=\t%f\tb\t%d,%d,%d\t=\t%f", metric_index,
-            elem_a->offset.x, elem_a->offset.y, elem_a->offset.z, m_a,
-            elem_b->offset.x, elem_b->offset.y, elem_b->offset.z, m_b); */
-        if (m_a != m_b) {
-            return calc_nonzero_sign(m_a - m_b);
-        }
-        /* If equal just continue to next comparison level */
-    }
-
-    return 0;
-}
-
 std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) {
-    floatCoordinate currentMetricPos, direction;
-    LO_Element *DcArray;
-    int cubeElemCount;
-    int i;
-    int edgeLen, halfSc;
-    int x, y, z;
-    float floatHalfSc;
+    const float floatHalfSc = state->M / 2.;
+    const int halfSc = std::floor(floatHalfSc);
+    const floatCoordinate direction = state->loaderUserMoveViewportDirection;
+    const int cubeElemCount = state->cubeSetElements;
+    const auto currentOrigin = center.cube(state->cubeEdgeLength, state->magnification);
 
-    edgeLen = state->M;
-    floatHalfSc = (float)edgeLen / 2.;
-    halfSc = (int)floorf(floatHalfSc);
-
-    direction = state->loaderUserMoveViewportDirection;
-
-    cubeElemCount = state->cubeSetElements;
-    DcArray = (LO_Element*)malloc(sizeof(DcArray[0]) * cubeElemCount);
-    if (NULL == DcArray) {
-        return {};
-    }
-    memset(DcArray, 0, sizeof(DcArray[0]) * cubeElemCount);
-    auto currentOrigin = center.cube(state->cubeEdgeLength, state->magnification);
-    i = 0;
-    this->currentMaxMetric = 0;
-    for (x = -halfSc; x < halfSc + 1; x++) {
-        for (y = -halfSc; y < halfSc + 1; y++) {
-            for (z = -halfSc; z < halfSc + 1; z++) {
+    int i = 0;
+    currentMaxMetric = 0;
+    std::vector<LO_Element> DcArray(cubeElemCount);
+    for (int x = -halfSc; x < halfSc + 1; ++x) {
+        for (int y = -halfSc; y < halfSc + 1; ++y) {
+            for (int z = -halfSc; z < halfSc + 1; ++z) {
                 DcArray[i].coordinate = {currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z};
                 DcArray[i].offset = {x, y, z};
-                currentMetricPos = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
+                floatCoordinate currentMetricPos(x, y, z);
                 CalcLoadOrderMetric(floatHalfSc, currentMetricPos, direction, &DcArray[i].loadOrderMetrics[0]);
-                i++;
+                ++i;
             }
         }
     }
@@ -266,16 +216,22 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) 
     state->loaderUserMoveType = USERMOVE_NEUTRAL;
     state->loaderUserMoveViewportDirection = {0, 0, 0};
 
-    //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
-    std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs){
-        return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) < 0;
+    std::sort(std::begin(DcArray), std::begin(DcArray) + cubeElemCount, [&](const LO_Element & elem_a, const LO_Element & elem_b){
+        for (int metric_index = 0; metric_index < currentMaxMetric; ++metric_index) {
+            float m_a = elem_a.loadOrderMetrics[metric_index];
+            float m_b = elem_b.loadOrderMetrics[metric_index];
+            if (m_a != m_b) {
+                return (m_a - m_b) < 0;
+            }
+            //If equal just continue to next comparison level
+        }
+        return false;
     });
 
     std::vector<CoordOfCube> cubes;
-    for (i = 0; i < cubeElemCount; i++) {
+    for (int i = 0; i < cubeElemCount; ++i) {
         cubes.emplace_back(DcArray[i].coordinate);
     }
-    free(DcArray);
 
     return cubes;
 }
