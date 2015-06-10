@@ -494,7 +494,7 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
     action.setShortcutContext(Qt::ApplicationShortcut);
     QObject::connect(&action, &QAction::triggered, receiver, slot);
     return action;
-};
+}
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
