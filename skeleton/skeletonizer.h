@@ -188,9 +188,6 @@ public slots:
     static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
-    static void setColorFromNode(nodeListElement *node, color4F *color);
-    static float radius(const nodeListElement &node);
-
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
     void selectTrees(const std::vector<treeListElement*> & trees);
@@ -257,6 +254,10 @@ public:
     TracingMode getTracingMode() const;
     void setTracingMode(TracingMode mode);
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
+
+    void setColorFromNode(nodeListElement *node, color4F *color) const;
+    float radius(const nodeListElement &node) const;
+    float segmentSizeAt(const nodeListElement &node) const;
 private:
     void clearNodeSelection();
     void clearTreeSelection();

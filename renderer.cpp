@@ -2137,7 +2137,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
     uint renderNode;
-    float currentRadius;
+    const auto & skeletonizer = Skeletonizer::singleton();
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
     state->skeletonState->lineVertBuffer.normsIndex = 0;
@@ -2286,9 +2286,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                         glLoadName(3);
                     }
                     renderCylinder(&(lastRenderedNode->position),
-                                   Skeletonizer::radius(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentNode->position),
-                                   Skeletonizer::radius(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
                                    currentColor,
                                    currentVP,
                                    viewportType);
@@ -2310,8 +2310,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderCylinder(&(currentSegment->source->position), Skeletonizer::radius(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
-                        &(currentSegment->target->position), Skeletonizer::radius(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
+                    renderCylinder(&(currentSegment->source->position), skeletonizer.segmentSizeAt(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position), skeletonizer.segmentSizeAt(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
                         currentColor, currentVP, viewportType);
 
                     if(viewportType != VIEWPORT_SKELETON) {
@@ -2327,8 +2327,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
-                Skeletonizer::setColorFromNode(currentNode, &currentColor);
-                const float currentRadius = Skeletonizer::radius(*currentNode);
+                skeletonizer.setColorFromNode(currentNode, &currentColor);
+                const float currentRadius = skeletonizer.radius(*currentNode);
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
                 if(1.5 < currentRadius && viewportType != VIEWPORT_SKELETON) { // draw node center to make large nodes visible and clickable in ortho vps
@@ -2416,9 +2416,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
         /* Color gets changes in case there is a comment & conditional comment
         highlighting */
-        Skeletonizer::setColorFromNode(active, &currentColor);
+        skeletonizer.setColorFromNode(active, &currentColor);
         currentColor.a = 0.2f;
-        renderSphere(&(active->position), Skeletonizer::radius(*active) * 1.5, currentColor, currentVP, viewportType);
+        renderSphere(&(active->position), skeletonizer.radius(*active) * 1.5, currentColor, currentVP, viewportType);
 
         // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
         // Comment should only be rendered in orthogonal viewports.
