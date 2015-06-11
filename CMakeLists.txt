@@ -33,7 +33,6 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 find_package(Boost 1.50 REQUIRED)
-find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Qt5Python27 REQUIRED)
 find_package(Snappy REQUIRED)
@@ -82,14 +81,6 @@ set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
-#custom adjustments
-if(NOT BUILD_SHARED_LIBS)
-    #these definitions remove the dllimport directives from the includes
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "FREEGLUT_STATIC" "GLUT_STATIC_LIB")
-    if(WIN32)
-        set(GLUT_LIBRARIES freeglut_static -lWinmm)
-    endif()
-endif()
 option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
     find_package(Qt5Python27_QtAll REQUIRED)
@@ -100,13 +91,11 @@ endif()
 #or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
 target_include_directories(${PROJECT_NAME} PRIVATE
     #${Boost_INCLUDE_DIRS}
-    #${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIR}
 )
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
-    ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
     Qt5::Core

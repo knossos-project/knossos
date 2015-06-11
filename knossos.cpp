@@ -44,13 +44,6 @@
 #include <iostream>
 #include <fstream>
 
-#define GLUT_DISABLE_ATEXIT_HACK
-#ifdef Q_OS_MAC
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-
 #define NUMTHREADS 4
 
 #if defined(Q_OS_WIN) && defined(QT_STATIC)
@@ -139,7 +132,6 @@ void Knossos::applyDefaultConfig() {
 Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
-    glutInit(&argc, argv);
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
     QApplication a(argc, argv);
     qInstallMessageHandler(debugMessageHandler);

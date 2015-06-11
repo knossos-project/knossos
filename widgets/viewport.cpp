@@ -917,7 +917,7 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
     }
     if(id != VIEWPORT_SKELETON && withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderSizeLabel(id, BIG);
+        state->viewer->renderer->renderSizeLabel(id);
     }
 
     QImage fboImage(fbo.toImage());
