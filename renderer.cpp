@@ -247,7 +247,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str, const int
     backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
-    painter.setFont(QFont(painter.font().family(), fontSize));
+    painter.setFont(QFont(painter.font().family(), fontSize * refVPSkel->devicePixelRatio()));
     painter.setPen(Qt::black);
     painter.drawText(x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
