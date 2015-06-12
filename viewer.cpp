@@ -728,8 +728,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
   *
   */
 bool Viewer::initViewer() {
-    Segmentation::singleton().loadOverlayLutFromFile();
-
     // This is the buffer that holds the actual texture data (for _all_ textures)
 
     state->viewerState->texData =
