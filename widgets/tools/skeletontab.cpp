@@ -123,6 +123,7 @@ SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
 
     splitter.addWidget(&treeView);
     splitter.addWidget(&nodeView);
+    splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
     bottomHLayout.addWidget(&treeCountLabel);
     bottomHLayout.addWidget(&nodeCountLabel);
     mainLayout.addWidget(&splitter);
