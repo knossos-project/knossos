@@ -75,8 +75,7 @@ add_custom_command(
 )
 
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
-    ${SRC_LIST} buildinfo.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
