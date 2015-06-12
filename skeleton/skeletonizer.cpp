@@ -2450,7 +2450,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
 
-                qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
+                qDebug() << "Branch point (node ID" << branchNode->nodeID << ") added.";
                 emit branchPushedSignal();
             }
 
@@ -2540,7 +2540,7 @@ bool Skeletonizer::updateTreeColors() {
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     segmentListElement *currentSegment = NULL;
-    node->circRadius = radius(*node);
+    node->circRadius = singleton().radius(*node);
     /* Any segment longer than the current circ radius?*/
     currentSegment = node->firstSegment;
     while(currentSegment) {
@@ -2551,7 +2551,7 @@ bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     return true;
 }
 
-void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
+void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) const {
     if(node->isBranchNode) { //branch nodes are always blue
         *color = {0.f, 0.f, 1.f, 1.f};
         return;
@@ -2568,7 +2568,7 @@ void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
     }
 }
 
-float Skeletonizer::radius(const nodeListElement & node) {
+float Skeletonizer::radius(const nodeListElement & node) const {
     if(node.comment && CommentSetting::useCommentNodeRadius) {
         float newRadius = CommentSetting::getRadius(QString(node.comment->content));
         if(newRadius != 0) {
@@ -2576,6 +2576,17 @@ float Skeletonizer::radius(const nodeListElement & node) {
         }
     }
     return state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
+}
+
+float Skeletonizer::segmentSizeAt(const nodeListElement & node) const {
+    float radius = state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
+    if(node.comment && CommentSetting::useCommentNodeRadius) {
+        float newRadius = CommentSetting::getRadius(QString(node.comment->content));
+        if(newRadius != 0 && newRadius < radius) {
+            return newRadius;
+        }
+    }
+    return radius;
 }
 
 bool Skeletonizer::moveToPrevTree() {

@@ -51,56 +51,16 @@
 #define LL_CURRENT_DIRECTIONS_SIZE (20)
 /* Max number of metrics allowed for sorting loading order */
 #define LL_METRIC_NUM (20)
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-/*
-* For the loader ad-hoc linked list
-*/
-#define LLL_SUCCESS  1
-#define LLL_FAILURE  0
 
 #define LM_LOCAL    0
 #define LM_FTP      1
 
-#define FTP_RETRY_NUM 3
-
 bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord);
-
-struct C_Element {
-    Coordinate coordinate; // coordinate * cubeEdgeLength = minimal coordinate in the cube; NOT center coordinate
-
-    char *data_filename;
-    char *overlay_filename;
-    char *path;
-    char *fullpath_data_filename;
-    char *fullpath_overlay_filename;
-    char *local_data_filename;
-    char *local_overlay_filename;
-    FILE *ftp_data_fh;
-    FILE *ftp_overlay_fh;
-    bool hasError;
-    bool hasDataError;
-    bool hasOverlayError;
-    int retries;
-    bool isFinished;
-    bool isDataFinished;
-    bool isOverlayFinished;
-    bool isAborted;
-    int isLoaded;
-
-    //uint debugVal;
-    //DWORD tickDownloaded;
-    //DWORD tickDecompressed;
-
-    C_Element *previous;
-    C_Element *next;
-};
 
 namespace Loader{
 class Controller;
 class Worker;
 }
-
-int calc_nonzero_sign(float x);
 
 namespace Loader {
 class Worker;
@@ -138,7 +98,6 @@ private:
     uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
-    int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, coord2bytep_map_t *currentLoadedHash);
     std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center);
     uint loadCubes();
     void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
@@ -167,7 +126,6 @@ public://matsch
     void snappyCacheFlush();
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
-    int CompareLoadOrderMetric(const void * a, const void * b);
 signals:
     void refCountChange(bool isIncrement, int refCount);
 public slots:

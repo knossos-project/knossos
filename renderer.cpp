@@ -24,6 +24,7 @@
 #include "renderer.h"
 
 #include "eventmodel.h"
+#include "profiler.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/node.h"
@@ -32,25 +33,20 @@
 #include "viewer.h"
 #include "widgets/viewport.h"
 
-#include <qgl.h>
-
 #include <QMatrix4x4>
+#include <QOpenGLPaintDevice>
+#include <QPainter>
 #include <QVector3D>
-#include "profiler.h"
 
-#define GLUT_DISABLE_ATEXIT_HACK
 #ifdef Q_OS_MAC
     #include <glu.h>
-    #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_LINUX
     #include <GL/gl.h>
     #include <GL/glu.h>
-    #include <GL/freeglut_std.h>
 #endif
 #ifdef Q_OS_WIN32
     #include <GL/glu.h>
-    #include <GL/glut.h>
 #endif
 
 #include <boost/math/constants/constants.hpp>
@@ -216,19 +212,46 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
         return true;
 }
 
-void Renderer::renderText(const Coordinate & pos, const QString & str, TextSize size) {
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    glRasterPos3d(pos.x, pos.y, pos.z);
+static void backup_gl_state() {
+    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+}
 
-    for (const auto & elem : str) {
-        glutBitmapCharacter(size == SMALL ? GLUT_BITMAP_HELVETICA_12 : GLUT_BITMAP_HELVETICA_18, elem.unicode());
-    }
+static void restore_gl_state() {
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glPopAttrib();
+    glPopClientAttrib();
+}
 
-    glEnable(GL_DEPTH_TEST);
-    if(state->viewerState->lightOnOff) {
-        glEnable(GL_LIGHTING);
-    }
+void Renderer::renderText(const Coordinate & pos, const QString & str, const int fontSize) {
+    GLdouble x, y, z, model[16], projection[16];
+    GLint gl_viewport[4];
+    glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
+    glGetDoublev(GL_PROJECTION_MATRIX, &projection[0]);
+    glGetIntegerv(GL_VIEWPORT, gl_viewport);
+    //retrieve 2d screen position from coordinate
+    gluProject(pos.x, pos.y, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
+
+    backup_gl_state();
+    QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
+    QPainter painter(&paintDevice);
+    painter.setFont(QFont(painter.font().family(), fontSize));
+    painter.setPen(Qt::black);
+    painter.drawText(x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
+    painter.end();//would otherwise fiddle with the gl state in the dtor
+    restore_gl_state();
 }
 
 uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
@@ -445,12 +468,12 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
     }
 }
 
-void Renderer::renderSizeLabel(uint currentVP, TextSize size) {
+void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
     glColor4f(0, 0, 0, 1);
     float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
     float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
     Coordinate pos(15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1);
-    renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), size);
+    renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), fontSize);
 }
 
 // Currently not used
@@ -2137,7 +2160,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
     uint renderNode;
-    float currentRadius;
+    const auto & skeletonizer = Skeletonizer::singleton();
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
     state->skeletonState->lineVertBuffer.normsIndex = 0;
@@ -2286,9 +2309,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                         glLoadName(3);
                     }
                     renderCylinder(&(lastRenderedNode->position),
-                                   Skeletonizer::radius(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentNode->position),
-                                   Skeletonizer::radius(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
                                    currentColor,
                                    currentVP,
                                    viewportType);
@@ -2310,8 +2333,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderCylinder(&(currentSegment->source->position), Skeletonizer::radius(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
-                        &(currentSegment->target->position), Skeletonizer::radius(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
+                    renderCylinder(&(currentSegment->source->position), skeletonizer.segmentSizeAt(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position), skeletonizer.segmentSizeAt(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
                         currentColor, currentVP, viewportType);
 
                     if(viewportType != VIEWPORT_SKELETON) {
@@ -2327,8 +2350,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
-                Skeletonizer::setColorFromNode(currentNode, &currentColor);
-                const float currentRadius = Skeletonizer::radius(*currentNode);
+                skeletonizer.setColorFromNode(currentNode, &currentColor);
+                const float currentRadius = skeletonizer.radius(*currentNode);
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
                 if(1.5 < currentRadius && viewportType != VIEWPORT_SKELETON) { // draw node center to make large nodes visible and clickable in ortho vps
@@ -2416,9 +2439,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
         /* Color gets changes in case there is a comment & conditional comment
         highlighting */
-        Skeletonizer::setColorFromNode(active, &currentColor);
+        skeletonizer.setColorFromNode(active, &currentColor);
         currentColor.a = 0.2f;
-        renderSphere(&(active->position), Skeletonizer::radius(*active) * 1.5, currentColor, currentVP, viewportType);
+        renderSphere(&(active->position), skeletonizer.radius(*active) * 1.5, currentColor, currentVP, viewportType);
 
         // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
         // Comment should only be rendered in orthogonal viewports.

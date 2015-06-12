@@ -60,7 +60,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
 
 Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
         QOpenGLWidget(parent), id(newId), viewportType(viewportType),
-        resizeButtonHold(false), isDocked(true), floatParent(NULL) {
+        isDocked(true), floatParent(nullptr), resizeButtonHold(false) {
     dockParent = parent;
     setContextMenuPolicy(Qt::CustomContextMenu);
     setCursor(Qt::CrossCursor);
@@ -917,7 +917,7 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
     }
     if(id != VIEWPORT_SKELETON && withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderSizeLabel(id, BIG);
+        state->viewer->renderer->renderSizeLabel(id);
     }
 
     QImage fboImage(fbo.toImage());

@@ -7,11 +7,6 @@
 #include <QNetworkAccessManager>
 #include <QThread>
 
-struct FtpElement {
-    bool isOverlay;
-    C_Element *cube;
-};
-
 class Network {
     QNetworkAccessManager manager;
     QNetworkCookieJar cookieJar;
