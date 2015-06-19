@@ -178,15 +178,15 @@ public slots:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint findAvailableNodeID();
-    uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, ViewportType VPtype, int inMag, int time, int respectLocks);
+    uint addNode(uint nodeID, float radius, int treeID, const Coordinate & position, ViewportType VPtype, int inMag, int time, int respectLocks);
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
     static stack *newStack(int size);
     static bool delStack(stack *stack);
 
-    static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
-    static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
+    static nodeListElement * addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, const Coordinate & position, int inMag);
+    static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
@@ -197,7 +197,7 @@ public slots:
     bool delTree(int treeID);
     bool clearSkeleton(int loadingSkeleton);
     void autoSaveIfElapsed();
-    uint64_t UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
+    uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
@@ -239,7 +239,7 @@ public slots:
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
-    uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive);
+    uint addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
     static bool updateCircRadius(nodeListElement *node);

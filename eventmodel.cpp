@@ -107,7 +107,7 @@ void merging(QMouseEvent *event, const int vp) {
                     seg.mergeSelectedObjects();
                     if (seg.brush.getTool() == brush_t::tool_t::hybrid) {
                         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-                        Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[vp].type);
+                        Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[vp].type);
                     }
                 }
             }
@@ -222,21 +222,21 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     bool newNode = false;
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNode = Skeletonizer::singleton().UI_addSkeletonNode(&clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
             uint newNodeID;
-            if((newNodeID = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(&clickedCoordinate,
+            if((newNodeID = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeID);
@@ -246,7 +246,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
         //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
-        newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(&clickedCoordinate,
+        newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
         if(newNode == false) { //could not add node

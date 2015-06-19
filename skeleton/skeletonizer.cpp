@@ -92,7 +92,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(tru
 nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
               float radius,
               nodeListElement **currentNode,
-              Coordinate *position,
+              const Coordinate & position,
               int inMag) {
 
     nodeListElement *newElement = NULL;
@@ -125,7 +125,7 @@ nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
         }
     }
 
-    newElement->position = *position;
+    newElement->position = position;
     //Assign radius
     newElement->radius = radius;
     //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
@@ -182,7 +182,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
 
-uint64_t Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype) {
+uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
     color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
@@ -218,7 +218,7 @@ uint64_t Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Viewpor
     return addedNodeID;
 }
 
-uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
+uint Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
     if(!state->skeletonState->activeNode) {
         qDebug() << "Please create a node before trying to link nodes.";
         return false;
@@ -836,11 +836,11 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             }
 
                             if(merge == false) {
-                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, ms, false);
+                                addNode(nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, ms, false);
                             }
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, ms, false);
+                                addNode(nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, ms, false);
                             }
                         }
                         xml.skipCurrentElement();
@@ -1303,7 +1303,7 @@ uint Skeletonizer::findAvailableNodeID() {
     return std::max(nodeID,(uint)1);
 }
 
-uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *position,
+uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, const Coordinate & position,
                            ViewportType VPtype, int inMag, int time, int respectLocks) {
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
@@ -1326,9 +1326,9 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, Coordinate *po
                 return false;
             }
 
-            lockVector.x = (float)position->x - (float)state->skeletonState->lockedPosition.x;
-            lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
-            lockVector.z = (float)position->z - (float)state->skeletonState->lockedPosition.z;
+            lockVector.x = (float)position.x - (float)state->skeletonState->lockedPosition.x;
+            lockVector.y = (float)position.y - (float)state->skeletonState->lockedPosition.y;
+            lockVector.z = (float)position.z - (float)state->skeletonState->lockedPosition.z;
 
             float lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
