@@ -8,3 +8,6 @@ knossos.pro.user
 
 #system depended settings
 CustomLibraryLocations.cmake
+
+#aur ssh private key
+id_rsa

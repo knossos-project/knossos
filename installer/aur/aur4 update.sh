@@ -1,3 +1,3 @@
 #!/bin/bash
 updpkgsums
-makepkg --source
+mksrcinfo
