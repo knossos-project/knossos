@@ -641,7 +641,13 @@ void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
     emit todosLeftChanged();
 }
 
-void Segmentation::placeCommentForSelectedObject(const QString comment) {
+void Segmentation::jumpToSelectedObject() {
+    if (!selectedObjectIndices.empty()) {
+        jumpToObject(objects[selectedObjectIndices.front()]);
+    }
+}
+
+void Segmentation::placeCommentForSelectedObject(const QString & comment) {
     if(selectedObjectIndices.size() == 1) {
         int index = selectedObjectIndices.front();
         objects[index].comment = comment;

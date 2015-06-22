@@ -213,7 +213,6 @@ public:
     void unselectObject(Object & object);
     void clearObjectSelection();
 
-    void placeCommentForSelectedObject(const QString comment);
     void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist();
@@ -247,6 +246,8 @@ public slots:
     void deleteSelectedObjects();
     void mergeSelectedObjects();
     void unmergeSelectedObjects(const Coordinate & clickPos);
+    void jumpToSelectedObject();
+    void placeCommentForSelectedObject(const QString & comment);
 };
 
 #endif // SEGMENTATION_H
