@@ -171,8 +171,10 @@ segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
     return Skeletonizer::findSegmentByNodeIDs(source_id, target_id);
 }
 
-bool SkeletonProxy::jump_to_active_node() {
-    return Skeletonizer::singleton().jumpToActiveNode();
+void SkeletonProxy::jump_to_node(nodeListElement *node) {
+    if(node) {
+        Skeletonizer::singleton().jumpToNode(*node);
+    }
 }
 
 bool SkeletonProxy::has_unsaved_changes() {

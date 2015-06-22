@@ -931,7 +931,7 @@ void ToolsTreeviewTab::nodeTableSelectionChanged() {
 void ToolsTreeviewTab::activateFirstSelectedNode() {
     if (state->skeletonState->selectedNodes.size() == 1) {
         Skeletonizer::singleton().setActiveNode(nullptr, state->skeletonState->selectedNodes.front()->nodeID);
-        Skeletonizer::singleton().jumpToActiveNode();
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     }
 }
 

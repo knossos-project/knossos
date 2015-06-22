@@ -60,7 +60,7 @@ public slots:
     nodeListElement *node_with_prev_id(int node_id, bool same_tree);
     nodeListElement *node_with_next_id(int node_id, bool same_tree);
     bool edit_node(int node_id, float radius, int x, int y, int z, int in_mag);
-    bool jump_to_active_node();
+    void jump_to_node(nodeListElement *node);
     bool delete_node(int node_id);
     bool set_active_node(int node_id);
     nodeListElement *active_node();

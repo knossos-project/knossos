@@ -2278,7 +2278,7 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
         if(state->skeletonState->currentComment) {
             state->skeletonState->currentComment = state->skeletonState->currentComment->previous;
             setActiveNode(state->skeletonState->currentComment->node, 0);
-            jumpToActiveNode();
+            jumpToNode(*state->skeletonState->currentComment->node);
         }
     }
     else {
@@ -2289,7 +2289,7 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
                 if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
                     setActiveNode(state->skeletonState->currentComment->node, 0);
-                    jumpToActiveNode();
+                    jumpToNode(*state->skeletonState->currentComment->node);
                     break;
                 }
                 currentComment = currentComment->previous;
@@ -2330,7 +2330,7 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
         if(state->skeletonState->currentComment) {
             state->skeletonState->currentComment = state->skeletonState->currentComment->next;
             setActiveNode(state->skeletonState->currentComment->node, 0);
-            jumpToActiveNode();
+            jumpToNode(*state->skeletonState->currentComment->node);
         }
     }
     else {
@@ -2341,7 +2341,7 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
                 if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
                     setActiveNode(state->skeletonState->currentComment->node, 0);
-                    jumpToActiveNode();
+                    jumpToNode(*state->skeletonState->currentComment->node);
                     break;
                 }
                 currentComment = currentComment->next;
@@ -2471,14 +2471,11 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
     return true;
 }
 
-bool Skeletonizer::jumpToActiveNode() {
-    if(state->skeletonState->activeNode) {
-        emit userMoveSignal(state->skeletonState->activeNode->position.x - state->viewerState->currentPosition.x,
-                            state->skeletonState->activeNode->position.y - state->viewerState->currentPosition.y,
-                            state->skeletonState->activeNode->position.z - state->viewerState->currentPosition.z,
-                            USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
-    }
-    return true;
+void Skeletonizer::jumpToNode(const nodeListElement & node) {
+    emit userMoveSignal(node.position.x - state->viewerState->currentPosition.x,
+                        node.position.y - state->viewerState->currentPosition.y,
+                        node.position.z - state->viewerState->currentPosition.z,
+                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {

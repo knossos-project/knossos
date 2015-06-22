@@ -661,7 +661,11 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), &Skeletonizer::jumpToActiveNode, Qt::Key_S);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), []() {
+        if(state->skeletonState->activeNode) {
+            Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
+        }
+    }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextNode, Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevNode, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
