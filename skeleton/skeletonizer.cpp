@@ -182,6 +182,18 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
 
+QList<treeListElement *> Skeletonizer::findTrees(const QString & comment) {
+    auto tree = state->skeletonState->firstTree;
+    QList<treeListElement *> hits;
+    while(tree) {
+        if(QString(tree->comment).contains(comment)) {
+            hits.append(tree);
+        }
+        tree = tree->next;
+    }
+    return hits;
+}
+
 uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
     color4F treeCol;
     /* -1 causes new color assignment */
@@ -1688,6 +1700,18 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
 nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
     const auto nodeIt = state->skeletonState->nodesByNodeID.find(nodeID);
     return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
+}
+
+QList<nodeListElement*> Skeletonizer::findNodesInTree(const treeListElement & tree, const QString & comment) {
+    auto node = tree.firstNode;
+    QList<nodeListElement *> hits;
+    while(node) {
+        if(node->comment && QString(node->comment->content).contains(comment)) {
+            hits.append(node);
+        }
+        node = node->next;
+    }
+    return hits;
 }
 
 int Skeletonizer::findAvailableTreeID() {

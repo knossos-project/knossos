@@ -40,6 +40,7 @@ public slots:
 
     void delete_skeleton();
     treeListElement *find_tree_by_id(int tree_id);
+    QList<treeListElement *> find_trees(const QString & comment);
     treeListElement *first_tree();
     treeListElement *tree_with_previous_id(int tree_id);
     treeListElement *tree_with_next_id(int tree_id);
@@ -54,6 +55,7 @@ public slots:
     bool move_to_previous_tree();
 
     nodeListElement *find_node_by_id(int node_id);
+    QList<nodeListElement *> find_nodes_in_tree(const treeListElement & tree, const QString & comment);
     nodeListElement *find_node_in_radius(int x, int y, int z);
     bool move_node_to_tree(int node_id, int tree_id);
     nodeListElement *find_nearby_node_from_tree(int tree_id, int x, int y, int z);

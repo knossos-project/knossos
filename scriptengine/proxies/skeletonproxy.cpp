@@ -41,6 +41,10 @@ treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
     return Skeletonizer::findTreeByTreeID(tree_id);
 }
 
+QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
+    return Skeletonizer::findTrees(comment);
+}
+
 treeListElement *SkeletonProxy::first_tree() {
     return state->skeletonState->firstTree;
 }
@@ -63,6 +67,10 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
 
 nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
+}
+
+QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(const treeListElement & tree, const QString & comment) {
+    return Skeletonizer::findNodesInTree(tree, comment);
 }
 
 bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {

@@ -227,7 +227,9 @@ public slots:
     bool moveToNextNode();
     bool moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
+    static QList<treeListElement *> findTrees(const QString & comment);
     static nodeListElement *findNodeByNodeID(uint nodeID);
+    static QList<nodeListElement *> findNodesInTree(const treeListElement & tree, const QString & comment);
     static bool addSegment(uint sourceNodeID, uint targetNodeID);
     static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
