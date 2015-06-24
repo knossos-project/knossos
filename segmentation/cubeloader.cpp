@@ -139,12 +139,16 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     return processRegion(globalFirst, globalLast, func, [](int &, int, int){});
 }
 
-std::unordered_set<uint64_t> readVoxels(const Coordinate & centerPos, const brush_t &brush) {
-    std::unordered_set<uint64_t> subobjects;
+std::size_t hash_value(const Coordinate & val) {
+    return std::hash<Coordinate>()(val);
+}
+
+subobjectRetrievalSet readVoxels(const Coordinate & centerPos, const brush_t &brush) {
+    subobjectRetrievalSet subobjects;
     const auto region = getRegion(centerPos, brush);
-    processRegion(region.first, region.second, [&subobjects](uint64_t & voxel, Coordinate){
+    processRegion(region.first, region.second, [&subobjects](uint64_t & voxel, Coordinate position){
         if (voxel != 0) {//don’t select the unsegmented area as object
-            subobjects.emplace(voxel);
+            subobjects.emplace(std::make_pair(voxel, position));
         }
     });
     return subobjects;

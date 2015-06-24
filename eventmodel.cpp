@@ -73,32 +73,34 @@ void segmentation_work(QMouseEvent *event, const int vp) {
 
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
-    Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-    const auto subobjectIds = readVoxels(clickPos, seg.brush);
-    for(const auto subobjectId : subobjectIds) {
+    const auto brushCenter = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+    const auto subobjectIds = readVoxels(brushCenter, seg.brush);
+    for(const auto subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
-            auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
+            const auto soid = subobjectPair.first;
+            const auto pos = subobjectPair.second;
+            auto & subobject = seg.subobjectFromId(soid, pos);
             const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
             // if clicked object is currently selected, an unmerge is requested
             if (seg.isSelected(subobject)) {
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        seg.selectObjectFromSubObject(subobject, clickPos);
-                        seg.unmergeSelectedObjects(clickPos);
+                        seg.selectObjectFromSubObject(subobject, pos);
+                        seg.unmergeSelectedObjects(pos);
                     } else {
                         if(seg.isSelected(objectToMergeId)) { // if no other object to unmerge, just unmerge subobject
-                            seg.selectObjectFromSubObject(subobject, clickPos);
+                            seg.selectObjectFromSubObject(subobject, pos);
                         }
                         else {
                             seg.selectObject(objectToMergeId);
                         }
-                        seg.unmergeSelectedObjects(clickPos);
+                        seg.unmergeSelectedObjects(pos);
                     }
                 }
             } else { // object is not selected, so user wants to merge
                 if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                        seg.selectObjectFromSubObject(subobject, clickPos);
+                        seg.selectObjectFromSubObject(subobject, pos);
                     } else {
                         seg.selectObject(objectToMergeId);//select largest object
                     }
@@ -106,12 +108,11 @@ void merging(QMouseEvent *event, const int vp) {
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
                     if (seg.brush.getTool() == brush_t::tool_t::hybrid) {
-                        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-                        Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[vp].type);
+                        Skeletonizer::singleton().UI_addSkeletonNode(pos, state->viewerState->vpConfigs[vp].type);
                     }
                 }
             }
-            seg.touchObjects(subobjectId);
+            seg.touchObjects(soid);
         }
     }
 }
