@@ -94,6 +94,8 @@ class Scripting : public QObject
     Q_OBJECT
 public:
     explicit Scripting();
+    void runFile(const QString &filename);
+    void addObject(const QString& name, QObject* object);
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -108,11 +110,12 @@ public:
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;
-    PythonQtObjectPtr _ctx;
 protected:
     QSettings *settings;
 private:
+    PythonQtObjectPtr _ctx;
     void executeFromUserDirectory();
+    void executeResourceStartup();
     void changeWorkingDirectory();
     void addCustomPythonPath();
     void addWidgets();
