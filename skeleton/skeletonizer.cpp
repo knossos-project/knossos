@@ -194,7 +194,7 @@ QList<treeListElement *> Skeletonizer::findTrees(const QString & comment) {
     return hits;
 }
 
-uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
+uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype, const uint64_t nodeId) {
     color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
@@ -207,7 +207,7 @@ uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, 
     }
 
     auto addedNodeID = addNode(
-                          0,
+                          nodeId,
                           state->skeletonState->defaultNodeRadius,
                           state->skeletonState->activeTree->treeID,
                           clickedCoordinate,

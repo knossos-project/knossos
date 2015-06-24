@@ -194,10 +194,13 @@ public slots:
     void deleteSelectedTrees();
     void deleteSelectedNodes();
 
+    void selectSubobjectNode(const uint64_t objectId, const uint64_t subobjectId, const Coordinate & clickPosition, const int vpid);
+    void linkActiveToSubobjectNode(const uint64_t objectId, const uint64_t subobjectId, const Coordinate & clickPosition, const int vpid);
+
     bool delTree(int treeID);
     bool clearSkeleton(int loadingSkeleton);
     void autoSaveIfElapsed();
-    uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
+    uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype, const uint64_t nodeId = 0);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);

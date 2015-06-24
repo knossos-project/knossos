@@ -108,7 +108,8 @@ void merging(QMouseEvent *event, const int vp) {
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
                     if (seg.brush.getTool() == brush_t::tool_t::hybrid) {
-                        Skeletonizer::singleton().UI_addSkeletonNode(pos, state->viewerState->vpConfigs[vp].type);
+                        Skeletonizer::singleton().linkActiveToSubobjectNode(objectToMergeId, soid, pos, vp);
+                        Skeletonizer::singleton().selectSubobjectNode(objectToMergeId, soid, pos, vp);
                     }
                 }
             }
@@ -589,6 +590,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     segmentation.selectObject(objIndex);
                 }
                 if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
+                    if (segmentation.brush.getTool() == brush_t::tool_t::hybrid) {
+                        Skeletonizer::singleton().selectSubobjectNode(objIndex, subobjectId, clickPos, VPfound);
+                    }
                     segmentation.touchObjects(subobjectId);
                 } else {
                     segmentation.untouchObjects();
