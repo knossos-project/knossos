@@ -68,8 +68,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
-    skeletonFileHistory = new QQueue<QString>();
-    skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
+    skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
@@ -346,23 +345,19 @@ void MainWindow::updateTitlebar() {
     setWindowTitle(title);
 }
 
-// -- static methods -- //
-
 void MainWindow::updateRecentFile(const QString & fileName) {
-    bool notAlreadyExists = std::find(std::begin(*skeletonFileHistory), std::end(*skeletonFileHistory), fileName) == std::end(*skeletonFileHistory);
-    if (notAlreadyExists) {
-        if (skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
-            skeletonFileHistory->enqueue(fileName);
-        } else {//shrink if necessary
-            skeletonFileHistory->dequeue();
-            skeletonFileHistory->enqueue(fileName);
+    int pos = skeletonFileHistory.indexOf(fileName);
+    if (pos != -1) {//move to front if already existing
+        skeletonFileHistory.move(pos, 0);
+    } else {
+        if (skeletonFileHistory.size() == FILE_DIALOG_HISTORY_MAX_ENTRIES) {//shrink if necessary
+           skeletonFileHistory.pop_back();
         }
-    } else {//move to front if already existing
-        skeletonFileHistory->move(skeletonFileHistory->indexOf(fileName), 0);
+        skeletonFileHistory.push_front(fileName);
     }
     //update the menu
     int i = 0;
-    for (const auto & path : *skeletonFileHistory) {
+    for (const auto & path : skeletonFileHistory) {
         historyEntryActions[i]->setText(path);
         historyEntryActions[i]->setVisible(!path.isEmpty());
         ++i;
@@ -877,11 +872,11 @@ void MainWindow::saveSlot() {
             annotationFilename += ".k.zip";
         }
         if (state->skeletonState->autoFilenameIncrementBool) {
-            int index = skeletonFileHistory->indexOf(annotationFilename);
+            int index = skeletonFileHistory.indexOf(annotationFilename);
             updateFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
-                skeletonFileHistory->replace(index, annotationFilename);
-                historyEntryActions[index]->setText(skeletonFileHistory->at(index));
+                skeletonFileHistory.replace(index, annotationFilename);
+                historyEntryActions[index]->setText(annotationFilename);
             }
         }
         annotationFileSave(annotationFilename);
@@ -1116,7 +1111,7 @@ void MainWindow::saveSettings() {
     settings.setValue(SEGMENTATION_TOOL, static_cast<int>(Segmentation::singleton().brush.getTool()));
 
     int i = 0;
-    for (const auto & path : *skeletonFileHistory) {
+    for (const auto & path : skeletonFileHistory) {
         settings.setValue(QString("loaded_file%1").arg(i+1), path);
         ++i;
     }
@@ -1191,16 +1186,9 @@ void MainWindow::loadSettings() {
     const auto segmentationTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL, static_cast<int>(brush_t::tool_t::merge)).toInt());
     Segmentation::singleton().brush.setTool(segmentationTool);
 
-    updateRecentFile(settings.value(LOADED_FILE1, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE2, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE3, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE4, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE5, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE6, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE7, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE8, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE9, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE10, "").toString());
+    for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
+        updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
+    }
 
     settings.endGroup();
     setGeometry(x, y, width, height);
@@ -1218,7 +1206,7 @@ void MainWindow::loadSettings() {
 void MainWindow::clearSettings() {
     QSettings settings;
 
-    skeletonFileHistory->clear();
+    skeletonFileHistory.clear();
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i]->setVisible(false);
