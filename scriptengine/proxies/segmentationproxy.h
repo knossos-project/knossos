@@ -14,6 +14,9 @@ public slots:
     void subobjectFromId(quint64 subObjId, QList<int> coord);
     quint64 largestObjectContainingSubobject(quint64 subObjId, QList<int> coord);
     void changeComment(quint64 objIndex, QString comment);
+    void removeObject(quint64 objIndex);
+    void setRenderAllObjs(bool b);
+    bool isRenderAllObjs();
 };
 
 #endif // SEGMENTATIONPROXY_H

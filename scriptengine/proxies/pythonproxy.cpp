@@ -199,6 +199,12 @@ int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
 }
 
+bool PythonProxy::isHybridMode() {
+    auto & segmentation = Segmentation::singleton();
+    return  (Session::singleton().annotationMode == SegmentationMode) &&
+            (segmentation.brush.getTool() == brush_t::tool_t::hybrid);
+}
+
 // UNTESTED
 bool PythonProxy::loadStyleSheet(const QString &filename) {
     QFile file(filename);

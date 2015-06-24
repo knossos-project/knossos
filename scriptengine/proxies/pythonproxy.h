@@ -53,6 +53,7 @@ public slots:
     float getMovementAreaFactor();
     void oc_reslice_notify_all(QList<int> coord);
     int loaderLoadingNr();
+    bool isHybridMode();
     bool loadStyleSheet(const QString &path);
 };
 
