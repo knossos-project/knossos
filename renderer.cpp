@@ -1779,82 +1779,69 @@ bool Renderer::renderSkeletonVP(bool drawSkeleton, bool drawVpPlanes) {
 }
 
 void Renderer::renderBrush(uint viewportType, Coordinate coord) {
-    auto & seg = Segmentation::singleton();
-    auto xsize = seg.brush.getRadius() / state->scale.x;
-    auto ysize = seg.brush.getRadius() / state->scale.y;
-    auto zsize = seg.brush.getRadius() / state->scale.z;
-    const auto bview = seg.brush.getView();
-
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     glLineWidth(2.0f);
 
-    auto drawCursor = [&]() {
+    auto & seg = Segmentation::singleton();
+    auto drawCursor = [&seg, viewportType, coord]() {
+        const auto bradius = seg.brush.getRadius();
+        const auto bview = seg.brush.getView();
+        const auto xsize = bradius / state->scale.x;
+        const auto ysize = bradius / state->scale.y;
+        const auto zsize = bradius / state->scale.z;
+
+        glTranslatef(coord.x, coord.y, coord.z);
+        if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
+            glTranslatef(0, 0, 1);//move origin to other corner of voxel, idrk why that’s necessary
+            glRotatef(-90, 1, 0, 0);
+        } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+            glRotatef(-90, 0, 1, 0);
+        } else if (viewportType != VIEWPORT_XY || bview != brush_t::view_t::xy) {
+            return;
+        }
+
+        const bool xy = viewportType == VIEWPORT_XY;
+        const bool xz = viewportType == VIEWPORT_XZ;
+        const int z = xy ? -1 : 1;//render brush on top of everything else
+
         if(seg.brush.getShape() == brush_t::shape_t::angular) {
-            //integer coordinates to round to voxel boundaries
-            xsize = static_cast<int>(xsize);
-            ysize = static_cast<int>(ysize);
-            zsize = static_cast<int>(zsize);
-            glTranslatef(coord.x, coord.y, coord.z);
             glBegin(GL_LINE_LOOP);
-            if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
-                glVertex3f(- xsize  , - ysize  , 0);
-                glVertex3f(+ xsize+1, - ysize  , 0);
-                glVertex3f(+ xsize+1, + ysize+1, 0);
-                glVertex3f(- xsize  , + ysize+1, 0);
-            }
-            if(viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-                glVertex3f(- xsize  , 0, - zsize  );
-                glVertex3f(+ xsize+1, 0, - zsize  );
-                glVertex3f(+ xsize+1, 0, + zsize+1);
-                glVertex3f(- xsize  , 0, + zsize+1);
-            }
-            if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
-                glVertex3f(0, - ysize  , - zsize  );
-                glVertex3f(0, + ysize+1, - zsize  );
-                glVertex3f(0, + ysize+1, + zsize+1);
-                glVertex3f(0, - ysize  , + zsize+1);
-            }
+            const auto x = xy || xz ? xsize : zsize;
+            const auto y = xz ? zsize : ysize;
+            //integer coordinates to round to voxel boundaries
+            glVertex3i(-x    , -y    , z);
+            glVertex3i( x + 1, -y    , z);
+            glVertex3i( x + 1,  y + 1, z);
+            glVertex3i(-x    ,  y + 1, z);
             glEnd();
         } else if(seg.brush.getShape() == brush_t::shape_t::round) {
-            glTranslatef(coord.x, coord.y, coord.z);
-            if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-                glTranslatef(0, 0, 1);
-                glRotatef(-90, 1, 0, 0);
-            } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
-                glRotatef(-90, 0, 1, 0);
-            } else if (viewportType != VIEWPORT_XY || bview != brush_t::view_t::xy) {
-                return;
-            }
-
-            glBegin(GL_LINES);
-            const int z = 0;
-            const bool xy = viewportType == VIEWPORT_XY;
-            const bool xz = viewportType == VIEWPORT_XZ;
             const int xmax = xy ? xsize : xz ? xsize : zsize;
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            while (x >= y) {
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, seg.brush.getRadius());
+            auto verticalPixelBorder = [](float x, float y, float z){
+                glVertex3f(x, y    , z);
+                glVertex3f(x, y + 1, z);
+            };
+            auto horizontalPixelBorder = [](float x, float y, float z){
+                glVertex3f(x    , y, z);
+                glVertex3f(x + 1, y, z);
+            };
+
+            glBegin(GL_LINES);
+            while (x >= y) {//first part of the ellipse (circle with anisotropic pixels), y dominant movement
+                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    glVertex3f( x + 1, y    , 0);
-                    glVertex3f( x + 1, y + 1, 0);
-                    glVertex3f(-x, y    , 0);
-                    glVertex3f(-x, y + 1, 0);
-                    glVertex3f(-x, -y    , 0);
-                    glVertex3f(-x, -y + 1, 0);
-                    glVertex3f( x + 1, -y    , 0);
-                    glVertex3f( x + 1, -y + 1, 0);
-                } else  if (x != xmax || y != 0) {
-                    glVertex3f( x + 1    , y, 0);
-                    glVertex3f( x + 1 - 1, y, 0);
-                    glVertex3f(-x    , y, 0);
-                    glVertex3f(-x + 1, y, 0);
-                    glVertex3f(-x    , -y + 1, 0);
-                    glVertex3f(-x + 1, -y + 1, 0);
-                    glVertex3f( x + 1    , -y + 1, 0);
-                    glVertex3f( x + 1 - 1, -y + 1, 0);
+                    verticalPixelBorder( x + 1,  y, z);
+                    verticalPixelBorder(-x    ,  y, z);
+                    verticalPixelBorder(-x    , -y, z);
+                    verticalPixelBorder( x + 1, -y, z);
+                } else if (x != xmax || y != 0) {
+                    horizontalPixelBorder( x,  y    , z);
+                    horizontalPixelBorder(-x,  y    , z);
+                    horizontalPixelBorder(-x, -y + 1, z);
+                    horizontalPixelBorder( x, -y + 1, z);
                 }
                 if (val) {
                     ++y;
@@ -1865,26 +1852,18 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
 
             x = 0;
             y = ymax;
-            while (y >= x) {
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, seg.brush.getRadius());
+            while (y >= x) {//second part of the ellipse, x dominant movement
+                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    glVertex3f( x    , y + 1, 0);
-                    glVertex3f( x + 1, y + 1, 0);
-                    glVertex3f(-x    , y + 1, 0);
-                    glVertex3f(-x + 1, y + 1, 0);
-                    glVertex3f(-x    , -y, 0);
-                    glVertex3f(-x + 1, -y, 0);
-                    glVertex3f( x    , -y, 0);
-                    glVertex3f( x + 1, -y, 0);
-                } else  if (y != ymax || x != 0) {
-                    glVertex3f( x, y + 1, 0);
-                    glVertex3f( x, y, 0);
-                    glVertex3f(-x + 1, y    , 0);
-                    glVertex3f(-x + 1, y + 1, 0);
-                    glVertex3f(-x + 1, -y    , 0);
-                    glVertex3f(-x + 1, -y + 1, 0);
-                    glVertex3f( x, -y + 1    , 0);
-                    glVertex3f( x, -y + 1 - 1, 0);
+                    horizontalPixelBorder( x,  y + 1, z);
+                    horizontalPixelBorder(-x,  y + 1, z);
+                    horizontalPixelBorder(-x, -y    , z);
+                    horizontalPixelBorder( x, -y    , z);
+                } else if (y != ymax || x != 0) {
+                    verticalPixelBorder( x    ,  y, z);
+                    verticalPixelBorder(-x + 1,  y, z);
+                    verticalPixelBorder(-x + 1, -y, z);
+                    verticalPixelBorder( x    , -y, z);
                 }
                 if (val) {
                     ++x;
