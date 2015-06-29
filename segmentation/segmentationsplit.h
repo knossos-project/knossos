@@ -18,7 +18,7 @@ public:
         xy, xz, yz
     };
     enum class shape_t {
-        square, circle
+        angular, round
     };
 
     void setInverse(const bool newInverse) {
@@ -74,7 +74,7 @@ private:
     mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
     view_t view = view_t::xy;
-    shape_t shape = shape_t::circle;
+    shape_t shape = shape_t::round;
 };
 
 void connectedComponent(const Coordinate & seed);

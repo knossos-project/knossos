@@ -1789,7 +1789,7 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     glLineWidth(2.0f);
 
     auto drawCursor = [&]() {
-        if(seg.brush.getShape() == brush_t::shape_t::square) {
+        if(seg.brush.getShape() == brush_t::shape_t::angular) {
             glBegin(GL_LINE_LOOP);
             if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
                 glVertex3i(coord.x - bsize,   coord.y - bsize,   coord.z-1);
@@ -1810,7 +1810,7 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
                 glVertex3i(coord.x-1, coord.y - bsize,   coord.z + bsize+1);
             }
             glEnd();
-        } else if(seg.brush.getShape() == brush_t::shape_t::circle){
+        } else if(seg.brush.getShape() == brush_t::shape_t::round) {
             float bradius = bsize + 0.5f;
             glBegin(GL_LINE_LOOP);
             if(viewportType == VIEWPORT_XY && bview == brush_t::view_t::xy) {
