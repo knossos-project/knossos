@@ -45,14 +45,21 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     return true;
 }
 
-bool isInsideSphere(int x, int y, int z, int radius) {
+bool isInsideSphere(const double xi, const double yi, const double zi, const double radius) {
+    const auto x = xi * state->scale.x;
+    const auto y = yi * state->scale.y;
+    const auto z = zi * state->scale.z;
     const auto sqdistance = x*x + y*y + z*z;
     return sqdistance < radius * radius;
 }
 
 std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const brush_t & brush) {
-    auto globalFirst = (centerPos - brush.getRadius()).capped(0, state->boundary);
-    auto globalLast = (centerPos + brush.getRadius()).capped(0, state->boundary);
+    const auto xsize = brush.getRadius() / state->scale.x;
+    const auto ysize = brush.getRadius() / state->scale.y;
+    const auto zsize = brush.getRadius() / state->scale.z;
+    const auto brushExtents = Coordinate(xsize, ysize, zsize);
+    auto globalFirst = (centerPos - brushExtents).capped(0, state->boundary);
+    auto globalLast = (centerPos + brushExtents).capped(0, state->boundary);
 
     if (brush.getMode() == brush_t::mode_t::two_dim) {//disable depth
         if (brush.getView() == brush_t::view_t::xy) {
@@ -180,13 +187,13 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
         } else if (!brush.isInverse() || Segmentation::singleton().selectedObjectsCount() == 0) {
             //voxel need to check if they are inside the circle
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius()+1)) {
+                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius())) {
                     voxel = value;
                 }
             });
         } else {//circle, inverse and selected
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius()+1)
+                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius())
                         && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
                     voxel = 0;
                 }
