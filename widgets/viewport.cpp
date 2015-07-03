@@ -397,7 +397,8 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
-    eventDelegate->userMouseSlide = QPoint();
+    eventDelegate->userMouseSlide = {};
+    eventDelegate->arbNodeDragCache = {};
     state->viewerState->vpConfigs[id].draggedNode = nullptr;
 }
 

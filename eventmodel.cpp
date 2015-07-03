@@ -41,6 +41,7 @@
 #include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/optional.hpp>
 
 #include <cstdlib>
 #include <unordered_set>
@@ -339,31 +340,24 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 }
 
-Coordinate deviationVP(const vpConfig & config, const QPoint deviation, const QPointF userMouseSlide){
+Coordinate deviationVP(const vpConfig & config, const QPoint deviation){
     switch (config.type) {
-    case VIEWPORT_XY: return Coordinate{deviation.x(), deviation.y(), 0};
-    case VIEWPORT_XZ: return Coordinate{deviation.x(), 0, deviation.y()};
-    case VIEWPORT_YZ: return Coordinate{0, deviation.y(), deviation.x()};
-    case VIEWPORT_ARBITRARY:
-        const auto v1 = config.v1 * userMouseSlide.x();
-        const auto v2 = config.v2 * userMouseSlide.y();
-        return Coordinate{v1 + v2};
+    case VIEWPORT_XY: return {deviation.x(), deviation.y(), 0};
+    case VIEWPORT_XZ: return {deviation.x(), 0, deviation.y()};
+    case VIEWPORT_YZ: return {0, deviation.y(), deviation.x()};
     }
 }
 
-template<typename Func>
-void handleMovement(const vpConfig & config, const QPointF & posDelta, QPointF & userMouseSlide, Func func) {
+boost::optional<Coordinate> handleMovement(const vpConfig & config, const QPointF & posDelta, QPointF & userMouseSlide) {
     userMouseSlide -= {posDelta.x() / config.screenPxXPerDataPx, posDelta.y() / config.screenPxYPerDataPx};
 
     const QPoint deviationTrunc(std::trunc(userMouseSlide.x()), std::trunc(userMouseSlide.y()));
 
     if (!deviationTrunc.isNull()) {
-        const auto move = deviationVP(config, deviationTrunc, userMouseSlide);
-
         userMouseSlide -= deviationTrunc;
-
-        func(config, move);
+        return deviationVP(config, deviationTrunc);
     }
+    return boost::none;
 }
 
 void EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
@@ -391,10 +385,16 @@ void EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
         }
     } else if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         const auto & config = state->viewerState->vpConfigs[VPfound];
-        const QPointF relPos(xrel(event->x()), yrel(event->y()));
-        handleMovement(config, relPos, userMouseSlide, [](const vpConfig & config, const Coordinate & move){
-            state->viewer->userMove(move.x, move.y, move.z, USERMOVE_HORIZONTAL, config.type);
-        });
+        const QPointF posDelta(xrel(event->x()), yrel(event->y()));
+        if (config.type == VIEWPORT_ARBITRARY) {
+            const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
+            const auto v1 = config.v1 * arbitraryMouseSlide.x();
+            const auto v2 = config.v2 * arbitraryMouseSlide.y();
+            const auto move = v1 + v2;
+            state->viewer->userMove_arb(move.x, move.y, move.z);//subpixel movements are accumulated within userMove_arb
+        } else if (auto moveIt = handleMovement(config, posDelta, userMouseSlide)) {
+            state->viewer->userMove(moveIt->x, moveIt->y, moveIt->z, USERMOVE_HORIZONTAL, config.type);
+        }
     }
 }
 
@@ -402,18 +402,22 @@ void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SkeletonizationMode) {
         const auto & config = state->viewerState->vpConfigs[VPfound];
         if (config.draggedNode != nullptr) {
-            const QPointF relPos(xrel(event->x()), yrel(event->y()));
-            handleMovement(config, relPos, userMouseSlide, [](const vpConfig & config, const Coordinate & movement){
-                const auto newDraggedNodePos = config.draggedNode->position - movement;
-                Skeletonizer::singleton().editNode(
-                         0,
-                         config.draggedNode,
-                         0.,
-                         newDraggedNodePos.x,
-                         newDraggedNodePos.y,
-                         newDraggedNodePos.z,
-                         state->magnification);
-            });
+            const QPointF posDelta(xrel(event->x()), yrel(event->y()));
+            boost::optional<Coordinate> moveIt;
+            if (config.type == VIEWPORT_ARBITRARY) {
+                const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
+                const auto v1 = config.v1 * arbitraryMouseSlide.x();
+                const auto v2 = config.v2 * arbitraryMouseSlide.y();
+                arbNodeDragCache += v1 + v2;//accumulate subpixel movements
+                moveIt = arbNodeDragCache;//truncate
+                arbNodeDragCache -= *moveIt;//only keep remaining fraction
+            } else {
+                moveIt = handleMovement(config, posDelta, userMouseSlide);
+            }
+            if (moveIt) {
+                const auto newPos = config.draggedNode->position - *moveIt;
+                Skeletonizer::singleton().editNode(0, config.draggedNode, 0., newPos.x, newPos.y, newPos.z, state->magnification);
+            }
         }
     }
 }

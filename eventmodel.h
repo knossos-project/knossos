@@ -83,6 +83,7 @@ public:
     QPoint mouseDown;
     QPoint prevMouseMove;
     QPointF userMouseSlide;
+    floatCoordinate arbNodeDragCache;
     bool grap;
 signals:
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
