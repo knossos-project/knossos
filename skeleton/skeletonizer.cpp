@@ -501,6 +501,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<uint> branchVector;
     std::vector<std::pair<uint, QString>> commentsVector;
     std::vector<std::pair<uint, uint>> edgeVector;
+    Coordinate movementAreaMin;//0
+    Coordinate movementAreaMax = state->boundary;
 
     bench.start();
     const auto blockState = this->signalsBlocked();
@@ -547,35 +549,30 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         magnification = 0;
                     }
                 } else if(xml.name() == "MovementArea") {
-                    auto & session = Session::singleton();
-                    Coordinate min = session.movementAreaMin;
-                    Coordinate max = session.movementAreaMax;
-
                     QStringRef attribute = attributes.value("min.x");
                     if(attribute.isNull() == false) {
-                        min.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
+                        movementAreaMin.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
                     }
                     attribute = attributes.value("min.y");
                     if(attribute.isNull() == false) {
-                        min.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
+                        movementAreaMin.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
                     }
                     attribute = attributes.value("min.z");
                     if(attribute.isNull() == false) {
-                        min.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
+                        movementAreaMin.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
                     }
                     attribute = attributes.value("max.x");
                     if(attribute.isNull() == false) {
-                        max.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
+                        movementAreaMax.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
                     }
                     attribute = attributes.value("max.y");
                     if(attribute.isNull() == false) {
-                        max.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
+                        movementAreaMax.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
                     }
                     attribute = attributes.value("max.z");
                     if(attribute.isNull() == false) {
-                        max.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
+                        movementAreaMax.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
                     }
-                    session.updateMovementArea(min, max);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if (attribute.isNull() == false) {
@@ -895,6 +892,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
         return false;
     }
+
+    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
 
     if (!experimentName.isEmpty() && experimentName != state->name) {
         const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
