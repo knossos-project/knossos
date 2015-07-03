@@ -293,7 +293,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     auto penmode = state->viewerState->penmode;
 
     if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
-        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        Qt::KeyboardModifiers modifiers = event->modifiers();
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
         bool alt = modifiers.testFlag(Qt::AltModifier);
 
@@ -365,7 +365,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     auto penmode = state->viewerState->penmode;
 
     if((penmode && event->button() == Qt::RightButton) || (!penmode && event->button() == Qt::LeftButton)) {
-        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        Qt::KeyboardModifiers modifiers = event->modifiers();
         const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
         const auto alt = modifiers.testFlag(Qt::AltModifier);
 
@@ -386,7 +386,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->signalRelay, this, event);
 
-    Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+    Qt::KeyboardModifiers modifiers = event->modifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
     const auto alt = modifiers.testFlag(Qt::AltModifier);
 
