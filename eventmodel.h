@@ -63,12 +63,11 @@ class EventModel : public QObject {
 public:
     explicit EventModel(QObject *parent = 0);
     void handleMouseHover(QMouseEvent *event, int VPfound);
-    bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
+    void handleMouseButtonLeft(QMouseEvent *event, int VPfound);
+    void handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
     void handleMouseButtonRight(QMouseEvent *event, int VPfound);
-    bool handleMouseMotion(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     void handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
     void handleMouseReleaseRight(QMouseEvent *event, int VPfound);
@@ -79,16 +78,11 @@ public:
     void startNodeSelection(int x, int y, int vpId);
     std::vector<nodeListElement *> nodeSelection(int x, int y, int vpId);
     Coordinate getMouseCoordinate(int VPfound);
-    int xrel(int x);
-    int yrel(int y);
-    int rightMouseDownX;
-    int rightMouseDownY;
-    int mouseDownX;
-    int mouseDownY;
-    int mouseX;
-    int mouseY;
-    int mousePosX;
-    int mousePosY;
+    int xrel(const int x);
+    int yrel(const int y);
+    QPoint mouseDown;
+    QPoint prevMouseMove;
+    QPointF userMouseSlide;
     bool grap;
 signals:
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);

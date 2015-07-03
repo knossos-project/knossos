@@ -287,10 +287,8 @@ void Viewport::enterEvent(QEvent *) {
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    bool clickEvent = false;
-
-    auto mouseBtn = QApplication::mouseButtons();
-    auto penmode = state->viewerState->penmode;
+    const auto mouseBtn = event->buttons();
+    const auto penmode = state->viewerState->penmode;
 
     if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
@@ -301,25 +299,17 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
             moveVP(event);
         } else {// delegate behaviour
             eventDelegate->handleMouseMotionLeftHold(event, id);
-            clickEvent = true;
         }
     } else if(mouseBtn == Qt::MidButton) {
         eventDelegate->handleMouseMotionMiddleHold(event, id);
-        clickEvent = true;
     } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
         eventDelegate->handleMouseMotionRightHold(event, id);
-        clickEvent = true;
     }
     eventDelegate->handleMouseHover(event, id);
 
-    if(clickEvent) {
-        eventDelegate->mouseX = event->x();
-        eventDelegate->mouseY = event->y();
-    }
-    eventDelegate->mousePosX = event->x();
-    eventDelegate->mousePosY = event->y();
-
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
+
+    eventDelegate->prevMouseMove = event->pos();
 }
 
 void Viewport::setDock(bool isDock) {
@@ -359,8 +349,7 @@ void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
 
-    eventDelegate->mouseX = event->x();
-    eventDelegate->mouseY = event->y();
+    eventDelegate->mouseDown = event->pos();
 
     auto penmode = state->viewerState->penmode;
 
@@ -408,11 +397,8 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
-    for (std::size_t i = 0; i < Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].draggedNode = NULL;
-        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-    }
+    eventDelegate->userMouseSlide = QPoint();
+    state->viewerState->vpConfigs[id].draggedNode = nullptr;
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
@@ -639,8 +625,8 @@ void Viewport::moveVP(QMouseEvent *event) {
     const auto position = mapFromGlobal(event->globalPos());
     const auto horizontalSpace = parentWidget()->width() - width();
     const auto verticalSpace = parentWidget()->height() - height();
-    const auto desiredX = x() + position.x() - baseEventX;
-    const auto desiredY = y() + position.y() - baseEventY;
+    const auto desiredX = x() + position.x() - eventDelegate->mouseDown.x();
+    const auto desiredY = y() + position.y() - eventDelegate->mouseDown.y();
 
     const auto newX = std::max(0, std::min(horizontalSpace, desiredX));
     const auto newY = std::max(0, std::min(verticalSpace, desiredY));

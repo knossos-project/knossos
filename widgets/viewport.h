@@ -135,11 +135,6 @@ struct vpConfig {
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
-
-    //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
-    //would result in a data pixel movement
-    float userMouseSlideX;
-    float userMouseSlideY;
 };
 
 class Viewport;

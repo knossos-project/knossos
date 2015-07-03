@@ -128,9 +128,7 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
     }
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    mouseDownX = event->x();
-    mouseDownY = event->y();
+void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
     if (Session::singleton().annotationMode == SkeletonizationMode && selection) {
         startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -160,19 +158,18 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
                     if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
-                        return false;
+                        return;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
             }
         }
     }
-    return true;
 }
 
-bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
+void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode != SkeletonizationMode) {
-        return true;
+        return;
     }
 
     auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
@@ -192,7 +189,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                     if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
-                        return false;
+                        return;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNode);
                 }
@@ -202,7 +199,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
             state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNode);
         }
     }
-    return true;
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
@@ -212,11 +208,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {
-            rightMouseDownX = event->x();
-            rightMouseDownY = event->y();
-            segmentation_work(event, VPfound);
-        }
+        segmentation_work(event, VPfound);
         return;
     }
     Coordinate movement, lastPos;
@@ -347,17 +339,42 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 }
 
-bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
+Coordinate deviationVP(const vpConfig & config, const QPoint deviation, const QPointF userMouseSlide){
+    switch (config.type) {
+    case VIEWPORT_XY: return Coordinate{deviation.x(), deviation.y(), 0};
+    case VIEWPORT_XZ: return Coordinate{deviation.x(), 0, deviation.y()};
+    case VIEWPORT_YZ: return Coordinate{0, deviation.y(), deviation.x()};
+    case VIEWPORT_ARBITRARY:
+        const auto v1 = config.v1 * userMouseSlide.x();
+        const auto v2 = config.v2 * userMouseSlide.y();
+        return Coordinate{v1 + v2};
+    }
+}
+
+template<typename Func>
+void handleMovement(const vpConfig & config, const QPointF & posDelta, QPointF & userMouseSlide, Func func) {
+    userMouseSlide -= {posDelta.x() / config.screenPxXPerDataPx, posDelta.y() / config.screenPxYPerDataPx};
+
+    const QPoint deviationTrunc(std::trunc(userMouseSlide.x()), std::trunc(userMouseSlide.y()));
+
+    if (!deviationTrunc.isNull()) {
+        const auto move = deviationVP(config, deviationTrunc, userMouseSlide);
+
+        userMouseSlide -= deviationTrunc;
+
+        func(config, move);
+    }
+}
+
+void EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if (state->viewerState->nodeSelectSquareVpId != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
-        return true;
+        return;
     }
 
-    switch(state->viewerState->vpConfigs[VPfound].type) {
-    // the user wants to drag the skeleton inside the VP
-    case VIEWPORT_SKELETON:
+    if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
         if(Segmentation::singleton().volume_render_toggle) {
             auto & seg = Segmentation::singleton();
             seg.volume_mouse_move_x -= xrel(event->x());
@@ -372,195 +389,38 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                 * (0.5 - state->skeletonState->zoomLevel))
                 / ((float)state->viewerState->vpConfigs[VPfound].edgeLength);
         }
-        break;
-    case VIEWPORT_XY:
-        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
-                ((float)xrel(event->x())
-            / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
-                ((float)yrel(event->y())
-            / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
-
-            emit userMoveSignal((int)state->viewerState->vpConfigs[VPfound].userMouseSlideX,
-                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY, 0,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
-            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
-        }
-        break;
-    case VIEWPORT_XZ:
-        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
-
-            emit userMoveSignal((int)state->viewerState->vpConfigs[VPfound].userMouseSlideX, 0,
-                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
-            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
-        }
-        break;
-    case VIEWPORT_YZ:
-        if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
-        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
-        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
-
-            emit userMoveSignal(0, (int)state->viewerState->vpConfigs[VPfound].userMouseSlideY,
-                (int)state->viewerState->vpConfigs[VPfound].userMouseSlideX,
-                                USERMOVE_HORIZONTAL, state->viewerState->vpConfigs[VPfound].type);
-            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
-        }
-        break;
-    case VIEWPORT_ARBITRARY:
-        if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
-            break;
-        }
-        state->viewerState->vpConfigs[VPfound].userMouseSlideX -=
-                ((float)xrel(event->x()) / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx);
-        state->viewerState->vpConfigs[VPfound].userMouseSlideY -=
-                ((float)yrel(event->y()) / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx);
-
-        if(fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideX) >= 1
-            || fabs(state->viewerState->vpConfigs[VPfound].userMouseSlideY) >= 1) {
-            emit userMoveArbSignal(
-                    (int)(state->viewerState->vpConfigs[VPfound].v1.x
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
-                          + state->viewerState->vpConfigs[VPfound].v2.x
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY),
-                    (int)(state->viewerState->vpConfigs[VPfound].v1.y
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
-                          + state->viewerState->vpConfigs[VPfound].v2.y
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY),
-                    (int)(state->viewerState->vpConfigs[VPfound].v1.z
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideX
-                          + state->viewerState->vpConfigs[VPfound].v2.z
-                          * state->viewerState->vpConfigs[VPfound].userMouseSlideY));
-            state->viewerState->vpConfigs[VPfound].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[VPfound].userMouseSlideY = 0.;
-        }
-        break;
+    } else if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
+        const auto & config = state->viewerState->vpConfigs[VPfound];
+        const QPointF relPos(xrel(event->x()), yrel(event->y()));
+        handleMovement(config, relPos, userMouseSlide, [](const vpConfig & config, const Coordinate & move){
+            state->viewer->userMove(move.x, move.y, move.z, USERMOVE_HORIZONTAL, config.type);
+        });
     }
-
-    return true;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/) {
-    if (Session::singleton().annotationMode != SkeletonizationMode) {
-        return true;
-    }
-
-    Coordinate newDraggedNodePos;
-
-    for(uint i = 0; i < Viewport::numberViewports; i++) {
-        switch(state->viewerState->vpConfigs[i].type) {
-            case VIEWPORT_XY:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                    ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                    ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                    newDraggedNodePos = {
-                        state->viewerState->vpConfigs[i].draggedNode->position.x - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
-                        , state->viewerState->vpConfigs[i].draggedNode->position.y - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
-                        , state->viewerState->vpConfigs[i].draggedNode->position.z
-                    };
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-
-                    Skeletonizer::singleton().editNode(
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
-            case VIEWPORT_XZ:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                        ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                        ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                    newDraggedNodePos = {
-                        state->viewerState->vpConfigs[i].draggedNode->position.x - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
-                        , state->viewerState->vpConfigs[i].draggedNode->position.y
-                        , state->viewerState->vpConfigs[i].draggedNode->position.z - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
-                    };
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-
-                    Skeletonizer::singleton().editNode(
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
-            case VIEWPORT_YZ:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                        ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                        ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                    newDraggedNodePos = {
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        , state->viewerState->vpConfigs[i].draggedNode->position.y - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideY)
-                        , state->viewerState->vpConfigs[i].draggedNode->position.z - static_cast<int>(state->viewerState->vpConfigs[i].userMouseSlideX)
-                    };
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-
-                    Skeletonizer::singleton().editNode(
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
+void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
+    if (Session::singleton().annotationMode == SkeletonizationMode) {
+        const auto & config = state->viewerState->vpConfigs[VPfound];
+        if (config.draggedNode != nullptr) {
+            const QPointF relPos(xrel(event->x()), yrel(event->y()));
+            handleMovement(config, relPos, userMouseSlide, [](const vpConfig & config, const Coordinate & movement){
+                const auto newDraggedNodePos = config.draggedNode->position - movement;
+                Skeletonizer::singleton().editNode(
+                         0,
+                         config.draggedNode,
+                         0.,
+                         newDraggedNodePos.x,
+                         newDraggedNodePos.y,
+                         newDraggedNodePos.z,
+                         state->magnification);
+            });
         }
     }
-    return true;
 }
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
-        const bool notOrigin = event->x() != rightMouseDownX && event->y() != rightMouseDownY;
+        const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
         if (mouseEventAtValidDatasetPosition(event, VPfound) && notOrigin) {
             segmentation_work(event, VPfound);
         }
@@ -575,7 +435,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
-        if(event->x() == mouseDownX && event->y() == mouseDownY) {
+        if (event->pos() == mouseDown) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != 0) {// don’t select the unsegmented area as object
@@ -625,10 +485,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode == SegmentationMode && mouseEventAtValidDatasetPosition(event, VPfound)) {
-        if (event->x() != rightMouseDownX && event->y() != rightMouseDownY) {//merge took already place on mouse down
+        if (event->pos() != mouseDown) {//merge took already place on mouse down
             segmentation_work(event, VPfound);
         }
-        rightMouseDownX = rightMouseDownY = -1;
     }
 }
 
@@ -1261,14 +1120,14 @@ std::vector<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) 
     return state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
 }
 
-int EventModel::xrel(int x) {
-    return (x - this->mouseX);
+int EventModel::xrel(const int x) {
+    return x - prevMouseMove.x();
 }
 
-int EventModel::yrel(int y) {
-    return (y - this->mouseY);
+int EventModel::yrel(const int y) {
+    return y - prevMouseMove.y();
 }
 
 Coordinate EventModel::getMouseCoordinate(int VPfound) {
-    return getCoordinateFromOrthogonalClick(mousePosX, mousePosY, VPfound);
+    return getCoordinateFromOrthogonalClick(prevMouseMove.x(), prevMouseMove.y(), VPfound);
 }
