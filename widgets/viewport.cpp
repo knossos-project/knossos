@@ -283,7 +283,8 @@ void Viewport::showContextMenu(const QPoint &point) {
 }
 
 void Viewport::enterEvent(QEvent *) {
-    setFocus();//get the keyboard focus on first mouse move so we don’t need permanent mousetracking (e.g. for D/F Movement)
+    activateWindow();//steal keyboard from other active windows
+    setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
