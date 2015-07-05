@@ -828,7 +828,7 @@ void MainWindow::newAnnotationSlot() {
             return;
         }
     }
-    Skeletonizer::singleton().clearSkeleton(false);
+    Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();
     state->skeletonState->unsavedChanges = false;
     Session::singleton().annotationFilename = "";
@@ -974,7 +974,7 @@ void MainWindow::clearSkeletonSlotGUI() {
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
-    Skeletonizer::singleton().clearSkeleton(false);
+    Skeletonizer::singleton().clearSkeleton();
     updateTitlebar();
 }
 

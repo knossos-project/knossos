@@ -475,7 +475,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     const bool merge = state->skeletonState->mergeOnLoadFlag;
     if (!merge) {
-        clearSkeleton(true);
+        clearSkeleton();
     } else {
         greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
@@ -501,8 +501,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<uint> branchVector;
     std::vector<std::pair<uint, QString>> commentsVector;
     std::vector<std::pair<uint, uint>> edgeVector;
-    Coordinate movementAreaMin;//0
-    Coordinate movementAreaMax = state->boundary;
 
     bench.start();
     const auto blockState = this->signalsBlocked();
@@ -549,6 +547,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         magnification = 0;
                     }
                 } else if(xml.name() == "MovementArea") {
+                    Coordinate movementAreaMin;//0
+                    Coordinate movementAreaMax = state->boundary;
+
                     QStringRef attribute = attributes.value("min.x");
                     if(attribute.isNull() == false) {
                         movementAreaMin.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
@@ -573,6 +574,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         movementAreaMax.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
                     }
+
+                    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if (attribute.isNull() == false) {
@@ -892,8 +895,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
         return false;
     }
-
-    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
 
     if (!experimentName.isEmpty() && experimentName != state->name) {
         const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
@@ -1475,7 +1476,7 @@ void Skeletonizer::clearNodeSelection() {
     state->skeletonState->selectedNodes.clear();
 }
 
-bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
+void Skeletonizer::clearSkeleton() {
     treeListElement *currentTree, *treeToDel;
     auto skeletonState = state->skeletonState;
 
@@ -1509,10 +1510,9 @@ bool Skeletonizer::clearSkeleton(int /*loadingSkeleton*/) {
 
     skeletonState->branchStack = newStack(1048576);
 
+    Session::singleton().resetMovementArea();
     Session::singleton().annotationTime(0);
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
-
-    return true;
 }
 
 bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
