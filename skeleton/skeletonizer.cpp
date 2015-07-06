@@ -551,18 +551,19 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     Coordinate movementAreaMax = state->boundary;
 
                     for (const auto & attribute : attributes) {
+                        const auto & name = attribute.value();
                         const auto & value = attribute.value();
-                        if (value == "min.x") {
+                        if (name == "min.x") {
                             movementAreaMin.x = value.toInt();
-                        } else if (value == "min.y") {
+                        } else if (name == "min.y") {
                             movementAreaMin.y = value.toInt();
-                        } else if (value == "min.z") {
+                        } else if (name == "min.z") {
                             movementAreaMin.z = value.toInt();
-                        } else if (value == "max.x") {
+                        } else if (name == "max.x") {
                             movementAreaMax.x = value.toInt();
-                        } else if (value == "max.y") {
+                        } else if (name == "max.y") {
                             movementAreaMax.y = value.toInt();
-                        } else if (value == "max.z") {
+                        } else if (name == "max.z") {
                             movementAreaMax.z = value.toInt();
                         }
                     }
