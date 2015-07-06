@@ -1248,8 +1248,8 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     return true;
 }
 
-uint Skeletonizer::findAvailableNodeID() {
-    return state->skeletonState->greatestNodeID + 1;
+uint64_t Skeletonizer::findAvailableNodeID() {
+    return {state->skeletonState->greatestNodeID + 1};
 }
 
 bool Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
