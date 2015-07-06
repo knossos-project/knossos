@@ -7,6 +7,8 @@
 
 #include <quazip/quazipfile.h>
 
+#include <QDir>
+#include <QFileInfo>
 #include <QStandardPaths>
 
 #include <ctime>
