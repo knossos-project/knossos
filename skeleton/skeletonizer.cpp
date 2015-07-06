@@ -550,32 +550,24 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     Coordinate movementAreaMin;//0
                     Coordinate movementAreaMax = state->boundary;
 
-                    QStringRef attribute = attributes.value("min.x");
-                    if(attribute.isNull() == false) {
-                        movementAreaMin.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
-                    }
-                    attribute = attributes.value("min.y");
-                    if(attribute.isNull() == false) {
-                        movementAreaMin.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
-                    }
-                    attribute = attributes.value("min.z");
-                    if(attribute.isNull() == false) {
-                        movementAreaMin.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
-                    }
-                    attribute = attributes.value("max.x");
-                    if(attribute.isNull() == false) {
-                        movementAreaMax.x = std::min(std::max(0, attribute.toInt()), state->boundary.x);
-                    }
-                    attribute = attributes.value("max.y");
-                    if(attribute.isNull() == false) {
-                        movementAreaMax.y = std::min(std::max(0, attribute.toInt()), state->boundary.y);
-                    }
-                    attribute = attributes.value("max.z");
-                    if(attribute.isNull() == false) {
-                        movementAreaMax.z = std::min(std::max(0, attribute.toInt()), state->boundary.z);
+                    for (const auto & attribute : attributes) {
+                        const auto & value = attribute.value();
+                        if (value == "min.x") {
+                            movementAreaMin.x = value.toInt();
+                        } else if (value == "min.y") {
+                            movementAreaMin.y = value.toInt();
+                        } else if (value == "min.z") {
+                            movementAreaMin.z = value.toInt();
+                        } else if (value == "max.x") {
+                            movementAreaMax.x = value.toInt();
+                        } else if (value == "max.y") {
+                            movementAreaMax.y = value.toInt();
+                        } else if (value == "max.z") {
+                            movementAreaMax.z = value.toInt();
+                        }
                     }
 
-                    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
+                    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
                     QStringRef attribute = attributes.value("ms");
                     if (attribute.isNull() == false) {
