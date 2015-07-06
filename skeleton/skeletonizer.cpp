@@ -1300,12 +1300,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 }
 
 uint Skeletonizer::findAvailableNodeID() {
-    uint nodeID = state->skeletonState->totalNodeElements;
-    //Test if node ID over node counter is available. If not, find a valid one.
-    while(findNodeByNodeID(nodeID)) {
-        nodeID++;
-    }
-    return std::max(nodeID,(uint)1);
+    return state->skeletonState->greatestNodeID + 1;
 }
 
 uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, const Coordinate & position,
@@ -1707,12 +1702,7 @@ QList<nodeListElement*> Skeletonizer::findNodesInTree(const treeListElement & tr
 }
 
 int Skeletonizer::findAvailableTreeID() {
-    int treeID = state->skeletonState->treeElements;
-    //Test if tree ID over tree counter is available. If not, find a valid one.
-    while(findTreeByTreeID(treeID)) {
-        treeID++;
-    }
-    return std::max(treeID,1);
+    return state->skeletonState->greatestTreeID + 1;
 }
 
 treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
