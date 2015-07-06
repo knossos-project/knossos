@@ -1,4 +1,4 @@
-# knossos [![Build Status](https://travis-ci.org/knossos-project/knossos.svg?branch=master)](https://travis-ci.org/knossos-project/knossos)
+# KNOSSOS
 
 ## Background
 KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed for the rapid reconstruction of neural morphology and connectivity.
