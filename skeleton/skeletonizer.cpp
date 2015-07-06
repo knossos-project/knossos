@@ -362,6 +362,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("inVp", QString::number(currentNode->createdInVp));
             xml.writeAttribute("inMag", QString::number(currentNode->createdInMag));
             xml.writeAttribute("time", QString::number(currentNode->timestamp));
+            for (auto propertyIt = currentNode->properties.constBegin(); propertyIt != currentNode->properties.constEnd(); ++propertyIt) {
+                xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
+            }
             xml.writeEndElement(); // end node
         }
         xml.writeEndElement(); // end nodes
@@ -408,15 +411,6 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 }
 
 bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
-    uint activeNodeID = 0, greatestNodeIDbeforeLoading = 0;
-    int greatestTreeIDbeforeLoading = 0;
-    int inMag, magnification = 0;
-    int globalMagnificationSpecified = false;
-
-    treeListElement *currentTree;
-
-    Coordinate loadedPosition;
-
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");
         return false;
@@ -425,9 +419,11 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     const bool merge = state->skeletonState->mergeOnLoadFlag;
     if (!merge) {
         clearSkeleton();
-    } else {
-        greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
-        greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
+        // Default for skeletons created in very old versions that don't have a
+        // skeletonTime.
+        // It is okay to set it to 0 in newer versions, because the time will be
+        // read from file anyway in case of no merge.
+        state->skeletonState->skeletonTime = 0;
     }
 
     // If "createdin"-node does not exist, skeleton was created in a version
@@ -435,21 +431,18 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
     strcpy(state->skeletonState->skeletonLastSavedInVersion, "pre-3.2");
 
-    // Default for skeletons created in very old versions that don't have a
-    // skeletonTime.
-    // It is okay to set it to 0 in newer versions, because the time will be
-    // read from file anyway in case of no merge.
-    if(!merge) {
-        state->skeletonState->skeletonTime = 0;
-    }
     QTime bench;
     QXmlStreamReader xml(&file);
-    bool minuteFile = false;//skeleton time in minutes and node time in seconds, TODO remove after transition time
 
     QString experimentName;
-    std::vector<uint> branchVector;
-    std::vector<std::pair<uint, QString>> commentsVector;
-    std::vector<std::pair<uint, uint>> edgeVector;
+    uint64_t activeNodeID = 0;
+    const uint64_t greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
+    const int greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
+    treeListElement *currentTree;
+    Coordinate loadedPosition;
+    std::vector<uint64_t> branchVector;
+    std::vector<std::pair<uint64_t, QString>> commentsVector;
+    std::vector<std::pair<uint64_t, uint64_t>> edgeVector;
 
     bench.start();
     const auto blockState = this->signalsBlocked();
@@ -483,18 +476,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if (experimentName != state->name) {
                         state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path, true);
                     }
-                } else if(xml.name() == "magnification" && xml.isStartElement()) {
-                    QStringRef attribute = attributes.value("factor");
-                     // This is for legacy skeleton files.
-                     // In the past, magnification was specified on a per-file basis
-                     // or not specified at all.
-                     // A magnification factor of 0 shall represent an unknown magnification.
-                    if(attribute.isNull() == false) {
-                        magnification = attribute.toLocal8Bit().toInt();
-                        globalMagnificationSpecified = true;
-                    } else {
-                        magnification = 0;
-                    }
                 } else if(xml.name() == "MovementArea") {
                     Coordinate movementAreaMin;//0
                     Coordinate movementAreaMax = state->boundary;
@@ -519,22 +500,12 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
                     Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
                 } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
-                    QStringRef attribute = attributes.value("ms");
-                    if (attribute.isNull() == false) {
-                        const auto ms = attribute.toInt();
-                        Session::singleton().annotationTime(ms);
-                    } else { // support for the few minutes files
-                        attribute = attributes.value("min");
-                        if (attribute.isNull() == false) {
-                            minuteFile = true;
-                            const auto ms = attribute.toInt() * 60 * 1000;
-                            Session::singleton().annotationTime(ms);
-                        }
-                    }
+                    const auto ms = attributes.value("ms").toULongLong();
+                    Session::singleton().annotationTime(ms);
                 } else if(xml.name() == "activeNode" && !merge) {
                     QStringRef attribute = attributes.value("id");
                     if(attribute.isNull() == false) {
-                        activeNodeID = attribute.toLocal8Bit().toUInt();
+                        activeNodeID = attribute.toULongLong();
                     }
                 } else if(xml.name() == "scale") {
                     QStringRef attribute = attributes.value("x");
@@ -625,12 +596,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "branchpoint") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("id");
-                    uint nodeID;
                     if(attribute.isNull() == false) {
-                        if(merge == false) {
-                            nodeID = attribute.toLocal8Bit().toUInt();
-                        } else {
-                            nodeID = attribute.toLocal8Bit().toUInt() + greatestNodeIDbeforeLoading;
+                        uint64_t nodeID = attribute.toULongLong();;
+                        if(merge) {
+                            nodeID += greatestNodeIDbeforeLoading;
                         }
                         branchVector.emplace_back(nodeID);
                     }
@@ -645,17 +614,13 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "comment") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("node");
-                    uint nodeID;
-                    if(attribute.isNull() == false) {
-                        if(merge == false) {
-                            nodeID = attribute.toLocal8Bit().toUInt();
-                        } else {
-                            nodeID = attribute.toLocal8Bit().toUInt() + greatestNodeIDbeforeLoading;
-                        }
+                    uint64_t nodeID = attribute.toULongLong();
+                    if(merge) {
+                        nodeID += greatestNodeIDbeforeLoading;
                     }
                     attribute = attributes.value("content");
                     if((!attribute.isNull()) && (!attribute.isEmpty())) {
-                        commentsVector.emplace_back(nodeID, attribute.toLocal8Bit());
+                        commentsVector.emplace_back(nodeID, attribute.toString());
                     }
                 }
                 xml.skipCurrentElement();
@@ -663,12 +628,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         } else if(xml.name() == "thing") {
             QXmlStreamAttributes attributes = xml.attributes();
 
-            int neuronID;
+            int treeID = 0;
             QStringRef attribute = attributes.value("id");
             if(attribute.isNull() == false) {
-                neuronID = attribute.toLocal8Bit().toInt();
-            } else {
-                neuronID = 0; // whatever
+                treeID = attribute.toInt();
             }
             // color: -1 causes default color assignment
             color4F neuronColor;
@@ -698,16 +661,16 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             }
 
             if(merge) {
-                neuronID += greatestTreeIDbeforeLoading;
-                currentTree = addTreeListElement(neuronID, neuronColor);
-                neuronID = currentTree->treeID;
+                treeID += greatestTreeIDbeforeLoading;
+                currentTree = addTreeListElement(treeID, neuronColor);
+                treeID = currentTree->treeID;
             } else {
-                currentTree = addTreeListElement(neuronID, neuronColor);
+                currentTree = addTreeListElement(treeID, neuronColor);
             }
 
             attribute = attributes.value("comment"); // the tree comment
             if(attribute.isNull() == false && attribute.length() > 0) {
-                addTreeComment(currentTree->treeID, attribute.toLocal8Bit().data());
+                addTreeComment(currentTree->treeID, attribute.toString());
             } else {
                 addTreeComment(currentTree->treeID, treeCmtOnMultiLoad);
             }
@@ -716,86 +679,41 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "nodes") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "node") {
-                            attributes = xml.attributes();
-
-                            uint nodeID;
-                            attribute = attributes.value("id");
-                            if(attribute.isNull() == false) {
-                                nodeID = attribute.toLocal8Bit().toUInt();
-                            } else {
-                                nodeID = 0;
-                            }
-
-                            float radius;
-                            attribute = attributes.value("radius");
-                            if(attribute.isNull() == false) {
-                                radius = attribute.toLocal8Bit().toFloat();
-                            } else {
-                                radius = state->skeletonState->defaultNodeRadius;
-                            }
-
+                            uint64_t nodeID;
+                            float radius = state->skeletonState->defaultNodeRadius;
                             Coordinate currentCoordinate;
-                            attribute = attributes.value("x");
-                            if(attribute.isNull() == false) {
-                                currentCoordinate.x = attribute.toLocal8Bit().toInt() - 1;
-                                if(globalMagnificationSpecified) {
-                                    currentCoordinate.x = currentCoordinate.x * magnification;
-                                }
-                            } else {
-                                currentCoordinate.x = 0;
-                            }
-
-                            attribute = attributes.value("y");
-                            if(attribute.isNull() == false) {
-                                currentCoordinate.y = attribute.toLocal8Bit().toInt() - 1;
-                                if(globalMagnificationSpecified) {
-                                    currentCoordinate.y = currentCoordinate.y * magnification;
-                                }
-                            } else {
-                                currentCoordinate.y = 0;
-                            }
-
-                            attribute = attributes.value("z");
-                            if(attribute.isNull() == false) {
-                                currentCoordinate.z = attribute.toLocal8Bit().toInt() - 1;
-                                if(globalMagnificationSpecified) {
-                                    currentCoordinate.z = currentCoordinate.z * magnification;
-                                }
-                            } else {
-                                currentCoordinate.z = 0;
-                            }
-
-                            ViewportType VPtype;
-                            attribute = attributes.value("inVp");
-                            if(attribute.isNull() == false) {
-                                VPtype = static_cast<ViewportType>(attribute.toLocal8Bit().toInt());
-                            } else {
-                                VPtype = VIEWPORT_UNDEFINED;
-                            }
-
-                            attribute = attributes.value("inMag");
-                            if(attribute.isNull() == false) {
-                                inMag = attribute.toLocal8Bit().toInt();
-                            } else {
-                                inMag = magnification; // For legacy skeleton files
-                            }
-
-                            attribute = attributes.value("time");
-                            auto ms = Session::singleton().annotationTime();// for legacy skeleton files (without time) add current runtime
-                            if(attribute.isNull() == false) {
-                                auto ms = attribute.toInt();
-                                if (minuteFile) {// nml with minutes in it?
-                                    ms = ms * 1000;//node time was saved in seconds → ms
+                            ViewportType inVP = VIEWPORT_UNDEFINED;
+                            int inMag = 0;
+                            uint64_t ms = 0;
+                            QVariantHash properties;
+                            for (const auto & attribute : xml.attributes()) {
+                                const auto & name = attribute.name();
+                                const auto & value = attribute.value();
+                                if (name == "id") {
+                                    nodeID = {value.toULongLong()};
+                                } else if (name == "radius") {
+                                    radius = {value.toFloat()};
+                                } else if (name == "x") {
+                                    currentCoordinate.x = {value.toInt() - 1};
+                                } else if (name == "y") {
+                                    currentCoordinate.y = {value.toInt() - 1};
+                                } else if (name == "z") {
+                                    currentCoordinate.z = {value.toInt() - 1};
+                                } else if (name == "inVp") {
+                                    inVP = static_cast<ViewportType>(value.toInt());
+                                } else if (name == "inMag") {
+                                    inMag = {value.toInt()};
+                                } else if (name == "time") {
+                                    ms = {value.toULongLong()};
+                                } else {
+                                    properties.insert(name.toString(), value.toString());
                                 }
                             }
 
-                            if(merge == false) {
-                                addNode(nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, ms, false);
-                            }
-                            else {
+                            if (merge) {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, ms, false);
                             }
+                            addNode(nodeID, radius, treeID, currentCoordinate, inVP, inMag, ms, false, properties);
                         }
                         xml.skipCurrentElement();
                     } // end while nodes
@@ -804,22 +722,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
                             attributes = xml.attributes();
-                            // Add edge
-                            uint sourcecNodeId;
-                            attribute = attributes.value("source");
-                            if(attribute.isNull() == false) {
-                                sourcecNodeId = attribute.toLocal8Bit().toUInt();
-                            } else {
-                                sourcecNodeId = 0;
-                            }
-                            uint targetNodeId;
-                            attribute = attributes.value("target");
-                            if(attribute.isNull() == false) {
-                                targetNodeId = attribute.toLocal8Bit().toUInt();
-                            } else {
-                                targetNodeId = 0;
-                            }
-
+                            const uint64_t sourcecNodeId = attributes.value("source").toULongLong();
+                            const uint64_t targetNodeId = attributes.value("target").toULongLong();
                             edgeVector.emplace_back(sourcecNodeId, targetNodeId);
                         }
                         xml.skipCurrentElement();
