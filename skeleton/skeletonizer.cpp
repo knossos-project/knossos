@@ -89,57 +89,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(tru
     state->skeletonState->unsavedChanges = false;
 }
 
-nodeListElement *Skeletonizer::addNodeListElement(uint nodeID,
-              float radius,
-              nodeListElement **currentNode,
-              const Coordinate & position,
-              int inMag) {
-
-    nodeListElement *newElement = NULL;
-
-    /*
-     * This skeleton modifying function does not lock the skeleton and therefore
-     * has to be called from functions that do lock and NEVER directly.
-     *
-     */
-
-    newElement = (nodeListElement*) malloc(sizeof(nodeListElement));
-    if(newElement == NULL) {
-        qDebug() << "Out of memory while trying to allocate memory for a new nodeListElement.";
-        return NULL;
-    }
-    memset(newElement, '\0', sizeof(nodeListElement));
-
-    if((*currentNode) == NULL) {
-        // Requested to add a node to a list that hasn't yet been started.
-        *currentNode = newElement;
-        newElement->previous = NULL;
-        newElement->next = NULL;
-    }
-    else {
-        newElement->previous = *currentNode;
-        newElement->next = (*currentNode)->next;
-        (*currentNode)->next = newElement;
-        if(newElement->next) {
-            newElement->next->previous = newElement;
-        }
-    }
-
-    newElement->position = position;
-    //Assign radius
-    newElement->radius = radius;
-    //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
-    //Take the provided nodeID.
-
-    newElement->numSegs = 0;
-    newElement->nodeID = nodeID;
-    newElement->isBranchNode = false;
-    newElement->selected = false;
-    newElement->createdInMag = inMag;
-
-    return newElement;
-}
-
 segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
     nodeListElement *sourceNode,
     nodeListElement *targetNode) {
@@ -213,7 +162,7 @@ uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, 
                           clickedCoordinate,
                           VPtype,
                           state->magnification,
-                          -1,
+                          boost::none,
                           true);
     if(!addedNodeID) {
         qDebug() << "Error: Could not add new node!";
@@ -244,7 +193,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCo
                            clickedCoordinate,
                            VPtype,
                            state->magnification,
-                           -1,
+                           boost::none,
                            true);
     if(!targetNodeID) {
         qDebug() << "Could not add new node while trying to add node and link with active node!";
@@ -1303,53 +1252,41 @@ uint Skeletonizer::findAvailableNodeID() {
     return state->skeletonState->greatestNodeID + 1;
 }
 
-uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, const Coordinate & position,
-                           ViewportType VPtype, int inMag, int time, int respectLocks) {
-    nodeListElement *tempNode = NULL;
-    treeListElement *tempTree = NULL;
-    floatCoordinate lockVector;
-
+bool Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
+        , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
     state->skeletonState->branchpointUnresolved = false;
 
      // respectLocks refers to locking the position to a specific coordinate such as to
      // disallow tracing areas further than a certain distance away from a specific point in the
      // dataset.
-
-    //qDebug() << state->skeletonState->lockedPosition.x  << " " << state->skeletonState->lockedPosition.y  << " " << state->skeletonState->lockedPosition.z;
-
-
-
-    if(respectLocks) {
+    if (respectLocks) {
         if(state->skeletonState->positionLocked) {
             if (state->viewerState->lockComment == QString(state->skeletonState->onCommentLock)) {
                 unlockPosition();
                 return false;
             }
 
+            floatCoordinate lockVector;
             lockVector.x = (float)position.x - (float)state->skeletonState->lockedPosition.x;
             lockVector.y = (float)position.y - (float)state->skeletonState->lockedPosition.y;
             lockVector.z = (float)position.z - (float)state->skeletonState->lockedPosition.z;
 
             float lockDistance = euclidicNorm(&lockVector);
-            if(lockDistance > state->skeletonState->lockRadius) {
-                qDebug("Node is too far away from lock point (%f), not adding.", lockDistance);
+            if (lockDistance > state->skeletonState->lockRadius) {
+                qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
                 return false;
             }
         }
     }
 
-    if(nodeID) {
-        tempNode = findNodeByNodeID(nodeID);
-    }
-
-    if(tempNode) {
-        qDebug("Node with ID %u already exists, no node added.", nodeID);
+    if (nodeID == 0 && findNodeByNodeID(nodeID)) {
+        qDebug() << tr("Node with ID %1 already exists, no node added.").arg(nodeID);
         return false;
     }
-    tempTree = findTreeByTreeID(treeID);
+    auto * const tempTree = findTreeByTreeID(treeID);
 
-    if(!tempTree) {
-        qDebug("There exists no tree with the provided ID %d!", treeID);
+    if (!tempTree) {
+        qDebug() << tr("There exists no tree with the provided ID %1!").arg(treeID);
         return false;
     }
 
@@ -1359,29 +1296,39 @@ uint Skeletonizer::addNode(uint nodeID, float radius, int treeID, const Coordina
     // One more node in this tree.
     ++tempTree->size;
 
-    if(nodeID == 0) {
+    if (nodeID == 0) {
         nodeID = findAvailableNodeID();
     }
 
-    tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag);
-    tempNode->correspondingTree = tempTree;
-    tempNode->comment = NULL;
-    tempNode->createdInVp = VPtype;
+    if (!time) {//time was not provided
+        time = Session::singleton().annotationTime() + Session::singleton().currentTimeSliceMs();
+    }
 
-    if(tempTree->firstNode == NULL) {
+    auto * const tempNode = new nodeListElement{nodeID, radius, position, inMag, VPtype, time.get(), properties, *tempTree};
+    auto * currentNode = &(tempTree->firstNode);
+    if ((*currentNode) == nullptr) {
+        // Requested to add a node to a list that hasn't yet been started.
+        *currentNode = tempNode;
+        tempNode->previous = nullptr;
+        tempNode->next = nullptr;
+    } else {
+        tempNode->previous = *currentNode;
+        tempNode->next = (*currentNode)->next;
+        (*currentNode)->next = tempNode;
+        if (tempNode->next) {
+            tempNode->next->previous = tempNode;
+        }
+    }
+
+    if (tempTree->firstNode == nullptr) {
         tempTree->firstNode = tempNode;
     }
 
     updateCircRadius(tempNode);
 
-    if (time == -1) {//time was not provided
-        time = Session::singleton().annotationTime() + Session::singleton().currentTimeSliceMs();
-    }
-    tempNode->timestamp = time;
-
     state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
 
-    if(nodeID > state->skeletonState->greatestNodeID) {
+    if (nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
     }
     state->skeletonState->unsavedChanges = true;

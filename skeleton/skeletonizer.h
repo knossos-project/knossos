@@ -29,7 +29,9 @@
 #include "widgets/viewport.h"
 
 #include <QObject>
-#include <QtCore>
+#include <QVariantHash>
+
+#include <boost/optional.hpp>
 
 #include <unordered_map>
 
@@ -178,14 +180,13 @@ public slots:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint findAvailableNodeID();
-    uint addNode(uint nodeID, float radius, int treeID, const Coordinate & position, ViewportType VPtype, int inMag, int time, int respectLocks);
+    bool addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
     static stack *newStack(int size);
     static bool delStack(stack *stack);
 
-    static nodeListElement * addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, const Coordinate & position, int inMag);
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
