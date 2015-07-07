@@ -169,14 +169,14 @@ uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, 
         return 0;
     }
 
-    setActiveNode(NULL, addedNodeID);
+    setActiveNode(NULL, addedNodeID.get());
 
     if(state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-        pushBranchNode(true, true, NULL, addedNodeID);
-        addComment("First Node", NULL, addedNodeID);
+        pushBranchNode(true, true, NULL, addedNodeID.get());
+        addComment("First Node", NULL, addedNodeID.get());
     }
-    return addedNodeID;
+    return addedNodeID.get();
 }
 
 uint Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
@@ -200,18 +200,18 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCo
         return false;
     }
 
-    addSegment(state->skeletonState->activeNode->nodeID, targetNodeID);
+    addSegment(state->skeletonState->activeNode->nodeID, targetNodeID.get());
 
     if(makeNodeActive) {
-        setActiveNode(NULL, targetNodeID);
+        setActiveNode(NULL, targetNodeID.get());
     }
     if (state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-        pushBranchNode(true, true, NULL, targetNodeID);
-        addComment("First Node", NULL, targetNodeID);
+        pushBranchNode(true, true, NULL, targetNodeID.get());
+        addComment("First Node", NULL, targetNodeID.get());
     }
 
-    return targetNodeID;
+    return targetNodeID.get();
 }
 
 void Skeletonizer::autoSaveIfElapsed() {
@@ -1156,7 +1156,7 @@ uint64_t Skeletonizer::findAvailableNodeID() {
     return {state->skeletonState->greatestNodeID + 1};
 }
 
-bool Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
+boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
         , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
     state->skeletonState->branchpointUnresolved = false;
 
@@ -1167,7 +1167,7 @@ bool Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID
         if(state->skeletonState->positionLocked) {
             if (state->viewerState->lockComment == QString(state->skeletonState->onCommentLock)) {
                 unlockPosition();
-                return false;
+                return boost::none;
             }
 
             floatCoordinate lockVector;
@@ -1178,20 +1178,20 @@ bool Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID
             float lockDistance = euclidicNorm(&lockVector);
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
-                return false;
+                return boost::none;
             }
         }
     }
 
     if (nodeID == 0 && findNodeByNodeID(nodeID)) {
         qDebug() << tr("Node with ID %1 already exists, no node added.").arg(nodeID);
-        return false;
+        return boost::none;
     }
     auto * const tempTree = findTreeByTreeID(treeID);
 
     if (!tempTree) {
         qDebug() << tr("There exists no tree with the provided ID %1!").arg(treeID);
-        return false;
+        return boost::none;
     }
 
     // One node more in all trees

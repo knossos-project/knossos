@@ -180,7 +180,7 @@ public slots:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
-    bool addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
+    boost::optional<uint64_t> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
