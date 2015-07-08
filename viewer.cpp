@@ -988,7 +988,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         }
     }
 
-    Loader::Controller::singleton().unload();//unload all the cubes
+    Loader::Controller::singleton().unloadCurrentMagnification();//unload all the cubes
     //clear the viewports
     dc_reslice_notify_visible();
     oc_reslice_notify_visible();

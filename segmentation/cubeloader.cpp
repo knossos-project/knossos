@@ -34,7 +34,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
-    if ((state->magnification != 1) || Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {//snappy cache only mag1 capable
+    if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
         return false;
     }
     const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
