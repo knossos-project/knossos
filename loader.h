@@ -153,7 +153,7 @@ public:
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
-        QObject::connect(worker.get(), &Loader::Worker::refCountChange, this, &Loader::Controller::refCountChangeWorker);
+        QObject::connect(worker.get(), &Loader::Worker::refCountChange, this, &Loader::Controller::refCountChange);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
@@ -175,8 +175,6 @@ signals:
     void snappyCacheSupplySnappySignal(const CoordOfCube, const std::string cube);
 public slots:
     int getRefCount();
-private slots:
-    void refCountChangeWorker(bool isIncrement, int refCount);
 };
 }//namespace Loader
 

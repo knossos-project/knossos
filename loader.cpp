@@ -559,10 +559,6 @@ int Loader::Controller::getRefCount() {
     return (worker == nullptr) ? 0 : worker.get()->getRefCount();
 }
 
-void Loader::Controller::refCountChangeWorker(bool isIncrement, int refCount) {
-    emit refCountChange(isIncrement,refCount);
-}
-
 void Loader::Controller::startLoading(const Coordinate & center) {
     if (worker != nullptr) {
         worker.get()->startLoadingBusy = true;
