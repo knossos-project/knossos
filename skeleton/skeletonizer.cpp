@@ -283,9 +283,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
-    xml.writeAttribute("x", QString::number(state->scale.x / state->magnification));
-    xml.writeAttribute("y", QString::number(state->scale.y / state->magnification));
-    xml.writeAttribute("z", QString::number(state->scale.z / state->magnification));
+    xml.writeAttribute("x", QString::number(state->scale.x));
+    xml.writeAttribute("y", QString::number(state->scale.y));
+    xml.writeAttribute("z", QString::number(state->scale.z));
     xml.writeEndElement();
 
     xml.writeStartElement("RadiusLocking");
