@@ -49,7 +49,6 @@
 Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
-    window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();

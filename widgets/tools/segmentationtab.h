@@ -96,8 +96,8 @@ Q_OBJECT
 
     CategoryDelegate categoryDelegate;
 
-    QTreeView touchedObjsTable;
     QSplitter splitter;
+    QTreeView touchedObjsTable;
     QTreeView objectsTable;
     QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;

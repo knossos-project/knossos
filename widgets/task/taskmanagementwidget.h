@@ -32,16 +32,16 @@ protected:
 
     QVBoxLayout mainLayout;
     QHBoxLayout hLayout;
+    QGroupBox taskInfoGroupBox{"Task Info"};
     QFormLayout formLayout;
     QVBoxLayout vLayout;
+    QGroupBox taskManagementGroupBox{"Task Management"};
     QGridLayout gridLayout;
 
-    QGroupBox taskInfoGroupBox{"Task Info"};
     QLabel taskLabel;
     QLabel descriptionLabel;
     QLabel commentLabel;
 
-    QGroupBox taskManagementGroupBox{"Task Management"};
     QPushButton startNewTaskButton{"Start new Task"};
     QPushButton loadLastSubmitButton{"Load last Submit"};
     QLineEdit submitCommentEdit;
