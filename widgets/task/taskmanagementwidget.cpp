@@ -179,8 +179,8 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     setCursor(Qt::ArrowCursor);
 
     if (handleError({res.first, res.second.first})) {
-        saveAndLoadFile(res.second.first, res.second.second);
         updateAndRefreshWidget();//task infos changed
+        saveAndLoadFile(res.second.first, res.second.second);
     }
 }
 
