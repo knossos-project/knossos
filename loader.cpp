@@ -134,6 +134,10 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
     }
 }
 
+bool Loader::Controller::isFinished() {
+    return worker != nullptr ? worker->isFinished.load() : true;//no loader == done?
+}
+
 void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
     const auto INNER_MULT_VECTOR = [](const floatCoordinate v) {
         return v.x * v.y * v.z;
@@ -563,14 +567,9 @@ void Loader::Worker::cleanup(const Coordinate center) {
     state->protectCube2Pointer->unlock();
 }
 
-int Loader::Controller::getRefCount() {
-    return (worker == nullptr) ? 0 : worker.get()->getRefCount();
-}
-
 void Loader::Controller::startLoading(const Coordinate & center) {
     if (worker != nullptr) {
-        worker.get()->startLoadingBusy = true;
-        emit refCountChange(true,getRefCount());
+        worker->isFinished = false;
         emit loadSignal(++loadingNr, center);
     }
 }
@@ -589,8 +588,10 @@ bool isOverlay(const Loader::CubeType type) {
     throw std::runtime_error("unknown value for Loader::CubeType");
 }
 
-int Loader::Worker::getRefCount() {
-    return dcDownload.size() + ocDownload.size() + (startLoadingBusy ? 1 : 0);
+void Loader::Worker::broadcastProgress(bool startup) {
+    auto count = dcDownload.size() + dcDecompression.size() + ocDownload.size() + ocDecompression.size();
+    isFinished = count == 0;
+    emit progress(startup, count);
 }
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center) {
@@ -703,13 +704,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto * reply = qnam.get(request);
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
-            emit refCountChange(true,getRefCount());
+            broadcastProgress(true);
             QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qCritical() << "no slots" << static_cast<int>(type) << cubeHash.size() << freeSlots.size();
                     downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
-                    emit refCountChange(false,getRefCount());
+                    broadcastProgress();
                     return;
                 }
                 auto * currentSlot = freeSlots.front();
@@ -735,7 +736,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         downloads[globalCoord]->deleteLater();
                         downloads.erase(globalCoord);
                         decompressions.erase(globalCoord);
-                        emit refCountChange(false,getRefCount());
+                        broadcastProgress();
                     });
                     decompressions[globalCoord].reset(watcher);
                     watcher->setFuture(future);
@@ -756,7 +757,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     }
                     downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
-                    emit refCountChange(false,getRefCount());
+                    broadcastProgress();
                 }
             });
         }
@@ -773,6 +774,4 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
         }
     }
-    startLoadingBusy = false;
-    emit refCountChange(false,getRefCount());
 }

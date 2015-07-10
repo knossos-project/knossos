@@ -146,7 +146,7 @@ signals:
     void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
-    void updateLoaderProgress(bool isIncrement, int refCount);
+    void updateLoaderProgress(int refCount);
 
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);

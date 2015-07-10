@@ -94,7 +94,7 @@ private:
     std::list<char*> freeOcSlots;
     int currentMaxMetric;
 
-    bool startLoadingBusy = false;
+    std::atomic_bool isFinished{false};
     uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
@@ -121,15 +121,15 @@ public://matsch
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
-    int getRefCount();
     void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
     void snappyCacheFlush();
+    void broadcastProgress(bool startup = false);
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
 signals:
-    void refCountChange(bool isIncrement, int refCount);
+    void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
     void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
@@ -155,7 +155,8 @@ public:
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
-        QObject::connect(worker.get(), &Loader::Worker::refCountChange, this, &Loader::Controller::refCountChange);
+        QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
+        QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
         QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), &Loader::Worker::unloadCurrentMagnification, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
@@ -169,14 +170,14 @@ public:
     }
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
+    bool isFinished();
 signals:
+    void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
-public slots:
-    int getRefCount();
 };
 }//namespace Loader
 

@@ -225,7 +225,7 @@ void MainWindow::createToolbars() {
     loaderLastProgress = 0;
     loaderProgress->setFixedWidth(25);
     loaderProgress->setAlignment(Qt::AlignCenter);
-    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::refCountChange, this, &MainWindow::updateLoaderProgress);
+    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::progress, this, &MainWindow::updateLoaderProgress);
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
@@ -245,7 +245,7 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
-void MainWindow::updateLoaderProgress(bool, int refCount) {
+void MainWindow::updateLoaderProgress(int refCount) {
     if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
         return;
     }
