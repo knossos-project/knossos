@@ -226,7 +226,7 @@ void TaskManagementWidget::setActiveUser(const QString &username) {
 }
 
 void TaskManagementWidget::setTask(const QString & task) {
-    taskLabel.setText("<font color='green'>" + task + "</font>");
+    taskLabel.setText(task);
 }
 
 void TaskManagementWidget::setDescription(const QString & description) {
