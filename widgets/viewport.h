@@ -161,7 +161,7 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QElapsedTimer timeFBase;
 public:
     const static uint numberViewports = 4;
-    explicit Viewport(QWidget *parent, int viewportType, uint newId);
+    explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void setDock(bool isDock);
@@ -192,7 +192,7 @@ protected:
     void keyReleaseEvent(QKeyEvent *event) override;
 
     uint id; // VP_UPPERLEFT, ...
-    int viewportType; // XY_VIEWPORT, ...
+    ViewportType viewportType; // XY_VIEWPORT, ...
     int baseEventX; //last x position
     int baseEventY; //last y position
 

@@ -58,7 +58,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
     new QVBoxLayout(this);
 }
 
-Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
+Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
         QOpenGLWidget(parent), id(newId), viewportType(viewportType),
         isDocked(true), floatParent(nullptr), resizeButtonHold(false) {
     dockParent = parent;
@@ -122,7 +122,14 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
 }
 
 void Viewport::initializeGL() {
-    initializeOpenGLFunctions();
+    if (viewportType == VIEWPORT_XY) {//we want only one output
+        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
+                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
+                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+    }
+    if (!initializeOpenGLFunctions()) {
+        qDebug() << "initializeOpenGLFunctions failed";
+    }
     oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
@@ -197,10 +204,6 @@ void Viewport::initializeGL() {
 
     if (viewportType != VIEWPORT_SKELETON) {
         createOverlayTextures();
-    }
-
-    if(viewportType == VIEWPORT_SKELETON) {//we want only one output
-        qDebug() << reinterpret_cast<const char*>(glGetString(GL_VERSION));
     }
 }
 
