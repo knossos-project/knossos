@@ -14,10 +14,14 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");
 
-    statusLabel.setWordWrap(true);
-    descriptionLabel.setWordWrap(true);
-    commentLabel.setWordWrap(true);
+    for (auto && label : {&statusLabel, &descriptionLabel, &commentLabel}) {
+        label->setWordWrap(true);
+        label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    }
+    descriptionLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
+    commentLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
 
+    formLayout.setSizeConstraint(QLayout::SetMinimumSize);
     formLayout.addRow("Current Task: ", &taskLabel);
     formLayout.addRow("Description: ", &descriptionLabel);
     formLayout.addRow("Comment: ", &commentLabel);
