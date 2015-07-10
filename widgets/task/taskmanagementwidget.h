@@ -69,7 +69,7 @@ signals:
     void visibilityChanged(bool);
 
 private:
-    bool handleError(QPair<bool, QString> res);
+    bool handleError(const QPair<bool, QString> & res, const QString & successText = "");
 
     void showEvent(QShowEvent * showEvent) override {
         QDialog::showEvent(showEvent);

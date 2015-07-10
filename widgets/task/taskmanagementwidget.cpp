@@ -56,9 +56,9 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     });
 }
 
-bool TaskManagementWidget::handleError(QPair<bool, QString> res) {
+bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const QString & successText) {
     if (res.first) {
-        setResponse("<font color='green'>" + res.second + "</font>");
+        setResponse("<font color='green'>" + successText + "</font>");
         return true;
     } else {
         setResponse("<font color='red'>" + res.second + "</font>");
@@ -167,7 +167,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     const auto res = Network::singleton().getFile(url);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError({res.first, res.second.first})) {
+    if (handleError({res.first, res.second.second})) {
         saveAndLoadFile(res.second.first, res.second.second);
     }
 }
@@ -178,7 +178,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     const auto res = Network::singleton().getPost(url);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError({res.first, res.second.first})) {
+    if (handleError({res.first, res.second.second})) {
         updateAndRefreshWidget();//task infos changed
         saveAndLoadFile(res.second.first, res.second.second);
     }
@@ -199,12 +199,11 @@ bool TaskManagementWidget::submit(const bool final) {
     auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError(res)) {
+    if (handleError(res, "Task successfully submitted!")) {
         submitCommentEdit.clear();//clean comment if submit was successful
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 void TaskManagementWidget::resetSession(const QString &message) {
