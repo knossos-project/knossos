@@ -469,7 +469,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     std::vector<nodeListElement*> selectedNodes;
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
-    if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag
+    if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
         auto nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
         nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
@@ -480,10 +480,10 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         selectedNodes = nodeSelection(event->pos().x(), event->pos().y(), VPfound);
     }
     state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
-    if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-        Skeletonizer::singleton().selectNodes(selectedNodes);
-    } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
+    if (event->modifiers().testFlag(Qt::ControlModifier)) {
         Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
+    } else {
+        Skeletonizer::singleton().selectNodes(selectedNodes);
     }
 }
 
