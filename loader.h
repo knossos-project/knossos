@@ -170,6 +170,7 @@ public:
     }
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
+public slots:
     bool isFinished();
 signals:
     void progress(int count);

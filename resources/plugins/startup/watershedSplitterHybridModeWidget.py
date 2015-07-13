@@ -313,7 +313,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
 
     def waitForLoader(self):
         busyScope = self.BusyCursorScope()
-        while knossos_global_loader.getRefCount() > 0:
+        while not knossos_global_loader.isFinished():
             Qt.QApplication.processEvents()
             time.sleep(0)
         return
