@@ -29,6 +29,7 @@
 
 #include <QElapsedTimer>
 #include <QObject>
+#include <QPair>
 #include <QString>
 #include <QTimer>
 
@@ -48,6 +49,7 @@ class Session : public QObject {
     void handleTimeSlice();
 
 public:
+    QPair<QString, QString> task;
     AnnotationMode annotationMode;
 
     Coordinate movementAreaMin; // Center of movement area

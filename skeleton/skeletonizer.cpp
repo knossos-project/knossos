@@ -273,6 +273,11 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetPath);
     xml.writeEndElement();
 
+    xml.writeStartElement("task");
+    xml.writeAttribute("category", Session::singleton().task.first);
+    xml.writeAttribute("name", Session::singleton().task.second);
+    xml.writeEndElement();
+
     xml.writeStartElement("MovementArea");
     xml.writeAttribute("min.x", QString::number(Session::singleton().movementAreaMin.x));
     xml.writeAttribute("min.y", QString::number(Session::singleton().movementAreaMin.y));
@@ -434,7 +439,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     QTime bench;
     QXmlStreamReader xml(&file);
 
-    QString experimentName;
+    QString experimentName, taskCategory, taskName;
     uint64_t activeNodeID = 0;
     const uint64_t greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
     const int greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
@@ -587,6 +592,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         const auto idleTime = attribute.toString().toInt();
                         //subract from annotationTime
                         Session::singleton().annotationTime(annotationTime - idleTime);
+                    }
+                } else if(xml.name() == "task") {
+                    for (auto && attribute : attributes) {
+                        auto key = attribute.name();
+                        if (key == "category") {
+                            taskCategory = attribute.value().toString();
+                        } else if (key == "name") {
+                            taskName = attribute.value().toString();
+                        }
                     }
                 }
                 xml.skipCurrentElement();
@@ -742,9 +756,26 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         return false;
     }
 
-    if (!experimentName.isEmpty() && experimentName != state->name) {
-        const auto text = tr("The annotation (created in dataset “%1”) does not belong to this dataset (“%2”).").arg(experimentName).arg(state->name);
-        QMessageBox::information(state->viewer->window, tr("Wrong dataset"), text);
+    auto msg = tr("");
+    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
+    if (mismatchedDataset) {
+        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(state->name);
+    }
+    const auto currentTaskCategory = Session::singleton().task.first;
+    const auto currentTaskName = Session::singleton().task.second;
+    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
+    if (mismatchedDataset && mismatchedTask) {
+        msg += "\n\n";
+    }
+    if (mismatchedTask) {
+        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
+    }
+    if (!msg.isEmpty()) {
+        QMessageBox msgBox(state->viewer->window);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
+        msgBox.setInformativeText(msg);
+        msgBox.exec();
     }
 
     for (const auto & elem : edgeVector) {

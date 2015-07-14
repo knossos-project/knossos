@@ -20,12 +20,10 @@ class TaskManagementWidget : public QDialog {
     void saveAndLoadFile(const QString & filename, const QByteArray content);
 public:
     explicit TaskManagementWidget(QWidget *parent = nullptr);
-    void setResponse(const QString & message);
-    void setActiveUser(const QString & username);
-    void setTask(const QString & task);
-    void resetSession(const QString & message);
 
     TaskLoginWidget taskLoginWidget;
+
+    QString username;
 
 protected:
     QLabel statusLabel;
@@ -39,8 +37,8 @@ protected:
     QGridLayout gridLayout;
 
     QLabel taskLabel;
-    QLabel descriptionLabel;
-    QLabel commentLabel;
+    QLabel categoryDescriptionLabel;
+    QLabel taskCommentLabel;
 
     QPushButton startNewTaskButton{"Start new Task"};
     QPushButton loadLastSubmitButton{"Load last Submit"};
@@ -52,8 +50,6 @@ protected:
 
 public slots:
     void updateAndRefreshWidget();
-    void setDescription(const QString & description);
-    void setComment(const QString & comment);
 
     void submitFinal();
     bool submit(const bool final = false);
@@ -64,8 +60,6 @@ public slots:
     void logoutButtonClicked();
 
 signals:
-    void autosaveSignal();
-    bool loadAnnotationFiles(QStringList fileNames);
     void visibilityChanged(bool);
 
 private:

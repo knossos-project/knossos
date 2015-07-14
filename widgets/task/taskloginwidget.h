@@ -28,7 +28,6 @@ public:
     explicit TaskLoginWidget(QWidget * parent = nullptr);
     void saveSettings();
     void setResponse(const QString & message);
-    void resetSession(const QString & message);
 };
 
 #endif // TASKLOGINWIDGET_H

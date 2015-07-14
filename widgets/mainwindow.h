@@ -140,9 +140,6 @@ signals:
 
     treeListElement *addTreeListElementSignal(int treeID, color4F color);
 
-    void updateTaskDescriptionSignal(QString description);
-    void updateTaskCommentSignal(QString comment);
-
     void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);

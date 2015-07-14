@@ -1705,8 +1705,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
     QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
     QObject::connect(window, &MainWindow::startRenderTimerSignal, timer, static_cast<void(QTimer::*)(int)>(&QTimer::start));
-    QObject::connect(window, &MainWindow::updateTaskDescriptionSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setDescription);
-    QObject::connect(window, &MainWindow::updateTaskCommentSignal, window->widgetContainer->taskManagementWidget, &TaskManagementWidget::setComment);
     //end mainwindow signals
     //viewport signals
     QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);

@@ -1,6 +1,7 @@
 #include "taskloginwidget.h"
 
 #include "network.h"
+#include "session.h"
 #include "stateInfo.h"
 #include "widgets/GuiConstants.h"
 
@@ -62,11 +63,8 @@ void TaskLoginWidget::saveSettings() {
     settings.endGroup();
 }
 
-void TaskLoginWidget::resetSession(const QString & message) {
-    setResponse(message);
-}
-
 void TaskLoginWidget::setResponse(const QString &message) {
+    Session::singleton().task = {};
     response.setText(message);
     show();
 }
