@@ -225,7 +225,7 @@ public slots:
     void resetButtonClicked();
     bool setOrientation(ViewportType orientation);
     void showContextMenu(const QPoint &point);
-    void takeSnapshot(QString path, const bool withOverlay, bool withSkeleton, const bool withScale, bool withVpPlanes);
+    void takeSnapshot(const QString & path, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // VIEWPORT_H

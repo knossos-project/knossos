@@ -519,7 +519,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay && state->viewerState->showOverlay, true, state->viewerState->drawVPCrosshairs);
+    state->viewer->renderer->renderOrthogonalVP(vpID, RenderOptions(true, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -883,11 +883,11 @@ void Viewport::resetButtonClicked() {
     }
 }
 
-void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
+void Viewport::takeSnapshot(const QString & path, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, 2048, 2048);
     QOpenGLFramebufferObject fbo(2048, 2048, QOpenGLFramebufferObject::Depth);
-
+    const RenderOptions options(false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
@@ -900,11 +900,11 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
             renderVolumeVP();
         }
         else {
-            state->viewer->renderer->renderSkeletonVP(withSkeleton, withVpPlanes);
+            state->viewer->renderer->renderSkeletonVP(options);
         }
     }
     else {
-        state->viewer->renderer->renderOrthogonalVP(id, withOverlay, withSkeleton, false);
+        state->viewer->renderer->renderOrthogonalVP(id, options);
     }
     if(id != VIEWPORT_SKELETON && withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
