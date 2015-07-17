@@ -73,13 +73,14 @@ public:
     void setFrontFacePerspective(uint currentVP);
     void renderViewportFrontFace(uint currentVP);
     void renderSizeLabel(uint currentVP, const int fontSize = defaultFonsSize);
+    void renderScaleBar(uint currentVP, const int thickness, const int fontSize = defaultFonsSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
 
     uint renderSegPlaneIntersection(segmentListElement *segment);
-    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize);
+    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType, const RenderOptions & options = RenderOptions());

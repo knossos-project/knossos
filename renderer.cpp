@@ -236,19 +236,18 @@ static void restore_gl_state() {
     glPopClientAttrib();
 }
 
-void Renderer::renderText(const Coordinate & pos, const QString & str, const int fontSize) {
+void Renderer::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
     GLdouble x, y, z, model[16], projection[16];
     GLint gl_viewport[4];
     glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
     glGetDoublev(GL_PROJECTION_MATRIX, &projection[0]);
     glGetIntegerv(GL_VIEWPORT, gl_viewport);
     //retrieve 2d screen position from coordinate
-    gluProject(pos.x, pos.y, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
-
     backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), fontSize * refVPSkel->devicePixelRatio()));
+    gluProject(centered ? pos.x - QFontMetrics(painter.font()).width(str)/2 : pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
     painter.drawText(x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
@@ -465,7 +464,7 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glDisable(GL_BLEND);
     }
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
-        renderSizeLabel(currentVP);
+        renderScaleBar(currentVP, 2);
     }
 }
 
@@ -475,6 +474,21 @@ void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
     float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
     Coordinate pos(15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1);
     renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), fontSize);
+}
+
+void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
+    int edge_len = state->viewerState->vpConfigs[currentVP].edgeLength;
+    int min_x = std::round(0.05*edge_len), max_x =  min_x + edge_len/3, y = edge_len - min_x, z = -1;
+    glLineWidth(thickness);
+    glColor3f(0., 0., 0.);
+    glBegin(GL_LINES);
+    glVertex3f(min_x, y, z);
+    glVertex3f(max_x, y, z);
+    glEnd();
+    if (fontSize > 0) {
+        float size = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY/3*0.001;
+        renderText(Coordinate(min_x + edge_len/6, y, z), QString("%1 µm").arg(size), fontSize, true);
+    }
 }
 
 // Currently not used
