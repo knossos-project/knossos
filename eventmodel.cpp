@@ -57,7 +57,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
     auto& seg = Segmentation::singleton();
     state->skeletonState->branchpointUnresolved = false;
 
-    if (seg.brush.getTool() == brush_t::tool_t::hybrid || seg.brush.getTool() == brush_t::tool_t::merge) {
+    if (seg.brush.getTool() == brush_t::tool_t::merge) {
         merging(event, vp);
     } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
@@ -108,10 +108,6 @@ void merging(QMouseEvent *event, const int vp) {
                 }
                 if (seg.selectedObjectsCount() >= 2) {
                     seg.mergeSelectedObjects();
-                    if (seg.brush.getTool() == brush_t::tool_t::hybrid) {
-                        Skeletonizer::singleton().linkActiveToSubobjectNode(objectToMergeId, soid, pos, vp);
-                        Skeletonizer::singleton().selectSubobjectNode(objectToMergeId, soid, pos, vp);
-                    }
                 }
             }
             seg.touchObjects(soid);
@@ -454,9 +450,6 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     segmentation.selectObject(objIndex);
                 }
                 if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
-                    if (segmentation.brush.getTool() == brush_t::tool_t::hybrid) {
-                        Skeletonizer::singleton().selectSubobjectNode(objIndex, subobjectId, clickPos, VPfound);
-                    }
                     segmentation.touchObjects(subobjectId);
                 } else {
                     segmentation.untouchObjects();

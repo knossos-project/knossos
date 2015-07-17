@@ -195,9 +195,6 @@ public slots:
     void deleteSelectedTrees();
     void deleteSelectedNodes();
 
-    void selectSubobjectNode(const uint64_t objectId, const uint64_t subobjectId, const Coordinate & clickPosition, const int vpid);
-    void linkActiveToSubobjectNode(const uint64_t objectId, const uint64_t subobjectId, const Coordinate & clickPosition, const int vpid);
-
     bool delTree(int treeID);
     void clearSkeleton();
     void autoSaveIfElapsed();

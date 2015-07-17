@@ -12,7 +12,7 @@ public:
         two_dim, three_dim
     };
     enum class tool_t {
-        hybrid, merge, add
+        merge, add
     };
     enum class view_t {
         xy, xz, yz

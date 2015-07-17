@@ -523,14 +523,10 @@ void MainWindow::createMenus() {
     segEditMenu->addSeparator();
 
 
-    const QString branchToolTip{"Create Nodes when merging."};
     const QString mergeToolTip{"Right click to merge.\nHold SHIFT to unmerge.\nHold CTRL to work on object parts only."};
     const QString paintToolTip{"Create overlay data for the selected object.\nHold SHIFT to erase.\nErase any if none is selected."};
 
     auto & brushModeGroup = *new QActionGroup(this);
-    auto & hybridModeAction = *brushModeGroup.addAction(tr("Hybrid Mode"));
-    hybridModeAction.setCheckable(true);
-    hybridModeAction.setStatusTip(branchToolTip);
     auto & mergeModeAction = *brushModeGroup.addAction(tr("Merge/Unmerge Mode"));
     mergeModeAction.setCheckable(true);
     mergeModeAction.setStatusTip(mergeToolTip);
@@ -538,7 +534,7 @@ void MainWindow::createMenus() {
     paintModeAction.setCheckable(true);
     paintModeAction.setStatusTip(paintToolTip);
 
-    segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
+    segEditMenu->addActions({&mergeModeAction, &paintModeAction});
     segEditMenu->addSeparator();
 
     addApplicationShortcut(*segEditMenu, QIcon(), tr("Push Branch"), this, [this](){
@@ -548,13 +544,12 @@ void MainWindow::createMenus() {
         Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
     }, Qt::Key_J);
 
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
-        hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
+    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&mergeModeAction, &paintModeAction](brush_t::tool_t value){
         mergeModeAction.setChecked(value == brush_t::tool_t::merge);
         paintModeAction.setChecked(value == brush_t::tool_t::add);
     });
-    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&hybridModeAction, &mergeModeAction, &paintModeAction](QAction * action){
-        const auto tool = action == &hybridModeAction ? brush_t::tool_t::hybrid : action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
+    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&mergeModeAction, &paintModeAction](QAction * action){
+        const auto tool = action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
         if (tool != Segmentation::singleton().brush.getTool()) {//no ping pong
             Segmentation::singleton().brush.setTool(tool);
         }
