@@ -632,7 +632,9 @@ void Segmentation::mergeSelectedObjects() {
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
-    while (selectedObjectIndices.size() > 1) {
+    if (selectedObjectIndices.size() == 1) {
+        deleteSelectedObjects();
+    } else while (selectedObjectIndices.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);
         unselectObject(objectToUnmerge);
