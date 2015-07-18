@@ -692,7 +692,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "nodes") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "node") {
-                            uint64_t nodeID;
+                            uint64_t nodeID = 0;
                             float radius = state->skeletonState->defaultNodeRadius;
                             Coordinate currentCoordinate;
                             ViewportType inVP = VIEWPORT_UNDEFINED;
