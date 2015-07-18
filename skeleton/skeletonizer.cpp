@@ -178,7 +178,7 @@ uint64_t Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, 
     return addedNodeID.get();
 }
 
-uint Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
+uint64_t Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
     if(!state->skeletonState->activeNode) {
         qDebug() << "Please create a node before trying to link nodes.";
         return false;

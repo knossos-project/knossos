@@ -243,7 +243,7 @@ public slots:
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
-    uint addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
+    uint64_t addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
     static bool updateCircRadius(nodeListElement *node);
