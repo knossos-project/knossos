@@ -35,7 +35,6 @@
 
 #include <cstring>
 #include <queue>
-#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -1888,9 +1887,9 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
         return false;
     }
 
-    std::set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
+    std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
     std::queue<nodeListElement*> queue;
-    std::set<nodeListElement*> visitedNodes;
+    std::unordered_set<nodeListElement*> visitedNodes;
     visitedNodes.insert(node);
     queue.push(node);
     while(queue.size() > 0) {
@@ -2663,7 +2662,7 @@ void Skeletonizer::deleteSelectedNodes() {
 
 bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement & w) const {
     std::queue<const nodeListElement*> queue;
-    std::set<const nodeListElement*> visitedNodes;
+    std::unordered_set<const nodeListElement*> visitedNodes;
     visitedNodes.insert(&v);
     queue.push(&v);
     while(queue.size() > 0) {
