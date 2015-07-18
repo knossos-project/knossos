@@ -5,25 +5,23 @@
 
 #include <QList>
 
+#include <memory>
+
 class nodeListElement;
 class segmentListElement;
 
 class treeListElement {
 public:
-    treeListElement();
-    treeListElement(int treeID, QString comment, color4F color);
-    treeListElement(int treeID, QString comment, float r, float g, float b, float a);
+    std::unique_ptr<treeListElement> next;
+    treeListElement * previous = nullptr;
+    std::unique_ptr<nodeListElement> firstNode;
 
-    treeListElement *next;
-    treeListElement *previous;
-    nodeListElement *firstNode;
-
-    bool render=true;
+    bool render = true;
 
     int treeID;
     color4F color;
     bool selected;
-    int colorSetManually;
+    bool colorSetManually;
     std::size_t size;
 
     char comment[8192];

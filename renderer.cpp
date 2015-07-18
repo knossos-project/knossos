@@ -2246,13 +2246,13 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
 
     /* We iterate over the whole tree structure. */
-    currentTree = state->skeletonState->firstTree;
+    currentTree = state->skeletonState->firstTree.get();
 
     while(currentTree) {
 
         /* Render only trees we want to be rendered*/
         if(!currentTree->render) {
-            currentTree = currentTree->next;
+            currentTree = currentTree->next.get();
             continue;
         }
 
@@ -2262,12 +2262,12 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
 
         if(state->skeletonState->displayMode & DSP_SELECTED_TREES) {
             if(currentTree->selected == false) {
-                currentTree = currentTree->next;
+                currentTree = currentTree->next.get();
                 continue;
             }
         }
 
-        currentNode = currentTree->firstNode;
+        currentNode = currentTree->firstNode.get();
         while(currentNode) {
 
             /* We start with frustum culling:
@@ -2283,7 +2283,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
             that includes its segments. */
 
             if(!sphereInFrustum(currNodePos, currentNode->circRadius, currentVP)) {
-                currentNode = currentNode->next;
+                currentNode = currentNode->next.get();
                 lastNode = lastRenderedNode = NULL;
                 continue;
             }
@@ -2429,10 +2429,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
 
             lastNode = currentNode;
 
-            currentNode = currentNode->next;
+            currentNode = currentNode->next.get();
         }
 
-        currentTree = currentTree->next;
+        currentTree = currentTree->next.get();
     }
 
     if(state->viewerState->selectModeFlag)

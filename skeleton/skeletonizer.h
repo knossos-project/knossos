@@ -26,6 +26,7 @@
  */
 
 #include "mesh.h"
+#include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
 #include <QObject>
@@ -33,12 +34,12 @@
 
 #include <boost/optional.hpp>
 
+#include <memory>
 #include <unordered_map>
 
 class nodeListElement;
 class segmentListElement;
 class commentListElement;
-class treeListElement;
 
 struct stack;
 
@@ -51,7 +52,7 @@ struct skeletonState {
     bool unsavedChanges;
     int skeletonTime;
 
-    treeListElement *firstTree;
+    std::unique_ptr<treeListElement> firstTree;
     treeListElement *activeTree;
     nodeListElement *activeNode;
 

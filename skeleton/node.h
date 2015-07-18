@@ -24,7 +24,7 @@ public:
     QVariantHash properties;
     treeListElement * correspondingTree = nullptr;
 
-    nodeListElement * next = nullptr;
+    std::unique_ptr<nodeListElement> next = nullptr;
     nodeListElement * previous = nullptr;
     segmentListElement * firstSegment = nullptr;
     int numSegs;// counts forward AND backward segments!!!

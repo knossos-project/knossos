@@ -46,7 +46,7 @@ QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
 }
 
 treeListElement *SkeletonProxy::first_tree() {
-    return state->skeletonState->firstTree;
+    return state->skeletonState->firstTree.get();
 }
 
 bool SkeletonProxy::delete_tree(int tree_id) {
@@ -236,10 +236,10 @@ bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
 
 QList<treeListElement *> *SkeletonProxy::trees() {
     QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree;
+    treeListElement *currentTree = state->skeletonState->firstTree.get();
     while (currentTree) {
         trees->append(currentTree);
-        currentTree = currentTree->next;
+        currentTree = currentTree->next.get();
     }
     return trees;
 }
