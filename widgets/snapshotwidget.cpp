@@ -5,6 +5,8 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <math.h>
+
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QDir>
@@ -15,6 +17,11 @@
 SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowTitle("Snapshot Tool");
+    sizeCombo.addItem("8192 x 8192");
+    sizeCombo.addItem("4096 x 4096");
+    sizeCombo.addItem("2048 x 2048");
+    sizeCombo.addItem("1024 x 1024");
+    sizeCombo.setCurrentIndex(0); // 1000 elements default
 
     auto viewportChoiceLayout = new QVBoxLayout();
     vpXYRadio.setChecked(true);
@@ -24,7 +31,6 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     viewportChoiceLayout->addWidget(&vp3dRadio);
     QObject::connect(&vp3dRadio, &QRadioButton::toggled, [this](bool checked) {
         withOverlayCheck.setHidden(checked);
-        withScaleCheck.setHidden(checked);
         if(Segmentation::singleton().volume_render_toggle == false) {
             withVpPlanes.setVisible(checked);
         }
@@ -33,7 +39,6 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     auto imageOptionsLayout = new QVBoxLayout();
     withOverlayCheck.setChecked(true);
     withScaleCheck.setChecked(true);
-    withOverlayCheck.setHidden(true);
     withVpPlanes.setHidden(true);
     imageOptionsLayout->addWidget(&withOverlayCheck);
     imageOptionsLayout->addWidget(&withSkeletonCheck);
@@ -48,6 +53,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     settingsLayout->addWidget(line);
     settingsLayout->addLayout(imageOptionsLayout);
 
+    mainLayout.addWidget(&sizeCombo);
     mainLayout.addLayout(settingsLayout);
     mainLayout.addWidget(&snapshotButton);
 
@@ -62,7 +68,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpYZRadio.isChecked() ? VIEWPORT_YZ :
                                                     VIEWPORT_SKELETON;
-            emit snapshotRequest(path, vp, withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
+            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
     });
 

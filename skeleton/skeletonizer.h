@@ -26,17 +26,20 @@
  */
 
 #include "mesh.h"
+#include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
 #include <QObject>
-#include <QtCore>
+#include <QVariantHash>
 
+#include <boost/optional.hpp>
+
+#include <memory>
 #include <unordered_map>
 
 class nodeListElement;
 class segmentListElement;
 class commentListElement;
-class treeListElement;
 
 struct stack;
 
@@ -49,7 +52,7 @@ struct skeletonState {
     bool unsavedChanges;
     int skeletonTime;
 
-    treeListElement *firstTree;
+    std::unique_ptr<treeListElement> firstTree;
     treeListElement *activeTree;
     nodeListElement *activeNode;
 
@@ -114,7 +117,7 @@ struct skeletonState {
     int totalNodeElements;
     int totalSegmentElements;
 
-    uint greatestNodeID;
+    uint64_t greatestNodeID;
     int greatestTreeID;
 
     nodeListElement *selectedCommentNode;
@@ -177,16 +180,15 @@ public slots:
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
-    uint findAvailableNodeID();
-    uint addNode(uint nodeID, float radius, int treeID, Coordinate *position, ViewportType VPtype, int inMag, int time, int respectLocks);
+    uint64_t findAvailableNodeID();
+    boost::optional<uint64_t> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
     static stack *newStack(int size);
     static bool delStack(stack *stack);
 
-    static nodeListElement *addNodeListElement(uint nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
-    static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
+    static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     void selectNodes(const std::vector<nodeListElement*> & nodes);
     void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
@@ -195,9 +197,9 @@ public slots:
     void deleteSelectedNodes();
 
     bool delTree(int treeID);
-    bool clearSkeleton(int loadingSkeleton);
+    void clearSkeleton();
     void autoSaveIfElapsed();
-    uint64_t UI_addSkeletonNode(Coordinate *clickedCoordinate, ViewportType VPtype);
+    uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype, const uint64_t nodeId = 0);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
@@ -212,7 +214,7 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
-    bool jumpToActiveNode();
+    void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 
     bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
@@ -227,7 +229,9 @@ public slots:
     bool moveToNextNode();
     bool moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
+    static QList<treeListElement *> findTrees(const QString & comment);
     static nodeListElement *findNodeByNodeID(uint nodeID);
+    static QList<nodeListElement *> findNodesInTree(const treeListElement & tree, const QString & comment);
     static bool addSegment(uint sourceNodeID, uint targetNodeID);
     static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
@@ -239,7 +243,7 @@ public slots:
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
-    uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, ViewportType VPtype, int makeNodeActive);
+    uint64_t addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);
     static bool updateCircRadius(nodeListElement *node);

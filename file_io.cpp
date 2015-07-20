@@ -7,6 +7,9 @@
 
 #include <quazip/quazipfile.h>
 
+#include <QDir>
+#include <QFileInfo>
+#include <QRegularExpression>
 #include <QStandardPaths>
 
 #include <ctime>
@@ -31,7 +34,7 @@ QString annotationFileDefaultPath() {
 void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad, bool *isSuccess) {
     bool annotationSuccess = false;
     bool mergelistSuccess = false;
-    QRegExp cubeRegEx = QRegExp(R"regex(.*x([0-9]*)y([0-9]*)z([0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
+    QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
@@ -48,10 +51,11 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             if (fileInside == "microworker.txt") {
                 Segmentation::singleton().jobLoad(file);
             }
-            if (cubeRegEx.exactMatch(fileInside)) {
+            const auto match = cubeRegEx.match(fileInside);
+            if (match.hasMatch()) {
                 file.open(QIODevice::ReadOnly);
-                const auto cubeCoord = CoordOfCube(cubeRegEx.cap(1).toInt(), cubeRegEx.cap(2).toInt(), cubeRegEx.cap(3).toInt());
-                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, file.readAll().toStdString());
+                const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
+                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, match.captured("mag").toInt(), file.readAll().toStdString());
             }
         }
         state->viewer->loader_notify();
@@ -104,16 +108,20 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
         }
         QTime time;
         time.start();
-        for (const auto & pair : Loader::Controller::singleton().getAllModifiedCubes()) {
-            QuaZipFile file_write(&archive_write);
-            const auto cubeCoord = pair.first;
-            const auto name = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(state->name).arg(1).arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
-            const bool open = zipCreateFile(file_write, name, 1);
-            if (open) {
-                file_write.write(pair.second.c_str(), pair.second.length());
-            } else {
-                qDebug() << filename << "saving snappy cube failed";
-                allSuccess = false;
+        const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+        for (std::size_t i = 0; i < cubes.size(); ++i) {
+            const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(state->name).arg(QString::number(std::pow(2, i)));
+            for (const auto & pair : cubes[i]) {
+                QuaZipFile file_write(&archive_write);
+                const auto cubeCoord = pair.first;
+                const auto name = magName.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
+                const bool open = zipCreateFile(file_write, name, 1);
+                if (open) {
+                    file_write.write(pair.second.c_str(), pair.second.length());
+                } else {
+                    qDebug() << filename << "saving snappy cube failed";
+                    allSuccess = false;
+                }
             }
         }
         qDebug() << "save" << time.restart();

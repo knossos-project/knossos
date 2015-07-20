@@ -3,42 +3,37 @@
 
 #include "widgets/viewport.h"
 
+#include <QVariantHash>
+
 #include <cstddef>
 
+class commentListElement;
 class segmentListElement;
 class treeListElement;
 
 class nodeListElement {
 public:
-    nodeListElement();
-    nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, ViewportType inVp, int inMag, int time);
+    nodeListElement(const uint64_t nodeID, const float radius, const Coordinate & position, const int inMag, const ViewportType inVP, const uint64_t ms, const QVariantHash & properties, treeListElement & tree);
 
-    nodeListElement *next;
-    nodeListElement *previous;
-
-    segmentListElement *firstSegment;
-
-    treeListElement *correspondingTree;
-
+    uint64_t nodeID;
     float radius;
-
-    //can be VIEWPORT_XY, ...
-    ViewportType createdInVp;
+    Coordinate position;
     int createdInMag;
-    int timestamp;
+    ViewportType createdInVp;
+    uint64_t timestamp;
+    QVariantHash properties;
+    treeListElement * correspondingTree = nullptr;
 
-    class commentListElement *comment;
-
-    // counts forward AND backward segments!!!
-    int numSegs;
-
+    std::unique_ptr<nodeListElement> next = nullptr;
+    nodeListElement * previous = nullptr;
+    segmentListElement * firstSegment = nullptr;
+    int numSegs;// counts forward AND backward segments!!!
+    commentListElement * comment = nullptr;
     // circumsphere radius - max. of length of all segments and node radius.
     //Used for frustum culling
-    float circRadius;
-    uint64_t nodeID;
-    Coordinate position;
-    bool isBranchNode;
-    bool selected;
+    float circRadius = radius;
+    bool isBranchNode = false;
+    bool selected = false;
 
     QList<segmentListElement *> *getSegments();
 };

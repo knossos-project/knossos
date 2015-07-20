@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
+#include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 
@@ -166,7 +167,6 @@ class Skeletonizer;
 class Renderer;
 class EventModel;
 class Viewport;
-class MainWindow;
 class Viewer : public QThread {
     Q_OBJECT
 private:
@@ -180,7 +180,8 @@ public:
     Skeletonizer *skeletonizer;
     EventModel *eventModel;
     Renderer *renderer;
-    MainWindow *window;
+    MainWindow mainWindow;
+    MainWindow *window = &mainWindow;
 
     floatCoordinate v1, v2, v3;
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;

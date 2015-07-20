@@ -1,13 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/splash.png</file>
-
         <file>resources/doc/collection.qhc</file>
         <file>resources/doc/doc.qch</file>
-
         <file>resources/datasets/e2006.k.conf</file>
         <file>resources/datasets/ek0563.k.conf</file>
-
         <file>resources/icons/application-exit.png</file>
         <file>resources/icons/appointment.png</file>
         <file>resources/icons/configure-toolbars.png</file>
@@ -38,5 +35,6 @@
         <file>resources/icons/zoom-in.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
+        <file>resources/plugins/startup/watershedSplitterHybridModeWidget.py</file>
     </qresource>
 </RCC>

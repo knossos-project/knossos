@@ -228,7 +228,9 @@ void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
 }
 
 void ToolsCommandsTab::jumpToActiveButtonClicked() {
-    Skeletonizer::singleton().jumpToActiveNode();
+    if(state->skeletonState->activeNode) {
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
+    }
 }
 
 void ToolsCommandsTab::newTreeButtonClicked() {

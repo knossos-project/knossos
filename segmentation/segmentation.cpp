@@ -632,7 +632,9 @@ void Segmentation::mergeSelectedObjects() {
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
-    while (selectedObjectIndices.size() > 1) {
+    if (selectedObjectIndices.size() == 1) {
+        deleteSelectedObjects();
+    } else while (selectedObjectIndices.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);
         unselectObject(objectToUnmerge);
@@ -641,7 +643,13 @@ void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
     emit todosLeftChanged();
 }
 
-void Segmentation::placeCommentForSelectedObject(const QString comment) {
+void Segmentation::jumpToSelectedObject() {
+    if (!selectedObjectIndices.empty()) {
+        jumpToObject(objects[selectedObjectIndices.front()]);
+    }
+}
+
+void Segmentation::placeCommentForSelectedObject(const QString & comment) {
     if(selectedObjectIndices.size() == 1) {
         int index = selectedObjectIndices.front();
         objects[index].comment = comment;

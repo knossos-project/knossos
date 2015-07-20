@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
-    QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
+    QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     global_argc = argc;
@@ -611,8 +611,6 @@ bool Knossos::configDefaults() {
                 break;
             }
             state->viewerState->vpConfigs[i].draggedNode = NULL;
-            state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-            state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
             state->viewerState->vpConfigs[i].edgeLength = 350;
 
             state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;

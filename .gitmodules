@@ -1,0 +1,6 @@
+[submodule "installer/aur/knossos-git"]
+	path = installer/aur/knossos-git
+	url = ssh://aur@aur4.archlinux.org/knossos-git.git
+[submodule "installer/aur/knossos"]
+	path = installer/aur/knossos
+	url = ssh://aur@aur4.archlinux.org/knossos.git

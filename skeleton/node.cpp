@@ -2,17 +2,8 @@
 
 #include <coordinate.h>
 
-nodeListElement::nodeListElement() {}
-
-nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int, float radius, ViewportType inVp, int inMag, int time) {
-    this->nodeID = nodeID;
-    this->radius = radius;
-
-    this->position = Coordinate(x, y, z);
-    this->createdInVp = inVp;
-    this->createdInMag = inMag;
-    this->timestamp = time;
-}
+nodeListElement::nodeListElement(const uint64_t nodeID, const float radius, const Coordinate & position, const int inMag, const ViewportType inVP, const uint64_t ms, const QVariantHash & properties, treeListElement & tree)
+        : nodeID{nodeID}, radius{radius}, position{position}, createdInMag{inMag}, createdInVp{inVP}, timestamp{ms}, properties{properties}, correspondingTree{&tree} {}
 
 QList<segmentListElement *> *nodeListElement::getSegments() {
     QList<segmentListElement *> *segments = new QList<segmentListElement *>();
@@ -23,5 +14,3 @@ QList<segmentListElement *> *nodeListElement::getSegments() {
     }
     return segments;
 }
-
-

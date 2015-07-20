@@ -107,8 +107,6 @@ Scripting::Scripting() : _ctx(NULL) {
     PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
 
-    changeWorkingDirectory();
-    executeFromUserDirectory();
     addCustomPythonPath();
 
 #ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
@@ -116,6 +114,10 @@ Scripting::Scripting() : _ctx(NULL) {
 #else
     _ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
 #endif
+
+    changeWorkingDirectory();
+    executeResourceStartup();
+    executeFromUserDirectory();
 
     autoStartTerminal();
 }
@@ -131,9 +133,8 @@ QVariant getSettingsValue(const QString &key) {
 void Scripting::autoStartTerminal() {
     auto value = getSettingsValue(PYTHON_AUTOSTART_TERMINAL);
     if (value.isNull()) { return; }
-    auto autoStartFolder = value.toBool();
-    if (autoStartFolder) {
-        qDebug() << "TRUE!";
+    auto autoStartTerminal = value.toBool();
+    if (autoStartTerminal) {
         state->viewer->window->widgetContainer->pythonPropertyWidget->openTerminal();
     }
 }
@@ -157,6 +158,21 @@ void Scripting::addCustomPythonPath() {
     }
 }
 
+void Scripting::runFile(const QString &filename) {
+    QFile pyFile(filename);
+    pyFile.open(QIODevice::ReadOnly);
+    QString s;
+    QTextStream textStream(&pyFile);
+    s.append(textStream.readAll());
+    pyFile.close();
+
+    _ctx.evalScript(s, Py_file_input);
+}
+
+void Scripting::addObject(const QString& name, QObject* object) {
+    _ctx.addObject(name, object);
+}
+
 void Scripting::executeFromUserDirectory() {
     auto value = getSettingsValue(PYTHON_AUTOSTART_FOLDER);
     if (value.isNull()) { return; }
@@ -174,6 +190,13 @@ void Scripting::executeFromUserDirectory() {
             continue;
         }
         _ctx.evalFile(script.canonicalFilePath());
+    }
+}
+
+void Scripting::executeResourceStartup() {
+    auto startupDir = QDir(":/resources/plugins/startup");
+    for (const auto & plugin : startupDir.entryInfoList()) {
+        runFile(plugin.absoluteFilePath());
     }
 }
 

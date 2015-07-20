@@ -94,7 +94,7 @@ private:
     std::list<char*> freeOcSlots;
     int currentMaxMetric;
 
-    bool startLoadingBusy = false;
+    std::atomic_bool isFinished{false};
     uint loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
@@ -112,22 +112,24 @@ private:
     const CubeType typeOc;
     const QString experimentName;
 public://matsch
-    std::unordered_set<CoordOfCube> OcModifiedCacheQueue;
-    std::unordered_map<CoordOfCube, std::string> snappyCache;
+    using CacheQueue = std::unordered_set<CoordOfCube>;
+    std::vector<CacheQueue> OcModifiedCacheQueue;
+    using SnappyCache = std::unordered_map<CoordOfCube, std::string>;
+    std::vector<SnappyCache> snappyCache;
     QMutex snappyMutex;
     QWaitCondition snappyFlushCondition;
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
-    int getRefCount();
-    void unload();
+    void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappy(const CoordOfCube, const std::string cube);
+    void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
     void snappyCacheFlush();
+    void broadcastProgress(bool startup = false);
     Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
 signals:
-    void refCountChange(bool isIncrement, int refCount);
+    void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
     void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
@@ -146,16 +148,17 @@ public:
     }
     void waitForWorkerThread();
     ~Controller();
-    void unload();
+    void unloadCurrentMagnification();
     template<typename... Args>
     void restart(Args&&... args) {
         waitForWorkerThread();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
-        QObject::connect(worker.get(), &Loader::Worker::refCountChange, this, &Loader::Controller::refCountChangeWorker);
+        QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
+        QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
-        QObject::connect(this, &Loader::Controller::unloadSignal, worker.get(), &Loader::Worker::unload, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), &Loader::Worker::unloadCurrentMagnification, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
@@ -167,16 +170,15 @@ public:
     }
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
+public slots:
+    bool isFinished();
 signals:
+    void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
-    void unloadSignal();
+    void unloadCurrentMagnificationSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappySignal(const CoordOfCube, const std::string cube);
-public slots:
-    int getRefCount();
-private slots:
-    void refCountChangeWorker(bool isIncrement, int refCount);
+    void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
 };
 }//namespace Loader
 

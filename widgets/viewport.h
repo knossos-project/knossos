@@ -135,11 +135,6 @@ struct vpConfig {
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
-
-    //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
-    //would result in a data pixel movement
-    float userMouseSlideX;
-    float userMouseSlideY;
 };
 
 class Viewport;
@@ -166,7 +161,7 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QElapsedTimer timeFBase;
 public:
     const static uint numberViewports = 4;
-    explicit Viewport(QWidget *parent, int viewportType, uint newId);
+    explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void setDock(bool isDock);
@@ -197,7 +192,7 @@ protected:
     void keyReleaseEvent(QKeyEvent *event) override;
 
     uint id; // VP_UPPERLEFT, ...
-    int viewportType; // XY_VIEWPORT, ...
+    ViewportType viewportType; // XY_VIEWPORT, ...
     int baseEventX; //last x position
     int baseEventY; //last y position
 
@@ -230,7 +225,7 @@ public slots:
     void resetButtonClicked();
     bool setOrientation(ViewportType orientation);
     void showContextMenu(const QPoint &point);
-    void takeSnapshot(QString path, const bool withOverlay, bool withSkeleton, const bool withScale, bool withVpPlanes);
+    void takeSnapshot(const QString & path, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // VIEWPORT_H

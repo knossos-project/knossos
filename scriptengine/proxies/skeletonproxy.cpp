@@ -41,8 +41,12 @@ treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
     return Skeletonizer::findTreeByTreeID(tree_id);
 }
 
+QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
+    return Skeletonizer::findTrees(comment);
+}
+
 treeListElement *SkeletonProxy::first_tree() {
-    return state->skeletonState->firstTree;
+    return state->skeletonState->firstTree.get();
 }
 
 bool SkeletonProxy::delete_tree(int tree_id) {
@@ -63,6 +67,10 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
 
 nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
+}
+
+QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(const treeListElement & tree, const QString & comment) {
+    return Skeletonizer::findNodesInTree(tree, comment);
 }
 
 bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
@@ -171,8 +179,10 @@ segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
     return Skeletonizer::findSegmentByNodeIDs(source_id, target_id);
 }
 
-bool SkeletonProxy::jump_to_active_node() {
-    return Skeletonizer::singleton().jumpToActiveNode();
+void SkeletonProxy::jump_to_node(nodeListElement *node) {
+    if(node) {
+        Skeletonizer::singleton().jumpToNode(*node);
+    }
 }
 
 bool SkeletonProxy::has_unsaved_changes() {
@@ -217,7 +227,7 @@ int SkeletonProxy::findAvailableNodeID() {
 
 bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
-    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, &coordinate, (ViewportType)inVp, inMag, time, false)) {
+    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, coordinate, (ViewportType)inVp, inMag, time, false)) {
         emit echo(QString("could not add the node with node id %1").arg(node_id));
         return false;
     }
@@ -226,10 +236,10 @@ bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
 
 QList<treeListElement *> *SkeletonProxy::trees() {
     QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree;
+    treeListElement *currentTree = state->skeletonState->firstTree.get();
     while (currentTree) {
         trees->append(currentTree);
-        currentTree = currentTree->next;
+        currentTree = currentTree->next.get();
     }
     return trees;
 }

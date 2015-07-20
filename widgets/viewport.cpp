@@ -58,7 +58,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
     new QVBoxLayout(this);
 }
 
-Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
+Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
         QOpenGLWidget(parent), id(newId), viewportType(viewportType),
         isDocked(true), floatParent(nullptr), resizeButtonHold(false) {
     dockParent = parent;
@@ -122,7 +122,14 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
 }
 
 void Viewport::initializeGL() {
-    initializeOpenGLFunctions();
+    if (viewportType == VIEWPORT_XY) {//we want only one output
+        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
+                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
+                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+    }
+    if (!initializeOpenGLFunctions()) {
+        qDebug() << "initializeOpenGLFunctions failed";
+    }
     oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
@@ -197,10 +204,6 @@ void Viewport::initializeGL() {
 
     if (viewportType != VIEWPORT_SKELETON) {
         createOverlayTextures();
-    }
-
-    if(viewportType == VIEWPORT_SKELETON) {//we want only one output
-        qDebug() << reinterpret_cast<const char*>(glGetString(GL_VERSION));
     }
 }
 
@@ -283,17 +286,16 @@ void Viewport::showContextMenu(const QPoint &point) {
 }
 
 void Viewport::enterEvent(QEvent *) {
-    setFocus();//get the keyboard focus on first mouse move so we don’t need permanent mousetracking (e.g. for D/F Movement)
+    activateWindow();//steal keyboard from other active windows
+    setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    bool clickEvent = false;
-
-    auto mouseBtn = QApplication::mouseButtons();
-    auto penmode = state->viewerState->penmode;
+    const auto mouseBtn = event->buttons();
+    const auto penmode = state->viewerState->penmode;
 
     if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
-        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        Qt::KeyboardModifiers modifiers = event->modifiers();
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
         bool alt = modifiers.testFlag(Qt::AltModifier);
 
@@ -301,25 +303,17 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
             moveVP(event);
         } else {// delegate behaviour
             eventDelegate->handleMouseMotionLeftHold(event, id);
-            clickEvent = true;
         }
     } else if(mouseBtn == Qt::MidButton) {
         eventDelegate->handleMouseMotionMiddleHold(event, id);
-        clickEvent = true;
     } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
         eventDelegate->handleMouseMotionRightHold(event, id);
-        clickEvent = true;
     }
     eventDelegate->handleMouseHover(event, id);
 
-    if(clickEvent) {
-        eventDelegate->mouseX = event->x();
-        eventDelegate->mouseY = event->y();
-    }
-    eventDelegate->mousePosX = event->x();
-    eventDelegate->mousePosY = event->y();
-
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
+
+    eventDelegate->prevMouseMove = event->pos();
 }
 
 void Viewport::setDock(bool isDock) {
@@ -359,13 +353,12 @@ void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
 
-    eventDelegate->mouseX = event->x();
-    eventDelegate->mouseY = event->y();
+    eventDelegate->mouseDown = event->pos();
 
     auto penmode = state->viewerState->penmode;
 
     if((penmode && event->button() == Qt::RightButton) || (!penmode && event->button() == Qt::LeftButton)) {
-        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        Qt::KeyboardModifiers modifiers = event->modifiers();
         const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
         const auto alt = modifiers.testFlag(Qt::AltModifier);
 
@@ -386,7 +379,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->signalRelay, this, event);
 
-    Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+    Qt::KeyboardModifiers modifiers = event->modifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
     const auto alt = modifiers.testFlag(Qt::AltModifier);
 
@@ -408,11 +401,9 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
-    for (std::size_t i = 0; i < Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].draggedNode = NULL;
-        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-    }
+    eventDelegate->userMouseSlide = {};
+    eventDelegate->arbNodeDragCache = {};
+    state->viewerState->vpConfigs[id].draggedNode = nullptr;
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
@@ -528,7 +519,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, state->overlay && state->viewerState->showOverlay, true, state->viewerState->drawVPCrosshairs);
+    state->viewer->renderer->renderOrthogonalVP(vpID, RenderOptions(true, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -639,8 +630,8 @@ void Viewport::moveVP(QMouseEvent *event) {
     const auto position = mapFromGlobal(event->globalPos());
     const auto horizontalSpace = parentWidget()->width() - width();
     const auto verticalSpace = parentWidget()->height() - height();
-    const auto desiredX = x() + position.x() - baseEventX;
-    const auto desiredY = y() + position.y() - baseEventY;
+    const auto desiredX = x() + position.x() - eventDelegate->mouseDown.x();
+    const auto desiredY = y() + position.y() - eventDelegate->mouseDown.y();
 
     const auto newX = std::max(0, std::min(horizontalSpace, desiredX));
     const auto newY = std::max(0, std::min(verticalSpace, desiredY));
@@ -892,11 +883,11 @@ void Viewport::resetButtonClicked() {
     }
 }
 
-void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
+void Viewport::takeSnapshot(const QString & path, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
-    glViewport(0, 0, 2048, 2048);
-    QOpenGLFramebufferObject fbo(2048, 2048, QOpenGLFramebufferObject::Depth);
-
+    glViewport(0, 0, size, size);
+    QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::Depth);
+    const RenderOptions options(false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
@@ -909,19 +900,32 @@ void Viewport::takeSnapshot(QString path, bool withOverlay, bool withSkeleton, b
             renderVolumeVP();
         }
         else {
-            state->viewer->renderer->renderSkeletonVP(withSkeleton, withVpPlanes);
+            state->viewer->renderer->renderSkeletonVP(options);
         }
     }
     else {
-        state->viewer->renderer->renderOrthogonalVP(id, withOverlay, withSkeleton, false);
+        state->viewer->renderer->renderOrthogonalVP(id, options);
     }
-    if(id != VIEWPORT_SKELETON && withScale) {
+    if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderSizeLabel(id);
+        state->viewer->renderer->renderScaleBar(id, std::ceil(0.006*size), 0);
     }
 
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
+    if(withScale && id != VIEWPORT_SKELETON) {
+        QString sizeLabel = QString::number(state->viewerState->vpConfigs[id].displayedlengthInNmY/3*0.001) + " µm";
+        int edge_len = state->viewerState->vpConfigs[id].edgeLength/3;
+        float scale = size/edge_len;
+        int min_x = edge_len*0.05*scale, x = min_x + edge_len/6*scale, y = size - min_x - std::ceil(0.006*size) - 3;
+
+        QPainter painter;
+        painter.begin(&image);
+        painter.setFont(QFont(painter.font().family(), std::ceil(0.02*size)));
+        QFontMetrics metrics(painter.font());
+        painter.drawText(x - metrics.width(sizeLabel)/2, y, sizeLabel);
+        painter.end();
+    }
     image.save(path);
     glPopAttrib(); // restore viewport setting
     fbo.bindDefault();

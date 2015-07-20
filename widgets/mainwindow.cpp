@@ -68,8 +68,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
-    skeletonFileHistory = new QQueue<QString>();
-    skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
+    skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
@@ -80,9 +79,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
-    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest, [this](QString path, ViewportType vp, bool withOverlay, bool withSkeleton, bool withScale, bool withVpPlanes) {
-       viewports[vp]->takeSnapshot(path, withOverlay, withSkeleton, withScale, withVpPlanes);
-    });
+    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest,
+        [this](const QString & path, ViewportType vp, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
+            viewports[vp]->takeSnapshot(path, size, withOverlay, withSkeleton, withScale, withVpPlanes);
+        });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -226,7 +226,7 @@ void MainWindow::createToolbars() {
     loaderLastProgress = 0;
     loaderProgress->setFixedWidth(25);
     loaderProgress->setAlignment(Qt::AlignCenter);
-    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::refCountChange, this, &MainWindow::updateLoaderProgress);
+    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::progress, this, &MainWindow::updateLoaderProgress);
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
@@ -246,7 +246,7 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
-void MainWindow::updateLoaderProgress(bool, int refCount) {
+void MainWindow::updateLoaderProgress(int refCount) {
     if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
         return;
     }
@@ -346,23 +346,19 @@ void MainWindow::updateTitlebar() {
     setWindowTitle(title);
 }
 
-// -- static methods -- //
-
 void MainWindow::updateRecentFile(const QString & fileName) {
-    bool notAlreadyExists = std::find(std::begin(*skeletonFileHistory), std::end(*skeletonFileHistory), fileName) == std::end(*skeletonFileHistory);
-    if (notAlreadyExists) {
-        if (skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
-            skeletonFileHistory->enqueue(fileName);
-        } else {//shrink if necessary
-            skeletonFileHistory->dequeue();
-            skeletonFileHistory->enqueue(fileName);
+    int pos = skeletonFileHistory.indexOf(fileName);
+    if (pos != -1) {//move to front if already existing
+        skeletonFileHistory.move(pos, 0);
+    } else {
+        if (skeletonFileHistory.size() == FILE_DIALOG_HISTORY_MAX_ENTRIES) {//shrink if necessary
+           skeletonFileHistory.pop_back();
         }
-    } else {//move to front if already existing
-        skeletonFileHistory->move(skeletonFileHistory->indexOf(fileName), 0);
+        skeletonFileHistory.push_front(fileName);
     }
     //update the menu
     int i = 0;
-    for (const auto & path : *skeletonFileHistory) {
+    for (const auto & path : skeletonFileHistory) {
         historyEntryActions[i]->setText(path);
         historyEntryActions[i]->setVisible(!path.isEmpty());
         ++i;
@@ -527,14 +523,10 @@ void MainWindow::createMenus() {
     segEditMenu->addSeparator();
 
 
-    const QString branchToolTip{"Create Nodes when merging."};
     const QString mergeToolTip{"Right click to merge.\nHold SHIFT to unmerge.\nHold CTRL to work on object parts only."};
     const QString paintToolTip{"Create overlay data for the selected object.\nHold SHIFT to erase.\nErase any if none is selected."};
 
     auto & brushModeGroup = *new QActionGroup(this);
-    auto & hybridModeAction = *brushModeGroup.addAction(tr("Hybrid Mode"));
-    hybridModeAction.setCheckable(true);
-    hybridModeAction.setStatusTip(branchToolTip);
     auto & mergeModeAction = *brushModeGroup.addAction(tr("Merge/Unmerge Mode"));
     mergeModeAction.setCheckable(true);
     mergeModeAction.setStatusTip(mergeToolTip);
@@ -542,7 +534,7 @@ void MainWindow::createMenus() {
     paintModeAction.setCheckable(true);
     paintModeAction.setStatusTip(paintToolTip);
 
-    segEditMenu->addActions({&hybridModeAction, &mergeModeAction, &paintModeAction});
+    segEditMenu->addActions({&mergeModeAction, &paintModeAction});
     segEditMenu->addSeparator();
 
     addApplicationShortcut(*segEditMenu, QIcon(), tr("Push Branch"), this, [this](){
@@ -552,13 +544,12 @@ void MainWindow::createMenus() {
         Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
     }, Qt::Key_J);
 
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&hybridModeAction, &mergeModeAction, &paintModeAction](brush_t::tool_t value){
-        hybridModeAction.setChecked(value == brush_t::tool_t::hybrid);
+    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&mergeModeAction, &paintModeAction](brush_t::tool_t value){
         mergeModeAction.setChecked(value == brush_t::tool_t::merge);
         paintModeAction.setChecked(value == brush_t::tool_t::add);
     });
-    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&hybridModeAction, &mergeModeAction, &paintModeAction](QAction * action){
-        const auto tool = action == &hybridModeAction ? brush_t::tool_t::hybrid : action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
+    QObject::connect(&brushModeGroup, &QActionGroup::triggered, [&mergeModeAction, &paintModeAction](QAction * action){
+        const auto tool = action == &mergeModeAction ? brush_t::tool_t::merge : brush_t::tool_t::add;
         if (tool != Segmentation::singleton().brush.getTool()) {//no ping pong
             Segmentation::singleton().brush.setTool(tool);
         }
@@ -661,7 +652,11 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), &Skeletonizer::jumpToActiveNode, Qt::Key_S);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), []() {
+        if(state->skeletonState->activeNode) {
+            Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
+        }
+    }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextNode, Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevNode, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
@@ -829,7 +824,7 @@ void MainWindow::newAnnotationSlot() {
             return;
         }
     }
-    Skeletonizer::singleton().clearSkeleton(false);
+    Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();
     state->skeletonState->unsavedChanges = false;
     Session::singleton().annotationFilename = "";
@@ -873,11 +868,11 @@ void MainWindow::saveSlot() {
             annotationFilename += ".k.zip";
         }
         if (state->skeletonState->autoFilenameIncrementBool) {
-            int index = skeletonFileHistory->indexOf(annotationFilename);
+            int index = skeletonFileHistory.indexOf(annotationFilename);
             updateFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
-                skeletonFileHistory->replace(index, annotationFilename);
-                historyEntryActions[index]->setText(skeletonFileHistory->at(index));
+                skeletonFileHistory.replace(index, annotationFilename);
+                historyEntryActions[index]->setText(annotationFilename);
             }
         }
         annotationFileSave(annotationFilename);
@@ -975,7 +970,7 @@ void MainWindow::clearSkeletonSlotGUI() {
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
-    Skeletonizer::singleton().clearSkeleton(false);
+    Skeletonizer::singleton().clearSkeleton();
     updateTitlebar();
 }
 
@@ -1112,7 +1107,7 @@ void MainWindow::saveSettings() {
     settings.setValue(SEGMENTATION_TOOL, static_cast<int>(Segmentation::singleton().brush.getTool()));
 
     int i = 0;
-    for (const auto & path : *skeletonFileHistory) {
+    for (const auto & path : skeletonFileHistory) {
         settings.setValue(QString("loaded_file%1").arg(i+1), path);
         ++i;
     }
@@ -1187,16 +1182,9 @@ void MainWindow::loadSettings() {
     const auto segmentationTool = static_cast<brush_t::tool_t>(settings.value(SEGMENTATION_TOOL, static_cast<int>(brush_t::tool_t::merge)).toInt());
     Segmentation::singleton().brush.setTool(segmentationTool);
 
-    updateRecentFile(settings.value(LOADED_FILE1, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE2, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE3, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE4, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE5, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE6, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE7, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE8, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE9, "").toString());
-    updateRecentFile(settings.value(LOADED_FILE10, "").toString());
+    for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
+        updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
+    }
 
     settings.endGroup();
     setGeometry(x, y, width, height);
@@ -1214,7 +1202,7 @@ void MainWindow::loadSettings() {
 void MainWindow::clearSettings() {
     QSettings settings;
 
-    skeletonFileHistory->clear();
+    skeletonFileHistory.clear();
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i]->setVisible(false);
@@ -1360,12 +1348,5 @@ void MainWindow::pythonFileSlot() {
     state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     state->viewerState->renderInterval = FAST;
-    QFile pyFile(pyFileName);
-    pyFile.open(QIODevice::ReadOnly);
-    QString s;
-    QTextStream textStream(&pyFile);
-    s.append(textStream.readAll());
-    pyFile.close();
-
-    state->scripting->_ctx.evalScript(s, Py_file_input);
+    state->scripting->runFile(pyFileName);
 }

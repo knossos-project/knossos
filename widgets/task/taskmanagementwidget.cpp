@@ -14,13 +14,17 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");
 
-    statusLabel.setWordWrap(true);
-    descriptionLabel.setWordWrap(true);
-    commentLabel.setWordWrap(true);
+    for (auto && label : {&statusLabel, &categoryDescriptionLabel, &taskCommentLabel}) {
+        label->setWordWrap(true);
+        label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    }
+    categoryDescriptionLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
+    taskCommentLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
 
+    formLayout.setSizeConstraint(QLayout::SetMinimumSize);
     formLayout.addRow("Current Task: ", &taskLabel);
-    formLayout.addRow("Description: ", &descriptionLabel);
-    formLayout.addRow("Comment: ", &commentLabel);
+    formLayout.addRow("Description: ", &categoryDescriptionLabel);
+    formLayout.addRow("Comment: ", &taskCommentLabel);
 
     taskInfoGroupBox.setLayout(&formLayout);
 
@@ -56,12 +60,12 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     });
 }
 
-bool TaskManagementWidget::handleError(QPair<bool, QString> res) {
+bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const QString & successText) {
     if (res.first) {
-        setResponse("<font color='green'>" + res.second + "</font>");
+        statusLabel.setText("<font color='green'>" + successText + "</font>");
         return true;
     } else {
-        setResponse("<font color='red'>" + res.second + "</font>");
+        statusLabel.setText("<font color='red'>" + res.second + "</font>");
         return false;
     }
 }
@@ -74,21 +78,26 @@ void TaskManagementWidget::updateAndRefreshWidget() {
 
     if (res.first) {
         QXmlStreamReader xml(res.second);
-        QString username;
-        QString taskName;
         if (xml.readNextStartElement() && xml.name() == "session") {
-            QXmlStreamAttributes attributes = xml.attributes();
+            const auto attributes = xml.attributes();
             username = attributes.value("username").toString();
-            taskName = attributes.value("task").toString();
-            //attributes.value("taskFile").toString();//TODO is it needed
-            setActiveUser(username);
-            setResponse("Hello " + username + "!");
-            setTask(taskName);
-            setDescription(QByteArray::fromBase64(attributes.value("description").toUtf8()));
-            setComment(QByteArray::fromBase64(attributes.value("comment").toUtf8()));
+            logoutButton.setText("Logout »" + username + "«");
+            statusLabel.setText("Hello " + username + "!");
+            const auto categoryDesciption = QByteArray::fromBase64(attributes.value("description").toUtf8());
+            const auto taskComment = QByteArray::fromBase64(attributes.value("comment").toUtf8());
+            categoryDescriptionLabel.setText(categoryDesciption);
+            taskCommentLabel.setText(taskComment);
+        }
+        QString task;
+        if (xml.readNextStartElement() && xml.name() == "task") {
+            const auto attributes = xml.attributes();
+            const auto taskCategory = attributes.value("category").toString();
+            const auto taskName = attributes.value("name").toString();
+            task = tr("%1 (%2)").arg(taskName).arg(taskCategory);
+            taskLabel.setText(task);
         }
         if (!username.isEmpty()) {
-            const bool hasTask = !taskName.isEmpty();
+            const bool hasTask = !task.isEmpty();
             //last submit/new task are mutually exclusive, show only one of both
             gridLayout.removeWidget(&loadLastSubmitButton);
             gridLayout.removeWidget(&startNewTaskButton);
@@ -137,7 +146,8 @@ void TaskManagementWidget::logoutButtonClicked() {
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res)) {
-        resetSession("<font color='green'>Logged out successfully.</font>");
+        hide();
+        taskLoginWidget.setResponse("<font color='green'>Logged out successfully.</font>");
     }
 }
 
@@ -167,7 +177,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     const auto res = Network::singleton().getFile(url);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError({res.first, res.second.first})) {
+    if (handleError({res.first, res.second.second})) {
         saveAndLoadFile(res.second.first, res.second.second);
     }
 }
@@ -178,9 +188,9 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     const auto res = Network::singleton().getPost(url);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError({res.first, res.second.first})) {
-        saveAndLoadFile(res.second.first, res.second.second);
+    if (handleError({res.first, res.second.second})) {
         updateAndRefreshWidget();//task infos changed
+        saveAndLoadFile(res.second.first, res.second.second);
     }
 }
 
@@ -199,41 +209,9 @@ bool TaskManagementWidget::submit(const bool final) {
     auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError(res)) {
+    if (handleError(res, "Task successfully submitted!")) {
         submitCommentEdit.clear();//clean comment if submit was successful
         return true;
-    } else {
-        return false;
     }
-}
-
-void TaskManagementWidget::resetSession(const QString &message) {
-    setResponse("");
-    setActiveUser("");
-    setTask("");
-    setDescription("");
-    setComment("");
-
-    hide();
-    taskLoginWidget.setResponse(message);
-}
-
-void TaskManagementWidget::setResponse(const QString &message) {
-    statusLabel.setText(message);
-}
-
-void TaskManagementWidget::setActiveUser(const QString &username) {
-    logoutButton.setText("Logout »" + username + "«");
-}
-
-void TaskManagementWidget::setTask(const QString & task) {
-    taskLabel.setText("<font color='green'>" + task + "</font>");
-}
-
-void TaskManagementWidget::setDescription(const QString & description) {
-    descriptionLabel.setText(description);
-}
-
-void TaskManagementWidget::setComment(const QString & comment) {
-    commentLabel.setText(comment);
+    return false;
 }

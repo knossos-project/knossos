@@ -45,6 +45,20 @@ constexpr int defaultFonsSize = 10;
 class Viewport;
 class segmentListElement;
 
+struct RenderOptions {
+    RenderOptions(const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
+                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true)
+        : drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
+          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection) {}
+    bool drawBoundaryBox;
+    bool drawCrosshairs;
+    bool drawOverlay;
+    bool drawSkeleton;
+    bool drawViewportPlanes;
+    bool highlightActiveNode;
+    bool highlightSelection;
+};
+
 class Renderer : public QObject {
     Q_OBJECT
     friend class MeshDecorator;
@@ -59,16 +73,17 @@ public:
     void setFrontFacePerspective(uint currentVP);
     void renderViewportFrontFace(uint currentVP);
     void renderSizeLabel(uint currentVP, const int fontSize = defaultFonsSize);
+    void renderScaleBar(uint currentVP, const int thickness, const int fontSize = defaultFonsSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
 
     uint renderSegPlaneIntersection(segmentListElement *segment);
-    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize);
+    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
-    void renderSkeleton(uint currentVP,uint viewportType);
+    void renderSkeleton(uint currentVP,uint viewportType, const RenderOptions & options = RenderOptions());
     bool resizemeshCapacity(mesh *toResize, uint n);
     bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
@@ -78,8 +93,8 @@ protected:
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
-    bool renderOrthogonalVP(uint currentVP, bool drawOverlay, bool drawSkeleton, bool drawCrosshairs);
-    bool renderSkeletonVP(bool drawSkeleton = true, bool drawVpPlanes = true);
+    bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
+    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
 };
 
 #endif // RENDERER_H

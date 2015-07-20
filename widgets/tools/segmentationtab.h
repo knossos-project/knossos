@@ -96,8 +96,8 @@ Q_OBJECT
 
     CategoryDelegate categoryDelegate;
 
-    QTreeView touchedObjsTable;
     QSplitter splitter;
+    QTreeView touchedObjsTable;
     QTreeView objectsTable;
     QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;
@@ -118,8 +118,7 @@ public:
     uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
     uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
 
-    template<typename Model>
-    friend void contextMenu(const SegmentationTab & tab, const QTreeView & table, Model & model, const QPoint & pos);
+    void contextMenu(const QTreeView & table, const QPoint & pos);
 public slots:
     void filter();
 };

@@ -25,22 +25,22 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "color4F.h"
-#include "viewport.h"
+#include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
+#include "viewport.h"
 #include "widgetcontainer.h"
-
-#include <array>
-#include <memory>
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 
-#include <QMainWindow>
-#include <QDropEvent>
-#include <QQueue>
 #include <QComboBox>
+#include <QDropEvent>
+#include <QList>
+#include <QMainWindow>
 #include <QToolBar>
 #include <QUndoStack>
-#include "scriptengine/proxies/skeletonproxy.h"
+
+#include <array>
+#include <memory>
 
 class QLabel;
 class QToolButton;
@@ -101,7 +101,7 @@ public:
     QAction *dragDatasetAction;
     QAction *recenterOnClickAction;
 
-    QQueue<QString> *skeletonFileHistory;
+    QList<QString> skeletonFileHistory;
     QFile *loadedFile;
 
     SkeletonProxy *skeletonProxy;
@@ -140,13 +140,10 @@ signals:
 
     treeListElement *addTreeListElementSignal(int treeID, color4F color);
 
-    void updateTaskDescriptionSignal(QString description);
-    void updateTaskCommentSignal(QString comment);
-
     void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
-    void updateLoaderProgress(bool isIncrement, int refCount);
+    void updateLoaderProgress(int refCount);
 
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);

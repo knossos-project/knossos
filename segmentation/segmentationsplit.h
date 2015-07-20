@@ -12,13 +12,13 @@ public:
         two_dim, three_dim
     };
     enum class tool_t {
-        hybrid, merge, add
+        merge, add
     };
     enum class view_t {
         xy, xz, yz
     };
     enum class shape_t {
-        square, circle
+        angular, round
     };
 
     void setInverse(const bool newInverse) {
@@ -69,12 +69,12 @@ signals:
     void toolChanged(const tool_t);
     void shapeChanged(const shape_t);
 private:
-    int radius = 10;
+    int radius = 100;
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
     tool_t tool = tool_t::merge;
     view_t view = view_t::xy;
-    shape_t shape = shape_t::circle;
+    shape_t shape = shape_t::round;
 };
 
 void connectedComponent(const Coordinate & seed);

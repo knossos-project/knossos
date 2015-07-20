@@ -75,8 +75,7 @@ add_custom_command(
 )
 
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
-    ${SRC_LIST} buildinfo.h ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns)
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
@@ -123,9 +122,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pedantic-errors")
 #target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")
-target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra" "-Wpedantic")
+target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
 #set(CMAKE_C_COMPILER "clang")
 #set(CMAKE_CXX_COMPILER "clang++")

@@ -221,8 +221,8 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     twodBtn.setToolTip("Only work on one 2D slice.");
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
-    brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     brushRadiusEdit.setRange(0, 1000);
+    brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
     toolsLayout.addWidget(&showAllChck);
@@ -387,8 +387,12 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
             Segmentation::singleton().jumpToObject(indexFromRow(touchedObjectModel, index));
         }
     });
-    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & point){contextMenu(*this, objectsTable, objectModel, point);});
-    QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & point){contextMenu(*this, touchedObjsTable, touchedObjectModel, point);});
+    QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
+        contextMenu(objectsTable, pos);
+    });
+    QObject::connect(&touchedObjsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
+        contextMenu(touchedObjsTable, pos);
+    });
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderAllObjs);
@@ -531,17 +535,15 @@ uint64_t SegmentationTab::indexFromRow(const TouchedObjectModel & model, const Q
     return model.objectCache[index.row()].get().index;
 }
 
-template<typename Model>
-void contextMenu(const SegmentationTab & tab, const QTreeView & table, Model & model, const QPoint & pos) {
+void SegmentationTab::contextMenu(const QTreeView & table, const QPoint & pos) {
     QMenu contextMenu;
     auto & jumpAction = *contextMenu.addAction("jump to object");
     auto & mergeAction = *contextMenu.addAction("merge");
     auto & deleteAction = *contextMenu.addAction("delete");
+    jumpAction.setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);
     deleteAction.setShortcut(Qt::Key_Delete);//a shortcut in a context menu doesn’t work but it _shows_ the shortcut used elsewhere
     contextMenu.setDefaultAction(&jumpAction);
-    QObject::connect(&jumpAction, &QAction::triggered, [&tab, pos, &table, &model](){
-        Segmentation::singleton().jumpToObject(tab.indexFromRow(model, table.indexAt(pos)));
-    });
+    QObject::connect(&jumpAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::jumpToSelectedObject);
     QObject::connect(&mergeAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
     QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
     contextMenu.exec(table.viewport()->mapToGlobal(pos));

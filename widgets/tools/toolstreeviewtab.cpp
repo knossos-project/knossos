@@ -931,7 +931,7 @@ void ToolsTreeviewTab::nodeTableSelectionChanged() {
 void ToolsTreeviewTab::activateFirstSelectedNode() {
     if (state->skeletonState->selectedNodes.size() == 1) {
         Skeletonizer::singleton().setActiveNode(nullptr, state->skeletonState->selectedNodes.front()->nodeID);
-        Skeletonizer::singleton().jumpToActiveNode();
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     }
 }
 
@@ -1002,7 +1002,7 @@ void ToolsTreeviewTab::recreateTreesTable() {
     treeTable->selectionProtection = false;
 
     size_t treeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
+    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
         // filter comment for search string match
         if(treeSearchField->text().length() > 0) {
             if(strlen(currentTree->comment) == 0) {
@@ -1051,8 +1051,8 @@ void ToolsTreeviewTab::recreateNodesTable() {
     nodeTable->selectionProtection = false;
 
     int nodeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
-        for (nodeListElement * node = currentTree->firstNode; node != nullptr; node = node->next) {
+    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
+        for (nodeListElement * node = currentTree->firstNode.get(); node != nullptr; node = node->next.get()) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
                 break;
