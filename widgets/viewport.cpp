@@ -49,7 +49,7 @@ bool Viewport::showNodeComments = false;
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
-    emit vpResize(event);
+    emit vpResize(event->globalPos());
 }
 
 QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
@@ -283,7 +283,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         bool alt = modifiers.testFlag(Qt::AltModifier);
 
         if(ctrl && alt) { // drag viewport around
-            moveVP(event);
+            moveVP(event->globalPos());
         } else {// delegate behaviour
             eventDelegate->handleMouseMotionLeftHold(event, id);
         }
@@ -585,41 +585,59 @@ void Viewport::zoomInSkeletonVP() {
     }
 }
 
-void Viewport::resizeVP(QMouseEvent *event) {
+void Viewport::sizeAdapt() {
+    sizeAdapt({size().width(), size().height()});
+}
+
+void Viewport::sizeAdapt(const QPoint & desiredSize) {
+    const auto MIN_VP_SIZE = 50;
+    const auto horizontalSpace = parentWidget()->width() - x();
+    const auto verticalSpace = parentWidget()->height() - y();
+    const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
+
+    dockSize = {size, size};
+    resize(dockSize);
+}
+
+void Viewport::resizeVP(const QPoint & globalPos) {
     if (!isDocked) {
         // Floating viewports are resized indirectly by container window
         return;
     }
     raise();//we come from the resize button
     //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
-    const int MIN_VP_SIZE = 50;
-    const auto position = mapFromGlobal(event->globalPos());
-    const auto horizontalSpace = parentWidget()->width() - x();
-    const auto verticalSpace = parentWidget()->height() - y();
-    const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(position.x(), position.y())}));
+    const auto desiredSize = mapFromGlobal(globalPos);
 
-    dockSize = {size, size};
-    resize(dockSize);
+    sizeAdapt(desiredSize);
 
     state->viewerState->defaultVPSizeAndPos = false;
 }
 
-void Viewport::moveVP(QMouseEvent *event) {
+void Viewport::posAdapt() {
+    posAdapt(pos());
+}
+
+void Viewport::posAdapt(const QPoint & desiredPos) {
+    const auto horizontalSpace = parentWidget()->width() - width();
+    const auto verticalSpace = parentWidget()->height() - height();
+    const auto newX = std::max(0, std::min(horizontalSpace, desiredPos.x()));
+    const auto newY = std::max(0, std::min(verticalSpace, desiredPos.y()));
+
+    move(newX, newY);
+}
+
+void Viewport::moveVP(const QPoint & globalPos) {
     if (!isDocked) {
         // Moving viewports is relevant only when docked
         return;
     }
     //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
-    const auto position = mapFromGlobal(event->globalPos());
-    const auto horizontalSpace = parentWidget()->width() - width();
-    const auto verticalSpace = parentWidget()->height() - height();
+    const auto position = mapFromGlobal(globalPos);
     const auto desiredX = x() + position.x() - eventDelegate->mouseDown.x();
     const auto desiredY = y() + position.y() - eventDelegate->mouseDown.y();
 
-    const auto newX = std::max(0, std::min(horizontalSpace, desiredX));
-    const auto newY = std::max(0, std::min(verticalSpace, desiredY));
+    posAdapt({desiredX, desiredY});
 
-    move(newX, newY);
     state->viewerState->defaultVPSizeAndPos = false;
 }
 

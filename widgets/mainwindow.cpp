@@ -1223,6 +1223,11 @@ void MainWindow::resizeEvent(QResizeEvent *) {
     if(state->viewerState->defaultVPSizeAndPos) {
         // don't resize viewports when user positioned and resized them manually
         resetViewports();
+    } else {//ensure viewports fit the window
+        for (auto & vp : viewports) {
+            vp->posAdapt();
+            vp->sizeAdapt();
+        }
     }
 }
 

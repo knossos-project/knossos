@@ -144,7 +144,7 @@ class ResizeButton : public QPushButton {
 public:
     explicit ResizeButton(Viewport * parent);
 signals:
-    void vpResize(QMouseEvent * event);
+    void vpResize(const QPoint & globalPos);
 };
 
 #include <QOpenGLFunctions_2_0>
@@ -169,6 +169,10 @@ public:
     bool renderVolumeVP();
     void updateOverlayTexture();
     void updateVolumeTexture();
+    void posAdapt();
+    void posAdapt(const QPoint & desiredPos);
+    void sizeAdapt();
+    void sizeAdapt(const QPoint & desiredSize);
 
     QSize dockSize;
     QPoint dockPos;
@@ -205,8 +209,8 @@ protected:
     QMenu *contextMenu;
 private:
     bool resizeButtonHold;
-    void resizeVP(QMouseEvent *event);
-    void moveVP(QMouseEvent *event);
+    void resizeVP(const QPoint & globalPos);
+    void moveVP(const QPoint & globalPos);
 signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
