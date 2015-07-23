@@ -74,7 +74,6 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
     resizeButton->setMaximumSize(resizeButton->minimumSize());
 
     QObject::connect(resizeButton, &ResizeButton::vpResize, this, &Viewport::resizeVP);
-    connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
     const auto vpLayout = new QVBoxLayout();
     vpLayout->setMargin(0);//attach buttons to vp border
@@ -266,22 +265,6 @@ void Viewport::paintGL() {
             drawSkeletonViewport();
         }
         state->viewer->renderer->renderViewportFrontFace(id);
-    }
-}
-
-void Viewport::showContextMenu(const QPoint &point) {
-    if(viewportType == VIEWPORT_SKELETON && QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        QMenu menu(this);
-        QMenu *subMenu = menu.addMenu("Change view direction");
-        subMenu->addAction("xy", this, SLOT(xyButtonClicked()));
-        subMenu->addAction("xz", this, SLOT(xzButtonClicked()));
-        subMenu->addAction("yz", this, SLOT(xzButtonClicked()));
-        subMenu->addAction("r90", this, SLOT(r90ButtonClicked()));
-        subMenu->addAction("180", this, SLOT(r180ButtonClicked()));
-        subMenu->addAction("reset", this, SLOT(resetButtonClicked()));
-
-        menu.popup(this->mapToGlobal(point));
-        menu.exec();
     }
 }
 

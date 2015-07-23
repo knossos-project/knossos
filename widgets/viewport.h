@@ -224,7 +224,6 @@ public slots:
     void r180ButtonClicked();
     void resetButtonClicked();
     bool setOrientation(ViewportType orientation);
-    void showContextMenu(const QPoint &point);
     void takeSnapshot(const QString & path, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
