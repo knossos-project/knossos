@@ -20,6 +20,7 @@ const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
 /* General attributes appropriate for most widgets */
 const QString GEOMETRY = "geometry";
+const QString STATE = "state";
 const QString WIDTH  = "width";
 const QString HEIGHT = "height";
 const QString POS_X  = "x";

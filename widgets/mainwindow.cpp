@@ -133,6 +133,9 @@ void MainWindow::createViewports() {
 }
 
 void MainWindow::createToolbars() {
+    basicToolbar.setObjectName(basicToolbar.windowTitle());
+    defaultToolbar.setObjectName(defaultToolbar.windowTitle());
+
     basicToolbar.setMovable(false);
     basicToolbar.setFloatable(false);
     basicToolbar.setMaximumHeight(45);
@@ -1079,10 +1082,8 @@ void MainWindow::saveSettings() {
     QSettings settings;
 
     settings.beginGroup(MAIN_WINDOW);
-    settings.setValue(WIDTH, this->geometry().width());
-    settings.setValue(HEIGHT, this->geometry().height());
-    settings.setValue(POS_X, this->geometry().x());
-    settings.setValue(POS_Y, this->geometry().y());
+    settings.setValue(GEOMETRY, saveGeometry());
+    settings.setValue(STATE, saveState());
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
@@ -1135,20 +1136,13 @@ void MainWindow::saveSettings() {
 void MainWindow::loadSettings() {
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
-    int width = (settings.value(WIDTH).isNull())? 1024 : settings.value(WIDTH).toInt();
-    int height = (settings.value(HEIGHT).isNull())? 800 : settings.value(HEIGHT).toInt();
-    int x, y;
-    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
-        x = QApplication::desktop()->screen()->rect().topLeft().x() + 20;
-        y = QApplication::desktop()->screen()->rect().topLeft().y() + 50;
-    }
-    else {
-        x = settings.value(POS_X).toInt();
-        y = settings.value(POS_Y).toInt();
-    }
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    restoreState(settings.value(STATE).toByteArray());
 
     state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
-    if(state->viewerState->defaultVPSizeAndPos == false) {
+    if (state->viewerState->defaultVPSizeAndPos) {
+        resetViewports();
+    } else {
         viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toSize());
         viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toSize());
         viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toSize());
@@ -1187,7 +1181,6 @@ void MainWindow::loadSettings() {
     }
 
     settings.endGroup();
-    setGeometry(x, y, width, height);
 
     widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
