@@ -310,6 +310,8 @@ void Viewport::setDock(bool isDock) {
         }
         move(dockPos);
         resize(dockSize);
+        dockPos = {};
+        dockSize = {};
     } else {
         dockPos = pos();
         dockSize = size();
@@ -595,8 +597,7 @@ void Viewport::sizeAdapt(const QPoint & desiredSize) {
     const auto verticalSpace = parentWidget()->height() - y();
     const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
 
-    dockSize = {size, size};
-    resize(dockSize);
+    resize({size, size});
 }
 
 void Viewport::resizeVP(const QPoint & globalPos) {
