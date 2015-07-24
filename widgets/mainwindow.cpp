@@ -1087,20 +1087,21 @@ void MainWindow::saveSettings() {
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->dockSize.isEmpty() ? viewports[VIEWPORT_XY]->size() : viewports[VIEWPORT_XY]->dockSize);
-    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->dockSize.isEmpty() ? viewports[VIEWPORT_XZ]->size() : viewports[VIEWPORT_XZ]->dockSize);
-    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->dockSize.isEmpty() ? viewports[VIEWPORT_YZ]->size() : viewports[VIEWPORT_YZ]->dockSize);
-    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->dockSize.isEmpty() ? viewports[VIEWPORT_SKELETON]->size() : viewports[VIEWPORT_SKELETON]->dockSize);
-
-    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->dockPos.isNull() ? viewports[VIEWPORT_XY]->pos() : viewports[VIEWPORT_XY]->dockPos);
-    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->dockPos.isNull() ? viewports[VIEWPORT_XZ]->pos() : viewports[VIEWPORT_XZ]->dockPos);
-    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->dockPos.isNull() ? viewports[VIEWPORT_YZ]->pos() : viewports[VIEWPORT_YZ]->dockPos);
-    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->dockPos.isNull() ? viewports[VIEWPORT_SKELETON]->pos() : viewports[VIEWPORT_SKELETON]->dockPos);
-
-    settings.setValue(VPXY_VISIBLE, viewports[VIEWPORT_XY]->isVisible());
-    settings.setValue(VPXZ_VISIBLE, viewports[VIEWPORT_XZ]->isVisible());
-    settings.setValue(VPYZ_VISIBLE, viewports[VIEWPORT_YZ]->isVisible());
-    settings.setValue(VPSKEL_VISIBLE, viewports[VIEWPORT_SKELETON]->isVisible());
+    for (int i = 0; i < Viewport::numberViewports; ++i) {
+        const Viewport & vp = *viewports[i];
+        settings.setValue(VP_I_POS.arg(i), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(i), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(i), vp.isVisible());
+    }
+    QList<QVariant> order;
+    for (const auto & w : centralWidget()->children()) {
+        for (int i = 0; i < Viewport::numberViewports; ++i) {
+            if (w == viewports[i].get()) {
+                order.append(i);
+            }
+        }
+    }
+    settings.setValue(VP_ORDER, order);
 
     settings.setValue(TRACING_MODE, static_cast<int>(state->viewer->skeletonizer->getTracingMode()));
     settings.setValue(SIMPLE_TRACING, Skeletonizer::singleton().simpleTracing);
@@ -1143,21 +1144,15 @@ void MainWindow::loadSettings() {
     if (state->viewerState->defaultVPSizeAndPos) {
         resetViewports();
     } else {
-        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toSize());
-        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toSize());
-        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toSize());
-        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toSize());
-
-        viewports[VIEWPORT_XY]->move(settings.value(VPXY_COORD).toPoint());
-        viewports[VIEWPORT_XZ]->move(settings.value(VPXZ_COORD).toPoint());
-        viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
-        viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
-
-        bool defaultViewportVisibility = true;
-        viewports[VIEWPORT_XY]->setVisible(settings.value(VPXY_VISIBLE,defaultViewportVisibility).toBool());
-        viewports[VIEWPORT_XZ]->setVisible(settings.value(VPXZ_VISIBLE,defaultViewportVisibility).toBool());
-        viewports[VIEWPORT_YZ]->setVisible(settings.value(VPYZ_VISIBLE,defaultViewportVisibility).toBool());
-        viewports[VIEWPORT_SKELETON]->setVisible(settings.value(VPSKEL_VISIBLE,defaultViewportVisibility).toBool());
+        for (int i = 0; i < Viewport::numberViewports; ++i) {
+            Viewport & vp = *viewports[i];
+            vp.move(settings.value(VP_I_POS.arg(i)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(i)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(i), true).toBool());
+        }
+    }
+    for (const auto & i : settings.value(VP_ORDER).toList()) {
+        viewports[i.toInt()]->raise();
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();

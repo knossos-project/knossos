@@ -54,6 +54,7 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
 
 QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
     setWindowFlags(Qt::Window);
+    const std::array<const char * const, Viewport::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "3D"}};
     setWindowTitle(VP_TITLES[id]);
     new QVBoxLayout(this);
 }

@@ -160,7 +160,7 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QElapsedTimer timeDBase;
     QElapsedTimer timeFBase;
 public:
-    const static uint numberViewports = 4;
+    const static int numberViewports = 4;
     explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
