@@ -247,9 +247,9 @@ void Renderer::renderText(const Coordinate & pos, const QString & str, const int
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), fontSize * refVPSkel->devicePixelRatio()));
-    gluProject(centered ? pos.x - QFontMetrics(painter.font()).width(str)/2 : pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
+    gluProject(pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
-    painter.drawText(x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
+    painter.drawText(centered ? x - QFontMetrics(painter.font()).width(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
     restore_gl_state();
 }
@@ -463,8 +463,8 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glEnd();
         glDisable(GL_BLEND);
     }
-    if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
-        renderScaleBar(currentVP, 2);
+    if(state->viewerState->showVPLabels) {
+        renderScaleBar(currentVP);
     }
 }
 
@@ -477,18 +477,21 @@ void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
 }
 
 void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
-    int edge_len = state->viewerState->vpConfigs[currentVP].edgeLength;
-    int min_x = std::round(0.05*edge_len), max_x =  min_x + edge_len/3, y = edge_len - min_x, z = -1;
+    const auto & vp = state->viewerState->vpConfigs[currentVP];
+    auto vp_edgelen_um = 0.001 * (currentVP == VIEWPORT_SKELETON ? vp.edgeLength / vp.screenPxXPerDataPx * state->scale.x : vp.displayedlengthInNmX);
+    auto rounded_scalebar_size_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
+    if(rounded_scalebar_size_um == 0) {
+        rounded_scalebar_size_um = vp_edgelen_um; // default scalebar length of vp edge length
+    }
+    const auto divisor = vp_edgelen_um / rounded_scalebar_size_um; // for scalebar size in pixels
+    int min_x = 0.05 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
     glLineWidth(thickness);
     glColor3f(0., 0., 0.);
     glBegin(GL_LINES);
     glVertex3f(min_x, y, z);
     glVertex3f(max_x, y, z);
     glEnd();
-    if (fontSize > 0) {
-        float size = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY/3*0.001;
-        renderText(Coordinate(min_x + edge_len/6, y, z), QString("%1 µm").arg(size), fontSize, true);
-    }
+    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, y, z), QString("%1 µm").arg(rounded_scalebar_size_um), fontSize, true);
 }
 
 // Currently not used
