@@ -1263,8 +1263,8 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
 
 
     state->viewerState->vpConfigs[VIEWPORT_SKELETON].screenPxXPerDataPx =
-            (float)state->viewerState->vpConfigs[VIEWPORT_SKELETON].edgeLength / ((
-            (float)state->skeletonState->volBoundary - 2.f * ((float)state->skeletonState->volBoundary * state->skeletonState->zoomLevel))/2.f);
+            (float)state->viewerState->vpConfigs[VIEWPORT_SKELETON].edgeLength
+            / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
 
     if(state->viewerState->lightOnOff) {
         // Configure light
