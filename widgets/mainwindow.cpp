@@ -368,39 +368,6 @@ void MainWindow::updateRecentFile(const QString & fileName) {
     }
 }
 
-/**
-  * @todo Replacements for the Labels
-  * Maybe functionality of Viewport
-  */
-void MainWindow::reloadDataSizeWin(){
-    float heightxy = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmY*0.001;
-    float widthxy = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmX*0.001;
-    float heightxz = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmY*0.001;
-    float widthxz = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmX*0.001;
-    float heightyz = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmY*0.001;
-    float widthyz = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmX*0.001;
-
-    if ((heightxy > 1.0) && (widthxy > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
-    }
-    else{
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.0f nm, Width %.0f nm", heightxy*1000, widthxy*1000);
-    }
-    if ((heightxz > 1.0) && (widthxz > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxz, widthxz);
-    }
-    else{
-       // AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.0f nm, Width %.0f nm", heightxz*1000, widthxz*1000);
-    }
-
-    if ((heightyz > 1.0) && (widthyz > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightyz, widthyz);
-    }
-    else{
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.0f nm, Width %.0f nm", heightyz*1000, widthyz*1000);
-    }
-}
-
 void MainWindow::treeColorAdjustmentsChanged() {
     //user lut activated
         if(state->viewerState->treeColortableOn) {

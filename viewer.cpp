@@ -1663,8 +1663,6 @@ bool Viewer::recalcTextureOffsets() {
             state->viewerState->vpConfigs[i].texture.texLLy = state->viewerState->vpConfigs[i].texture.texRLy;
         }
     }
-    //Reload the height/width-windows in viewports
-    MainWindow::reloadDataSizeWin();
     return true;
 }
 

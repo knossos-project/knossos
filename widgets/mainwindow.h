@@ -126,7 +126,6 @@ public:
     void notifyUnsavedChanges();
     void updateTitlebar();
 
-    static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
 
 signals:
