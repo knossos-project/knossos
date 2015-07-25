@@ -887,11 +887,13 @@ void Viewport::resetButtonClicked() {
 }
 
 void Viewport::takeSnapshot(const QString & path, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
+    makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
-    QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::Depth);
+    QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
     const RenderOptions options(false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
         auto& seg = Segmentation::singleton();
@@ -911,26 +913,12 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     }
     if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderScaleBar(id, std::ceil(0.006*size), 0);
+        state->viewer->renderer->renderScaleBar(id, std::ceil(0.006*size), std::ceil(0.02*size));
     }
 
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
-    if(withScale && id != VIEWPORT_SKELETON) {
-        QString sizeLabel = QString::number(state->viewerState->vpConfigs[id].displayedlengthInNmY/3*0.001) + " µm";
-        int edge_len = state->viewerState->vpConfigs[id].edgeLength/3;
-        float scale = size/edge_len;
-        int min_x = edge_len*0.05*scale, x = min_x + edge_len/6*scale, y = size - min_x - std::ceil(0.006*size) - 3;
-
-        QPainter painter;
-        painter.begin(&image);
-        painter.setFont(QFont(painter.font().family(), std::ceil(0.02*size)));
-        QFontMetrics metrics(painter.font());
-        painter.drawText(x - metrics.width(sizeLabel)/2, y, sizeLabel);
-        painter.end();
-    }
     image.save(path);
     glPopAttrib(); // restore viewport setting
-    fbo.bindDefault();
     fbo.release();
 }
