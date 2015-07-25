@@ -478,7 +478,7 @@ void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
 
 void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[currentVP];
-    auto vp_edgelen_um = 0.001 * (currentVP == VIEWPORT_SKELETON ? vp.edgeLength / vp.screenPxXPerDataPx * state->scale.x : vp.displayedlengthInNmX);
+    auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_size_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
     if(rounded_scalebar_size_um == 0) {
         rounded_scalebar_size_um = vp_edgelen_um; // default scalebar length of vp edge length
@@ -1265,9 +1265,9 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY, -1000, 10 *state->skeletonState->volBoundary);
 
 
-    state->viewerState->vpConfigs[VIEWPORT_SKELETON].screenPxXPerDataPx =
-            (float)state->viewerState->vpConfigs[VIEWPORT_SKELETON].edgeLength
-            / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
+    auto & skelVP = state->viewerState->vpConfigs[VIEWPORT_SKELETON];
+    skelVP.screenPxXPerDataPx = (float)skelVP.edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
+    skelVP.displayedlengthInNmX = skelVP.edgeLength / skelVP.screenPxXPerDataPx * state->scale.x;
 
     if(state->viewerState->lightOnOff) {
         // Configure light
