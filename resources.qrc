@@ -35,6 +35,5 @@
         <file>resources/icons/zoom-in.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
-        <file>resources/plugins/startup/watershedSplitterHybridModeWidget.py</file>
     </qresource>
 </RCC>
