@@ -481,7 +481,7 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
     auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_size_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
     if(rounded_scalebar_size_um == 0) {
-        rounded_scalebar_size_um = vp_edgelen_um; // default scalebar length of vp edge length
+        rounded_scalebar_size_um = vp_edgelen_um/3; // default scalebar length of vp edge length/3
     }
     const auto divisor = vp_edgelen_um / rounded_scalebar_size_um; // for scalebar size in pixels
     int min_x = 0.05 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
