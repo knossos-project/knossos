@@ -412,7 +412,7 @@ void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
             }
             if (moveIt) {
                 const auto newPos = config.draggedNode->position - *moveIt;
-                Skeletonizer::singleton().editNode(0, config.draggedNode, 0., newPos.x, newPos.y, newPos.z, state->magnification);
+                Skeletonizer::singleton().editNode(0, config.draggedNode, 0., newPos, state->magnification);
             }
         }
     }
@@ -508,11 +508,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
 
-        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius
-                 , state->skeletonState->activeNode->position.x
-                 , state->skeletonState->activeNode->position.y
-                 , state->skeletonState->activeNode->position.z
-                 , state->magnification);
+        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, state->magnification);
     } else if (Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0) {

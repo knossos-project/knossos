@@ -1765,9 +1765,7 @@ segmentListElement* Skeletonizer::findSegmentByNodeIDs(uint sourceNodeID, uint t
     return NULL;
 }
 
-bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
-                            float newRadius, int newXPos, int newYPos, int newZPos, int inMag) {
-
+bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
     if(!node) {
         node = findNodeByNodeID(nodeID);
     }
@@ -1778,11 +1776,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node,
 
     nodeID = node->nodeID;
 
-    if(!((newXPos < 0) || (newXPos > state->boundary.x)
-       || (newYPos < 0) || (newYPos > state->boundary.y)
-       || (newZPos < 0) || (newZPos > state->boundary.z))) {
-        node->position = {newXPos, newYPos, newZPos};
-    }
+    node->position = newPos.capped(0, state->boundary);
 
     if(newRadius != 0.) {
         node->radius = newRadius;

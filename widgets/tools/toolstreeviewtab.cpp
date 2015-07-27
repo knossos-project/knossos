@@ -500,11 +500,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
         radiusBuffer = value;
 
         if (activeNodeTable->hasFocus()) {
-            Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radiusBuffer,
-                                   state->skeletonState->activeNode->position.x,
-                                   state->skeletonState->activeNode->position.y,
-                                   state->skeletonState->activeNode->position.z,
-                                   state->skeletonState->activeNode->createdInMag);
+            Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radiusBuffer, state->skeletonState->activeNode->position, state->skeletonState->activeNode->createdInMag);
             setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
             int row = getActiveNodeRow();
             if (row != -1) {
@@ -515,8 +511,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
                 if(node == state->skeletonState->activeNode) {
                     setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
                 }
-                Skeletonizer::singleton().editNode(0, node, radiusBuffer,
-                                       node->position.x, node->position.y, node->position.z, node->createdInMag);
+                Skeletonizer::singleton().editNode(0, node, radiusBuffer, node->position, node->createdInMag);
             }
             recreateNodesTable();
         }

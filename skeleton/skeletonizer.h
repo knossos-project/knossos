@@ -208,7 +208,7 @@ public slots:
     commentListElement *nextComment(QString searchString);
     commentListElement *previousComment(QString searchString);
     static bool delSegment(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
-    bool editNode(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    bool editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement *node, uint nodeID);
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
