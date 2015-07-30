@@ -1695,15 +1695,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
-    // mainwindow signals
-    QObject::connect(window, &MainWindow::resetRotationSignal, this, &Viewer::resetRotation);
-    QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
-    QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
-    QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
-    QObject::connect(window, &MainWindow::startRenderTimerSignal, timer, static_cast<void(QTimer::*)(int)>(&QTimer::start));
-    //end mainwindow signals
     //viewport signals
     QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
