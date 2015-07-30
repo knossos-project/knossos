@@ -51,10 +51,14 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
+enum WorkMode { Tracing, AdvancedTracing, UnlinkedTracing, SegmentationMerge, SegmentationPaint, MergeTracing };
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
     friend TaskManagementWidget;
     friend SkeletonProxy;
+
+    std::vector<QString> workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
 
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -63,8 +67,10 @@ class MainWindow : public QMainWindow {
 
     QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"File"};
-    QMenu *skelEditMenu;
     QMenu *segEditMenu;
+    QMenu *skelEditMenu;
+    QMenu modeChoiceMenu{"Mode"};
+    QMenu actionMenu{"Action"};
     QString openFileDirectory;
     QString saveFileDirectory;
 

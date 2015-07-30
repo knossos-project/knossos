@@ -33,7 +33,24 @@
 #include <QString>
 #include <QTimer>
 
-enum AnnotationMode { SkeletonizationMode, SegmentationMode };
+//menu entries
+//SimpleTracing, Linked, Unlinked, Merge, Paint, MergeTracing
+
+//JobMode
+
+
+//AnnotationMode: Skeletonization, Segmentation
+//TracingMode: oneUnlinked, linked, unlinked
+//brush::tool_t: merge, paint
+//job.active
+//hybrid
+//simple tracing
+
+
+enum class AnnotationMode {
+    Skeletonization, Segmentation,
+    Hybrid
+};
 
 class Session : public QObject {
     Q_OBJECT
@@ -50,7 +67,7 @@ class Session : public QObject {
 
 public:
     QPair<QString, QString> task;
-    AnnotationMode annotationMode;
+    QFlags<AnnotationMode> annotationMode;
 
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension

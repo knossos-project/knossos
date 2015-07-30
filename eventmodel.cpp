@@ -126,7 +126,7 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SkeletonizationMode) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
             startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -164,7 +164,7 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SkeletonizationMode) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
         auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if (clickedNodeId != 0) {
@@ -197,7 +197,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return;
     }
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         segmentation_work(event, VPfound);
         return;
@@ -388,7 +388,7 @@ void EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SkeletonizationMode) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
         const auto & config = state->viewerState->vpConfigs[VPfound];
         if (config.draggedNode != nullptr) {
             const QPointF posDelta(xrel(event->x()), yrel(event->y()));
@@ -412,7 +412,7 @@ void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SegmentationMode && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
         if (mouseEventAtValidDatasetPosition(event, VPfound) && notOrigin) {
             segmentation_work(event, VPfound);
@@ -427,7 +427,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if (event->pos() == mouseDown) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(clickPos);
@@ -474,7 +474,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode == SegmentationMode && mouseEventAtValidDatasetPosition(event, VPfound)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && mouseEventAtValidDatasetPosition(event, VPfound)) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
             segmentation_work(event, VPfound);
         }
@@ -485,7 +485,7 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && Segmentation::singleton().selectedObjectsCount() == 1) {
             connectedComponent(clickedCoordinate);
         }
     }
@@ -495,13 +495,13 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     const int directionSign = event->delta() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
-    if (Session::singleton().annotationMode == SkeletonizationMode
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)
             && event->modifiers() == Qt::SHIFT
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, state->magnification);
-    } else if (Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0) {
             seg.brush.setRadius(0);
