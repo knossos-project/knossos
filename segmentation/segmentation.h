@@ -147,6 +147,8 @@ Q_OBJECT
 
     Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
+
+    Object & objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position);
 public:
     class Job {
     public:
@@ -197,6 +199,7 @@ public:
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
     uint64_t subobjectIdOfFirstSelectedObject();
     bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
+    uint64_t largestObjectContainingSubobjectId(const uint64_t subObjectId, const Coordinate & location);
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t tryLargestObjectContainingSubobject(const uint64_t subObjectId) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
@@ -209,6 +212,7 @@ public:
     void selectObject(const uint64_t & objectIndex);
     void selectObject(Object & object);
     void selectObjectFromSubObject(SubObject &subobject, const Coordinate & position);
+    void selectObjectFromSubObject(const uint64_t soid, const Coordinate & position);
     void unselectObject(const uint64_t & objectIndex);
     void unselectObject(Object & object);
     void clearObjectSelection();

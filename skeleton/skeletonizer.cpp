@@ -26,6 +26,7 @@
 #include "file_io.h"
 #include "functions.h"
 #include "knossos.h"
+#include "segmentation/cubeloader.h"
 #include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
@@ -921,6 +922,8 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     auto tree = nodeToDel->correspondingTree;
     const auto pos = nodeToDel->position;
 
+    unsetSubobjectOfHybridNode(*nodeToDel);
+
     if (nodeToDel->next != nullptr) {
         nodeToDel->next->previous = nodeToDel->previous;
     }
@@ -1776,6 +1779,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     nodeID = node->nodeID;
 
+    auto oldPos = node->position;
     node->position = newPos.capped(0, state->boundary);
 
     if(newRadius != 0.) {
@@ -1785,6 +1789,9 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     updateCircRadius(node);
     state->skeletonState->unsavedChanges = true;
+
+    const quint64 newSubobjectId = readVoxel(newPos);
+    Skeletonizer::singleton().movedHybridNode(*node, newSubobjectId, oldPos);
 
     emit nodeChangedSignal(*node);
 

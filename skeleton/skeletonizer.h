@@ -214,6 +214,11 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
+    void setSubobject(const quint64 nodeId, const quint64 subobjectId);
+    void setSubobject(nodeListElement & node, const quint64 subobjectId);
+    void unsetSubobjectOfHybridNode(nodeListElement & node);
+    void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
+    void selectObjectForNode(nodeListElement & node);
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 

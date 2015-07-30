@@ -204,6 +204,11 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     Coordinate movement, lastPos;
 
+    const quint64 subobjectId = readVoxel(clickedCoordinate);
+    if (subobjectId == 0) {
+        return;
+    }
+
     uint64_t newNodeId = 0;
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
@@ -315,6 +320,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         break;
     }
+
+    Skeletonizer::singleton().setSubobject(newNodeId, subobjectId);
+
     /* Move to the new node position */
     if (newNodeId) {
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
@@ -470,6 +478,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
     } else {
         Skeletonizer::singleton().selectNodes(selectedNodes);
+        if (selectedNodes.size() == 1) {
+            Skeletonizer::singleton().selectObjectForNode(*selectedNodes.front());
+        }
     }
 }
 

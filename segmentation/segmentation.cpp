@@ -281,6 +281,11 @@ bool Segmentation::objectOrder(const uint64_t & lhsIndex, const uint64_t & rhsIn
     return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
 }
 
+uint64_t Segmentation::largestObjectContainingSubobjectId(const uint64_t subObjectId, const Coordinate & location) {
+    const auto & subobject = subobjectFromId(subObjectId, location);
+    return largestObjectContainingSubobject(subobject);
+}
+
 uint64_t Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
     //same comparator for both functions, it seems to work as it is, so i don’t waste my head now to find out why
     //there may have been some reasoning… (at first glance it seems too restrictive for the largest object)
@@ -463,7 +468,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
     }
 }
 
-void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
+Segmentation::Object & Segmentation::objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position) {
     const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
     , [&](const uint64_t elemId){
         const auto & elem = objects[elemId];
@@ -473,11 +478,18 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
         emit beforeAppendRow();
         objects.emplace_back(++Object::highestId, false, false, position, subobject);
         emit appendedRow();
-        auto & newObject = objects.back();
-        selectObject(newObject);
+        return objects.back();
     } else {
-        selectObject(*other);
+        return objects[*other];
     }
+}
+
+void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
+    selectObject(objectFromSubobject(subobject, position));
+}
+
+void Segmentation::selectObjectFromSubObject(const uint64_t soid, const Coordinate & position) {
+    selectObject(objectFromSubobject(subobjectFromId(soid, position), position));
 }
 
 void Segmentation::selectObject(const uint64_t & objectIndex) {
