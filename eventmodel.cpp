@@ -126,38 +126,37 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
-    if (Session::singleton().annotationMode == SkeletonizationMode && selection) {
-        startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
-    } else if(state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
-        // check click mode of orthogonal viewports
-        if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
-            if(mouseEventAtValidDatasetPosition(event, VPfound)) {
-                Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-                emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
-                Knossos::sendRemoteSignal();
+    if (Session::singleton().annotationMode == SkeletonizationMode) {
+        const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
+        if (selection) {
+            startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
+        } else if (state->viewerState->vpConfigs[VPfound].type != VIEWPORT_SKELETON) {
+            // check click mode of orthogonal viewports
+            if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
+                if(mouseEventAtValidDatasetPosition(event, VPfound)) {
+                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
+                    emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
+                    Knossos::sendRemoteSignal();
+                }
             }
         }
-    }
-
-    //Set Connection between Active Node and Clicked Node
-    if(QApplication::keyboardModifiers() == Qt::ALT) {
-        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
-        if(clickedNode) {
-            auto activeNode = state->skeletonState->activeNode;
-            if(activeNode) {
+        //Set Connection between Active Node and Clicked Node
+        if (QApplication::keyboardModifiers() == Qt::ALT) {
+            auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10) != 0;
+            auto * activeNode = state->skeletonState->activeNode;
+            if (clickedNodeId != 0 && activeNode != nullptr) {
                 auto & skel = Skeletonizer::singleton();
-                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(activeNode->nodeID, clickedNode, NULL);
-                } else if (skel.findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNode, activeNode->nodeID, NULL);
+                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNodeId)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNodeId, NULL);
+                } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNodeId, activeNode->nodeID, NULL);
                 } else{
-                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
+                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return;
                     }
-                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
+                    emit addSegmentSignal(activeNode->nodeID, clickedNodeId);
                 }
             }
         }
@@ -165,41 +164,36 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode != SkeletonizationMode) {
-        return;
-    }
+    if (Session::singleton().annotationMode == SkeletonizationMode) {
+        auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
-    auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
-
-    if(clickedNode) {
-        auto & skel = Skeletonizer::singleton();
-        auto activeNode = state->skeletonState->activeNode;
-        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-        if(keyMod.testFlag(Qt::ShiftModifier)) {
-            // Toggle segment between clicked and active node
-            if(activeNode) {
-                if(skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(activeNode->nodeID, clickedNode, 0);
-                } else if (skel.findSegmentByNodeIDs(clickedNode, activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNode, activeNode->nodeID, 0);
+        if (clickedNodeId != 0) {
+            auto & skel = Skeletonizer::singleton();
+            auto activeNode = state->skeletonState->activeNode;
+            Qt::KeyboardModifiers keyMod = event->modifiers();
+            if (keyMod.testFlag(Qt::ShiftModifier) && activeNode != nullptr) {
+                // Toggle segment between clicked and active node
+                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNodeId)) {
+                    emit delSegmentSignal(activeNode->nodeID, clickedNodeId, 0);
+                } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
+                    emit delSegmentSignal(clickedNodeId, activeNode->nodeID, 0);
                 } else {
-                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNode))) {
+                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return;
                     }
-                    emit addSegmentSignal(activeNode->nodeID, clickedNode);
+                    emit addSegmentSignal(activeNode->nodeID, clickedNodeId);
                 }
+            } else if (keyMod.testFlag(Qt::NoModifier)) {
+                state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNodeId);
             }
-        } else {
-            // No modifier pressed
-            state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNode);
         }
     }
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    if(mouseEventAtValidDatasetPosition(event, VPfound) == false) {
+    if (!mouseEventAtValidDatasetPosition(event, VPfound)) {
         return;
     }
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
@@ -210,37 +204,36 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     Coordinate movement, lastPos;
 
-    bool newNode = false;
+    uint64_t newNodeId = 0;
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
-            uint newNodeID;
-            if((newNodeID = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+            if((newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
-                Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeID);
-                Skeletonizer::singleton().setActiveNode(nullptr, newNodeID);
+                Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeId);
+                Skeletonizer::singleton().setActiveNode(nullptr, newNodeId);
             }
             break;
         }
         //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
-        newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+        newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
-        if(newNode == false) { //could not add node
+        if(newNodeId == false) { //could not add node
             break;
         }
 
@@ -323,7 +316,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         break;
     }
     /* Move to the new node position */
-    if (newNode) {
+    if (newNodeId) {
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
         } else {
@@ -507,7 +500,6 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
-
         Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, state->magnification);
     } else if (Session::singleton().annotationMode == SegmentationMode && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
