@@ -1139,24 +1139,24 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
      // (node == NULL and nodeID == 0), the active node is
      // set to NULL.
 
-    if(nodeID != 0) {
+    if (nodeID != 0) {
         node = findNodeByNodeID(nodeID);
-        if(!node) {
+        if (node == nullptr) {
             qDebug("No node with id %u available.", nodeID);
             return false;
         }
     }
-    if(node) {
-        nodeID = node->nodeID;
+    if (node == state->skeletonState->activeNode) {
+        return true;
     }
 
     state->skeletonState->activeNode = node;
 
-    clearNodeSelection();
-    if(node) {
-        if(node->selected == false) {
-            node->selected = true;
-            state->skeletonState->selectedNodes.push_back(node);
+    if (node == nullptr) {
+        selectNodes({});
+    } else {
+        if (!node->selected) {
+            selectNodes({node});
         }
 
         setActiveTreeByID(node->correspondingTree->treeID);
@@ -1174,8 +1174,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
     }
 
     state->skeletonState->unsavedChanges = true;
-
-    emit nodeSelectionChangedSignal();
 
     return true;
 }
@@ -1330,13 +1328,6 @@ void Skeletonizer::clearTreeSelection() {
         selectedTree->selected = false;
     }
     state->skeletonState->selectedTrees.clear();
-}
-
-void Skeletonizer::clearNodeSelection() {
-    for (auto &selectedNode : state->skeletonState->selectedNodes) {
-        selectedNode->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
 }
 
 void Skeletonizer::clearSkeleton() {
@@ -2579,7 +2570,13 @@ bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
 }
 
 void Skeletonizer::selectNodes(QSet<nodeListElement*> nodes) {
-    clearNodeSelection();
+    for (auto & elem : state->skeletonState->selectedNodes) {
+        if (nodes.contains(elem)) {//if selected node is already selected ignore
+            nodes.remove(elem);
+        } else {//unselect everything else
+            nodes.insert(elem);
+        }
+    }
     toggleNodeSelection(nodes);
 }
 
@@ -2605,11 +2602,9 @@ void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodes) {
     if (selectedNodes.size() == 1) {
         setActiveNode(selectedNodes.front(), 0);
     } else if (selectedNodes.empty() && state->skeletonState->activeNode != nullptr) {
-        // at least one must always be selected
-        setActiveNode(state->skeletonState->activeNode, 0);
-    } else {
-        emit nodeSelectionChangedSignal();
+        setActiveNode(state->skeletonState->activeNode, 0);// at least one must always be selected
     }
+    emit nodeSelectionChangedSignal();
 }
 
 void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
