@@ -555,7 +555,7 @@ bool Knossos::configDefaults() {
     state->viewerState->treeColortableOn = false;
     state->viewerState->viewerReady = false;
     state->viewerState->drawVPCrosshairs = true;
-    state->viewerState->showVPLabels = false;
+    state->viewerState->showScalebar = false;
     state->viewerState->stepsPerSec = 40;
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;

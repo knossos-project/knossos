@@ -463,17 +463,9 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glEnd();
         glDisable(GL_BLEND);
     }
-    if(state->viewerState->showVPLabels) {
+    if(state->viewerState->showScalebar) {
         renderScaleBar(currentVP);
     }
-}
-
-void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
-    glColor4f(0, 0, 0, 1);
-    float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
-    float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
-    Coordinate pos(15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1);
-    renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), fontSize);
 }
 
 void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
