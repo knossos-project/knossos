@@ -2578,12 +2578,12 @@ bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
     return true;
 }
 
-void Skeletonizer::selectNodes(const std::vector<nodeListElement*> & nodes) {
+void Skeletonizer::selectNodes(QSet<nodeListElement*> nodes) {
     clearNodeSelection();
     toggleNodeSelection(nodes);
 }
 
-void Skeletonizer::toggleNodeSelection(const std::vector<nodeListElement*> & nodes) {
+void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodes) {
     auto & selectedNodes = state->skeletonState->selectedNodes;
 
     std::unordered_set<decltype(nodeListElement::nodeID)> removeNodes;

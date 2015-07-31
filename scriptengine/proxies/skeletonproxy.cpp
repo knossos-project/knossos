@@ -308,7 +308,7 @@ QList<nodeListElement *> *SkeletonProxy::selectedNodes() {
 }
 
 void SkeletonProxy::selectNodes(QList<nodeListElement *> nodes) {
-    Skeletonizer::singleton().selectNodes(nodes.toVector().toStdVector());
+    Skeletonizer::singleton().selectNodes(nodes.toSet());
 }
 
 QString SkeletonProxy::help() {

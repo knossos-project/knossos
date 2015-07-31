@@ -452,7 +452,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         return;
     }
 
-    std::vector<nodeListElement*> selectedNodes;
+    QSet<nodeListElement*> selectedNodes;
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
@@ -1088,7 +1088,7 @@ void EventModel::startNodeSelection(int x, int y, int vpId) {
     state->viewerState->nodeSelectSquareVpId = vpId;
 }
 
-std::vector<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) {
+QSet<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) {
     // node selection square
     state->viewerState->nodeSelectionSquare.second.x = x;
     state->viewerState->nodeSelectionSquare.second.y = y;

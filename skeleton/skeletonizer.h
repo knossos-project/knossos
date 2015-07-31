@@ -30,6 +30,7 @@
 #include "widgets/viewport.h"
 
 #include <QObject>
+#include <QSet>
 #include <QVariantHash>
 
 #include <boost/optional.hpp>
@@ -190,8 +191,8 @@ public slots:
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
-    void selectNodes(const std::vector<nodeListElement*> & nodes);
-    void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
+    void selectNodes(QSet<nodeListElement *> nodes);
+    void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
     void selectTrees(const std::vector<treeListElement*> & trees);
     void deleteSelectedTrees();
     void deleteSelectedNodes();
