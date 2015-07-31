@@ -484,7 +484,7 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
     auto divisor = vp_edgelen_um / rounded_scalebar_len_um; // for scalebar size in pixels
 
     if(rounded_scalebar_len_um == 0) {
-        const auto rounded_scalebar_len_nm = std::round(vp.displayedlengthInNmX/3); // switch to nanometers
+        const auto rounded_scalebar_len_nm = std::round(vp.displayedlengthInNmX/3/5)*5; // switch to nanometers rounded to next multiple of 5
         sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
         divisor = vp.displayedlengthInNmX/rounded_scalebar_len_nm;
     }
