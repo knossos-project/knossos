@@ -321,7 +321,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         break;
     }
 
-    Skeletonizer::singleton().setSubobject(newNodeId, subobjectId);
+    Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId);
 
     /* Move to the new node position */
     if (newNodeId) {

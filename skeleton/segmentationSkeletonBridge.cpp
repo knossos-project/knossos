@@ -23,12 +23,12 @@ void Skeletonizer::selectObjectForNode(nodeListElement & node) {
     });
 }
 
-void Skeletonizer::setSubobject(const quint64 nodeId, const quint64 subobjectId) {
+void Skeletonizer::setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId) {
     auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
-    setSubobject(node, subobjectId);
+    setSubobjectAndMerge(node, subobjectId);
 }
 
-void Skeletonizer::setSubobject(nodeListElement & node, const quint64 subobjectId) {
+void Skeletonizer::setSubobjectAndMerge(nodeListElement & node, const quint64 subobjectId) {
     node.properties.insert(subobjectPropertyKey, subobjectId);
     ++node.correspondingTree->subobjectCount[subobjectId];
 
@@ -37,9 +37,9 @@ void Skeletonizer::setSubobject(nodeListElement & node, const quint64 subobjectI
     Segmentation::singleton().mergeSelectedObjects();
 }
 
-void Skeletonizer::setSubobjectFromProperty(nodeListElement & node) {
+void Skeletonizer::updateSubobjectCountFromProperty(nodeListElement & node) {
     ifsoproperty(node, [&](const uint64_t subobjectId){
-        setSubobject(node, subobjectId);
+        ++node.correspondingTree->subobjectCount[subobjectId];
     });
 }
 
@@ -62,7 +62,7 @@ void Skeletonizer::movedHybridNode(nodeListElement & node, const quint64 newSubo
     ifsoproperty(node, [&](const uint64_t oldSubobjectId){
         if (oldSubobjectId != newSubobjectId) {
             decrementSubobjectCount(node, oldPos, oldSubobjectId);
-            setSubobject(node, newSubobjectId);
+            setSubobjectAndMerge(node, newSubobjectId);
         }
     });
 }
