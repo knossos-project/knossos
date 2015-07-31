@@ -1153,10 +1153,12 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 
     if (node == nullptr) {
         selectNodes({});
+        Segmentation::singleton().clearObjectSelection();
     } else {
         if (!node->selected) {
             selectNodes({node});
         }
+        selectObjectForNode(*node);
 
         setActiveTreeByID(node->correspondingTree->treeID);
 
