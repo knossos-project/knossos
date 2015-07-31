@@ -1257,6 +1257,8 @@ boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float rad
 
     updateCircRadius(tempNode);
 
+    setSubobjectFromProperty(*tempNode);
+
     state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
 
     if (nodeID > state->skeletonState->greatestNodeID) {

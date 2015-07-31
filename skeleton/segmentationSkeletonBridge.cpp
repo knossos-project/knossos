@@ -6,6 +6,15 @@
 
 const auto subobjectPropertyKey = "subobjectId";
 
+template<typename Func>
+void ifsoproperty(nodeListElement & node, Func func) {
+    auto soPropertyIt = node.properties.find(subobjectPropertyKey);
+    if (soPropertyIt != std::end(node.properties)) {
+        const auto subobjectId = soPropertyIt->toULongLong();
+        func(subobjectId);
+    }
+}
+
 void Skeletonizer::selectObjectForNode(nodeListElement & node) {
     const auto subobjectId = node.properties[subobjectPropertyKey].toULongLong();
     auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
@@ -27,21 +36,18 @@ void Skeletonizer::setSubobject(nodeListElement & node, const quint64 subobjectI
     Segmentation::singleton().mergeSelectedObjects();
 }
 
+void Skeletonizer::setSubobjectFromProperty(nodeListElement & node) {
+    ifsoproperty(node, [&](const uint64_t subobjectId){
+        setSubobject(node, subobjectId);
+    });
+}
+
 void decrementSubobjectCount(nodeListElement & node, const Coordinate & oldPos, const uint64_t oldSubobjectId) {
     if (--node.correspondingTree->subobjectCount[oldSubobjectId] == 0) {
         node.correspondingTree->subobjectCount.remove(oldSubobjectId);
 
         Segmentation::singleton().selectObjectFromSubObject(oldSubobjectId, oldPos);
         Segmentation::singleton().unmergeSelectedObjects(oldPos);
-    }
-}
-
-template<typename Func>
-void ifsoproperty(nodeListElement & node, Func func) {
-    auto soPropertyIt = node.properties.find(subobjectPropertyKey);
-    if (soPropertyIt != std::end(node.properties)) {
-        const auto subobjectId = soPropertyIt->toULongLong();
-        func(subobjectId);
     }
 }
 

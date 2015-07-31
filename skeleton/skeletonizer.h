@@ -216,6 +216,7 @@ public slots:
     bool delComment(commentListElement *currentComment, uint commentNodeID);
     void setSubobject(const quint64 nodeId, const quint64 subobjectId);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
+    void setSubobjectFromProperty(nodeListElement & node);
     void unsetSubobjectOfHybridNode(nodeListElement & node);
     void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
     void selectObjectForNode(nodeListElement & node);
