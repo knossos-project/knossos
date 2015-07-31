@@ -478,9 +478,6 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
     } else {
         Skeletonizer::singleton().selectNodes(selectedNodes);
-        if (selectedNodes.size() == 1) {
-            Skeletonizer::singleton().selectObjectForNode(*selectedNodes.front());
-        }
     }
 }
 

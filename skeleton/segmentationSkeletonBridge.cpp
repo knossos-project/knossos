@@ -16,10 +16,11 @@ void ifsoproperty(nodeListElement & node, Func func) {
 }
 
 void Skeletonizer::selectObjectForNode(nodeListElement & node) {
-    const auto subobjectId = node.properties[subobjectPropertyKey].toULongLong();
-    auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
-    Segmentation::singleton().clearObjectSelection();
-    Segmentation::singleton().selectObject(objIndex);
+    ifsoproperty(node, [&](const uint64_t subobjectId){
+        auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
+        Segmentation::singleton().clearObjectSelection();
+        Segmentation::singleton().selectObject(objIndex);
+    });
 }
 
 void Skeletonizer::setSubobject(const quint64 nodeId, const quint64 subobjectId) {

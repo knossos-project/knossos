@@ -2619,6 +2619,10 @@ void Skeletonizer::toggleNodeSelection(const std::vector<nodeListElement*> & nod
     } else {
         emit nodeSelectionChangedSignal();
     }
+
+    if (selectedNodes.size() == 1) {//hybrid mode
+        Skeletonizer::singleton().selectObjectForNode(*selectedNodes.front());
+    }
 }
 
 void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
