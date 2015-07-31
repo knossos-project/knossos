@@ -2599,7 +2599,7 @@ void Skeletonizer::toggleNodeSelection(const std::vector<nodeListElement*> & nod
         return removeNodes.find(node->nodeID) != std::end(removeNodes);
     });
     if (eraseIt != std::end(selectedNodes)) {
-        selectedNodes.erase(eraseIt);
+        selectedNodes.erase(eraseIt, std::end(selectedNodes));
     }
 
     if (selectedNodes.size() == 1) {
