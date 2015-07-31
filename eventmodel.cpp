@@ -465,12 +465,14 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
         selectedNodes = nodeSelection(event->pos().x(), event->pos().y(), VPfound);
     }
-    state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
-    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-        Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
-    } else {
-        Skeletonizer::singleton().selectNodes(selectedNodes);
+    if (state->viewerState->nodeSelectSquareVpId != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
+        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+            Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
+        } else {
+            Skeletonizer::singleton().selectNodes(selectedNodes);
+        }
     }
+    state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
