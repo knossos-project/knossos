@@ -29,6 +29,7 @@
 
 #include <QList>
 #include <QObject>
+#include <QSet>
 
 #include <boost/multi_array.hpp>
 
@@ -91,7 +92,7 @@ protected:
 
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
-    std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
+    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
 };

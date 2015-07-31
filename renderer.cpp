@@ -1685,13 +1685,13 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
     const auto & nodes = retrieveAllObjectsBeneathSquare(currentVP, x, y, width, width);
     if (nodes.size() != 0) {
-        return nodes.back()->nodeID;
+        return (*std::begin(nodes))->nodeID;
     } else {
         return 0;//no node found
     }
 }
 
-std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
+QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1746,7 +1746,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     glLoadIdentity();
 
     qDebug() << "selection hits: " << hits;
-    std::vector<nodeListElement *> foundNodes;
+    QSet<nodeListElement *> foundNodes;
     for (std::size_t i = 0; i < selectionBuffer.size();) {
         if (hits == 0) {//if hits was positive and reaches 0
             //if overflow bit was set hits is negative and we only use the buffer-end-condition
@@ -1760,7 +1760,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
             if (name >= GLNAME_NODEID_OFFSET) {
                 nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
                 if (foundNode != nullptr) {
-                    foundNodes.emplace_back(foundNode);
+                    foundNodes.insert(foundNode);
                 }
             }
         }

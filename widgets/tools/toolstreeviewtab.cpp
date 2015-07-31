@@ -913,10 +913,10 @@ void ToolsTreeviewTab::nodeTableSelectionChanged() {
     }
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
-    std::vector<nodeListElement*> selectedNodes;
+    QSet<nodeListElement*> selectedNodes;
     foreach(QModelIndex index, selected) {
         nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toUInt());
-        selectedNodes.emplace_back(node);
+        selectedNodes.insert(node);
     }
     Skeletonizer::singleton().selectNodes(selectedNodes);
 

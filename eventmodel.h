@@ -28,11 +28,12 @@
 #include "stateInfo.h"
 #include "widgets/viewport.h"
 
-#include <QObject>
-#include <QMouseEvent>
 #include <QKeyEvent>
-#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QObject>
+#include <QSet>
 #include <QShortcut>
+#include <QWheelEvent>
 
 /**
   * @class EventModel
@@ -76,7 +77,7 @@ public:
     void handleKeyPress(QKeyEvent *event, int VPfound);
     void handleKeyRelease(QKeyEvent *event);
     void startNodeSelection(int x, int y, int vpId);
-    std::vector<nodeListElement *> nodeSelection(int x, int y, int vpId);
+    QSet<nodeListElement *> nodeSelection(int x, int y, int vpId);
     Coordinate getMouseCoordinate(int VPfound);
     int xrel(const int x);
     int yrel(const int y);
