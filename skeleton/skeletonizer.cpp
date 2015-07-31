@@ -1100,18 +1100,16 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
 bool Skeletonizer::setActiveTreeByID(int treeID) {
     treeListElement *currentTree;
     currentTree = findTreeByTreeID(treeID);
-    if(!currentTree) {
+    if (currentTree == nullptr) {
         qDebug("There exists no tree with ID %d!", treeID);
         return false;
+    } else if (currentTree == state->skeletonState->activeTree) {
+        return true;
     }
 
     state->skeletonState->activeTree = currentTree;
 
-    clearTreeSelection();
-    if(currentTree->selected == false) {
-        currentTree->selected = true;
-        state->skeletonState->selectedTrees.push_back(currentTree);
-    }
+    selectTrees({currentTree});
 
     //switch to nearby node of new tree
     if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->correspondingTree != currentTree) {
@@ -1127,8 +1125,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     }
 
     state->skeletonState->unsavedChanges = true;
-
-    emit treeSelectionChangedSignal();
 
     return true;
 }
@@ -1321,13 +1317,6 @@ bool Skeletonizer::addSegment(uint sourceNodeID, uint targetNodeID) {
     state->skeletonState->unsavedChanges = true;
 
     return true;
-}
-
-void Skeletonizer::clearTreeSelection() {
-    for (auto &selectedTree : state->skeletonState->selectedTrees) {
-        selectedTree->selected = false;
-    }
-    state->skeletonState->selectedTrees.clear();
 }
 
 void Skeletonizer::clearSkeleton() {
@@ -1587,10 +1576,8 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
     //Tree ID is unique in tree list
     //Take the provided tree ID if there is one.
     newElement->treeID = treeID != 0 ? treeID : findAvailableTreeID();
-    clearTreeSelection();
     newElement->render = true;
-    newElement->selected = true;
-    state->skeletonState->selectedTrees.push_back(newElement);
+    newElement->selected = false;
 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
@@ -1617,9 +1604,6 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
     }
     //We change the old and new first elements
     state->skeletonState->firstTree.reset(newElement);
-
-    state->skeletonState->activeTree = newElement;
-    //qDebug("Added new tree with ID: %d.", newElement->treeID);
 
     state->skeletonState->treesByID.emplace(newElement->treeID, newElement);
 
@@ -2608,21 +2592,21 @@ void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodes) {
 }
 
 void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
-    clearTreeSelection();
+    auto & selectedTrees = state->skeletonState->selectedTrees;
+    for (auto &selectedTree : selectedTrees) {
+        selectedTree->selected = false;
+    }
     for (auto & elem : trees) {
         elem->selected = true;
     }
-    auto & selectedTrees = state->skeletonState->selectedTrees;
     selectedTrees = trees;
 
     if (selectedTrees.size() == 1) {
         setActiveTreeByID(selectedTrees.front()->treeID);
     } else if (selectedTrees.empty() && state->skeletonState->activeTree != nullptr) {
-        // at least one must always be selected
-        setActiveTreeByID(state->skeletonState->activeTree->treeID);
-    } else {
-        emit treeSelectionChangedSignal();
+        setActiveTreeByID(state->skeletonState->activeTree->treeID);// at least one must always be selected
     }
+    emit treeSelectionChangedSignal();
 }
 
 void Skeletonizer::deleteSelectedTrees() {

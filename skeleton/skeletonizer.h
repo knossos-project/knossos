@@ -264,7 +264,6 @@ public:
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
 private:
-    void clearTreeSelection();
 
     TracingMode tracingMode;
 };
