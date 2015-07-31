@@ -93,7 +93,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     segmentationOverlayLayout.addWidget(&segmenationOverlaySpinBox);
 
     drawIntersectionsCrossHairCheckBox = new QCheckBox("Draw Intersections Crosshairs");
-    showViewPortsSizeCheckBox = new QCheckBox("Show Viewport Size");
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -149,7 +148,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(line6, 13, 3, 1, 3);
     gridLayout->addLayout(&segmentationOverlayLayout, 14, 0, 1, 2);
     gridLayout->addWidget(drawIntersectionsCrossHairCheckBox, 14, 3, 1, 2);
-    gridLayout->addWidget(showViewPortsSizeCheckBox, 15, 3, 1, 2);
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
@@ -183,7 +181,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
         state->viewer->oc_reslice_notify_visible();
     });
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
-    connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool checked) {
@@ -300,10 +297,6 @@ void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
 
 void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
     state->viewerState->drawVPCrosshairs = on;
-}
-
-void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
-    state->viewerState->showVPLabels = on;
 }
 
 void VPSlicePlaneViewportWidget::updateIntersection() {

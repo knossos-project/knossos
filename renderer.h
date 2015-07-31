@@ -72,7 +72,6 @@ public:
     void renderBrush(uint viewportType, Coordinate coord);
     void setFrontFacePerspective(uint currentVP);
     void renderViewportFrontFace(uint currentVP);
-    void renderSizeLabel(uint currentVP, const int fontSize = defaultFonsSize);
     void renderScaleBar(uint currentVP, const int thickness = 2, const int fontSize = defaultFonsSize);
 protected:
     bool setRotationState(uint setTo);
