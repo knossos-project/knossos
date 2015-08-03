@@ -485,7 +485,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     Coordinate movementAreaMax = state->boundary;
 
                     for (const auto & attribute : attributes) {
-                        const auto & name = attribute.value();
+                        const auto & name = attribute.name();
                         const auto & value = attribute.value();
                         if (name == "min.x") {
                             movementAreaMin.x = value.toInt();
@@ -810,7 +810,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
            (loadedPosition.y != 0) &&
            (loadedPosition.z != 0)) {
             Coordinate jump = loadedPosition - 1 - state->viewerState->currentPosition;
-            emit userMoveSignal(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+            state->viewer->userMove(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
         }
     }
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
