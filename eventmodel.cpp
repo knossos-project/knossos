@@ -151,7 +151,7 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
                 } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, NULL);
                 } else{
-                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return;
@@ -178,7 +178,7 @@ void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                 } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, 0);
                 } else {
-                    if(skel.simpleTracing && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!",
                                                  "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
                         return;
@@ -205,15 +205,12 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate movement, lastPos;
 
     uint64_t newNodeId = 0;
-    switch (state->viewer->skeletonizer->getTracingMode()) {
-    case Skeletonizer::TracingMode::unlinkedNodes:
+    switch (state->viewer->skeletonizer->tracingMode) {
+    case Skeletonizer::TracingMode::unlinked:
         newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
-    case Skeletonizer::TracingMode::skipNextLink:
-        newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
-        break;
-    case Skeletonizer::TracingMode::linkedNodes:
+    case Skeletonizer::TracingMode::standard:
+    case Skeletonizer::TracingMode::advanced:
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
             newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);

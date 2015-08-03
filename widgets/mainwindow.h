@@ -59,6 +59,13 @@ class MainWindow : public QMainWindow {
     friend SkeletonProxy;
 
     std::vector<QString> workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
+    WorkMode workMode;
+    AnnotationMode workMode2AnnotationMode(const WorkMode mode) const;
+    QAction *newTreeAction;
+    QAction *pushBranchAction;
+    QAction *popBranchAction;
+    QAction *clearSkeletonAction;
+    QAction *clearMergelistAction;
 
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -163,10 +170,9 @@ public slots:
     void exportToNml();
 
     /* edit skeleton menu*/
-    void setAnnotationMode(AnnotationMode mode);
+    void setWorkMode(WorkMode mode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
-    void setSimpleTracing(bool simple);
 
     /* view menu */
     void dragDatasetSlot();
