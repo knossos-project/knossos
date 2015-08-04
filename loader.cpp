@@ -64,9 +64,9 @@ constexpr bool inRange(const int value, const int min, const int max) {
 
 bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
     const int halfSupercube = cubeSize * cubesPerDimension * 0.5;
-    const int xcube = center.x - center.x % cubeSize;
-    const int ycube = center.y - center.y % cubeSize;
-    const int zcube = center.z - center.z % cubeSize;
+    const int xcube = center.x - center.x % cubeSize + cubeSize /2;
+    const int ycube = center.y - center.y % cubeSize + cubeSize / 2 ;
+    const int zcube = center.z - center.z % cubeSize + cubeSize / 2;
     bool valid = true;
     valid &= inRange(coord.x, xcube - halfSupercube, xcube + halfSupercube);
     valid &= inRange(coord.y, ycube - halfSupercube, ycube + halfSupercube);
