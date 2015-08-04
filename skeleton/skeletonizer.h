@@ -257,8 +257,6 @@ public:
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-private:
-
 };
 
 #endif // SKELETONIZER_H

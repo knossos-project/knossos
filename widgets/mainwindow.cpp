@@ -64,7 +64,7 @@
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject), workMode(WorkMode::Tracing) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), workMode(WorkMode::Tracing), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
@@ -74,9 +74,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         if (!showOverlays) {
-            modeChoiceMenu.actions()[WorkMode::SegmentationMerge]->setDisabled(true);
-            modeChoiceMenu.actions()[WorkMode::SegmentationPaint]->setDisabled(true);
-            modeChoiceMenu.actions()[WorkMode::MergeTracing]->setDisabled(true);
+            workModeModel.recreate({tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing")});
             switch(Skeletonizer::singleton().tracingMode) {
             case Skeletonizer::TracingMode::advanced: setWorkMode(WorkMode::AdvancedTracing); break;
             case Skeletonizer::TracingMode::unlinked: setWorkMode(WorkMode::UnlinkedTracing); break;
@@ -84,9 +82,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
             }
         }
         else {
-            modeChoiceMenu.actions()[WorkMode::SegmentationMerge]->setDisabled(false);
-            modeChoiceMenu.actions()[WorkMode::SegmentationPaint]->setDisabled(false);
-            modeChoiceMenu.actions()[WorkMode::MergeTracing]->setDisabled(false);
+            workModeModel.recreate(workModes);
+            modeCombo.setCurrentIndex(workMode);
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
@@ -153,6 +150,13 @@ void MainWindow::createToolbars() {
 
     basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
     basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar.addSeparator();
+    basicToolbar.addWidget(&modeCombo);
+    workModeModel.recreate(workModes);
+    modeCombo.setModel(&workModeModel);
+    modeCombo.setCurrentIndex(workMode);
+    QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(static_cast<WorkMode>(index)); });
+    modeCombo.setToolTip("Select a work mode");
     basicToolbar.addSeparator();
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
@@ -483,14 +487,6 @@ void MainWindow::createMenus() {
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
 
-    auto modeActionGroup = new QActionGroup(this);
-    for (int i = WorkMode::Tracing; i <= WorkMode::MergeTracing; ++i) {
-        auto *action = modeChoiceMenu.addAction(workModes[i]);
-        modeActionGroup->addAction(action);
-        action->setCheckable(true);
-        QObject::connect(action, &QAction::triggered, [&, i]() { setWorkMode(static_cast<WorkMode>(i)); });
-    }
-    menuBar()->addMenu(&modeChoiceMenu);
     menuBar()->addMenu(&actionMenu);
 
     auto viewMenu = menuBar()->addMenu("Navigation");
@@ -814,34 +810,22 @@ void MainWindow::exportToNml() {
 
 void MainWindow::setWorkMode(WorkMode mode) {
     workMode = mode;
-    modeChoiceMenu.actions()[static_cast<int>(mode)]->setChecked(true);
-    const auto annotationMode = workMode2AnnotationMode(workMode);
-    newTreeAction->setVisible(workMode == WorkMode::AdvancedTracing || workMode == WorkMode::UnlinkedTracing || workMode == WorkMode::MergeTracing);
+    modeCombo.setCurrentIndex(mode);
+    const auto annotationMode = (mode == WorkMode::MergeTracing) ? AnnotationMode::Hybrid :
+                                (mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint) ? AnnotationMode::Segmentation :
+                                                                                                               AnnotationMode::Skeletonization;
+    newTreeAction->setVisible(mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing);
     pushBranchAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
     popBranchAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
     clearSkeletonAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
     clearMergelistAction->setVisible(annotationMode == AnnotationMode::Segmentation || annotationMode == AnnotationMode::Hybrid);
     Session::singleton().annotationMode = annotationMode;
     if (annotationMode == AnnotationMode::Skeletonization) {
-        Skeletonizer::singleton().tracingMode = workMode == WorkMode::Tracing ? Skeletonizer::TracingMode::standard :
-                                                workMode == WorkMode::AdvancedTracing ? Skeletonizer::TracingMode::advanced :
-                                                                                        Skeletonizer::TracingMode::unlinked;
+        Skeletonizer::singleton().tracingMode = (workMode == WorkMode::Tracing) ? Skeletonizer::TracingMode::standard :
+                                                (workMode == WorkMode::AdvancedTracing) ? Skeletonizer::TracingMode::advanced :
+                                                                                          Skeletonizer::TracingMode::unlinked;
     } else if (annotationMode == AnnotationMode::Segmentation) {
         Segmentation::singleton().brush.setTool(workMode == WorkMode::SegmentationMerge ? brush_t::tool_t::merge : brush_t::tool_t::add);
-    }
-}
-
-AnnotationMode MainWindow::workMode2AnnotationMode(const WorkMode mode) const {
-    switch(mode) {
-    case WorkMode::Tracing:
-    case WorkMode::AdvancedTracing:
-    case WorkMode::UnlinkedTracing:
-        return AnnotationMode::Skeletonization;
-    case WorkMode::SegmentationMerge:
-    case WorkMode::SegmentationPaint:
-        return AnnotationMode::Segmentation;
-    default:
-        return AnnotationMode::Hybrid;
     }
 }
 

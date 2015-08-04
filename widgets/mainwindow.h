@@ -53,14 +53,40 @@ class QFile;
 
 enum WorkMode { Tracing, AdvancedTracing, UnlinkedTracing, SegmentationMerge, SegmentationPaint, MergeTracing };
 
+class WorkModeModel : public QAbstractListModel {
+    Q_OBJECT
+    std::vector<QString> workModes;
+public:
+    virtual int rowCount(const QModelIndex &parent) const override { return workModes.size(); }
+    virtual QVariant data(const QModelIndex &index, int role) const override {
+        if (role == Qt::DisplayRole) {
+            return workModes[index.row()];
+        }
+        return QVariant();
+    }
+    void recreate(const QStringList & modes) {
+        beginResetModel();
+        workModes.clear();
+        for (auto & mode : modes) {
+            workModes.emplace_back(mode);
+        }
+        endResetModel();
+    }
+};
+
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
     friend TaskManagementWidget;
     friend SkeletonProxy;
 
-    std::vector<QString> workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
+    QToolBar basicToolbar{"Basic Functionality"};
+    QToolBar defaultToolbar{"Tools"};
+
+    QStringList workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
     WorkMode workMode;
-    AnnotationMode workMode2AnnotationMode(const WorkMode mode) const;
+    WorkModeModel workModeModel;
+    QComboBox modeCombo;
     QAction *newTreeAction;
     QAction *pushBranchAction;
     QAction *popBranchAction;
@@ -76,15 +102,12 @@ class MainWindow : public QMainWindow {
     QMenu fileMenu{"File"};
     QMenu *segEditMenu;
     QMenu *skelEditMenu;
-    QMenu modeChoiceMenu{"Mode"};
     QMenu actionMenu{"Action"};
     QString openFileDirectory;
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
 
-    QToolBar basicToolbar{"Basic Functionality"};
-    QToolBar defaultToolbar{"Tools"};
     int loaderLastProgress;
     QLabel *loaderProgress;
 
