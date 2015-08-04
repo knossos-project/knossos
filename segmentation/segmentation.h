@@ -195,7 +195,7 @@ public:
     //data access
     void createAndSelectObject(const Coordinate & position);
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
-    uint64_t subobjectIdOfFirstSelectedObject();
+    uint64_t subobjectIdOfFirstSelectedObject(const Coordinate & newLocation);
     bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t tryLargestObjectContainingSubobject(const uint64_t subObjectId) const;
@@ -216,8 +216,6 @@ public:
     void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist();
-
-    void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
     void hoverSubObject(const uint64_t subobject_id);
     void touchObjects(const uint64_t subobject_id);

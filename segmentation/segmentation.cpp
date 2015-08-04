@@ -264,8 +264,14 @@ bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
     return it != std::end(subobjects);
 }
 
-uint64_t Segmentation::subobjectIdOfFirstSelectedObject() {
-    return objects[selectedObjectIndices.front()].subobjects.front().get().id;
+uint64_t Segmentation::subobjectIdOfFirstSelectedObject(const Coordinate & newLocation) {
+    if (selectedObjectsCount() != 0) {
+        auto & obj = objects[selectedObjectIndices.front()];
+        obj.location = newLocation;
+        return obj.subobjects.front().get().id;
+    } else {
+        throw std::runtime_error("no objects selected for subobject retrieval");
+    }
 }
 
 Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId, const Coordinate & location) {
@@ -487,10 +493,6 @@ void Segmentation::selectObject(const uint64_t & objectIndex) {
     if (objectIndex < objects.size()) {
         selectObject(objects[objectIndex]);
     }
-}
-
-void Segmentation::updateLocationForFirstSelectedObject(const Coordinate & newLocation) {
-    objects[selectedObjectIndices.front()].location = newLocation;
 }
 
 std::size_t Segmentation::selectedObjectsCount() const {
