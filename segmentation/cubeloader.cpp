@@ -54,19 +54,19 @@ bool isInsideSphere(const double xi, const double yi, const double zi, const dou
 }
 
 std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const brush_t & brush) {
-    const auto xsize = brush.getRadius() / state->scale.x;
-    const auto ysize = brush.getRadius() / state->scale.y;
-    const auto zsize = brush.getRadius() / state->scale.z;
+    const auto xsize = brush.radius / state->scale.x;
+    const auto ysize = brush.radius / state->scale.y;
+    const auto zsize = brush.radius / state->scale.z;
     const auto brushExtents = Coordinate(xsize, ysize, zsize);
     auto globalFirst = (centerPos - brushExtents).capped(0, state->boundary);
     auto globalLast = (centerPos + brushExtents).capped(0, state->boundary);
 
-    if (brush.getMode() == brush_t::mode_t::two_dim) {//disable depth
-        if (brush.getView() == brush_t::view_t::xy) {
+    if (brush.mode == brush_t::mode_t::two_dim) {//disable depth
+        if (brush.view == brush_t::view_t::xy) {
             globalFirst.z = globalLast.z = centerPos.z;
-        } else if(brush.getView() == brush_t::view_t::xz) {
+        } else if(brush.view == brush_t::view_t::xz) {
             globalFirst.y = globalLast.y = centerPos.y;
-        } else if(brush.getView() == brush_t::view_t::yz) {
+        } else if(brush.view == brush_t::view_t::yz) {
             globalFirst.x = globalLast.x = centerPos.x;
         }
     }
@@ -162,12 +162,12 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     //the brush differentiations were moved outside the core lambda which is called for every voxel
     CubeCoordSet cubeChangeSet;
     CubeCoordSet cubeChangeSetWholeCube;
-    if (brush.getTool() == brush_t::tool_t::add) {
+    if (brush.tool == brush_t::tool_t::add) {
         const auto region = getRegion(centerPos, brush);
-        if (brush.getShape() == brush_t::shape_t::angular) {
-            if (!brush.isInverse() || Segmentation::singleton().selectedObjectsCount() == 0) {
+        if (brush.shape == brush_t::shape_t::angular) {
+            if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
                 //for rectangular brushes no further range checks are needed
-                if (brush.getMode() == brush_t::mode_t::three_dim && brush.getShape() == brush_t::shape_t::angular) {
+                if (brush.mode == brush_t::mode_t::three_dim && brush.shape == brush_t::shape_t::angular) {
                     //rarest special case: processes completely exclosed cubes first
                     cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
                         voxel = value;
@@ -184,16 +184,16 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                     }
                 });
             }
-        } else if (!brush.isInverse() || Segmentation::singleton().selectedObjectsCount() == 0) {
+        } else if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
             //voxel need to check if they are inside the circle
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius())) {
+                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)) {
                     voxel = value;
                 }
             });
         } else {//circle, inverse and selected
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.getRadius())
+                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
                         && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
                     voxel = 0;
                 }

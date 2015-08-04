@@ -68,14 +68,14 @@ void segmentation_work(QMouseEvent *event, const int vp) {
             soid = seg.subobjectIdOfFirstSelectedObject();
             seg.updateLocationForFirstSelectedObject(coord);
         }
-        writeVoxels(coord, soid, seg.brush);
+        writeVoxels(coord, soid, seg.brush.value());
     }
 }
 
 void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-    const auto subobjectIds = readVoxels(brushCenter, seg.brush);
+    const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
     for(const auto subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             const auto soid = subobjectPair.first;

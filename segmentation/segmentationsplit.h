@@ -5,8 +5,7 @@
 
 #include <QObject>
 
-class brush_t : public QObject {
-    Q_OBJECT
+class brush_t {
 public:
     enum class mode_t {
         two_dim, three_dim
@@ -21,6 +20,20 @@ public:
         angular, round
     };
 
+    int radius = 100;
+    bool inverse = false;
+    mode_t mode = mode_t::two_dim;
+    tool_t tool = tool_t::merge;
+    view_t view = view_t::xy;
+    shape_t shape = shape_t::round;
+};
+
+class brush_subject : public QObject, private brush_t {
+    Q_OBJECT
+public:
+    brush_t value() {
+        return static_cast<brush_t>(*this);
+    }
     void setInverse(const bool newInverse) {
         inverse = newInverse;
         emit inverseChanged(inverse);
@@ -68,13 +81,6 @@ signals:
     void radiusChanged(const int);
     void toolChanged(const tool_t);
     void shapeChanged(const shape_t);
-private:
-    int radius = 100;
-    bool inverse = false;
-    mode_t mode = mode_t::two_dim;
-    tool_t tool = tool_t::merge;
-    view_t view = view_t::xy;
-    shape_t shape = shape_t::round;
 };
 
 void connectedComponent(const Coordinate & seed);

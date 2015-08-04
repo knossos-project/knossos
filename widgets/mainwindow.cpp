@@ -499,7 +499,7 @@ void MainWindow::createMenus() {
         Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
     }, Qt::Key_J);
 
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::toolChanged, [&mergeModeAction, &paintModeAction](brush_t::tool_t value){
+    QObject::connect(&Segmentation::singleton().brush, &brush_subject::toolChanged, [&mergeModeAction, &paintModeAction](brush_t::tool_t value){
         mergeModeAction.setChecked(value == brush_t::tool_t::merge);
         paintModeAction.setChecked(value == brush_t::tool_t::add);
     });
