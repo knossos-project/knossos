@@ -152,8 +152,7 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, NULL);
                 } else{
                     if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
-                        QMessageBox::information(nullptr, "Cycle detected!",
-                                                 "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
+                        QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNodeId);
@@ -179,8 +178,7 @@ void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, 0);
                 } else {
                     if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
-                        QMessageBox::information(nullptr, "Cycle detected!",
-                                                 "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
+                        QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
                     emit addSegmentSignal(activeNode->nodeID, clickedNodeId);

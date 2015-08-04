@@ -156,7 +156,13 @@ void MainWindow::createToolbars() {
     modeCombo.setModel(&workModeModel);
     modeCombo.setCurrentIndex(workMode);
     QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(static_cast<WorkMode>(index)); });
-    modeCombo.setToolTip("Select a work mode");
+    modeCombo.setToolTip("<b>Select a work mode:</b><br/>"
+                         "<b>" + workModes[WorkMode::Tracing] + ":</b> Skeletonization on one tree<br/>"
+                         "<b>" + workModes[WorkMode::AdvancedTracing] + ":</b> Unrestricted skeletonization<br/>"
+                         "<b>" + workModes[WorkMode::UnlinkedTracing] + ":</b> Skeletonization with unlinked nodes<br/>"
+                         "<b>" + workModes[WorkMode::SegmentationMerge] + ":</b> Segmentation by merging objects<br/>"
+                         "<b>" + workModes[WorkMode::SegmentationPaint] + ":</b> Segmentation by painting<br/>"
+                         "<b>" + workModes[WorkMode::MergeTracing] + ":</b> Merge segmentation objects by tracing");
     basicToolbar.addSeparator();
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
@@ -811,6 +817,7 @@ void MainWindow::exportToNml() {
 void MainWindow::setWorkMode(WorkMode mode) {
     workMode = mode;
     modeCombo.setCurrentIndex(mode);
+    widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(mode != WorkMode::Tracing);
     const auto annotationMode = (mode == WorkMode::MergeTracing) ? AnnotationMode::Hybrid :
                                 (mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint) ? AnnotationMode::Segmentation :
                                                                                                                AnnotationMode::Skeletonization;

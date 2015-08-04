@@ -292,6 +292,10 @@ void ToolsCommandsTab::disableCurrentLockButtonClicked() {
     Skeletonizer::singleton().unlockPosition();
 }
 
+void ToolsCommandsTab::enableNewTreeButton(const bool value) {
+    newTreeButton->setEnabled(value);
+}
+
 void ToolsCommandsTab::updateBranchCount() {
     branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
 }

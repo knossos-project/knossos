@@ -18,6 +18,7 @@ class ToolsCommandsTab : public QWidget
 
 public:
     explicit ToolsCommandsTab(QWidget *parent = 0);
+    void enableNewTreeButton(const bool value);
 protected:
     QLabel *treeLabel;
     QLabel *activeTreeLabel;

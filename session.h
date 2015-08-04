@@ -33,20 +33,6 @@
 #include <QString>
 #include <QTimer>
 
-//menu entries
-//SimpleTracing, Linked, Unlinked, Merge, Paint, MergeTracing
-
-//JobMode
-
-
-//AnnotationMode: Skeletonization, Segmentation
-//TracingMode: oneUnlinked, linked, unlinked
-//brush::tool_t: merge, paint
-//job.active
-//hybrid
-//simple tracing
-
-
 enum class AnnotationMode {
     Skeletonization, Segmentation,
     Hybrid
