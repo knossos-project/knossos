@@ -463,27 +463,24 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glEnd();
         glDisable(GL_BLEND);
     }
-    if(state->viewerState->showVPLabels) {
+    if(state->viewerState->showScalebar) {
         renderScaleBar(currentVP);
     }
 }
 
-void Renderer::renderSizeLabel(uint currentVP, const int fontSize) {
-    glColor4f(0, 0, 0, 1);
-    float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
-    float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
-    Coordinate pos(15, static_cast<int>(state->viewerState->vpConfigs[currentVP].edgeLength) - 10, -1);
-    renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width), fontSize);
-}
-
 void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[currentVP];
-    auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
-    auto rounded_scalebar_size_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
-    if(rounded_scalebar_size_um == 0) {
-        rounded_scalebar_size_um = vp_edgelen_um/3; // default scalebar length of vp edge length/3
+    const auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
+    auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
+    auto sizeLabel = QString("%1 µm").arg(rounded_scalebar_len_um);
+    auto divisor = vp_edgelen_um / rounded_scalebar_len_um; // for scalebar size in pixels
+
+    if(rounded_scalebar_len_um == 0) {
+        const auto rounded_scalebar_len_nm = std::round(vp.displayedlengthInNmX/3/5)*5; // switch to nanometers rounded to next multiple of 5
+        sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
+        divisor = vp.displayedlengthInNmX/rounded_scalebar_len_nm;
     }
-    const auto divisor = vp_edgelen_um / rounded_scalebar_size_um; // for scalebar size in pixels
+
     int min_x = 0.05 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
     glLineWidth(thickness);
     glColor3f(0., 0., 0.);
@@ -491,7 +488,7 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
     glVertex3f(min_x, y, z);
     glVertex3f(max_x, y, z);
     glEnd();
-    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, y, z), QString("%1 µm").arg(rounded_scalebar_size_um), fontSize, true);
+    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, y, z), sizeLabel, fontSize, true);
 }
 
 // Currently not used
@@ -1688,13 +1685,13 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
     const auto & nodes = retrieveAllObjectsBeneathSquare(currentVP, x, y, width, width);
     if (nodes.size() != 0) {
-        return nodes.back()->nodeID;
+        return (*std::begin(nodes))->nodeID;
     } else {
         return 0;//no node found
     }
 }
 
-std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
+QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1749,7 +1746,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     glLoadIdentity();
 
     qDebug() << "selection hits: " << hits;
-    std::vector<nodeListElement *> foundNodes;
+    QSet<nodeListElement *> foundNodes;
     for (std::size_t i = 0; i < selectionBuffer.size();) {
         if (hits == 0) {//if hits was positive and reaches 0
             //if overflow bit was set hits is negative and we only use the buffer-end-condition
@@ -1763,7 +1760,7 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
             if (name >= GLNAME_NODEID_OFFSET) {
                 nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
                 if (foundNode != nullptr) {
-                    foundNodes.emplace_back(foundNode);
+                    foundNodes.insert(foundNode);
                 }
             }
         }

@@ -40,6 +40,7 @@ class VPGeneralTabWidget : public QWidget
 public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
     QPushButton *resetVPsButton;
+    QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox *showVPDecorationCheckBox;
     QCheckBox hideSkeletonOrthoVPsCheckBox{"Hide Skeleton in Ortho VPs"};
 signals:

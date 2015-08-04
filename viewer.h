@@ -99,8 +99,7 @@ struct viewerState {
     int nodeSelectSquareVpId;
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
-    //Show height/width-labels inside VPs
-    bool showVPLabels;
+    bool showScalebar;
 
     bool selectModeFlag;
 

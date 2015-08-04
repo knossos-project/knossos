@@ -449,7 +449,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         return;
     }
 
-    std::vector<nodeListElement*> selectedNodes;
+    QSet<nodeListElement*> selectedNodes;
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
@@ -462,12 +462,14 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
         selectedNodes = nodeSelection(event->pos().x(), event->pos().y(), VPfound);
     }
-    state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
-    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-        Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
-    } else {
-        Skeletonizer::singleton().selectNodes(selectedNodes);
+    if (state->viewerState->nodeSelectSquareVpId != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
+        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+            Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
+        } else {
+            Skeletonizer::singleton().selectNodes(selectedNodes);
+        }
     }
+    state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
@@ -1083,7 +1085,7 @@ void EventModel::startNodeSelection(int x, int y, int vpId) {
     state->viewerState->nodeSelectSquareVpId = vpId;
 }
 
-std::vector<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) {
+QSet<nodeListElement*> EventModel::nodeSelection(int x, int y, int vpId) {
     // node selection square
     state->viewerState->nodeSelectionSquare.second.x = x;
     state->viewerState->nodeSelectionSquare.second.y = y;

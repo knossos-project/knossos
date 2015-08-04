@@ -47,7 +47,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->hightlightActiveTreeCheckBox->setChecked(state->viewerState->highlightVp);
 
     this->showAllNodeIdsCheckBox = new QCheckBox("Show All Node IDs");
-    this->showAllNodeIdsCheckBox->setChecked(state->viewerState->showVPLabels);
+    this->showAllNodeIdsCheckBox->setChecked(state->viewerState->showScalebar);
 
     this->renderingQualityLabel = new QLabel("Rendering quality(1 best, 20 fastest):");
     this->renderingQualitySpinBox = new QSpinBox();
@@ -122,6 +122,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     line->setFrameShadow(QFrame::Sunken);
     mainLayout->addWidget(line);
 
+    mainLayout->addWidget(&showScalebarCheckBox);
     mainLayout->addWidget(this->showVPDecorationCheckBox);
     mainLayout->addWidget(this->resetVPsButton);
 
@@ -142,9 +143,9 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QObject::connect(&onlySelectedTreesRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::onlySelectedTreesSelected);
     QObject::connect(&hideSkeletonOrthoVPsCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonOrthoVPClicked);
     QObject::connect(&hideSkeletonSkelVPCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonSkelVPClicked);
-
     QObject::connect(showVPDecorationCheckBox, &QCheckBox::toggled, this, &VPGeneralTabWidget::setViewportDecorations);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &VPGeneralTabWidget::resetViewportPositions);
+    QObject::connect(&showScalebarCheckBox, &QCheckBox::toggled, [] (bool checked) { state->viewerState->showScalebar = checked; });
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {

@@ -64,7 +64,6 @@ public slots:
     void rangeDeltaSliderMoved(int value);
     void rangeDeltaChanged(int value);
     void drawIntersectionsCrossHairChecked(bool on);
-    void showViewPortsSizeChecked(bool on);
     void updateIntersection();
 
     void loadDatasetLUT();
@@ -88,7 +87,7 @@ protected:
     QSlider *biasSlider, *rangeDeltaSlider;
 
     QLabel *viewportObjectsLabel;
-    QCheckBox *drawIntersectionsCrossHairCheckBox, *showViewPortsSizeCheckBox;
+    QCheckBox *drawIntersectionsCrossHairCheckBox;
 
     QLabel *datasetLutFile;
     QLabel *treeLutFile;

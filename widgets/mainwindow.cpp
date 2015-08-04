@@ -380,28 +380,13 @@ void MainWindow::updateRecentFile(const QString & fileName) {
 }
 
 void MainWindow::treeColorAdjustmentsChanged() {
-    //user lut activated
-        if(state->viewerState->treeColortableOn) {
-            //user lut selected
-            if(state->viewerState->treeLutSet) {
-                memcpy(state->viewerState->treeAdjustmentTable,
-                state->viewerState->treeColortable,
-                RGB_LUTSIZE * sizeof(float));
-                emit updateTreeColorsSignal();
-            }
-            else {
-                memcpy(state->viewerState->treeAdjustmentTable,
-                state->viewerState->defaultTreeTable,
-                RGB_LUTSIZE * sizeof(float));
-            }
-        }
-        //use of default lut
-        else {
-            memcpy(state->viewerState->treeAdjustmentTable,
-            state->viewerState->defaultTreeTable,
-            RGB_LUTSIZE * sizeof(float));
-                    emit updateTreeColorsSignal();
-            }
+    if (state->viewerState->treeColortableOn && state->viewerState->treeLutSet) {//user lut activated and  selected
+        memcpy(state->viewerState->treeAdjustmentTable, state->viewerState->treeColortable, RGB_LUTSIZE * sizeof(float));
+        Skeletonizer::singleton().updateTreeColors();
+    } else {//use of default lut
+        memcpy(state->viewerState->treeAdjustmentTable, state->viewerState->defaultTreeTable, RGB_LUTSIZE * sizeof(float));
+        Skeletonizer::singleton().updateTreeColors();
+    }
 }
 
 void MainWindow::datasetColorAdjustmentsChanged() {
@@ -979,7 +964,7 @@ void MainWindow::coordinateEditingFinished() {
     const auto viewer_offset_x = xField->value() - 1 - state->viewerState->currentPosition.x;
     const auto viewer_offset_y = yField->value() - 1 - state->viewerState->currentPosition.y;
     const auto viewer_offset_z = zField->value() - 1 - state->viewerState->currentPosition.z;
-    emit userMoveSignal(viewer_offset_x, viewer_offset_y, viewer_offset_z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    state->viewer->userMove(viewer_offset_x, viewer_offset_y, viewer_offset_z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 void MainWindow::saveSettings() {

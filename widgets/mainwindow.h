@@ -141,18 +141,6 @@ public:
 
     static void datasetColorAdjustmentsChanged();
 
-signals:
-    bool changeDatasetMagSignal(uint upOrDownFlag);
-    void recentFileSelectSignal(int index);
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-
-    void stopRenderTimerSignal();
-    void startRenderTimerSignal(int frequency);
-    void updateTreeColorsSignal();
-
-    treeListElement *addTreeListElementSignal(int treeID, color4F color);
-
-    void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
