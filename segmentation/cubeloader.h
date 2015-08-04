@@ -19,5 +19,6 @@ subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &);
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged = true);
 void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t &, bool isMarkChanged = true);
 CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, const char *data, const Coordinate & strides, bool isWrite, bool markChanged);
+void listFill(const Coordinate & centerPos, const brush_t & brush, const uint64_t fillsoid, const std::unordered_set<Coordinate> & voxels);
 
 #endif//CUBELOADER_H

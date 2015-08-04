@@ -227,3 +227,13 @@ CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coo
     }
     return cubeChangeSet;
 }
+
+void listFill(const Coordinate & centerPos, const brush_t & brush, const uint64_t fillsoid, const std::unordered_set<Coordinate> & voxels) {
+    const auto region = getRegion(centerPos, brush);
+    auto cubeChangeSet = processRegion(region.first, region.second, [fillsoid, &voxels](uint64_t & voxel, Coordinate globalPos){
+        if (voxels.find(globalPos) != std::end(voxels)) {
+            voxel = fillsoid;
+        }
+    });
+    coordCubesMarkChanged(cubeChangeSet);
+}

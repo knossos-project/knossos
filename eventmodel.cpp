@@ -483,8 +483,12 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().selectedObjectsCount() == 1) {
-            connectedComponent(clickedCoordinate);
+        if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().brush.getTool() == brush_t::tool_t::add && Segmentation::singleton().selectedObjectsCount() == 1) {
+            uint64_t soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject(clickedCoordinate);
+            auto brush_copy = Segmentation::singleton().brush.value();
+            brush_copy.shape = brush_t::shape_t::angular;
+            brush_copy.radius = state->viewerState->vpConfigs->displayedlengthInNmX / 2;//set brush to fill visible area
+            subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
         }
     }
 }

@@ -5,6 +5,8 @@
 
 #include <QObject>
 
+#include <unordered_set>
+
 class brush_t {
 public:
     enum class mode_t {
@@ -83,6 +85,7 @@ signals:
     void shapeChanged(const shape_t);
 };
 
+void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush);
 void connectedComponent(const Coordinate & seed);
 void verticalSplittingPlane(const Coordinate & seed);
 
