@@ -26,7 +26,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     activeNodeIDLabel = new QLabel("Active Node ID:");
     activeNodeIDSpin = new QSpinBox();
     activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
-    newTreeButton = new QPushButton("New Tree (C)");
+    newTreeButton = new QPushButton("New Tree (C)"); // TODO MODES
 
     newTreeButton->setToolTip("Create a new tree");
     jumpToActiveButton = new QPushButton("Jump To Active Node (S)");
@@ -292,8 +292,8 @@ void ToolsCommandsTab::disableCurrentLockButtonClicked() {
     Skeletonizer::singleton().unlockPosition();
 }
 
-void ToolsCommandsTab::setSimpleTracing(bool simple) {
-    newTreeButton->setEnabled(!simple);
+void ToolsCommandsTab::enableNewTreeButton(const bool value) {
+    newTreeButton->setEnabled(value);
 }
 
 void ToolsCommandsTab::updateBranchCount() {

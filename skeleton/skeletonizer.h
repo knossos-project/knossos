@@ -256,22 +256,13 @@ public slots:
     static bool updateCircRadius(nodeListElement *node);
 
 public:
-    enum TracingMode {
-        skipNextLink
-        , linkedNodes
-        , unlinkedNodes
-    };
-    bool simpleTracing;
-    TracingMode getTracingMode() const;
-    void setTracingMode(TracingMode mode);
+    enum TracingMode { standard, advanced, unlinked };
+    TracingMode tracingMode;
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
 
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-private:
-
-    TracingMode tracingMode;
 };
 
 #endif // SKELETONIZER_H

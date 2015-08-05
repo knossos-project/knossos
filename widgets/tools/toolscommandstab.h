@@ -18,7 +18,7 @@ class ToolsCommandsTab : public QWidget
 
 public:
     explicit ToolsCommandsTab(QWidget *parent = 0);
-    void setSimpleTracing(bool simple);
+    void enableNewTreeButton(const bool value);
 protected:
     QLabel *treeLabel;
     QLabel *activeTreeLabel;
