@@ -16,9 +16,9 @@ void ifsoproperty(nodeListElement & node, Func func) {
 }
 
 void Skeletonizer::selectObjectForNode(nodeListElement & node) {
+    Segmentation::singleton().clearObjectSelection();//no property clears selection
     ifsoproperty(node, [&](const uint64_t subobjectId){
         auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
-        Segmentation::singleton().clearObjectSelection();
         Segmentation::singleton().selectObject(objIndex);
     });
 }
