@@ -5,7 +5,7 @@
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
-#include <quazip/quazipfile.h>
+#include <quazipfile.h>
 
 #include <QDir>
 #include <QFileInfo>

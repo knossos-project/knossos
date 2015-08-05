@@ -2,8 +2,8 @@
 
 find_package(ZLIB REQUIRED)
 
-find_library(QUAZIP_LIBRARY quazip PATH_SUFFIXES "QuaZip")
-find_path(QUAZIP_INCLUDE_DIR quazip/quazip.h)
+find_library(QUAZIP_LIBRARY NAMES quazip quazip5 PATH_SUFFIXES "QuaZip")
+find_path(QUAZIP_INCLUDE_DIR quazip.h PATH_SUFFIXES quazip quazip5)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(QUAZIP
