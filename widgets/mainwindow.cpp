@@ -815,25 +815,38 @@ void MainWindow::exportToNml() {
 }
 
 void MainWindow::setWorkMode(WorkMode mode) {
-    workMode = mode;
     modeCombo.setCurrentIndex(mode);
-    widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(mode != WorkMode::Tracing);
-    const auto annotationMode = (mode == WorkMode::MergeTracing) ? AnnotationMode::Hybrid :
-                                (mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint) ? AnnotationMode::Segmentation :
-                                                                                                               AnnotationMode::Skeletonization;
-    newTreeAction->setVisible(mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing);
-    pushBranchAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
-    popBranchAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
-    clearSkeletonAction->setVisible(annotationMode == AnnotationMode::Skeletonization || annotationMode == AnnotationMode::Hybrid);
-    clearMergelistAction->setVisible(annotationMode == AnnotationMode::Segmentation || annotationMode == AnnotationMode::Hybrid);
-    Session::singleton().annotationMode = annotationMode;
-    if (annotationMode == AnnotationMode::Skeletonization) {
-        Skeletonizer::singleton().tracingMode = (workMode == WorkMode::Tracing) ? Skeletonizer::TracingMode::standard :
-                                                (workMode == WorkMode::AdvancedTracing) ? Skeletonizer::TracingMode::advanced :
-                                                                                          Skeletonizer::TracingMode::unlinked;
-    } else if (annotationMode == AnnotationMode::Segmentation) {
-        Segmentation::singleton().brush.setTool(workMode == WorkMode::SegmentationMerge ? brush_t::tool_t::merge : brush_t::tool_t::add);
+    const bool skeleton = mode == WorkMode::Tracing || mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing;
+    const bool branches = skeleton;
+    const bool trees = mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing;
+
+    const bool segmentation = mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint || mode == WorkMode::MergeTracing;
+    const bool brush = mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint;
+
+    newTreeAction->setVisible(trees);
+    widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(trees);
+    pushBranchAction->setVisible(branches);
+    popBranchAction->setVisible(branches);
+    clearSkeletonAction->setVisible(skeleton);
+    clearMergelistAction->setVisible(segmentation);
+    Session::singleton().annotationMode = mode == WorkMode::MergeTracing ? AnnotationMode::Hybrid : segmentation ? AnnotationMode::Segmentation : AnnotationMode::Skeletonization;
+
+    if (skeleton) {
+        if (mode == WorkMode::Tracing) {
+            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::standard;
+        } else if (mode == WorkMode::AdvancedTracing || mode == WorkMode::MergeTracing) {
+            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::advanced;
+        } else if (mode == WorkMode::UnlinkedTracing) {
+            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::unlinked;
+        }
+    } else if (brush) {
+        if (mode == WorkMode::SegmentationMerge) {
+            Segmentation::singleton().brush.setTool(brush_t::tool_t::merge);
+        } else if (mode == WorkMode::SegmentationPaint) {
+            Segmentation::singleton().brush.setTool(brush_t::tool_t::add);
+        }
     }
+    workMode = mode;
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
