@@ -57,8 +57,10 @@ class WorkModeModel : public QAbstractListModel {
     Q_OBJECT
     std::vector<QString> workModes;
 public:
-    virtual int rowCount(const QModelIndex &parent) const override { return workModes.size(); }
-    virtual QVariant data(const QModelIndex &index, int role) const override {
+    virtual int rowCount(const QModelIndex &) const override {
+        return workModes.size();
+    }
+    virtual QVariant data(const QModelIndex & index, int role) const override {
         if (role == Qt::DisplayRole) {
             return workModes[index.row()];
         }
@@ -67,7 +69,7 @@ public:
     void recreate(const QStringList & modes) {
         beginResetModel();
         workModes.clear();
-        for (auto & mode : modes) {
+        for (const auto & mode : modes) {
             workModes.emplace_back(mode);
         }
         endResetModel();
