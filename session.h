@@ -33,7 +33,10 @@
 #include <QString>
 #include <QTimer>
 
-enum AnnotationMode { SkeletonizationMode, SegmentationMode };
+enum class AnnotationMode {
+    Skeletonization, Segmentation,
+    Hybrid
+};
 
 class Session : public QObject {
     Q_OBJECT
@@ -50,7 +53,7 @@ class Session : public QObject {
 
 public:
     QPair<QString, QString> task;
-    AnnotationMode annotationMode;
+    QFlags<AnnotationMode> annotationMode;
 
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension

@@ -26,6 +26,7 @@
 #include "file_io.h"
 #include "functions.h"
 #include "knossos.h"
+#include "segmentation/cubeloader.h"
 #include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
@@ -47,7 +48,7 @@ struct stack {
     int size;
 };
 
-Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent), simpleTracing(true) {
+Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
@@ -921,6 +922,8 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     auto tree = nodeToDel->correspondingTree;
     const auto pos = nodeToDel->position;
 
+    unsetSubobjectOfHybridNode(*nodeToDel);
+
     if (nodeToDel->next != nullptr) {
         nodeToDel->next->previous = nodeToDel->previous;
     }
@@ -1150,10 +1153,12 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 
     if (node == nullptr) {
         selectNodes({});
+        Segmentation::singleton().clearObjectSelection();
     } else {
         if (!node->selected) {
             selectNodes({node});
         }
+        selectObjectForNode(*node);
 
         setActiveTreeByID(node->correspondingTree->treeID);
 
@@ -1247,6 +1252,8 @@ boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float rad
     }
 
     updateCircRadius(tempNode);
+
+    updateSubobjectCountFromProperty(*tempNode);
 
     state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
 
@@ -1751,6 +1758,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     nodeID = node->nodeID;
 
+    auto oldPos = node->position;
     node->position = newPos.capped(0, state->boundary);
 
     if(newRadius != 0.) {
@@ -1760,6 +1768,9 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     updateCircRadius(node);
     state->skeletonState->unsavedChanges = true;
+
+    const quint64 newSubobjectId = readVoxel(newPos);
+    Skeletonizer::singleton().movedHybridNode(*node, newSubobjectId, oldPos);
 
     emit nodeChangedSignal(*node);
 
@@ -2655,20 +2666,4 @@ bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement 
         }
     }
     return false;
-}
-
-Skeletonizer::TracingMode Skeletonizer::getTracingMode() const {
-    return tracingMode;
-}
-
-void Skeletonizer::setTracingMode(TracingMode mode) {
-    tracingMode = mode;//change internal state
-    //adjust gui
-    if (tracingMode == TracingMode::skipNextLink && !state->viewer->window->addNodeAction->isChecked()) {
-        state->viewer->window->addNodeAction->setChecked(true);
-    } else if (tracingMode == TracingMode::linkedNodes && !state->viewer->window->linkWithActiveNodeAction->isChecked()) {
-        state->viewer->window->linkWithActiveNodeAction->setChecked(true);
-    } else if (tracingMode == TracingMode::unlinkedNodes && !state->viewer->window->dropNodesAction->isChecked()) {
-        state->viewer->window->dropNodesAction->setChecked(true);
-    }
 }

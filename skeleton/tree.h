@@ -3,6 +3,7 @@
 
 #include "color4F.h"
 
+#include <QHash>
 #include <QList>
 
 #include <memory>
@@ -25,6 +26,9 @@ public:
     std::size_t size;
 
     char comment[8192];
+
+    QHash<uint64_t, int> subobjectCount;
+
     QList<nodeListElement *> *getNodes();
     QList<segmentListElement *> getSegments();
 };

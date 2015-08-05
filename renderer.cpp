@@ -671,7 +671,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP, const RenderOptions &options) 
 
         swapYZ();
 
-        if (Session::singleton().annotationMode == SegmentationMode && Segmentation::singleton().job.active == false) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && Segmentation::singleton().job.active == false) {
             glPushMatrix();
             glLoadIdentity();
             view();

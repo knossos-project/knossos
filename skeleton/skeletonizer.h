@@ -215,6 +215,12 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
+    void setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId);
+    void setSubobjectAndMerge(nodeListElement & node, const quint64 subobjectId);
+    void updateSubobjectCountFromProperty(nodeListElement & node);
+    void unsetSubobjectOfHybridNode(nodeListElement & node);
+    void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
+    void selectObjectForNode(nodeListElement & node);
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 
@@ -250,22 +256,13 @@ public slots:
     static bool updateCircRadius(nodeListElement *node);
 
 public:
-    enum TracingMode {
-        skipNextLink
-        , linkedNodes
-        , unlinkedNodes
-    };
-    bool simpleTracing;
-    TracingMode getTracingMode() const;
-    void setTracingMode(TracingMode mode);
+    enum TracingMode { standard, advanced, unlinked };
+    TracingMode tracingMode;
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
 
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-private:
-
-    TracingMode tracingMode;
 };
 
 #endif // SKELETONIZER_H
