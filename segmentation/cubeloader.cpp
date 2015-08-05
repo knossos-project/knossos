@@ -26,7 +26,7 @@ boost::multi_array_ref<uint64_t, 3> getCubeRef(char * const rawcube) {
 uint64_t readVoxel(const Coordinate & pos) {
     auto cubeIt = getRawCube(pos);
     if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
-        return 0;
+        return Segmentation::singleton().getBackgroundId();
     }
     const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];

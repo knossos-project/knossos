@@ -307,11 +307,15 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("checksum", timeChecksum);
     xml.writeEndElement();
 
-    if (state->skeletonState->activeNode) {
+    if (state->skeletonState->activeNode != nullptr) {
         xml.writeStartElement("activeNode");
         xml.writeAttribute("id", QString::number(state->skeletonState->activeNode->nodeID));
         xml.writeEndElement();
     }
+
+    xml.writeStartElement("segmentation");
+    xml.writeAttribute("backgroundId", QString::number(Segmentation::singleton().getBackgroundId()));
+    xml.writeEndElement();
 
     xml.writeStartElement("editPosition");
     xml.writeAttribute("x", QString::number(state->viewerState->currentPosition.x + 1));
@@ -512,6 +516,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         activeNodeID = attribute.toULongLong();
                     }
+                } else if(xml.name() == "segmentation") {
+                    Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
                 } else if(xml.name() == "scale") {
                     QStringRef attribute = attributes.value("x");
                     if(attribute.isNull() == false) {

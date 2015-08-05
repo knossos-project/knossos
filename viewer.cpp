@@ -297,9 +297,9 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
 
     auto & seg = Segmentation::singleton();
     //cache
-    uint64_t subobjectIdCache = 0;
-    bool selectedCache = false;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
+    uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
+    bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache = seg.colorObjectFromId(subobjectIdCache);
     //first and last row boundaries
     const std::size_t min = state->cubeEdgeLength;
     const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);

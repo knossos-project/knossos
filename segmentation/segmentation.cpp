@@ -219,6 +219,14 @@ void Segmentation::setRenderAllObjs(bool all) {
     emit renderAllObjsChanged(renderAllObjs);
 }
 
+decltype(Segmentation::backgroundId) Segmentation::getBackgroundId() const {
+    return backgroundId;
+}
+
+void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
+    emit backgroundIdChanged(backgroundId = newBackgroundId);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
@@ -234,7 +242,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(const uint64_t subObjectID) const {
-    if (subObjectID == 0) {
+    if (subObjectID == backgroundId) {
         return std::make_tuple(0, 0, 0, 0);
     }
     const auto subobjectIt = subobjects.find(subObjectID);
@@ -329,7 +337,7 @@ void Segmentation::touchObjects(const uint64_t subobject_id) {
 }
 
 void Segmentation::untouchObjects() {
-    touched_subobject_id = 0;
+    touched_subobject_id = backgroundId;
     emit resetTouchedObjects();
 }
 

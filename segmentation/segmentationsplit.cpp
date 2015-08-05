@@ -52,7 +52,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
         work.pop_back();
 
         auto subobjectId = readVoxel(pos);
-        if (subobjectId != 0 && subobjectId != newSubObjId) {
+        if (subobjectId != Segmentation::singleton().getBackgroundId() && subobjectId != newSubObjId) {
             auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
             auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objIndex == objIndexToSplit) {
@@ -83,7 +83,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
 
 void connectedComponent(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
-    if (subobjectId != 0) {
+    if (subobjectId != Segmentation::singleton().getBackgroundId()) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
@@ -117,7 +117,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
         work.pop_back();
 
         auto subobjectId = readVoxel(pos);
-        if (subobjectId != 0 && subobjectId != newSubObjId) {
+        if (subobjectId != Segmentation::singleton().getBackgroundId() && subobjectId != newSubObjId) {
             auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, pos);
             auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objIndex == objIndexToSplit) {
@@ -142,7 +142,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
 
 void verticalSplittingPlane(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
-    if (subobjectId != 0) {
+    if (subobjectId != Segmentation::singleton().getBackgroundId()) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;

@@ -95,6 +95,7 @@ Q_OBJECT
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
+    uint64_t backgroundId = 0;
     uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
@@ -178,6 +179,8 @@ public:
     Segmentation();
     //rendering
     void setRenderAllObjs(bool);
+    decltype(backgroundId) getBackgroundId() const;
+    void setBackgroundId(decltype(backgroundId));
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
     //volume rendering
@@ -239,6 +242,7 @@ signals:
     void resetSelection();
     void resetTouchedObjects();
     void renderAllObjsChanged(bool all);
+    void backgroundIdChanged(uint64_t backgroundId);
     void setRecenteringPositionSignal(float x, float y, float z);
     void categoriesChanged();
     void todosLeftChanged();

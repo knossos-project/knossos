@@ -199,7 +199,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate movement, lastPos;
 
     const quint64 subobjectId = readVoxel(clickedCoordinate);
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid) && subobjectId == 0) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid) && subobjectId == Segmentation::singleton().getBackgroundId()) {
         return;
     }
 
@@ -432,7 +432,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         if (event->pos() == mouseDown) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(clickPos);
-            if (subobjectId != 0) {// don’t select the unsegmented area as object
+            if (subobjectId != segmentation.getBackgroundId()) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
