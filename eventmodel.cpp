@@ -203,7 +203,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate movement, lastPos;
 
     const quint64 subobjectId = readVoxel(clickedCoordinate);
-    if (subobjectId == 0) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid) && subobjectId == 0) {
         return;
     }
 
@@ -316,7 +316,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         break;
     }
 
-    Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId);
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid)) {
+        Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId);
+    }
 
     /* Move to the new node position */
     if (newNodeId) {
