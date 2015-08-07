@@ -1169,7 +1169,7 @@ void MainWindow::popBranchNodeSlot() {
 void MainWindow::placeComment(const int index) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation)) {
         Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
-    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && state->skeletonState->activeNode != nullptr) {
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization) && state->skeletonState->activeNode != nullptr) {
         CommentSetting comment = CommentSetting::comments[index];
         if (!comment.text.isEmpty()) {
             if(comment.appendComment) {
