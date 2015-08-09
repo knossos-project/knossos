@@ -189,6 +189,9 @@ void Segmentation::removeObject(Object & object) {
         emit changedRow(object.index);//object now references the former end
     }
     emit beforeRemoveRow();
+    if (object.id == Object::highestId) {
+        --Object::highestId;
+    }
     objects.pop_back();
     emit removedRow();
     --Object::highestIndex;
@@ -216,6 +219,14 @@ void Segmentation::setRenderAllObjs(bool all) {
     emit renderAllObjsChanged(renderAllObjs);
 }
 
+decltype(Segmentation::backgroundId) Segmentation::getBackgroundId() const {
+    return backgroundId;
+}
+
+void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
+    emit backgroundIdChanged(backgroundId = newBackgroundId);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
@@ -231,7 +242,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(const uint64_t subObjectID) const {
-    if (subObjectID == 0) {
+    if (subObjectID == backgroundId) {
         return std::make_tuple(0, 0, 0, 0);
     }
     const auto subobjectIt = subobjects.find(subObjectID);
@@ -261,8 +272,14 @@ bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
     return it != std::end(subobjects);
 }
 
-uint64_t Segmentation::subobjectIdOfFirstSelectedObject() {
-    return objects[selectedObjectIndices.front()].subobjects.front().get().id;
+uint64_t Segmentation::subobjectIdOfFirstSelectedObject(const Coordinate & newLocation) {
+    if (selectedObjectsCount() != 0) {
+        auto & obj = objects[selectedObjectIndices.front()];
+        obj.location = newLocation;
+        return obj.subobjects.front().get().id;
+    } else {
+        throw std::runtime_error("no objects selected for subobject retrieval");
+    }
 }
 
 Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId, const Coordinate & location) {
@@ -279,6 +296,11 @@ bool Segmentation::objectOrder(const uint64_t & lhsIndex, const uint64_t & rhsIn
     const auto & rhs = objects[rhsIndex];
     //operator< substitute, prefer immutable objects and choose the smallest
     return (lhs.immutable && !rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
+}
+
+uint64_t Segmentation::largestObjectContainingSubobjectId(const uint64_t subObjectId, const Coordinate & location) {
+    const auto & subobject = subobjectFromId(subObjectId, location);
+    return largestObjectContainingSubobject(subobject);
 }
 
 uint64_t Segmentation::largestObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
@@ -315,7 +337,7 @@ void Segmentation::touchObjects(const uint64_t subobject_id) {
 }
 
 void Segmentation::untouchObjects() {
-    touched_subobject_id = 0;
+    touched_subobject_id = backgroundId;
     emit resetTouchedObjects();
 }
 
@@ -463,7 +485,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
     }
 }
 
-void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
+Segmentation::Object & Segmentation::objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position) {
     const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
     , [&](const uint64_t elemId){
         const auto & elem = objects[elemId];
@@ -473,21 +495,24 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
         emit beforeAppendRow();
         objects.emplace_back(++Object::highestId, false, false, position, subobject);
         emit appendedRow();
-        auto & newObject = objects.back();
-        selectObject(newObject);
+        return objects.back();
     } else {
-        selectObject(*other);
+        return objects[*other];
     }
+}
+
+void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
+    selectObject(objectFromSubobject(subobject, position));
+}
+
+void Segmentation::selectObjectFromSubObject(const uint64_t soid, const Coordinate & position) {
+    selectObject(objectFromSubobject(subobjectFromId(soid, position), position));
 }
 
 void Segmentation::selectObject(const uint64_t & objectIndex) {
     if (objectIndex < objects.size()) {
         selectObject(objects[objectIndex]);
     }
-}
-
-void Segmentation::updateLocationForFirstSelectedObject(const Coordinate & newLocation) {
-    objects[selectedObjectIndices.front()].location = newLocation;
 }
 
 std::size_t Segmentation::selectedObjectsCount() const {

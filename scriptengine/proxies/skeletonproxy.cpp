@@ -105,7 +105,7 @@ nodeListElement *SkeletonProxy::node_with_next_id(int node_id, bool same_tree) {
 }
 
 bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, int in_mag) {
-    if (!Skeletonizer::singleton().editNode(node_id, 0, radius, x, y, z, in_mag)) {
+    if (!Skeletonizer::singleton().editNode(node_id, 0, radius, {x, y, z}, in_mag)) {
         emit echo (QString("Skeletonizer::editNode failed!"));
         return false;
     }
@@ -308,7 +308,7 @@ QList<nodeListElement *> *SkeletonProxy::selectedNodes() {
 }
 
 void SkeletonProxy::selectNodes(QList<nodeListElement *> nodes) {
-    Skeletonizer::singleton().selectNodes(nodes.toVector().toStdVector());
+    Skeletonizer::singleton().selectNodes(nodes.toSet());
 }
 
 QString SkeletonProxy::help() {

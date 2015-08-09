@@ -1,4 +1,5 @@
 from PythonQt import QtGui, Qt
+import KnossosModule
 import numpy, traceback, re, time
 from scipy import ndimage
 from skimage.morphology import watershed
@@ -75,8 +76,9 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         self.resize(0,0)
         return
 
-    def __init__(self, parent=knossos_global_mainwindow):
-        super(watershedSplitterHybridModeWidget, self).__init__(parent, Qt.Qt.WA_DeleteOnClose)
+    def __init__(self, parent=KnossosModule.knossos_global_mainwindow):
+        super(main_class, self).__init__(parent, Qt.Qt.WA_DeleteOnClose)
+        KnossosModule.plugin_container[main_class.__name__] = self
         self.initGUI()
         self.initLogic()
         return
@@ -155,7 +157,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
                         (self.widgetLeftEdit,"WIDGET_LEFT", "0"), \
                          (self.widgetTopEdit,"WIDGET_TOP", "0")]
         self.signalConns = []
-        self.signalConns.append((signalRelay.Signal_EventModel_handleMouseReleaseMiddle, self.handleMouseReleaseMiddle))
+        self.signalConns.append((KnossosModule.signalRelay.Signal_EventModel_handleMouseReleaseMiddle, self.handleMouseReleaseMiddle))
         self.signalsConnect()
         return
 
@@ -218,8 +220,8 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def TreeIdById(self,Id):
         if Id in self.mapIdToTreeId:
             return self.mapIdToTreeId[Id]
-        treeId = skeleton.findAvailableTreeID()
-        skeleton.add_tree(treeId)
+        treeId = KnossosModule.skeleton.findAvailableTreeID()
+        KnossosModule.skeleton.add_tree(treeId)
         self.mapIdToTreeId[Id] = treeId
         return treeId
 
@@ -229,8 +231,8 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         return
 
     def addNode(self,coord,treeId,vpId):
-        nodeId = skeleton.findAvailableNodeID()
-        skeleton.add_node(*((nodeId,)+coord+(treeId,self.markerRadius,vpId,)))
+        nodeId = KnossosModule.skeleton.findAvailableNodeID()
+        KnossosModule.skeleton.add_node(*((nodeId,)+coord+(treeId,self.markerRadius,vpId,)))
         return nodeId
 
     def displayCoord(self,coord):
@@ -267,7 +269,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         self.refreshTable()
         self.calcWS()
         if not isSlack:
-            segmentation.changeComment(self.ObjIndexFromId(Id),"WatershedSplitter")
+            KnossosModule.segmentation.changeComment(self.ObjIndexFromId(Id),"WatershedSplitter")
         self.moreCoords = []
         self.updateFinishButton()
         return
@@ -287,10 +289,10 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         if len(Ids) == 0:
             return
         for Id in Ids:
-            segmentation.removeObject(self.ObjIndexFromId(Id))
+            KnossosModule.segmentation.removeObject(self.ObjIndexFromId(Id))
             self.matrixDelId(Id,self.mapIdToSlack[Id])
             del self.mapIdToCoord[Id]
-            skeleton.delete_tree(self.mapIdToTreeId[Id])
+            KnossosModule.skeleton.delete_tree(self.mapIdToTreeId[Id])
             del self.mapIdToTreeId[Id]
             del self.mapIdToNodeId[Id]
             del self.mapIdToSlack[Id]
@@ -313,7 +315,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
 
     def waitForLoader(self):
         busyScope = self.BusyCursorScope()
-        while not knossos_global_loader.isFinished():
+        while not KnossosModule.knossos_global_loader.isFinished():
             Qt.QApplication.processEvents()
             time.sleep(0)
         return
@@ -355,8 +357,6 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         return
     
     def handleMouseReleaseMiddle(self, eocd, clickedCoord, vpId, event):
-        if not knossos.isHybridMode():
-            return
         coord = tuple(clickedCoord.vector())
         if not self.active:
             self.begin(coord)
@@ -384,7 +384,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
 
     def accessMatrix(self, matrix, isWrite):
         self.waitForLoader()
-        return knossos.processRegionByStridedBufProxy(list(self.beginCoord_arr), list(self.dims_arr), self.npDataPtr(matrix), matrix.strides, isWrite, True)
+        return KnossosModule.knossos.processRegionByStridedBufProxy(list(self.beginCoord_arr), list(self.dims_arr), self.npDataPtr(matrix), matrix.strides, isWrite, True)
 
     def writeMatrix(self, matrix):
         self.accessMatrix(matrix, True)
@@ -413,15 +413,15 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         self.active = False
         self.clearTable()
         for treeId in self.mapIdToTreeId.values():
-            skeleton.delete_tree(treeId)
+            KnossosModule.skeleton.delete_tree(treeId)
         self.guiEnd()
         self.endMatrices()
         if not self.confined:
-            knossos.resetMovementArea()
+            KnossosModule.knossos.resetMovementArea()
         self.generateGuiConfig()
         self.saveConfig()
-        if segmentation.isRenderAllObjs():
-            segmentation.setRenderAllObjs(self.prevRenderAllObjs)
+        if KnossosModule.segmentation.isRenderAllObjs():
+            KnossosModule.segmentation.setRenderAllObjs(self.prevRenderAllObjs)
         return
     
     def guiBegin(self):
@@ -464,12 +464,12 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
 
     def ObjIndexFromId(self,Id):
         coord = self.mapIdToCoord[Id]
-        segmentation.subobjectFromId(Id, coord)
-        return segmentation.largestObjectContainingSubobject(Id,(0,0,0))
+        KnossosModule.segmentation.subobjectFromId(Id, coord)
+        return KnossosModule.segmentation.largestObjectContainingSubobject(Id,(0,0,0))
     
     def resetSubObjs(self):
         for Id in self.nonSlacks():
-            segmentation.removeObject(self.ObjIndexFromId(Id))
+            KnossosModule.segmentation.removeObject(self.ObjIndexFromId(Id))
         return
 
     def beginSeeds(self):
@@ -487,15 +487,8 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def isSizeSmaller(self,smallSize,refSize):
         return not (True in (smallSize > refSize))
 
-    def waitForLoader(self):
-        busyScope = self.BusyCursorScope()
-        while knossos_global_loader.getRefCount() > 0:
-            Qt.QApplication.processEvents()
-            time.sleep(0)
-        return
-    
     def setPositionWrap(self, coord):
-        knossos.setPosition(coord)
+        KnossosModule.knossos.setPosition(coord)
         self.waitForLoader()
         return
 
@@ -511,7 +504,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
             self.dims_arr = numpy.array(self.str2tripint(str(self.workAreaSizeEdit.text)))
             self.baseSubObjId = long(str(self.baseSubObjIdEdit.text))
             self.markerRadius = int(self.markerRadiusEdit.text)
-            movementArea_arr = numpy.array(knossos.getMovementArea())
+            movementArea_arr = numpy.array(KnossosModule.knossos.getMovementArea())
             self.movementAreaBegin_arr, self.movementAreaEnd_arr = movementArea_arr[:3], movementArea_arr[3:]+1
             self.movementAreaSize_arr = self.movementAreaEnd_arr - self.movementAreaBegin_arr
             if self.isSizeSmaller(self.movementAreaSize_arr, self.dims_arr):
@@ -522,15 +515,15 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
             else:
                 self.confined = False
                 self.setPositionWrap(coord)
-                self.middleCoord_arr = numpy.array(knossos.getPosition())
+                self.middleCoord_arr = numpy.array(KnossosModule.knossos.getPosition())
                 self.beginCoord_arr = self.middleCoord_arr - (self.dims_arr/2)
                 self.endCoord_arr = self.beginCoord_arr + self.dims_arr - 1
-                knossos.setMovementArea(list(self.beginCoord_arr), list(self.endCoord_arr))
+                KnossosModule.knossos.setMovementArea(list(self.beginCoord_arr), list(self.endCoord_arr))
             self.beginSeeds()
             self.beginMatrices()
             self.guiBegin()
-            self.prevRenderAllObjs = segmentation.isRenderAllObjs()
-            segmentation.setRenderAllObjs(True)
+            self.prevRenderAllObjs = KnossosModule.segmentation.isRenderAllObjs()
+            KnossosModule.segmentation.setRenderAllObjs(True)
             self.active = True
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -552,4 +545,5 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         self.commonEnd()
         return
 
-plugin_container.append(watershedSplitterHybridModeWidget())
+main_class = watershedSplitterHybridModeWidget
+main_class()

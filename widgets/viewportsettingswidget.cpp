@@ -187,10 +187,7 @@ void ViewportSettingsWidget::loadSettings() {
     slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(drawVPCrosshairs);
     slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->clicked(drawVPCrosshairs);
 
-    const auto showVPLabels = settings.value(SHOW_VIEWPORT_SIZE, false).toBool();
-    slicePlaneViewportWidget->showViewPortsSizeCheckBox->setChecked(showVPLabels);
-    slicePlaneViewportWidget->showViewPortsSizeCheckBox->clicked(showVPLabels);
-
+    generalTabWidget->showScalebarCheckBox.setChecked(settings.value(SHOW_SCALEBAR, false).toBool());
 
     //skeleton vp settings
     const auto xyplane = settings.value(SHOW_XY_PLANE, true).toBool();
@@ -251,7 +248,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(RANGE_DELTA, slicePlaneViewportWidget->rangeDeltaSpinBox->value());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, slicePlaneViewportWidget->segmenationOverlaySlider.value());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->isChecked());
-    settings.setValue(SHOW_VIEWPORT_SIZE, slicePlaneViewportWidget->showViewPortsSizeCheckBox->isChecked());
+    settings.setValue(SHOW_SCALEBAR, generalTabWidget->showScalebarCheckBox.isChecked());
     settings.setValue(DATASET_LUT_FILE, slicePlaneViewportWidget->datasetLutFile->text());
     settings.setValue(DATASET_LUT_FILE_USED, slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->isChecked());
     settings.setValue(TREE_LUT_FILE, slicePlaneViewportWidget->treeLutFile->text());

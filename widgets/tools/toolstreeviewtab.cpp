@@ -500,11 +500,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
         radiusBuffer = value;
 
         if (activeNodeTable->hasFocus()) {
-            Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radiusBuffer,
-                                   state->skeletonState->activeNode->position.x,
-                                   state->skeletonState->activeNode->position.y,
-                                   state->skeletonState->activeNode->position.z,
-                                   state->skeletonState->activeNode->createdInMag);
+            Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radiusBuffer, state->skeletonState->activeNode->position, state->skeletonState->activeNode->createdInMag);
             setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
             int row = getActiveNodeRow();
             if (row != -1) {
@@ -515,8 +511,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
                 if(node == state->skeletonState->activeNode) {
                     setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
                 }
-                Skeletonizer::singleton().editNode(0, node, radiusBuffer,
-                                       node->position.x, node->position.y, node->position.z, node->createdInMag);
+                Skeletonizer::singleton().editNode(0, node, radiusBuffer, node->position, node->createdInMag);
             }
             recreateNodesTable();
         }
@@ -532,8 +527,8 @@ void ToolsTreeviewTab::linkNodesAction() {
         skel.delSegment(node0->nodeID, node1->nodeID, nullptr);
     } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
         skel.delSegment(node1->nodeID, node0->nodeID, nullptr);
-    } else if (skel.simpleTracing && Skeletonizer::singleton().areConnected(*node0, *node1)) {
-        QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please deactivate Simple Tracing under 'Edit Skeleton'.");
+    } else if (Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*node0, *node1)) {
+        QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
     } else {//nodes are not already linked
         skel.addSegment(node0->nodeID, node1->nodeID);
     }
@@ -918,10 +913,10 @@ void ToolsTreeviewTab::nodeTableSelectionChanged() {
     }
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
-    std::vector<nodeListElement*> selectedNodes;
+    QSet<nodeListElement*> selectedNodes;
     foreach(QModelIndex index, selected) {
         nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toUInt());
-        selectedNodes.emplace_back(node);
+        selectedNodes.insert(node);
     }
     Skeletonizer::singleton().selectNodes(selectedNodes);
 

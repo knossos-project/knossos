@@ -95,6 +95,7 @@ Q_OBJECT
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
+    uint64_t backgroundId = 0;
     uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
@@ -147,6 +148,8 @@ Q_OBJECT
 
     Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
+
+    Object & objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position);
 public:
     class Job {
     public:
@@ -167,7 +170,7 @@ public:
 
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
-    brush_t brush;
+    brush_subject brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
     bool hoverVersion;
     uint64_t mouseFocusedObjectId;
@@ -176,6 +179,8 @@ public:
     Segmentation();
     //rendering
     void setRenderAllObjs(bool);
+    decltype(backgroundId) getBackgroundId() const;
+    void setBackgroundId(decltype(backgroundId));
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromId(const uint64_t subObjectID) const;
     //volume rendering
@@ -195,8 +200,9 @@ public:
     //data access
     void createAndSelectObject(const Coordinate & position);
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
-    uint64_t subobjectIdOfFirstSelectedObject();
+    uint64_t subobjectIdOfFirstSelectedObject(const Coordinate & newLocation);
     bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
+    uint64_t largestObjectContainingSubobjectId(const uint64_t subObjectId, const Coordinate & location);
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t tryLargestObjectContainingSubobject(const uint64_t subObjectId) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
@@ -209,6 +215,7 @@ public:
     void selectObject(const uint64_t & objectIndex);
     void selectObject(Object & object);
     void selectObjectFromSubObject(SubObject &subobject, const Coordinate & position);
+    void selectObjectFromSubObject(const uint64_t soid, const Coordinate & position);
     void unselectObject(const uint64_t & objectIndex);
     void unselectObject(Object & object);
     void clearObjectSelection();
@@ -216,8 +223,6 @@ public:
     void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist();
-
-    void updateLocationForFirstSelectedObject(const Coordinate & newLocation);
 
     void hoverSubObject(const uint64_t subobject_id);
     void touchObjects(const uint64_t subobject_id);
@@ -237,6 +242,7 @@ signals:
     void resetSelection();
     void resetTouchedObjects();
     void renderAllObjsChanged(bool all);
+    void backgroundIdChanged(uint64_t backgroundId);
     void setRecenteringPositionSignal(float x, float y, float z);
     void categoriesChanged();
     void todosLeftChanged();

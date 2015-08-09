@@ -493,11 +493,11 @@ bool Knossos::findAndRegisterAvailableDatasets() {
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
         state->skeletonState->volBoundary = state->boundary.x * 2;
     }
-    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y)) {
+    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
         state->skeletonState->volBoundary = state->boundary.y * 2;
     }
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        state->skeletonState->volBoundary = state->boundary.x * 2;
+        state->skeletonState->volBoundary = state->boundary.z * 2;
     }
 
     return true;
@@ -555,7 +555,7 @@ bool Knossos::configDefaults() {
     state->viewerState->treeColortableOn = false;
     state->viewerState->viewerReady = false;
     state->viewerState->drawVPCrosshairs = true;
-    state->viewerState->showVPLabels = false;
+    state->viewerState->showScalebar = false;
     state->viewerState->stepsPerSec = 40;
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;

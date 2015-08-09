@@ -96,6 +96,7 @@ public:
     explicit Scripting();
     void runFile(const QString &filename);
     void addObject(const QString& name, QObject* object);
+    void addVariable(const QString& name, const QVariant& v);
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -114,6 +115,7 @@ protected:
     QSettings *settings;
 private:
     PythonQtObjectPtr _ctx;
+    void moveSymbolIntoKnossosModule(const QString& name);
     void executeFromUserDirectory();
     void executeResourceStartup();
     void changeWorkingDirectory();

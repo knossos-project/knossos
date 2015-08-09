@@ -30,6 +30,7 @@
 #include "widgets/viewport.h"
 
 #include <QObject>
+#include <QSet>
 #include <QVariantHash>
 
 #include <boost/optional.hpp>
@@ -190,8 +191,8 @@ public slots:
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
-    void selectNodes(const std::vector<nodeListElement*> & nodes);
-    void toggleNodeSelection(const std::vector<nodeListElement *> & nodes);
+    void selectNodes(QSet<nodeListElement *> nodes);
+    void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
     void selectTrees(const std::vector<treeListElement*> & trees);
     void deleteSelectedTrees();
     void deleteSelectedNodes();
@@ -208,12 +209,18 @@ public slots:
     commentListElement *nextComment(QString searchString);
     commentListElement *previousComment(QString searchString);
     static bool delSegment(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
-    bool editNode(uint nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    bool editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement *node, uint nodeID);
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
+    void setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId);
+    void setSubobjectAndMerge(nodeListElement & node, const quint64 subobjectId);
+    void updateSubobjectCountFromProperty(nodeListElement & node);
+    void unsetSubobjectOfHybridNode(nodeListElement & node);
+    void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
+    void selectObjectForNode(nodeListElement & node);
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 
@@ -249,24 +256,13 @@ public slots:
     static bool updateCircRadius(nodeListElement *node);
 
 public:
-    enum TracingMode {
-        skipNextLink
-        , linkedNodes
-        , unlinkedNodes
-    };
-    bool simpleTracing;
-    TracingMode getTracingMode() const;
-    void setTracingMode(TracingMode mode);
+    enum TracingMode { standard, advanced, unlinked };
+    TracingMode tracingMode;
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
 
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-private:
-    void clearNodeSelection();
-    void clearTreeSelection();
-
-    TracingMode tracingMode;
 };
 
 #endif // SKELETONIZER_H

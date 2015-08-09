@@ -3,6 +3,8 @@
 
 #include <QColor>
 
+#include <vector>
+
 class CommentSetting {
     friend class CommentsModel;
     QString shortcut;

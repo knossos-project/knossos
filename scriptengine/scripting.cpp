@@ -31,6 +31,8 @@ void PythonQtInit() {
 #endif
 }
 
+const QString SCRIPTING_KNOSSOS_MODULE = "KnossosModule";
+
 Scripting::Scripting() : _ctx(NULL) {
     state->scripting = this;
 
@@ -57,28 +59,31 @@ Scripting::Scripting() : _ctx(NULL) {
     // as ipython does not export it's sys paths after the installation we refer to that site-package
     _ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
-    _ctx.evalScript("plugin_container = []");
+    PythonQt::self()->createModuleFromScript(SCRIPTING_KNOSSOS_MODULE);
+    _ctx.evalScript("import " + SCRIPTING_KNOSSOS_MODULE);
 
-    _ctx.addObject("signalRelay", state->signalRelay);
-    _ctx.addObject("knossos", pythonProxy);
-    _ctx.addObject("segmentation", segmentationProxy);
-    _ctx.addObject("skeleton", skeletonProxy);
-    _ctx.addObject("knossos_global_viewer", state->viewer);
-    _ctx.addObject("knossos_global_mainwindow", state->viewer->window);
-    _ctx.addObject("knossos_global_eventmodel", state->viewer->eventModel);
-    _ctx.addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
-    _ctx.addObject("knossos_global_segmentation", &Segmentation::singleton());
-    _ctx.addObject("knossos_global_loader", &Loader::Controller::singleton());
-    _ctx.addVariable("GL_POINTS", GL_POINTS);
-    _ctx.addVariable("GL_LINES", GL_LINES);
-    _ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
-    _ctx.addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
-    _ctx.addVariable("GL_TRIANGLES", GL_TRIANGLES);
-    _ctx.addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
-    _ctx.addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
-    _ctx.addVariable("GL_QUADS", GL_QUADS);
-    _ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
-    _ctx.addVariable("GL_POLYGON", GL_POLYGON);
+    _ctx.evalScript(SCRIPTING_KNOSSOS_MODULE + ".plugin_container = {}");
+
+    addObject("signalRelay", state->signalRelay);
+    addObject("knossos", pythonProxy);
+    addObject("segmentation", segmentationProxy);
+    addObject("skeleton", skeletonProxy);
+    addObject("knossos_global_viewer", state->viewer);
+    addObject("knossos_global_mainwindow", state->viewer->window);
+    addObject("knossos_global_eventmodel", state->viewer->eventModel);
+    addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
+    addObject("knossos_global_segmentation", &Segmentation::singleton());
+    addObject("knossos_global_loader", &Loader::Controller::singleton());
+    addVariable("GL_POINTS", GL_POINTS);
+    addVariable("GL_LINES", GL_LINES);
+    addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
+    addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
+    addVariable("GL_TRIANGLES", GL_TRIANGLES);
+    addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
+    addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
+    addVariable("GL_QUADS", GL_QUADS);
+    addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
+    addVariable("GL_POLYGON", GL_POLYGON);
     addWidgets();
 
     QString module("internal");
@@ -169,8 +174,18 @@ void Scripting::runFile(const QString &filename) {
     _ctx.evalScript(s, Py_file_input);
 }
 
+void Scripting::moveSymbolIntoKnossosModule(const QString& name) {
+    _ctx.evalScript(QString("%1.%2 = %2; del %2").arg(SCRIPTING_KNOSSOS_MODULE).arg(name));
+}
+
 void Scripting::addObject(const QString& name, QObject* object) {
     _ctx.addObject(name, object);
+    moveSymbolIntoKnossosModule(name);
+}
+
+void Scripting::addVariable(const QString& name, const QVariant& v) {
+    _ctx.addVariable(name, v);
+    moveSymbolIntoKnossosModule(name);
 }
 
 void Scripting::executeFromUserDirectory() {
@@ -223,6 +238,6 @@ void Scripting::addWidgets() {
             }
         }
 
-        _ctx.addObject("widget_" + QString(array), widget);
+        addObject("knossos_global_widget_" + QString(array), widget);
     }
 }

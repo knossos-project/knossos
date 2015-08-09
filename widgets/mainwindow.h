@@ -51,10 +51,49 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
+enum WorkMode { Tracing, AdvancedTracing, UnlinkedTracing, SegmentationMerge, SegmentationPaint, MergeTracing };
+
+class WorkModeModel : public QAbstractListModel {
+    Q_OBJECT
+    std::vector<QString> workModes;
+public:
+    virtual int rowCount(const QModelIndex &) const override {
+        return workModes.size();
+    }
+    virtual QVariant data(const QModelIndex & index, int role) const override {
+        if (role == Qt::DisplayRole) {
+            return workModes[index.row()];
+        }
+        return QVariant();
+    }
+    void recreate(const QStringList & modes) {
+        beginResetModel();
+        workModes.clear();
+        for (const auto & mode : modes) {
+            workModes.emplace_back(mode);
+        }
+        endResetModel();
+    }
+};
+
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
     friend TaskManagementWidget;
     friend SkeletonProxy;
+
+    QToolBar basicToolbar{"Basic Functionality"};
+    QToolBar defaultToolbar{"Tools"};
+
+    QStringList workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
+    WorkMode workMode;
+    WorkModeModel workModeModel;
+    QComboBox modeCombo;
+    QAction *newTreeAction;
+    QAction *pushBranchAction;
+    QAction *popBranchAction;
+    QAction *clearSkeletonAction;
+    QAction *clearMergelistAction;
 
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -63,15 +102,14 @@ class MainWindow : public QMainWindow {
 
     QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"File"};
-    QMenu *skelEditMenu;
     QMenu *segEditMenu;
+    QMenu *skelEditMenu;
+    QMenu actionMenu{"Action"};
     QString openFileDirectory;
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
 
-    QToolBar basicToolbar{"Basic Functionality"};
-    QToolBar defaultToolbar{"Tools"};
     int loaderLastProgress;
     QLabel *loaderProgress;
 
@@ -126,21 +164,8 @@ public:
     void notifyUnsavedChanges();
     void updateTitlebar();
 
-    static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
 
-signals:
-    bool changeDatasetMagSignal(uint upOrDownFlag);
-    void recentFileSelectSignal(int index);
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-
-    void stopRenderTimerSignal();
-    void startRenderTimerSignal(int frequency);
-    void updateTreeColorsSignal();
-
-    treeListElement *addTreeListElementSignal(int treeID, color4F color);
-
-    void resetRotationSignal();
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
@@ -158,10 +183,9 @@ public slots:
     void exportToNml();
 
     /* edit skeleton menu*/
-    void setAnnotationMode(AnnotationMode mode);
+    void setWorkMode(WorkMode mode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
-    void setSimpleTracing(bool simple);
 
     /* view menu */
     void dragDatasetSlot();

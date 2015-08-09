@@ -144,7 +144,7 @@ class ResizeButton : public QPushButton {
 public:
     explicit ResizeButton(Viewport * parent);
 signals:
-    void vpResize(QMouseEvent * event);
+    void vpResize(const QPoint & globalPos);
 };
 
 #include <QOpenGLFunctions_2_0>
@@ -160,7 +160,7 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QElapsedTimer timeDBase;
     QElapsedTimer timeFBase;
 public:
-    const static uint numberViewports = 4;
+    const static int numberViewports = 4;
     explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
@@ -169,6 +169,10 @@ public:
     bool renderVolumeVP();
     void updateOverlayTexture();
     void updateVolumeTexture();
+    void posAdapt();
+    void posAdapt(const QPoint & desiredPos);
+    void sizeAdapt();
+    void sizeAdapt(const QPoint & desiredSize);
 
     QSize dockSize;
     QPoint dockPos;
@@ -205,8 +209,8 @@ protected:
     QMenu *contextMenu;
 private:
     bool resizeButtonHold;
-    void resizeVP(QMouseEvent *event);
-    void moveVP(QMouseEvent *event);
+    void resizeVP(const QPoint & globalPos);
+    void moveVP(const QPoint & globalPos);
 signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
@@ -224,7 +228,6 @@ public slots:
     void r180ButtonClicked();
     void resetButtonClicked();
     bool setOrientation(ViewportType orientation);
-    void showContextMenu(const QPoint &point);
     void takeSnapshot(const QString & path, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 

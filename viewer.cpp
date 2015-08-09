@@ -297,9 +297,9 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
 
     auto & seg = Segmentation::singleton();
     //cache
-    uint64_t subobjectIdCache = 0;
-    bool selectedCache = false;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache;
+    uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
+    bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache = seg.colorObjectFromId(subobjectIdCache);
     //first and last row boundaries
     const std::size_t min = state->cubeEdgeLength;
     const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);
@@ -313,13 +313,13 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 if((vpConfig->type == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
                     ((vpConfig->type == VIEWPORT_XZ || vpConfig->type == VIEWPORT_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
-                    slice[3] = 0;
+                    reinterpret_cast<uint8_t*>(slice)[3] = 0;
                     hide = true;
                 }
                 else if(((vpConfig->type == VIEWPORT_XY || vpConfig->type == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
                         (vpConfig->type == VIEWPORT_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
-                    slice[3] = 0;
+                    reinterpret_cast<uint8_t*>(slice)[3] = 0;
                     hide = true;
                 }
             }
@@ -328,10 +328,10 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 uint64_t subobjectId = *reinterpret_cast<uint64_t*>(datacube);
 
                 auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromId(subobjectId);
-                slice[0] = std::get<0>(color);
-                slice[1] = std::get<1>(color);
-                slice[2] = std::get<2>(color);
-                slice[3] = std::get<3>(color);
+                reinterpret_cast<uint8_t*>(slice)[0] = std::get<0>(color);
+                reinterpret_cast<uint8_t*>(slice)[1] = std::get<1>(color);
+                reinterpret_cast<uint8_t*>(slice)[2] = std::get<2>(color);
+                reinterpret_cast<uint8_t*>(slice)[3] = std::get<3>(color);
 
                 const bool selected = (subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId);
                 const bool isPastFirstRow = counter >= min;
@@ -350,7 +350,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                             const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
                             //enhance alpha of this voxel if any of the surrounding voxels belong to another object
                             if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
-                                slice[3] = std::min(255, slice[3]*4);
+                                reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
                             }
                         }
                     }
@@ -362,7 +362,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                     const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
                     //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
                     if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
-                        slice[3] = std::min(255, slice[3]*4);
+                        reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
                     }
                 }
 
@@ -1663,8 +1663,6 @@ bool Viewer::recalcTextureOffsets() {
             state->viewerState->vpConfigs[i].texture.texLLy = state->viewerState->vpConfigs[i].texture.texRLy;
         }
     }
-    //Reload the height/width-windows in viewports
-    MainWindow::reloadDataSizeWin();
     return true;
 }
 
@@ -1697,15 +1695,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
-    // mainwindow signals
-    QObject::connect(window, &MainWindow::resetRotationSignal, this, &Viewer::resetRotation);
-    QObject::connect(window, &MainWindow::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(window, &MainWindow::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(window, &MainWindow::updateTreeColorsSignal, &Skeletonizer::updateTreeColors);
-    QObject::connect(window, &MainWindow::addTreeListElementSignal, skeletonizer, &Skeletonizer::addTreeListElement);
-    QObject::connect(window, &MainWindow::stopRenderTimerSignal, timer, &QTimer::stop);
-    QObject::connect(window, &MainWindow::startRenderTimerSignal, timer, static_cast<void(QTimer::*)(int)>(&QTimer::start));
-    //end mainwindow signals
     //viewport signals
     QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);

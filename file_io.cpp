@@ -5,7 +5,7 @@
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
-#include <quazip/quazipfile.h>
+#include <quazipfile.h>
 
 #include <QDir>
 #include <QFileInfo>
@@ -40,23 +40,27 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             QuaZipFile file(&archive);
             const auto & fileInside = archive.getCurrentFileName();
-            if (fileInside == "annotation.xml") {
-                state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
-                annotationSuccess = true;
-            }
-            if (fileInside == "mergelist.txt") {
-                Segmentation::singleton().mergelistLoad(file);
-                mergelistSuccess = true;
-            }
-            if (fileInside == "microworker.txt") {
-                Segmentation::singleton().jobLoad(file);
-            }
             const auto match = cubeRegEx.match(fileInside);
             if (match.hasMatch()) {
                 file.open(QIODevice::ReadOnly);
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
                 Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, match.captured("mag").toInt(), file.readAll().toStdString());
             }
+        }
+        if (archive.setCurrentFile("mergelist.txt")) {
+            QuaZipFile file(&archive);
+            Segmentation::singleton().mergelistLoad(file);
+            mergelistSuccess = true;
+        }
+        if (archive.setCurrentFile("microworker.txt")) {
+            QuaZipFile file(&archive);
+            Segmentation::singleton().jobLoad(file);
+        }
+        //load skeleton last as it may depend on a loaded segmentation
+        if (archive.setCurrentFile("annotation.xml")) {
+            QuaZipFile file(&archive);
+            state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            annotationSuccess = true;
         }
         state->viewer->loader_notify();
     } else {

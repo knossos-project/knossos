@@ -29,6 +29,7 @@
 
 #include <QList>
 #include <QObject>
+#include <QSet>
 
 #include <boost/multi_array.hpp>
 
@@ -72,8 +73,7 @@ public:
     void renderBrush(uint viewportType, Coordinate coord);
     void setFrontFacePerspective(uint currentVP);
     void renderViewportFrontFace(uint currentVP);
-    void renderSizeLabel(uint currentVP, const int fontSize = defaultFonsSize);
-    void renderScaleBar(uint currentVP, const int thickness, const int fontSize = defaultFonsSize);
+    void renderScaleBar(uint currentVP, const int thickness = 2, const int fontSize = defaultFonsSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -92,7 +92,7 @@ protected:
 
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
-    std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
+    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
 };

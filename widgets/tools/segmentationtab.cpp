@@ -289,10 +289,10 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     QObject::connect(&modeGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [](int id){
         Segmentation::singleton().brush.setMode(static_cast<brush_t::mode_t>(id));
     });
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::modeChanged, [this](brush_t::mode_t value){
+    QObject::connect(&Segmentation::singleton().brush, &brush_subject::modeChanged, [this](brush_t::mode_t value){
         modeGroup.button(static_cast<int>(value))->setChecked(true);
     });
-    QObject::connect(&Segmentation::singleton().brush, &brush_t::radiusChanged, [this](int value){
+    QObject::connect(&Segmentation::singleton().brush, &brush_subject::radiusChanged, [this](int value){
         brushRadiusEdit.setValue(value);
     });
 

@@ -20,6 +20,7 @@ const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
 /* General attributes appropriate for most widgets */
 const QString GEOMETRY = "geometry";
+const QString STATE = "state";
 const QString WIDTH  = "width";
 const QString HEIGHT = "height";
 const QString POS_X  = "x";
@@ -57,23 +58,10 @@ const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
 const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
-const QString VPXY_COORD = "vpxy_coord";
-const QString VPXY_SIZE = "vpxy_size";
-const QString VPXY_VISIBLE = "vpxy_visible";
-const QString VPXY_TITLE = "XY";
-const QString VPXZ_COORD = "vpxz_coord";
-const QString VPXZ_SIZE = "vpxz_size";
-const QString VPXZ_VISIBLE = "vpxz_visible";
-const QString VPXZ_TITLE = "XZ";
-const QString VPYZ_COORD = "vpyz_coord";
-const QString VPYZ_SIZE = "vpyz_size";
-const QString VPYZ_VISIBLE = "vpyz_visible";
-const QString VPYZ_TITLE = "YZ";
-const QString VPSKEL_COORD = "vpskel_coord";
-const QString VPSKEL_SIZE = "vpskel_size";
-const QString VPSKEL_VISIBLE = "vpskel_visible";
-const QString VPSKEL_TITLE = "Skeleton";
-const std::vector<QString> VP_TITLES{VPXY_TITLE, VPXZ_TITLE, VPYZ_TITLE, VPSKEL_TITLE};
+const QString VP_ORDER = "vo_order";
+const QString VP_I_POS = "vp%1_pos";
+const QString VP_I_SIZE = "vp%1_size";
+const QString VP_I_VISIBLE = "vp%1_visible";
 const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
@@ -86,7 +74,7 @@ const QString BIAS = "bias";
 const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
-const QString SHOW_VIEWPORT_SIZE = "draw_viewport_size";
+const QString SHOW_SCALEBAR = "show_scalebar";
 const QString TREE_LUT_FILE = "tree_lut_file";
 const QString TREE_LUT_FILE_USED = "tree_lut_file_used";
 const QString DATASET_LUT_FILE = "dataset_lut_file";
@@ -160,10 +148,7 @@ const QString LOADED_FILE10 = "loaded_file10";
 
 const QString OPEN_FILE_DIALOG_DIRECTORY = "open_file_dialog_directory";
 const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
-const QString ANNOTATION_MODE = "annotation_mode";
-const QString TRACING_MODE = "tracing_mode";
-const QString SIMPLE_TRACING = "simple_tracing";
-const QString SEGMENTATION_TOOL = "segmentation_tool";
+const QString WORK_MODE = "work_mode";
 
 /* Python Property Widget */
 const QString PYTHON_INTERPRETER = "python_interpreter";

@@ -2,9 +2,46 @@
 
 #include "coordinate.h"
 #include "cubeloader.h"
+#include "loader.h"
 #include "segmentation.h"
 
 #include <unordered_set>
+
+void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush) {
+    std::vector<Coordinate> work = {seed};
+    std::unordered_set<Coordinate> visitedVoxels;
+
+    while (!work.empty()) {
+        auto pos = work.back();
+        work.pop_back();
+
+        auto subobjectId = readVoxel(pos);
+        if (subobjectId != fillsoid) {
+            visitedVoxels.emplace(pos.x, pos.y, pos.z);
+
+            auto walk = [&](const Coordinate & newPos){
+                if (visitedVoxels.find(newPos) == std::end(visitedVoxels) && currentlyVisibleWrapWrap(center, pos)) {
+                    work.emplace_back(newPos);
+                }
+            };
+
+            if (brush.view != brush_t::view_t::yz || brush.mode == brush_t::mode_t::three_dim) {
+                walk({pos.x + 1, pos.y, pos.z});
+                walk({pos.x - 1, pos.y, pos.z});
+            }
+            if (brush.view != brush_t::view_t::xz || brush.mode == brush_t::mode_t::three_dim) {
+                walk({pos.x, pos.y + 1, pos.z});
+                walk({pos.x, pos.y - 1, pos.z});
+            }
+            if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
+                walk({pos.x, pos.y, pos.z + 1});
+                walk({pos.x, pos.y, pos.z - 1});
+            }
+        }
+    }
+
+    listFill(center, brush, fillsoid, visitedVoxels);
+}
 
 std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t objIndexToSplit, const uint64_t newSubObjId, const std::unordered_set<uint64_t> & subObjectsToFill) {
     std::vector<Coordinate> work = {seed};
@@ -15,7 +52,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
         work.pop_back();
 
         auto subobjectId = readVoxel(pos);
-        if (subobjectId != 0 && subobjectId != newSubObjId) {
+        if (subobjectId != Segmentation::singleton().getBackgroundId() && subobjectId != newSubObjId) {
             auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
             auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objIndex == objIndexToSplit) {
@@ -46,7 +83,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
 
 void connectedComponent(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
-    if (subobjectId != 0) {
+    if (subobjectId != Segmentation::singleton().getBackgroundId()) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
@@ -80,7 +117,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
         work.pop_back();
 
         auto subobjectId = readVoxel(pos);
-        if (subobjectId != 0 && subobjectId != newSubObjId) {
+        if (subobjectId != Segmentation::singleton().getBackgroundId() && subobjectId != newSubObjId) {
             auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, pos);
             auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
             if (objIndex == objIndexToSplit) {
@@ -105,7 +142,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
 
 void verticalSplittingPlane(const Coordinate & seed) {
     auto subobjectId = readVoxel(seed);
-    if (subobjectId != 0) {
+    if (subobjectId != Segmentation::singleton().getBackgroundId()) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
