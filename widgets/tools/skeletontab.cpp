@@ -119,7 +119,9 @@ void NodeModel::recreate() {
 
 SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
+    treeView.setUniformRowHeights(true);//perf hint from doc
     nodeView.setModel(&nodeModel);
+    nodeView.setUniformRowHeights(true);//perf hint from doc
 
     splitter.addWidget(&treeView);
     splitter.addWidget(&nodeView);
