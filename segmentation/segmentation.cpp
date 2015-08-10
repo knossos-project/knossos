@@ -227,6 +227,14 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
     emit backgroundIdChanged(backgroundId = newBackgroundId);
 }
 
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
+    const auto & objectId = objects[objectIndex].id;
+    const uint8_t red   = overlayColorMap[0][objectId % 256];
+    const uint8_t green = overlayColorMap[1][objectId % 256];
+    const uint8_t blue  = overlayColorMap[2][objectId % 256];
+    return std::make_tuple(red, green, blue, alpha);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
@@ -234,11 +242,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     const auto objectIndex = *std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [this](const uint64_t index){
         return objects[index].selected;
     });
-    const auto & object = objects[objectIndex];
-    const uint8_t red   = overlayColorMap[0][object.index % 256];
-    const uint8_t green = overlayColorMap[1][object.index % 256];
-    const uint8_t blue  = overlayColorMap[2][object.index % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    return colorObjectFromIndex(objectIndex);
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
@@ -259,12 +263,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubo
     } else if (!renderAllObjs) {
         return std::make_tuple(0, 0, 0, 0);
     }
-
-    const auto objectIndex = largestObjectContainingSubobject(subobject);
-    const uint8_t red   = overlayColorMap[0][objectIndex % 256];
-    const uint8_t green = overlayColorMap[1][objectIndex % 256];
-    const uint8_t blue  = overlayColorMap[2][objectIndex % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    return colorObjectFromIndex(largestObjectContainingSubobject(subobject));
 }
 
 bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
