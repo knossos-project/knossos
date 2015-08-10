@@ -151,6 +151,10 @@ struct skeletonState {
 
 class Skeletonizer : public QObject {
     Q_OBJECT
+    friend class NodeModel;
+    friend class TreeModel;
+    std::vector<nodeListElement*> nodesOrdered;
+    std::vector<treeListElement*> treesOrdered;
 public:
     explicit Skeletonizer(QObject *parent = 0);
     static Skeletonizer & singleton() {

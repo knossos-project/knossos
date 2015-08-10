@@ -24,8 +24,7 @@ int TreeModel::rowCount(const QModelIndex &) const {
 }
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
-    auto * tree = state->skeletonState->firstTree.get();
-    for (int i = 0; i < index.row(); ++i, tree = tree->next.get());
+    auto * tree = Skeletonizer::singleton().treesOrdered[index.row()];
 
     if (index.column() == 2 && role == Qt::BackgroundRole) {
         return QColor(tree->color.r * 255, tree->color.g * 255, tree->color.b * 255, tree->color.a * 255);
@@ -45,8 +44,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (index.isValid()) {
         return false;
     }
-    auto * tree = state->skeletonState->firstTree.get();
-    for (int i = 0; i < index.row(); ++i, tree = tree->next.get());
+    auto * tree = Skeletonizer::singleton().treesOrdered[index.row()];
 
     if (index.column() == 4 && role == Qt::CheckStateRole) {
         tree->render = value.toBool();
@@ -68,8 +66,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     if (state->skeletonState->firstTree == nullptr) {
         return QVariant();//return invalid QVariant
     }
-    auto * node = state->skeletonState->firstTree->firstNode.get();
-    for (int i = 0; i < index.row(); ++i, node = node->next.get());
+    auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
@@ -88,8 +85,7 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (state->skeletonState->firstTree == nullptr || index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
         return false;
     }
-    auto * node = state->skeletonState->firstTree->firstNode.get();
-    for (int i = 0; i < index.row(); ++i, node = node->next.get());
+    auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
 
     if (index.column() == 1) {
         strcpy(node->comment->content, value.toString().toUtf8().data());

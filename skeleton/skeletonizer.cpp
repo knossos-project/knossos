@@ -41,6 +41,14 @@
 
 #define CATCH_RADIUS 10
 
+auto nodeCompare = [](const nodeListElement * const lhs, const uint64_t & rhs){
+    return lhs->nodeID < rhs;
+};
+
+auto treeCompare = [](const treeListElement * const lhs, const int & rhs){
+    return lhs->treeID < rhs;
+};
+
 struct stack {
     uint elementsOnStack;
     void **elements;
@@ -913,6 +921,7 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     }
 
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
+    nodesOrdered.erase(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeToDel->nodeID, nodeCompare));//binfind pointer
 
     if (nodeToDel->selected) {
         auto & selectedNodes = state->skeletonState->selectedNodes;
@@ -971,6 +980,7 @@ bool Skeletonizer::delTree(int treeID) {
     blockSignals(blockState);
 
     state->skeletonState->treesByID.erase(treeToDel->treeID);
+    treesOrdered.erase(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), treeToDel->treeID, treeCompare));//binfind pointer
 
     if (treeToDel->selected) {
         auto & selectedTrees = state->skeletonState->selectedTrees;
@@ -1265,6 +1275,9 @@ boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float rad
 
     if (nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
+        nodesOrdered.emplace_back(tempNode);
+    } else {
+        nodesOrdered.emplace(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeID, nodeCompare), tempNode);
     }
     state->skeletonState->unsavedChanges = true;
 
@@ -1622,6 +1635,9 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
+        treesOrdered.emplace_back(newElement);
+    } else {
+        treesOrdered.emplace(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), newElement->treeID, treeCompare), newElement);
     }
 
     state->skeletonState->unsavedChanges = true;
