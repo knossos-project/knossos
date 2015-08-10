@@ -241,7 +241,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     return std::make_tuple(red, green, blue, alpha);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(const uint64_t subObjectID) const {
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
     if (subObjectID == backgroundId) {
         return std::make_tuple(0, 0, 0, 0);
     }
