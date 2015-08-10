@@ -189,8 +189,9 @@ void Segmentation::removeObject(Object & object) {
         emit changedRow(object.index);//object now references the former end
     }
     emit beforeRemoveRow();
-    if (object.id == Object::highestId) {
-        --Object::highestId;
+    //the last element is the one which gets removed
+    if (objects.back().id == Object::highestId) {
+        --Object::highestId;//reassign highest object id if it was removed before
     }
     objects.pop_back();
     emit removedRow();
