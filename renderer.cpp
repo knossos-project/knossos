@@ -1520,16 +1520,14 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         const Coordinate root_pos(- state->boundary.x / 2 - 50, - state->boundary.y / 2 - 50, - state->boundary.z / 2 - 50);
 
         auto pos = root_pos;
-        renderText(pos, QString("1, 1, 1"));
-
         pos = Coordinate(- root_pos.x, root_pos.y, root_pos.z);
-        renderText(pos, QString("%0, 1, 1").arg(state->boundary.x + 1));
+        renderText(pos, QString("%1 µm").arg(state->boundary.x * state->scale.x * 0.001));
 
         pos = Coordinate(root_pos.x, - root_pos.y, root_pos.z);
-        renderText(pos, QString("1, %0, 1").arg(state->boundary.y + 1));
+        renderText(pos, QString("%1 µm").arg(state->boundary.y * state->scale.y * 0.001));
 
         pos = Coordinate(root_pos.x, root_pos.y, - root_pos.z);
-        renderText(pos, QString("1, 1, %0").arg(state->boundary.z + 1));
+        renderText(pos, QString("%1 µm").arg(state->boundary.z * state->scale.z * 0.001));
 
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
