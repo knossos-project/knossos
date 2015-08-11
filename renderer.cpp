@@ -481,7 +481,7 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
         divisor = vp.displayedlengthInNmX/rounded_scalebar_len_nm;
     }
 
-    int min_x = 0.05 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
+    int min_x = 0.02 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
     glLineWidth(thickness);
     glColor3f(0., 0., 0.);
     glBegin(GL_LINES);
