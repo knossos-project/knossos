@@ -976,7 +976,7 @@ void MainWindow::saveSettings() {
     }
     settings.setValue(VP_ORDER, order);
 
-    settings.setValue(WORK_MODE, static_cast<int>(workModeModel.at(modeCombo.currentIndex()).first));
+    settings.setValue(WORK_MODE, modeCombo.currentIndex());
 
     int i = 0;
     for (const auto & path : skeletonFileHistory) {
@@ -1032,7 +1032,8 @@ void MainWindow::loadSettings() {
 
     saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY, autosaveLocation).toString();
 
-    setWorkMode(static_cast<AnnotationMode>(settings.value(WORK_MODE, static_cast<int>(AnnotationMode::Tracing)).toInt()));
+    auto mode = workModeModel.at(settings.value(WORK_MODE, 0).toInt()).first;
+    setWorkMode(mode);
 
     for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
         updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
