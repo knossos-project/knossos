@@ -51,42 +51,51 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
-enum WorkMode { Tracing, AdvancedTracing, UnlinkedTracing, SegmentationMerge, SegmentationPaint, MergeTracing };
-
 class WorkModeModel : public QAbstractListModel {
     Q_OBJECT
-    std::vector<QString> workModes;
+    std::vector<std::pair<AnnotationMode, QString>> workModes;
 public:
     virtual int rowCount(const QModelIndex &) const override {
         return workModes.size();
     }
     virtual QVariant data(const QModelIndex & index, int role) const override {
         if (role == Qt::DisplayRole) {
-            return workModes[index.row()];
+            return workModes[index.row()].second;
         }
         return QVariant();
     }
-    void recreate(const QStringList & modes) {
+    void recreate(const std::map<AnnotationMode, QString> & modes) {
         beginResetModel();
         workModes.clear();
         for (const auto & mode : modes) {
             workModes.emplace_back(mode);
         }
+        std::sort(std::begin(workModes), std::end(workModes), [](const std::pair<AnnotationMode, QString> elemA, const std::pair<AnnotationMode, QString> elemB) {
+            return elemA.second < elemB.second;
+        });
         endResetModel();
+    }
+    std::pair<AnnotationMode, QString> at(const int index) const {
+        return workModes[index];
     }
 };
 
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
-    friend TaskManagementWidget;
-    friend SkeletonProxy;
+    friend class TaskManagementWidget;
+    friend class SkeletonProxy;
 
     QToolBar basicToolbar{"Basic Functionality"};
     QToolBar defaultToolbar{"Tools"};
 
-    QStringList workModes = {tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing"), tr("Segmentation Merge"), tr("Segmentation Paint"), tr("Merge Tracing")};
-    WorkMode workMode;
+    std::map<AnnotationMode, QString> workModes{ {AnnotationMode::MergeTracing, tr("Merge Tracing")},
+                                                 {AnnotationMode::Tracing, tr("Tracing")},
+                                                 {AnnotationMode::TracingAdvanced, tr("Tracing Advanced")},
+                                                 {AnnotationMode::TracingUnlinked, tr("Tracing Unlinked")},
+                                                 {AnnotationMode::SegmentationMerge, tr("Segmentation Merge")},
+                                                 {AnnotationMode::SegmentationPaint, tr("Segmentation Paint")},
+                                               };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
     QAction *newTreeAction;
@@ -183,7 +192,7 @@ public slots:
     void exportToNml();
 
     /* edit skeleton menu*/
-    void setWorkMode(WorkMode mode);
+    void setWorkMode(AnnotationMode mode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
 

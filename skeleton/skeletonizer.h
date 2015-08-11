@@ -256,8 +256,6 @@ public slots:
     static bool updateCircRadius(nodeListElement *node);
 
 public:
-    enum TracingMode { standard, advanced, unlinked };
-    TracingMode tracingMode;
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
 
     void setColorFromNode(nodeListElement *node, color4F *color) const;

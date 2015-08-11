@@ -34,8 +34,20 @@
 #include <QTimer>
 
 enum class AnnotationMode {
-    Skeletonization, Segmentation,
-    Hybrid
+    Tracing = 0x1|0x80, // NodeEditing
+    TracingAdvanced = 0x2|0x80|0x100, // NodeEditing, SkeletonCycles
+    TracingUnlinked = 0x4|0x80|0x100, // NodeEditing, SkeletonCycles
+
+    SegmentationPaint = 0x8|0x200|0x400, // Brush, ObjectSelection
+    SegmentationMerge = 0x10|0x200|0x400, // Brush, ObjectSelection
+    SegmentationMergeSimple = 0x20|0x10|0x200, // SegmentationMerge, Brush
+
+    MergeTracing = 0x40|0x2|0x10|0x80|0x100, // TracingAdvanced, SegmentationMerge, NodeEditing, SkeletonCycles
+
+    NodeEditing = 0x80,
+    SkeletonCycles = 0x100,
+    Brush = 0x200,
+    ObjectSelection = 0x400
 };
 
 class Session : public QObject {

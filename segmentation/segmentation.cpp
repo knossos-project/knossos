@@ -2,6 +2,7 @@
 
 #include "knossos.h"
 #include "loader.h"
+#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
@@ -74,11 +75,6 @@ Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other)
     std::swap(subobjects, tmp);
     subobjects.erase(std::unique(std::begin(subobjects), std::end(subobjects)), std::end(subobjects));
     return *this;
-}
-
-Segmentation & Segmentation::singleton() {
-    static Segmentation segmentation;
-    return segmentation;
 }
 
 Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFocusedObjectId(0) {
@@ -586,7 +582,9 @@ void Segmentation::jobLoad(QIODevice & file) {
     job.campaign = campaign_line.isNull() ? "" : campaign_line;
     job.worker = worker_line.isNull() ? "" : worker_line;
     job.submitPath = submit_line.isNull() ? "" : submit_line;
-    job.active = (job.id == 0) ? false : true;
+    if (job.id != 0) {
+        Session::singleton().annotationMode = AnnotationMode::SegmentationMergeSimple;
+    }
 }
 
 void Segmentation::jobSave(QIODevice &file) const {

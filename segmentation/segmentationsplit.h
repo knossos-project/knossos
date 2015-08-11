@@ -12,9 +12,6 @@ public:
     enum class mode_t {
         two_dim, three_dim
     };
-    enum class tool_t {
-        merge, add
-    };
     enum class view_t {
         xy, xz, yz
     };
@@ -25,7 +22,6 @@ public:
     int radius = 100;
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
-    tool_t tool = tool_t::merge;
     view_t view = view_t::xy;
     shape_t shape = shape_t::round;
 };
@@ -57,13 +53,6 @@ public:
     int getRadius() const {
         return radius;
     }
-    void setTool(const tool_t newTool) {
-        tool = newTool;
-        emit toolChanged(tool);
-    }
-    tool_t getTool() const {
-        return tool;
-    }
     void setView(const view_t newView) {
         view = newView;
     }
@@ -81,7 +70,6 @@ signals:
     void inverseChanged(const bool);
     void modeChanged(const mode_t);
     void radiusChanged(const int);
-    void toolChanged(const tool_t);
     void shapeChanged(const shape_t);
 };
 
