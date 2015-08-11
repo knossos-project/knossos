@@ -16,7 +16,7 @@ class SnapshotWidget : public QDialog
     QString saveDir;
     QComboBox sizeCombo;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpYZRadio{"YZ viewport"}, vp3dRadio{"3D viewport"};
-    QCheckBox withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
+    QCheckBox withAxesCheck{"Dataset Axes"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
     QVBoxLayout mainLayout;
     ViewportType getCheckedViewport() const;
@@ -26,7 +26,7 @@ public:
     void saveSettings();
     void loadSettings();
 signals:
-    void snapshotRequest(const QString & path, ViewportType vp, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void snapshotRequest(const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // SNAPSHOTWIDGET_H

@@ -47,10 +47,11 @@ class Viewport;
 class segmentListElement;
 
 struct RenderOptions {
-    RenderOptions(const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
+    RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
                   const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true)
-        : drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
+        : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
           drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection) {}
+    bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
     bool drawOverlay;

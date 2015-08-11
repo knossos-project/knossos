@@ -1404,57 +1404,59 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_TEXTURE_2D);
     }
 
-    if(options.drawBoundaryBox) {
+    if(options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
         glEnable(GL_BLEND);
 
-        // Now we draw the data volume box.
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glLoadName(3);
-        glColor4f(0.8, 0.8, 0.8, 1.0);
-        glBegin(GL_QUADS);
-            glNormal3i(0,0,1);
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+        if(options.drawBoundaryBox) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glLoadName(3);
+            glColor4f(0.8, 0.8, 0.8, 1.0);
+            glBegin(GL_QUADS);
+                glNormal3i(0,0,1);
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
 
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
 
-            glNormal3i(0,0,1);
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+                glNormal3i(0,0,1);
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
 
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
 
-            glNormal3i(0,1,0);
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+                glNormal3i(0,1,0);
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
 
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
 
-            glNormal3i(0,1,0);
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+                glNormal3i(0,1,0);
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
 
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
 
-            glNormal3i(1,0,0);
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+                glNormal3i(1,0,0);
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
 
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
 
-            glNormal3i(1,0,0);
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+                glNormal3i(1,0,0);
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
 
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
-        glEnd();
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+            glEnd();
+        }
+
 
         // draw axes with endpoints
         glColor4f(0., 0., 0., 1.);
@@ -1739,7 +1741,7 @@ QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP
         renderSkeletonVP();
     } else {
         glDisable(GL_DEPTH_TEST);
-        renderOrthogonalVP(currentVP, RenderOptions(true, state->viewerState->drawVPCrosshairs, state->overlay & state->viewerState->showOverlay));
+        renderOrthogonalVP(currentVP, RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay & state->viewerState->showOverlay));
     }
 
     GLint hits = glRenderMode(GL_RENDER);

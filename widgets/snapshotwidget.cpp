@@ -32,14 +32,17 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     QObject::connect(&vp3dRadio, &QRadioButton::toggled, [this](bool checked) {
         withOverlayCheck.setHidden(checked);
         if(Segmentation::singleton().volume_render_toggle == false) {
+            withAxesCheck.setVisible(checked);
             withVpPlanes.setVisible(checked);
         }
     });
 
     auto imageOptionsLayout = new QVBoxLayout();
+    withAxesCheck.setChecked(true);
     withOverlayCheck.setChecked(true);
     withScaleCheck.setChecked(true);
     withVpPlanes.setHidden(true);
+    imageOptionsLayout->addWidget(&withAxesCheck);
     imageOptionsLayout->addWidget(&withOverlayCheck);
     imageOptionsLayout->addWidget(&withSkeletonCheck);
     imageOptionsLayout->addWidget(&withScaleCheck);
@@ -68,7 +71,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpYZRadio.isChecked() ? VIEWPORT_YZ :
                                                     VIEWPORT_SKELETON;
-            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
+            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
     });
 
@@ -101,6 +104,7 @@ void SnapshotWidget::saveSettings() {
     settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(VIEWPORT, getCheckedViewport());
+    settings.setValue(WITH_AXES, withAxesCheck.isChecked());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
     settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
@@ -122,7 +126,7 @@ void SnapshotWidget::loadSettings() {
         case VIEWPORT_YZ: vpYZRadio.setChecked(true); break;
         default: vp3dRadio.setChecked(true); break;
     }
-
+    withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
     withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
