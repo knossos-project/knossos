@@ -203,6 +203,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return;
     }
 
+    uint64_t oldNodeId = state->skeletonState->activeNode != nullptr ? state->skeletonState->activeNode->nodeID : 0;
     uint64_t newNodeId = 0;
 
     if (annotationMode.testFlag(AnnotationMode::TracingUnlinked)) {
@@ -304,12 +305,11 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
     }
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::MergeTracing)) {
-        Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId);
-    }
-
-    /* Move to the new node position */
-    if (newNodeId) {
+    if (newNodeId != 0) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::MergeTracing)) {
+            Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId, oldNodeId);
+        }
+        // Move to the new node position
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
         } else {

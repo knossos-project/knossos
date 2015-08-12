@@ -7,7 +7,7 @@
 const auto subobjectPropertyKey = "subobjectId";
 
 template<typename Func>
-void ifsoproperty(nodeListElement & node, Func func) {
+void ifsoproperty(const nodeListElement & node, Func func) {
     auto soPropertyIt = node.properties.find(subobjectPropertyKey);
     if (soPropertyIt != std::end(node.properties)) {
         const auto subobjectId = soPropertyIt->toULongLong();
@@ -15,7 +15,7 @@ void ifsoproperty(nodeListElement & node, Func func) {
     }
 }
 
-void Skeletonizer::selectObjectForNode(nodeListElement & node) {
+void Skeletonizer::selectObjectForNode(const nodeListElement & node) {
     Segmentation::singleton().clearObjectSelection();//no property clears selection
     ifsoproperty(node, [&](const uint64_t subobjectId){
         auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
@@ -23,8 +23,12 @@ void Skeletonizer::selectObjectForNode(nodeListElement & node) {
     });
 }
 
-void Skeletonizer::setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId) {
+void Skeletonizer::setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId) {
     auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
+    if (previousActiveNodeId != 0) {
+        const auto & node2 = *Skeletonizer::singleton().findNodeByNodeID(previousActiveNodeId);
+        selectObjectForNode(node2);//reselect the previous active node as it got unselected during new node creation
+    }
     setSubobjectAndMerge(node, subobjectId);
 }
 
