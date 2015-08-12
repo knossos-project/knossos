@@ -1,8 +1,9 @@
 #include "skeletontab.h"
 
-#include <skeleton/node.h>
-#include <skeleton/skeletonizer.h>
-#include <skeleton/tree.h>
+#include "model_helper.h"
+#include "skeleton/node.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
 
 template<typename ConcreteModel>
 int AbstractSkeletonModel<ConcreteModel>::columnCount(const QModelIndex &) const {
@@ -116,8 +117,10 @@ void NodeModel::recreate() {
 SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
     treeView.setUniformRowHeights(true);//perf hint from doc
+    treeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
     nodeView.setModel(&nodeModel);
     nodeView.setUniformRowHeights(true);//perf hint from doc
+    nodeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
 
     splitter.addWidget(&treeView);
     splitter.addWidget(&nodeView);
@@ -134,15 +137,46 @@ SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, &treeModel, &TreeModel::recreate);
 //    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, &treeModel, &TreeModel::recreate);
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, &nodeModel, &NodeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, &nodeModel, &NodeModel::recreate);
-//    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, &nodeModel, &NodeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, &nodeModel, &NodeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, &nodeModel, &NodeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, &nodeModel, &NodeModel::recreate);
+    static auto updateSelection = [this](){
+        const auto selectedIndices = blockSelection(nodeModel, Skeletonizer::singleton().nodesOrdered);
+        nodeSelectionProtection = true;
+        nodeView.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
+        nodeSelectionProtection = false;
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){
-        treeModel.recreate();
+        if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
+            nodeView.scrollTo(selectedIndices.indexes().front());
+        }
+    };
+    static auto nodeRecreate = [&, this](){
+        nodeView.selectionModel()->reset();
         nodeModel.recreate();
+        updateSelection();
+    };
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, updateSelection);
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, &nodeModel, nodeRecreate );
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, &nodeModel, nodeRecreate );
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [&, this](){
+        treeModel.recreate();
+        nodeRecreate();
+    });
+
+    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection & selected, const QItemSelection & deselected){
+        if (!nodeSelectionProtection) {
+            auto indices = selected.indexes();
+            indices.append(deselected.indexes());
+            QSet<nodeListElement*> nodes;
+            for (const auto & modelIndex : indices) {
+                if (modelIndex.column() == 0) {
+                    nodes.insert(Skeletonizer::singleton().nodesOrdered[modelIndex.row()]);
+                }
+            }
+            Skeletonizer::singleton().toggleNodeSelection(nodes);
+        }
     });
 }

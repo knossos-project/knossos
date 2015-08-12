@@ -1,5 +1,6 @@
 #include "segmentationtab.h"
 
+#include "model_helper.h"
 #include "viewer.h"
 
 #include <QApplication>
@@ -449,42 +450,6 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     commitSelection(proxySelected, proxyDeselected);
     Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
-}
-
-template<typename Elem>
-Elem & getElem(Elem & elem) {
-    return elem;
-}
-template<typename Elem>
-Elem & getElem(std::reference_wrapper<Elem> & elem) {
-    return elem.get();
-}
-
-template<typename T>
-QItemSelection blockSelection(const SegmentationObjectModel & model, T & data) {
-    QItemSelection selectedItems;
-
-    bool blockSelection = false;
-    std::size_t blockStartIndex;
-
-    std::size_t objIndex = 0;
-    for (auto & elem : data) {
-        if (!blockSelection && getElem(elem).selected) { //start block selection
-            blockSelection = true;
-            blockStartIndex = objIndex;
-        }
-        if (blockSelection && !getElem(elem).selected) { //end block selection
-            selectedItems.select(model.index(blockStartIndex, 0), model.index(objIndex-1, model.columnCount()-1));
-            blockSelection = false;
-        }
-        ++objIndex;
-    }
-    //finish last blockselection – if any
-    if (blockSelection) {
-        selectedItems.select(model.index(blockStartIndex, 0), model.index(objIndex-1, model.columnCount()-1));
-    }
-
-    return selectedItems;
 }
 
 void SegmentationTab::updateTouchedObjSelection() {
