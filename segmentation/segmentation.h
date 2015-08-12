@@ -175,10 +175,7 @@ public:
     bool hoverVersion;
     uint64_t mouseFocusedObjectId;
 
-    static Segmentation & singleton() {
-        static Segmentation segmentation;
-        return segmentation;
-    }
+    static Segmentation & singleton();
 
     Segmentation();
     //rendering

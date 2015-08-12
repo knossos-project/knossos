@@ -100,7 +100,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 allSuccess = false;
             }
         }
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::SegmentationMergeSimple)) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
             QuaZipFile file_write(&archive_write);
             const bool open = zipCreateFile(file_write, "microworker.txt", 1);
             if (open) {

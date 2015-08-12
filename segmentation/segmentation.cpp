@@ -77,6 +77,11 @@ Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other)
     return *this;
 }
 
+Segmentation & Segmentation::singleton() {
+    static Segmentation segmentation;
+    return segmentation;
+}
+
 Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFocusedObjectId(0) {
     loadOverlayLutFromFile();
 }
@@ -583,7 +588,7 @@ void Segmentation::jobLoad(QIODevice & file) {
     job.worker = worker_line.isNull() ? "" : worker_line;
     job.submitPath = submit_line.isNull() ? "" : submit_line;
     if (job.id != 0) {
-        Session::singleton().annotationMode = AnnotationMode::SegmentationMergeSimple;
+        Session::singleton().annotationMode = AnnotationMode::Mode_MergeSimple;
     }
 }
 

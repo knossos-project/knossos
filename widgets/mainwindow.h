@@ -89,12 +89,12 @@ class MainWindow : public QMainWindow {
     QToolBar basicToolbar{"Basic Functionality"};
     QToolBar defaultToolbar{"Tools"};
 
-    std::map<AnnotationMode, QString> workModes{ {AnnotationMode::MergeTracing, tr("Merge Tracing")},
-                                                 {AnnotationMode::Tracing, tr("Tracing")},
-                                                 {AnnotationMode::TracingAdvanced, tr("Tracing Advanced")},
-                                                 {AnnotationMode::TracingUnlinked, tr("Tracing Unlinked")},
-                                                 {AnnotationMode::SegmentationMerge, tr("Segmentation Merge")},
-                                                 {AnnotationMode::SegmentationPaint, tr("Segmentation Paint")},
+    std::map<AnnotationMode, QString> workModes{ {AnnotationMode::Mode_MergeTracing, tr("Merge Tracing")},
+                                                 {AnnotationMode::Mode_Tracing, tr("Tracing")},
+                                                 {AnnotationMode::Mode_TracingAdvanced, tr("Tracing Advanced")},
+                                                 {AnnotationMode::Mode_TracingUnlinked, tr("Tracing Unlinked")},
+                                                 {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
+                                                 {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;

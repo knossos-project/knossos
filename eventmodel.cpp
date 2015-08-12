@@ -56,9 +56,9 @@ void segmentation_brush_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto& seg = Segmentation::singleton();
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::SegmentationMerge)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectMerge)) {
         merging(event, vp);
-    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::SegmentationPaint)) {//paint and erase
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
@@ -199,16 +199,16 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Coordinate movement, lastPos;
 
     const quint64 subobjectId = readVoxel(clickedCoordinate);
-    if (annotationMode.testFlag(AnnotationMode::MergeTracing) && subobjectId == Segmentation::singleton().getBackgroundId()) {
+    if (annotationMode.testFlag(AnnotationMode::Mode_MergeTracing) && subobjectId == Segmentation::singleton().getBackgroundId()) {
         return;
     }
 
     uint64_t oldNodeId = state->skeletonState->activeNode != nullptr ? state->skeletonState->activeNode->nodeID : 0;
     uint64_t newNodeId = 0;
 
-    if (annotationMode.testFlag(AnnotationMode::TracingUnlinked)) {
+    if (annotationMode.testFlag(AnnotationMode::UnlinkedNodes)) {
         newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-    } else if (annotationMode.testFlag(AnnotationMode::Tracing) || annotationMode.testFlag(AnnotationMode::TracingAdvanced)) {
+    } else if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
             newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -306,7 +306,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 
     if (newNodeId != 0) {
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::MergeTracing)) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId, oldNodeId);
         }
         // Move to the new node position
@@ -480,7 +480,7 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::SegmentationPaint) && Segmentation::singleton().selectedObjectsCount() == 1) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Segmentation::singleton().selectedObjectsCount() == 1) {
             uint64_t soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject(clickedCoordinate);
             auto brush_copy = Segmentation::singleton().brush.value();
             brush_copy.shape = brush_t::shape_t::angular;
