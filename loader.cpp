@@ -266,7 +266,7 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader
 }
 
 Loader::Worker::~Worker() {
-    abortDownloadsFinishDecompression(*this, [](const Coordinate &){return false;});
+    abortDownloadsFinishDecompression([](const Coordinate &){return false;});
 
     state->protectCube2Pointer->lock();
     for (auto &elem : state->Dc2Pointer) { elem.clear(); }
@@ -297,7 +297,7 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
 }
 
 void Loader::Worker::unloadCurrentMagnification() {
-    abortDownloadsFinishDecompression(*this, [](const Coordinate &){return false;});
+    abortDownloadsFinishDecompression([](const Coordinate &){return false;});
 
     state->protectCube2Pointer->lock();
     for (auto &elem : state->Dc2Pointer[loaderMagnification]) {
@@ -418,11 +418,11 @@ void finishDecompression(Decomp & decompressions, Func keep) {
 }
 
 template<typename Func>
-void Loader::abortDownloadsFinishDecompression(Loader::Worker & worker, Func keep) {
-    abortDownloads(worker.dcDownload, keep);
-    abortDownloads(worker.ocDownload, keep);
-    finishDecompression(worker.dcDecompression, keep);
-    finishDecompression(worker.ocDecompression, keep);
+void Loader::Worker::abortDownloadsFinishDecompression(Func keep) {
+    abortDownloads(dcDownload, keep);
+    abortDownloads(ocDownload, keep);
+    finishDecompression(dcDecompression, keep);
+    finishDecompression(ocDecompression, keep);
 }
 
 std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
@@ -554,7 +554,7 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
 }
 
 void Loader::Worker::cleanup(const Coordinate center) {
-    abortDownloadsFinishDecompression(*this, currentlyVisibleWrap(center));
+    abortDownloadsFinishDecompression(currentlyVisibleWrap(center));
     state->protectCube2Pointer->lock();
     unloadCubes(state->Dc2Pointer[loaderMagnification], freeDcSlots, insideCurrentSupercubeWrap(center));
     unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap(center), [this](const CoordOfCube & cubeCoord, char * remSlotPtr){

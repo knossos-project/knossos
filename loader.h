@@ -104,7 +104,7 @@ private:
     void snappyCacheClear();
 
     template<typename Func>
-    friend void abortDownloadsFinishDecompression(Loader::Worker&, Func);
+    void abortDownloadsFinishDecompression(Func);
 
     const QUrl baseUrl;
     const API api;
