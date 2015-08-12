@@ -299,7 +299,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     //cache
     uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
     bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache = seg.colorObjectFromId(subobjectIdCache);
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorCache = seg.colorObjectFromSubobjectId(subobjectIdCache);
     //first and last row boundaries
     const std::size_t min = state->cubeEdgeLength;
     const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);
@@ -327,7 +327,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             if(hide == false) {
                 uint64_t subobjectId = *reinterpret_cast<uint64_t*>(datacube);
 
-                auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromId(subobjectId);
+                auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromSubobjectId(subobjectId);
                 reinterpret_cast<uint8_t*>(slice)[0] = std::get<0>(color);
                 reinterpret_cast<uint8_t*>(slice)[1] = std::get<1>(color);
                 reinterpret_cast<uint8_t*>(slice)[2] = std::get<2>(color);

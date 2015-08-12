@@ -52,14 +52,13 @@ uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewp
     return readVoxel(getCoordinateFromOrthogonalClick(x, y, viewportId));
 }
 
-void segmentation_work(QMouseEvent *event, const int vp) {
+void segmentation_brush_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto& seg = Segmentation::singleton();
-    state->skeletonState->branchpointUnresolved = false;
 
-    if (seg.brush.getTool() == brush_t::tool_t::merge) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectMerge)) {
         merging(event, vp);
-    } else if (seg.brush.getTool() == brush_t::tool_t::add) {//paint and erase
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
@@ -122,7 +121,7 @@ void EventModel::handleMouseHover(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
             startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -147,7 +146,7 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
                 } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, NULL);
                 } else{
-                    if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
@@ -159,7 +158,7 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if (clickedNodeId != 0) {
@@ -173,7 +172,7 @@ void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                 } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
                     emit delSegmentSignal(clickedNodeId, activeNode->nodeID, 0);
                 } else {
-                    if(Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
                         QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
@@ -190,30 +189,29 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if (!mouseEventAtValidDatasetPosition(event, VPfound)) {
         return;
     }
+    const auto & annotationMode = Session::singleton().annotationMode;
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && VPfound != VIEWPORT_SKELETON) {
+    if (annotationMode.testFlag(AnnotationMode::Brush) && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        segmentation_work(event, VPfound);
+        segmentation_brush_work(event, VPfound);
         return;
     }
     Coordinate movement, lastPos;
 
     const quint64 subobjectId = readVoxel(clickedCoordinate);
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid) && subobjectId == Segmentation::singleton().getBackgroundId()) {
+    if (annotationMode.testFlag(AnnotationMode::Mode_MergeTracing) && subobjectId == Segmentation::singleton().getBackgroundId()) {
         return;
     }
 
+    uint64_t oldNodeId = state->skeletonState->activeNode != nullptr ? state->skeletonState->activeNode->nodeID : 0;
     uint64_t newNodeId = 0;
-    switch (state->viewer->skeletonizer->tracingMode) {
-    case Skeletonizer::TracingMode::unlinked:
+
+    if (annotationMode.testFlag(AnnotationMode::UnlinkedNodes)) {
         newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        break;
-    case Skeletonizer::TracingMode::standard:
-    case Skeletonizer::TracingMode::advanced:
+    } else if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
         if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
             newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-            break;
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             //Add a "stump", a branch node to which we don't automatically move.
             if((newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
@@ -222,102 +220,96 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                 Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeId);
                 Skeletonizer::singleton().setActiveNode(nullptr, newNodeId);
             }
-            break;
-        }
-        //Add a node and apply tracing modes
-        lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
-        newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                         state->viewerState->vpConfigs[VPfound].type,
-                                                         true);
-        if(newNodeId == false) { //could not add node
-            break;
-        }
+        } else {
+            //Add a node and apply tracing modes
+            lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
+            newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+                                                             state->viewerState->vpConfigs[VPfound].type,
+                                                             true);
+            if(newNodeId) {
+                /* Highlight the viewport with the biggest movement component and set
+                   behavior of f / d keys accordingly. */
+                movement.x = clickedCoordinate.x - lastPos.x;
+                movement.y = clickedCoordinate.y - lastPos.y;
+                movement.z = clickedCoordinate.z - lastPos.z;
+                /* Determine which viewport to highlight based on which movement component is biggest. */
+                if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
+                    state->viewerState->highlightVp = VIEWPORT_YZ;
+                }
+                else if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
+                    state->viewerState->highlightVp = VIEWPORT_XZ;
+                }
+                else {
+                    state->viewerState->highlightVp = VIEWPORT_XY;
+                }
+                /* Determine the directions for the f and d keys based on the signs of the movement
+                   components along the three dimensions. */
+                state->viewerState->vpKeyDirection[VP_UPPERLEFT] = (movement.z >= 0)? 1 : -1;
+                state->viewerState->vpKeyDirection[VP_LOWERLEFT] = (movement.y >= 0)? 1 : -1;
+                state->viewerState->vpKeyDirection[VP_UPPERRIGHT] = (movement.x >= 0)? 1 : -1;
 
-        /* Highlight the viewport with the biggest movement component and set
-           behavior of f / d keys accordingly. */
-        movement.x = clickedCoordinate.x - lastPos.x;
-        movement.y = clickedCoordinate.y - lastPos.y;
-        movement.z = clickedCoordinate.z - lastPos.z;
-        /* Determine which viewport to highlight based on which movement component is biggest. */
-        if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
-            state->viewerState->highlightVp = VIEWPORT_YZ;
-        }
-        else if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
-            state->viewerState->highlightVp = VIEWPORT_XZ;
-        }
-        else {
-            state->viewerState->highlightVp = VIEWPORT_XY;
-        }
-        /* Determine the directions for the f and d keys based on the signs of the movement
-           components along the three dimensions. */
-        state->viewerState->vpKeyDirection[VP_UPPERLEFT] = (movement.z >= 0)? 1 : -1;
-        state->viewerState->vpKeyDirection[VP_LOWERLEFT] = (movement.y >= 0)? 1 : -1;
-        state->viewerState->vpKeyDirection[VP_UPPERRIGHT] = (movement.x >= 0)? 1 : -1;
+                //Auto tracing adjustments
 
-        //Auto tracing adjustments
-
-        if (state->viewerState->autoTracingDelay < 10) { state->viewerState->autoTracingDelay = 10; }
-        else if (state->viewerState->autoTracingDelay > 500) { state->viewerState->autoTracingDelay = 500; }
-        if (state->viewerState->autoTracingSteps < 1) { state->viewerState->autoTracingSteps = 1; }
-        else if (state->viewerState->autoTracingSteps > 50) { state->viewerState->autoTracingSteps = 50; }
+                if (state->viewerState->autoTracingDelay < 10) { state->viewerState->autoTracingDelay = 10; }
+                else if (state->viewerState->autoTracingDelay > 500) { state->viewerState->autoTracingDelay = 500; }
+                if (state->viewerState->autoTracingSteps < 1) { state->viewerState->autoTracingSteps = 1; }
+                else if (state->viewerState->autoTracingSteps > 50) { state->viewerState->autoTracingSteps = 50; }
 
 
-        //Additional move of specified steps along clicked viewport
-        if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
-            case VIEWPORT_XY:
-                clickedCoordinate.z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
-                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
-                break;
-            case VIEWPORT_XZ:
-                clickedCoordinate.y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
-                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
-                break;
-            case VIEWPORT_YZ:
-                clickedCoordinate.x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
-                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
-                break;
+                //Additional move of specified steps along clicked viewport
+                if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
+                    switch(state->viewerState->vpConfigs[VPfound].type) {
+                    case VIEWPORT_XY:
+                        clickedCoordinate.z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
+                                             state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                        break;
+                    case VIEWPORT_XZ:
+                        clickedCoordinate.y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
+                                             state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                        break;
+                    case VIEWPORT_YZ:
+                        clickedCoordinate.x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
+                                             state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                        break;
+                    }
+                }
+
+                if ((state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove)
+                    || (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove)) {
+                    floatCoordinate walkingVector;
+                    walkingVector.x = movement.x;
+                    walkingVector.y = movement.y;
+                    walkingVector.z = movement.z;
+                    //Additional move of specified steps along tracing direction
+                    if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
+                        clickedCoordinate.x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                        clickedCoordinate.y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                        clickedCoordinate.z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                    }
+                    //Additional move of steps equal to distance between last and new node along tracing direction.
+                    if (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove) {
+                        clickedCoordinate.x += walkingVector.x;
+                        clickedCoordinate.y += walkingVector.y;
+                        clickedCoordinate.z += walkingVector.z;
+                    }
+                }
+
+                /* Do not allow clicks outside the dataset */
+                if (clickedCoordinate.x < 0) { clickedCoordinate.x = 0; }
+                else if (clickedCoordinate.x > state->boundary.x) { clickedCoordinate.x = state->boundary.x; }
+                if (clickedCoordinate.y < 0) { clickedCoordinate.y = 0; }
+                else if (clickedCoordinate.y > state->boundary.y) { clickedCoordinate.y = state->boundary.y; }
+                if (clickedCoordinate.z < 0) { clickedCoordinate.z = 0; }
+                else if (clickedCoordinate.z > state->boundary.z) { clickedCoordinate.z = state->boundary.z; }
             }
         }
-
-        if ((state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove)
-            || (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove)) {
-            floatCoordinate walkingVector;
-            walkingVector.x = movement.x;
-            walkingVector.y = movement.y;
-            walkingVector.z = movement.z;
-            //Additional move of specified steps along tracing direction
-            if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
-                clickedCoordinate.x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                clickedCoordinate.y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                clickedCoordinate.z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-            }
-            //Additional move of steps equal to distance between last and new node along tracing direction.
-            if (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove) {
-                clickedCoordinate.x += walkingVector.x;
-                clickedCoordinate.y += walkingVector.y;
-                clickedCoordinate.z += walkingVector.z;
-            }
-        }
-
-        /* Do not allow clicks outside the dataset */
-        if (clickedCoordinate.x < 0) { clickedCoordinate.x = 0; }
-        else if (clickedCoordinate.x > state->boundary.x) { clickedCoordinate.x = state->boundary.x; }
-        if (clickedCoordinate.y < 0) { clickedCoordinate.y = 0; }
-        else if (clickedCoordinate.y > state->boundary.y) { clickedCoordinate.y = state->boundary.y; }
-        if (clickedCoordinate.z < 0) { clickedCoordinate.z = 0; }
-        else if (clickedCoordinate.z > state->boundary.z) { clickedCoordinate.z = state->boundary.z; }
-
-
-        break;
     }
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Hybrid)) {
-        Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId);
-    }
-
-    /* Move to the new node position */
-    if (newNodeId) {
+    if (newNodeId != 0) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+            Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId, oldNodeId);
+        }
+        // Move to the new node position
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, VPfound);
         } else {
@@ -389,7 +381,7 @@ void EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const auto & config = state->viewerState->vpConfigs[VPfound];
         if (config.draggedNode != nullptr) {
             const QPointF posDelta(xrel(event->x()), yrel(event->y()));
@@ -413,10 +405,10 @@ void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && VPfound != VIEWPORT_SKELETON) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
         if (mouseEventAtValidDatasetPosition(event, VPfound) && notOrigin) {
-            segmentation_work(event, VPfound);
+            segmentation_brush_work(event, VPfound);
         }
         return;
     }
@@ -428,7 +420,7 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     auto & segmentation = Segmentation::singleton();
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if (event->pos() == mouseDown) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(clickPos);
@@ -477,9 +469,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && mouseEventAtValidDatasetPosition(event, VPfound)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && mouseEventAtValidDatasetPosition(event, VPfound)) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
-            segmentation_work(event, VPfound);
+            segmentation_brush_work(event, VPfound);
         }
     }
 }
@@ -488,7 +480,7 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && Segmentation::singleton().brush.getTool() == brush_t::tool_t::add && Segmentation::singleton().selectedObjectsCount() == 1) {
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Segmentation::singleton().selectedObjectsCount() == 1) {
             uint64_t soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject(clickedCoordinate);
             auto brush_copy = Segmentation::singleton().brush.value();
             brush_copy.shape = brush_t::shape_t::angular;
@@ -502,13 +494,13 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     const int directionSign = event->delta() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization)
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)
             && event->modifiers() == Qt::SHIFT
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, state->magnification);
-    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation) && event->modifiers() == Qt::SHIFT) {
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
         if(seg.brush.getRadius() < 0) {
             seg.brush.setRadius(0);

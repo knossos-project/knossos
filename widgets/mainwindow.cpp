@@ -64,7 +64,7 @@
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), workMode(WorkMode::Tracing), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
@@ -73,23 +73,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), workMode(WorkMode
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
+        const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {
-            workModeModel.recreate({tr("Tracing"), tr("Advanced Tracing"), tr("Unlinked Tracing")});
-            switch(Skeletonizer::singleton().tracingMode) {
-            case Skeletonizer::TracingMode::advanced: setWorkMode(WorkMode::AdvancedTracing); break;
-            case Skeletonizer::TracingMode::unlinked: setWorkMode(WorkMode::UnlinkedTracing); break;
-            default: setWorkMode(WorkMode::Tracing);
-            }
+            const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
+                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]},
+                                                             {AnnotationMode::Mode_TracingUnlinked, workModes[AnnotationMode::Mode_TracingUnlinked]}};
+            workModeModel.recreate(rawModes);
+            setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : AnnotationMode::Mode_Tracing);
         }
         else {
             workModeModel.recreate(workModes);
-            modeCombo.setCurrentIndex(workMode);
+            setWorkMode(currentMode);
         }
         widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
     });
     QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest,
-        [this](const QString & path, ViewportType vp, const int size, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
-            viewports[vp]->takeSnapshot(path, size, withOverlay, withSkeleton, withScale, withVpPlanes);
+        [this](const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
+            viewports[vp]->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
         });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -151,18 +151,18 @@ void MainWindow::createToolbars() {
     basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
     basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
     basicToolbar.addSeparator();
-    basicToolbar.addWidget(&modeCombo);
     workModeModel.recreate(workModes);
     modeCombo.setModel(&workModeModel);
-    modeCombo.setCurrentIndex(workMode);
-    QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(static_cast<WorkMode>(index)); });
+    modeCombo.setCurrentIndex(static_cast<int>(AnnotationMode::Mode_Tracing));
+    basicToolbar.addWidget(&modeCombo);
+    QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
     modeCombo.setToolTip("<b>Select a work mode:</b><br/>"
-                         "<b>" + workModes[WorkMode::Tracing] + ":</b> Skeletonization on one tree<br/>"
-                         "<b>" + workModes[WorkMode::AdvancedTracing] + ":</b> Unrestricted skeletonization<br/>"
-                         "<b>" + workModes[WorkMode::UnlinkedTracing] + ":</b> Skeletonization with unlinked nodes<br/>"
-                         "<b>" + workModes[WorkMode::SegmentationMerge] + ":</b> Segmentation by merging objects<br/>"
-                         "<b>" + workModes[WorkMode::SegmentationPaint] + ":</b> Segmentation by painting<br/>"
-                         "<b>" + workModes[WorkMode::MergeTracing] + ":</b> Merge segmentation objects by tracing");
+                         "<b>" + workModes[AnnotationMode::Mode_MergeTracing] + ":</b> Merge segmentation objects by tracing<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_TracingUnlinked] + ":</b> Skeletonization with unlinked nodes<br/>");
     basicToolbar.addSeparator();
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
@@ -285,7 +285,7 @@ void MainWindow::updateLoaderProgress(int refCount) {
 
 void MainWindow::setJobModeUI(bool enabled) {
     if(enabled) {
-        setWorkMode(WorkMode::SegmentationMerge);
+        setWorkMode(AnnotationMode::Mode_MergeSimple);
         menuBar()->hide();
         widgetContainer->hideAll();
         removeToolBar(&defaultToolbar);
@@ -311,7 +311,7 @@ void MainWindow::updateTodosLeft() {
     if(todosLeft > 0) {
         todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
     }
-    else if(job.active) {
+    else if(Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
         todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
         // submit work
         QRegExp regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b");
@@ -686,7 +686,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     updateTitlebar();
 
-    if (Segmentation::singleton().job.active) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
@@ -814,39 +814,22 @@ void MainWindow::exportToNml() {
     }
 }
 
-void MainWindow::setWorkMode(WorkMode mode) {
-    modeCombo.setCurrentIndex(mode);
-    const bool skeleton = mode == WorkMode::Tracing || mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing;
-    const bool branches = skeleton;
-    const bool trees = mode == WorkMode::AdvancedTracing || mode == WorkMode::UnlinkedTracing || mode == WorkMode::MergeTracing;
-
-    const bool segmentation = mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint || mode == WorkMode::MergeTracing;
-    const bool brush = mode == WorkMode::SegmentationMerge || mode == WorkMode::SegmentationPaint;
-
+void MainWindow::setWorkMode(AnnotationMode mode) {
+    if(workModes.find(mode) == std::end(workModes)) {
+        mode = AnnotationMode::Mode_Tracing;
+    }
+    modeCombo.setCurrentText(workModes[mode]);
+    auto & annotationMode = Session::singleton().annotationMode;
+    annotationMode = mode;
+    const bool trees = mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
+    const bool skeleton = mode == AnnotationMode::Mode_Tracing || mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
+    const bool segmentation = mode == AnnotationMode::Brush || mode == AnnotationMode::Mode_MergeTracing;
     newTreeAction->setVisible(trees);
     widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(trees);
-    pushBranchAction->setVisible(branches);
-    popBranchAction->setVisible(branches);
+    pushBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
+    popBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
-    Session::singleton().annotationMode = mode == WorkMode::MergeTracing ? AnnotationMode::Hybrid : segmentation ? AnnotationMode::Segmentation : AnnotationMode::Skeletonization;
-
-    if (skeleton) {
-        if (mode == WorkMode::Tracing) {
-            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::standard;
-        } else if (mode == WorkMode::AdvancedTracing || mode == WorkMode::MergeTracing) {
-            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::advanced;
-        } else if (mode == WorkMode::UnlinkedTracing) {
-            Skeletonizer::singleton().tracingMode = Skeletonizer::TracingMode::unlinked;
-        }
-    } else if (brush) {
-        if (mode == WorkMode::SegmentationMerge) {
-            Segmentation::singleton().brush.setTool(brush_t::tool_t::merge);
-        } else if (mode == WorkMode::SegmentationPaint) {
-            Segmentation::singleton().brush.setTool(brush_t::tool_t::add);
-        }
-    }
-    workMode = mode;
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
@@ -996,7 +979,7 @@ void MainWindow::saveSettings() {
     }
     settings.setValue(VP_ORDER, order);
 
-    settings.setValue(WORK_MODE, static_cast<int>(workMode));
+    settings.setValue(ANNOTATION_MODE, static_cast<int>(workModeModel.at(modeCombo.currentIndex()).first));
 
     int i = 0;
     for (const auto & path : skeletonFileHistory) {
@@ -1052,7 +1035,7 @@ void MainWindow::loadSettings() {
 
     saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY, autosaveLocation).toString();
 
-    setWorkMode(static_cast<WorkMode>(settings.value(WORK_MODE, static_cast<int>(WorkMode::Tracing)).toInt()));
+    setWorkMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, static_cast<int>(AnnotationMode::Mode_Tracing)).toInt()));
 
     for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
         updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
@@ -1167,9 +1150,7 @@ void MainWindow::popBranchNodeSlot() {
 }
 
 void MainWindow::placeComment(const int index) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Segmentation)) {
-        Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
-    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Skeletonization) && state->skeletonState->activeNode != nullptr) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && state->skeletonState->activeNode != nullptr) {
         CommentSetting comment = CommentSetting::comments[index];
         if (!comment.text.isEmpty()) {
             if(comment.appendComment) {
@@ -1179,9 +1160,10 @@ void MainWindow::placeComment(const int index) {
                     comment.text.prepend(text);
                 }
             }
-
             Skeletonizer::singleton().setComment(comment.text, state->skeletonState->activeNode, 0);
         }
+    } else {
+        Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
     }
 }
 

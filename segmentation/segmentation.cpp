@@ -2,6 +2,7 @@
 
 #include "knossos.h"
 #include "loader.h"
+#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
@@ -189,8 +190,9 @@ void Segmentation::removeObject(Object & object) {
         emit changedRow(object.index);//object now references the former end
     }
     emit beforeRemoveRow();
-    if (object.id == Object::highestId) {
-        --Object::highestId;
+    //the last element is the one which gets removed
+    if (objects.back().id == Object::highestId) {
+        --Object::highestId;//reassign highest object id if it was removed before
     }
     objects.pop_back();
     emit removedRow();
@@ -227,6 +229,14 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
     emit backgroundIdChanged(backgroundId = newBackgroundId);
 }
 
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
+    const auto & objectId = objects[objectIndex].id;
+    const uint8_t red   = overlayColorMap[0][objectId % 256];
+    const uint8_t green = overlayColorMap[1][objectId % 256];
+    const uint8_t blue  = overlayColorMap[2][objectId % 256];
+    return std::make_tuple(red, green, blue, alpha);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
@@ -234,14 +244,10 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     const auto objectIndex = *std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [this](const uint64_t index){
         return objects[index].selected;
     });
-    const auto & object = objects[objectIndex];
-    const uint8_t red   = overlayColorMap[0][object.index % 256];
-    const uint8_t green = overlayColorMap[1][object.index % 256];
-    const uint8_t blue  = overlayColorMap[2][object.index % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    return colorObjectFromIndex(objectIndex);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(const uint64_t subObjectID) const {
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
     if (subObjectID == backgroundId) {
         return std::make_tuple(0, 0, 0, 0);
     }
@@ -259,12 +265,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromId(c
     } else if (!renderAllObjs) {
         return std::make_tuple(0, 0, 0, 0);
     }
-
-    const auto objectIndex = largestObjectContainingSubobject(subobject);
-    const uint8_t red   = overlayColorMap[0][objectIndex % 256];
-    const uint8_t green = overlayColorMap[1][objectIndex % 256];
-    const uint8_t blue  = overlayColorMap[2][objectIndex % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    return colorObjectFromIndex(largestObjectContainingSubobject(subobject));
 }
 
 bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
@@ -586,7 +587,9 @@ void Segmentation::jobLoad(QIODevice & file) {
     job.campaign = campaign_line.isNull() ? "" : campaign_line;
     job.worker = worker_line.isNull() ? "" : worker_line;
     job.submitPath = submit_line.isNull() ? "" : submit_line;
-    job.active = (job.id == 0) ? false : true;
+    if (job.id != 0) {
+        Session::singleton().annotationMode = AnnotationMode::Mode_MergeSimple;
+    }
 }
 
 void Segmentation::jobSave(QIODevice &file) const {

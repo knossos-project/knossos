@@ -162,7 +162,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     //the brush differentiations were moved outside the core lambda which is called for every voxel
     CubeCoordSet cubeChangeSet;
     CubeCoordSet cubeChangeSetWholeCube;
-    if (brush.tool == brush_t::tool_t::add) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {
         const auto region = getRegion(centerPos, brush);
         if (brush.shape == brush_t::shape_t::angular) {
             if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {

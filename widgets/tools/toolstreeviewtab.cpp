@@ -1,5 +1,6 @@
 #include "toolstreeviewtab.h"
 
+#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -527,7 +528,7 @@ void ToolsTreeviewTab::linkNodesAction() {
         skel.delSegment(node0->nodeID, node1->nodeID, nullptr);
     } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
         skel.delSegment(node1->nodeID, node0->nodeID, nullptr);
-    } else if (Skeletonizer::singleton().tracingMode == Skeletonizer::TracingMode::standard && Skeletonizer::singleton().areConnected(*node0, *node1)) {
+    } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*node0, *node1)) {
         QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
     } else {//nodes are not already linked
         skel.addSegment(node0->nodeID, node1->nodeID);

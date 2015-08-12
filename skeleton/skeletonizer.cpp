@@ -2619,7 +2619,8 @@ void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodes) {
     if (selectedNodes.size() == 1) {
         setActiveNode(selectedNodes.front(), 0);
     } else if (selectedNodes.empty() && state->skeletonState->activeNode != nullptr) {
-        setActiveNode(state->skeletonState->activeNode, 0);// at least one must always be selected
+        selectNodes({state->skeletonState->activeNode});// at least one must always be selected
+        return;
     }
     emit nodeSelectionChangedSignal();
 }
@@ -2637,7 +2638,8 @@ void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
     if (selectedTrees.size() == 1) {
         setActiveTreeByID(selectedTrees.front()->treeID);
     } else if (selectedTrees.empty() && state->skeletonState->activeTree != nullptr) {
-        setActiveTreeByID(state->skeletonState->activeTree->treeID);// at least one must always be selected
+        selectTrees({state->skeletonState->activeTree});// at least one must always be selected
+        return;
     }
     emit treeSelectionChangedSignal();
 }
