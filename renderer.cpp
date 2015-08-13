@@ -468,7 +468,7 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
     }
 }
 
-void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
+void Renderer::renderScaleBar(uint currentVP, const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[currentVP];
     const auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
@@ -480,15 +480,16 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
         sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
         divisor = vp.displayedlengthInNmX/rounded_scalebar_len_nm;
     }
-
-    int min_x = 0.02 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
-    glLineWidth(thickness);
+    int min_x = 0.02 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, min_y = vp.edgeLength - min_x - 2, max_y = min_y + 2, z = -1;
     glColor3f(0., 0., 0.);
-    glBegin(GL_LINES);
-    glVertex3f(min_x, y, z);
-    glVertex3f(max_x, y, z);
+    glBegin(GL_POLYGON);
+    glVertex3d(min_x, min_y, z);
+    glVertex3d(max_x, min_y, z);
+    glVertex3d(max_x, max_y, z);
+    glVertex3d(min_x, max_y, z);
     glEnd();
-    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, y, z), sizeLabel, fontSize, true);
+
+    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
 }
 
 // Currently not used

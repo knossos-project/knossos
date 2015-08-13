@@ -913,7 +913,7 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     }
     if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderScaleBar(id, std::ceil(0.006*size), std::ceil(0.02*size));
+        state->viewer->renderer->renderScaleBar(id, std::ceil(0.02*size));
     }
 
     QImage fboImage(fbo.toImage());
