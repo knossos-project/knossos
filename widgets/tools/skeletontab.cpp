@@ -114,6 +114,46 @@ void NodeModel::recreate() {
     endResetModel();
 }
 
+template<typename T>
+std::vector<T*> ordered();
+template<>
+std::vector<nodeListElement*> ordered() {
+    return Skeletonizer::singleton().nodesOrdered;
+}
+template<>
+std::vector<treeListElement*> ordered() {
+    return Skeletonizer::singleton().treesOrdered;
+}
+
+template<typename T>
+auto selectElems = [](const bool & selectionProtection){
+    return [&selectionProtection](const QItemSelection & selected, const QItemSelection & deselected){
+        if (!selectionProtection) {
+            auto indices = selected.indexes();
+            indices.append(deselected.indexes());
+            QSet<T*> elems;
+            for (const auto & modelIndex : indices) {
+                if (modelIndex.column() == 0) {
+                    elems.insert(ordered<T>()[modelIndex.row()]);
+                }
+            }
+            Skeletonizer::singleton().toggleSelection(elems);
+        }
+    };
+};
+
+template<typename T>
+auto updateSelection = [](QTreeView & view, auto & model){
+    const auto selectedIndices = blockSelection(model, ordered<T>());
+    model.selectionProtection = true;
+    view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
+    model.selectionProtection = false;
+
+    if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
+        view.scrollTo(selectedIndices.indexes().front());
+    }
+};
+
 SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
     treeView.setUniformRowHeights(true);//perf hint from doc
@@ -131,52 +171,36 @@ SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
     mainLayout.addLayout(&bottomHLayout);
     setLayout(&mainLayout);
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, &treeModel, &TreeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, &treeModel, &TreeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, &treeModel, &TreeModel::recreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, &treeModel, &TreeModel::recreate);
-//    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, &treeModel, &TreeModel::recreate);
-
-    static auto updateSelection = [this](){
-        const auto selectedIndices = blockSelection(nodeModel, Skeletonizer::singleton().nodesOrdered);
-        nodeSelectionProtection = true;
-        nodeView.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
-        nodeSelectionProtection = false;
-
-        if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
-            nodeView.scrollTo(selectedIndices.indexes().front());
-        }
+    static auto treeRecreate = [&, this](){
+        treeView.selectionModel()->reset();
+        treeModel.recreate();
+        updateSelection<treeListElement>(treeView, treeModel);
     };
     static auto nodeRecreate = [&, this](){
         nodeView.selectionModel()->reset();
         nodeModel.recreate();
-        updateSelection();
+        updateSelection<nodeListElement>(nodeView, nodeModel);
     };
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, &treeModel, &TreeModel::recreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, &treeModel, &TreeModel::recreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, &treeModel, &TreeModel::recreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, &treeModel, &TreeModel::recreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){updateSelection<treeListElement>(treeView, treeModel);});
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, updateSelection);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){updateSelection<nodeListElement>(nodeView, nodeModel);});
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, &nodeModel, nodeRecreate );
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, &nodeModel, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, &nodeModel, nodeRecreate );
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, &nodeModel, nodeRecreate);
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [&, this](){
-        treeModel.recreate();
+        treeRecreate();
         nodeRecreate();
     });
 
-    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection & selected, const QItemSelection & deselected){
-        if (!nodeSelectionProtection) {
-            auto indices = selected.indexes();
-            indices.append(deselected.indexes());
-            QSet<nodeListElement*> nodes;
-            for (const auto & modelIndex : indices) {
-                if (modelIndex.column() == 0) {
-                    nodes.insert(Skeletonizer::singleton().nodesOrdered[modelIndex.row()]);
-                }
-            }
-            Skeletonizer::singleton().toggleNodeSelection(nodes);
-        }
-    });
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel.selectionProtection));
+    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel.selectionProtection));
 }

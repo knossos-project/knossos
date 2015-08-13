@@ -10,6 +10,7 @@
 template<typename ConcreteModel>
 class AbstractSkeletonModel : public QAbstractListModel {
 public:
+    bool selectionProtection{false};
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
@@ -48,8 +49,6 @@ class SkeletonTab : public QWidget {
     QHBoxLayout bottomHLayout;
     QLabel treeCountLabel{"trees"};
     QLabel nodeCountLabel{"nodes"};
-
-    bool nodeSelectionProtection{false};
 public:
     explicit SkeletonTab(QWidget * const parent = nullptr);
 };

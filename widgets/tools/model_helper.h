@@ -12,12 +12,12 @@ Elem & getElem(Elem * elem) {
     return *elem;
 }
 template<typename Elem>
-Elem & getElem(std::reference_wrapper<Elem> & elem) {
+Elem & getElem(const std::reference_wrapper<Elem> & elem) {
     return elem.get();
 }
 
 template<typename Model, typename Data>
-QItemSelection blockSelection(const Model & model, Data & data) {
+QItemSelection blockSelection(const Model & model, const Data & data) {
     QItemSelection selectedItems;
 
     bool blockSelection = false;
