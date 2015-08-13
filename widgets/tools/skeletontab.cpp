@@ -83,7 +83,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
 }
 
 bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int role) {
-    if (state->skeletonState->firstTree == nullptr || index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
+    if (state->skeletonState->firstTree == nullptr || !index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
         return false;
     }
     auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
