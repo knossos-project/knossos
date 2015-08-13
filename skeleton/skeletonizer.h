@@ -152,6 +152,14 @@ struct skeletonState {
 class Skeletonizer : public QObject {
     Q_OBJECT
 public:
+    template<typename T>
+    void select(QSet<T*>);
+    void setActive(nodeListElement & elem);
+    void setActive(treeListElement & elem);
+    template<typename T>
+    void toggleSelection(const QSet<T*> & nodes);
+    template<typename Elem>
+    void notifySelection();
     std::vector<nodeListElement*> nodesOrdered;
     std::vector<treeListElement*> treesOrdered;
 

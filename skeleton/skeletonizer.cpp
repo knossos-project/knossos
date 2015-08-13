@@ -2586,62 +2586,109 @@ bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
     return true;
 }
 
-void Skeletonizer::selectNodes(QSet<nodeListElement*> nodes) {
-    for (auto & elem : state->skeletonState->selectedNodes) {
-        if (nodes.contains(elem)) {//if selected node is already selected ignore
-            nodes.remove(elem);
-        } else {//unselect everything else
-            nodes.insert(elem);
-        }
-    }
-    toggleNodeSelection(nodes);
+template<typename T>
+std::vector<T*> & selected();
+template<>
+std::vector<nodeListElement*> & selected() {
+    return state->skeletonState->selectedNodes;
+}
+template<>
+std::vector<treeListElement*> & selected() {
+    return state->skeletonState->selectedTrees;
 }
 
-void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodes) {
-    auto & selectedNodes = state->skeletonState->selectedNodes;
+auto getId(const nodeListElement & elem) -> decltype(elem.nodeID) {
+    return elem.nodeID;
+}
+auto getId(const treeListElement & elem) -> decltype(elem.treeID) {
+    return elem.treeID;
+}
 
-    std::unordered_set<decltype(nodeListElement::nodeID)> removeNodes;
-    for (auto & elem : nodes) {
-        elem->selected = !elem->selected;//toggle
-        if (elem->selected) {
-            selectedNodes.emplace_back(elem);
-        } else {
-            removeNodes.emplace(elem->nodeID);
+void Skeletonizer::setActive(nodeListElement & elem) {
+    setActiveNode(&elem, 0);
+}
+void Skeletonizer::setActive(treeListElement & elem) {
+    setActiveTreeByID(elem.treeID);
+}
+
+template<typename T>
+T * active();
+template<>
+nodeListElement * active<nodeListElement>() {
+    return state->skeletonState->activeNode;
+}
+template<>
+treeListElement * active<treeListElement>() {
+    return state->skeletonState->activeTree;
+}
+
+template<>
+void Skeletonizer::notifySelection<nodeListElement>() {
+    emit nodeSelectionChangedSignal();
+}
+template<>
+void Skeletonizer::notifySelection<treeListElement>() {
+    emit treeSelectionChangedSignal();
+}
+
+template<typename T>
+void Skeletonizer::select(QSet<T*> elems) {
+    for (auto & elem : selected<T>()) {
+        if (elems.contains(elem)) {//if selected node is already selected ignore
+            elems.remove(elem);
+        } else {//unselect everything else
+            elems.insert(elem);
         }
     }
-    auto eraseIt = std::remove_if(std::begin(selectedNodes), std::end(selectedNodes), [&removeNodes](nodeListElement const * const node){
-        return removeNodes.find(node->nodeID) != std::end(removeNodes);
+    toggleSelection(elems);
+}
+
+template<typename T>
+void Skeletonizer::toggleSelection(const QSet<T*> & elems) {
+    auto & selectedElems = selected<T>();
+
+    std::unordered_set<decltype(getId(std::declval<const T &>()))> removeElems;
+    for (auto & elem : elems) {
+        elem->selected = !elem->selected;//toggle
+        if (elem->selected) {
+            selectedElems.emplace_back(elem);
+        } else {
+            removeElems.emplace(getId(*elem));
+        }
+    }
+    auto eraseIt = std::remove_if(std::begin(selectedElems), std::end(selectedElems), [&removeElems](T const * const elem){
+        return removeElems.find(getId(*elem)) != std::end(removeElems);
     });
-    if (eraseIt != std::end(selectedNodes)) {
-        selectedNodes.erase(eraseIt, std::end(selectedNodes));
+    if (eraseIt != std::end(selectedElems)) {
+        selectedElems.erase(eraseIt, std::end(selectedElems));
     }
 
-    if (selectedNodes.size() == 1) {
-        setActiveNode(selectedNodes.front(), 0);
-    } else if (selectedNodes.empty() && state->skeletonState->activeNode != nullptr) {
-        selectNodes({state->skeletonState->activeNode});// at least one must always be selected
+    if (selectedElems.size() == 1) {
+        setActive(*selectedElems.front());
+    } else if (selectedElems.empty() && active<T>() != nullptr) {
+        select<T>({active<T>()});// at least one must always be selected
         return;
     }
-    emit nodeSelectionChangedSignal();
+    notifySelection<T>();
+}
+
+template void Skeletonizer::toggleSelection<nodeListElement>(const QSet<nodeListElement*> & nodes);
+template void Skeletonizer::toggleSelection<treeListElement>(const QSet<treeListElement*> & trees);
+
+void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodeSet) {
+    toggleSelection(nodeSet);
+}
+
+void Skeletonizer::selectNodes(QSet<nodeListElement*> nodeSet) {
+    select(nodeSet);
 }
 
 void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
-    auto & selectedTrees = state->skeletonState->selectedTrees;
-    for (auto &selectedTree : selectedTrees) {
-        selectedTree->selected = false;
+    QSet<treeListElement*> treeSet;
+    for (const auto & elem : trees) {
+        treeSet.insert(elem);
     }
-    for (auto & elem : trees) {
-        elem->selected = true;
-    }
-    selectedTrees = trees;
-
-    if (selectedTrees.size() == 1) {
-        setActiveTreeByID(selectedTrees.front()->treeID);
-    } else if (selectedTrees.empty() && state->skeletonState->activeTree != nullptr) {
-        selectTrees({state->skeletonState->activeTree});// at least one must always be selected
-        return;
-    }
-    emit treeSelectionChangedSignal();
+    select(treeSet);
 }
 
 void Skeletonizer::deleteSelectedTrees() {
