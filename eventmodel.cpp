@@ -212,7 +212,13 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             //no node to link with or no empty tree
             newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
-            if (const auto stumpNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
+            if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+                const auto splitNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+                if (splitNodeId != 0) {
+                    Skeletonizer::singleton().addComment("split", nullptr, splitNodeId);
+                    Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
+                }
+            } else if (const auto stumpNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
                 //Add a "stump", a branch node to which we don't automatically move.
                 Skeletonizer::singleton().pushBranchNode(true, true, NULL, stumpNodeId);
                 Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
