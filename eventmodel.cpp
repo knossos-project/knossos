@@ -215,6 +215,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
                 const auto splitNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
                 if (splitNodeId != 0) {
+                    Skeletonizer::singleton().setSubobjectAndSelect(splitNodeId, subobjectId);
                     Skeletonizer::singleton().addComment("split", nullptr, splitNodeId);
                     Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
                 }
@@ -269,7 +270,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
     if (newNodeId != 0) {
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
-            Skeletonizer::singleton().setSubobjectAndMerge(newNodeId, subobjectId, oldNodeId);
+            Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNodeId, subobjectId, oldNodeId);
         }
         // Move to the new node position
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
