@@ -48,13 +48,9 @@
 
 EventModel::EventModel(QObject *parent) : QObject(parent) {}
 
-uint64_t segmentationColorPickingPoint(const int x, const int y, const int viewportId) {
-    return readVoxel(getCoordinateFromOrthogonalClick(x, y, viewportId));
-}
-
 void segmentation_brush_work(QMouseEvent *event, const int vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
-    auto& seg = Segmentation::singleton();
+    auto & seg = Segmentation::singleton();
 
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectMerge)) {
         merging(event, vp);
@@ -71,7 +67,7 @@ void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
-    for(const auto subobjectPair : subobjectIds) {
+    for (const auto subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             const auto soid = subobjectPair.first;
             const auto pos = subobjectPair.second;
@@ -186,14 +182,15 @@ void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    if (!mouseEventAtValidDatasetPosition(event, VPfound)) {
-        return;
-    }
     const auto & annotationMode = Session::singleton().annotationMode;
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
     if (annotationMode.testFlag(AnnotationMode::Brush) && VPfound != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
         segmentation_brush_work(event, VPfound);
+        return;
+    }
+
+    if (!mouseEventAtValidDatasetPosition(event, VPfound)) {//don’t place nodes outside movement area
         return;
     }
 
@@ -370,7 +367,7 @@ void EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
 void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && VPfound != VIEWPORT_SKELETON) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
-        if (mouseEventAtValidDatasetPosition(event, VPfound) && notOrigin) {
+        if (notOrigin) {
             segmentation_brush_work(event, VPfound);
         }
         return;
@@ -432,7 +429,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && mouseEventAtValidDatasetPosition(event, VPfound)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
             segmentation_brush_work(event, VPfound);
         }

@@ -58,8 +58,8 @@ std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const 
     const auto ysize = brush.radius / state->scale.y;
     const auto zsize = brush.radius / state->scale.z;
     const auto brushExtents = Coordinate(xsize, ysize, zsize);
-    auto globalFirst = (centerPos - brushExtents).capped(0, state->boundary);
-    auto globalLast = (centerPos + brushExtents).capped(0, state->boundary);
+    auto globalFirst = (centerPos - brushExtents).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+    auto globalLast = (centerPos + brushExtents).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
 
     if (brush.mode == brush_t::mode_t::two_dim) {//disable depth
         if (brush.view == brush_t::view_t::xy) {
