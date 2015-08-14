@@ -42,7 +42,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
 }
 
 bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int role) {
-    if (index.isValid()) {
+    if (!index.isValid()) {
         return false;
     }
     auto * tree = Skeletonizer::singleton().treesOrdered[index.row()];
