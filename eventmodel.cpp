@@ -213,12 +213,10 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             //no node to link with or no empty tree
             newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
-            //Add a "stump", a branch node to which we don't automatically move.
-            if((newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                                state->viewerState->vpConfigs[VPfound].type,
-                                                                false))) {
-                Skeletonizer::singleton().pushBranchNode(true, true, NULL, newNodeId);
-                Skeletonizer::singleton().setActiveNode(nullptr, newNodeId);
+            if (const auto stumpNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
+                //Add a "stump", a branch node to which we don't automatically move.
+                Skeletonizer::singleton().pushBranchNode(true, true, NULL, stumpNodeId);
+                Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
             }
         } else {
             //Add a node and apply tracing modes
