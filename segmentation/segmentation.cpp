@@ -270,9 +270,11 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
     const auto & objectId = objects[objectIndex].id;
-    const uint8_t red   = overlayColorMap[0][objectId % 256];
-    const uint8_t green = overlayColorMap[1][objectId % 256];
-    const uint8_t blue  = overlayColorMap[2][objectId % 256];
+    const auto colorIndex = objectId % overlayColorMap.size();
+
+    const uint8_t red   = overlayColorMap[colorIndex][0];
+    const uint8_t green = overlayColorMap[colorIndex][1];
+    const uint8_t blue  = overlayColorMap[colorIndex][2];
     return std::make_tuple(red, green, blue, alpha);
 }
 

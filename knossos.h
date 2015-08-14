@@ -41,7 +41,6 @@ namespace Knossos {
     bool sendServerSignal();
     void loadStyleSheet();
     void loadDefaultTreeLUT();
-    void loadTreeLUTFallback();
 }
 
 #endif
