@@ -212,7 +212,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked(bool checked) {
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
 
     if (!fileName.isEmpty()) {//load lut and apply
         datasetLutFile->setText(fileName);
@@ -247,7 +247,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorsClicked(bool checked) {
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
 
     if(!fileName.isEmpty()) {
         treeLutFile->setText(fileName);

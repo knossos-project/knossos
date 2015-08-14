@@ -35,5 +35,6 @@
         <file>resources/icons/zoom-in.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
+        <file>resources/color_palette/default.json</file>
     </qresource>
 </RCC>

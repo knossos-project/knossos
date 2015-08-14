@@ -812,113 +812,125 @@ bool Viewer::initViewer() {
 
 // from knossos-global.h
 bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
-    FILE *lutFile = NULL;
-    uint8_t lutBuffer[RGBA_LUTSIZE];
-    uint readBytes = 0, i = 0;
-    uint size = RGB_LUTSIZE;
 
-    // The b is for compatibility with non-UNIX systems and denotes a
-    // binary file.
-
-    std::string path_stdstr = path.toStdString();
-    const char *cpath = path_stdstr.c_str();
-
-    qDebug("Reading Dataset LUT at %s\n", cpath);
-
-    lutFile = fopen(cpath, "rb");
-    if(lutFile == NULL) {
-        qDebug("Unable to open Dataset LUT at %s.", cpath);
-        return false;
-    }
+    int size = 0;
 
     if(type == GL_RGB) {
         size = RGB_LUTSIZE;
-    }
-    else if(type == GL_RGBA) {
+    } else if (type == GL_RGBA) {
         size = RGBA_LUTSIZE;
-    }
-    else {
+    } else {
         qDebug("Requested color type %x does not exist.", type);
         return false;
     }
 
-    readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
-    if(readBytes != size) {
-        qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
-        if(fclose(lutFile) != 0) {
-            qDebug() << "Additionally, an error occured closing the file.";
-        }
-        return false;
-    }
+    QFile overlayLutFile(QString(path.toStdString().c_str()));
 
-    if(fclose(lutFile) != 0) {
-        qDebug() << "Error closing LUT file.";
-        return false;
-    }
+    overlayLutFile.open(QIODevice::ReadOnly);
 
-    if(type == GL_RGB) {
-        for(i = 0; i < 256; i++) {
-            table[0 * 256 + i] = (GLuint)lutBuffer[i];
-            table[1 * 256 + i] = (GLuint)lutBuffer[i + 256];
-            table[2 * 256 + i] = (GLuint)lutBuffer[i + 512];
+    if (overlayLutFile.isOpen()) {
+        if (overlayLutFile.size() == size) { //we have a .lut file! (RGB || RGBA)
+
+            const auto buffer = overlayLutFile.readAll();
+            overlayLutFile.close();
+
+            if (type == GL_RGB) {
+                for (int i = 0; i < 256; ++i) {
+                    table[0 * 256 + i] = static_cast<uint8_t>(buffer[0 * 256 + i]);
+                    table[1 * 256 + i] = static_cast<uint8_t>(buffer[1 * 256 + i]);
+                    table[2 * 256 + i] = static_cast<uint8_t>(buffer[2 * 256 + i]);
+                }
+            } else if (type == GL_RGBA) {
+                for (int i = 0; i < 256; ++i) {
+                    table[0 * 256 + i] = static_cast<uint8_t>(buffer[0 * 256 + i]);
+                    table[1 * 256 + i] = static_cast<uint8_t>(buffer[1 * 256 + i]);
+                    table[2 * 256 + i] = static_cast<uint8_t>(buffer[2 * 256 + i]);
+                    table[3 * 256 + i] = static_cast<uint8_t>(buffer[3 * 256 + i]);
+                }
+            }
+
+            qDebug() << "loadDatasetColorTable: sucessfully loaded LUT-File »" << path.toStdString().c_str() << "«";
+
+        } else { //json file, RGB only
+            QTextStream in(&overlayLutFile);
+            QString json_raw = in.readAll();
+
+            overlayLutFile.close();
+
+            QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
+            auto jarray = json_conf.array();
+
+            //Get RGB-Values in percent
+            for (int i = 0; i < jarray.size(); ++i) {
+                table[0 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[0].toInt()) / MAX_COLORVAL;
+                table[1 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[1].toInt()) / MAX_COLORVAL;
+                table[2 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[2].toInt()) / MAX_COLORVAL;
+            }
+
+            qDebug() << "loadDatasetColorTable: sucessfully loaded JSON-File »" << path.toStdString().c_str() << "«";
         }
-    }
-    else if(type == GL_RGBA) {
-        for(i = 0; i < 256; i++) {
-            table[0 * 256 + i] = (GLuint)lutBuffer[i];
-            table[1 * 256 + i] = (GLuint)lutBuffer[i + 256];
-            table[2 * 256 + i] = (GLuint)lutBuffer[i + 512];
-            table[3 * 256 + i] = (GLuint)lutBuffer[i + 768];
-        }
+    } else {
+        qDebug() << "loadDatasetColorTable: Failed to open file: »" << path.toStdString().c_str() << "«";
+
+        return false;
     }
 
     return true;
 }
 
 bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
-    FILE *lutFile = NULL;
-    uint8_t lutBuffer[RGB_LUTSIZE];
-    uint readBytes = 0, i = 0;
-    uint size = RGB_LUTSIZE;
 
-    std::string path_stdstr = path.toStdString();
-    const char *cpath = path_stdstr.c_str();
-    // The b is for compatibility with non-UNIX systems and denotes a
-    // binary file.
-    qDebug("Reading Tree LUT at %s\n", cpath);
-
-    lutFile = fopen(cpath, "rb");
-    if(lutFile == NULL) {
-        qDebug("Unable to open Tree LUT at %s.", cpath);
-        return false;
-    }
-    if(type != GL_RGB) {
+    if (type != GL_RGB) {
         /* AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type); */
         qDebug("Chosen color was of type %x, but expected GL_RGB", type);
         return false;
     }
 
-    readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
-    if(readBytes != size) {
-        qDebug("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size);
-        if(fclose(lutFile) != 0) {
-            qDebug() << "Additionally, an error occured closing the file.";
-        }
-        return false;
-    }
-    if(fclose(lutFile) != 0) {
-        qDebug() << "Error closing LUT file.";
-        return false;
-    }
+    QFile overlayLutFile(QString(path.toStdString().c_str()));
 
-    //Get RGB-Values in percent
-    for(i = 0; i < 256; i++) {
-        table[i]   = lutBuffer[i]/MAX_COLORVAL;
-        table[i + 256] = lutBuffer[i+256]/MAX_COLORVAL;
-        table[i + 512] = lutBuffer[i + 512]/MAX_COLORVAL;
+    overlayLutFile.open(QIODevice::ReadOnly);
+
+    if (overlayLutFile.isOpen()) {
+        if (overlayLutFile.size() == 768) { //we have a .lut file!
+
+            const auto buffer = overlayLutFile.readAll();
+            overlayLutFile.close();
+
+            //Get RGB-Values in percent
+            for (int i = 0; i < 256; ++i) {
+                table[0 * 256 + i] = static_cast<uint8_t>(buffer[i]) / MAX_COLORVAL;
+                table[1 * 256 + i] = static_cast<uint8_t>(buffer[i + 256]) / MAX_COLORVAL;
+                table[2 * 256 + i] = static_cast<uint8_t>(buffer[i + 512]) / MAX_COLORVAL;
+            }
+
+            qDebug() << "loadTreeColorTable: sucessfully loaded LUT-File »" << path.toStdString().c_str() << "«";
+        } else { //json
+            QTextStream in(&overlayLutFile);
+            QString json_raw = in.readAll();
+
+            overlayLutFile.close();
+
+            QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
+            auto jarray = json_conf.array();
+
+            //Get RGB-Values in percent
+            for (int i = 0; i < jarray.size(); ++i) {
+                table[i] = static_cast<uint8_t>(jarray[i].toArray()[0].toInt()) / MAX_COLORVAL;
+                table[i + 256] = static_cast<uint8_t>(jarray[i].toArray()[1].toInt()) / MAX_COLORVAL;
+                table[i + 512] = static_cast<uint8_t>(jarray[i].toArray()[2].toInt()) / MAX_COLORVAL;
+            }
+
+            qDebug() << "loadTreeColorTable: sucessfully loaded JSON-File »" << path.toStdString().c_str() << "«";
+        }
+
+    } else {
+        qDebug() << "loadTreeColorTable: Failed to open file: »" << path.toStdString().c_str() << "«";
+
+        return false;
     }
 
     window->treeColorAdjustmentsChanged();
+
     return true;
 }
 

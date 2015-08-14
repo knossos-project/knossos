@@ -224,7 +224,7 @@ public slots:
     void run();
     void loader_notify();
     bool loadTreeColorTable(QString path, float *table, int type);
-    static bool loadDatasetColorTable(QString path, GLuint *table, int type);
+    static bool loadDatasetColorTable(QString path, GLuint *table, int type=0);
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();

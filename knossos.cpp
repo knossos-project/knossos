@@ -792,7 +792,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
 void Knossos::loadDefaultTreeLUT() {
     if (!state->viewer->loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB)) {
-        Knossos::loadTreeLUTFallback();
+        state->viewer->loadTreeColorTable(":/resources/color_palette/default.json", &(state->viewerState->defaultTreeTable[0]), GL_RGB);
         state->viewer->window->treeColorAdjustmentsChanged();
     }
 }
