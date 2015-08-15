@@ -195,7 +195,8 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
 
     const quint64 subobjectId = readVoxel(clickedCoordinate);
-    if (annotationMode.testFlag(AnnotationMode::Mode_MergeTracing) && subobjectId == Segmentation::singleton().getBackgroundId()) {
+    const bool background = subobjectId == Segmentation::singleton().getBackgroundId();
+    if (annotationMode.testFlag(AnnotationMode::Mode_MergeTracing) && background && !event->modifiers().testFlag(Qt::ControlModifier)) {
         return;
     }
 
@@ -212,8 +213,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
                 const auto splitNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
                 if (splitNodeId != 0) {
+                    const auto comment = background ? "ecs" : "split";
                     Skeletonizer::singleton().setSubobject(splitNodeId, subobjectId);
-                    Skeletonizer::singleton().addComment("split", nullptr, splitNodeId);
+                    Skeletonizer::singleton().addComment(comment, nullptr, splitNodeId);
                     Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
                 }
             } else if (const auto stumpNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
