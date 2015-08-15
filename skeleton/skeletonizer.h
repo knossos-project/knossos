@@ -215,7 +215,7 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
-    void setSubobjectAndSelect(const quint64 nodeId, const quint64 subobjectId);
+    void setSubobject(const quint64 nodeId, const quint64 subobjectId);
     void setSubobjectSelectAndMergeWithPrevious(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId);
     void updateSubobjectCountFromProperty(nodeListElement & node);
     void unsetSubobjectOfHybridNode(nodeListElement & node);

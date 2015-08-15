@@ -23,10 +23,10 @@ void Skeletonizer::selectObjectForNode(const nodeListElement & node) {
     });
 }
 
-void Skeletonizer::setSubobjectAndSelect(const quint64 nodeId, const quint64 subobjectId) {
+void Skeletonizer::setSubobject(const quint64 nodeId, const quint64 subobjectId) {
     auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
-    auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
-    Segmentation::singleton().selectObject(objIndex);
+    node.properties.insert(subobjectPropertyKey, subobjectId);
+    ++node.correspondingTree->subobjectCount[subobjectId];
 }
 
 void setSubobjectSelectAndMerge(nodeListElement & node, const quint64 subobjectId) {

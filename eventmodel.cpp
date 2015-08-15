@@ -212,7 +212,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
                 const auto splitNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
                 if (splitNodeId != 0) {
-                    Skeletonizer::singleton().setSubobjectAndSelect(splitNodeId, subobjectId);
+                    Skeletonizer::singleton().setSubobject(splitNodeId, subobjectId);
                     Skeletonizer::singleton().addComment("split", nullptr, splitNodeId);
                     Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
                 }
