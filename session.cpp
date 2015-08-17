@@ -27,7 +27,6 @@
 #include "stateInfo.h"
 
 #include <QApplication>
-#include <QStandardPaths>
 
 class Session::ActivityEventFilter : public QObject {
     bool & timeSliceActivity;
