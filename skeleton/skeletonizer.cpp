@@ -518,19 +518,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 } else if(xml.name() == "segmentation") {
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
-                } else if(xml.name() == "scale") {
-                    QStringRef attribute = attributes.value("x");
-                    if(attribute.isNull() == false) {
-                        state->scale.x = attribute.toLocal8Bit().toFloat();
-                    }
-                    attribute = attributes.value("y");
-                    if(attribute.isNull() == false) {
-                        state->scale.y = attribute.toLocal8Bit().toFloat();
-                    }
-                    attribute = attributes.value("z");
-                    if(attribute.isNull() == false) {
-                        state->scale.z = attribute.toLocal8Bit().toFloat();
-                    }
                 } else if(xml.name() == "editPosition") {
                     QStringRef attribute = attributes.value("x");
                     if(attribute.isNull() == false)
