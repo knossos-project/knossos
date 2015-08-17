@@ -27,6 +27,7 @@
 #include "stateInfo.h"
 
 #include <QApplication>
+#include <QStandardPaths>
 
 class Session::ActivityEventFilter : public QObject {
     bool & timeSliceActivity;
@@ -42,26 +43,20 @@ public:
     }
 };
 
-void Session::autoSaveIfElapsed() {
-    if (autoSaveBool) {
-        const auto minutes = (state->time.elapsed() - lastSaveTicks) / 60000.0;
-        if (minutes >= autoSaveInterval) {//timeout elapsed
-            lastSaveTicks = state->time.elapsed();//save timestamp
-            if (unsavedChanges) {//there’re real changes
-                emit autosaveSignal();
-            }
-        }
-    }
-}
-
 Session::Session() : annotationMode(AnnotationMode::Mode_Tracing) {
     qApp->installEventFilter(new ActivityEventFilter(*this));
 
     annotationTimer.setTimerType(Qt::PreciseTimer);
     QObject::connect(&annotationTimer, &QTimer::timeout, this, &Session::handleTimeSlice);
     annotationTimer.start(TIME_SLICE_MS);
-
     lastTimeSlice.start();
+
+    autoSaveTimer.setTimerType(Qt::PreciseTimer);
+    QObject::connect(&autoSaveTimer, &QTimer::timeout, [this]() {
+       if(unsavedChanges) {
+           emit autoSaveSignal();
+       }
+    });
 }
 
 bool Session::outsideMovementArea(const Coordinate & pos) {
@@ -91,7 +86,7 @@ void Session::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms)
     const auto hours = absoluteMinutes / 60;
     const auto minutes = absoluteMinutes % 60;
 
-    emit annotationTimeChanged(QString("%1:%2h annotation time").arg(hours).arg(minutes, 2, 10, QChar('0')));
+    emit annotationTimeChanged(QString("%1:%2 h annotation time").arg(hours).arg(minutes, 2, 10, QChar('0')));
 }
 
 decltype(Session::annotationTimeMilliseconds) Session::currentTimeSliceMs() const {

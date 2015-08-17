@@ -1101,8 +1101,7 @@ void Viewer::run() {
     }
 
     updateViewerState();
-    Session::singleton().autoSaveIfElapsed();
-    window->updateTitlebar();//display changes after filename
+    window->updateTitlebar(); //display changes after filename
 
     vpUpperLeft->update();
     vpLowerLeft->update();

@@ -50,6 +50,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     autosaveIntervalLabel = new QLabel("Saving interval [min]");
     autosaveIntervalSpinBox = new QSpinBox();
     autosaveIntervalSpinBox->setMinimum(1);
+    autosaveIntervalSpinBox->setValue(5);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
@@ -62,12 +63,13 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     mainLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(mainLayout);
 
-    QObject::connect(autosaveCheckbox, &QCheckBox::clicked, [](const bool on) { Session::singleton().autoFilenameIncrementBool = on; });
-    QObject::connect(autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int value) { Session::singleton().autoSaveInterval = value; });
-    QObject::connect(autoincrementFileNameButton, &QPushButton::clicked, [this](const bool on) {
-        Session::singleton().autoSaveBool = on;
-        if(on) {
-           Session::singleton().autoSaveInterval = autosaveIntervalSpinBox->value();
+    QObject::connect(autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) { Session::singleton().autoFilenameIncrementBool = on; });
+    QObject::connect(autosaveCheckbox, &QCheckBox::stateChanged, [this](const bool on) {
+        if (on) {
+            Session::singleton().autoSaveTimer.start(autosaveIntervalSpinBox->value() * 60 * 1000);
+        }
+        else {
+            Session::singleton().autoSaveTimer.stop();
         }
         state->viewer->window->updateTitlebar();
     });
@@ -94,13 +96,9 @@ void DataSavingWidget::loadSettings() {
     }
     visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-    auto & session = Session::singleton();
-    session.autoSaveBool = settings.value(AUTO_SAVING, true).toBool();
-    autosaveCheckbox->setChecked(session.autoSaveBool);
-    session.autoSaveInterval = settings.value(SAVING_INTERVAL, 5).toInt();
-    autosaveIntervalSpinBox->setValue(session.autoSaveInterval);
-    session.autoFilenameIncrementBool = settings.value(AUTOINC_FILENAME, true).toBool();
-    autoincrementFileNameButton->setChecked(session.autoFilenameIncrementBool);
+    autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL, 5).toInt());
+    autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
+    autosaveCheckbox->setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
 
     settings.endGroup();
     if(visible) {

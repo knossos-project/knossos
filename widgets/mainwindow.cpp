@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
 
-    QObject::connect(&Session::singleton(), &Session::autosaveSignal, this, &MainWindow::autosaveSlot);
+    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, this, &MainWindow::autoSaveSlot);
 
     createToolbars();
     createMenus();
@@ -348,9 +348,16 @@ void MainWindow::updateTitlebar() {
     } else {
         title.append("no annotation file");
     }
+    unsavedChangesLabel.setToolTip("");
     if (session.unsavedChanges) {
         title.append("*");
-        const auto autosave = !session.autoSaveBool ? tr("<font color='red'>(not autosaving)</font> ") : tr("<font color='green'>(autosaving)</font>");
+        auto autosave = tr("<font color='red'>(autosave: off)</font> ");
+        if(session.autoSaveTimer.isActive()) {
+            autosave = tr("<font color='green'>(autosave: on)</font>");
+            const auto minutes = session.autoSaveTimer.remainingTime() / 1000 / 60;
+            const auto seconds = session.autoSaveTimer.remainingTime() / 1000 % 60;
+            unsavedChangesLabel.setToolTip(tr("Next autosave in %1:%2 min").arg(minutes).arg(seconds, 2, 10, QChar('0')));
+        }
         unsavedChangesLabel.setText(tr("unsaved changes ") + autosave);
     } else {
         unsavedChangesLabel.setText("saved");
@@ -364,7 +371,7 @@ void MainWindow::updateTitlebar() {
         annotationTimeLabel.show();
     }
 
-    if(session.autoSaveBool == false) {
+    if(session.autoSaveTimer.isActive() == false) {
         title.append(" Autosave: OFF");
     }
 
@@ -729,7 +736,7 @@ void MainWindow::openSlot() {
     }
 }
 
-void MainWindow::autosaveSlot() {
+void MainWindow::autoSaveSlot() {
     if (Session::singleton().annotationFilename.isEmpty()) {
         Session::singleton().annotationFilename = annotationFileDefaultPath();
     }

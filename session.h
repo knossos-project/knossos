@@ -63,16 +63,12 @@ class Session : public QObject {
     bool timeSliceActivity = false;
     QTimer annotationTimer;
     QElapsedTimer lastTimeSlice;
-
     void handleTimeSlice();
 
-    uint lastSaveTicks = 0;
 public:
+    QTimer autoSaveTimer;
     bool autoFilenameIncrementBool = true;
-    bool autoSaveBool = true;
-    uint autoSaveInterval = 5;
     bool unsavedChanges = false;
-    void autoSaveIfElapsed();
 
     QPair<QString, QString> task;
     QFlags<AnnotationMode> annotationMode;
@@ -96,7 +92,7 @@ public:
 
 signals:
     void annotationTimeChanged(const QString & timeString);
-    void autosaveSignal();
+    void autoSaveSignal();
     void movementAreaChanged();
 };
 

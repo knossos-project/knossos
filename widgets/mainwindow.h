@@ -186,7 +186,7 @@ public slots:
     /* skeleton menu */
     void newAnnotationSlot();
     void openSlot();
-    void autosaveSlot();
+    void autoSaveSlot();
     void saveSlot();
     void saveAsSlot();
     void exportToNml();
