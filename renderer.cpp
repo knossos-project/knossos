@@ -1057,7 +1057,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
 
     glLoadName(1);
 
-    glColor4f(0.9, 0.9, 0.9, 1.); // HERE
+    glColor4f(1., 1., 1., 1.); // HERE
     // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
     glBegin(GL_QUADS);
         glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
