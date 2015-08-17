@@ -112,8 +112,8 @@ bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, in
     return true;
 }
 
-int SkeletonProxy::skeleton_time() {
-    return state->skeletonState->skeletonTime;
+int SkeletonProxy::annotation_time() {
+    return Session::singleton().getAnnotationTime();
 }
 
 QString SkeletonProxy::skeleton_file() {
@@ -186,7 +186,7 @@ void SkeletonProxy::jump_to_node(nodeListElement *node) {
 }
 
 bool SkeletonProxy::has_unsaved_changes() {
-    return state->skeletonState->unsavedChanges;
+    return Session::singleton().unsavedChanges;
 }
 
 void SkeletonProxy::delete_skeleton() {

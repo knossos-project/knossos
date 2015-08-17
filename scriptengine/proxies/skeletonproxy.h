@@ -32,7 +32,7 @@ signals:
 
 
 public slots:
-    int skeleton_time();
+    int annotation_time();
     QString skeleton_file();
     bool annotation_save(const QString &filename);
     bool annotation_load(const QString &filename, bool isMerge = false);

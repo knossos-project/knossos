@@ -91,7 +91,7 @@ bool Segmentation::hasSegData() const {
 }
 
 void Segmentation::clear() {
-    state->skeletonState->unsavedChanges |= hasSegData();
+    Session::singleton().unsavedChanges |= hasSegData();
 
     selectedObjectIndices.clear();
     objects.clear();

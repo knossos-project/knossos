@@ -42,6 +42,18 @@ public:
     }
 };
 
+void Session::autoSaveIfElapsed() {
+    if (autoSaveBool) {
+        const auto minutes = (state->time.elapsed() - lastSaveTicks) / 60000.0;
+        if (minutes >= autoSaveInterval) {//timeout elapsed
+            lastSaveTicks = state->time.elapsed();//save timestamp
+            if (unsavedChanges) {//there’re real changes
+                emit autosaveSignal();
+            }
+        }
+    }
+}
+
 Session::Session() : annotationMode(AnnotationMode::Mode_Tracing) {
     qApp->installEventFilter(new ActivityEventFilter(*this));
 
@@ -68,11 +80,11 @@ void Session::resetMovementArea() {
     updateMovementArea({0, 0, 0}, state->boundary);
 }
 
-decltype(Session::annotationTimeMilliseconds) Session::annotationTime() const {
+decltype(Session::annotationTimeMilliseconds) Session::getAnnotationTime() const {
     return annotationTimeMilliseconds;
 }
 
-void Session::annotationTime(const decltype(annotationTimeMilliseconds) & ms) {
+void Session::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms) {
     annotationTimeMilliseconds = ms;
 
     const auto absoluteMinutes = annotationTimeMilliseconds / 1000 / 60;
@@ -88,7 +100,7 @@ decltype(Session::annotationTimeMilliseconds) Session::currentTimeSliceMs() cons
 
 void Session::handleTimeSlice() {
     if (timeSliceActivity) {
-        annotationTime(annotationTimeMilliseconds + TIME_SLICE_MS);
+        setAnnotationTime(annotationTimeMilliseconds + TIME_SLICE_MS);
         timeSliceActivity = false;
     }
     lastTimeSlice.restart();

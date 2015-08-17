@@ -1101,7 +1101,7 @@ void Viewer::run() {
     }
 
     updateViewerState();
-    skeletonizer->autoSaveIfElapsed();
+    Session::singleton().autoSaveIfElapsed();
     window->updateTitlebar();//display changes after filename
 
     vpUpperLeft->update();

@@ -376,7 +376,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     if (!keepAnnotation) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
-    if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
+    if (Session::singleton().unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
         return false;
     }
 

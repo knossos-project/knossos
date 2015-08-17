@@ -66,7 +66,14 @@ class Session : public QObject {
 
     void handleTimeSlice();
 
+    uint lastSaveTicks = 0;
 public:
+    bool autoFilenameIncrementBool = true;
+    bool autoSaveBool = true;
+    uint autoSaveInterval = 5;
+    bool unsavedChanges = false;
+    void autoSaveIfElapsed();
+
     QPair<QString, QString> task;
     QFlags<AnnotationMode> annotationMode;
 
@@ -83,12 +90,13 @@ public:
         static Session session;
         return session;
     }
-    decltype(annotationTimeMilliseconds) annotationTime() const;
-    void annotationTime(const decltype(annotationTimeMilliseconds) & ms);
+    decltype(annotationTimeMilliseconds) getAnnotationTime() const;
+    void setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms);
     decltype(annotationTimeMilliseconds) currentTimeSliceMs() const;
 
 signals:
     void annotationTimeChanged(const QString & timeString);
+    void autosaveSignal();
     void movementAreaChanged();
 };
 

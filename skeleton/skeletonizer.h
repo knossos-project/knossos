@@ -47,12 +47,6 @@ struct stack;
 struct skeletonState {
     uint skeletonRevision;
 
-    //    skeletonTime is the time spent on the current skeleton in all previous
-    //    instances of knossos that worked with the skeleton.
-
-    bool unsavedChanges;
-    int skeletonTime;
-
     std::unique_ptr<treeListElement> firstTree;
     treeListElement *activeTree;
     nodeListElement *activeNode;
@@ -112,7 +106,6 @@ struct skeletonState {
     int showXZplane;
     int showYZplane;
     int showNodeIDs;
-    bool autoFilenameIncrementBool;
 
     int treeElements;
     int totalNodeElements;
@@ -125,10 +118,6 @@ struct skeletonState {
 
     //If true, loadSkeleton merges the current skeleton with the provided
     bool mergeOnLoadFlag;
-
-    uint lastSaveTicks;
-    bool autoSaveBool;
-    uint autoSaveInterval;
 
     float defaultNodeRadius;
 
@@ -172,8 +161,6 @@ signals:
     void treeSelectionChangedSignal();
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void resetData();
-
-    void autosaveSignal();
     void setRecenteringPositionSignal(int x, int y, int z);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
@@ -199,7 +186,6 @@ public slots:
 
     bool delTree(int treeID);
     void clearSkeleton();
-    void autoSaveIfElapsed();
     uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype, const uint64_t nodeId = 0);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeCommentToSelectedTrees(QString comment);

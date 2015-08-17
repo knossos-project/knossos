@@ -630,10 +630,6 @@ bool Knossos::configDefaults() {
 
     strncpy(state->skeletonState->onCommentLock, "seed", 1024);
     state->skeletonState->branchpointUnresolved = false;
-    state->skeletonState->autoFilenameIncrementBool = true;
-    state->skeletonState->autoSaveBool = true;
-    state->skeletonState->autoSaveInterval = 5;
-    state->skeletonState->skeletonTime = 0;
     state->skeletonState->definedSkeletonVpView = -1;
 
     state->loadMode = LM_LOCAL;

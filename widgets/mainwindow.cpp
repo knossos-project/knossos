@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::autosaveSignal, this, &MainWindow::autosaveSlot);
+    QObject::connect(&Session::singleton(), &Session::autosaveSignal, this, &MainWindow::autosaveSlot);
 
     createToolbars();
     createMenus();
@@ -336,26 +336,27 @@ void MainWindow::updateTodosLeft() {
 }
 
 void MainWindow::notifyUnsavedChanges() {
-    state->skeletonState->unsavedChanges = true;
+    Session::singleton().unsavedChanges = true;
     updateTitlebar();
 }
 
 void MainWindow::updateTitlebar() {
+    const auto & session = Session::singleton();
     QString title = qApp->applicationDisplayName() + " showing ";
-    if (!Session::singleton().annotationFilename.isEmpty()) {
+    if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {
         title.append("no annotation file");
     }
-    if (state->skeletonState->unsavedChanges) {
+    if (session.unsavedChanges) {
         title.append("*");
-        const auto autosave = tr(" (") + (!state->skeletonState->autoSaveBool ? "<b>NOT</b> " : "") + "autosaving)";
-        unsavedChangesLabel.setText(tr("unsaved changes") + autosave);
+        const auto autosave = !session.autoSaveBool ? tr("<font color='red'>(not autosaving)</font> ") : tr("<font color='green'>(autosaving)</font>");
+        unsavedChangesLabel.setText(tr("unsaved changes ") + autosave);
     } else {
         unsavedChangesLabel.setText("saved");
     }
     //don’t display if there are no changes and no file is loaded
-    if (!state->skeletonState->unsavedChanges && Session::singleton().annotationFilename.isEmpty()) {
+    if (session.unsavedChanges == false && session.annotationFilename.isEmpty()) {
         unsavedChangesLabel.hide();
         annotationTimeLabel.hide();
     } else {
@@ -363,7 +364,7 @@ void MainWindow::updateTitlebar() {
         annotationTimeLabel.show();
     }
 
-    if(!state->skeletonState->autoSaveBool) {
+    if(session.autoSaveBool == false) {
         title.append(" Autosave: OFF");
     }
 
@@ -584,7 +585,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
     saveSettings();
 
-    if(state->skeletonState->unsavedChanges) {
+    if(Session::singleton().unsavedChanges) {
          QMessageBox question;
          question.setWindowFlags(Qt::WindowStaysOnTopHint);
          question.setIcon(QMessageBox::Question);
@@ -678,7 +679,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
 
-    state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
+    Session::singleton().unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
     Session::singleton().annotationFilename = "";
     if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
@@ -694,7 +695,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 }
 
 void MainWindow::newAnnotationSlot() {
-    if (state->skeletonState->unsavedChanges) {
+    if (Session::singleton().unsavedChanges) {
         const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
         const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
         if (button == 1) {
@@ -703,7 +704,7 @@ void MainWindow::newAnnotationSlot() {
     }
     Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();
-    state->skeletonState->unsavedChanges = false;
+    Session::singleton().unsavedChanges = false;
     Session::singleton().annotationFilename = "";
 }
 
@@ -744,7 +745,7 @@ void MainWindow::saveSlot() {
             annotationFilename.chop(4);
             annotationFilename += ".k.zip";
         }
-        if (state->skeletonState->autoFilenameIncrementBool) {
+        if (Session::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(annotationFilename);
             updateFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
@@ -833,7 +834,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    if(state->skeletonState->unsavedChanges || state->skeletonState->treeElements > 0) {
+    if(Session::singleton().unsavedChanges || state->skeletonState->treeElements > 0) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);

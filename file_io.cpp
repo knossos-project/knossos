@@ -135,7 +135,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     }
 
     if (allSuccess) {
-        state->skeletonState->unsavedChanges = false;
+        Session::singleton().unsavedChanges = false;
     }
 
     if (NULL != isSuccess) {
