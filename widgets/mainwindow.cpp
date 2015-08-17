@@ -814,20 +814,20 @@ void MainWindow::exportToNml() {
     }
 }
 
-void MainWindow::setWorkMode(AnnotationMode mode) {
-    if(workModes.find(mode) == std::end(workModes)) {
-        mode = AnnotationMode::Mode_Tracing;
+void MainWindow::setWorkMode(AnnotationMode workMode) {
+    if(workModes.find(workMode) == std::end(workModes)) {
+        workMode = AnnotationMode::Mode_Tracing;
     }
-    modeCombo.setCurrentText(workModes[mode]);
-    auto & annotationMode = Session::singleton().annotationMode;
-    annotationMode = mode;
-    const bool trees = mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
-    const bool skeleton = mode == AnnotationMode::Mode_Tracing || mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
-    const bool segmentation = mode == AnnotationMode::Brush || mode == AnnotationMode::Mode_MergeTracing;
+    modeCombo.setCurrentText(workModes[workMode]);
+    auto & mode = Session::singleton().annotationMode;
+    mode = workMode;
+    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     newTreeAction->setVisible(trees);
     widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(trees);
-    pushBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
-    popBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
+    pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
+    popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
 }

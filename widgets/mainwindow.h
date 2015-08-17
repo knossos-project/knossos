@@ -192,7 +192,7 @@ public slots:
     void exportToNml();
 
     /* edit skeleton menu*/
-    void setWorkMode(AnnotationMode mode);
+    void setWorkMode(AnnotationMode workMode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
 
