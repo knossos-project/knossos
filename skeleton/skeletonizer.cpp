@@ -80,7 +80,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
-    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
+    state->skeletonState->skeletonLastSavedInVersion.clear();
 }
 
 segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
@@ -243,8 +243,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("createdin");
-    const auto & createdInVersion = QString(state->skeletonState->skeletonCreatedInVersion);
-    xml.writeAttribute("version", createdInVersion);
+    xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
     xml.writeEndElement();
 
     xml.writeStartElement("dataset");
@@ -412,10 +411,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         Session::singleton().setAnnotationTime(0);
     }
 
-    // If "createdin"-node does not exist, skeleton was created in a version
-    // before 3.2
-    strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
-    strcpy(state->skeletonState->skeletonLastSavedInVersion, "pre-3.2");
+    // If "createdin"-node does not exist, skeleton was created in a version before 3.2
+    state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
+    state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
     QTime bench;
     QXmlStreamReader xml(&file);
@@ -445,17 +443,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if (xml.name() == "experiment") {
                     experimentName = attributes.value("name").toString();
                 } else if (xml.name() == "createdin") {
-                    QStringRef attribute = attributes.value("version");
-                    if(attribute.isNull() == false) {
-                        strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toLocal8Bit().data());
-                    } else {
-                        strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
-                    }
+                    state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
-                    QStringRef attribute = attributes.value("version");
-                    if(attribute.isNull() == false) {
-                        strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
-                    }
+                    state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "dataset") {
                     QStringRef attribute = attributes.value("path");
                     QString path = attribute.isNull() ? "" : attribute.toString();
@@ -1333,7 +1323,8 @@ void Skeletonizer::clearSkeleton() {
 
     Session::singleton().resetMovementArea();
     Session::singleton().setAnnotationTime(0);
-    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
+    state->skeletonState->skeletonCreatedInVersion = KVERSION;
+    state->skeletonState->skeletonLastSavedInVersion.clear();
 }
 
 bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {

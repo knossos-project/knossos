@@ -131,8 +131,8 @@ struct skeletonState {
 
     bool branchpointUnresolved;
 
-    char skeletonCreatedInVersion[32];
-    char skeletonLastSavedInVersion[32];
+    QString skeletonCreatedInVersion;
+    QString skeletonLastSavedInVersion;
 
     QString nodeCommentFilter;
     QString treeCommentFilter;

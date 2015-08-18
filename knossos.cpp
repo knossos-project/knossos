@@ -197,13 +197,6 @@ bool Knossos::initStates() {
 
     state->viewerState->treeLutSet = false;
 
-    /* @todo todo emitting signals out of class seems to be problematic
-    emit knossos->calcDisplayedEdgeLengthSignal();
-    */
-
-    // For the skeletonizer
-    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
-
     state->time.start();
 
     // Those values can be calculated from given parameters
