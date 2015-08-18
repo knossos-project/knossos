@@ -138,8 +138,6 @@ public:
 
     QMutex *protectCube2Pointer;
 
-    QElapsedTimer time; // it is not allowed to modify this object
-
  //---  Info about the state of KNOSSOS in general. --------
 
     // Cube loader affairs

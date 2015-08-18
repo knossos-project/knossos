@@ -27,10 +27,8 @@
 namespace Knossos {
     bool readConfigFile(const char *path);
     bool printConfigValues();
-    bool loadNeutralDatasetLUT(unsigned int *datasetLut);
     bool findAndRegisterAvailableDatasets();
     bool configDefaults();
-    bool initStates();
     bool commonInitStates();
 
     bool sendRemoteSignal();

@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos::configDefaults();
-    Knossos::initStates();
+    Knossos::commonInitStates();
 
     SignalRelay signalRelay;
     Viewer viewer;
@@ -177,34 +177,6 @@ bool Knossos::commonInitStates() {
     }
 
     return findAndRegisterAvailableDatasets();
-}
-
-/**
- * This function initializes the values of state with the value of tempConfig
- * Beyond it allocates the dynamic data structures
- */
-bool Knossos::initStates() {
-    // For the viewer
-    state->viewerState->movementAreaFactor = 80;
-    state->viewerState->showOverlay = true;
-    state->viewerState->autoTracingMode = navigationMode::recenter;
-    state->viewerState->autoTracingDelay = 50;
-    state->viewerState->autoTracingSteps = 10;
-
-    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
-    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
-    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-
-    state->viewerState->treeLutSet = false;
-
-    state->time.start();
-
-    // Those values can be calculated from given parameters
-    state->magnification = 1;
-    state->lowestAvailableMag = 1;
-    state->highestAvailableMag = 1;
-
-    return commonInitStates();
 }
 
 bool Knossos::sendRemoteSignal() {
@@ -320,19 +292,6 @@ bool Knossos::printConfigValues() {
                .arg(state->M)
                .arg(state->cubeSetElements)
                .arg(state->cubeSetBytes);
-    return true;
-}
-
-bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
-
-    int i;
-
-    for(i = 0; i < 256; i++) {
-        datasetLut[0 * 256 + i] = i;
-        datasetLut[1 * 256 + i] = i;
-        datasetLut[2 * 256 + i] = i;
-   }
-
     return true;
 }
 

@@ -114,6 +114,23 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewerState->vpConfigs[VIEWPORT_YZ].v2 = v2;
     state->viewerState->vpConfigs[VIEWPORT_YZ].n = v1;
 
+    state->viewerState->movementAreaFactor = 80;
+    state->viewerState->showOverlay = true;
+    state->viewerState->autoTracingMode = navigationMode::recenter;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
+
+    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
+    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
+
+    for (int i = 0; i < 256; ++i) {
+        state->viewerState->neutralDatasetTable[0][i] = i;
+        state->viewerState->neutralDatasetTable[1][i] = i;
+        state->viewerState->neutralDatasetTable[2][i] = i;
+    }
+
+    state->viewerState->treeLutSet = false;
+
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify_visible);
