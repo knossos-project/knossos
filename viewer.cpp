@@ -1214,19 +1214,12 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
 
     const auto lastPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
-    auto newPos = Coordinate(viewerState->currentPosition.x + x, viewerState->currentPosition.y + y, viewerState->currentPosition.z + z);
-    if (Session::singleton().outsideMovementArea(newPos) == false) {
-            viewerState->currentPosition.x += x;
-            viewerState->currentPosition.y += y;
-            viewerState->currentPosition.z += z;
-            state->currentDirections[state->currentDirectionsIndex] = {x, y, z};
-            state->currentDirectionsIndex = (state->currentDirectionsIndex + 1) % LL_CURRENT_DIRECTIONS_SIZE;
-    }
-    else {
-        qDebug("Position (%d, %d, %d) out of bounds",
-            viewerState->currentPosition.x + x + 1,
-            viewerState->currentPosition.y + y + 1,
-            viewerState->currentPosition.z + z + 1);
+    const Coordinate movement{x, y, z};
+    auto newPos = viewerState->currentPosition + movement;
+    if (!Session::singleton().outsideMovementArea(newPos)) {
+            viewerState->currentPosition += movement;
+    } else {
+        qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + 1).arg(newPos.y + 1).arg(newPos.z + 1);
     }
 
     const auto newPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);

@@ -204,9 +204,6 @@ bool Knossos::initStates() {
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
 
-    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
-    state->currentDirectionsIndex = 0;
-
     return commonInitStates();
 }
 

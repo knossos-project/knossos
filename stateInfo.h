@@ -142,12 +142,6 @@ public:
 
  //---  Info about the state of KNOSSOS in general. --------
 
-/* Calculate movement trajectory for loading based on how many last single movements */
-#define LL_CURRENT_DIRECTIONS_SIZE (20)
-    // This gives the current direction whenever userMove is called
-    Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
-    int currentDirectionsIndex;
-
     // Cube loader affairs
     int    loadMode;
     char       ftpBasePath[CSTRING_SIZE];
