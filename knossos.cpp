@@ -83,9 +83,6 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     }
 }
 
-int global_argc;
-char **global_argv;
-
 void Knossos::applyDefaultConfig() {
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -104,16 +101,9 @@ void Knossos::applyDefaultConfig() {
         _Exit(false);
     }
 
-    if(global_argc >= 2) {
-        Knossos::configFromCli(global_argc, global_argv);
-    }
-
     if(state->path[0] != '\0') {
         // Got a path from cli.
         Knossos::readDataConfAndLocalConf();
-        // We need to read the specified config file again because it should
-        // override all parameters from other config files.
-        Knossos::configFromCli(global_argc, global_argv);
     }
     else {
         Knossos::readConfigFile("knossos.conf");
@@ -121,12 +111,6 @@ void Knossos::applyDefaultConfig() {
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;
     state->viewerState->voxelDimZ = state->scale.z;
-
-    if(global_argc >= 2) {
-        if(Knossos::configFromCli(global_argc, global_argv) == false) {
-            qDebug() << "Error reading configuration from command line.";
-        }
-    }
 }
 
 Q_DECLARE_METATYPE(std::string)
@@ -146,9 +130,6 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("MPIMF");
     QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    global_argc = argc;
-    global_argv = argv;
 
     Knossos::applyDefaultConfig();
 
@@ -668,118 +649,6 @@ bool Knossos::readDataConfAndLocalConf() {
 
     return true;
 }
-
-bool Knossos::configFromCli(int argCount, char *arguments[]) {
-
- #define NUM_PARAMS 14
-
- char *lval = NULL, *rval = NULL;
- char *equals = NULL;
- int i = 0, j = 0, llen = 0;
- const char *lvals[NUM_PARAMS] = {
-                             "--data-path",       // 0  Do not forget
-                             "--connect-asap",    // 1  to also modify, client is no more
-                             "--scale-x",         // 2  NUM_PARAMS
-                             "--scale-y",         // 3  above when adding
-                             "--scale-z",         // 4  switches!
-                             "--boundary-x",      // 5
-                             "--boundary-y",      // 6
-                             "--boundary-z",      // 7
-                             "--experiment-name", // 8
-                             "--supercube-edge",  // 9
-                             "--color-table",     // 10
-                             "--config-file",     // 11
-                             "--magnification",   // 12
-                             "--overlay",         // 13
-                           };
-
- for(i = 1; i < argCount; i++) {
-     /*
-      * Everything right of the equals sign is the rvalue, everythin left of
-      * it the lvalue, or, if there is no equals sign, everything is lvalue.
-      */
-
-     llen = strlen(arguments[i]);
-     equals = strchr(arguments[i], '=');
-
-     if(equals) {
-         if(equals[1] != '\0') {
-             llen = strlen(arguments[i]) - strlen(equals);
-             equals++;
-             rval = (char *)malloc((strlen(equals) + 1) * sizeof(char));
-             if(rval == NULL) {
-                 qDebug() << "Out of memory.";
-                 _Exit(false);
-             }
-             memset(rval, '\0', strlen(equals) + 1);
-
-             strncpy(rval, equals, strlen(equals));
-         }
-         else
-             llen = strlen(arguments[i]) - 1;
-     }
-     lval = (char *) malloc((llen + 1) * sizeof(char));
-     if(lval == NULL) {
-         qDebug() << "Out of memory.";
-         _Exit(false);
-     }
-     memset(lval, '\0', llen + 1);
-
-     strncpy(lval, arguments[i], llen);
-
-     for(j = 0; j < NUM_PARAMS; j++) {
-         if(strcmp(lval, lvals[j]) == 0) {
-             switch(j) {
-                 case 0:
-                     strncpy(state->path, rval, 1023);
-                     break;
-                 case 1:
-                    qDebug() << "switch not applicable anymore";
-                     break;
-                 case 2:
-                     state->scale.x = (float)strtod(rval, NULL);
-                     break;
-                 case 3:
-                     state->scale.y = (float)strtod(rval, NULL);
-                     break;
-                 case 4:
-                     state->scale.z = (float)strtod(rval, NULL);
-                     break;
-                 case 5:
-                     state->boundary.x = (int)atoi(rval);
-                     break;
-                 case 6:
-                     state->boundary.y = (int)atoi(rval);
-                     break;
-                 case 7:
-                     state->boundary.z = (int)atoi(rval);
-                     break;
-                 case 8:
-                     strncpy(state->name, rval, 1023);
-                     break;
-                 case 9:
-                     state->M = (int)atoi(rval);
-                     break;
-                 case 10:
-                     Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
-                     break;
-                 case 11:
-                     Knossos::readConfigFile(rval);
-                     break;
-                 case 12:
-                     state->magnification = (int)atoi(rval);
-                     break;
-                 case 13:
-                     state->overlay = std::stoi(rval);
-                     break;
-             }
-         }
-     }
- }
-
- return true;
-}
-
 
 /**
   * This function shows how wired the code is at some places.

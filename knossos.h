@@ -32,7 +32,6 @@ namespace Knossos {
     bool readDataConfAndLocalConf();
     bool findAndRegisterAvailableDatasets();
     bool configDefaults();
-    bool configFromCli(int argCount, char *arguments[]);
     bool initStates();
     bool commonInitStates();
 
