@@ -147,7 +147,7 @@ void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
                 overlayColorMap.reserve(expectedSize);
 
                 for(int i = 0; i < 768; i+=3) {
-                    overlayColorMap.push_back({static_cast<uint8_t>(buffer[i]), static_cast<uint8_t>(buffer[i+1]), static_cast<uint8_t>(buffer[i+3])});
+                    overlayColorMap.push_back({{static_cast<uint8_t>(buffer[i]), static_cast<uint8_t>(buffer[i+1]), static_cast<uint8_t>(buffer[i+3])}});
                 }
                 qDebug() << "sucessfully loaded LUT-File »" << filename.c_str() << "«";
             } else {
@@ -171,7 +171,7 @@ void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
                 r = static_cast<uint8_t>(jarray[i].toArray()[0].toInt());
                 g = static_cast<uint8_t>(jarray[i].toArray()[1].toInt());
                 b = static_cast<uint8_t>(jarray[i].toArray()[2].toInt());
-                overlayColorMap.push_back({r,g,b});
+                overlayColorMap.push_back({{r,g,b}});
             }
 
             qDebug() << "sucessfully loaded JSON-File »" << filename.c_str() << "«";
