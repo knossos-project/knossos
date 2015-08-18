@@ -135,7 +135,6 @@ int main(int argc, char *argv[]) {
     viewer.window->widgetContainer->datasetLoadWidget->loadDataset();
 
     viewer.window->widgetContainer->datasetOptionsWidget->updateCompressionRatioDisplay();
-    Knossos::printConfigValues();
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
@@ -273,25 +272,6 @@ bool Knossos::readConfigFile(const char *path) {
         }
     }
 
-    return true;
-}
-
-bool Knossos::printConfigValues() {
-    qDebug() << QString("Configuration:\n\tExperiment:\n\t\tPath: %0\n\t\tName: %1\n\t\tBoundary (x): %2\n\t\tBoundary (y): %3\n\t\tBoundary (z): %4\n\t\tScale (x): %5\n\t\tScale (y): %6\n\t\tScale (z): %7\n\n\tData:\n\t\tCube bytes: %8\n\t\tCube edge length: %9\n\t\tCube slice area: %10\n\t\tM (cube set edge length): %11\n\t\tCube set elements: %12\n\t\tCube set bytes: %13\n\t\tZ-first cube order: %14\n")
-               .arg(state->path)
-               .arg(state->name)
-               .arg(state->boundary.x)
-               .arg(state->boundary.y)
-               .arg(state->boundary.z)
-               .arg(state->scale.x)
-               .arg(state->scale.y)
-               .arg(state->scale.z)
-               .arg(state->cubeBytes)
-               .arg(state->cubeEdgeLength)
-               .arg(state->cubeSliceArea)
-               .arg(state->M)
-               .arg(state->cubeSetElements)
-               .arg(state->cubeSetBytes);
     return true;
 }
 

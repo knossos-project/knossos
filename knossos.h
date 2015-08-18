@@ -26,7 +26,6 @@
 
 namespace Knossos {
     bool readConfigFile(const char *path);
-    bool printConfigValues();
     bool findAndRegisterAvailableDatasets();
     bool configDefaults();
     bool commonInitStates();
