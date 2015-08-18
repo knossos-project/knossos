@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos::configDefaults();
-    Knossos::commonInitStates();
 
     SignalRelay signalRelay;
     Viewer viewer;
@@ -142,40 +141,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
     return a.exec();
-}
-
-/**
- * This function is common to initStates, which is called when knossos starts,
- * and to switching to another dataset. Therefore it includes *only* those
- * actions that are dataset-specific, or that are required for reseting dataset-
- * derived content, e.g. the actual cube contents
- */
-bool Knossos::commonInitStates() {
-    // the voxel dim stuff needs an cleanup. this is such a mess. fuck
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
-
-    //reset viewerState texture properties
-    for(uint i = 0; i < Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-
-        //This variable indicates the current zoom value for a viewport.
-        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-    }
-
-    // searches for multiple mag datasets and enables multires if more
-    //  than one was found
-    if(state->path[0] == '\0') {
-        return false;//no dataset loaded
-    }
-
-    return findAndRegisterAvailableDatasets();
 }
 
 bool Knossos::sendRemoteSignal() {
@@ -458,50 +423,6 @@ bool Knossos::configDefaults() {
     state->viewerState->autoTracingSteps = 10;
     state->viewerState->recenteringTimeOrth = 500;
     state->viewerState->walkOrth = false;
-
-    if (firstRun) {
-        state->viewerState->vpConfigs = (vpConfig *) malloc(Viewport::numberViewports * sizeof(struct vpConfig));
-        if(state->viewerState->vpConfigs == NULL) {
-            qDebug() << "Out of memory.";
-            return false;
-        }
-        memset(state->viewerState->vpConfigs, '\0', Viewport::numberViewports * sizeof(struct vpConfig));
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            switch(i) {
-            case VP_UPPERLEFT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
-                state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
-                break;
-            case VP_LOWERLEFT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
-                state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
-                break;
-            case VP_UPPERRIGHT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
-                state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
-                break;
-            case VP_LOWERRIGHT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
-                state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
-                break;
-            }
-            state->viewerState->vpConfigs[i].draggedNode = NULL;
-            state->viewerState->vpConfigs[i].edgeLength = 350;
-
-            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-            state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-            state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-
-            //This variable indicates the current zoom value for a viewport.
-            //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-        }
-    }
-
 
     // For the skeletonizer
     state->skeletonState->lockRadius = 100;

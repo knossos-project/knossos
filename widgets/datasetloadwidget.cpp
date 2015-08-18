@@ -198,7 +198,6 @@ bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
     state->scale = {sx, sy, sz};
 
     state->path[0] = '\0'; //dont't check for other mags
-    Knossos::commonInitStates();
     state->highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
 
     state->compressionRatio = 1000;
@@ -234,7 +233,6 @@ bool DatasetLoadWidget::parseWebKnossosJson(const QString & json_raw) {
     state->scale = {sx, sy, sz};
 
     state->path[0] = '\0'; //dont't check for other mags
-    Knossos::commonInitStates();
 
     auto mag = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
 
@@ -357,7 +355,7 @@ void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
     }
     strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
 
-    Knossos::commonInitStates();
+    Knossos::findAndRegisterAvailableDatasets();
 }
 
 /* dataset can be selected in three ways:
@@ -525,21 +523,18 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
+    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        const auto msg = "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
+        qDebug() << msg;
+        throw std::runtime_error(msg);
+    }
     //settings depending on supercube and cube size
-    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-    state->cubeSetElements = state->M * state->M * state->M;
+    state->cubeSliceArea = std::pow(state->cubeEdgeLength, 2);
+    state->cubeBytes = std::pow(state->cubeEdgeLength, 3);
+    state->cubeSetElements = std::pow(state->M, 3);
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
-    for(uint i = 0; i <  Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-    }
-
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-    }
+    Viewport::resetTextureProperties();
 }
 
 void DatasetLoadWidget::loadSettings() {

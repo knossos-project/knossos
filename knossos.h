@@ -28,12 +28,9 @@ namespace Knossos {
     bool readConfigFile(const char *path);
     bool findAndRegisterAvailableDatasets();
     bool configDefaults();
-    bool commonInitStates();
 
     bool sendRemoteSignal();
     bool sendQuitSignal();
-    bool sendServerSignal();
-    void loadStyleSheet();
     void loadDefaultTreeLUT();
 }
 

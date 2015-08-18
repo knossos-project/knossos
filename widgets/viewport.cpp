@@ -80,6 +80,45 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
     vpLayout->setMargin(0);//attach buttons to vp border
 
     if(viewportType == VIEWPORT_SKELETON) {
+        //vpconfig init
+        state->viewerState->vpConfigs.resize(Viewport::numberViewports);
+        for(uint i = 0; i < Viewport::numberViewports; i++) {
+            switch(i) {
+            case VP_UPPERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
+                state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
+                break;
+            case VP_LOWERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
+                state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
+                break;
+            case VP_UPPERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
+                state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
+                break;
+            case VP_LOWERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
+                state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
+                break;
+            }
+            state->viewerState->vpConfigs[i].draggedNode = NULL;
+            state->viewerState->vpConfigs[i].edgeLength = 350;
+
+            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+            state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+            state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+
+            //This variable indicates the current zoom value for a viewport.
+            //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+        }
+        resetTextureProperties();
+
+
         xyButton = new QPushButton("xy", this);
         xzButton = new QPushButton("xz", this);
         yzButton = new QPushButton("yz", this);
@@ -119,6 +158,25 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
 
     timeDBase.start();
     timeFBase.start();
+}
+
+void Viewport::resetTextureProperties() {
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+    //reset viewerState texture properties
+    for(uint i = 0; i < Viewport::numberViewports; i++) {
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
+        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+    }
 }
 
 void Viewport::initializeGL() {

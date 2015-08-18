@@ -55,7 +55,7 @@
 #define MAX_COLORVAL 255.
 
 struct viewerState {
-    vpConfig *vpConfigs;
+    std::vector<vpConfig> vpConfigs;
     char *texData;
     char *overlayData;
     char *defaultTexData;
