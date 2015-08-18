@@ -25,11 +25,9 @@
  */
 
 namespace Knossos {
-    void applyDefaultConfig();
     bool readConfigFile(const char *path);
     bool printConfigValues();
     bool loadNeutralDatasetLUT(unsigned int *datasetLut);
-    bool readDataConfAndLocalConf();
     bool findAndRegisterAvailableDatasets();
     bool configDefaults();
     bool initStates();

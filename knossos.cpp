@@ -83,36 +83,6 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     }
 }
 
-void Knossos::applyDefaultConfig() {
-    // The idea behind all this is that we have four sources of
-    // configuration data:
-    //
-    //  * Arguments passed by KUKU
-    //  * Local knossos.conf
-    //  * knossos.conf that comes with the data
-    //  * Default parameters
-    //
-    // All this config data should be used. Command line overrides
-    // local knossos.conf and local knossos.conf overrides knossos.conf
-    // from data and knossos.conf from data overrides defaults.
-
-    if(Knossos::configDefaults() != true) {
-        qDebug() << "Error loading default parameters.";
-        _Exit(false);
-    }
-
-    if(state->path[0] != '\0') {
-        // Got a path from cli.
-        Knossos::readDataConfAndLocalConf();
-    }
-    else {
-        Knossos::readConfigFile("knossos.conf");
-    }
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-}
-
 Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
@@ -131,8 +101,7 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Knossos::applyDefaultConfig();
-
+    Knossos::configDefaults();
     Knossos::initStates();
 
     SignalRelay signalRelay;
@@ -623,37 +592,6 @@ bool Knossos::configDefaults() {
     return true;
 
 }
-
-bool Knossos::readDataConfAndLocalConf() {
-
-    int length;
-    char configFile[1024];
-
-    memset(configFile, '\0', 1024);
-    length = strlen(state->path);
-
-    if(length >= 1010) {
-        // We need to append "/knossos.conf"
-        qDebug() << "Data path too long.";
-        _Exit(false);
-    }
-
-    strcat(configFile, state->path);
-    strcat(configFile, "/knossos.conf");
-
-
-    qDebug("Trying to read %s.", configFile);
-    readConfigFile(configFile);
-
-    readConfigFile("knossos.conf");
-
-    return true;
-}
-
-/**
-  * This function shows how wired the code is at some places.
-  * A structural update might be advantegous for the future.
-  */
 
 void Knossos::loadDefaultTreeLUT() {
     if (!state->viewer->loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB)) {
