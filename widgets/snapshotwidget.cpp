@@ -108,6 +108,7 @@ void SnapshotWidget::saveSettings() {
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
     settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
+    settings.setValue(WITH_VP_PLANES, withVpPlanes.isChecked());
     settings.setValue(SAVE_DIR, saveDir);
     settings.endGroup();
 }
@@ -130,6 +131,7 @@ void SnapshotWidget::loadSettings() {
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
     withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
+    withVpPlanes.setChecked(settings.value(WITH_VP_PLANES, false).toBool());
     saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 
     settings.endGroup();
