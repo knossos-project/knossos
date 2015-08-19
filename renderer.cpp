@@ -464,6 +464,9 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glDisable(GL_BLEND);
     }
     if(state->viewerState->showScalebar) {
+        if(currentVP == VIEWPORT_SKELETON && Segmentation::singleton().volume_render_toggle) {
+            return;
+        }
         renderScaleBar(currentVP);
     }
 }
