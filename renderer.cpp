@@ -1516,9 +1516,16 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         glLoadIdentity();
         glTranslatef(origin[0], gl_viewport[3] - origin[1], origin[2]);
         glColor4f(0, 0, 0, 1);
-        renderAxis(axis_x, QString("x: %1 px").arg(state->boundary.x + 1));
-        renderAxis(axis_y, QString("y: %1 px").arg(state->boundary.y + 1));
-        renderAxis(axis_z, QString("z: %1 px").arg(state->boundary.z + 1));
+        if(Viewport::showBoundariesInUm) {
+            renderAxis(axis_x, QString("x: %1 µm").arg(state->boundary.x * state->scale.x * 0.001));
+            renderAxis(axis_y, QString("y: %1 µm").arg(state->boundary.y * state->scale.y * 0.001));
+            renderAxis(axis_z, QString("z: %1 µm").arg(state->boundary.z * state->scale.z * 0.001));
+        }
+        else {
+            renderAxis(axis_x, QString("x: %1 px").arg(state->boundary.x + 1));
+            renderAxis(axis_y, QString("y: %1 px").arg(state->boundary.y + 1));
+            renderAxis(axis_z, QString("z: %1 px").arg(state->boundary.z + 1));
+        }
         // restore world coordinate system
         glPopMatrix();
         glMatrixMode(GL_PROJECTION);

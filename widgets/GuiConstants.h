@@ -84,6 +84,7 @@ const QString DATASET_LUT_FILE_USED = "dataset_lut_file_used";
 const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
 const QString SHOW_YZ_PLANE = "show_yz_plane";
+const QString SHOW_PHYSICAL_BOUNDARIES = "show_physical_boundaries";
 const QString ROTATE_AROUND_ACTIVE_NODE = "rotate_around_active_node";
 
 /* Navigation Widget */

@@ -202,6 +202,10 @@ void ViewportSettingsWidget::loadSettings() {
     skeletonViewportWidget->showYZPlaneCheckBox.setChecked(yzplane);
     skeletonViewportWidget->showYZPlaneCheckBox.clicked(yzplane);
 
+    const auto showPhysicalBoundaries = settings.value(SHOW_PHYSICAL_BOUNDARIES, false).toBool();
+    skeletonViewportWidget->boundariesPixelRadioBtn.setChecked(!showPhysicalBoundaries);
+    skeletonViewportWidget->boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);
+
     const auto rotateAroundActiveNode = settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool();
     skeletonViewportWidget->rotateAroundActiveNodeCheckBox.setChecked(rotateAroundActiveNode);
     skeletonViewportWidget->rotateAroundActiveNodeCheckBox.clicked(rotateAroundActiveNode);
@@ -257,6 +261,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox.isChecked());
     settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox.isChecked());
+    settings.setValue(SHOW_PHYSICAL_BOUNDARIES, skeletonViewportWidget->boundariesPhysicalRadioBtn.isChecked());
     settings.setValue(ROTATE_AROUND_ACTIVE_NODE, skeletonViewportWidget->rotateAroundActiveNodeCheckBox.isChecked());
 
     settings.setValue(VP_TAB_INDEX, tabs->currentIndex());

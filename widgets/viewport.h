@@ -181,7 +181,7 @@ public:
     static bool arbitraryOrientation;
     static bool oglDebug;
     static bool showNodeComments;
-
+    static bool showBoundariesInUm;
 protected:
     void initializeGL() override;
     void createOverlayTextures();

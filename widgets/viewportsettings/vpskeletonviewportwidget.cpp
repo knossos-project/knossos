@@ -26,6 +26,7 @@
 #include "skeleton/skeletonizer.h"
 #include "segmentation/segmentation.h"
 
+#include <QButtonGroup>
 #include <QColorDialog>
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
@@ -50,19 +51,23 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     VolumeOpaquenessLayout.addWidget(&VolumeOpaquenessSlider);
     VolumeOpaquenessLayout.addWidget(&VolumeOpaquenessSpinBox);
 
-    int currentGridColumn = 0;
-    gridLayout.addWidget(&datasetVisualizationLabel, currentGridColumn++, 0);
-    gridLayout.addWidget(&line2, currentGridColumn++, 0);
-    gridLayout.addWidget(&showXYPlaneCheckBox, currentGridColumn++, 0);
-    gridLayout.addWidget(&showXZPlaneCheckBox, currentGridColumn++, 0);
-    gridLayout.addWidget(&showYZPlaneCheckBox, currentGridColumn++, 0);
+    auto boundaryGroup = new QButtonGroup(this);
+    boundaryGroup->addButton(&boundariesPixelRadioBtn);
+    boundaryGroup->addButton(&boundariesPhysicalRadioBtn);
 
-    gridLayout.addWidget(&view3dlabel, currentGridColumn++, 0);
-    gridLayout.addWidget(&line3, currentGridColumn++, 0);
-    gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentGridColumn++, 0);
-    gridLayout.addWidget(&VolumeRenderFlagCheckBox, currentGridColumn++, 0);
-    gridLayout.addLayout(&VolumeOpaquenessLayout, currentGridColumn++, 0);
-    gridLayout.addLayout(&VolumeColorLayout, currentGridColumn++, 0);
+    int currentRow = 0;
+    gridLayout.addWidget(&datasetVisualizationLabel, currentRow++, 0);
+    gridLayout.addWidget(&line2, currentRow++, 0, 1, 2);
+    gridLayout.addWidget(&showXYPlaneCheckBox, currentRow, 0);  gridLayout.addWidget(&boundariesPixelRadioBtn, currentRow++, 1);
+    gridLayout.addWidget(&showXZPlaneCheckBox, currentRow, 0);  gridLayout.addWidget(&boundariesPhysicalRadioBtn, currentRow++, 1);
+    gridLayout.addWidget(&showYZPlaneCheckBox, currentRow++, 0);
+
+    gridLayout.addWidget(&view3dlabel, currentRow++, 0);
+    gridLayout.addWidget(&line3, currentRow++, 0, 1, 2);
+    gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentRow++, 0);
+    gridLayout.addWidget(&VolumeRenderFlagCheckBox, currentRow++, 0);
+    gridLayout.addLayout(&VolumeOpaquenessLayout, currentRow++, 0);
+    gridLayout.addLayout(&VolumeColorLayout, currentRow++, 0);
 
     mainLayout.addLayout(&gridLayout);
     mainLayout.addStretch(1);//expand vertically with empty space
@@ -71,8 +76,14 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXYplane = checked; });
     QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showYZplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
+    QObject::connect(boundaryGroup, static_cast<void(QButtonGroup::*)(int, bool)>(&QButtonGroup::buttonToggled), [this](const int, const bool) {
+        Viewport::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
+    });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
-    QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [](bool checked){Segmentation::singleton().volume_render_toggle = checked; });
+    QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [this](bool checked){
+        Segmentation::singleton().volume_render_toggle = checked;
+        emit volumeRenderToggled();
+    });
     QObject::connect(&VolumeColorBox, &QPushButton::clicked, [&](){
         auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
         if (color.isValid() == QColorDialog::Accepted) {

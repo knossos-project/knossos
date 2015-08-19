@@ -45,6 +45,7 @@
 bool Viewport::arbitraryOrientation = false;
 bool Viewport::oglDebug = false;
 bool Viewport::showNodeComments = false;
+bool Viewport::showBoundariesInUm = false;
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
@@ -951,7 +952,6 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
     const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
         auto& seg = Segmentation::singleton();

@@ -56,6 +56,9 @@ class VPSkeletonViewportWidget : public QWidget
     QLabel view3dlabel{"3D View"};
     QFrame line3;
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
+    QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
+    QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
+
     QCheckBox VolumeRenderFlagCheckBox{"Render Volume instead of Skeleton"};
     QLabel VolumeOpaquenessLabel{"Volume Opaqueness"};
     QSpinBox VolumeOpaquenessSpinBox;
@@ -69,6 +72,7 @@ class VPSkeletonViewportWidget : public QWidget
 public:
     explicit VPSkeletonViewportWidget(QWidget * const parent = nullptr);
 signals:
+    void volumeRenderToggled();
 
 };
 
