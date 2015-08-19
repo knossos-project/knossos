@@ -24,18 +24,16 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     sizeCombo.setCurrentIndex(0); // 1000 elements default
 
     auto viewportChoiceLayout = new QVBoxLayout();
-    vpXYRadio.setChecked(true);
+    auto vpGroup = new QButtonGroup();
+    vpGroup->addButton(&vpXYRadio);
+    vpGroup->addButton(&vpXZRadio);
+    vpGroup->addButton(&vpYZRadio);
+    vpGroup->addButton(&vp3dRadio);
     viewportChoiceLayout->addWidget(&vpXYRadio);
     viewportChoiceLayout->addWidget(&vpXZRadio);
     viewportChoiceLayout->addWidget(&vpYZRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
-    QObject::connect(&vp3dRadio, &QRadioButton::toggled, [this](bool checked) {
-        withOverlayCheck.setHidden(checked);
-        if(Segmentation::singleton().volume_render_toggle == false) {
-            withAxesCheck.setVisible(checked);
-            withVpPlanes.setVisible(checked);
-        }
-    });
+    QObject::connect(vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
 
     auto imageOptionsLayout = new QVBoxLayout();
     withAxesCheck.setChecked(true);
@@ -85,6 +83,14 @@ ViewportType SnapshotWidget::getCheckedViewport() const {
                                    VIEWPORT_SKELETON;
 }
 
+void SnapshotWidget::updateOptionVisibility() {
+    withOverlayCheck.setVisible(vp3dRadio.isChecked() == false);
+    withSkeletonCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withScaleCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withAxesCheck.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withVpPlanes.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+}
+
 QString SnapshotWidget::defaultFilename() const {
     const QString vp = vpXYRadio.isChecked() ? "XY" :
                    vpXZRadio.isChecked() ? "XZ" :
@@ -132,6 +138,7 @@ void SnapshotWidget::loadSettings() {
     withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
     withVpPlanes.setChecked(settings.value(WITH_VP_PLANES, false).toBool());
+    updateOptionVisibility();
     saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 
     settings.endGroup();

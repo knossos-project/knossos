@@ -25,6 +25,8 @@ public:
     explicit SnapshotWidget(QWidget *parent = 0);
     void saveSettings();
     void loadSettings();
+public slots:
+    void updateOptionVisibility();
 signals:
     void snapshotRequest(const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
