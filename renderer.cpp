@@ -1459,81 +1459,74 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
                 glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
                 glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
             glEnd();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-
-        // draw axes with endpoints
-        glColor4f(0., 0., 0., 1.);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+        // draw axes
+        GLdouble origin[3], conePos_x[3], conePos_y[3], conePos_z[3], model[16], projection[16];
+        GLint gl_viewport[4];
+        glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
+        glGetDoublev(GL_PROJECTION_MATRIX, &projection[0]);
+        glGetIntegerv(GL_VIEWPORT, gl_viewport);
+        gluProject(-state->boundary.x/2, -state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &origin[0], &origin[1], &origin[2]);
+        gluProject(state->boundary.x/2, -state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_x[0], &conePos_x[1], &conePos_x[2]);
+        gluProject(-state->boundary.x/2, state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_y[0], &conePos_y[1], &conePos_y[2]);
+        gluProject(-state->boundary.x/2, -state->boundary.y/2, state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_z[0], &conePos_z[1], &conePos_z[2]);
+        floatCoordinate axis_x{static_cast<float>(conePos_x[0] - origin[0]), static_cast<float>(origin[1] - conePos_x[1]), static_cast<float>(conePos_x[2] - origin[2])};
+        floatCoordinate axis_y{static_cast<float>(conePos_y[0] - origin[0]), static_cast<float>(origin[1] - conePos_y[1]), static_cast<float>(conePos_y[2] - origin[2])};
+        floatCoordinate axis_z{static_cast<float>(conePos_z[0] - origin[0]), static_cast<float>(origin[1] - conePos_z[1]), static_cast<float>(conePos_z[2] - origin[2])};
+        glDisable(GL_DEPTH_TEST);
+        auto renderAxis = [this, gl_viewport](floatCoordinate & targetView, const QString label) {
+            glPushMatrix();
+            floatCoordinate currentView = {0, 0, -1};
+            const auto angle = acosf(scalarProduct(&currentView, &targetView));
+            auto axis = crossProduct(&currentView, &targetView);
+            if (normalizeVector(&axis)) {
+                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+            }
+            // axis
+            const auto diameter = std::ceil(0.005*gl_viewport[2]);
+            GLUquadricObj * gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+            gluCylinder(gluCylObj, diameter, diameter , euclidicNorm(&targetView), 10, 1);
+            gluDeleteQuadric(gluCylObj);
+            // cone z
+            glTranslatef(0, 0, euclidicNorm(&targetView));
+            gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+            gluCylinder(gluCylObj, std::ceil(0.014*gl_viewport[2]), 0., std::ceil(0.028*gl_viewport[2]), 10, 5);
+            gluDeleteQuadric(gluCylObj);
+            const int offset = std::ceil(0.043*gl_viewport[2]);
+            renderText({offset, offset, offset}, label, std::ceil(0.02*gl_viewport[2]));
+            glPopMatrix();
+        };
+        // remember world coordinate system
+        glMatrixMode(GL_PROJECTION);
         glPushMatrix();
-
-        glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
-        GLUquadricObj * gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.z, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
+        glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glTranslatef(0.,0., state->boundary.z);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
+        // switch to viewport coordinate system
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        const auto lenLongestAxis = std::max(euclidicNorm(&axis_x), std::max(euclidicNorm(&axis_y), euclidicNorm(&axis_z)));
+        glOrtho(0, gl_viewport[2], gl_viewport[3], 0, lenLongestAxis, -lenLongestAxis);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glTranslatef(origin[0], gl_viewport[3] - origin[1], origin[2]);
+        glColor4f(0, 0, 0, 1);
+        renderAxis(axis_x, QString("x: %1 px").arg(state->boundary.x + 1));
+        renderAxis(axis_y, QString("y: %1 px").arg(state->boundary.y + 1));
+        renderAxis(axis_z, QString("z: %1 px").arg(state->boundary.z + 1));
+        // restore world coordinate system
         glPopMatrix();
-
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        glRotatef(90., 0., 1., 0.);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.x, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
-        glPushMatrix();
-        glTranslatef(0.,0., state->boundary.x);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
+        glMatrixMode(GL_PROJECTION);
         glPopMatrix();
-
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        glRotatef(-90., 1., 0., 0.);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.y, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
-        glPushMatrix();
-        glTranslatef(0.,0., state->boundary.y);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
-
-        glPopMatrix();
-        glPopMatrix();
-
-        // Draw axis description
-        glColor4f(0., 0., 0., 1.);
-
-        const Coordinate root_pos(- state->boundary.x / 2 - 50, - state->boundary.y / 2 - 50, - state->boundary.z / 2 - 50);
-
-        auto pos = root_pos;
-        pos = Coordinate(- root_pos.x, root_pos.y, root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.x * state->scale.x * 0.001));
-
-        pos = Coordinate(root_pos.x, - root_pos.y, root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.y * state->scale.y * 0.001));
-
-        pos = Coordinate(root_pos.x, root_pos.y, - root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.z * state->scale.z * 0.001));
+        glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_TEXTURE_2D);
+        glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
     }
 
