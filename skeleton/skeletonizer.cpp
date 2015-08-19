@@ -966,7 +966,6 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
     treeListElement *currentTree = NULL;
-    floatCoordinate distanceVector;
     float smallestDistance = 0;
 
 
@@ -978,12 +977,12 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
 
         while(currentNode) {
             // We make the nearest node the next active node
-            distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
-            distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
-            distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
+            const floatCoordinate distanceVector = {(float)(searchPosition.x - currentNode->position.x),
+                                                    (float)(searchPosition.y - currentNode->position.y),
+                                                    (float)(searchPosition.z - currentNode->position.z)};
             //set nearest distance to distance to first node found, then to distance of any nearer node found.
-            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(&distanceVector);
+            if(smallestDistance == 0 || euclidicNorm(distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
             currentNode = currentNode->next.get();
@@ -1005,18 +1004,14 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
 
         while(currentNode) {
             //We make the nearest node the next active node
-            distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
-            distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
-            distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
-
-            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(&distanceVector);
+            const floatCoordinate distanceVector = {(float)(searchPosition.x - currentNode->position.x),
+                                                    (float)(searchPosition.y - currentNode->position.y), (float)(searchPosition.z - currentNode->position.z)};
+            if(smallestDistance == 0 || euclidicNorm(distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
-
             currentNode = currentNode->next.get();
         }
-
        currentTree = currentTree->next.get();
     }
 
@@ -1031,7 +1026,6 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
     treeListElement *currentTree = NULL;
-    floatCoordinate distanceVector;
     float smallestDistance = CATCH_RADIUS;
 
     currentTree = state->skeletonState->firstTree.get();
@@ -1040,12 +1034,11 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
 
         while(currentNode) {
             //We make the nearest node the next active node
-            distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
-            distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
-            distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
-
-            if(euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(&distanceVector);
+            const floatCoordinate distanceVector = {(float)searchPosition.x - (float)currentNode->position.x,
+                                                    (float)searchPosition.y - (float)currentNode->position.y,
+                                                    (float)searchPosition.z - (float)currentNode->position.z};
+            if(euclidicNorm(distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
             currentNode = currentNode->next.get();
@@ -1157,12 +1150,10 @@ boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float rad
                 return boost::none;
             }
 
-            floatCoordinate lockVector;
-            lockVector.x = (float)position.x - (float)state->skeletonState->lockedPosition.x;
-            lockVector.y = (float)position.y - (float)state->skeletonState->lockedPosition.y;
-            lockVector.z = (float)position.z - (float)state->skeletonState->lockedPosition.z;
-
-            float lockDistance = euclidicNorm(&lockVector);
+            const floatCoordinate lockVector = {(float)(position.x - state->skeletonState->lockedPosition.x),
+                                                (float)(position.y - state->skeletonState->lockedPosition.y),
+                                                (float)(position.z - state->skeletonState->lockedPosition.z)};
+            float lockDistance = euclidicNorm(lockVector);
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
                 return boost::none;
@@ -1230,7 +1221,6 @@ boost::optional<uint64_t> Skeletonizer::addNode(uint64_t nodeID, const float rad
 bool Skeletonizer::addSegment(uint sourceNodeID, uint targetNodeID) {
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
-    floatCoordinate node1, node2;
 
     if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
         qDebug("Segment between nodes %u and %u exists already.", sourceNodeID, targetNodeID);
@@ -1264,20 +1254,14 @@ bool Skeletonizer::addSegment(uint sourceNodeID, uint targetNodeID) {
     sourceSeg->reverseSegment->reverseSegment = sourceSeg;
 
     /* numSegs counts forward AND backward segments!!! */
-   sourceNode->numSegs++;
-   targetNode->numSegs++;
+    sourceNode->numSegs++;
+    targetNode->numSegs++;
 
-   /* Do we really skip this node? Test cum dist. to last rendered node! */
-   node1.x = (float)sourceNode->position.x;
-   node1.y = (float)sourceNode->position.y;
-   node1.z = (float)sourceNode->position.z;
+    /* Do we really skip this node? Test cum dist. to last rendered node! */
+    const floatCoordinate node1 = {(float)sourceNode->position.x, (float)sourceNode->position.y, (float)sourceNode->position.z};
+    const floatCoordinate node2 = {(float)targetNode->position.x - node1.x, (float)targetNode->position.y - node1.y, (float)targetNode->position.z - node1.z};
 
-   node2.x = (float)targetNode->position.x - node1.x;
-   node2.y = (float)targetNode->position.y - node1.y;
-   node2.z = (float)targetNode->position.z - node1.z;
-
-   sourceSeg->length = sourceSeg->reverseSegment->length
-       = sqrtf(scalarProduct(&node2, &node2));
+    sourceSeg->length = sourceSeg->reverseSegment->length = sqrtf(scalarProduct(node2, node2));
 
     updateCircRadius(sourceNode);
 

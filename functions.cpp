@@ -11,22 +11,20 @@ int roundFloat(float number) {
     else return (int)(number - 0.5);
 }
 
-float scalarProduct(floatCoordinate *v1, floatCoordinate *v2) {
-    return ((v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z));
+float scalarProduct(const floatCoordinate & v1, const floatCoordinate  & v2) {
+    return ((v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z));
 }
 
-float euclidicNorm(floatCoordinate *v) {
+float euclidicNorm(const floatCoordinate & v) {
     return sqrt(scalarProduct(v, v));
 }
 
-bool normalizeVector(floatCoordinate *v) {
-    float norm = euclidicNorm(v);
+bool normalizeVector(floatCoordinate & v) {
+    const auto norm = euclidicNorm(v);
     if(norm == 0) {
         return false;
     }
-    v->x /= norm;
-    v->y /= norm;
-    v->z /= norm;
+    v = {v.x / norm, v.y / norm, v.z / norm};
     return true;
 }
 
@@ -46,13 +44,11 @@ float degToRad(float deg) {
     return ((deg / 180.) * boost::math::constants::pi<float>());
 }
 
-floatCoordinate crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
-    floatCoordinate result;
-    result = {v1->y * v2->z - v1->z * v2->y, v1->z * v2->x - v1->x * v2->z, v1->x * v2->y - v1->y * v2->x};
-    return result;
+floatCoordinate crossProduct(const floatCoordinate & v1, const floatCoordinate & v2) {
+    return {v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x};
 }
 
-float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
+float vectorAngle(const floatCoordinate & v1, const floatCoordinate & v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
 
@@ -77,7 +73,7 @@ void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
     const auto y = matrix[1][0]*v.x + matrix[1][1]*v.y + matrix[1][2]*v.z;
     const auto z = matrix[2][0]*v.x + matrix[2][1]*v.y + matrix[2][2]*v.z;
     v = {x, y, z};
-    normalizeVector(&v);
+    normalizeVector(v);
 }
 
 bool checkTreeParameter(int id, float r, float g, float b, float a) {

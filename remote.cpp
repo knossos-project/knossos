@@ -59,7 +59,7 @@ void Remote::run() {
         }
         //distance vector
         floatCoordinate currToNext = recenteringPosition - state->viewerState->currentPosition;
-        if(euclidicNorm(&currToNext) > jumpThreshold) {
+        if(euclidicNorm(currToNext) > jumpThreshold) {
             remoteJump(recenteringPosition.x, recenteringPosition.y, recenteringPosition.z);
         } else {
             remoteWalk(round(currToNext.x), round(currToNext.y), round(currToNext.z));
@@ -177,15 +177,12 @@ bool Remote::remoteWalk(int x, int y, int z) {
             }
             avg /= lastRecenterings.size();
 
-            floatCoordinate delta;
-            delta.x = recenteringPosition.x - avg.x;
-            delta.y = recenteringPosition.y - avg.y;
-            delta.z = recenteringPosition.z - avg.z;
-            normalizeVector(&delta);
-            float scalar = scalarProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
+            floatCoordinate delta = {recenteringPosition.x - avg.x, recenteringPosition.y - avg.y, recenteringPosition.z - avg.z};
+            normalizeVector(delta);
+            float scalar = scalarProduct(state->viewerState->vpConfigs[activeVP].n, delta);
             rotation.alpha = acosf(std::min(1.f, std::max(-1.f, scalar)));
-            rotation.axis = crossProduct(&state->viewerState->vpConfigs[activeVP].n, &delta);
-            normalizeVector(&rotation.axis);
+            rotation.axis = crossProduct(state->viewerState->vpConfigs[activeVP].n, delta);
+            normalizeVector(rotation.axis);
         }
     }
 
@@ -215,7 +212,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
     }
 
-    float walkLength = std::max(10.f, euclidicNorm(&walkVector));
+    float walkLength = std::max(10.f, euclidicNorm(walkVector));
     uint timePerStep = std::max(10u, recenteringTime / ((uint)walkLength));
     float totalMoves = std::max(std::max(abs(x), abs(y)), abs(z)) / state->magnification;
     floatCoordinate singleMove = walkVector / totalMoves;

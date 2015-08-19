@@ -124,16 +124,12 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             glTranslatef((float)base->x, (float)base->y, (float)base->z);
 
             //Some calculations for the correct direction of the cylinder.
-            tempVec.x = 0.;
-            tempVec.y = 0.;
-            tempVec.z = 1.;
-            segDirection.x = (float)(top->x - base->x);
-            segDirection.y = (float)(top->y - base->y);
-            segDirection.z = (float)(top->z - base->z);
+            tempVec = {0., 0., 1.};
+            segDirection = {(float)(top->x - base->x), (float)(top->y - base->y), (float)(top->z - base->z)};
 
             //temVec2 defines the rotation axis
-            tempVec2 = crossProduct(&tempVec, &segDirection);
-            currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
+            tempVec2 = crossProduct(tempVec, segDirection);
+            currentAngle = radToDeg(vectorAngle(tempVec, segDirection));
 
             //some gl implementations have problems with the params occuring for
             //segs in straight directions. we need a fix here.
@@ -142,13 +138,13 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             //tdItem use state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx for proper LOD
             //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
             if((baseRadius > 100.f) || topRadius > 100.f) {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 10, 1);
             }
             else if((baseRadius > 15.f) || topRadius > 15.f) {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 6, 1);
             }
             else {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 3, 1);
             }
 
             gluDeleteQuadric(gluCylObj);
@@ -326,8 +322,8 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
                     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
                     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-                    length = euclidicNorm(&segDir);
-                    distSourceInter = euclidicNorm(&tempVec3);
+                    length = euclidicNorm(segDir);
+                    distSourceInter = euclidicNorm(tempVec3);
 
                     if(sSr_local < sTr_local)
                         radius = sTr_local + sSr_local * (1. - distSourceInter / length);
@@ -336,21 +332,16 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
                     else
                         radius = sSr_local - (sSr_local - sTr_local) * distSourceInter / length;
 
-                    segDir.x /= length;
-                    segDir.y /= length;
-                    segDir.z /= length;
+                    segDir = {segDir.x / length, segDir.y / length, segDir.z / length};
 
                     glTranslatef(intPoint.x - 0.75 * segDir.x, intPoint.y - 0.75 * segDir.y, intPoint.z - 0.75 * segDir.z);
                     //glTranslatef(intPoint.x, intPoint.y, intPoint.z);
 
                     //Some calculations for the correct direction of the cylinder.
-                    tempVec.x = 0.;
-                    tempVec.y = 0.;
-                    tempVec.z = 1.;
-
+                    tempVec = {0., 0., 1.};
                     //temVec2 defines the rotation axis
-                    tempVec2 = crossProduct(&tempVec, &segDir);
-                    currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
+                    tempVec2 = crossProduct(tempVec, segDir);
+                    currentAngle = radToDeg(vectorAngle(tempVec, segDir));
                     glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
                     glColor4f(0.,0.,0.,1.);
@@ -733,17 +724,17 @@ bool Renderer::renderOrthogonalVP(uint currentVP, const RenderOptions &options) 
             vec1 = {0, 0, 1};
         }
         // first rotation makes the viewport face the camera
-        float scalar = scalarProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
+        float scalar = scalarProduct(normal, state->viewerState->vpConfigs[currentVP].n);
         float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
-        floatCoordinate axis = crossProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
-        if(normalizeVector(&axis)) {
+        floatCoordinate axis = crossProduct(normal, state->viewerState->vpConfigs[currentVP].n);
+        if(normalizeVector(axis)) {
             glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         } // second rotation also aligns the plane vectors with the camera
         rotateAndNormalize(vec1, axis, angle);
-        scalar = scalarProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
+        scalar = scalarProduct(vec1, state->viewerState->vpConfigs[currentVP].v1);
         angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
-        axis = crossProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
-        if(normalizeVector(&axis)) {
+        axis = crossProduct(vec1, state->viewerState->vpConfigs[currentVP].v1);
+        if(normalizeVector(axis)) {
             glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         }
 
@@ -1479,9 +1470,9 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         auto renderAxis = [this, gl_viewport](floatCoordinate & targetView, const QString label) {
             glPushMatrix();
             floatCoordinate currentView = {0, 0, -1};
-            const auto angle = acosf(scalarProduct(&currentView, &targetView));
-            auto axis = crossProduct(&currentView, &targetView);
-            if (normalizeVector(&axis)) {
+            const auto angle = acosf(scalarProduct(currentView, targetView));
+            auto axis = crossProduct(currentView, targetView);
+            if (normalizeVector(axis)) {
                 glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
             }
             // axis
@@ -1489,10 +1480,10 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
             GLUquadricObj * gluCylObj = gluNewQuadric();
             gluQuadricNormals(gluCylObj, GLU_SMOOTH);
             gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, diameter, diameter , euclidicNorm(&targetView), 10, 1);
+            gluCylinder(gluCylObj, diameter, diameter , euclidicNorm(targetView), 10, 1);
             gluDeleteQuadric(gluCylObj);
             // cone z
-            glTranslatef(0, 0, euclidicNorm(&targetView));
+            glTranslatef(0, 0, euclidicNorm(targetView));
             gluCylObj = gluNewQuadric();
             gluQuadricNormals(gluCylObj, GLU_SMOOTH);
             gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
@@ -1510,7 +1501,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         // switch to viewport coordinate system
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        const auto lenLongestAxis = std::max(euclidicNorm(&axis_x), std::max(euclidicNorm(&axis_y), euclidicNorm(&axis_z)));
+        const auto lenLongestAxis = std::max(euclidicNorm(axis_x), std::max(euclidicNorm(axis_y), euclidicNorm(axis_z)));
         glOrtho(0, gl_viewport[2], gl_viewport[3], 0, lenLongestAxis, -lenLongestAxis);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();

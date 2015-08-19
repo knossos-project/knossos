@@ -256,7 +256,7 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             //Additional move of specified steps along tracing direction
             if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
                 floatCoordinate walking{movement};
-                const auto factor = state->viewerState->autoTracingSteps / euclidicNorm(&walking);
+                const auto factor = state->viewerState->autoTracingSteps / euclidicNorm(walking);
                 clickedCoordinate += {roundFloat(movement.x * factor), roundFloat(movement.y * factor), roundFloat(movement.z * factor)};
             }
             //Additional move of steps equal to distance between last and new node along tracing direction.
