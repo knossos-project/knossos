@@ -154,22 +154,16 @@ void ViewportSettingsWidget::loadSettings() {
     slicePlaneViewportWidget->showNodeCommentsCheckBox.clicked(showNodeComments);
 
     slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE, "").toString());
-    if (!slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
-        slicePlaneViewportWidget->loadDatasetLUT();
-    }
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut
     const auto useDatasetLut = settings.value(DATASET_LUT_FILE_USED, false).toBool();
     slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->setChecked(useDatasetLut);
-    slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->clicked(useDatasetLut);
+    slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->clicked(useDatasetLut);//reload LUT
 
     slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE, "").toString());
-    if (!slicePlaneViewportWidget->treeLutFile->text().isEmpty()) {
-        slicePlaneViewportWidget->loadTreeLUT();
-    }
     //the same applies here
     const auto useTreeLut = settings.value(TREE_LUT_FILE_USED, false).toBool();
     slicePlaneViewportWidget->useOwnTreeColorsCheckBox->setChecked(useTreeLut);
-    slicePlaneViewportWidget->useOwnTreeColorsCheckBox->clicked(useTreeLut);
+    slicePlaneViewportWidget->useOwnTreeColorsCheckBox->clicked(useTreeLut);//reload LUT
 
     const auto luminanceBias = settings.value(BIAS, 0).toInt();
     slicePlaneViewportWidget->biasSpinBox->setValue(luminanceBias);

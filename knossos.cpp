@@ -125,8 +125,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
     QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
-    Knossos::loadDefaultTreeLUT();
-
     Scripting scripts;
     viewer.run();
     remote.start();
@@ -396,7 +394,6 @@ bool Knossos::configDefaults() {
     state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
     state->viewerState->datasetColortableOn = false;
     state->viewerState->datasetAdjustmentOn = false;
-    state->viewerState->treeColortableOn = false;
     state->viewerState->viewerReady = false;
     state->viewerState->drawVPCrosshairs = true;
     state->viewerState->showScalebar = false;
@@ -441,11 +438,4 @@ bool Knossos::configDefaults() {
 
     return true;
 
-}
-
-void Knossos::loadDefaultTreeLUT() {
-    if (!state->viewer->loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB)) {
-        state->viewer->loadTreeColorTable(":/resources/color_palette/default.json", &(state->viewerState->defaultTreeTable[0]), GL_RGB);
-        state->viewer->window->treeColorAdjustmentsChanged();
-    }
 }

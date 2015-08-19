@@ -1,5 +1,6 @@
 #include "segmentation.h"
 
+#include "file_io.h"
 #include "knossos.h"
 #include "loader.h"
 #include "session.h"
@@ -114,12 +115,7 @@ void Segmentation::clear() {
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
     const auto colorIndex = subObjectID % overlayColorMap.size();
-
-    const uint8_t red   = overlayColorMap[colorIndex][0];
-    const uint8_t green = overlayColorMap[colorIndex][1];
-    const uint8_t blue  = overlayColorMap[colorIndex][2];
-
-    return std::make_tuple(red, green, blue, alpha);
+    return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
 Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Segmentation::Object & other) {
@@ -129,57 +125,9 @@ Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Seg
     return objects.back();
 }
 
-void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
-    QFile overlayLutFile(QString(filename.c_str()));
-
-    overlayLutFile.open(QIODevice::ReadOnly);
-
-    //std::ifstream overlayLutFile(filename, std::ios_base::binary);
-    if (overlayLutFile.isOpen()) {
-
-        if(overlayLutFile.size() == 768) { //we have a .lut file!
-
-            const auto buffer = overlayLutFile.readAll();
-            const auto expectedSize = 768 * sizeof(buffer[0]);
-
-            if (buffer.size() == expectedSize) {
-
-                overlayColorMap.reserve(expectedSize);
-
-                for(int i = 0; i < 768; i+=3) {
-                    overlayColorMap.push_back({{static_cast<uint8_t>(buffer[i]), static_cast<uint8_t>(buffer[i+1]), static_cast<uint8_t>(buffer[i+3])}});
-                }
-                qDebug() << "sucessfully loaded LUT-File »" << filename.c_str() << "«";
-            } else {
-                qDebug() << filename.c_str() << " corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
-            }
-            overlayLutFile.close();
-        } else { //parse it as json
-            QTextStream in(&overlayLutFile);
-            QString json_raw = in.readAll();
-
-            overlayLutFile.close();
-
-            QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-            auto jarray = json_conf.array();
-
-            overlayColorMap.reserve(jarray.size());
-
-            //Get RGB-Values in percent
-            for(int i = 0; i < jarray.size(); ++i) {
-                uint8_t r, g,b;
-                r = static_cast<uint8_t>(jarray[i].toArray()[0].toInt());
-                g = static_cast<uint8_t>(jarray[i].toArray()[1].toInt());
-                b = static_cast<uint8_t>(jarray[i].toArray()[2].toInt());
-                overlayColorMap.push_back({{r,g,b}});
-            }
-
-            qDebug() << "sucessfully loaded JSON-File »" << filename.c_str() << "«";
-        }
-    } else {
-        qDebug() << "could not open »" << filename.c_str() << "«";
-    }
-
+void Segmentation::loadOverlayLutFromFile(const QString & path) {
+    overlayColorMap = loadLookupTable(path);
+    emit resetData();
 }
 
 bool Segmentation::hasObjects() const {
@@ -271,11 +219,7 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
     const auto & objectId = objects[objectIndex].id;
     const auto colorIndex = objectId % overlayColorMap.size();
-
-    const uint8_t red   = overlayColorMap[colorIndex][0];
-    const uint8_t green = overlayColorMap[colorIndex][1];
-    const uint8_t blue  = overlayColorMap[colorIndex][2];
-    return std::make_tuple(red, green, blue, alpha);
+    return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {

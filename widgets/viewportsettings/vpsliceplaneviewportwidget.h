@@ -25,13 +25,13 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <qgl.h>
-#include <QLabel>
-#include <QSpinBox>
-#include <QHBoxLayout>
-#include <QSlider>
-#include <QWidget>
 #include <QCheckBox>
+#include <QLabel>
+#include <QHBoxLayout>
+#include <QMessageBox>
+#include <QSlider>
+#include <QSpinBox>
+#include <QWidget>
 
 class QDoubleSpinBox;
 class QPushButton;
@@ -42,14 +42,12 @@ class VPSlicePlaneViewportWidget : public QWidget {
     friend class ViewportSettingsWidget;
     friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
+    QMessageBox lutErrorBox;
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
 signals:
-    bool loadDataSetColortableSignal(QString path, GLuint *table, int type);
     void showIntersectionsSignal(bool value);
     void updateViewerStateSignal();
-    bool loadTreeColorTableSignal(QString path, float *table, int type);
-    void treeColorAdjustmentsChangedSignal();
     void setVPOrientationSignal(bool arbitrary);
 public slots:
     void datasetLinearFilteringChecked(bool checked);
@@ -57,17 +55,14 @@ public slots:
     void depthCutoffChanged(double value);
     void useOwnDatasetColorsClicked(bool checked);
     void useOwnTreeColorsClicked(bool checked);
-    void useOwnDatasetColorsButtonClicked();
-    void useOwnTreeColorButtonClicked();
+    void useOwnDatasetColorsButtonClicked(QString path = "");
+    void useOwnTreeColorButtonClicked(QString path = "");
     void biasSliderMoved(int value);
     void biasChanged(int value);
     void rangeDeltaSliderMoved(int value);
     void rangeDeltaChanged(int value);
     void drawIntersectionsCrossHairChecked(bool on);
     void updateIntersection();
-
-    void loadDatasetLUT();
-    void loadTreeLUT();
 
 protected:
     QCheckBox arbitraryModeCheckBox{"Arbitrary Viewport Orientation"};

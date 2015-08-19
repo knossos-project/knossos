@@ -24,6 +24,7 @@
 #include "viewer.h"
 
 #include "eventmodel.h"
+#include "file_io.h"
 #include "functions.h"
 #include "renderer.h"
 #include "segmentation/segmentation.h"
@@ -42,9 +43,6 @@
 #include <fstream>
 
 #include <cmath>
-
-//  For the Lookup tables
-#define RGBA_LUTSIZE 1024
 
 Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewer = this;
@@ -123,14 +121,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
     state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
 
-    for (int i = 0; i < 256; ++i) {
-        state->viewerState->neutralDatasetTable[0][i] = i;
-        state->viewerState->neutralDatasetTable[1][i] = i;
-        state->viewerState->neutralDatasetTable[2][i] = i;
-    }
-
-    state->viewerState->treeLutSet = false;
-
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify_visible);
@@ -180,9 +170,9 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
                 const uint8_t adjustIndex = reinterpret_cast<uint8_t*>(datacube)[0];
-                r = state->viewerState->datasetAdjustmentTable[0][adjustIndex];
-                g = state->viewerState->datasetAdjustmentTable[1][adjustIndex];
-                b = state->viewerState->datasetAdjustmentTable[2][adjustIndex];
+                r = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+                g = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+                b = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
             } else {
                 r = g = b = reinterpret_cast<uint8_t*>(datacube)[0];
             }
@@ -256,9 +246,9 @@ bool Viewer::dcSliceExtract_arb(char *datacube, struct vpConfig *viewPort, float
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
                 const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[dcIndex];
-                slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][adjustIndex];
-                slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][adjustIndex];
-                slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][adjustIndex];
+                slice[sliceIndex + 0] = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+                slice[sliceIndex + 1] = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+                slice[sliceIndex + 2] = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
             }
             else {
                 slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
@@ -821,132 +811,6 @@ bool Viewer::initViewer() {
 
     updateViewerState();
     recalcTextureOffsets();
-
-    return true;
-}
-
-
-
-// from knossos-global.h
-bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
-
-    int size = 0;
-
-    if(type == GL_RGB) {
-        size = RGB_LUTSIZE;
-    } else if (type == GL_RGBA) {
-        size = RGBA_LUTSIZE;
-    } else {
-        qDebug("Requested color type %x does not exist.", type);
-        return false;
-    }
-
-    QFile overlayLutFile(QString(path.toStdString().c_str()));
-
-    overlayLutFile.open(QIODevice::ReadOnly);
-
-    if (overlayLutFile.isOpen()) {
-        if (overlayLutFile.size() == size) { //we have a .lut file! (RGB || RGBA)
-
-            const auto buffer = overlayLutFile.readAll();
-            overlayLutFile.close();
-
-            if (type == GL_RGB) {
-                for (int i = 0; i < 256; ++i) {
-                    table[0 * 256 + i] = static_cast<uint8_t>(buffer[0 * 256 + i]);
-                    table[1 * 256 + i] = static_cast<uint8_t>(buffer[1 * 256 + i]);
-                    table[2 * 256 + i] = static_cast<uint8_t>(buffer[2 * 256 + i]);
-                }
-            } else if (type == GL_RGBA) {
-                for (int i = 0; i < 256; ++i) {
-                    table[0 * 256 + i] = static_cast<uint8_t>(buffer[0 * 256 + i]);
-                    table[1 * 256 + i] = static_cast<uint8_t>(buffer[1 * 256 + i]);
-                    table[2 * 256 + i] = static_cast<uint8_t>(buffer[2 * 256 + i]);
-                    table[3 * 256 + i] = static_cast<uint8_t>(buffer[3 * 256 + i]);
-                }
-            }
-
-            qDebug() << "loadDatasetColorTable: sucessfully loaded LUT-File »" << path.toStdString().c_str() << "«";
-
-        } else { //json file, RGB only
-            QTextStream in(&overlayLutFile);
-            QString json_raw = in.readAll();
-
-            overlayLutFile.close();
-
-            QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-            auto jarray = json_conf.array();
-
-            //Get RGB-Values in percent
-            for (int i = 0; i < jarray.size(); ++i) {
-                table[0 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[0].toInt()) / MAX_COLORVAL;
-                table[1 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[1].toInt()) / MAX_COLORVAL;
-                table[2 * 256 + i] = static_cast<uint8_t>(jarray[i].toArray()[2].toInt()) / MAX_COLORVAL;
-            }
-
-            qDebug() << "loadDatasetColorTable: sucessfully loaded JSON-File »" << path.toStdString().c_str() << "«";
-        }
-    } else {
-        qDebug() << "loadDatasetColorTable: Failed to open file: »" << path.toStdString().c_str() << "«";
-
-        return false;
-    }
-
-    return true;
-}
-
-bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
-
-    if (type != GL_RGB) {
-        /* AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type); */
-        qDebug("Chosen color was of type %x, but expected GL_RGB", type);
-        return false;
-    }
-
-    QFile overlayLutFile(QString(path.toStdString().c_str()));
-
-    overlayLutFile.open(QIODevice::ReadOnly);
-
-    if (overlayLutFile.isOpen()) {
-        if (overlayLutFile.size() == 768) { //we have a .lut file!
-
-            const auto buffer = overlayLutFile.readAll();
-            overlayLutFile.close();
-
-            //Get RGB-Values in percent
-            for (int i = 0; i < 256; ++i) {
-                table[0 * 256 + i] = static_cast<uint8_t>(buffer[i]) / MAX_COLORVAL;
-                table[1 * 256 + i] = static_cast<uint8_t>(buffer[i + 256]) / MAX_COLORVAL;
-                table[2 * 256 + i] = static_cast<uint8_t>(buffer[i + 512]) / MAX_COLORVAL;
-            }
-
-            qDebug() << "loadTreeColorTable: sucessfully loaded LUT-File »" << path.toStdString().c_str() << "«";
-        } else { //json
-            QTextStream in(&overlayLutFile);
-            QString json_raw = in.readAll();
-
-            overlayLutFile.close();
-
-            QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-            auto jarray = json_conf.array();
-
-            //Get RGB-Values in percent
-            for (int i = 0; i < jarray.size(); ++i) {
-                table[i] = static_cast<uint8_t>(jarray[i].toArray()[0].toInt()) / MAX_COLORVAL;
-                table[i + 256] = static_cast<uint8_t>(jarray[i].toArray()[1].toInt()) / MAX_COLORVAL;
-                table[i + 512] = static_cast<uint8_t>(jarray[i].toArray()[2].toInt()) / MAX_COLORVAL;
-            }
-
-            qDebug() << "loadTreeColorTable: sucessfully loaded JSON-File »" << path.toStdString().c_str() << "«";
-        }
-
-    } else {
-        qDebug() << "loadTreeColorTable: Failed to open file: »" << path.toStdString().c_str() << "«";
-
-        return false;
-    }
-
-    window->treeColorAdjustmentsChanged();
 
     return true;
 }
@@ -1691,6 +1555,40 @@ void Viewer::loader_notify() {
     Loader::Controller::singleton().startLoading(state->viewerState->currentPosition);
 }
 
+void Viewer::defaultDatasetLUT() {
+    state->viewerState->datasetColortableOn = false;
+    datasetColorAdjustmentsChanged();
+}
+
+void Viewer::loadDatasetLUT(const QString & path) {
+    state->viewerState->datasetColortable = loadLookupTable(path);
+    state->viewerState->datasetColortableOn = true;
+    datasetColorAdjustmentsChanged();
+}
+
+void Viewer::datasetColorAdjustmentsChanged() {
+    if (state->viewerState->datasetColortableOn) {
+        state->viewerState->datasetAdjustmentTable = state->viewerState->datasetColortable;
+    } else {
+        state->viewerState->datasetAdjustmentTable.resize(256);
+        for (std::size_t i = 0; i < state->viewerState->datasetAdjustmentTable.size(); ++i) {//identity adjustment
+            state->viewerState->datasetAdjustmentTable[i] = std::make_tuple(i, i, i);
+        }
+    }
+    //Apply the dynamic range settings to the adjustment table
+    if (state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL) {
+        const auto originalAdjustment = state->viewerState->datasetAdjustmentTable;
+        for (int i = 0; i < 256; ++i) {
+            int dynIndex = ((i - state->viewerState->luminanceBias) / (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
+            dynIndex = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
+            state->viewerState->datasetAdjustmentTable[i] = originalAdjustment[dynIndex];
+        }
+    }
+    state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL;
+
+    dc_reslice_notify_visible();
+}
+
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
@@ -1739,9 +1637,6 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  slice plane vps tab signals
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::setVPOrientationSignal, this, &Viewer::setVPOrientation);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::treeColorAdjustmentsChangedSignal, window, &MainWindow::treeColorAdjustmentsChanged);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadTreeColorTableSignal, this, &Viewer::loadTreeColorTable);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadDataSetColortableSignal, &Viewer::loadDatasetColorTable);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  -- end viewport settings widget signals
     //  dataset options signals --

@@ -119,17 +119,10 @@ struct viewerState {
     int luminanceBias;
     int luminanceRangeDelta;
 
-    GLuint datasetColortable[3][256];
-    GLuint datasetAdjustmentTable[3][256];
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
     bool datasetColortableOn;
     bool datasetAdjustmentOn;
-    GLuint neutralDatasetTable[3][256];
-
-    bool treeLutSet;
-    bool treeColortableOn;
-    float treeColortable[RGB_LUTSIZE];
-    float treeAdjustmentTable[RGB_LUTSIZE];
-    float defaultTreeTable[RGB_LUTSIZE];
 
     // Advanced Tracing Modes Stuff
     navigationMode autoTracingMode;
@@ -223,8 +216,9 @@ public slots:
     bool updateViewerState();
     void run();
     void loader_notify();
-    bool loadTreeColorTable(QString path, float *table, int type);
-    static bool loadDatasetColorTable(QString path, GLuint *table, int type=0);
+    void defaultDatasetLUT();
+    void loadDatasetLUT(const QString & path);
+    void datasetColorAdjustmentsChanged();
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();

@@ -140,6 +140,7 @@ struct skeletonState {
 
 class Skeletonizer : public QObject {
     Q_OBJECT
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
 public:
     explicit Skeletonizer(QObject *parent = 0);
     static Skeletonizer & singleton() {
@@ -226,14 +227,14 @@ public slots:
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(const treeListElement & tree, const QString & comment);
     static bool addSegment(uint sourceNodeID, uint targetNodeID);
-    static void restoreDefaultTreeColor(treeListElement *tree);
-    static void restoreDefaultTreeColor();
+    void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(int nodeID);
     int findAvailableTreeID();
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
-    static bool updateTreeColors();
+    void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
+    void updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
     uint64_t addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);

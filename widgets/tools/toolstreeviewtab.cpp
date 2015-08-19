@@ -338,7 +338,7 @@ void ToolsTreeviewTab::mergeTreesAction() {
 
 void ToolsTreeviewTab::restoreColorAction() {
     for (auto * tree : state->skeletonState->selectedTrees) {
-        Skeletonizer::restoreDefaultTreeColor(tree);
+        Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
     }
     recreateTreesTable();
 }

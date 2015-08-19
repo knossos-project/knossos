@@ -81,6 +81,8 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
     state->skeletonState->skeletonLastSavedInVersion.clear();
+
+    loadTreeLUT();
 }
 
 segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
@@ -1533,14 +1535,11 @@ treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
-        int index = (newElement->treeID - 1) % 256; //first index is 0
-
-        newElement->color.r =  state->viewerState->treeAdjustmentTable[index];
-        newElement->color.g =  state->viewerState->treeAdjustmentTable[index + 256];
-        newElement->color.b =  state->viewerState->treeAdjustmentTable[index + 512];
-        newElement->color.a = 1.;
-    }
-    else {
+        const auto blockState = this->signalsBlocked();
+        blockSignals(true);
+        restoreDefaultTreeColor(*newElement);
+        blockSignals(blockState);
+    } else {
         newElement->color = color;
     }
     newElement->colorSetManually = false;
@@ -2286,34 +2285,27 @@ nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const pa
     return popBranchNode();
 }
 
-void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
-    if(tree == NULL) {
-        return;
-    }
-    int index = (tree->treeID - 1) % 256;
+void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
+    const auto index = (tree.treeID - 1) % treeColors.size();
+    tree.color.r = std::get<0>(treeColors[index]) / MAX_COLORVAL;
+    tree.color.g = std::get<1>(treeColors[index]) / MAX_COLORVAL;
+    tree.color.b = std::get<2>(treeColors[index]) / MAX_COLORVAL;
+    tree.color.a = 1.;
 
-    tree->color.r = state->viewerState->defaultTreeTable[index];
-    tree->color.g = state->viewerState->defaultTreeTable[index + 256];
-    tree->color.b = state->viewerState->defaultTreeTable[index + 512];
-    tree->color.a = 1.;
-
-    tree->colorSetManually = false;
+    tree.colorSetManually = false;
     Session::singleton().unsavedChanges = true;
+    emit treeChangedSignal(tree);
 }
 
-void Skeletonizer::restoreDefaultTreeColor() {
-    restoreDefaultTreeColor(state->skeletonState->activeTree);
+void Skeletonizer::loadTreeLUT(const QString & path) {
+    treeColors = loadLookupTable(path);
+    updateTreeColors();
 }
 
-bool Skeletonizer::updateTreeColors() {
+void Skeletonizer::updateTreeColors() {
     for (auto * tree = state->skeletonState->firstTree.get(); tree != nullptr; tree = tree->next.get()) {
-        uint index = (tree->treeID - 1) % 256;
-        tree->color.r = state->viewerState->treeAdjustmentTable[index];
-        tree->color.g = state->viewerState->treeAdjustmentTable[index +  256];
-        tree->color.b = state->viewerState->treeAdjustmentTable[index + 512];
-        tree->color.a = 1.;
+        restoreDefaultTreeColor(*tree);
     }
-    return true;
 }
 
 /**

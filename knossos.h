@@ -31,7 +31,6 @@ namespace Knossos {
 
     bool sendRemoteSignal();
     bool sendQuitSignal();
-    void loadDefaultTreeLUT();
 }
 
 #endif

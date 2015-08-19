@@ -173,8 +173,6 @@ public:
     void notifyUnsavedChanges();
     void updateTitlebar();
 
-    static void datasetColorAdjustmentsChanged();
-
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
@@ -212,7 +210,6 @@ public slots:
 
     void updateCoordinateBar(int x, int y, int z);
     void recentFileSelected();
-    void treeColorAdjustmentsChanged();
     // viewports
     void resetViewports();
     void showVPDecorationClicked();

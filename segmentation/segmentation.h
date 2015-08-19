@@ -104,7 +104,7 @@ Q_OBJECT
 
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
-    std::vector<std::array<uint8_t, 3>> overlayColorMap;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
 
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
@@ -202,7 +202,7 @@ public:
     //files
     void mergelistSave(QIODevice & file) const;
     void mergelistLoad(QIODevice & file);
-    void loadOverlayLutFromFile(const std::string & filename = ":/resources/color_palette/default.json");
+    void loadOverlayLutFromFile(const QString & filename = ":/resources/color_palette/default.json");
 signals:
     void beforeAppendRow();
     void beforeRemoveRow();

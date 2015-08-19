@@ -39,9 +39,7 @@
 #include <QGridLayout>
 #include <QFileDialog>
 
-VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
-    QWidget(parent)
-{
+VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) : QWidget(parent), lutErrorBox(this) {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QGridLayout *gridLayout = new QGridLayout();
 
@@ -152,6 +150,10 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
 
+    lutErrorBox.setIcon(QMessageBox::Warning);
+    lutErrorBox.setText("LUT loading failed");
+    lutErrorBox.setInformativeText("LUTs are restricted to 256 RGB tuples");
+
     QObject::connect(&arbitraryModeCheckBox, &QCheckBox::clicked, [&](bool checked) {
         Viewport::arbitraryOrientation = checked;
         emit setVPOrientationSignal(checked);
@@ -163,9 +165,9 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
         Viewport::showNodeComments = checked;
     });
     QObject::connect(useOwnDatasetColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked);
-    connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
+    QObject::connect(useOwnDatasetColorsButton, &QPushButton::clicked, [this](){ useOwnDatasetColorsButtonClicked(); });
     QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsClicked);
-    connect(useOwnTreeColorButton, SIGNAL(clicked()), this, SLOT(useOwnTreeColorButtonClicked()));
+    QObject::connect(useOwnTreeColorButton, &QPushButton::clicked, [this](){ useOwnTreeColorButtonClicked(); });
     QObject::connect(biasSlider, &QSlider::valueChanged, this, &VPSlicePlaneViewportWidget::biasSliderMoved);
     QObject::connect(biasSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &VPSlicePlaneViewportWidget::biasChanged);
     QObject::connect(rangeDeltaSlider, &QSlider::valueChanged, this, &VPSlicePlaneViewportWidget::rangeDeltaSliderMoved);
@@ -202,97 +204,81 @@ void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked(bool checked) {
-    if (checked && datasetLutFile->text().isEmpty()) {//load file if none is cached
-        useOwnDatasetColorsButtonClicked();
-    }
-    if (!datasetLutFile->text().isEmpty()) {//valid filename → apply
-        state->viewerState->datasetColortableOn = checked;
-        MainWindow::datasetColorAdjustmentsChanged();
+    if (checked) {//load file if none is cached
+        useOwnDatasetColorsButtonClicked(datasetLutFile->text());
+    } else {
+        state->viewer->defaultDatasetLUT();
     }
 }
 
-void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
-
-    if (!fileName.isEmpty()) {//load lut and apply
-        datasetLutFile->setText(fileName);
-        loadDatasetLUT();
-        useOwnDatasetColorsCheckBox->setChecked(true);
-        useOwnDatasetColorsCheckBox->clicked(true);
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked(QString path) {
+    if (path.isEmpty()) {
+        path = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+    }
+    if (!path.isEmpty()) {//load LUT and apply
+        try {
+            state->viewer->loadDatasetLUT(path);
+            datasetLutFile->setText(path);
+            useOwnDatasetColorsCheckBox->setChecked(true);
+        } catch (...) {
+            lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
+            lutErrorBox.exec();
+            useOwnDatasetColorsCheckBox->setChecked(false);
+        }
     } else {
         useOwnDatasetColorsCheckBox->setChecked(false);
-        useOwnDatasetColorsCheckBox->clicked(false);
-    }
-}
-
-void VPSlicePlaneViewportWidget::loadDatasetLUT() {
-    bool result = loadDataSetColortableSignal(this->datasetLutFile->text(), &(state->viewerState->datasetColortable[0][0]), GL_RGB);
-
-    if(!result) {
-        qDebug() << "Error loading Dataset LUT.\n";
-        memcpy(&(state->viewerState->datasetColortable[0][0]),
-                       &(state->viewerState->neutralDatasetTable[0][0]),
-                       RGB_LUTSIZE);
     }
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsClicked(bool checked) {
-    if (checked && treeLutFile->text().isEmpty()) {//load file if none is cached
-        useOwnTreeColorButtonClicked();
-    }
-    if (!treeLutFile->text().isEmpty()) {//valid filename → apply
-        state->viewerState->treeColortableOn = checked;
-        emit treeColorAdjustmentsChangedSignal();
+    if (checked) {//load file if none is cached
+        useOwnTreeColorButtonClicked(treeLutFile->text());
+    } else {
+        Skeletonizer::singleton().loadTreeLUT();
     }
 }
 
-void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
-
-    if(!fileName.isEmpty()) {
-        treeLutFile->setText(fileName);
-        state->viewerState->treeLutSet = true;//necessary?
-        loadTreeLUT();
-        useOwnTreeColorsCheckBox->setChecked(true);
-        useOwnTreeColorsCheckBox->clicked(true);
+void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked(QString path) {
+    if (path.isEmpty()) {
+        path = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+    }
+    if (!path.isEmpty()) {//load LUT and apply
+        try {
+            Skeletonizer::singleton().loadTreeLUT(path);
+            treeLutFile->setText(path);
+            useOwnTreeColorsCheckBox->setChecked(true);
+        }  catch (...) {
+            lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
+            lutErrorBox.exec();
+            useOwnTreeColorsCheckBox->setChecked(false);
+        }
     } else {
         useOwnTreeColorsCheckBox->setChecked(false);
-        useOwnTreeColorsCheckBox->clicked(false);
-    }
-}
-
-void VPSlicePlaneViewportWidget::loadTreeLUT() {
-    if(loadTreeColorTableSignal(this->treeLutFile->text(), &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
-        qDebug() << "Error loading Tree LUT.\n";
-        memcpy(&(state->viewerState->treeColortable[0]),
-               &(state->viewerState->defaultTreeTable[0]),
-                 RGB_LUTSIZE);
-        state->viewerState->treeLutSet = false;
     }
 }
 
 void VPSlicePlaneViewportWidget::biasSliderMoved(int value) {
     state->viewerState->luminanceBias = value;
     biasSpinBox->setValue(value);
-    MainWindow::datasetColorAdjustmentsChanged();
+    state->viewer->datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::biasChanged(int value) {
     state->viewerState->luminanceBias = value;
     biasSlider->setValue(value);
-    MainWindow::datasetColorAdjustmentsChanged();
+    state->viewer->datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSpinBox->setValue(value);
-    MainWindow::datasetColorAdjustmentsChanged();
+    state->viewer->datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSlider->setValue(value);
-    MainWindow::datasetColorAdjustmentsChanged();
+    state->viewer->datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
