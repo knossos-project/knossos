@@ -150,13 +150,16 @@ void DatasetLoadWidget::updateDatasetInfo() {
         return;
     }
 
+    const auto datasetinfo = Dataset::fromLegacyConf(download.second);
+
     //make sure supercubeedge is small again
-    superCubeEdgeSpin.setValue(superCubeEdgeSpin.value() * cubeEdgeSpin.value() / 128);
-    cubeEdgeSpin.setValue(128);
+    auto supercubeedge = superCubeEdgeSpin.value() * cubeEdgeSpin.value() / datasetinfo.cubeEdgeLength;
+    supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+    superCubeEdgeSpin.setValue(supercubeedge);
+    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
     adaptMemoryConsumption();
 
     QString infotext = tr("<b>%1 Dataset</b><br />%2");
-    const auto datasetinfo = Dataset::fromLegacyConf(download.second);
     if (datasetinfo.remote) {
         infotext = infotext.arg("Remote").arg("URL: %1<br />").arg(datasetinfo.url.toString());
     } else {

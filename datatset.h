@@ -12,7 +12,7 @@ struct Dataset {
     Coordinate boundary{0,0,0};
     floatCoordinate scale{0,0,0};
     int magnification = 0;
-    int cubeEdgeLength = 0;
+    int cubeEdgeLength = 128;
     int compressionRatio = 0;
     bool remote = false;
     QString experimentname{""};
