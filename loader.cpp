@@ -430,15 +430,20 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
     bool success = false;
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
+    const std::size_t availableSize = data.size();
     if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
-        const qint64 expectedSize = state->cubeBytes;
-        std::copy(std::begin(data), std::end(data), currentSlot);
-        success = data.size() == expectedSize;
+        const std::size_t expectedSize = state->cubeBytes;
+        if (availableSize == expectedSize) {
+            std::copy(std::begin(data), std::end(data), currentSlot);
+            success = true;
+        }
     } else if (type == Loader::CubeType::RAW_JPG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
-        std::copy(image.bits(), image.bits()+image.byteCount(), currentSlot);
-        success = image.byteCount() == expectedSize;
+        if (image.byteCount() == expectedSize) {
+            std::copy(image.bits(), image.bits() + image.byteCount(), currentSlot);
+            success = true;
+        }
     } else if (type == Loader::CubeType::RAW_J2K || type == Loader::CubeType::RAW_JP2_6) {
         QTemporaryFile file(QDir::tempPath() + QString("/XXXXXX.%1").arg(type == Loader::CubeType::RAW_J2K ? "j2k" : "jp2"));
         success = file.open();
@@ -446,9 +451,11 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
         file.close();
         success &= EXIT_SUCCESS == jp2_decompress_main(file.fileName().toUtf8().data(), reinterpret_cast<char*>(currentSlot), state->cubeBytes);
     } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
-        const qint64 expectedSize = state->cubeBytes * OBJID_BYTES;
-        std::copy(std::begin(data), std::end(data), currentSlot);
-        success = data.size() == expectedSize;
+        const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
+        if (availableSize == expectedSize) {
+            std::copy(std::begin(data), std::end(data), currentSlot);
+            success = true;
+        }
     } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
         QBuffer buffer(&data);
         QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
@@ -457,7 +464,12 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
             QuaZipFile file(&archive);
             if (file.open(QIODevice::ReadOnly)) {
                 auto data = file.readAll();
-                success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
+                std::size_t uncompressedSize;
+                snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
+                const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
+                if (uncompressedSize == expectedSize) {
+                    success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
+                }
             }
             archive.close();
         }
