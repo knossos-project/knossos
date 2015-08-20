@@ -13,7 +13,7 @@ Dataset Dataset::fromLegacyConf(QString config) {
     QTextStream stream(&config);
     QString line;
     while (!(line = stream.readLine()).isNull()) {
-        const QStringList tokenList = line.split(QRegularExpression("[ ;\n]"), QString::SkipEmptyParts);
+        const QStringList tokenList = line.split(QRegularExpression("[ ;]"));
         QString token = tokenList.front();
 
         if (token == "experiment") {
