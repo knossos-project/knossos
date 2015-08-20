@@ -37,15 +37,6 @@ class DatasetLoadWidget : public QDialog {
     QHBoxLayout buttonHLayout;
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
-
-    struct Datasetinfo{
-        Coordinate boundary;
-        floatCoordinate scale{0,0,0};
-        int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
-        bool remote = false;
-        std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
-    };
-    Datasetinfo datasetinfo;
 public:
     QString datasetPath;//meh
 
@@ -62,7 +53,6 @@ public:
     bool parseGoogleJson(const QString & json_raw);
     bool parseWebKnossosJson(const QString & json_raw);
     QString extractWebKnossosToken(QString & json_raw);
-    Datasetinfo getConfigFileInfo(const QString &path);
     QStringList getRecentPathItems();
 
 signals:

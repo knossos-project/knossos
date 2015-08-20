@@ -1,5 +1,6 @@
 #include "datasetloadwidget.h"
 
+#include "datatset.h"
 #include "GuiConstants.h"
 #include "knossos.h"
 #include "loader.h"
@@ -135,41 +136,40 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 }
 
 void DatasetLoadWidget::updateDatasetInfo() {
-    if (tableWidget.selectedItems().empty()) return;
-
-    const auto dataset = tableWidget.selectedItems().front()->text();
+    bool bad = tableWidget.selectedItems().empty();
+    QString dataset;
+    bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
+    QUrl url(dataset);
+    if (url.isRelative()) {//assume file if no protocol is present
+        url.setScheme("file");
+    }
+    decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
+    bad = bad || !(download = Network::singleton().refresh(url)).first;
+    if (bad) {
+        infoLabel.setText("");
+        return;
+    }
 
     //make sure supercubeedge is small again
     superCubeEdgeSpin.setValue(superCubeEdgeSpin.value() * cubeEdgeSpin.value() / 128);
     cubeEdgeSpin.setValue(128);
     adaptMemoryConsumption();
 
-    QString infotext;
-    if (dataset != "") {
-        datasetinfo = getConfigFileInfo(dataset);
-
-        if (datasetinfo.remote) {
-            infotext = QString("<b>Remote Dataset</b><br>URL: %0%1<br>Boundary (x y z): %2 %3 %4<br>Compression: %5<br>cubeEdgeLength: %6<br>Magnification: %7<br>Scale (x y z): %8 %9 %10")
-                    .arg(datasetinfo.ftphostname.c_str())
-                    .arg(datasetinfo.ftpbasepath.c_str())
-                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                    .arg(datasetinfo.compressionRatio)
-                    .arg(datasetinfo.cubeEdgeLength)
-                    .arg(datasetinfo.magnification)
-                    .arg(datasetinfo.scale.x)
-                    .arg(datasetinfo.scale.y)
-                    .arg(datasetinfo.scale.z);
-        } else {
-            infotext = QString("<b>Local Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
-                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                    .arg(datasetinfo.compressionRatio)
-                    .arg(datasetinfo.cubeEdgeLength)
-                    .arg(datasetinfo.magnification)
-                    .arg(datasetinfo.scale.x)
-                    .arg(datasetinfo.scale.y)
-                    .arg(datasetinfo.scale.z);
-        }
+    QString infotext = tr("<b>%1 Dataset</b><br />%2");
+    const auto datasetinfo = Dataset::fromLegacyConf(download.second);
+    if (datasetinfo.remote) {
+        infotext = infotext.arg("Remote").arg("URL: %1<br />").arg(datasetinfo.url.toString());
+    } else {
+        infotext = infotext.arg("Local").arg("");
     }
+    infotext += QString("Boundary (x y z): %1 %2 %3<br />Compression: %4<br />cubeEdgeLength: %5<br />Magnification: %6<br />Scale (x y z): %7 %8 %9")
+        .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+        .arg(datasetinfo.compressionRatio)
+        .arg(datasetinfo.cubeEdgeLength)
+        .arg(datasetinfo.magnification)
+        .arg(datasetinfo.scale.x)
+        .arg(datasetinfo.scale.y)
+        .arg(datasetinfo.scale.z);
 
     infoLabel.setText(infotext);
 }
@@ -434,77 +434,6 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     emit datasetChanged(segmentationOverlayCheckbox.isChecked());
 
     return true;
-}
-
-DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const QString & path) {
-    Datasetinfo info;
-    QString qpath{path};
-
-    if(qpath.startsWith("http", Qt::CaseInsensitive)) {
-        if(!Network::singleton().refresh(qpath).first) return info;
-    }
-
-    QFile file(qpath);
-
-    if(!file.open(QIODevice::ReadOnly)) {
-        qDebug("Error reading config file at path:%s", qpath.toStdString().c_str());
-        return info;
-    }
-
-    QTextStream stream(&file);
-    while(!stream.atEnd()) {
-        QString line = stream.readLine();
-        if(line.isEmpty())
-            continue;
-
-        QStringList tokenList = line.split(
-            QRegExp("[ ;]"),
-            QString::SkipEmptyParts
-        );
-
-        QString token = tokenList.at(0);
-
-        if(token == "experiment") {
-            token = tokenList.at(2);
-            QStringList experimentTokenList = token.split(
-                        QRegExp("[\"]"),
-                        QString::SkipEmptyParts);
-            info.experimentname = experimentTokenList.at(0).toStdString();
-
-        } else if(token == "scale") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                info.scale.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                info.scale.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                info.scale.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "boundary") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                info.boundary.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                info.boundary.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                info.boundary.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "magnification") {
-            info.magnification = tokenList.at(1).toInt();
-        } else if(token == "cube_edge_length") {
-            info.cubeEdgeLength = tokenList.at(1).toInt();
-        } else if(token == "ftp_mode") {
-            info.remote = true;
-
-            info.ftphostname = tokenList.at(1).toStdString();
-            info.ftpbasepath = tokenList.at(2).toStdString();
-
-        } else if (token == "compression_ratio") {
-            info.compressionRatio = tokenList.at(1).toInt();
-        }
-    }
-
-    return info;
 }
 
 void DatasetLoadWidget::saveSettings() {
