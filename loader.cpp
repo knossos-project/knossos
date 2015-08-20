@@ -440,7 +440,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
         std::copy(image.bits(), image.bits()+image.byteCount(), currentSlot);
         success = image.byteCount() == expectedSize;
     } else if (type == Loader::CubeType::RAW_J2K || type == Loader::CubeType::RAW_JP2_6) {
-        QTemporaryFile file(QDir::tempPath() + "/XXXXXX.jp2");
+        QTemporaryFile file(QDir::tempPath() + QString("/XXXXXX.%1").arg(type == Loader::CubeType::RAW_J2K ? "j2k" : "jp2"));
         success = file.open();
         success &= file.write(data) == data.size();
         file.close();
