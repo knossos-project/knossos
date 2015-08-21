@@ -249,7 +249,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("dataset");
-    xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetPath);
+    xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetUrl.toString());
     xml.writeEndElement();
 
     xml.writeStartElement("task");

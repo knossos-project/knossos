@@ -140,13 +140,14 @@ void DatasetLoadWidget::updateDatasetInfo() {
     QString dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    bad = bad || !(download = Network::singleton().refresh({dataset})).first;
+    const QUrl url{dataset};
+    bad = bad || !(download = Network::singleton().refresh(url)).first;
     if (bad) {
         infoLabel.setText("");
         return;
     }
 
-    const auto datasetinfo = Dataset::fromLegacyConf(download.second);
+    const auto datasetinfo = Dataset::fromLegacyConf(url, download.second);
 
     //make sure supercubeedge is small again
     auto supercubeedge = superCubeEdgeSpin.value() * cubeEdgeSpin.value() / datasetinfo.cubeEdgeLength;
@@ -171,77 +172,6 @@ void DatasetLoadWidget::updateDatasetInfo() {
         .arg(datasetinfo.scale.z);
 
     infoLabel.setText(infotext);
-}
-
-bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
-    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-
-    auto jmap = json_conf.object();
-    auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();
-
-    auto bx = boundary_json["x"].toString().toInt();
-    auto by = boundary_json["y"].toString().toInt();
-    auto bz = boundary_json["z"].toString().toInt();
-
-    auto scale_json = jmap["geometry"].toArray()[0].toObject()["pixelSize"].toObject();
-
-    auto sx = static_cast<float>(scale_json["x"].toDouble());
-    auto sy = static_cast<float>(scale_json["y"].toDouble());
-    auto sz = static_cast<float>(scale_json["z"].toDouble());
-
-    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
-        return false;
-    }
-
-    state->boundary = {bx, by, bz};
-    state->scale = {sx, sy, sz};
-
-    state->path[0] = '\0'; //dont't check for other mags
-    state->highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
-
-    state->compressionRatio = 1000;
-
-    state->overlay = false; //google does not have this
-
-    return true;
-}
-
-bool DatasetLoadWidget::parseWebKnossosJson(const QString & json_raw) {
-    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-
-    auto jmap = json_conf.object();
-
-    auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
-
-    auto bx = boundary_json["width"].toInt();
-    auto by = boundary_json["height"].toInt();
-    auto bz = boundary_json["depth"].toInt();
-
-    auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
-
-    auto sx = static_cast<float>(scale_json[0].toDouble());
-    auto sy = static_cast<float>(scale_json[1].toDouble());
-    auto sz = static_cast<float>(scale_json[2].toDouble());
-
-    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
-        return false;
-    }
-
-    state->boundary = {bx, by, bz};
-
-    state->scale = {sx, sy, sz};
-
-    state->path[0] = '\0'; //dont't check for other mags
-
-    auto mag = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
-
-    state->highestAvailableMag = mag[mag.size()-1].toInt();
-
-    state->compressionRatio = 0;
-
-    state->overlay = false; //webknossos does not have this
-
-    return true;
 }
 
 QString DatasetLoadWidget::extractWebKnossosToken(QString & json_raw) {
@@ -289,85 +219,22 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
-void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString path) {
-    //check if we have a remote conf
-    if(path.startsWith("http", Qt::CaseInsensitive)) {
-        if(!Network::singleton().refresh(path).first) return;
-    }
-
-    QFileInfo pathInfo;
-    pathInfo.setFile(path);
-
-    QString filePath; // for holding the whole path to a .conf file
-    QFile confFile;
-    if(pathInfo.isFile()) { // .conf file selected (case 3)
-        filePath = path;
-        confFile.setFileName(filePath);
-    }  else { // folder selected
-        if(path.endsWith('/') == false && path.endsWith('\\') == false) {
-            // qFileInfo only recognizes paths with trailing slash as directories.
-            path.append('/');
-            pathInfo.setFile(path);
-        }
-        QDir directory(path);
-        QStringList dirContent = directory.entryList(QStringList("*.conf"));
-        if(dirContent.empty()) { // apparently the base dataset folder (case 2) was selected
-            // find the magnification subfolders and look for a .conf file starting at lowest mag
-            bool foundConf = false;
-            dirContent = directory.entryList(QStringList("*mag*"), QDir::Dirs, QDir::Name);
-            for(const auto magPath : dirContent) {
-                QDir magDir(QString("%1/%2").arg(directory.absolutePath()).arg(magPath));
-                QStringList subDirContent = magDir.entryList(QStringList("*.conf"), QDir::Files);
-                if(subDirContent.empty() == false) {
-                    filePath = QString("%1/%2/%3").arg(directory.absolutePath()).arg(magPath).arg(subDirContent.front());
-                    confFile.setFileName(filePath);
-                    QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
-                    foundConf = true;
-                    break;
-                }
-            }
-            if(foundConf == false) {
-                QMessageBox::information(this, "Unable to load", "Could not find a dataset file (*.conf)");
-                return;
-            }
-        }
-        else {
-            filePath = QString("%1/%2").arg(directory.absolutePath()).arg(dirContent.front());
-            if(QRegExp(".*mag[0-9]+").exactMatch(directory.absolutePath())) {
-                // apparently the magnification folder was selected (case 1)
-                directory.cdUp();
-                QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
-            }
-        }
-    }
-
-    if (!Knossos::readConfigFile(filePath.toStdString().c_str())) {
-        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(filePath));
-        return;
-    }
-
-    // we want state->path to hold the path to the dataset folder
-    // instead of a path to a subfolder of a specific magnification
-    QDir datasetDir(pathInfo.absolutePath());
-    if(QRegExp(".*mag[0-9]+").exactMatch(datasetDir.absolutePath())) {
-        datasetDir.cdUp();
-    }
-    strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
-
-    Knossos::findAndRegisterAvailableDatasets();
-}
-
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
 bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
-    if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
+    if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         show();
         return false;
-    } else if (path.isEmpty()) {
-        path = datasetPath;
+    } else if (!path.isEmpty()) {//if empty reload previous
+        datasetUrl = {path};//remember config url
+    }
+    const auto download = Network::singleton().refresh(datasetUrl);
+    if (!download.first) {
+        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(datasetUrl.toString()));
+        return false;
     }
 
     if (!keepAnnotation) {
@@ -376,38 +243,22 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
 
     Loader::Controller::singleton().waitForWorkerThread();//we change variables the loader uses
 
-    // actually load the dataset
-    datasetPath = path;
+    Loader::API api;
+    Dataset info;
+    Loader::CubeType raw_compression;
+    {
+        api = Loader::API::Heidelbrain;
+        info = Dataset::fromLegacyConf(datasetUrl, download.second);
+        info.checkMagnifications();
+        info.applyToState();
+        raw_compression = info.compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
+                : info.compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
+    }
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = superCubeEdgeSpin.value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
-
-    Loader::API api;
-    QString url;
-    Loader::CubeType raw_compression;
-    {
-        api = Loader::API::Heidelbrain;
-        gatherHeidelbrainDatasetInformation(QUrl{path}.toLocalFile());
-        if (state->loadMode == LM_FTP) {
-            url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
-        } else {
-            url = QString("file:///%1").arg(state->path);
-        }
-        raw_compression = state->compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : state->compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
-                : state->compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
-    }
-    //skeleton vp boundary
-    if ((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-    }
-    if ((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.y * 2;
-    }
-    if ((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        state->skeletonState->volBoundary = state->boundary.z * 2;
-    }
 
     applyGeometrySettings();
 
@@ -418,7 +269,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    Loader::Controller::singleton().restart(url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, state->name);
+    Loader::Controller::singleton().restart(info.url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 
@@ -437,7 +288,7 @@ void DatasetLoadWidget::saveSettings() {
     settings.beginGroup(DATASET_WIDGET);
 
     settings.setValue(DATASET_GEOMETRY, saveGeometry());
-    settings.setValue(DATASET_LAST_USED, datasetPath);
+    settings.setValue(DATASET_LAST_USED, datasetUrl);
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
@@ -448,7 +299,7 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+    if (state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
         const auto msg = "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
         qDebug() << msg;
         throw std::runtime_error(msg);
@@ -467,11 +318,11 @@ void DatasetLoadWidget::loadSettings() {
     settings.beginGroup(DATASET_WIDGET);
 
     restoreGeometry(settings.value(DATASET_GEOMETRY, "").toByteArray());
-    datasetPath = settings.value(DATASET_LAST_USED, "").toString();
+    datasetUrl = settings.value(DATASET_LAST_USED, "").toString();
 
     auto appendRowSelectIfLU = [this](const QString & dataset){
         insertDatasetRow(dataset, tableWidget.rowCount());
-        if (dataset == datasetPath) {
+        if (dataset == datasetUrl.toString()) {
             tableWidget.selectRow(tableWidget.rowCount() - 1);
         }
     };
@@ -503,7 +354,6 @@ void DatasetLoadWidget::loadSettings() {
 
     tableWidget.blockSignals(false);
     updateDatasetInfo();
-
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();

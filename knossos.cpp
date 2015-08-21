@@ -161,190 +161,6 @@ bool Knossos::sendQuitSignal() {
     return true;
 }
 
-bool Knossos::readConfigFile(const char *path) {
-    QFile file(path);
-    if(!file.open(QIODevice::ReadOnly)) {
-        qDebug("Error reading config file at path:%s", path);
-        return false;
-    }
-
-    state->loadMode = LM_LOCAL;
-    state->compressionRatio = 0;
-    QTextStream stream(&file);
-    while(!stream.atEnd()) {
-        QString line = stream.readLine();
-        if(line.isEmpty())
-            continue;
-
-        QStringList tokenList = line.split(
-                    QRegExp("[ ;]"),
-                    QString::SkipEmptyParts);
-
-        QString token = tokenList.at(0);
-
-        if(token == "experiment") {
-            token = tokenList.at(2);
-            QStringList experimentTokenList = token.split(
-                        QRegExp("[\"]"),
-                        QString::SkipEmptyParts);
-            QString experimentToken = experimentTokenList.at(0);
-            std::string stdString = experimentToken.toStdString();
-            strncpy(state->name, stdString.c_str(), 1024);
-
-        } else if(token == "scale") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                state->scale.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                state->scale.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                state->scale.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "boundary") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                state->boundary.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                state->boundary.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                state->boundary.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "magnification") {
-            state->magnification = tokenList.at(1).toInt();
-            state->lowestAvailableMag = state->magnification;
-            state->highestAvailableMag = state->magnification;
-        } else if(token == "cube_edge_length") {
-            state->cubeEdgeLength = tokenList.at(1).toInt();
-        } else if(token == "ftp_mode") {
-            state->loadMode = LM_FTP;
-            int ti;
-            std::string stdString;
-            const int FTP_PARAMS_NUM = 4;
-            char *ftp_conf_strings[FTP_PARAMS_NUM] = { state->ftpHostName, state->ftpBasePath, state->ftpUsername, state->ftpPassword };
-            for (ti = 0; ti < FTP_PARAMS_NUM; ti++) {
-                token = tokenList.at(ti + 1);
-                stdString = token.toStdString();
-                strncpy(ftp_conf_strings[ti], stdString.c_str(), CSTRING_SIZE);
-            }
-            state->ftpFileTimeout = tokenList.at(ti + 1).toInt();
-
-        } else if (token == "compression_ratio") {
-            state->compressionRatio = tokenList.at(1).toInt();
-        } else {
-            qDebug() << "Skipping unknown parameter";
-        }
-    }
-
-    return true;
-}
-
-bool Knossos::findAndRegisterAvailableDatasets() {
-    QDir datasetDir;
-    QString baseMagDirName;
-    bool isMultiresCompatible = false;
-    if (LM_FTP == state->loadMode) {
-        isMultiresCompatible = true;
-    }
-    else {
-        // dataset is multires-compatible if a mag subfolder exists.
-        datasetDir.setPath(state->path);
-        QStringList dirContent = datasetDir.entryList(QStringList("*mag*"), QDir::Dirs);
-        isMultiresCompatible = dirContent.empty() == false;
-    }
-
-    if(isMultiresCompatible) {
-        if(LM_LOCAL == state->loadMode) {
-            // retrieve potential basename at the beginning of the mag subfolders,
-            // e.g. folder "xxx_mag1" with "xxx" being the basename
-            QStringList dirContent = datasetDir.entryList(QStringList("*mag*"), QDir::Dirs);
-            baseMagDirName = dirContent.front();
-            int magPart = baseMagDirName.lastIndexOf(QRegExp("mag.*"));
-            baseMagDirName.remove(magPart, baseMagDirName.length() - magPart);
-        }
-
-        // iterate over all possible mags and test their availability
-        // (available if corresponding .conf file exists)
-        for(uint currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
-            int currMagExists = false;
-            QString currentPath;
-            if(LM_FTP == state->loadMode) {
-                currentPath = QString("http://%1:%2@%3/%4/mag%5/knossos.conf").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath).arg(currMag);
-                if (Network::singleton().refresh(currentPath).first) {
-                    currMagExists = true;
-                }
-            }
-            else {
-                currentPath = QString("%1/%2%3%4/").arg(state->path).arg(baseMagDirName).arg("mag").arg(currMag);
-                QDir currentMagDir(currentPath);
-                if(currentMagDir.entryList(QStringList("*.conf")).empty() == false) {
-                    currMagExists = true;
-                }
-            }
-
-            if(currMagExists) {
-                if(state->lowestAvailableMag > currMag) {
-                    state->lowestAvailableMag = currMag;
-                }
-                state->highestAvailableMag = currMag;
-            }
-        }
-        qDebug("lowest Mag: %d, Highest Mag: %d", state->lowestAvailableMag, state->highestAvailableMag);
-
-        if(state->highestAvailableMag > NUM_MAG_DATASETS) {
-            state->highestAvailableMag = NUM_MAG_DATASETS;
-            qDebug("KNOSSOS currently supports only datasets downsampled by a factor of %d.\
-                   This can easily be changed in the source.", NUM_MAG_DATASETS);
-        }
-    }
-    // no magstring found, take mag read from .conf file of dataset
-    if(isMultiresCompatible == false) {
-        int pathLen = strlen(state->path);
-        if(!pathLen) {
-            qDebug() << "No valid dataset specified.\n";
-            return false;
-        }
-
-        if((state->path[pathLen-1] == '\\')
-           || (state->path[pathLen-1] == '/')) {
-        #ifdef Q_OS_UNIX
-            state->path[pathLen-1] = '/';
-        #else
-            state->path[pathLen-1] = '\\';
-        #endif
-        }
-        else {
-        #ifdef Q_OS_UNIX
-            state->path[pathLen] = '/';
-        #else
-            state->path[pathLen] = '\\';
-        #endif
-            state->path[pathLen + 1] = '\0';
-        }
-
-        state->lowestAvailableMag = state->magnification;
-        state->highestAvailableMag = state->magnification;
-    }
-    state->boundary.x *= state->magnification;
-    state->boundary.y *= state->magnification;
-    state->boundary.z *= state->magnification;
-
-    state->scale.x /= (float)state->magnification;
-    state->scale.y /= (float)state->magnification;
-    state->scale.z /= (float)state->magnification;
-    // update the volume boundary
-    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-    }
-    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.y * 2;
-    }
-    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        state->skeletonState->volBoundary = state->boundary.z * 2;
-    }
-
-    return true;
-}
-
 stateInfo * emptyState() {
     stateInfo *state = new stateInfo();
     state->viewerState = new viewerState();
@@ -369,9 +185,6 @@ bool Knossos::configDefaults() {
         state->protectRemoteSignal = new QMutex();
         state->protectCube2Pointer = new QMutex();
     }
-
-    state->path[0] = '\0';
-    state->name[0] = '\0';
 
     // General stuff
     state->boundary.x = 1000;
@@ -429,7 +242,6 @@ bool Knossos::configDefaults() {
     state->skeletonState->branchpointUnresolved = false;
     state->skeletonState->definedSkeletonVpView = -1;
 
-    state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
 
     state->keyD = state->keyF = false;

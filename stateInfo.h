@@ -68,11 +68,8 @@ public:
     // These signals are used to communicate with the remote.
     bool remoteSignal;
 
-    // Path to the current cube files for the viewer and loader.
-    char path[1024];
-
     // Current dataset identifier string
-    char name[1024];
+    QString name;
 
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
@@ -139,14 +136,6 @@ public:
     QMutex *protectCube2Pointer;
 
  //---  Info about the state of KNOSSOS in general. --------
-
-    // Cube loader affairs
-    int    loadMode;
-    char       ftpBasePath[CSTRING_SIZE];
-    char       ftpHostName[CSTRING_SIZE];
-    char       ftpUsername[CSTRING_SIZE];
-    char       ftpPassword[CSTRING_SIZE];
-    int    ftpFileTimeout;
 
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
     // coordinates to pointers to datacubes / overlay cubes loaded

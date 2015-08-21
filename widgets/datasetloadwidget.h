@@ -38,11 +38,10 @@ class DatasetLoadWidget : public QDialog {
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
 public:
-    QString datasetPath;//meh
+    QUrl datasetUrl;//meh
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    void gatherHeidelbrainDatasetInformation(QString);
     bool loadDataset(QString path = "", const bool keepAnnotation = false);
     void saveSettings();
     void loadSettings();
@@ -50,8 +49,6 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
-    bool parseGoogleJson(const QString & json_raw);
-    bool parseWebKnossosJson(const QString & json_raw);
     QString extractWebKnossosToken(QString & json_raw);
     QStringList getRecentPathItems();
 

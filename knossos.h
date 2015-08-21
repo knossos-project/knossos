@@ -25,8 +25,6 @@
  */
 
 namespace Knossos {
-    bool readConfigFile(const char *path);
-    bool findAndRegisterAvailableDatasets();
     bool configDefaults();
 
     bool sendRemoteSignal();
