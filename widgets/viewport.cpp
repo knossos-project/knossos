@@ -779,7 +779,7 @@ void Viewport::updateVolumeTexture() {
     std::unordered_map<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> selectedIdColors;
     std::tuple<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> lastIdColor;
 
-    state->protectCube2Pointer->lock();
+    state->protectCube2Pointer.lock();
 
     dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
     uint64_t** rawcubes = new uint64_t*[M*M*M];
@@ -838,7 +838,7 @@ void Viewport::updateVolumeTexture() {
 
     delete[] rawcubes;
 
-    state->protectCube2Pointer->unlock();
+    state->protectCube2Pointer.unlock();
 
     colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
 

@@ -11,9 +11,9 @@
 std::pair<bool, char *> getRawCube(const Coordinate & pos) {
     const auto posDc = pos.cube(state->cubeEdgeLength, state->magnification);
 
-    state->protectCube2Pointer->lock();
+    state->protectCube2Pointer.lock();
     auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
-    state->protectCube2Pointer->unlock();
+    state->protectCube2Pointer.unlock();
 
     return std::make_pair(rawcube != nullptr, rawcube);
 }

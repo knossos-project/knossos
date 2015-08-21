@@ -46,13 +46,13 @@ void Remote::run() {
     rotate = false;
     activeVP = 0;
     while(true) {
-        state->protectRemoteSignal->lock();
+        state->protectRemoteSignal.lock();
         while(!state->remoteSignal) {
-            state->conditionRemoteSignal->wait(state->protectRemoteSignal);
+            state->conditionRemoteSignal.wait(&state->protectRemoteSignal);
         }
 
         state->remoteSignal = false;
-        state->protectRemoteSignal->unlock();
+        state->protectRemoteSignal.unlock();
 
         if(state->quitSignal) {
             break;

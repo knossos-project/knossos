@@ -475,10 +475,10 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             default:
                 qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp.type);
             }
-            state->protectCube2Pointer->lock();
+            state->protectCube2Pointer.lock();
             char * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], currentDc);
             char * const overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], currentDc);
-            state->protectCube2Pointer->unlock();
+            state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
 
@@ -596,9 +596,9 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             if(currentPx.y < 0) { currentDc.y -= 1; }
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
-            state->protectCube2Pointer->lock();
+            state->protectCube2Pointer.lock();
             datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], {currentDc.x, currentDc.y, currentDc.z});
-            state->protectCube2Pointer->unlock();
+            state->protectCube2Pointer.unlock();
 
             currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
             t_old = t;

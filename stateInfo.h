@@ -119,21 +119,15 @@ public:
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
 
     // Tell the remote to wake up.
-    QWaitCondition *conditionRemoteSignal;
-
-    // Any signalling to the loading thread needs to be protected
-    // by this mutex. This is done by sendLoadSignal(), so always
-    // use sendLoadSignal() to signal to the loading thread.
-
-    QMutex *protectLoadSignal;
+    QWaitCondition conditionRemoteSignal;
 
     // This should be accessed through sendRemoteSignal() only.
-    QMutex *protectRemoteSignal;
+    QMutex protectRemoteSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
 
-    QMutex *protectCube2Pointer;
+    QMutex protectCube2Pointer;
 
  //---  Info about the state of KNOSSOS in general. --------
 

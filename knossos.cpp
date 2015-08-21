@@ -141,24 +141,19 @@ int main(int argc, char *argv[]) {
     return a.exec();
 }
 
-bool Knossos::sendRemoteSignal() {
-    state->protectRemoteSignal->lock();
+void Knossos::sendRemoteSignal() {
+    state->protectRemoteSignal.lock();
     state->remoteSignal = true;
-    state->protectRemoteSignal->unlock();
+    state->protectRemoteSignal.unlock();
 
-    state->conditionRemoteSignal->wakeOne();
-
-    return true;
+    state->conditionRemoteSignal.wakeOne();
 }
 
-bool Knossos::sendQuitSignal() {
-
+void Knossos::sendQuitSignal() {
     state->quitSignal = true;
     QApplication::processEvents(); //ensure everything’s done
     Loader::Controller::singleton().waitForWorkerThread();//suspend loader
     Knossos::sendRemoteSignal();
-
-    return true;
 }
 
 stateInfo * emptyState() {
@@ -181,9 +176,6 @@ bool Knossos::configDefaults() {
         state->loaderUserMoveViewportDirection = {};
         state->remoteSignal = false;
         state->quitSignal = false;
-        state->conditionRemoteSignal = new QWaitCondition();
-        state->protectRemoteSignal = new QMutex();
-        state->protectCube2Pointer = new QMutex();
     }
 
     // General stuff
