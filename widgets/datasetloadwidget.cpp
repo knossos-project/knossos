@@ -99,7 +99,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     QPushButton *addDs = new QPushButton("…");
     QObject::connect(addDs, &QPushButton::clicked, [this, rowFromCell, addDs](){
         state->viewerState->renderInterval = SLOW;
-        QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+        const auto selectFile = QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         state->viewerState->renderInterval = FAST;
         if (!selectFile.isEmpty()) {
             QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
@@ -139,12 +139,8 @@ void DatasetLoadWidget::updateDatasetInfo() {
     bool bad = tableWidget.selectedItems().empty();
     QString dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
-    QUrl url(dataset);
-    if (url.isRelative()) {//assume file if no protocol is present
-        url.setScheme("file");
-    }
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    bad = bad || !(download = Network::singleton().refresh(url)).first;
+    bad = bad || !(download = Network::singleton().refresh({dataset})).first;
     if (bad) {
         infoLabel.setText("");
         return;
@@ -293,7 +289,7 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
-void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
+void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString path) {
     //check if we have a remote conf
     if(path.startsWith("http", Qt::CaseInsensitive)) {
         if(!Network::singleton().refresh(path).first) return;
@@ -393,7 +389,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     Loader::CubeType raw_compression;
     {
         api = Loader::API::Heidelbrain;
-        gatherHeidelbrainDatasetInformation(path);
+        gatherHeidelbrainDatasetInformation(QUrl{path}.toLocalFile());
         if (state->loadMode == LM_FTP) {
             url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
         } else {
@@ -483,14 +479,19 @@ void DatasetLoadWidget::loadSettings() {
     tableWidget.blockSignals(true);
 
     //add datasets from file
-    for(const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
+    for (QString dataset : settings.value(DATASET_MRU).toStringList()) {
+        dataset.remove("file:///");
+        if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
+            dataset.prepend("file:///");
+        }
         appendRowSelectIfLU(dataset);
     }
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
-        if (tableWidget.findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
-            appendRowSelectIfLU(dataset.absoluteFilePath());
+        const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
+        if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
+            appendRowSelectIfLU(url);
         }
     }
     //add Empty row at the end
