@@ -25,8 +25,6 @@
  */
 
 namespace Knossos {
-    void configDefaults();
-
     void sendRemoteSignal();
     void sendQuitSignal();
 }

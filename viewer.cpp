@@ -631,7 +631,7 @@ void Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
  * and the real dataset pixel */
 bool Viewer::calcLeftUpperTexAbsPx() {
     uint i = 0;
-    viewerState *viewerState = state->viewerState;
+    auto * viewerState = state->viewerState;
 
     CoordOfCube currentPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
@@ -1069,7 +1069,7 @@ void Viewer::updateCurrentPosition() {
 }
 
 bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
-    struct viewerState *viewerState = state->viewerState;
+    auto * viewerState = state->viewerState;
 
     if (Viewport::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
         dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;

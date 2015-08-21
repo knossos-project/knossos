@@ -102,7 +102,8 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Knossos::configDefaults();
+    stateInfo state;
+    ::state = &state;
     Dataset::dummyDataset().applyToState();
 
     SignalRelay signalRelay;
@@ -156,43 +157,4 @@ void Knossos::sendQuitSignal() {
     QApplication::processEvents(); //ensure everything’s done
     Loader::Controller::singleton().waitForWorkerThread();//suspend loader
     Knossos::sendRemoteSignal();
-}
-
-void Knossos::configDefaults() {
-    state = new stateInfo();
-
-    // For the viewer
-    state->viewerState = new viewerState();
-    state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
-    state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
-    state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
-    state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-    state->viewerState->datasetColortableOn = false;
-    state->viewerState->datasetAdjustmentOn = false;
-    state->viewerState->viewerReady = false;
-    state->viewerState->drawVPCrosshairs = true;
-    state->viewerState->showScalebar = false;
-    state->viewerState->stepsPerSec = 40;
-    state->viewerState->dropFrames = 1;
-    state->viewerState->walkFrames = 10;
-    state->viewerState->nodeSelectSquareVpId = -1;
-    state->viewerState->nodeSelectionSquare.first = {};
-    state->viewerState->nodeSelectionSquare.second = {};
-
-    state->viewerState->filterType = GL_LINEAR;
-    state->viewerState->currentPosition.x = 0;
-    state->viewerState->currentPosition.y = 0;
-    state->viewerState->currentPosition.z = 0;
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-    state->viewerState->voxelXYRatio = state->viewerState->voxelDimX / state->viewerState->voxelDimY;
-    state->viewerState->voxelXYtoZRatio = state->viewerState->voxelDimX / state->viewerState->voxelDimZ;
-    state->viewerState->depthCutOff = 5.;
-    state->viewerState->luminanceBias = 0;
-    state->viewerState->luminanceRangeDelta = 255;
-    state->viewerState->autoTracingDelay = 50;
-    state->viewerState->autoTracingSteps = 10;
-    state->viewerState->recenteringTimeOrth = 500;
-    state->viewerState->walkOrth = false;
 }
