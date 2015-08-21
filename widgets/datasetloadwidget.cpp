@@ -480,11 +480,14 @@ void DatasetLoadWidget::loadSettings() {
 
     //add datasets from file
     for (QString dataset : settings.value(DATASET_MRU).toStringList()) {
-        dataset.remove("file:///");
+        QUrl url = dataset;
         if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
-            dataset.prepend("file:///");
+            url = QUrl::fromLocalFile(dataset);
         }
-        appendRowSelectIfLU(dataset);
+        if (url.isRelative()) {
+            url = QUrl::fromLocalFile(dataset);
+        }
+        appendRowSelectIfLU(url.toString());
     }
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
