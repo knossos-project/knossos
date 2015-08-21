@@ -753,22 +753,20 @@ bool Viewer::initViewer() {
 
     // This is the buffer that holds the actual overlay texture data (for _all_ textures)
 
-    if(state->overlay) {
-        state->viewerState->overlayData =
-                (char *) malloc(TEXTURE_EDGE_LEN *
-                   TEXTURE_EDGE_LEN *
-                   sizeof(char) *
-                   4);
-        if(state->viewerState->overlayData == NULL) {
-            qDebug() << "Out of memory.";
-            _Exit(false);
-        }
-        memset(state->viewerState->overlayData, '\0',
-               TEXTURE_EDGE_LEN
-               * TEXTURE_EDGE_LEN
-               * sizeof(char)
-               * 4);
+    state->viewerState->overlayData =
+            (char *) malloc(TEXTURE_EDGE_LEN *
+               TEXTURE_EDGE_LEN *
+               sizeof(char) *
+               4);
+    if(state->viewerState->overlayData == NULL) {
+        qDebug() << "Out of memory.";
+        _Exit(false);
     }
+    memset(state->viewerState->overlayData, '\0',
+           TEXTURE_EDGE_LEN
+           * TEXTURE_EDGE_LEN
+           * sizeof(char)
+           * 4);
 
     // This is the data we use when the data for the
     //   slices is not yet available (hasn't yet been loaded).
@@ -794,20 +792,17 @@ bool Viewer::initViewer() {
         memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
     }
 
-
     // Default data for the overlays
-    if(state->overlay) {
-        state->viewerState->defaultOverlayData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                                 * sizeof(char)
-                                                                 * 4);
-        if(state->viewerState->defaultOverlayData == NULL) {
-            qDebug() << "Out of memory.";
-            _Exit(false);
-        }
-        memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
+    state->viewerState->defaultOverlayData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
                                                              * sizeof(char)
                                                              * 4);
+    if(state->viewerState->defaultOverlayData == NULL) {
+        qDebug() << "Out of memory.";
+        _Exit(false);
     }
+    memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
+                                                         * sizeof(char)
+                                                         * 4);
 
     updateViewerState();
     recalcTextureOffsets();
