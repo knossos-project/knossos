@@ -57,16 +57,16 @@ public:
     // Use overlay cubes to color the data.
     bool overlay;
     // How user movement was generated
-    UserMoveType loaderUserMoveType;
+    UserMoveType loaderUserMoveType{USERMOVE_NEUTRAL};
     // Direction of user movement in case of drilling,
     // or normal to viewport plane in case of horizontal movement.
     // Left unset in neutral movement.
-    Coordinate loaderUserMoveViewportDirection;
+    Coordinate loaderUserMoveViewportDirection{};
 
-    bool quitSignal;
+    bool quitSignal{false};
 
     // These signals are used to communicate with the remote.
-    bool remoteSignal;
+    bool remoteSignal{false};
 
     // Current dataset identifier string
     QString name;
@@ -144,10 +144,11 @@ public:
     class Viewer *viewer;
     class Scripting *scripting;
     class SignalRelay *signalRelay;
-    struct skeletonState *skeletonState;
-    bool keyD, keyF;
-    std::array<float, 3> repeatDirection;
-    bool viewerKeyRepeat;
+    struct SkeletonState *skeletonState;
+    bool keyD{false};
+    bool keyF{false};
+    std::array<float, 3> repeatDirection{{}};
+    bool viewerKeyRepeat{false};
 };
 
 #endif//STATE_INFO_H

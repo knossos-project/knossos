@@ -23,6 +23,7 @@
  */
 #include "knossos.h"
 
+#include "datatset.h"
 #include "eventmodel.h"
 #include "file_io.h"
 #include "loader.h"
@@ -102,6 +103,7 @@ int main(int argc, char *argv[]) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos::configDefaults();
+    Dataset::dummyDataset().applyToState();
 
     SignalRelay signalRelay;
     Viewer viewer;
@@ -156,43 +158,11 @@ void Knossos::sendQuitSignal() {
     Knossos::sendRemoteSignal();
 }
 
-stateInfo * emptyState() {
-    stateInfo *state = new stateInfo();
-    state->viewerState = new viewerState();
-    state->skeletonState = new skeletonState();
-    return state;
-}
-
-bool Knossos::configDefaults() {
-    bool firstRun = false;
-    if (nullptr == state) {
-        firstRun = true;
-    }
-
-    if (firstRun) {
-        state = emptyState();
-
-        state->loaderUserMoveType = USERMOVE_NEUTRAL;
-        state->loaderUserMoveViewportDirection = {};
-        state->remoteSignal = false;
-        state->quitSignal = false;
-    }
-
-    // General stuff
-    state->boundary.x = 1000;
-    state->boundary.y = 1000;
-    state->boundary.z = 1000;
-    state->scale.x = 1.;
-    state->scale.y = 1.;
-    state->scale.z = 1.;
-    state->cubeEdgeLength = 128;
-    state->M = 0;//invalid M, so the datasetLoadWidget can tell if M was provided by cmdline
-    state->magnification = 1;
-    state->lowestAvailableMag = 1;
-    state->highestAvailableMag = 1;
-    state->overlay = true;
+void Knossos::configDefaults() {
+    state = new stateInfo();
 
     // For the viewer
+    state->viewerState = new viewerState();
     state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
     state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
     state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
@@ -225,21 +195,4 @@ bool Knossos::configDefaults() {
     state->viewerState->autoTracingSteps = 10;
     state->viewerState->recenteringTimeOrth = 500;
     state->viewerState->walkOrth = false;
-
-    // For the skeletonizer
-    state->skeletonState->lockRadius = 100;
-    state->skeletonState->lockPositions = false;
-
-    strncpy(state->skeletonState->onCommentLock, "seed", 1024);
-    state->skeletonState->branchpointUnresolved = false;
-    state->skeletonState->definedSkeletonVpView = -1;
-
-    state->compressionRatio = 0;
-
-    state->keyD = state->keyF = false;
-    state->repeatDirection = {{}};
-    state->viewerKeyRepeat = false;
-
-    return true;
-
 }

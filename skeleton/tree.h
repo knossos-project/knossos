@@ -2,13 +2,13 @@
 #define TREE_H
 
 #include "color4F.h"
+#include "node.h"
 
 #include <QHash>
 #include <QList>
 
 #include <memory>
 
-class nodeListElement;
 class segmentListElement;
 
 class treeListElement {

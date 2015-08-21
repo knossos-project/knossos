@@ -41,47 +41,7 @@
 
 #define CATCH_RADIUS 10
 
-struct stack {
-    uint elementsOnStack;
-    void **elements;
-    int stackpointer;
-    int size;
-};
-
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
-    state->skeletonState->branchStack = newStack(1048576);
-
-    // Generate empty tree structures
-    state->skeletonState->firstTree = NULL;
-    state->skeletonState->treeElements = 0;
-    state->skeletonState->totalNodeElements = 0;
-    state->skeletonState->totalSegmentElements = 0;
-    state->skeletonState->activeTree = NULL;
-    state->skeletonState->activeNode = NULL;
-
-    state->skeletonState->segRadiusToNodeRadius = 0.5;
-    state->skeletonState->greatestNodeID = 0;
-
-    state->skeletonState->showNodeIDs = false;
-    state->skeletonState->highlightActiveTree = true;
-    state->skeletonState->showIntersections = false;
-
-    state->skeletonState->defaultNodeRadius = 1.5;
-    state->skeletonState->overrideNodeRadiusBool = false;
-    state->skeletonState->overrideNodeRadiusVal = 1.;
-
-    state->skeletonState->currentComment = NULL;
-    state->skeletonState->totalComments = 0;
-    state->skeletonState->totalBranchpoints = 0;
-
-
-    state->skeletonState->commentBuffer = (char*) malloc(10240 * sizeof(char));
-    memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
-
-    state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
-    memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
-    state->skeletonState->skeletonLastSavedInVersion.clear();
-
     loadTreeLUT();
 }
 
@@ -545,7 +505,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                     attribute = attributes.value("lockToNodesWithComment");
                     if(attribute.isNull() == false) {
-                        strcpy(state->skeletonState->onCommentLock, static_cast<const char*>(attribute.toString().toStdString().c_str()));
+                        state->skeletonState->onCommentLock = attribute.toString();
                     }
                 } else if(merge == false && xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
                     QStringRef attribute = attributes.value("ms");
@@ -864,10 +824,6 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     }
     nodeToDel->firstSegment = nullptr;
 
-    if (nodeToDel == state->skeletonState->selectedCommentNode) {
-        state->skeletonState->selectedCommentNode = nullptr;
-    }
-
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
 
     if (nodeToDel->selected) {
@@ -1117,16 +1073,11 @@ bool Skeletonizer::setActiveNode(nodeListElement *node, uint nodeID) {
 
         setActiveTreeByID(node->correspondingTree->treeID);
 
-        if(node->comment) {
+        state->skeletonState->commentBuffer.clear();
+        if (node->comment) {
             state->skeletonState->currentComment = node->comment;
-            memset(state->skeletonState->commentBuffer, '\0', 10240);
-
-            strncpy(state->skeletonState->commentBuffer,
-                    state->skeletonState->currentComment->content,
-                    strlen(state->skeletonState->currentComment->content));
+            state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
         }
-        else
-            memset(state->skeletonState->commentBuffer, '\0', 10240);
     }
 
     Session::singleton().unsavedChanges = true;
@@ -1721,7 +1672,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
     return true;
 }
 
-void* Skeletonizer::popStack(stack *stack) {
+void * popStack(stack *stack) {
     //The stack should hold values != NULL only, NULL indicates an error.
     void *element = NULL;
 
@@ -1737,7 +1688,7 @@ void* Skeletonizer::popStack(stack *stack) {
     return element;
 }
 
-bool Skeletonizer::pushStack(stack *stack, void *element) {
+bool pushStack(stack *stack, void *element) {
     if(element == NULL) {
         qDebug() << "Stack can't hold NULL.";
         return false;
@@ -1760,7 +1711,7 @@ bool Skeletonizer::pushStack(stack *stack, void *element) {
     return true;
 }
 
-stack* Skeletonizer::newStack(int size) {
+stack * newStack(int size) {
     struct stack *newStack = NULL;
 
     if(size <= 0) {
@@ -1790,7 +1741,7 @@ stack* Skeletonizer::newStack(int size) {
 
 }
 
-bool Skeletonizer::delStack(stack *stack) {
+bool delStack(stack *stack) {
     free(stack->elements);
     free(stack);
 
@@ -1933,10 +1884,8 @@ bool Skeletonizer::addComment(QString content, nodeListElement *node, uint nodeI
 
 
     //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
-    memset(state->skeletonState->commentBuffer, '\0', 10240);
-    strncpy(state->skeletonState->commentBuffer,
-            state->skeletonState->currentComment->content,
-            strlen(state->skeletonState->currentComment->content));
+    state->skeletonState->commentBuffer.clear();
+    state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
 
     Session::singleton().unsavedChanges = true;
 
@@ -1983,8 +1932,8 @@ bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNo
         currentComment->node->comment = NULL;
     }
 
-    if(state->skeletonState->currentComment == currentComment) {
-        memset(state->skeletonState->commentBuffer, '\0', 10240);
+    if (state->skeletonState->currentComment == currentComment) {
+        state->skeletonState->commentBuffer.clear();
     }
 
     if(currentComment->next == currentComment) {
@@ -2087,22 +2036,17 @@ commentListElement* Skeletonizer::nextComment(QString searchString) {
         }
     }
 
-    memset(state->skeletonState->commentBuffer, '\0', 10240);
+    state->skeletonState->commentBuffer.clear();
 
-    if(state->skeletonState->currentComment) {
-        strncpy(state->skeletonState->commentBuffer,
-                state->skeletonState->currentComment->content,
-                strlen(state->skeletonState->currentComment->content));
-
-        if(state->skeletonState->lockPositions) {
-            if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock)) {
+    if (state->skeletonState->currentComment != nullptr) {
+        state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
+        if (state->skeletonState->lockPositions) {
+            if (state->skeletonState->commentBuffer == state->skeletonState->onCommentLock) {
                 lockPosition(state->skeletonState->currentComment->node->position);
-            }
-            else {
+            } else {
                 unlockPosition();
             }
         }
-
     }
     return state->skeletonState->currentComment;
 }
@@ -2139,18 +2083,15 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
 
         }
     }
-    memset(state->skeletonState->commentBuffer, '\0', 10240);
 
-    if(state->skeletonState->currentComment) {
-        strncpy(state->skeletonState->commentBuffer,
-            state->skeletonState->currentComment->content,
-            strlen(state->skeletonState->currentComment->content));
+    state->skeletonState->commentBuffer.clear();
 
-        if(state->skeletonState->lockPositions) {
-            if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock)) {
+    if (state->skeletonState->currentComment != nullptr) {
+        state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
+        if (state->skeletonState->lockPositions) {
+            if (state->skeletonState->commentBuffer == state->skeletonState->onCommentLock) {
                 lockPosition(state->skeletonState->currentComment->node->position);
-            }
-            else {
+            } else {
                 unlockPosition();
             }
         }

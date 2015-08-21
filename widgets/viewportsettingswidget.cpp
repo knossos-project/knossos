@@ -96,7 +96,6 @@ void ViewportSettingsWidget::loadSettings() {
             (settings.value(RENDERING_QUALITY).isNull())? 7. : settings.value(RENDERING_QUALITY).toInt();
     this->generalTabWidget->renderingQualitySpinBox->setValue((int)state->viewerState->cumDistRenderThres);
 
-    state->skeletonState->displayMode = 0;//it needs to get initialized _somewhere_
     const auto wholeSkeleton = settings.value(WHOLE_SKELETON, true).toBool();
     generalTabWidget->wholeSkeletonRadioButton.setChecked(wholeSkeleton);
     generalTabWidget->wholeSkeletonRadioButton.clicked(wholeSkeleton);

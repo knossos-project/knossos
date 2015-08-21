@@ -42,49 +42,64 @@ class nodeListElement;
 class segmentListElement;
 class commentListElement;
 
-struct stack;
+struct stack {
+    uint elementsOnStack;
+    void **elements;
+    int stackpointer;
+    int size;
+};
+void *popStack(stack *stack);
+bool pushStack(stack *stack, void *element);
+stack *newStack(int size);
+bool delStack(stack *stack);
 
-struct skeletonState {
-    uint skeletonRevision;
+// skeleton vp orientation
+#define SKELVP_XY_VIEW 0
+#define SKELVP_XZ_VIEW 1
+#define SKELVP_YZ_VIEW 2
+#define SKELVP_R90 3
+#define SKELVP_R180 4
+#define SKELVP_RESET 5
 
+struct SkeletonState {
+    SkeletonState() {
+        state->skeletonState = this;
+    }
     std::unique_ptr<treeListElement> firstTree;
-    treeListElement *activeTree;
-    nodeListElement *activeNode;
+    treeListElement * activeTree{nullptr};
+    nodeListElement * activeNode{nullptr};
 
     std::unordered_map<int, treeListElement *> treesByID;
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
-    commentListElement *currentComment;
-    char *commentBuffer;
-    char *searchStrBuffer;
+    commentListElement * currentComment{nullptr};
+    QString commentBuffer;
 
-    stack *branchStack;
+    stack * branchStack{newStack(1048576)};
 
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
     uint volBoundary;
 
-    uint totalComments;
-    uint totalBranchpoints;
+    uint totalComments{0};
+    uint totalBranchpoints{0};
 
-    bool userCommentColoringOn;
-    uint commentNodeRadiusOn;
-
-    bool lockPositions;
-    bool positionLocked;
-    char onCommentLock[1024];
+    bool lockPositions{false};
+    bool positionLocked{false};
+    QString onCommentLock{"seed"};
     Coordinate lockedPosition;
-    long unsigned int lockRadius;
+    long unsigned int lockRadius{100};
 
     float rotdx;
     float rotdy;
     int rotationcounter;
 
-    int definedSkeletonVpView;
+    int definedSkeletonVpView{SKELVP_RESET};
 
-    float translateX, translateY;
+    float translateX;
+    float translateY;
 
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
@@ -93,33 +108,31 @@ struct skeletonState {
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    uint displayMode;
+    uint displayMode{0};
 
-    float segRadiusToNodeRadius;
-    int overrideNodeRadiusBool;
-    float overrideNodeRadiusVal;
+    float segRadiusToNodeRadius{.5f};
+    int overrideNodeRadiusBool{false};
+    float overrideNodeRadiusVal{1.f};
 
-    int highlightActiveTree;
-    int showIntersections;
+    int highlightActiveTree{true};
+    int showIntersections{false};
     int rotateAroundActiveNode;
-    int showXYplane;
-    int showXZplane;
-    int showYZplane;
-    int showNodeIDs;
+    int showXYplane{true};
+    int showXZplane{true};
+    int showYZplane{true};
+    int showNodeIDs{false};
 
-    int treeElements;
-    int totalNodeElements;
-    int totalSegmentElements;
+    int treeElements{0};
+    int totalNodeElements{0};
+    int totalSegmentElements{0};
 
-    uint64_t greatestNodeID;
-    int greatestTreeID;
-
-    nodeListElement *selectedCommentNode;
+    uint64_t greatestNodeID{0};
+    int greatestTreeID{0};
 
     //If true, loadSkeleton merges the current skeleton with the provided
     bool mergeOnLoadFlag;
 
-    float defaultNodeRadius;
+    float defaultNodeRadius{1.5f};
 
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     float zoomLevel;
@@ -129,7 +142,7 @@ struct skeletonState {
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
 
-    bool branchpointUnresolved;
+    bool branchpointUnresolved{false};
 
     QString skeletonCreatedInVersion;
     QString skeletonLastSavedInVersion;
@@ -142,6 +155,7 @@ class Skeletonizer : public QObject {
     Q_OBJECT
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
 public:
+    SkeletonState skeletonState;
     explicit Skeletonizer(QObject *parent = 0);
     static Skeletonizer & singleton() {
         static Skeletonizer skeletonizer;
@@ -171,11 +185,6 @@ public slots:
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
     boost::optional<uint64_t> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
-
-    static void *popStack(stack *stack);
-    static bool pushStack(stack *stack, void *element);
-    static stack *newStack(int size);
-    static bool delStack(stack *stack);
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 

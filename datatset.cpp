@@ -13,6 +13,18 @@
 #include <QStringList>
 #include <QTextStream>
 
+Dataset Dataset::dummyDataset() {
+    Dataset info;
+    info.boundary = {1000, 1000, 1000};
+    info.scale = {1.f, 1.f, 1.f};
+    info.lowestAvailableMag = 1;
+    info.magnification = 1;
+    info.highestAvailableMag = 1;
+    info.cubeEdgeLength = 128;
+    info.overlay = false;
+    return info;
+}
+
 Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     Dataset info;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -168,12 +180,12 @@ void Dataset::applyToState() const {
 
     // update the volume boundary
     if ((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.x * 2;
+        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.x * 2;
     }
     if ((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.y * 2;
+        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.y * 2;
     }
     if ((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        state->skeletonState->volBoundary = state->boundary.z * 2;
+        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.z * 2;
     }
 }

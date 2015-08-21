@@ -7,6 +7,7 @@
 #include <QUrl>
 
 struct Dataset {
+    static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
     static Dataset fromLegacyConf(const QUrl & url, QString config);
@@ -15,14 +16,14 @@ struct Dataset {
 
     Coordinate boundary{0,0,0};
     floatCoordinate scale{0,0,0};
-    int magnification = 0;
-    int lowestAvailableMag;
-    int highestAvailableMag;
-    int cubeEdgeLength = 128;
-    int compressionRatio = 0;
-    bool remote = false;
-    bool overlay = false;
-    QString experimentname{""};
+    int magnification{0};
+    int lowestAvailableMag{0};
+    int highestAvailableMag{0};
+    int cubeEdgeLength{128};
+    int compressionRatio{0};
+    bool remote{false};
+    bool overlay{false};
+    QString experimentname{};
     QUrl url;
 };
 
