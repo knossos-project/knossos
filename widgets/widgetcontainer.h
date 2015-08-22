@@ -12,7 +12,6 @@
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
 #include "viewportsettingswidget.h"
-#include "viewportsettings/vpskeletonviewportwidget.h"
 #include "pythonpropertywidget.h"
 
 struct WidgetContainer {
@@ -28,7 +27,7 @@ struct WidgetContainer {
         , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         QObject::connect(datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
-        QObject::connect(viewportSettingsWidget->skeletonViewportWidget, &VPSkeletonViewportWidget::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
+        QObject::connect(&viewportSettingsWidget->datasetAndSegmentationTab, &DatasetAndSegmentationOptionsTab::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
     }
 
     AnnotationWidget annotationWidgetObject;

@@ -37,8 +37,6 @@
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
-#include "widgets/viewportsettings/vpgeneraltabwidget.h"
-#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/optional.hpp>
@@ -835,7 +833,8 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        emit updateSlicePlaneWidgetSignal();
+        auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->viewportTab;
+        vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
@@ -856,10 +855,10 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        const auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->generalTabWidget;
-        const auto hideSkeletonOrtho = vpSettings->hideSkeletonOrthoVPsCheckBox.isChecked();
-        vpSettings->hideSkeletonOrthoVPsCheckBox.setChecked(!hideSkeletonOrtho);
-        vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
+        auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->skeletonTab;
+        const auto showkeletonOrtho = vpSettings.skeletonInOrthoVPsCheck.isChecked();
+        vpSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
+        vpSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
     } else if(event->key() == Qt::Key_Plus) {
         if(control) {
             Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1);
@@ -870,8 +869,8 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha += 10;
             }
-            const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-            sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+            auto & segSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->datasetAndSegmentationTab;
+            segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Minus) {
         if(control) {
@@ -885,8 +884,8 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha -= 10;
             }
-            const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-            sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+            auto & segSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->datasetAndSegmentationTab;
+            segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Space) {
         state->viewerState->showOverlay = false;

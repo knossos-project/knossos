@@ -32,8 +32,6 @@
 #include "skeleton/skeletonizer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
-#include "widgets/viewportsettings/vpgeneraltabwidget.h"
-#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
 #include "widgets/widgetcontainer.h"
 
 #include <QDebug>
@@ -1542,7 +1540,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
-    QObject::connect(eventModel, &EventModel::updateSlicePlaneWidgetSignal, window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateIntersection);
     QObject::connect(eventModel, &EventModel::compressionRatioToggled, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
@@ -1566,7 +1563,7 @@ void Viewer::rewire() {
     // --- widget signals ---
     //  viewport settings widget signals --
     //  slice plane vps tab signals
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::setVPOrientationSignal, this, &Viewer::setVPOrientation);
+    QObject::connect(&window->widgetContainer->viewportSettingsWidget->viewportTab, &ViewportOptionsTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
     //  -- end viewport settings widget signals
     //  dataset options signals --
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);

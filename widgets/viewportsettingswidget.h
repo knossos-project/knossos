@@ -25,22 +25,25 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "viewportsettings/datasetandsegmentationoptionstab.h"
+#include "viewportsettings/skeletonoptionstab.h"
+#include "viewportsettings/viewportoptionstab.h"
+
 #include <QDialog>
 #include <QTabWidget>
-
-class VPGeneralTabWidget;
-class VPSlicePlaneViewportWidget;
-class VPSkeletonViewportWidget;
+#include <QVBoxLayout>
 
 class ViewportSettingsWidget : public QDialog
 {
     Q_OBJECT
-    QTabWidget *tabs;
+    QTabWidget tabs;
 public:
     explicit ViewportSettingsWidget(QWidget *parent = 0);
-    VPGeneralTabWidget *generalTabWidget;
-    VPSkeletonViewportWidget *skeletonViewportWidget;
-    VPSlicePlaneViewportWidget *slicePlaneViewportWidget;
+    DatasetAndSegmentationOptionsTab datasetAndSegmentationTab;
+    SkeletonOptionsTab skeletonTab;
+    ViewportOptionsTab viewportTab;
+    QVBoxLayout mainLayout;
+
     void loadSettings();
     void saveSettings();
 signals:
