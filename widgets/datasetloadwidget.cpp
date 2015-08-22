@@ -203,7 +203,7 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     superCubeSizeLabel.setText(text);
     const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
     //make sure it’s an odd number
-    superCubeEdgeSpin.setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
+    superCubeEdgeSpin.setMaximum(maxsupercubeedge - !maxsupercubeedge);
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
