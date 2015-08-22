@@ -106,19 +106,8 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
                 state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
                 break;
             }
-            state->viewerState->vpConfigs[i].draggedNode = NULL;
-            state->viewerState->vpConfigs[i].edgeLength = 350;
-
-            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-            state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-            state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-
-            //This variable indicates the current zoom value for a viewport.
-            //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
         }
         resetTextureProperties();
-
 
         xyButton = new QPushButton("xy", this);
         xzButton = new QPushButton("xz", this);
@@ -168,7 +157,8 @@ void Viewport::resetTextureProperties() {
     state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
-    for(uint i = 0; i < Viewport::numberViewports; i++) {
+    for (uint i = 0; i < Viewport::numberViewports; i++) {
+        state->viewerState->vpConfigs[i].draggedNode = nullptr;
         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
         state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
