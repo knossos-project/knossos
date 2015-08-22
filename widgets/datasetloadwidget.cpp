@@ -314,11 +314,22 @@ void DatasetLoadWidget::applyGeometrySettings() {
 }
 
 void DatasetLoadWidget::loadSettings() {
+    auto transitionedDataset = [](const QString & dataset){//update old files from settings
+        QUrl url = dataset;
+        if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
+            url = QUrl::fromLocalFile(dataset);
+        }
+        if (url.isRelative()) {
+            url = QUrl::fromLocalFile(dataset);
+        }
+        return url;
+    };
+
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
     restoreGeometry(settings.value(DATASET_GEOMETRY, "").toByteArray());
-    datasetUrl = settings.value(DATASET_LAST_USED, "").toString();
+    datasetUrl = transitionedDataset(settings.value(DATASET_LAST_USED, "").toString());
 
     auto appendRowSelectIfLU = [this](const QString & dataset){
         insertDatasetRow(dataset, tableWidget.rowCount());
@@ -330,15 +341,8 @@ void DatasetLoadWidget::loadSettings() {
     tableWidget.blockSignals(true);
 
     //add datasets from file
-    for (QString dataset : settings.value(DATASET_MRU).toStringList()) {
-        QUrl url = dataset;
-        if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
-            url = QUrl::fromLocalFile(dataset);
-        }
-        if (url.isRelative()) {
-            url = QUrl::fromLocalFile(dataset);
-        }
-        appendRowSelectIfLU(url.toString());
+    for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
+        appendRowSelectIfLU(transitionedDataset(dataset).toString());
     }
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
