@@ -139,7 +139,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
 
     QObject::connect(&wholeSkeletonRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::wholeSkeletonSelected);
-    //QObject::connect(&onlyCurrentCubeRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::onlyCurrentCubeSelected);
     QObject::connect(&onlySelectedTreesRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::onlySelectedTreesSelected);
     QObject::connect(&hideSkeletonOrthoVPsCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonOrthoVPClicked);
     QObject::connect(&hideSkeletonSkelVPCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonSkelVPClicked);
@@ -169,7 +168,6 @@ void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
     state->skeletonState->overrideNodeRadiusVal = value;
 }
 
-
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
     state->skeletonState->segRadiusToNodeRadius = value;
 }
@@ -180,36 +178,24 @@ void VPGeneralTabWidget::renderingQualityChanged(int value) {
 
 void VPGeneralTabWidget::wholeSkeletonSelected(bool checked) {
     if (checked) {
-        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
+        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES);
         state->skeletonState->displayMode |= DSP_WHOLE;
-        emit updateViewerStateSignal();
-    }
-}
-
-void VPGeneralTabWidget::onlyCurrentCubeSelected(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_CURRENTCUBE;
-        emit updateViewerStateSignal();
     }
 }
 
 void VPGeneralTabWidget::onlySelectedTreesSelected(bool checked) {
     if (checked) {
-        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
+        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES);
         state->skeletonState->displayMode |= DSP_SELECTED_TREES;
-        emit updateViewerStateSignal();
     }
 }
 
 void VPGeneralTabWidget::hideSkeletonSkelVPClicked(bool checked) {
     if (checked) {
         state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-    }
-    else {
+    } else {
         state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
     }
-    emit updateViewerStateSignal();
 }
 
 void VPGeneralTabWidget::hideSkeletonOrthoVPClicked(bool checked) {
@@ -218,5 +204,4 @@ void VPGeneralTabWidget::hideSkeletonOrthoVPClicked(bool checked) {
     } else {
         state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
     }
-    emit updateViewerStateSignal();
 }

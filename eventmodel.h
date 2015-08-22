@@ -95,7 +95,6 @@ signals:
     void zoomOrthoSignal(float step);
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
-    void updateViewerStateSignal();
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();

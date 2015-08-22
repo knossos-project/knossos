@@ -46,7 +46,6 @@ public:
 signals:
     void setViewportDecorations(bool);
     void resetViewportPositions();
-    void updateViewerStateSignal();
 
 public slots:
     void lightEffectsChecked(bool on);
@@ -58,7 +57,6 @@ public slots:
     void renderingQualityChanged(int value);
     // skeleton visibility
     void wholeSkeletonSelected(bool checked);
-    void onlyCurrentCubeSelected(bool checked);
     void onlySelectedTreesSelected(bool checked);
     void hideSkeletonOrthoVPClicked(bool checked);
     void hideSkeletonSkelVPClicked(bool checked);
@@ -74,7 +72,6 @@ protected:
     QDoubleSpinBox *overrideNodeRadiusSpinBox;
 
     QRadioButton wholeSkeletonRadioButton{"Whole Skeleton"};
-    QRadioButton onlyCurrentCubeRadioButton{"Only Current Cube"};
     QRadioButton onlySelectedTreesRadioButton{"Only Selected Trees"};
     QCheckBox hideSkeletonSkelVPCheckBox{"Hide Skeleton  In Skeleton VP (fast)"};
 

@@ -68,10 +68,6 @@ struct ViewerState {
     int highlightVp{VIEWPORT_UNDEFINED};
     int vpKeyDirection[3]{1,1,1};
 
-    //Min distance to currently centered data cube for rendering of spatial skeleton structure.
-    //Unit: data cubes.
-    int zoomCube;
-
     // don't jump between mags on zooming
     bool datasetMagLock;
 
@@ -90,7 +86,6 @@ struct ViewerState {
 
     //Keyboard repeat rate
     uint stepsPerSec{40};
-    GLint filterType{GL_LINEAR};
     int multisamplingOnOff;
     int lightOnOff;
 
@@ -182,8 +177,6 @@ public:
     QTimer *timer;
     int frames;
 
-    bool updateZoomCube();
-
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
@@ -215,7 +208,7 @@ public slots:
     bool userMove_arb(float x, float y, float z);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
-    bool updateViewerState();
+    void applyTextureFilterSetting(const GLint texFiltering);
     void run();
     void loader_notify();
     void defaultDatasetLUT();
@@ -232,7 +225,7 @@ public slots:
     void setMovementAreaFactor(float alpha);
 protected:
     bool calcLeftUpperTexAbsPx();
-    bool initViewer();
+    void initViewer();
 };
 
 #endif // VIEWER_H

@@ -125,7 +125,6 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
-    QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
     QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
     Scripting scripts;

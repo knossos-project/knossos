@@ -729,11 +729,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     return false;
 }
 
-/**
-  * Initializes the viewer, is called only once after the viewing thread started
-  *
-  */
-bool Viewer::initViewer() {
+void Viewer::initViewer() {
     // This is the buffer that holds the actual texture data (for _all_ textures)
 
     state->viewerState->texData =
@@ -804,10 +800,7 @@ bool Viewer::initViewer() {
                                                          * sizeof(char)
                                                          * 4);
 
-    updateViewerState();
     recalcTextureOffsets();
-
-    return true;
 }
 
 bool Viewer::calcDisplayedEdgeLength() {
@@ -975,8 +968,6 @@ void Viewer::run() {
             }
         }
     }
-
-    updateViewerState();
     window->updateTitlebar(); //display changes after filename
 
     vpUpperLeft->update();
@@ -985,78 +976,25 @@ void Viewer::run() {
     vpLowerRight->update();
 }
 
-bool Viewer::updateViewerState() {
-    uint i;
-
-    for(i = 0; i < Viewport::numberViewports; i++) {
-
-        if(i == VP_UPPERLEFT) {
+void Viewer::applyTextureFilterSetting(const GLint texFiltering) {
+    for (uint i = 0; i < Viewport::numberViewports; i++) {
+        if (i == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
-        }
-        else if(i == VP_LOWERLEFT) {
+        } else if (i == VP_LOWERLEFT) {
             vpLowerLeft->makeCurrent();
-        }
-        else if(i == VP_UPPERRIGHT) {
+        } else if (i == VP_UPPERRIGHT) {
             vpUpperRight->makeCurrent();
         }
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
         // Set the parameters for the texture.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.overlayHandle);
         // Set the parameters for the texture.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    updateZoomCube();
-    return true;
-}
-
-
-bool Viewer::updateZoomCube() {
-    uint i;
-    int residue, max, currentZoomCube;
-
-    /* Notice int division! */
-    max = ((state->M/2)*2-1);
-    state->viewerState->zoomCube = 0;
-
-    for(i = 0; i < Viewport::numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
-            residue = ((max*state->cubeEdgeLength)
-            - ((int)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
-            / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx)))
-            / state->cubeEdgeLength;
-
-            if(residue%2) {
-                residue = residue / 2 + 1;
-            }
-            else if((residue%2 == 0) && (residue != 0)) {
-                residue = (residue - 1) / 2 + 1;
-            }
-            currentZoomCube = (state->M/2)-residue;
-            if(state->viewerState->zoomCube < currentZoomCube) {
-                state->viewerState->zoomCube = currentZoomCube;
-            }
-            residue = ((max*state->cubeEdgeLength)
-            - ((int)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
-            / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx)))
-            / state->cubeEdgeLength;
-
-            if(residue%2) {
-                residue = residue / 2 + 1;
-            }
-            else if((residue%2 == 0) && (residue != 0)) {
-                residue = (residue - 1) / 2 + 1;
-            }
-            currentZoomCube = (state->M/2)-residue;
-            if(state->viewerState->zoomCube < currentZoomCube) {
-                state->viewerState->zoomCube = currentZoomCube;
-            }
-        }
-    }
-    return true;
 }
 
 void Viewer::updateCurrentPosition() {
@@ -1601,7 +1539,6 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-    QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
@@ -1628,11 +1565,8 @@ void Viewer::rewire() {
 
     // --- widget signals ---
     //  viewport settings widget signals --
-    //  general vp settings tab signals
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  slice plane vps tab signals
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::setVPOrientationSignal, this, &Viewer::setVPOrientation);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  -- end viewport settings widget signals
     //  dataset options signals --
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);

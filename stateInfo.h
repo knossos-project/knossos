@@ -20,11 +20,11 @@ extern stateInfo * state;
 #define NO_MAG_CHANGE 0
 
 #define DSP_WHOLE           1
-#define DSP_CURRENTCUBE      2
+//#define DSP_CURRENTCUBE      2
 #define DSP_SKEL_VP_HIDE        4
 #define DSP_SLICE_VP_HIDE       8
 #define DSP_SELECTED_TREES      16
-#define DSP_LINES_POINTS        32
+//#define DSP_LINES_POINTS        32
 
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)

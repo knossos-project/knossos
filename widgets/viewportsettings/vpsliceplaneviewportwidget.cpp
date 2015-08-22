@@ -187,11 +187,10 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) : QWidge
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool checked) {
     if (checked) {
-        state->viewerState->filterType = GL_LINEAR;
+        state->viewer->applyTextureFilterSetting(GL_LINEAR);
     } else {
-        state->viewerState->filterType = GL_NEAREST;
+        state->viewer->applyTextureFilterSetting(GL_NEAREST);
     }
-    emit updateViewerStateSignal();
 }
 
 void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool checked) {

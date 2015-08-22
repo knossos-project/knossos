@@ -47,7 +47,6 @@ public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
 signals:
     void showIntersectionsSignal(bool value);
-    void updateViewerStateSignal();
     void setVPOrientationSignal(bool arbitrary);
 public slots:
     void datasetLinearFilteringChecked(bool checked);

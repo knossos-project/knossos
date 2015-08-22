@@ -52,7 +52,6 @@ public:
 
 signals:
     void finished();
-    void updateViewerStateSignal();
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void rotationSignal(float x, float y, float z, float angle);
 public slots:

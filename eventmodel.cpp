@@ -278,7 +278,6 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
         }
     }
-    emit updateViewerStateSignal();
     if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
         Knossos::sendRemoteSignal();
     }
@@ -698,7 +697,6 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                                               state->viewerState->currentPosition.y,
                                               state->viewerState->currentPosition.z + state->viewerState->walkFrames
                                               * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
-            emit updateViewerStateSignal();
             Knossos::sendRemoteSignal();
             break;
         case VIEWPORT_XZ:
