@@ -22,11 +22,11 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     segmentationOverlaySlider.setMaximum(255);
     segmentationOverlaySlider.setSingleStep(1);
 
-    VolumeColorBox.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
-    VolumeOpaquenessSpinBox.setMaximum(255);
-    VolumeOpaquenessSpinBox.setSingleStep(1);
-    VolumeOpaquenessSlider.setMaximum(255);
-    VolumeOpaquenessSlider.setSingleStep(1);
+    volumeColorButton.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
+    volumeOpaquenessSpinBox.setMaximum(255);
+    volumeOpaquenessSpinBox.setSingleStep(1);
+    volumeOpaquenessSlider.setMaximum(255);
+    volumeOpaquenessSlider.setSingleStep(1);
 
     datasetSeparator.setFrameShape(QFrame::HLine);
     datasetSeparator.setFrameShadow(QFrame::Sunken);
@@ -47,9 +47,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     mainLayout.addWidget(&segmentationSeparator, row++, 0, 1, 3);
     mainLayout.addWidget(&segmentationOverlayLabel, row, 0); mainLayout.addWidget(&segmentationOverlaySlider, row, 1); mainLayout.addWidget(&segmentationOverlaySpinBox, row++, 2);
     // segmentation volume
-    mainLayout.addWidget(&VolumeRenderFlagCheckBox, row++, 0, 1, 2);
-    mainLayout.addWidget(&VolumeOpaquenessLabel, row, 0); mainLayout.addWidget(&VolumeOpaquenessSlider, row, 1); mainLayout.addWidget(&VolumeOpaquenessSpinBox, row++, 2);
-    mainLayout.addWidget(&VolumeColorLabel, row, 0); mainLayout.addWidget(&VolumeColorBox, row++, 1, Qt::AlignLeft);
+    mainLayout.addWidget(&volumeRenderCheckBox, row++, 0, 1, 2);
+    mainLayout.addWidget(&volumeOpaquenessLabel, row, 0); mainLayout.addWidget(&volumeOpaquenessSlider, row, 1); mainLayout.addWidget(&volumeOpaquenessSpinBox, row++, 2);
+    mainLayout.addWidget(&volumeColorLabel, row, 0); mainLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
     setLayout(&mainLayout);
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
@@ -97,24 +97,24 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
     });
-    QObject::connect(&VolumeRenderFlagCheckBox, &QCheckBox::clicked, [this](bool checked){
+    QObject::connect(&volumeRenderCheckBox, &QCheckBox::toggled, [this](bool checked){
         Segmentation::singleton().volume_render_toggle = checked;
         emit volumeRenderToggled();
     });
-    QObject::connect(&VolumeColorBox, &QPushButton::clicked, [&](){
+    QObject::connect(&volumeColorButton, &QPushButton::clicked, [&](){
         auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
         if (color.isValid() == QColorDialog::Accepted) {
             Segmentation::singleton().volume_background_color = color;
-            VolumeColorBox.setStyleSheet("background-color: " + color.name() + ";");
+            volumeColorButton.setStyleSheet("background-color: " + color.name() + ";");
         }
     });
-    QObject::connect(&VolumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
-        VolumeOpaquenessSpinBox.setValue(value);
+    QObject::connect(&volumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
+        volumeOpaquenessSpinBox.setValue(value);
         Segmentation::singleton().volume_opacity = value;
         Segmentation::singleton().volume_update_required = true;
     });
-    QObject::connect(&VolumeOpaquenessSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
-        VolumeOpaquenessSlider.setValue(value);
+    QObject::connect(&volumeOpaquenessSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+        volumeOpaquenessSlider.setValue(value);
         Segmentation::singleton().volume_opacity = value;
         Segmentation::singleton().volume_update_required = true;
     });

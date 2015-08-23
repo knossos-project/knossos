@@ -109,6 +109,12 @@ void AppearanceWidget::loadSettings() {
     datasetAndSegmentationTab.segmentationOverlaySlider.setValue(segmentationOverlayAlpha);
     datasetAndSegmentationTab.segmentationOverlaySlider.valueChanged(segmentationOverlayAlpha);
 
+    datasetAndSegmentationTab.volumeRenderCheckBox.setChecked(settings.value(RENDER_VOLUME, false).toBool());
+    datasetAndSegmentationTab.volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
+
+    Segmentation::singleton().volume_background_color.setRgba(settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).toUInt());
+    datasetAndSegmentationTab.volumeColorButton.setStyleSheet("background-color: " + Segmentation::singleton().volume_background_color.name() + ";");
+
     // vp settings
     viewportTab.showScalebarCheckBox.setChecked(settings.value(SHOW_SCALEBAR, false).toBool());
 
@@ -177,6 +183,9 @@ void AppearanceWidget::saveSettings() {
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, datasetAndSegmentationTab.segmentationOverlaySlider.value());
     settings.setValue(DATASET_LUT_FILE, datasetAndSegmentationTab.lutFilePath);
     settings.setValue(DATASET_LUT_FILE_USED, datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.isChecked());
+    settings.setValue(RENDER_VOLUME, datasetAndSegmentationTab.volumeRenderCheckBox.isChecked());
+    settings.setValue(VOLUME_ALPHA, datasetAndSegmentationTab.volumeOpaquenessSpinBox.value());
+    settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color.rgba());
     // viewports
     settings.setValue(SHOW_SCALEBAR, viewportTab.showScalebarCheckBox.isChecked());
     settings.setValue(SHOW_VP_DECORATION, viewportTab.showVPDecorationCheckBox.isChecked());

@@ -32,12 +32,12 @@ class DatasetAndSegmentationTab : public QWidget
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
     // segmentation volume
-    QCheckBox VolumeRenderFlagCheckBox{"Show volume in 3D viewport"};
-    QLabel VolumeOpaquenessLabel{"Volume opacity"};
-    QSpinBox VolumeOpaquenessSpinBox;
-    QSlider VolumeOpaquenessSlider{Qt::Horizontal};
-    QLabel VolumeColorLabel{"Volume background color"};
-    QPushButton VolumeColorBox;
+    QCheckBox volumeRenderCheckBox{"Show volume in 3D viewport"};
+    QLabel volumeOpaquenessLabel{"Volume opacity"};
+    QSpinBox volumeOpaquenessSpinBox;
+    QSlider volumeOpaquenessSlider{Qt::Horizontal};
+    QLabel volumeColorLabel{"Volume background color"};
+    QPushButton volumeColorButton;
 
     QGridLayout mainLayout;
     void useOwnDatasetColorsButtonClicked(QString path = "");
