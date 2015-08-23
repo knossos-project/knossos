@@ -132,8 +132,7 @@ public:
     std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
 
     // contains all widgets
-    WidgetContainer widgetContainerObject;
-    WidgetContainer *widgetContainer;
+    WidgetContainer widgetContainer;
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 

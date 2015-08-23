@@ -1523,7 +1523,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
@@ -1532,22 +1532,22 @@ void Viewer::rewire() {
     //event model signals
     QObject::connect(eventModel, &EventModel::userMoveSignal, this, &Viewer::userMove);
     QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
-    QObject::connect(eventModel, &EventModel::zoomReset, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
+    QObject::connect(eventModel, &EventModel::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
     QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
     QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-    QObject::connect(eventModel, &EventModel::updateWidgetSignal, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(eventModel, &EventModel::updateWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
-    QObject::connect(eventModel, &EventModel::compressionRatioToggled, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    QObject::connect(eventModel, &EventModel::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
     QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
     //end event handler signals
     //viewport signals
-    QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpUpperRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpLowerRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpUpperRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(vpLowerRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
 
     QObject::connect(vpUpperLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
     QObject::connect(vpLowerLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
@@ -1562,16 +1562,16 @@ void Viewer::rewire() {
 
     // --- widget signals ---
     //  appearance widget signals --
-    QObject::connect(&window->widgetContainer->appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
+    QObject::connect(&window->widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
     //  -- end appearance widget signals
     //  dataset options signals --
-    QObject::connect(&window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
-    QObject::connect(&window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
+    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
+    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     //  -- end dataset options signals
     // dataset load signals --
-    QObject::connect(&window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
-    QObject::connect(&window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
-    QObject::connect(&window->widgetContainer->datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, &window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+    QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
+    QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
+    QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
      // -- end dataset load signals
     // --- end widget signals
 }

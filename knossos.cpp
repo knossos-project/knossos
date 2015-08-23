@@ -131,9 +131,9 @@ int main(int argc, char *argv[]) {
     viewer.run();
     remote.start();
 
-    viewer.window->widgetContainer->datasetLoadWidget.loadDataset();
+    viewer.window->widgetContainer.datasetLoadWidget.loadDataset();
 
-    viewer.window->widgetContainer->datasetOptionsWidget.updateCompressionRatioDisplay();
+    viewer.window->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
