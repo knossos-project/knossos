@@ -66,7 +66,8 @@ void AppearanceWidget::loadSettings() {
         y = settings.value(POS_Y).toInt();
     }
     visible = settings.value(VISIBLE, false).toBool();
-    // skeleton visualization
+
+    // skeleton
     skeletonTab.lightEffectsCheck.setChecked(settings.value(LIGHT_EFFECTS, true).toBool());
     skeletonTab.highlightActiveTreeCheck.setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE, true).toBool());
     skeletonTab.allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
@@ -87,62 +88,30 @@ void AppearanceWidget::loadSettings() {
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
     skeletonTab.ownTreeColorsCheck.setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());
 
-    //dataset & segmentation
-    const auto linearFiltering = settings.value(DATASET_LINEAR_FILTERING, true).toBool();
-    datasetAndSegmentationTab.datasetLinearFilteringCheckBox.setChecked(linearFiltering);
-    datasetAndSegmentationTab.datasetLinearFilteringCheckBox.clicked(linearFiltering);
+    // dataset & segmentation
+    datasetAndSegmentationTab.datasetLinearFilteringCheckBox.setChecked(settings.value(DATASET_LINEAR_FILTERING, true).toBool());
     datasetAndSegmentationTab.lutFilePath = settings.value(DATASET_LUT_FILE, "").toString();
     // again, load the path-string first, before populating the checkbox
-    const auto useDatasetLut = settings.value(DATASET_LUT_FILE_USED, false).toBool();
-    datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.setChecked(useDatasetLut);
-    datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.clicked(useDatasetLut); //reload LUT
-
-    const auto luminanceBias = settings.value(BIAS, 0).toInt();
-    datasetAndSegmentationTab.biasSpinBox.setValue(luminanceBias);
-    datasetAndSegmentationTab.biasSpinBox.valueChanged(luminanceBias);
-
-    const auto luminanceRangeDelta = settings.value(RANGE_DELTA, 255).toInt();
-    datasetAndSegmentationTab.rangeDeltaSpinBox.setValue(luminanceRangeDelta);
-    datasetAndSegmentationTab.rangeDeltaSpinBox.valueChanged(luminanceRangeDelta);
-
-    const auto segmentationOverlayAlpha = settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt();
-    datasetAndSegmentationTab.segmentationOverlaySlider.setValue(segmentationOverlayAlpha);
-    datasetAndSegmentationTab.segmentationOverlaySlider.valueChanged(segmentationOverlayAlpha);
-
+    datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.setChecked(settings.value(DATASET_LUT_FILE_USED, false).toBool());
+    datasetAndSegmentationTab.biasSpinBox.setValue(settings.value(BIAS, 0).toInt());
+    datasetAndSegmentationTab.rangeDeltaSpinBox.setValue(settings.value(RANGE_DELTA, 255).toInt());
+    datasetAndSegmentationTab.segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
     datasetAndSegmentationTab.volumeRenderCheckBox.setChecked(settings.value(RENDER_VOLUME, false).toBool());
     datasetAndSegmentationTab.volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
-
     Segmentation::singleton().volume_background_color.setRgba(settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).toUInt());
     datasetAndSegmentationTab.volumeColorButton.setStyleSheet("background-color: " + Segmentation::singleton().volume_background_color.name() + ";");
 
-    // vp settings
+    // viewports
     viewportTab.showScalebarCheckBox.setChecked(settings.value(SHOW_SCALEBAR, false).toBool());
-
     viewportTab.showVPDecorationCheckBox.setChecked(settings.value(SHOW_VP_DECORATION, true).toBool());
-
-    const auto drawVPCrosshairs = settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool();
-    viewportTab.drawIntersectionsCrossHairCheckBox.setChecked(drawVPCrosshairs);
-    viewportTab.drawIntersectionsCrossHairCheckBox.clicked(drawVPCrosshairs);
-
-    const auto xyplane = settings.value(SHOW_XY_PLANE, true).toBool();
-    viewportTab.showXYPlaneCheckBox.setChecked(xyplane);
-    viewportTab.showXYPlaneCheckBox.clicked(xyplane);
-
-    const auto xzplane = settings.value(SHOW_XZ_PLANE, true).toBool();
-    viewportTab.showXZPlaneCheckBox.setChecked(xzplane);
-    viewportTab.showXZPlaneCheckBox.clicked(xzplane);
-
-    const auto yzplane = settings.value(SHOW_YZ_PLANE, true).toBool();
-    viewportTab.showYZPlaneCheckBox.setChecked(yzplane);
-    viewportTab.showYZPlaneCheckBox.clicked(yzplane);
-
+    viewportTab.drawIntersectionsCrossHairCheckBox.setChecked(settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool());
+    viewportTab.showXYPlaneCheckBox.setChecked(settings.value(SHOW_XY_PLANE, true).toBool());
+    viewportTab.showXZPlaneCheckBox.setChecked(settings.value(SHOW_XZ_PLANE, true).toBool());
+    viewportTab.showYZPlaneCheckBox.setChecked(settings.value(SHOW_YZ_PLANE, true).toBool());
     const auto showPhysicalBoundaries = settings.value(SHOW_PHYSICAL_BOUNDARIES, false).toBool();
     viewportTab.boundariesPixelRadioBtn.setChecked(!showPhysicalBoundaries);
     viewportTab.boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);
-
-    const auto rotateAroundActiveNode = settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool();
-    viewportTab.rotateAroundActiveNodeCheckBox.setChecked(rotateAroundActiveNode);
-    viewportTab.rotateAroundActiveNodeCheckBox.clicked(rotateAroundActiveNode);
+    viewportTab.rotateAroundActiveNodeCheckBox.setChecked(settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool());
 
     tabs.setCurrentIndex(settings.value(VP_TAB_INDEX, 0).toInt());
 

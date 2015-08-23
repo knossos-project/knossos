@@ -52,14 +52,14 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     mainLayout.addWidget(&volumeColorLabel, row, 0); mainLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
     setLayout(&mainLayout);
 
-    QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
+    QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::toggled, [](const bool checked) {
         if (checked) {
             state->viewer->applyTextureFilterSetting(GL_LINEAR);
         } else {
             state->viewer->applyTextureFilterSetting(GL_NEAREST);
         }
     });
-    QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::clicked, [this](const bool checked) {
+    QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::toggled, [this](const bool checked) {
         if (checked) {//load file if none is cached
             useOwnDatasetColorsButtonClicked(lutFilePath);
         } else {

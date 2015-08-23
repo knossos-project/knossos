@@ -36,19 +36,19 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
 
     QObject::connect(&showScalebarCheckBox, &QCheckBox::toggled, [] (bool checked) { state->viewerState->showScalebar = checked; });
     QObject::connect(&showVPDecorationCheckBox, &QCheckBox::toggled, this, &ViewportTab::setViewportDecorations);
-    QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
-    QObject::connect(&arbitraryModeCheckBox, &QCheckBox::clicked, [&](bool checked) {
+    QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::toggled, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
+    QObject::connect(&arbitraryModeCheckBox, &QCheckBox::toggled, [&](bool checked) {
         Viewport::arbitraryOrientation = checked;
         emit setVPOrientationSignal(checked);
     });
     // 3D viewport
-    QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->skeletonState->showXYplane = checked; });
-    QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->skeletonState->showYZplane = checked; });
-    QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->skeletonState->showXZplane = checked; });
+    QObject::connect(&showXYPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showXYplane = checked; });
+    QObject::connect(&showYZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showYZplane = checked; });
+    QObject::connect(&showXZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showXZplane = checked; });
     QObject::connect(boundaryGroup, static_cast<void(QButtonGroup::*)(int, bool)>(&QButtonGroup::buttonToggled), [this](const int, const bool) {
         Viewport::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
-    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked) {state->skeletonState->rotateAroundActiveNode = checked; });
+    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::toggled, [](bool checked) {state->skeletonState->rotateAroundActiveNode = checked; });
 
     QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportTab::resetViewportPositions);
 }
