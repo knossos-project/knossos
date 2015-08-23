@@ -25,9 +25,9 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "viewportsettings/datasetandsegmentationoptionstab.h"
-#include "viewportsettings/skeletonoptionstab.h"
-#include "viewportsettings/viewportoptionstab.h"
+#include "viewportsettings/datasetsegmentationtab.h"
+#include "viewportsettings/skeletontab.h"
+#include "viewportsettings/viewporttab.h"
 
 #include <QDialog>
 #include <QTabWidget>
@@ -39,9 +39,9 @@ class ViewportSettingsWidget : public QDialog
     QTabWidget tabs;
 public:
     explicit ViewportSettingsWidget(QWidget *parent = 0);
-    DatasetAndSegmentationOptionsTab datasetAndSegmentationTab;
-    SkeletonOptionsTab skeletonTab;
-    ViewportOptionsTab viewportTab;
+    DatasetAndSegmentationTab datasetAndSegmentationTab;
+    SkeletonTab skeletonTab;
+    ViewportTab viewportTab;
     QVBoxLayout mainLayout;
 
     void loadSettings();

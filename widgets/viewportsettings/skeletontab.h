@@ -1,5 +1,5 @@
-#ifndef SKELETONOPTIONSTAB_H
-#define SKELETONOPTIONSTAB_H
+#ifndef SKELETONTAB_H
+#define SKELETONTAB_H
 
 #include <QCheckBox>
 #include <QDoubleSpinBox>
@@ -9,10 +9,9 @@
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QGridLayout>
-#include <QMessageBox>
 #include <QWidget>
 
-class SkeletonOptionsTab : public QWidget
+class SkeletonTab : public QWidget
 {
     friend class ViewportSettingsWidget;
     friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
@@ -26,7 +25,6 @@ class SkeletonOptionsTab : public QWidget
     QCheckBox ownTreeColorsCheck{"Use custom tree colors"};
     QString lutFilePath;
     QPushButton loadTreeLUTButton{"Load …"};
-    QMessageBox lutErrorBox;
     QLabel depthCutOffLabel{"Depth cutoff:"};
     QSpinBox depthCutoffSpin;
     QLabel renderQualityLabel{"Rendering quality (1 best, 20 fastest):"};
@@ -49,11 +47,11 @@ class SkeletonOptionsTab : public QWidget
 
     void loadTreeLUTButtonClicked(QString path = "");
 public:
-    explicit SkeletonOptionsTab(QWidget *parent = 0);
+    explicit SkeletonTab(QWidget *parent = 0);
 
 signals:
     void showIntersectionsSignal(const bool checked);
 public slots:
 };
 
-#endif // SKELETONOPTIONSTAB_H
+#endif // SKELETONTAB_H

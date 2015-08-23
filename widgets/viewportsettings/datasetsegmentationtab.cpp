@@ -1,9 +1,11 @@
-#include "datasetandsegmentationoptionstab.h"
+#include "datasetsegmentationtab.h"
 
 #include "segmentation/segmentation.h"
 #include "viewer.h"
 
-DatasetAndSegmentationOptionsTab::DatasetAndSegmentationOptionsTab(QWidget *parent) : QWidget(parent), lutErrorBox(this)
+#include <QMessageBox>
+
+DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent)
 {
     biasSpinBox.setMaximum(255);
     biasSpinBox.setSingleStep(1);
@@ -49,10 +51,6 @@ DatasetAndSegmentationOptionsTab::DatasetAndSegmentationOptionsTab(QWidget *pare
     mainLayout.addWidget(&VolumeOpaquenessLabel, row, 0); mainLayout.addWidget(&VolumeOpaquenessSlider, row, 1); mainLayout.addWidget(&VolumeOpaquenessSpinBox, row++, 2);
     mainLayout.addWidget(&VolumeColorLabel, row, 0); mainLayout.addWidget(&VolumeColorBox, row++, 1, Qt::AlignLeft);
     setLayout(&mainLayout);
-
-    lutErrorBox.setIcon(QMessageBox::Warning);
-    lutErrorBox.setText("LUT loading failed");
-    lutErrorBox.setInformativeText("LUTs are restricted to 256 RGB tuples");
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
         if (checked) {
@@ -122,7 +120,7 @@ DatasetAndSegmentationOptionsTab::DatasetAndSegmentationOptionsTab(QWidget *pare
     });
 }
 
-void DatasetAndSegmentationOptionsTab::useOwnDatasetColorsButtonClicked(QString path) {
+void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
     if (path.isEmpty()) {
         path = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }
@@ -132,6 +130,7 @@ void DatasetAndSegmentationOptionsTab::useOwnDatasetColorsButtonClicked(QString 
             lutFilePath = path;
             useOwnDatasetColorsCheckBox.setChecked(true);
         } catch (...) {
+            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
             lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
             lutErrorBox.exec();
             useOwnDatasetColorsCheckBox.setChecked(false);

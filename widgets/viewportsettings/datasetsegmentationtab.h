@@ -1,5 +1,5 @@
-#ifndef DATASETANDSEGMENTATIONOPTIONSTAB_H
-#define DATASETANDSEGMENTATIONOPTIONSTAB_H
+#ifndef DATASETANDSEGMENTATIONTAB_H
+#define DATASETANDSEGMENTATIONTAB_H
 
 #include <QCheckBox>
 #include <QGridLayout>
@@ -11,7 +11,7 @@
 #include <QSpinBox>
 #include <QWidget>
 
-class DatasetAndSegmentationOptionsTab : public QWidget
+class DatasetAndSegmentationTab : public QWidget
 {
     friend class EventModel;
     friend class ViewportSettingsWidget;
@@ -44,11 +44,11 @@ class DatasetAndSegmentationOptionsTab : public QWidget
     QGridLayout mainLayout;
     void useOwnDatasetColorsButtonClicked(QString path = "");
 public:
-    explicit DatasetAndSegmentationOptionsTab(QWidget *parent = 0);
+    explicit DatasetAndSegmentationTab(QWidget *parent = 0);
 
 signals:
     void volumeRenderToggled();
 public slots:
 };
 
-#endif // DATASETANDSEGMENTATIONOPTIONSTAB_H
+#endif // DATASETANDSEGMENTATIONTAB_H

@@ -69,8 +69,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportOptionsTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
-    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportOptionsTab::resetViewportPositions, this, &MainWindow::resetViewports);
+    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
+    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {

@@ -27,7 +27,7 @@ struct WidgetContainer {
         , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         QObject::connect(datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
-        QObject::connect(&viewportSettingsWidget->datasetAndSegmentationTab, &DatasetAndSegmentationOptionsTab::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
+        QObject::connect(&viewportSettingsWidget->datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
     }
 
     AnnotationWidget annotationWidgetObject;

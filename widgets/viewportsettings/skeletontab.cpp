@@ -1,20 +1,17 @@
-#include "skeletonoptionstab.h"
+#include "skeletontab.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QFileDialog>
 #include <QHBoxLayout>
+#include <QMessageBox>
 
-SkeletonOptionsTab::SkeletonOptionsTab(QWidget *parent) : QWidget(parent), lutErrorBox(this) {
+SkeletonTab::SkeletonTab(QWidget *parent) : QWidget(parent) {
     renderQualitySpin.setMinimum(1);
     renderQualitySpin.setMaximum(20);
     edgeNodeRatioSpin.setSingleStep(0.1);
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
-
-    lutErrorBox.setIcon(QMessageBox::Warning);
-    lutErrorBox.setText("LUT loading failed");
-    lutErrorBox.setInformativeText("LUTs are restricted to 256 RGB tuples");
 
     auto treeDisplayLayout = new QVBoxLayout();
     treeDisplayLayout->addWidget(&wholeSkeletonRadio);
@@ -99,7 +96,7 @@ SkeletonOptionsTab::SkeletonOptionsTab(QWidget *parent) : QWidget(parent), lutEr
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->skeletonState->segRadiusToNodeRadius = value; });
 }
 
-void SkeletonOptionsTab::loadTreeLUTButtonClicked(QString path) {
+void SkeletonTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
         path = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }
@@ -109,6 +106,7 @@ void SkeletonOptionsTab::loadTreeLUTButtonClicked(QString path) {
             lutFilePath = path;
             ownTreeColorsCheck.setChecked(true);
         }  catch (...) {
+            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
             lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
             lutErrorBox.exec();
             ownTreeColorsCheck.setChecked(false);

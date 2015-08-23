@@ -1,10 +1,10 @@
-#include "viewportoptionstab.h"
+#include "viewporttab.h"
 
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "../viewport.h"
 
-ViewportOptionsTab::ViewportOptionsTab(QWidget *parent) : QWidget(parent)
+ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
 {
     auto boundaryGroup = new QButtonGroup(this);
     boundaryGroup->addButton(&boundariesPixelRadioBtn);
@@ -35,7 +35,7 @@ ViewportOptionsTab::ViewportOptionsTab(QWidget *parent) : QWidget(parent)
     setLayout(&mainLayout);
 
     QObject::connect(&showScalebarCheckBox, &QCheckBox::toggled, [] (bool checked) { state->viewerState->showScalebar = checked; });
-    QObject::connect(&showVPDecorationCheckBox, &QCheckBox::toggled, this, &ViewportOptionsTab::setViewportDecorations);
+    QObject::connect(&showVPDecorationCheckBox, &QCheckBox::toggled, this, &ViewportTab::setViewportDecorations);
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
     QObject::connect(&arbitraryModeCheckBox, &QCheckBox::clicked, [&](bool checked) {
         Viewport::arbitraryOrientation = checked;
@@ -50,5 +50,5 @@ ViewportOptionsTab::ViewportOptionsTab(QWidget *parent) : QWidget(parent)
     });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked) {state->skeletonState->rotateAroundActiveNode = checked; });
 
-    QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportOptionsTab::resetViewportPositions);
+    QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportTab::resetViewportPositions);
 }
