@@ -800,7 +800,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Information);
             prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Check 'Arbitrary Viewport Orientation' under 'Viewport Settings -> Slice Plane Viewports' first.");
+            prompt.setText("Viewport orientation is still locked. Check 'Arbitrary Viewport Orientation' under 'Appearance Settings → Viewports' first.");
             prompt.exec();
         }
         else {
@@ -833,7 +833,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->viewportTab;
+        auto & vpSettings = state->viewer->window->widgetContainer->appearanceWidget->viewportTab;
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
@@ -855,10 +855,10 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->skeletonTab;
-        const auto showkeletonOrtho = vpSettings.skeletonInOrthoVPsCheck.isChecked();
-        vpSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
-        vpSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
+        auto & skelSettings = state->viewer->window->widgetContainer->appearanceWidget->skeletonTab;
+        const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
+        skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
+        skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
     } else if(event->key() == Qt::Key_Plus) {
         if(control) {
             Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1);
@@ -869,7 +869,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha += 10;
             }
-            auto & segSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->datasetAndSegmentationTab;
+            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget->datasetAndSegmentationTab;
             segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Minus) {
@@ -884,7 +884,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha -= 10;
             }
-            auto & segSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->datasetAndSegmentationTab;
+            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget->datasetAndSegmentationTab;
             segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Space) {

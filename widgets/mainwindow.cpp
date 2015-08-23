@@ -69,8 +69,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
-    QObject::connect(&widgetContainer->viewportSettingsWidget->viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
+    QObject::connect(&widgetContainer->appearanceWidget->viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
+    QObject::connect(&widgetContainer->appearanceWidget->viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {
@@ -205,7 +205,7 @@ void MainWindow::createToolbars() {
     };
     auto taskManagementButton = createToolToogleButton(":/resources/icons/task.png", "Task Management");
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
-    auto viewportSettingsButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Viewport Settings");
+    auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
@@ -217,12 +217,12 @@ void MainWindow::createToolbars() {
         }
     });
     QObject::connect(annotationButton, &QToolButton::clicked, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(viewportSettingsButton, &QToolButton::clicked, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
+    QObject::connect(appearanceButton, &QToolButton::clicked, widgetContainer->appearanceWidget, &AppearanceWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
     QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
+    QObject::connect(widgetContainer->appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
     QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
 
     defaultToolbar.addSeparator();
@@ -514,7 +514,7 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
     preferenceMenu->addAction(tr("Data Saving Options"), widgetContainer->dataSavingWidget, SLOT(show()));
-    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", widgetContainer->appearanceWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(updateAndRefreshWidget()));
@@ -941,7 +941,7 @@ void MainWindow::saveSettings() {
     widgetContainer->datasetLoadWidget->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->datasetOptionsWidget->saveSettings();
-    widgetContainer->viewportSettingsWidget->saveSettings();
+    widgetContainer->appearanceWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
     widgetContainer->pythonPropertyWidget->saveSettings();
@@ -992,7 +992,7 @@ void MainWindow::loadSettings() {
     widgetContainer->datasetLoadWidget->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->datasetOptionsWidget->loadSettings();
-    widgetContainer->viewportSettingsWidget->loadSettings();
+    widgetContainer->appearanceWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
     widgetContainer->pythonPropertyWidget->loadSettings();
@@ -1067,7 +1067,7 @@ void MainWindow::resetViewports() {
 }
 
 void MainWindow::showVPDecorationClicked() {
-    bool isShow = widgetContainer->viewportSettingsWidget->viewportTab.showVPDecorationCheckBox.isChecked();
+    bool isShow = widgetContainer->appearanceWidget->viewportTab.showVPDecorationCheckBox.isChecked();
     for(uint i = 0; i < Viewport::numberViewports; i++) {
         viewports[i]->showHideButtons(isShow);
     }

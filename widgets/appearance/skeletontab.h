@@ -13,7 +13,7 @@
 
 class SkeletonTab : public QWidget
 {
-    friend class ViewportSettingsWidget;
+    friend class AppearanceWidget;
     friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
     // tree render options

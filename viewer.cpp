@@ -1561,10 +1561,9 @@ void Viewer::rewire() {
     // end viewport signals
 
     // --- widget signals ---
-    //  viewport settings widget signals --
-    //  slice plane vps tab signals
-    QObject::connect(&window->widgetContainer->viewportSettingsWidget->viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
-    //  -- end viewport settings widget signals
+    //  appearance widget signals --
+    QObject::connect(&window->widgetContainer->appearanceWidget->viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
+    //  -- end appearance widget signals
     //  dataset options signals --
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(window->widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);

@@ -5,7 +5,6 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QSlider>
 #include <QSpinBox>
@@ -13,8 +12,8 @@
 
 class DatasetAndSegmentationTab : public QWidget
 {
+    friend class AppearanceWidget;
     friend class EventModel;
-    friend class ViewportSettingsWidget;
     Q_OBJECT
     // dataset
     QLabel datasetHeader{"<strong>Dataset</strong>"};
@@ -23,7 +22,6 @@ class DatasetAndSegmentationTab : public QWidget
     QCheckBox useOwnDatasetColorsCheckBox{"Use own dataset colors"};
     QPushButton useOwnDatasetColorsButton{"Load …"};
     QString lutFilePath;
-    QMessageBox lutErrorBox;
     QLabel datasetDynamicRangeLabel{"Dataset dynamic range"}, biasLabel{"Bias"}, rangeDeltaLabel{"Range delta"};
     QSpinBox biasSpinBox, rangeDeltaSpinBox;
     QSlider biasSlider{Qt::Horizontal}, rangeDeltaSlider{Qt::Horizontal};

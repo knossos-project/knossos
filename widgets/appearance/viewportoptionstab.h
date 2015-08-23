@@ -1,5 +1,5 @@
-#ifndef VIEWPORTTAB_H
-#define VIEWPORTTAB_H
+#ifndef VIEWPORTOPTIONSTAB_H
+#define VIEWPORTOPTIONSTAB_H
 
 #include <QCheckBox>
 #include <QGridLayout>
@@ -9,12 +9,13 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-class ViewportTab : public QWidget
+class ViewportOptionsTab : public QWidget
 {
+    friend class AppearanceWidget;
     friend class EventModel;
     friend class MainWindow;
-    friend class ViewportSettingsWidget;
     Q_OBJECT
+    QGridLayout mainLayout;
     QFrame separator;
     QLabel generalHeader{"<strong>General</strong>"};
     QCheckBox showScalebarCheckBox{"Show scalebar"};
@@ -32,9 +33,8 @@ class ViewportTab : public QWidget
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
     QVBoxLayout viewport3DLayout;
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
-    QGridLayout mainLayout;
 public:
-    explicit ViewportTab(QWidget *parent = 0);
+    explicit ViewportOptionsTab(QWidget *parent = 0);
 
 signals:
     void showIntersectionsSignal(const bool value);
@@ -46,4 +46,4 @@ public slots:
 
 };
 
-#endif // VIEWPORTTAB_H
+#endif // VIEWPORTOPTIONSTAB_H

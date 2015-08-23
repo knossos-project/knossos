@@ -2,6 +2,7 @@
 #define WIDGETCONTAINER_H
 
 #include "annotationwidget.h"
+#include "appearancewidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
 #include "datasavingwidget.h"
@@ -11,26 +12,25 @@
 #include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
-#include "viewportsettingswidget.h"
 #include "pythonpropertywidget.h"
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidgetObject(parent), datasetLoadWidgetObject(parent)
+        : annotationWidgetObject(parent), appearanceWidgetObject(parent), datasetLoadWidgetObject(parent)
         , datasetOptionsWidgetObject(parent), dataSavingWidgetObject(parent), docWidgetObject(parent)
         , navigationWidgetObject(parent), pythonPropertyWidgetObject(parent), snapshotWidgetObject(parent), splashWidgetObject(parent)
-        , taskManagementWidgetObject(parent), viewportSettingsWidgetObject(parent)
+        , taskManagementWidgetObject(parent)
 
-        , annotationWidget(&annotationWidgetObject), datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
+        , annotationWidget(&annotationWidgetObject), appearanceWidget(&appearanceWidgetObject), datasetLoadWidget(&datasetLoadWidgetObject), datasetOptionsWidget(&datasetOptionsWidgetObject)
         , dataSavingWidget(&dataSavingWidgetObject), docWidget(&docWidgetObject), navigationWidget(&navigationWidgetObject)
         , pythonPropertyWidget(&pythonPropertyWidgetObject), snapshotWidget(&snapshotWidgetObject), splashWidget(&splashWidgetObject), taskManagementWidget(&taskManagementWidgetObject)
-        , viewportSettingsWidget(&viewportSettingsWidgetObject)
     {
         QObject::connect(datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidgetObject, &DatasetOptionsWidget::zoomDefaultsClicked);
-        QObject::connect(&viewportSettingsWidget->datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
+        QObject::connect(&appearanceWidget->datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, snapshotWidget, &SnapshotWidget::updateOptionVisibility);
     }
 
     AnnotationWidget annotationWidgetObject;
+    AppearanceWidget appearanceWidgetObject;
     DatasetLoadWidget datasetLoadWidgetObject;
     DatasetOptionsWidget datasetOptionsWidgetObject;
     DataSavingWidget dataSavingWidgetObject;
@@ -40,11 +40,11 @@ struct WidgetContainer {
     SnapshotWidget snapshotWidgetObject;
     SplashScreenWidget splashWidgetObject;
     TaskManagementWidget taskManagementWidgetObject;
-    ViewportSettingsWidget viewportSettingsWidgetObject;
 
     //FIXME these pointers just point to the objects above
     //one may replace all -> with . in the project and remove these
     AnnotationWidget * const annotationWidget;
+    AppearanceWidget * const appearanceWidget;
     DatasetLoadWidget * const datasetLoadWidget;
     DatasetOptionsWidget * const datasetOptionsWidget;
     DataSavingWidget * const dataSavingWidget;
@@ -54,10 +54,10 @@ struct WidgetContainer {
     SnapshotWidget * const snapshotWidget;
     SplashScreenWidget * const splashWidget;
     TaskManagementWidget * const taskManagementWidget;
-    ViewportSettingsWidget * const viewportSettingsWidget;
 
     void hideAll() {
         annotationWidget->hide();
+        appearanceWidget->hide();
         datasetLoadWidget->hide();
         datasetOptionsWidget->hide();
         dataSavingWidget->hide();
@@ -68,7 +68,6 @@ struct WidgetContainer {
         snapshotWidget->hide();
         splashWidget->hide();
         taskManagementWidget->hide();
-        viewportSettingsWidget->hide();
     }
 };
 

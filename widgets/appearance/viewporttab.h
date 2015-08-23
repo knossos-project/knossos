@@ -1,5 +1,5 @@
-#ifndef VIEWPORTOPTIONSTAB_H
-#define VIEWPORTOPTIONSTAB_H
+#ifndef VIEWPORTTAB_H
+#define VIEWPORTTAB_H
 
 #include <QCheckBox>
 #include <QGridLayout>
@@ -9,11 +9,11 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-class ViewportOptionsTab : public QWidget
+class ViewportTab : public QWidget
 {
+    friend class AppearanceWidget;
     friend class EventModel;
     friend class MainWindow;
-    friend class ViewportSettingsWidget;
     Q_OBJECT
     QGridLayout mainLayout;
     QFrame separator;
@@ -34,7 +34,7 @@ class ViewportOptionsTab : public QWidget
     QVBoxLayout viewport3DLayout;
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
 public:
-    explicit ViewportOptionsTab(QWidget *parent = 0);
+    explicit ViewportTab(QWidget *parent = 0);
 
 signals:
     void showIntersectionsSignal(const bool value);
@@ -46,4 +46,4 @@ public slots:
 
 };
 
-#endif // VIEWPORTOPTIONSTAB_H
+#endif // VIEWPORTTAB_H

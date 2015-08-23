@@ -21,7 +21,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "viewportsettingswidget.h"
+#include "appearancewidget.h"
 
 #include "GuiConstants.h"
 #include "skeleton/skeletonizer.h"
@@ -36,9 +36,9 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent) {
+AppearanceWidget::AppearanceWidget(QWidget *parent) : QDialog(parent) {
     setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
-    setWindowTitle("Viewport Settings");
+    setWindowTitle("Appearance Settings");
     tabs.addTab(&skeletonTab, "Skeleton");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
     tabs.addTab(&viewportTab, "Viewports");
@@ -49,12 +49,12 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void ViewportSettingsWidget::loadSettings() {
+void AppearanceWidget::loadSettings() {
     int width, height, x, y;
     bool visible;
 
     QSettings settings;
-    settings.beginGroup(VIEWPORT_SETTINGS_WIDGET);
+    settings.beginGroup(APPEARANCE_WIDGET);
     width = settings.value(WIDTH, this->width()).toInt();
     height = settings.value(HEIGHT, this->height()).toInt();
     if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
@@ -145,9 +145,9 @@ void ViewportSettingsWidget::loadSettings() {
     setGeometry(x, y, width, height);
 }
 
-void ViewportSettingsWidget::saveSettings() {
+void AppearanceWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(VIEWPORT_SETTINGS_WIDGET);
+    settings.beginGroup(APPEARANCE_WIDGET);
     settings.setValue(WIDTH, geometry().width());
     settings.setValue(HEIGHT, geometry().height());
     settings.setValue(POS_X, geometry().x());
