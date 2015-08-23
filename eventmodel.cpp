@@ -428,7 +428,7 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && VPfound != VIEWPORT_SKELETON) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
             segmentation_brush_work(event, VPfound);
         }
