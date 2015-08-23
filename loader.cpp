@@ -99,14 +99,17 @@ bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coor
     return currentlyVisibleWrap(center)(coord);
 }
 
-void Loader::Controller::waitForWorkerThread() {
+void Loader::Controller::suspendLoader() {
     ++loadingNr;
     workerThread.quit();
     workerThread.wait();
+    if (worker != nullptr) {
+        worker->abortDownloadsFinishDecompression();
+    }
 }
 
 Loader::Controller::~Controller() {
-    waitForWorkerThread();
+    suspendLoader();
 }
 
 void Loader::Controller::unloadCurrentMagnification() {
@@ -266,7 +269,11 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader
 }
 
 Loader::Worker::~Worker() {
-    abortDownloadsFinishDecompression([](const Coordinate &){return false;});
+    abortDownloadsFinishDecompression();
+
+    if (state->quitSignal) {
+        return;//state is dead already
+    }
 
     state->protectCube2Pointer.lock();
     for (auto &elem : state->Dc2Pointer) { elem.clear(); }
@@ -411,6 +418,10 @@ void finishDecompression(Decomp & decompressions, Func keep) {
             elem.second->waitForFinished();
         }
     }
+}
+
+void Loader::Worker::abortDownloadsFinishDecompression() {
+    abortDownloadsFinishDecompression([](const Coordinate &){return false;});
 }
 
 template<typename Func>

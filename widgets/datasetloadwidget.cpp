@@ -241,7 +241,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
 
-    Loader::Controller::singleton().waitForWorkerThread();//we change variables the loader uses
+    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
 
     Loader::API api;
     Dataset info;

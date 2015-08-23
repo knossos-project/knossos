@@ -15,6 +15,7 @@ class ViewportOptionsTab : public QWidget
     friend class MainWindow;
     friend class ViewportSettingsWidget;
     Q_OBJECT
+    QGridLayout mainLayout;
     QFrame separator;
     QLabel generalHeader{"<strong>General</strong>"};
     QCheckBox showScalebarCheckBox{"Show scalebar"};
@@ -32,7 +33,6 @@ class ViewportOptionsTab : public QWidget
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
     QVBoxLayout viewport3DLayout;
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
-    QGridLayout mainLayout;
 public:
     explicit ViewportOptionsTab(QWidget *parent = 0);
 

@@ -154,6 +154,6 @@ void Knossos::sendRemoteSignal() {
 void Knossos::sendQuitSignal() {
     state->quitSignal = true;
     QApplication::processEvents(); //ensure everything’s done
-    Loader::Controller::singleton().waitForWorkerThread();//suspend loader
+    Loader::Controller::singleton().suspendLoader();
     Knossos::sendRemoteSignal();
 }
