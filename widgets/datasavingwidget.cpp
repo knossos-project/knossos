@@ -64,6 +64,11 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     setLayout(mainLayout);
 
     QObject::connect(autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) { Session::singleton().autoFilenameIncrementBool = on; });
+    QObject::connect(autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
+        if (autosaveCheckbox->isChecked()) {
+            Session::singleton().autoSaveTimer.start(value * 60 * 1000);
+        }
+    });
     QObject::connect(autosaveCheckbox, &QCheckBox::stateChanged, [this](const bool on) {
         if (on) {
             Session::singleton().autoSaveTimer.start(autosaveIntervalSpinBox->value() * 60 * 1000);
