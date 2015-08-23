@@ -272,10 +272,6 @@ Loader::Worker::~Worker() {
     for (auto &elem : state->Dc2Pointer) { elem.clear(); }
     for (auto &elem : state->Oc2Pointer) { elem.clear(); }
     state->protectCube2Pointer.unlock();
-    DcSetChunk.clear();
-    OcSetChunk.clear();
-    freeDcSlots.clear();
-    freeOcSlots.clear();
 }
 
 template<typename CubeHash, typename Slots, typename Keep>
