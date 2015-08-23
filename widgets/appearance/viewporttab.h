@@ -16,14 +16,15 @@ class ViewportTab : public QWidget
     friend class MainWindow;
     Q_OBJECT
     QGridLayout mainLayout;
+    QVBoxLayout generalLayout;
     QFrame separator;
     QLabel generalHeader{"<strong>General</strong>"};
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
     QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersections crosshairs"};
     QCheckBox arbitraryModeCheckBox{"Arbitrary viewport orientation"};
-    QVBoxLayout generalLayout;
     // 3D viewport
+    QVBoxLayout viewport3DLayout;
     QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
@@ -31,7 +32,6 @@ class ViewportTab : public QWidget
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
-    QVBoxLayout viewport3DLayout;
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
 public:
     explicit ViewportTab(QWidget *parent = 0);

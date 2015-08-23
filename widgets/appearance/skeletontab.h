@@ -16,6 +16,7 @@ class SkeletonTab : public QWidget
     friend class AppearanceWidget;
     friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
+    QGridLayout mainLayout;
     // tree render options
     QLabel treeHeaeder{"<strong>Trees</strong>"};
     QFrame treeSeparator;
@@ -43,7 +44,6 @@ class SkeletonTab : public QWidget
     QDoubleSpinBox nodeRadiusSpin;
     QLabel edgeNodeRatioLabel{"Edge : Node radius ratio"};
     QDoubleSpinBox edgeNodeRatioSpin;
-    QGridLayout mainLayout;
 
     void loadTreeLUTButtonClicked(QString path = "");
 public:

@@ -15,6 +15,7 @@ class DatasetAndSegmentationTab : public QWidget
     friend class AppearanceWidget;
     friend class EventModel;
     Q_OBJECT
+    QGridLayout mainLayout;
     // dataset
     QLabel datasetHeader{"<strong>Dataset</strong>"};
     QFrame datasetSeparator;
@@ -39,7 +40,6 @@ class DatasetAndSegmentationTab : public QWidget
     QLabel volumeColorLabel{"Volume background color"};
     QPushButton volumeColorButton;
 
-    QGridLayout mainLayout;
     void useOwnDatasetColorsButtonClicked(QString path = "");
 public:
     explicit DatasetAndSegmentationTab(QWidget *parent = 0);
