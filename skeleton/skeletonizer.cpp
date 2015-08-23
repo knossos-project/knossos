@@ -209,7 +209,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("dataset");
-    xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget->datasetUrl.toString());
+    xml.writeAttribute("path", state->viewer->window->widgetContainer->datasetLoadWidget.datasetUrl.toString());
     xml.writeEndElement();
 
     xml.writeStartElement("task");
@@ -412,7 +412,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     QStringRef attribute = attributes.value("path");
                     QString path = attribute.isNull() ? "" : attribute.toString();
                     if (experimentName != state->name) {
-                        state->viewer->window->widgetContainer->datasetLoadWidget->loadDataset(path, true);
+                        state->viewer->window->widgetContainer->datasetLoadWidget.loadDataset(path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     Coordinate movementAreaMin;//0

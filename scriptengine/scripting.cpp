@@ -140,7 +140,7 @@ void Scripting::autoStartTerminal() {
     if (value.isNull()) { return; }
     auto autoStartTerminal = value.toBool();
     if (autoStartTerminal) {
-        state->viewer->window->widgetContainer->pythonPropertyWidget->openTerminal();
+        state->viewer->window->widgetContainer->pythonPropertyWidget.openTerminal();
     }
 }
 

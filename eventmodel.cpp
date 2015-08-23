@@ -833,7 +833,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        auto & vpSettings = state->viewer->window->widgetContainer->appearanceWidget->viewportTab;
+        auto & vpSettings = state->viewer->window->widgetContainer->appearanceWidget.viewportTab;
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
@@ -855,7 +855,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        auto & skelSettings = state->viewer->window->widgetContainer->appearanceWidget->skeletonTab;
+        auto & skelSettings = state->viewer->window->widgetContainer->appearanceWidget.skeletonTab;
         const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
         skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
         skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
@@ -869,7 +869,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha += 10;
             }
-            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget->datasetAndSegmentationTab;
+            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget.datasetAndSegmentationTab;
             segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Minus) {
@@ -884,7 +884,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha -= 10;
             }
-            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget->datasetAndSegmentationTab;
+            auto & segSettings = state->viewer->window->widgetContainer->appearanceWidget.datasetAndSegmentationTab;
             segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
         }
     } else if(event->key() == Qt::Key_Space) {
