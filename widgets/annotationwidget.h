@@ -1,8 +1,8 @@
 #ifndef ANNOTATIONWIDGET_H
 #define ANNOTATIONWIDGET_H
 
-#include "tools/segmentationtab.h"
-#include "tools/skeletontab.h"
+#include "tools/segmentationview.h"
+#include "tools/skeletonview.h"
 #include "tools/toolstreeviewtab.h"
 #include "tools/toolscommandstab.h"
 #include "tools/commentstab.h"
@@ -18,8 +18,8 @@ public:
     QTabWidget tabs;
     QVBoxLayout mainLayout;
     ToolsTreeviewTab treeviewTab;
-    SkeletonTab skeletonTab{this};
-    SegmentationTab segmentationTab{this};
+    SkeletonView skeletonTab{this};
+    SegmentationView segmentationTab{this};
     ToolsCommandsTab commandsTab;
     CommentsTab commentsTab;
     explicit AnnotationWidget(QWidget *parent = 0);

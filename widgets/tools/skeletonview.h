@@ -1,5 +1,5 @@
-#ifndef SKELETONTAB_H
-#define SKELETONTAB_H
+#ifndef SKELETONVIEW_H
+#define SKELETONVIEW_H
 
 #include <QAbstractListModel>
 #include <QLabel>
@@ -38,7 +38,7 @@ public:
     void recreate();
 };
 
-class SkeletonTab : public QWidget {
+class SkeletonView : public QWidget {
     QVBoxLayout mainLayout;
     QSplitter splitter;
     TreeModel treeModel;
@@ -50,7 +50,7 @@ class SkeletonTab : public QWidget {
     QLabel treeCountLabel{"trees"};
     QLabel nodeCountLabel{"nodes"};
 public:
-    explicit SkeletonTab(QWidget * const parent = nullptr);
+    explicit SkeletonView(QWidget * const parent = nullptr);
 };
 
-#endif//SKELETONTAB_H
+#endif//SKELETONVIEW_H

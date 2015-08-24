@@ -1,4 +1,4 @@
-#include "skeletontab.h"
+#include "skeletonview.h"
 
 #include "model_helper.h"
 #include "skeleton/node.h"
@@ -154,7 +154,7 @@ auto updateSelection = [](QTreeView & view, auto & model){
     }
 };
 
-SkeletonTab::SkeletonTab(QWidget * const parent) : QWidget(parent) {
+SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
     treeView.setUniformRowHeights(true);//perf hint from doc
     treeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
