@@ -2587,6 +2587,21 @@ void Skeletonizer::deleteSelectedNodes() {
     emit resetData();
 }
 
+void Skeletonizer::toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent) {
+    const auto node0 = state->skeletonState->selectedNodes[0];
+    const auto node1 = state->skeletonState->selectedNodes[1];
+    //segments are only stored and searched in one direction so we have to search for both
+    if (findSegmentByNodeIDs(node0->nodeID, node1->nodeID) != nullptr) {
+        delSegment(node0->nodeID, node1->nodeID, nullptr);
+    } else if (findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
+        delSegment(node1->nodeID, node0->nodeID, nullptr);
+    } else if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && areConnected(*node0, *node1)) {
+        QMessageBox::information(parent, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
+    } else {//nodes are not already linked
+        addSegment(node0->nodeID, node1->nodeID);
+    }
+}
+
 bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement & w) const {
     std::queue<const nodeListElement*> queue;
     std::unordered_set<const nodeListElement*> visitedNodes;

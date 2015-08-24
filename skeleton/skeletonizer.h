@@ -204,6 +204,7 @@ public slots:
     void selectTrees(const std::vector<treeListElement*> & trees);
     void deleteSelectedTrees();
     void deleteSelectedNodes();
+    void toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent);
 
     bool delTree(int treeID);
     void clearSkeleton();

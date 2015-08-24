@@ -3,6 +3,7 @@
 
 #include <QAbstractListModel>
 #include <QLabel>
+#include <QMenu>
 #include <QSplitter>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -49,6 +50,9 @@ class SkeletonView : public QWidget {
     QHBoxLayout bottomHLayout;
     QLabel treeCountLabel{"trees"};
     QLabel nodeCountLabel{"nodes"};
+
+    QMenu treeContextMenu{&treeView};
+    QMenu nodeContextMenu{&nodeView};
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
 };
