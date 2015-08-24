@@ -67,7 +67,7 @@ enum {
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QWidget(parent), selectedNodes("selected nodes")
-    , radiusBuffer(state->skeletonState->defaultNodeRadius), draggedNodeID(0), displayedNodes(1000)
+    , radiusBuffer(Skeletonizer::singleton().skeletonState.defaultNodeRadius), draggedNodeID(0), displayedNodes(1000)
 {
     treeSearchField = new QLineEdit();
     treeSearchField->setPlaceholderText("search tree");
@@ -338,7 +338,7 @@ void ToolsTreeviewTab::mergeTreesAction() {
 
 void ToolsTreeviewTab::restoreColorAction() {
     for (auto * tree : state->skeletonState->selectedTrees) {
-        Skeletonizer::restoreDefaultTreeColor(tree);
+        Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
     }
     recreateTreesTable();
 }

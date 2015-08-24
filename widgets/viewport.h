@@ -162,6 +162,7 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
 public:
     const static int numberViewports = 4;
     explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
+    static void resetTextureProperties();
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void setDock(bool isDock);
@@ -180,7 +181,7 @@ public:
     static bool arbitraryOrientation;
     static bool oglDebug;
     static bool showNodeComments;
-
+    static bool showBoundariesInUm;
 protected:
     void initializeGL() override;
     void createOverlayTextures();

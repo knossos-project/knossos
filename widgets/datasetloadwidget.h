@@ -37,21 +37,11 @@ class DatasetLoadWidget : public QDialog {
     QHBoxLayout buttonHLayout;
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
-
-    struct Datasetinfo{
-        Coordinate boundary;
-        floatCoordinate scale{0,0,0};
-        int magnification = 0, cubeEdgeLength = 0, compressionRatio = 0;
-        bool remote = false;
-        std::string experimentname{""},ftphostname{""}, ftpbasepath{""};
-    };
-    Datasetinfo datasetinfo;
 public:
-    QString datasetPath;//meh
+    QUrl datasetUrl;//meh
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    void gatherHeidelbrainDatasetInformation(QString &);
     bool loadDataset(QString path = "", const bool keepAnnotation = false);
     void saveSettings();
     void loadSettings();
@@ -59,10 +49,7 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
-    bool parseGoogleJson(const QString & json_raw);
-    bool parseWebKnossosJson(const QString & json_raw);
     QString extractWebKnossosToken(QString & json_raw);
-    Datasetinfo getConfigFileInfo(const QString &path);
     QStringList getRecentPathItems();
 
 signals:

@@ -54,27 +54,24 @@
 
 #define MAX_COLORVAL 255.
 
-struct viewerState {
-    vpConfig *vpConfigs;
+struct ViewerState {
+    ViewerState() {
+        state->viewerState = this;
+    }
+    std::vector<vpConfig> vpConfigs;
     char *texData;
     char *overlayData;
     char *defaultTexData;
     char *defaultOverlayData;
-    uint splash;
-    bool viewerReady;
-    GLuint splashTexture;
+    bool viewerReady{false};
 
-    int highlightVp;
-    int vpKeyDirection[3];
-
-    //Min distance to currently centered data cube for rendering of spatial skeleton structure.
-    //Unit: data cubes.
-    int zoomCube;
+    int highlightVp{VIEWPORT_UNDEFINED};
+    int vpKeyDirection[3]{1,1,1};
 
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-    float depthCutOff;
+    float depthCutOff{5.f};
 
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
@@ -82,29 +79,28 @@ struct viewerState {
     Coordinate currentPosition;
 
     uint recenteringTime;
-    uint recenteringTimeOrth;
-    bool walkOrth;
+    uint recenteringTimeOrth{500};
+    bool walkOrth{false};
 
     //SDL_Surface *screen;
 
     //Keyboard repeat rate
-    uint stepsPerSec;
-    GLint filterType;
+    uint stepsPerSec{40};
     int multisamplingOnOff;
     int lightOnOff;
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
-    bool drawVPCrosshairs;
+    bool drawVPCrosshairs{true};
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
-    int nodeSelectSquareVpId;
+    int nodeSelectSquareVpId{-1};
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
-    bool showScalebar;
+    bool showScalebar{false};
 
-    bool selectModeFlag;
+    bool selectModeFlag{false};
 
-    uint dropFrames;
-    uint walkFrames;
+    uint dropFrames{1};
+    uint walkFrames{10};
 
     float voxelDimX;
     float voxelDimY;
@@ -114,43 +110,36 @@ struct viewerState {
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
-    uint clickReaction;
+    uint clickReaction{ON_CLICK_DRAG};
 
-    int luminanceBias;
-    int luminanceRangeDelta;
+    int luminanceBias{0};
+    int luminanceRangeDelta{255};
 
-    GLuint datasetColortable[3][256];
-    GLuint datasetAdjustmentTable[3][256];
-    bool datasetColortableOn;
-    bool datasetAdjustmentOn;
-    GLuint neutralDatasetTable[3][256];
-
-    bool treeLutSet;
-    bool treeColortableOn;
-    float treeColortable[RGB_LUTSIZE];
-    float treeAdjustmentTable[RGB_LUTSIZE];
-    float defaultTreeTable[RGB_LUTSIZE];
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
+    bool datasetColortableOn{false};
+    bool datasetAdjustmentOn{false};
 
     // Advanced Tracing Modes Stuff
-    navigationMode autoTracingMode;
-    int autoTracingDelay;
-    int autoTracingSteps;
+    navigationMode autoTracingMode{navigationMode::recenter};
+    int autoTracingDelay{50};
+    int autoTracingSteps{10};
 
-    float cumDistRenderThres;
+    float cumDistRenderThres{7.f};
 
-    bool defaultVPSizeAndPos;
+    bool defaultVPSizeAndPos{true};
     //there’s a problem (intel drivers on linux only?)
     //rendering knossos at full speed and displaying a file dialog
     //so we reduce the rendering speed during display of said dialog
-    uint renderInterval;
+    uint renderInterval{FAST};
 
     //In pennmode right and left click are switched
     bool penmode = false;
 
     QString lockComment;
 
-    float movementAreaFactor;
-    bool showOverlay;
+    float movementAreaFactor{80.f};
+    bool showOverlay{true};
 };
 
 /**
@@ -174,6 +163,7 @@ private:
     Rotation rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
+    ViewerState viewerState;
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
@@ -186,8 +176,6 @@ public:
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
     QTimer *timer;
     int frames;
-
-    bool updateZoomCube();
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
@@ -220,11 +208,12 @@ public slots:
     bool userMove_arb(float x, float y, float z);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
-    bool updateViewerState();
+    void applyTextureFilterSetting(const GLint texFiltering);
     void run();
     void loader_notify();
-    bool loadTreeColorTable(QString path, float *table, int type);
-    static bool loadDatasetColorTable(QString path, GLuint *table, int type);
+    void defaultDatasetLUT();
+    void loadDatasetLUT(const QString & path);
+    void datasetColorAdjustmentsChanged();
     bool vpGenerateTexture(vpConfig &currentVp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
@@ -236,7 +225,7 @@ public slots:
     void setMovementAreaFactor(float alpha);
 protected:
     bool calcLeftUpperTexAbsPx();
-    bool initViewer();
+    void initViewer();
 };
 
 #endif // VIEWER_H

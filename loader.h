@@ -103,8 +103,9 @@ private:
     void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
 
+    void abortDownloadsFinishDecompression();
     template<typename Func>
-    friend void abortDownloadsFinishDecompression(Loader::Worker&, Func);
+    void abortDownloadsFinishDecompression(Func);
 
     const QUrl baseUrl;
     const API api;
@@ -146,12 +147,12 @@ public:
         static Loader::Controller loader;
         return loader;
     }
-    void waitForWorkerThread();
+    void suspendLoader();
     ~Controller();
     void unloadCurrentMagnification();
     template<typename... Args>
     void restart(Args&&... args) {
-        waitForWorkerThread();
+        suspendLoader();
         worker.reset(new Loader::Worker(std::forward<Args>(args)...));
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);

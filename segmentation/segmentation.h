@@ -104,38 +104,7 @@ Q_OBJECT
 
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
-    std::array<std::array<uint8_t, 256>, 3> overlayColorMap = [](){
-        std::array<std::array<uint8_t, 256>, 3> lut;
-        std::mt19937 rng;
-        std::uniform_int_distribution<> dist(0, 255);
-        //interleaved spectral colors
-        for (std::size_t i = 0; i < 256 - 6; ++i) {//account for icrements inside the loop
-            lut[0][i] = 255;
-            lut[1][i] = 0;
-            lut[2][i] = dist(rng);
-            ++i;
-            lut[0][i] = dist(rng);
-            lut[1][i] = 255;
-            lut[2][i] = 0;
-            ++i;
-            lut[0][i] = 0;
-            lut[1][i] = dist(rng);
-            lut[2][i] = 255;
-            ++i;
-            lut[0][i] = 255;
-            lut[1][i] = dist(rng);
-            lut[2][i] = 0;
-            ++i;
-            lut[0][i] = dist(rng);
-            lut[1][i] = 0;
-            lut[2][i] = 255;
-            ++i;
-            lut[0][i] = 0;
-            lut[1][i] = 255;
-            lut[2][i] = dist(rng);
-        }
-        return lut;
-    }();
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
 
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
@@ -233,7 +202,7 @@ public:
     //files
     void mergelistSave(QIODevice & file) const;
     void mergelistLoad(QIODevice & file);
-    void loadOverlayLutFromFile(const std::string & filename = "stdOverlay.lut");
+    void loadOverlayLutFromFile(const QString & filename = ":/resources/color_palette/default.json");
 signals:
     void beforeAppendRow();
     void beforeRemoveRow();

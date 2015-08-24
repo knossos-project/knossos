@@ -33,14 +33,6 @@
 
 #include <boost/multi_array.hpp>
 
-// skeleton vp orientation
-#define SKELVP_XY_VIEW 0
-#define SKELVP_XZ_VIEW 1
-#define SKELVP_YZ_VIEW 2
-#define SKELVP_R90 3
-#define SKELVP_R180 4
-#define SKELVP_RESET 5
-
 constexpr int defaultFonsSize = 10;
 
 class Viewport;
@@ -74,7 +66,7 @@ public:
     void renderBrush(uint viewportType, Coordinate coord);
     void setFrontFacePerspective(uint currentVP);
     void renderViewportFrontFace(uint currentVP);
-    void renderScaleBar(uint currentVP, const int thickness = 2, const int fontSize = defaultFonsSize);
+    void renderScaleBar(uint currentVP, const int fontSize = defaultFonsSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();

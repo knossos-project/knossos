@@ -124,16 +124,12 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             glTranslatef((float)base->x, (float)base->y, (float)base->z);
 
             //Some calculations for the correct direction of the cylinder.
-            tempVec.x = 0.;
-            tempVec.y = 0.;
-            tempVec.z = 1.;
-            segDirection.x = (float)(top->x - base->x);
-            segDirection.y = (float)(top->y - base->y);
-            segDirection.z = (float)(top->z - base->z);
+            tempVec = {0., 0., 1.};
+            segDirection = {(float)(top->x - base->x), (float)(top->y - base->y), (float)(top->z - base->z)};
 
             //temVec2 defines the rotation axis
-            tempVec2 = crossProduct(&tempVec, &segDirection);
-            currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
+            tempVec2 = crossProduct(tempVec, segDirection);
+            currentAngle = radToDeg(vectorAngle(tempVec, segDirection));
 
             //some gl implementations have problems with the params occuring for
             //segs in straight directions. we need a fix here.
@@ -142,13 +138,13 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             //tdItem use state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx for proper LOD
             //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
             if((baseRadius > 100.f) || topRadius > 100.f) {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 10, 1);
             }
             else if((baseRadius > 15.f) || topRadius > 15.f) {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 6, 1);
             }
             else {
-                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 3, 1);
             }
 
             gluDeleteQuadric(gluCylObj);
@@ -326,8 +322,8 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
                     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
                     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-                    length = euclidicNorm(&segDir);
-                    distSourceInter = euclidicNorm(&tempVec3);
+                    length = euclidicNorm(segDir);
+                    distSourceInter = euclidicNorm(tempVec3);
 
                     if(sSr_local < sTr_local)
                         radius = sTr_local + sSr_local * (1. - distSourceInter / length);
@@ -336,21 +332,16 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
                     else
                         radius = sSr_local - (sSr_local - sTr_local) * distSourceInter / length;
 
-                    segDir.x /= length;
-                    segDir.y /= length;
-                    segDir.z /= length;
+                    segDir = {segDir.x / length, segDir.y / length, segDir.z / length};
 
                     glTranslatef(intPoint.x - 0.75 * segDir.x, intPoint.y - 0.75 * segDir.y, intPoint.z - 0.75 * segDir.z);
                     //glTranslatef(intPoint.x, intPoint.y, intPoint.z);
 
                     //Some calculations for the correct direction of the cylinder.
-                    tempVec.x = 0.;
-                    tempVec.y = 0.;
-                    tempVec.z = 1.;
-
+                    tempVec = {0., 0., 1.};
                     //temVec2 defines the rotation axis
-                    tempVec2 = crossProduct(&tempVec, &segDir);
-                    currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
+                    tempVec2 = crossProduct(tempVec, segDir);
+                    currentAngle = radToDeg(vectorAngle(tempVec, segDir));
                     glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
                     glColor4f(0.,0.,0.,1.);
@@ -464,11 +455,14 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
         glDisable(GL_BLEND);
     }
     if(state->viewerState->showScalebar) {
+        if(currentVP == VIEWPORT_SKELETON && Segmentation::singleton().volume_render_toggle) {
+            return;
+        }
         renderScaleBar(currentVP);
     }
 }
 
-void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fontSize) {
+void Renderer::renderScaleBar(uint currentVP, const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[currentVP];
     const auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
@@ -480,15 +474,16 @@ void Renderer::renderScaleBar(uint currentVP, const int thickness, const int fon
         sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
         divisor = vp.displayedlengthInNmX/rounded_scalebar_len_nm;
     }
-
-    int min_x = 0.02 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, y = vp.edgeLength - min_x, z = -1;
-    glLineWidth(thickness);
+    int min_x = 0.02 * vp.edgeLength, max_x = min_x + vp.edgeLength / divisor, min_y = vp.edgeLength - min_x - 2, max_y = min_y + 2, z = -1;
     glColor3f(0., 0., 0.);
-    glBegin(GL_LINES);
-    glVertex3f(min_x, y, z);
-    glVertex3f(max_x, y, z);
+    glBegin(GL_POLYGON);
+    glVertex3d(min_x, min_y, z);
+    glVertex3d(max_x, min_y, z);
+    glVertex3d(max_x, max_y, z);
+    glVertex3d(min_x, max_y, z);
     glEnd();
-    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, y, z), sizeLabel, fontSize, true);
+
+    renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
 }
 
 // Currently not used
@@ -729,17 +724,17 @@ bool Renderer::renderOrthogonalVP(uint currentVP, const RenderOptions &options) 
             vec1 = {0, 0, 1};
         }
         // first rotation makes the viewport face the camera
-        float scalar = scalarProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
+        float scalar = scalarProduct(normal, state->viewerState->vpConfigs[currentVP].n);
         float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
-        floatCoordinate axis = crossProduct(&normal, &state->viewerState->vpConfigs[currentVP].n);
-        if(normalizeVector(&axis)) {
+        floatCoordinate axis = crossProduct(normal, state->viewerState->vpConfigs[currentVP].n);
+        if(normalizeVector(axis)) {
             glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         } // second rotation also aligns the plane vectors with the camera
         rotateAndNormalize(vec1, axis, angle);
-        scalar = scalarProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
+        scalar = scalarProduct(vec1, state->viewerState->vpConfigs[currentVP].v1);
         angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
-        axis = crossProduct(&vec1, &state->viewerState->vpConfigs[currentVP].v1);
-        if(normalizeVector(&axis)) {
+        axis = crossProduct(vec1, state->viewerState->vpConfigs[currentVP].v1);
+        if(normalizeVector(axis)) {
             glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         }
 
@@ -1057,7 +1052,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
 
     glLoadName(1);
 
-    glColor4f(0.9, 0.9, 0.9, 1.); // HERE
+    glColor4f(1., 1., 1., 1.); // HERE
     // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
     glBegin(GL_QUADS);
         glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
@@ -1455,81 +1450,81 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
                 glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
                 glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
             glEnd();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-
-        // draw axes with endpoints
-        glColor4f(0., 0., 0., 1.);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+        // draw axes
+        GLdouble origin[3], conePos_x[3], conePos_y[3], conePos_z[3], model[16], projection[16];
+        GLint gl_viewport[4];
+        glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
+        glGetDoublev(GL_PROJECTION_MATRIX, &projection[0]);
+        glGetIntegerv(GL_VIEWPORT, gl_viewport);
+        gluProject(-state->boundary.x/2, -state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &origin[0], &origin[1], &origin[2]);
+        gluProject(state->boundary.x/2, -state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_x[0], &conePos_x[1], &conePos_x[2]);
+        gluProject(-state->boundary.x/2, state->boundary.y/2, -state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_y[0], &conePos_y[1], &conePos_y[2]);
+        gluProject(-state->boundary.x/2, -state->boundary.y/2, state->boundary.z/2, &model[0], &projection[0], &gl_viewport[0], &conePos_z[0], &conePos_z[1], &conePos_z[2]);
+        floatCoordinate axis_x{static_cast<float>(conePos_x[0] - origin[0]), static_cast<float>(origin[1] - conePos_x[1]), static_cast<float>(conePos_x[2] - origin[2])};
+        floatCoordinate axis_y{static_cast<float>(conePos_y[0] - origin[0]), static_cast<float>(origin[1] - conePos_y[1]), static_cast<float>(conePos_y[2] - origin[2])};
+        floatCoordinate axis_z{static_cast<float>(conePos_z[0] - origin[0]), static_cast<float>(origin[1] - conePos_z[1]), static_cast<float>(conePos_z[2] - origin[2])};
+        glDisable(GL_DEPTH_TEST);
+        auto renderAxis = [this, gl_viewport](floatCoordinate & targetView, const QString label) {
+            glPushMatrix();
+            floatCoordinate currentView = {0, 0, -1};
+            const auto angle = acosf(scalarProduct(currentView, targetView));
+            auto axis = crossProduct(currentView, targetView);
+            if (normalizeVector(axis)) {
+                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+            }
+            // axis
+            const auto diameter = std::ceil(0.005*gl_viewport[2]);
+            GLUquadricObj * gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+            gluCylinder(gluCylObj, diameter, diameter , euclidicNorm(targetView), 10, 1);
+            gluDeleteQuadric(gluCylObj);
+            // cone z
+            glTranslatef(0, 0, euclidicNorm(targetView));
+            gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+            gluCylinder(gluCylObj, std::ceil(0.014*gl_viewport[2]), 0., std::ceil(0.028*gl_viewport[2]), 10, 5);
+            gluDeleteQuadric(gluCylObj);
+            const int offset = std::ceil(0.043*gl_viewport[2]);
+            renderText({offset, offset, offset}, label, std::ceil(0.02*gl_viewport[2]));
+            glPopMatrix();
+        };
+        // remember world coordinate system
+        glMatrixMode(GL_PROJECTION);
         glPushMatrix();
-
-        glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
-        GLUquadricObj * gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.z, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
+        glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glTranslatef(0.,0., state->boundary.z);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
+        // switch to viewport coordinate system
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        const auto lenLongestAxis = std::max(euclidicNorm(axis_x), std::max(euclidicNorm(axis_y), euclidicNorm(axis_z)));
+        glOrtho(0, gl_viewport[2], gl_viewport[3], 0, lenLongestAxis, -lenLongestAxis);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glTranslatef(origin[0], gl_viewport[3] - origin[1], origin[2]);
+        glColor4f(0, 0, 0, 1);
+        if(Viewport::showBoundariesInUm) {
+            renderAxis(axis_x, QString("x: %1 µm").arg(state->boundary.x * state->scale.x * 0.001));
+            renderAxis(axis_y, QString("y: %1 µm").arg(state->boundary.y * state->scale.y * 0.001));
+            renderAxis(axis_z, QString("z: %1 µm").arg(state->boundary.z * state->scale.z * 0.001));
+        }
+        else {
+            renderAxis(axis_x, QString("x: %1 px").arg(state->boundary.x + 1));
+            renderAxis(axis_y, QString("y: %1 px").arg(state->boundary.y + 1));
+            renderAxis(axis_z, QString("z: %1 px").arg(state->boundary.z + 1));
+        }
+        // restore world coordinate system
         glPopMatrix();
-
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        glRotatef(90., 0., 1., 0.);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.x, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
-        glPushMatrix();
-        glTranslatef(0.,0., state->boundary.x);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
+        glMatrixMode(GL_PROJECTION);
         glPopMatrix();
-
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        glRotatef(-90., 1., 0., 0.);
-        gluCylinder(gluCylObj, 5., 5. , state->boundary.y, 5, 5);
-        gluDeleteQuadric(gluCylObj);
-
-        glPushMatrix();
-        glTranslatef(0.,0., state->boundary.y);
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-        gluDeleteQuadric(gluCylObj);
-
-        glPopMatrix();
-        glPopMatrix();
-
-        // Draw axis description
-        glColor4f(0., 0., 0., 1.);
-
-        const Coordinate root_pos(- state->boundary.x / 2 - 50, - state->boundary.y / 2 - 50, - state->boundary.z / 2 - 50);
-
-        auto pos = root_pos;
-        pos = Coordinate(- root_pos.x, root_pos.y, root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.x * state->scale.x * 0.001));
-
-        pos = Coordinate(root_pos.x, - root_pos.y, root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.y * state->scale.y * 0.001));
-
-        pos = Coordinate(root_pos.x, root_pos.y, - root_pos.z);
-        renderText(pos, QString("%1 µm").arg(state->boundary.z * state->scale.z * 0.001));
+        glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_TEXTURE_2D);
+        glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
     }
 

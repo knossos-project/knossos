@@ -33,7 +33,6 @@
 #include "viewport.h"
 #include "scriptengine/scripting.h"
 #include "skeleton/skeletonizer.h"
-#include "widgets/viewportsettings/vpgeneraltabwidget.h"
 #include "widgetcontainer.h"
 
 #include <PythonQt/PythonQt.h>
@@ -64,15 +63,15 @@
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerObject(this), widgetContainer(&widgetContainerObject) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
-    QObject::connect(widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::resetViewportPositions, this, &MainWindow::resetViewports);
-    QObject::connect(widgetContainer->datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
+    QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
+    QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
+    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {
             const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
@@ -85,9 +84,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
             workModeModel.recreate(workModes);
             setWorkMode(currentMode);
         }
-        widgetContainer->annotationWidget->setSegmentationVisibility(showOverlays);
+        widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
-    QObject::connect(widgetContainer->snapshotWidget, &SnapshotWidget::snapshotRequest,
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
         [this](const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
             viewports[vp]->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
         });
@@ -97,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainerOb
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::autosaveSignal, this, &MainWindow::autosaveSlot);
+    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, this, &MainWindow::autoSaveSlot);
 
     createToolbars();
     createMenus();
@@ -206,25 +205,25 @@ void MainWindow::createToolbars() {
     };
     auto taskManagementButton = createToolToogleButton(":/resources/icons/task.png", "Task Management");
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
-    auto viewportSettingsButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Viewport Settings");
+    auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
 
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
         if (down) {
-            widgetContainer->taskManagementWidget->updateAndRefreshWidget();
+            widgetContainer.taskManagementWidget.updateAndRefreshWidget();
         } else {
-            widgetContainer->taskManagementWidget->hide();
+            widgetContainer.taskManagementWidget.hide();
         }
     });
-    QObject::connect(annotationButton, &QToolButton::clicked, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(viewportSettingsButton, &QToolButton::clicked, widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::setVisible);
-    QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
+    QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
+    QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
+    QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
-    QObject::connect(widgetContainer->taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::visibilityChanged, viewportSettingsButton, &QToolButton::setChecked);
-    QObject::connect(widgetContainer->datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
 
     defaultToolbar.addSeparator();
 
@@ -287,7 +286,7 @@ void MainWindow::setJobModeUI(bool enabled) {
     if(enabled) {
         setWorkMode(AnnotationMode::Mode_MergeSimple);
         menuBar()->hide();
-        widgetContainer->hideAll();
+        widgetContainer.hideAll();
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
@@ -336,26 +335,34 @@ void MainWindow::updateTodosLeft() {
 }
 
 void MainWindow::notifyUnsavedChanges() {
-    state->skeletonState->unsavedChanges = true;
+    Session::singleton().unsavedChanges = true;
     updateTitlebar();
 }
 
 void MainWindow::updateTitlebar() {
+    const auto & session = Session::singleton();
     QString title = qApp->applicationDisplayName() + " showing ";
-    if (!Session::singleton().annotationFilename.isEmpty()) {
+    if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {
         title.append("no annotation file");
     }
-    if (state->skeletonState->unsavedChanges) {
+    unsavedChangesLabel.setToolTip("");
+    if (session.unsavedChanges) {
         title.append("*");
-        const auto autosave = tr(" (") + (!state->skeletonState->autoSaveBool ? "<b>NOT</b> " : "") + "autosaving)";
-        unsavedChangesLabel.setText(tr("unsaved changes") + autosave);
+        auto autosave = tr("<font color='red'>(autosave: off)</font> ");
+        if(session.autoSaveTimer.isActive()) {
+            autosave = tr("<font color='green'>(autosave: on)</font>");
+            const auto minutes = session.autoSaveTimer.remainingTime() / 1000 / 60;
+            const auto seconds = session.autoSaveTimer.remainingTime() / 1000 % 60;
+            unsavedChangesLabel.setToolTip(tr("Next autosave in %1:%2 min").arg(minutes).arg(seconds, 2, 10, QChar('0')));
+        }
+        unsavedChangesLabel.setText(tr("unsaved changes ") + autosave);
     } else {
         unsavedChangesLabel.setText("saved");
     }
     //don’t display if there are no changes and no file is loaded
-    if (!state->skeletonState->unsavedChanges && Session::singleton().annotationFilename.isEmpty()) {
+    if (session.unsavedChanges == false && session.annotationFilename.isEmpty()) {
         unsavedChangesLabel.hide();
         annotationTimeLabel.hide();
     } else {
@@ -363,7 +370,7 @@ void MainWindow::updateTitlebar() {
         annotationTimeLabel.show();
     }
 
-    if(!state->skeletonState->autoSaveBool) {
+    if(session.autoSaveTimer.isActive() == false) {
         title.append(" Autosave: OFF");
     }
 
@@ -389,66 +396,6 @@ void MainWindow::updateRecentFile(const QString & fileName) {
     }
 }
 
-void MainWindow::treeColorAdjustmentsChanged() {
-    if (state->viewerState->treeColortableOn && state->viewerState->treeLutSet) {//user lut activated and  selected
-        memcpy(state->viewerState->treeAdjustmentTable, state->viewerState->treeColortable, RGB_LUTSIZE * sizeof(float));
-        Skeletonizer::singleton().updateTreeColors();
-    } else {//use of default lut
-        memcpy(state->viewerState->treeAdjustmentTable, state->viewerState->defaultTreeTable, RGB_LUTSIZE * sizeof(float));
-        Skeletonizer::singleton().updateTreeColors();
-    }
-}
-
-void MainWindow::datasetColorAdjustmentsChanged() {
-    bool doAdjust = false;
-    int i = 0;
-    int dynIndex;
-    GLuint tempTable[3][256];
-
-    if(state->viewerState->datasetColortableOn) {
-        memcpy(state->viewerState->datasetAdjustmentTable,
-               state->viewerState->datasetColortable,
-               RGB_LUTSIZE * sizeof(GLuint));
-        doAdjust = true;
-    } else {
-        memcpy(state->viewerState->datasetAdjustmentTable,
-               state->viewerState->neutralDatasetTable,
-               RGB_LUTSIZE * sizeof(GLuint));
-    }
-
-    /*
-     * Apply the dynamic range settings to the adjustment table
-     *
-     */
-    if((state->viewerState->luminanceBias != 0) ||
-       (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
-        for(i = 0; i < 256; i++) {
-            dynIndex = (int)((i - state->viewerState->luminanceBias) /
-                                 (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
-
-            if(dynIndex < 0)
-                dynIndex = 0;
-            if(dynIndex > MAX_COLORVAL)
-                dynIndex = MAX_COLORVAL;
-
-            tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
-            tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
-            tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
-        }
-
-        for(i = 0; i < 256; i++) {
-            state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
-            state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
-            state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
-        }
-
-        doAdjust = true;
-    }
-    state->viewerState->datasetAdjustmentOn = doAdjust;
-
-    state->viewer->dc_reslice_notify_visible();
-}
-
 /** This slot is called if one of the entries is clicked in the recent file menue */
 void MainWindow::recentFileSelected() {
     QAction *action = (QAction *)sender();
@@ -470,7 +417,7 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), this->widgetContainer->datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &this->widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
@@ -541,7 +488,7 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    viewMenu->addAction(tr("Dataset Navigation Options"), widgetContainer->navigationWidget, SLOT(show()));
+    viewMenu->addAction(tr("Dataset Navigation Options"), &widgetContainer.navigationWidget, SLOT(show()));
 
     auto commentsMenu = menuBar()->addMenu("Comments");
 
@@ -566,25 +513,25 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(tr("Data Saving Options"), widgetContainer->dataSavingWidget, SLOT(show()));
-    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Viewport Settings", widgetContainer->viewportSettingsWidget, SLOT(show()));
+    preferenceMenu->addAction(tr("Data Saving Options"), &widgetContainer.dataSavingWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", widgetContainer->taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", widgetContainer->annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", widgetContainer->datasetOptionsWidget, SLOT(show()));
-    windowMenu->addAction(tr("Take a snapshot"), widgetContainer->snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", &widgetContainer.datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto helpMenu = menuBar()->addMenu("Help");
-    addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), widgetContainer->docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
-    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", widgetContainer->splashWidget, SLOT(show()));
+    addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
+    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(show()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
     saveSettings();
 
-    if(state->skeletonState->unsavedChanges) {
+    if(Session::singleton().unsavedChanges) {
          QMessageBox question;
          question.setWindowFlags(Qt::WindowStaysOnTopHint);
          question.setIcon(QMessageBox::Question);
@@ -678,7 +625,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
 
-    state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
+    Session::singleton().unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
     Session::singleton().annotationFilename = "";
     if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
@@ -694,7 +641,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 }
 
 void MainWindow::newAnnotationSlot() {
-    if (state->skeletonState->unsavedChanges) {
+    if (Session::singleton().unsavedChanges) {
         const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
         const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
         if (button == 1) {
@@ -703,7 +650,7 @@ void MainWindow::newAnnotationSlot() {
     }
     Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();
-    state->skeletonState->unsavedChanges = false;
+    Session::singleton().unsavedChanges = false;
     Session::singleton().annotationFilename = "";
 }
 
@@ -728,7 +675,7 @@ void MainWindow::openSlot() {
     }
 }
 
-void MainWindow::autosaveSlot() {
+void MainWindow::autoSaveSlot() {
     if (Session::singleton().annotationFilename.isEmpty()) {
         Session::singleton().annotationFilename = annotationFileDefaultPath();
     }
@@ -744,7 +691,7 @@ void MainWindow::saveSlot() {
             annotationFilename.chop(4);
             annotationFilename += ".k.zip";
         }
-        if (state->skeletonState->autoFilenameIncrementBool) {
+        if (Session::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(annotationFilename);
             updateFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
@@ -814,26 +761,26 @@ void MainWindow::exportToNml() {
     }
 }
 
-void MainWindow::setWorkMode(AnnotationMode mode) {
-    if(workModes.find(mode) == std::end(workModes)) {
-        mode = AnnotationMode::Mode_Tracing;
+void MainWindow::setWorkMode(AnnotationMode workMode) {
+    if(workModes.find(workMode) == std::end(workModes)) {
+        workMode = AnnotationMode::Mode_Tracing;
     }
-    modeCombo.setCurrentText(workModes[mode]);
-    auto & annotationMode = Session::singleton().annotationMode;
-    annotationMode = mode;
-    const bool trees = mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
-    const bool skeleton = mode == AnnotationMode::Mode_Tracing || mode == AnnotationMode::Mode_TracingAdvanced || mode == AnnotationMode::Mode_TracingUnlinked || mode == AnnotationMode::Mode_MergeTracing;
-    const bool segmentation = mode == AnnotationMode::Brush || mode == AnnotationMode::Mode_MergeTracing;
+    modeCombo.setCurrentText(workModes[workMode]);
+    auto & mode = Session::singleton().annotationMode;
+    mode = workMode;
+    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     newTreeAction->setVisible(trees);
-    widgetContainer->annotationWidget->commandsTab.enableNewTreeButton(trees);
-    pushBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
-    popBranchAction->setVisible(annotationMode.testFlag(AnnotationMode::NodeEditing));
+    widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
+    pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
+    popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    if(state->skeletonState->unsavedChanges || state->skeletonState->treeElements > 0) {
+    if(Session::singleton().unsavedChanges || state->skeletonState->treeElements > 0) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);
@@ -913,9 +860,8 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-        Knossos::loadTreeLUTFallback();
-        treeColorAdjustmentsChanged();
-        datasetColorAdjustmentsChanged();
+        Skeletonizer::singleton().loadTreeLUT();
+        state->viewer->defaultDatasetLUT();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
                           QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
@@ -992,16 +938,16 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    widgetContainer->datasetLoadWidget->saveSettings();
-    widgetContainer->dataSavingWidget->saveSettings();
-    widgetContainer->datasetOptionsWidget->saveSettings();
-    widgetContainer->viewportSettingsWidget->saveSettings();
-    widgetContainer->navigationWidget->saveSettings();
-    widgetContainer->annotationWidget->saveSettings();
-    widgetContainer->pythonPropertyWidget->saveSettings();
-    widgetContainer->snapshotWidget->saveSettings();
-    widgetContainer->taskManagementWidget->taskLoginWidget.saveSettings();
-    //widgetContainer->toolsWidget->saveSettings();
+    widgetContainer.datasetLoadWidget.saveSettings();
+    widgetContainer.dataSavingWidget.saveSettings();
+    widgetContainer.datasetOptionsWidget.saveSettings();
+    widgetContainer.appearanceWidget.saveSettings();
+    widgetContainer.navigationWidget.saveSettings();
+    widgetContainer.annotationWidget.saveSettings();
+    widgetContainer.pythonPropertyWidget.saveSettings();
+    widgetContainer.snapshotWidget.saveSettings();
+    widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
+    //widgetContainer.toolsWidget->saveSettings();
 }
 
 /**
@@ -1043,14 +989,14 @@ void MainWindow::loadSettings() {
 
     settings.endGroup();
 
-    widgetContainer->datasetLoadWidget->loadSettings();
-    widgetContainer->dataSavingWidget->loadSettings();
-    widgetContainer->datasetOptionsWidget->loadSettings();
-    widgetContainer->viewportSettingsWidget->loadSettings();
-    widgetContainer->navigationWidget->loadSettings();
-    widgetContainer->annotationWidget->loadSettings();
-    widgetContainer->pythonPropertyWidget->loadSettings();
-    widgetContainer->snapshotWidget->loadSettings();
+    widgetContainer.datasetLoadWidget.loadSettings();
+    widgetContainer.dataSavingWidget.loadSettings();
+    widgetContainer.datasetOptionsWidget.loadSettings();
+    widgetContainer.appearanceWidget.loadSettings();
+    widgetContainer.navigationWidget.loadSettings();
+    widgetContainer.annotationWidget.loadSettings();
+    widgetContainer.pythonPropertyWidget.loadSettings();
+    widgetContainer.snapshotWidget.loadSettings();
 }
 
 void MainWindow::clearSettings() {
@@ -1121,7 +1067,7 @@ void MainWindow::resetViewports() {
 }
 
 void MainWindow::showVPDecorationClicked() {
-    bool isShow = widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->isChecked();
+    bool isShow = widgetContainer.appearanceWidget.viewportTab.showVPDecorationCheckBox.isChecked();
     for(uint i = 0; i < Viewport::numberViewports; i++) {
         viewports[i]->showHideButtons(isShow);
     }
@@ -1181,11 +1127,11 @@ void MainWindow::resizeToFitViewports(int width, int height) {
 }
 
 void MainWindow::pythonSlot() {
-    widgetContainer->pythonPropertyWidget->openTerminal();
+    widgetContainer.pythonPropertyWidget.openTerminal();
 }
 
 void MainWindow::pythonPropertiesSlot() {
-    widgetContainer->pythonPropertyWidget->show();
+    widgetContainer.pythonPropertyWidget.show();
 }
 
 void MainWindow::pythonFileSlot() {

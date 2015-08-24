@@ -42,55 +42,64 @@ class nodeListElement;
 class segmentListElement;
 class commentListElement;
 
-struct stack;
+struct stack {
+    uint elementsOnStack;
+    void **elements;
+    int stackpointer;
+    int size;
+};
+void *popStack(stack *stack);
+bool pushStack(stack *stack, void *element);
+stack *newStack(int size);
+bool delStack(stack *stack);
 
-struct skeletonState {
-    uint skeletonRevision;
+// skeleton vp orientation
+#define SKELVP_XY_VIEW 0
+#define SKELVP_XZ_VIEW 1
+#define SKELVP_YZ_VIEW 2
+#define SKELVP_R90 3
+#define SKELVP_R180 4
+#define SKELVP_RESET 5
 
-    //    skeletonTime is the time spent on the current skeleton in all previous
-    //    instances of knossos that worked with the skeleton.
-
-    bool unsavedChanges;
-    int skeletonTime;
-
+struct SkeletonState {
+    SkeletonState() {
+        state->skeletonState = this;
+    }
     std::unique_ptr<treeListElement> firstTree;
-    treeListElement *activeTree;
-    nodeListElement *activeNode;
+    treeListElement * activeTree{nullptr};
+    nodeListElement * activeNode{nullptr};
 
     std::unordered_map<int, treeListElement *> treesByID;
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
-    commentListElement *currentComment;
-    char *commentBuffer;
-    char *searchStrBuffer;
+    commentListElement * currentComment{nullptr};
+    QString commentBuffer;
 
-    stack *branchStack;
+    stack * branchStack{newStack(1048576)};
 
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
     uint volBoundary;
 
-    uint totalComments;
-    uint totalBranchpoints;
+    uint totalComments{0};
+    uint totalBranchpoints{0};
 
-    bool userCommentColoringOn;
-    uint commentNodeRadiusOn;
-
-    bool lockPositions;
-    bool positionLocked;
-    char onCommentLock[1024];
+    bool lockPositions{false};
+    bool positionLocked{false};
+    QString onCommentLock{"seed"};
     Coordinate lockedPosition;
-    long unsigned int lockRadius;
+    long unsigned int lockRadius{100};
 
     float rotdx;
     float rotdy;
     int rotationcounter;
 
-    int definedSkeletonVpView;
+    int definedSkeletonVpView{SKELVP_RESET};
 
-    float translateX, translateY;
+    float translateX;
+    float translateY;
 
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
@@ -99,38 +108,31 @@ struct skeletonState {
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    uint displayMode;
+    uint displayMode{0};
 
-    float segRadiusToNodeRadius;
-    int overrideNodeRadiusBool;
-    float overrideNodeRadiusVal;
+    float segRadiusToNodeRadius{.5f};
+    int overrideNodeRadiusBool{false};
+    float overrideNodeRadiusVal{1.f};
 
-    int highlightActiveTree;
-    int showIntersections;
+    int highlightActiveTree{true};
+    int showIntersections{false};
     int rotateAroundActiveNode;
-    int showXYplane;
-    int showXZplane;
-    int showYZplane;
-    int showNodeIDs;
-    bool autoFilenameIncrementBool;
+    int showXYplane{true};
+    int showXZplane{true};
+    int showYZplane{true};
+    int showNodeIDs{false};
 
-    int treeElements;
-    int totalNodeElements;
-    int totalSegmentElements;
+    int treeElements{0};
+    int totalNodeElements{0};
+    int totalSegmentElements{0};
 
-    uint64_t greatestNodeID;
-    int greatestTreeID;
-
-    nodeListElement *selectedCommentNode;
+    uint64_t greatestNodeID{0};
+    int greatestTreeID{0};
 
     //If true, loadSkeleton merges the current skeleton with the provided
     bool mergeOnLoadFlag;
 
-    uint lastSaveTicks;
-    bool autoSaveBool;
-    uint autoSaveInterval;
-
-    float defaultNodeRadius;
+    float defaultNodeRadius{1.5f};
 
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     float zoomLevel;
@@ -140,10 +142,10 @@ struct skeletonState {
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
 
-    bool branchpointUnresolved;
+    bool branchpointUnresolved{false};
 
-    char skeletonCreatedInVersion[32];
-    char skeletonLastSavedInVersion[32];
+    QString skeletonCreatedInVersion;
+    QString skeletonLastSavedInVersion;
 
     QString nodeCommentFilter;
     QString treeCommentFilter;
@@ -151,6 +153,7 @@ struct skeletonState {
 
 class Skeletonizer : public QObject {
     Q_OBJECT
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
 public:
     template<typename T>
     void select(QSet<T*>);
@@ -163,6 +166,7 @@ public:
     std::vector<nodeListElement*> nodesOrdered;
     std::vector<treeListElement*> treesOrdered;
 
+    SkeletonState skeletonState;
     explicit Skeletonizer(QObject *parent = 0);
     static Skeletonizer & singleton() {
         static Skeletonizer skeletonizer;
@@ -183,8 +187,6 @@ signals:
     void treeSelectionChangedSignal();
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void resetData();
-
-    void autosaveSignal();
     void setRecenteringPositionSignal(int x, int y, int z);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
@@ -194,11 +196,6 @@ public slots:
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
     boost::optional<uint64_t> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
-
-    static void *popStack(stack *stack);
-    static bool pushStack(stack *stack, void *element);
-    static stack *newStack(int size);
-    static bool delStack(stack *stack);
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
@@ -210,7 +207,6 @@ public slots:
 
     bool delTree(int treeID);
     void clearSkeleton();
-    void autoSaveIfElapsed();
     uint64_t UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype, const uint64_t nodeId = 0);
     bool setActiveNode(nodeListElement *node, uint nodeID);
     bool addTreeCommentToSelectedTrees(QString comment);
@@ -226,8 +222,8 @@ public slots:
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
-    void setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId);
-    void setSubobjectAndMerge(nodeListElement & node, const quint64 subobjectId);
+    void setSubobject(const quint64 nodeId, const quint64 subobjectId);
+    void setSubobjectSelectAndMergeWithPrevious(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId);
     void updateSubobjectCountFromProperty(nodeListElement & node);
     void unsetSubobjectOfHybridNode(nodeListElement & node);
     void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
@@ -251,14 +247,14 @@ public slots:
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(const treeListElement & tree, const QString & comment);
     static bool addSegment(uint sourceNodeID, uint targetNodeID);
-    static void restoreDefaultTreeColor(treeListElement *tree);
-    static void restoreDefaultTreeColor();
+    void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(int nodeID);
     int findAvailableTreeID();
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
-    static bool updateTreeColors();
+    void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
+    void updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(uint sourceNodeID, uint targetNodeID);
     uint64_t addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);

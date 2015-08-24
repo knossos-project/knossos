@@ -1,5 +1,6 @@
 #include "datasetloadwidget.h"
 
+#include "datatset.h"
 #include "GuiConstants.h"
 #include "knossos.h"
 #include "loader.h"
@@ -98,7 +99,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     QPushButton *addDs = new QPushButton("…");
     QObject::connect(addDs, &QPushButton::clicked, [this, rowFromCell, addDs](){
         state->viewerState->renderInterval = SLOW;
-        QString selectFile = QFileDialog::getOpenFileName(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf");
+        const auto selectFile = QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         state->viewerState->renderInterval = FAST;
         if (!selectFile.isEmpty()) {
             QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
@@ -135,116 +136,42 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 }
 
 void DatasetLoadWidget::updateDatasetInfo() {
-    if (tableWidget.selectedItems().empty()) return;
+    bool bad = tableWidget.selectedItems().empty();
+    QString dataset;
+    bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
+    decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
+    const QUrl url{dataset};
+    bad = bad || !(download = Network::singleton().refresh(url)).first;
+    if (bad) {
+        infoLabel.setText("");
+        return;
+    }
 
-    const auto dataset = tableWidget.selectedItems().front()->text();
+    const auto datasetinfo = Dataset::fromLegacyConf(url, download.second);
 
     //make sure supercubeedge is small again
-    superCubeEdgeSpin.setValue(superCubeEdgeSpin.value() * cubeEdgeSpin.value() / 128);
-    cubeEdgeSpin.setValue(128);
+    auto supercubeedge = superCubeEdgeSpin.value() * cubeEdgeSpin.value() / datasetinfo.cubeEdgeLength;
+    supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+    superCubeEdgeSpin.setValue(supercubeedge);
+    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
     adaptMemoryConsumption();
 
-    QString infotext;
-    if (dataset != "") {
-        datasetinfo = getConfigFileInfo(dataset);
-
-        if (datasetinfo.remote) {
-            infotext = QString("<b>Remote Dataset</b><br>URL: %0%1<br>Boundary (x y z): %2 %3 %4<br>Compression: %5<br>cubeEdgeLength: %6<br>Magnification: %7<br>Scale (x y z): %8 %9 %10")
-                    .arg(datasetinfo.ftphostname.c_str())
-                    .arg(datasetinfo.ftpbasepath.c_str())
-                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                    .arg(datasetinfo.compressionRatio)
-                    .arg(datasetinfo.cubeEdgeLength)
-                    .arg(datasetinfo.magnification)
-                    .arg(datasetinfo.scale.x)
-                    .arg(datasetinfo.scale.y)
-                    .arg(datasetinfo.scale.z);
-        } else {
-            infotext = QString("<b>Local Dataset</b><br>Boundary (x y z): %0 %1 %2<br>Compression: %3<br>cubeEdgeLength: %4<br>Magnification: %5<br>Scale (x y z): %6 %7 %8")
-                    .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-                    .arg(datasetinfo.compressionRatio)
-                    .arg(datasetinfo.cubeEdgeLength)
-                    .arg(datasetinfo.magnification)
-                    .arg(datasetinfo.scale.x)
-                    .arg(datasetinfo.scale.y)
-                    .arg(datasetinfo.scale.z);
-        }
+    QString infotext = tr("<b>%1 Dataset</b><br />%2");
+    if (datasetinfo.remote) {
+        infotext = infotext.arg("Remote").arg("URL: %1<br />").arg(datasetinfo.url.toString());
+    } else {
+        infotext = infotext.arg("Local").arg("");
     }
+    infotext += QString("Boundary (x y z): %1 %2 %3<br />Compression: %4<br />cubeEdgeLength: %5<br />Magnification: %6<br />Scale (x y z): %7 %8 %9")
+        .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+        .arg(datasetinfo.compressionRatio)
+        .arg(datasetinfo.cubeEdgeLength)
+        .arg(datasetinfo.magnification)
+        .arg(datasetinfo.scale.x)
+        .arg(datasetinfo.scale.y)
+        .arg(datasetinfo.scale.z);
 
     infoLabel.setText(infotext);
-}
-
-bool DatasetLoadWidget::parseGoogleJson(const QString & json_raw) {
-    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-
-    auto jmap = json_conf.object();
-    auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();
-
-    auto bx = boundary_json["x"].toString().toInt();
-    auto by = boundary_json["y"].toString().toInt();
-    auto bz = boundary_json["z"].toString().toInt();
-
-    auto scale_json = jmap["geometry"].toArray()[0].toObject()["pixelSize"].toObject();
-
-    auto sx = static_cast<float>(scale_json["x"].toDouble());
-    auto sy = static_cast<float>(scale_json["y"].toDouble());
-    auto sz = static_cast<float>(scale_json["z"].toDouble());
-
-    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
-        return false;
-    }
-
-    state->boundary = {bx, by, bz};
-    state->scale = {sx, sy, sz};
-
-    state->path[0] = '\0'; //dont't check for other mags
-    Knossos::commonInitStates();
-    state->highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
-
-    state->compressionRatio = 1000;
-
-    state->overlay = false; //google does not have this
-
-    return true;
-}
-
-bool DatasetLoadWidget::parseWebKnossosJson(const QString & json_raw) {
-    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-
-    auto jmap = json_conf.object();
-
-    auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
-
-    auto bx = boundary_json["width"].toInt();
-    auto by = boundary_json["height"].toInt();
-    auto bz = boundary_json["depth"].toInt();
-
-    auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
-
-    auto sx = static_cast<float>(scale_json[0].toDouble());
-    auto sy = static_cast<float>(scale_json[1].toDouble());
-    auto sz = static_cast<float>(scale_json[2].toDouble());
-
-    if((bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0) || (bx == 0)) {
-        return false;
-    }
-
-    state->boundary = {bx, by, bz};
-
-    state->scale = {sx, sy, sz};
-
-    state->path[0] = '\0'; //dont't check for other mags
-    Knossos::commonInitStates();
-
-    auto mag = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
-
-    state->highestAvailableMag = mag[mag.size()-1].toInt();
-
-    state->compressionRatio = 0;
-
-    state->overlay = false; //webknossos does not have this
-
-    return true;
 }
 
 QString DatasetLoadWidget::extractWebKnossosToken(QString & json_raw) {
@@ -276,7 +203,7 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     superCubeSizeLabel.setText(text);
     const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
     //make sure it’s an odd number
-    superCubeEdgeSpin.setMaximum(maxsupercubeedge - (maxsupercubeedge % 2 == 0 ? 1 : 0));
+    superCubeEdgeSpin.setMaximum(maxsupercubeedge - !maxsupercubeedge);
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
@@ -292,128 +219,46 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
-void DatasetLoadWidget::gatherHeidelbrainDatasetInformation(QString & path) {
-    //check if we have a remote conf
-    if(path.startsWith("http", Qt::CaseInsensitive)) {
-        if(!Network::singleton().refresh(path).first) return;
-    }
-
-    QFileInfo pathInfo;
-    pathInfo.setFile(path);
-
-    QString filePath; // for holding the whole path to a .conf file
-    QFile confFile;
-    if(pathInfo.isFile()) { // .conf file selected (case 3)
-        filePath = path;
-        confFile.setFileName(filePath);
-    }  else { // folder selected
-        if(path.endsWith('/') == false && path.endsWith('\\') == false) {
-            // qFileInfo only recognizes paths with trailing slash as directories.
-            path.append('/');
-            pathInfo.setFile(path);
-        }
-        QDir directory(path);
-        QStringList dirContent = directory.entryList(QStringList("*.conf"));
-        if(dirContent.empty()) { // apparently the base dataset folder (case 2) was selected
-            // find the magnification subfolders and look for a .conf file starting at lowest mag
-            bool foundConf = false;
-            dirContent = directory.entryList(QStringList("*mag*"), QDir::Dirs, QDir::Name);
-            for(const auto magPath : dirContent) {
-                QDir magDir(QString("%1/%2").arg(directory.absolutePath()).arg(magPath));
-                QStringList subDirContent = magDir.entryList(QStringList("*.conf"), QDir::Files);
-                if(subDirContent.empty() == false) {
-                    filePath = QString("%1/%2/%3").arg(directory.absolutePath()).arg(magPath).arg(subDirContent.front());
-                    confFile.setFileName(filePath);
-                    QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
-                    foundConf = true;
-                    break;
-                }
-            }
-            if(foundConf == false) {
-                QMessageBox::information(this, "Unable to load", "Could not find a dataset file (*.conf)");
-                return;
-            }
-        }
-        else {
-            filePath = QString("%1/%2").arg(directory.absolutePath()).arg(dirContent.front());
-            if(QRegExp(".*mag[0-9]+").exactMatch(directory.absolutePath())) {
-                // apparently the magnification folder was selected (case 1)
-                directory.cdUp();
-                QFile::copy(filePath, QString("%1/%2.k.conf").arg(directory.absolutePath()).arg(directory.dirName()));
-            }
-        }
-    }
-
-    if (!Knossos::readConfigFile(filePath.toStdString().c_str())) {
-        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(filePath));
-        return;
-    }
-
-    // we want state->path to hold the path to the dataset folder
-    // instead of a path to a subfolder of a specific magnification
-    QDir datasetDir(pathInfo.absolutePath());
-    if(QRegExp(".*mag[0-9]+").exactMatch(datasetDir.absolutePath())) {
-        datasetDir.cdUp();
-    }
-    strcpy(state->path, datasetDir.absolutePath().toStdString().c_str());
-
-    Knossos::commonInitStates();
-}
-
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
 bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
-    if (path.isEmpty() && datasetPath.isEmpty()) {//no dataset available to load
+    if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         show();
         return false;
-    } else if (path.isEmpty()) {
-        path = datasetPath;
+    } else if (!path.isEmpty()) {//if empty reload previous
+        datasetUrl = {path};//remember config url
+    }
+    const auto download = Network::singleton().refresh(datasetUrl);
+    if (!download.first) {
+        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(datasetUrl.toString()));
+        return false;
     }
 
     if (!keepAnnotation) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
-    if (state->skeletonState->unsavedChanges) {//if annotation wasn’t cleared, abort loading of dataset
-        return false;
+
+    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
+
+    Loader::API api;
+    Dataset info;
+    Loader::CubeType raw_compression;
+    {
+        api = Loader::API::Heidelbrain;
+        info = Dataset::fromLegacyConf(datasetUrl, download.second);
+        info.checkMagnifications();
+        info.applyToState();
+        raw_compression = info.compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
+                : info.compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
     }
-
-    Loader::Controller::singleton().waitForWorkerThread();//we change variables the loader uses
-
-    // actually load the dataset
-    datasetPath = path;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = superCubeEdgeSpin.value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
-
-    Loader::API api;
-    QString url;
-    Loader::CubeType raw_compression;
-    {
-        api = Loader::API::Heidelbrain;
-        gatherHeidelbrainDatasetInformation(path);
-        if (state->loadMode == LM_FTP) {
-            url = QString("http://%1:%2@%3/%4").arg(state->ftpUsername).arg(state->ftpPassword).arg(state->ftpHostName).arg(state->ftpBasePath);
-        } else {
-            url = QString("file:///%1").arg(state->path);
-        }
-        raw_compression = state->compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : state->compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
-                : state->compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
-    }
-    //skeleton vp boundary
-    if ((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-    }
-    if ((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
-        state->skeletonState->volBoundary = state->boundary.y * 2;
-    }
-    if ((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        state->skeletonState->volBoundary = state->boundary.z * 2;
-    }
 
     applyGeometrySettings();
 
@@ -424,7 +269,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    Loader::Controller::singleton().restart(url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, state->name);
+    Loader::Controller::singleton().restart(info.url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 
@@ -438,83 +283,12 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     return true;
 }
 
-DatasetLoadWidget::Datasetinfo DatasetLoadWidget::getConfigFileInfo(const QString & path) {
-    Datasetinfo info;
-    QString qpath{path};
-
-    if(qpath.startsWith("http", Qt::CaseInsensitive)) {
-        if(!Network::singleton().refresh(qpath).first) return info;
-    }
-
-    QFile file(qpath);
-
-    if(!file.open(QIODevice::ReadOnly)) {
-        qDebug("Error reading config file at path:%s", qpath.toStdString().c_str());
-        return info;
-    }
-
-    QTextStream stream(&file);
-    while(!stream.atEnd()) {
-        QString line = stream.readLine();
-        if(line.isEmpty())
-            continue;
-
-        QStringList tokenList = line.split(
-            QRegExp("[ ;]"),
-            QString::SkipEmptyParts
-        );
-
-        QString token = tokenList.at(0);
-
-        if(token == "experiment") {
-            token = tokenList.at(2);
-            QStringList experimentTokenList = token.split(
-                        QRegExp("[\"]"),
-                        QString::SkipEmptyParts);
-            info.experimentname = experimentTokenList.at(0).toStdString();
-
-        } else if(token == "scale") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                info.scale.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                info.scale.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                info.scale.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "boundary") {
-            token = tokenList.at(1);
-            if(token == "x") {
-                info.boundary.x = tokenList.at(2).toFloat();
-            } else if(token == "y") {
-                info.boundary.y = tokenList.at(2).toFloat();
-            } else if(token == "z") {
-                info.boundary.z = tokenList.at(2).toFloat();
-            }
-        } else if(token == "magnification") {
-            info.magnification = tokenList.at(1).toInt();
-        } else if(token == "cube_edge_length") {
-            info.cubeEdgeLength = tokenList.at(1).toInt();
-        } else if(token == "ftp_mode") {
-            info.remote = true;
-
-            info.ftphostname = tokenList.at(1).toStdString();
-            info.ftpbasepath = tokenList.at(2).toStdString();
-
-        } else if (token == "compression_ratio") {
-            info.compressionRatio = tokenList.at(1).toInt();
-        }
-    }
-
-    return info;
-}
-
 void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
     settings.setValue(DATASET_GEOMETRY, saveGeometry());
-    settings.setValue(DATASET_LAST_USED, datasetPath);
+    settings.setValue(DATASET_LAST_USED, datasetUrl);
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
@@ -525,33 +299,41 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
+    if (state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        const auto msg = "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
+        qDebug() << msg;
+        throw std::runtime_error(msg);
+    }
     //settings depending on supercube and cube size
-    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-    state->cubeSetElements = state->M * state->M * state->M;
+    state->cubeSliceArea = std::pow(state->cubeEdgeLength, 2);
+    state->cubeBytes = std::pow(state->cubeEdgeLength, 3);
+    state->cubeSetElements = std::pow(state->M, 3);
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
-    for(uint i = 0; i <  Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-    }
-
-    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        qDebug() << "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-    }
+    Viewport::resetTextureProperties();
 }
 
 void DatasetLoadWidget::loadSettings() {
+    auto transitionedDataset = [](const QString & dataset){//update old files from settings
+        QUrl url = dataset;
+        if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
+            url = QUrl::fromLocalFile(dataset);
+        }
+        if (url.isRelative()) {
+            url = QUrl::fromLocalFile(dataset);
+        }
+        return url;
+    };
+
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
     restoreGeometry(settings.value(DATASET_GEOMETRY, "").toByteArray());
-    datasetPath = settings.value(DATASET_LAST_USED, "").toString();
+    datasetUrl = transitionedDataset(settings.value(DATASET_LAST_USED, "").toString());
 
     auto appendRowSelectIfLU = [this](const QString & dataset){
         insertDatasetRow(dataset, tableWidget.rowCount());
-        if (dataset == datasetPath) {
+        if (dataset == datasetUrl.toString()) {
             tableWidget.selectRow(tableWidget.rowCount() - 1);
         }
     };
@@ -559,14 +341,15 @@ void DatasetLoadWidget::loadSettings() {
     tableWidget.blockSignals(true);
 
     //add datasets from file
-    for(const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
-        appendRowSelectIfLU(dataset);
+    for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
+        appendRowSelectIfLU(transitionedDataset(dataset).toString());
     }
     //add public datasets
     auto datasetsDir = QDir(":/resources/datasets");
     for (const auto & dataset : datasetsDir.entryInfoList()) {
-        if (tableWidget.findItems(dataset.absoluteFilePath(), Qt::MatchExactly).empty()) {
-            appendRowSelectIfLU(dataset.absoluteFilePath());
+        const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
+        if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
+            appendRowSelectIfLU(url);
         }
     }
     //add Empty row at the end
@@ -575,7 +358,6 @@ void DatasetLoadWidget::loadSettings() {
 
     tableWidget.blockSignals(false);
     updateDatasetInfo();
-
 
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();

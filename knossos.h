@@ -25,23 +25,8 @@
  */
 
 namespace Knossos {
-    void applyDefaultConfig();
-    bool readConfigFile(const char *path);
-    bool printConfigValues();
-    bool loadNeutralDatasetLUT(unsigned int *datasetLut);
-    bool readDataConfAndLocalConf();
-    bool findAndRegisterAvailableDatasets();
-    bool configDefaults();
-    bool configFromCli(int argCount, char *arguments[]);
-    bool initStates();
-    bool commonInitStates();
-
-    bool sendRemoteSignal();
-    bool sendQuitSignal();
-    bool sendServerSignal();
-    void loadStyleSheet();
-    void loadDefaultTreeLUT();
-    void loadTreeLUTFallback();
+    void sendRemoteSignal();
+    void sendQuitSignal();
 }
 
 #endif

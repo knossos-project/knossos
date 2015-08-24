@@ -1,5 +1,6 @@
 #include "segmentation.h"
 
+#include "file_io.h"
 #include "knossos.h"
 #include "loader.h"
 #include "session.h"
@@ -91,7 +92,7 @@ bool Segmentation::hasSegData() const {
 }
 
 void Segmentation::clear() {
-    state->skeletonState->unsavedChanges |= hasSegData();
+    Session::singleton().unsavedChanges |= hasSegData();
 
     selectedObjectIndices.clear();
     objects.clear();
@@ -113,10 +114,8 @@ void Segmentation::clear() {
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
-    const uint8_t red   = overlayColorMap[0][subObjectID % 256];
-    const uint8_t green = overlayColorMap[1][subObjectID % 256];
-    const uint8_t blue  = overlayColorMap[2][subObjectID % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    const auto colorIndex = subObjectID % overlayColorMap.size();
+    return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
 Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Segmentation::Object & other) {
@@ -126,21 +125,9 @@ Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Seg
     return objects.back();
 }
 
-void Segmentation::loadOverlayLutFromFile(const std::string & filename) {
-    std::ifstream overlayLutFile(filename, std::ios_base::binary);
-    if (overlayLutFile) {
-        std::vector<char> buffer(std::istreambuf_iterator<char>(overlayLutFile), std::istreambuf_iterator<char>{});//consume whole file
-
-        const auto expectedSize = 768 * sizeof(buffer[0]);
-        if (buffer.size() == expectedSize) {
-            std::move(std::begin(buffer), std::end(buffer), &overlayColorMap[0][0]);
-            qDebug() << "sucessfully loaded »stdOverlay.lut«";
-        } else {
-            qDebug() << "stdOverlay.lut corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
-        }
-    } else {
-        qDebug() << "could not open »stdOverlay.lut«";
-    }
+void Segmentation::loadOverlayLutFromFile(const QString & path) {
+    overlayColorMap = loadLookupTable(path);
+    emit resetData();
 }
 
 bool Segmentation::hasObjects() const {
@@ -231,10 +218,8 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
     const auto & objectId = objects[objectIndex].id;
-    const uint8_t red   = overlayColorMap[0][objectId % 256];
-    const uint8_t green = overlayColorMap[1][objectId % 256];
-    const uint8_t blue  = overlayColorMap[2][objectId % 256];
-    return std::make_tuple(red, green, blue, alpha);
+    const auto colorIndex = objectId % overlayColorMap.size();
+    return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {

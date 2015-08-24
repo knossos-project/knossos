@@ -20,11 +20,11 @@ extern stateInfo * state;
 #define NO_MAG_CHANGE 0
 
 #define DSP_WHOLE           1
-#define DSP_CURRENTCUBE      2
+//#define DSP_CURRENTCUBE      2
 #define DSP_SKEL_VP_HIDE        4
 #define DSP_SLICE_VP_HIDE       8
 #define DSP_SELECTED_TREES      16
-#define DSP_LINES_POINTS        32
+//#define DSP_LINES_POINTS        32
 
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
@@ -57,22 +57,19 @@ public:
     // Use overlay cubes to color the data.
     bool overlay;
     // How user movement was generated
-    UserMoveType loaderUserMoveType;
+    UserMoveType loaderUserMoveType{USERMOVE_NEUTRAL};
     // Direction of user movement in case of drilling,
     // or normal to viewport plane in case of horizontal movement.
     // Left unset in neutral movement.
-    Coordinate loaderUserMoveViewportDirection;
+    Coordinate loaderUserMoveViewportDirection{};
 
-    bool quitSignal;
+    bool quitSignal{false};
 
     // These signals are used to communicate with the remote.
-    bool remoteSignal;
-
-    // Path to the current cube files for the viewer and loader.
-    char path[1024];
+    bool remoteSignal{false};
 
     // Current dataset identifier string
-    char name[1024];
+    QString name;
 
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
@@ -122,39 +119,17 @@ public:
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
 
     // Tell the remote to wake up.
-    QWaitCondition *conditionRemoteSignal;
-
-    // Any signalling to the loading thread needs to be protected
-    // by this mutex. This is done by sendLoadSignal(), so always
-    // use sendLoadSignal() to signal to the loading thread.
-
-    QMutex *protectLoadSignal;
+    QWaitCondition conditionRemoteSignal;
 
     // This should be accessed through sendRemoteSignal() only.
-    QMutex *protectRemoteSignal;
+    QMutex protectRemoteSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
 
-    QMutex *protectCube2Pointer;
-
-    QElapsedTimer time; // it is not allowed to modify this object
+    QMutex protectCube2Pointer;
 
  //---  Info about the state of KNOSSOS in general. --------
-
-/* Calculate movement trajectory for loading based on how many last single movements */
-#define LL_CURRENT_DIRECTIONS_SIZE (20)
-    // This gives the current direction whenever userMove is called
-    Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
-    int currentDirectionsIndex;
-
-    // Cube loader affairs
-    int    loadMode;
-    char       ftpBasePath[CSTRING_SIZE];
-    char       ftpHostName[CSTRING_SIZE];
-    char       ftpUsername[CSTRING_SIZE];
-    char       ftpPassword[CSTRING_SIZE];
-    int    ftpFileTimeout;
 
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
     // coordinates to pointers to datacubes / overlay cubes loaded
@@ -165,14 +140,15 @@ public:
     coord2bytep_map_t Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
     coord2bytep_map_t Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
-    struct viewerState *viewerState;
+    struct ViewerState *viewerState;
     class Viewer *viewer;
     class Scripting *scripting;
     class SignalRelay *signalRelay;
-    struct skeletonState *skeletonState;
-    bool keyD, keyF;
-    std::array<float, 3> repeatDirection;
-    bool viewerKeyRepeat;
+    struct SkeletonState *skeletonState;
+    bool keyD{false};
+    bool keyF{false};
+    std::array<float, 3> repeatDirection{{}};
+    bool viewerKeyRepeat{false};
 };
 
 #endif//STATE_INFO_H

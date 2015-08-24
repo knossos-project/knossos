@@ -47,10 +47,7 @@ protected:
 
 signals:
     void uncheckSignal();
-public slots:
-    void autosaveIntervalChanged(int value);
-    void autosaveCheckboxChecked(bool on);
-    void autonincrementFileNameButtonPushed(bool on);
+
 protected:
     void closeEvent(QCloseEvent *event);
 

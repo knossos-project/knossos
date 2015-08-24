@@ -45,6 +45,7 @@
 bool Viewport::arbitraryOrientation = false;
 bool Viewport::oglDebug = false;
 bool Viewport::showNodeComments = false;
+bool Viewport::showBoundariesInUm = false;
 
 ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
@@ -80,6 +81,34 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
     vpLayout->setMargin(0);//attach buttons to vp border
 
     if(viewportType == VIEWPORT_SKELETON) {
+        //vpconfig init
+        state->viewerState->vpConfigs.resize(Viewport::numberViewports);
+        for(uint i = 0; i < Viewport::numberViewports; i++) {
+            switch(i) {
+            case VP_UPPERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
+                state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
+                break;
+            case VP_LOWERLEFT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
+                state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
+                break;
+            case VP_UPPERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
+                state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
+                break;
+            case VP_LOWERRIGHT:
+                state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
+                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
+                state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
+                break;
+            }
+        }
+        resetTextureProperties();
+
         xyButton = new QPushButton("xy", this);
         xzButton = new QPushButton("xz", this);
         yzButton = new QPushButton("yz", this);
@@ -121,6 +150,26 @@ Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
     timeFBase.start();
 }
 
+void Viewport::resetTextureProperties() {
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+    //reset viewerState texture properties
+    for (uint i = 0; i < Viewport::numberViewports; i++) {
+        state->viewerState->vpConfigs[i].draggedNode = nullptr;
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
+        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+    }
+}
+
 void Viewport::initializeGL() {
     if (viewportType == VIEWPORT_XY) {//we want only one output
         qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
@@ -145,9 +194,6 @@ void Viewport::initializeGL() {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
 
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -227,9 +273,6 @@ void Viewport::createOverlayTextures() {
     //Set the parameters for the texture.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -717,10 +760,9 @@ void Viewport::updateVolumeTexture() {
     int M = state->M;
     int M_radius = (M - 1) / 2;
     GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
-    std::unordered_map<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> selectedIdColors;
     std::tuple<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> lastIdColor;
 
-    state->protectCube2Pointer->lock();
+    state->protectCube2Pointer.lock();
 
     dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
     uint64_t** rawcubes = new uint64_t*[M*M*M];
@@ -779,7 +821,7 @@ void Viewport::updateVolumeTexture() {
 
     delete[] rawcubes;
 
-    state->protectCube2Pointer->unlock();
+    state->protectCube2Pointer.unlock();
 
     colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
 
@@ -893,7 +935,6 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
     const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     if(viewportType == VIEWPORT_SKELETON) {
         auto& seg = Segmentation::singleton();
@@ -913,7 +954,7 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     }
     if(withScale) {
         state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderScaleBar(id, std::ceil(0.006*size), std::ceil(0.02*size));
+        state->viewer->renderer->renderScaleBar(id, std::ceil(0.02*size));
     }
 
     QImage fboImage(fbo.toImage());

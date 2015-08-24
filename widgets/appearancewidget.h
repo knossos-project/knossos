@@ -1,5 +1,5 @@
-#ifndef VIEWPORTSETTINGSWIDGET_H
-#define VIEWPORTSETTINGSWIDGET_H
+#ifndef APPEARANCEWIDGET_H
+#define APPEARANCEWIDGET_H
 
 /*
  *  This file is a part of KNOSSOS.
@@ -25,22 +25,25 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "appearance/datasetsegmentationtab.h"
+#include "appearance/skeletontab.h"
+#include "appearance/viewporttab.h"
+
 #include <QDialog>
 #include <QTabWidget>
+#include <QVBoxLayout>
 
-class VPGeneralTabWidget;
-class VPSlicePlaneViewportWidget;
-class VPSkeletonViewportWidget;
-
-class ViewportSettingsWidget : public QDialog
+class AppearanceWidget : public QDialog
 {
     Q_OBJECT
-    QTabWidget *tabs;
+    QTabWidget tabs;
 public:
-    explicit ViewportSettingsWidget(QWidget *parent = 0);
-    VPGeneralTabWidget *generalTabWidget;
-    VPSkeletonViewportWidget *skeletonViewportWidget;
-    VPSlicePlaneViewportWidget *slicePlaneViewportWidget;
+    explicit AppearanceWidget(QWidget *parent = 0);
+    DatasetAndSegmentationTab datasetAndSegmentationTab;
+    SkeletonTab skeletonTab;
+    ViewportTab viewportTab;
+    QVBoxLayout mainLayout;
+
     void loadSettings();
     void saveSettings();
 signals:
@@ -54,4 +57,4 @@ private:
     }
 };
 
-#endif // VIEWPORTSETTINGSWIDGET_H
+#endif // APPEARANCEWIDGET_H

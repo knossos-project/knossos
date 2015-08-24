@@ -95,7 +95,6 @@ signals:
     void zoomOrthoSignal(float step);
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
-    void updateViewerStateSignal();
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
@@ -106,7 +105,6 @@ signals:
     void addCommentSignal(const char *content, nodeListElement *node, uint nodeID);
     bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
     void addSegmentSignal(uint sourceNodeID, uint targetNodeID);
-    void updateSlicePlaneWidgetSignal();
 
     void compressionRatioToggled();
 };

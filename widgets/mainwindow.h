@@ -132,8 +132,7 @@ public:
     std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
 
     // contains all widgets
-    WidgetContainer widgetContainerObject;
-    WidgetContainer *widgetContainer;
+    WidgetContainer widgetContainer;
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
@@ -173,8 +172,6 @@ public:
     void notifyUnsavedChanges();
     void updateTitlebar();
 
-    static void datasetColorAdjustmentsChanged();
-
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
@@ -186,13 +183,13 @@ public slots:
     /* skeleton menu */
     void newAnnotationSlot();
     void openSlot();
-    void autosaveSlot();
+    void autoSaveSlot();
     void saveSlot();
     void saveAsSlot();
     void exportToNml();
 
     /* edit skeleton menu*/
-    void setWorkMode(AnnotationMode mode);
+    void setWorkMode(AnnotationMode workMode);
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
 
@@ -212,7 +209,6 @@ public slots:
 
     void updateCoordinateBar(int x, int y, int z);
     void recentFileSelected();
-    void treeColorAdjustmentsChanged();
     // viewports
     void resetViewports();
     void showVPDecorationClicked();

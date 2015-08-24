@@ -9,6 +9,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonDocument>
 #include <QRegularExpression>
 #include <QStandardPaths>
 
@@ -135,7 +136,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     }
 
     if (allSuccess) {
-        state->skeletonState->unsavedChanges = false;
+        Session::singleton().unsavedChanges = false;
     }
 
     if (NULL != isSuccess) {
@@ -166,4 +167,38 @@ void updateFileName(QString & fileName) {
         QFileInfo info(fileName);
         fileName = info.dir().absolutePath() + "/" + info.baseName() + ".001." + info.completeSuffix();
     }
+}
+
+std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString & path) {
+    auto kill = [&path](){
+        const auto msg = QObject::tr("Failed to open LUT file: »%1«").arg(path);
+        qWarning() << msg;
+        throw std::runtime_error(msg.toUtf8());
+    };
+
+    const int expectedBinaryLutSize = RGB_LUTSIZE;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> table;
+    QFile overlayLutFile(path);
+    if (overlayLutFile.open(QIODevice::ReadOnly)) {
+        if (overlayLutFile.size() == expectedBinaryLutSize) {//imageJ binary LUT
+            const auto buffer = overlayLutFile.readAll();
+            table.resize(256);
+            for (int i = 0; i < 256; ++i) {
+                table[i] = std::make_tuple(static_cast<uint8_t>(buffer[i]), static_cast<uint8_t>(buffer[256 + i]), static_cast<uint8_t>(buffer[512 + i]));
+            }
+        } else {//json
+            QJsonDocument json_conf = QJsonDocument::fromJson(overlayLutFile.readAll());
+            auto jarray = json_conf.array();
+            if (!json_conf.isArray() || jarray.size() != 256) {//dataset adjustment currently requires 256 values
+                kill();
+            }
+            table.resize(jarray.size());
+            for (int i = 0; i < jarray.size(); ++i) {
+                table[i] = std::make_tuple(jarray[i].toArray()[0].toInt(), jarray[i].toArray()[1].toInt(), (jarray[i].toArray()[2].toInt()));
+            }
+        }
+    } else {
+        kill();
+    }
+    return table;
 }

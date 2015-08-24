@@ -23,22 +23,28 @@ void Skeletonizer::selectObjectForNode(const nodeListElement & node) {
     });
 }
 
-void Skeletonizer::setSubobjectAndMerge(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId) {
+void Skeletonizer::setSubobject(const quint64 nodeId, const quint64 subobjectId) {
     auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
-    if (previousActiveNodeId != 0) {
-        const auto & node2 = *Skeletonizer::singleton().findNodeByNodeID(previousActiveNodeId);
-        selectObjectForNode(node2);//reselect the previous active node as it got unselected during new node creation
-    }
-    setSubobjectAndMerge(node, subobjectId);
+    node.properties.insert(subobjectPropertyKey, subobjectId);
+    ++node.correspondingTree->subobjectCount[subobjectId];
 }
 
-void Skeletonizer::setSubobjectAndMerge(nodeListElement & node, const quint64 subobjectId) {
+void setSubobjectSelectAndMerge(nodeListElement & node, const quint64 subobjectId) {
     node.properties.insert(subobjectPropertyKey, subobjectId);
     ++node.correspondingTree->subobjectCount[subobjectId];
 
     auto objIndex = Segmentation::singleton().largestObjectContainingSubobjectId(subobjectId, node.position);
     Segmentation::singleton().selectObject(objIndex);
     Segmentation::singleton().mergeSelectedObjects();
+}
+
+void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId) {
+    auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
+    if (previousActiveNodeId != 0) {
+        const auto & node2 = *Skeletonizer::singleton().findNodeByNodeID(previousActiveNodeId);
+        selectObjectForNode(node2);//reselect the previous active node as it got unselected during new node creation
+    }
+    setSubobjectSelectAndMerge(node, subobjectId);
 }
 
 void Skeletonizer::updateSubobjectCountFromProperty(nodeListElement & node) {
@@ -66,7 +72,7 @@ void Skeletonizer::movedHybridNode(nodeListElement & node, const quint64 newSubo
     ifsoproperty(node, [&](const uint64_t oldSubobjectId){
         if (oldSubobjectId != newSubobjectId) {
             decrementSubobjectCount(node, oldPos, oldSubobjectId);
-            setSubobjectAndMerge(node, newSubobjectId);
+            setSubobjectSelectAndMerge(node, newSubobjectId);
         }
     });
 }

@@ -50,6 +50,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     autosaveIntervalLabel = new QLabel("Saving interval [min]");
     autosaveIntervalSpinBox = new QSpinBox();
     autosaveIntervalSpinBox->setMinimum(1);
+    autosaveIntervalSpinBox->setValue(5);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
@@ -62,52 +63,56 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     mainLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(mainLayout);
 
-    connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));
-    connect(autosaveIntervalSpinBox, SIGNAL(valueChanged(int)), this, SLOT(autosaveIntervalChanged(int)));
-    connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
+    QObject::connect(autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) { Session::singleton().autoFilenameIncrementBool = on; });
+    QObject::connect(autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
+        if (autosaveCheckbox->isChecked()) {
+            Session::singleton().autoSaveTimer.start(value * 60 * 1000);
+        }
+    });
+    QObject::connect(autosaveCheckbox, &QCheckBox::stateChanged, [this](const bool on) {
+        if (on) {
+            Session::singleton().autoSaveTimer.start(autosaveIntervalSpinBox->value() * 60 * 1000);
+        }
+        else {
+            Session::singleton().autoSaveTimer.stop();
+        }
+        state->viewer->window->updateTitlebar();
+    });
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 
 void DataSavingWidget::loadSettings() {
-   int width, height, x, y;
-   bool visible;
+    int width, height, x, y;
+    bool visible;
 
-   QSettings settings;
-     settings.beginGroup(DATA_SAVING_WIDGET);
-     width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
-     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-     if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
-         x = QApplication::desktop()->screen()->rect().center().x();
-         y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
-     }
-     else {
-         x = settings.value(POS_X).toInt();
-         y = settings.value(POS_Y).toInt();
-     }
-     visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
+    QSettings settings;
+    settings.beginGroup(DATA_SAVING_WIDGET);
+    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
+    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().center().x();
+        y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
+    }
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
+    }
+    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-     state->skeletonState->autoSaveBool =
-             (settings.value(AUTO_SAVING).isNull())? true : settings.value(AUTO_SAVING).toBool();
-     this->autosaveCheckbox->setChecked(state->skeletonState->autoSaveBool);
+    autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL, 5).toInt());
+    autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
+    autosaveCheckbox->setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
 
-     state->skeletonState->autoSaveInterval =
-             (settings.value(SAVING_INTERVAL).isNull())? 5 : settings.value(SAVING_INTERVAL).toInt();
-     this->autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
-
-     state->skeletonState->autoFilenameIncrementBool =
-             (settings.value(AUTOINC_FILENAME).isNull())? true : settings.value(AUTOINC_FILENAME).toBool();
-     this->autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
-
-   settings.endGroup();
-   if(visible) {
-       show();
-   }
-   else {
-       hide();
-   }
-   setGeometry(x, y, width, height);
+    settings.endGroup();
+    if(visible) {
+        show();
+    }
+    else {
+        hide();
+    }
+    setGeometry(x, y, width, height);
 }
 
 void DataSavingWidget::saveSettings() {
@@ -128,22 +133,3 @@ void DataSavingWidget::closeEvent(QCloseEvent */*event*/) {
     this->hide();
     emit uncheckSignal();
 }
-
-void DataSavingWidget::autosaveCheckboxChecked(bool on) {
-    if(on) {
-       state->skeletonState->autoSaveBool = true;
-       state->skeletonState->autoSaveInterval = autosaveIntervalSpinBox->value();
-    } else {
-        state->skeletonState->autoSaveBool = false;
-    }
-    state->viewer->window->updateTitlebar();
-}
-
-void DataSavingWidget::autonincrementFileNameButtonPushed(bool on) {
-    state->skeletonState->autoFilenameIncrementBool = on;
-}
-
-void DataSavingWidget::autosaveIntervalChanged(int value) {
-    state->skeletonState->autoSaveInterval = value;
-}
-
