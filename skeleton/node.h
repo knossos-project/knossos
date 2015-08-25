@@ -14,7 +14,7 @@ class treeListElement;
 class nodeListElement {
 public:
     nodeListElement(const uint64_t nodeID, const float radius, const Coordinate & position, const int inMag, const ViewportType inVP, const uint64_t ms, const QVariantHash & properties, treeListElement & tree);
-
+    bool operator==(const nodeListElement & other);
     uint64_t nodeID;
     float radius;
     Coordinate position;

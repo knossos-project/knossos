@@ -101,10 +101,9 @@ signals:
 
     void setRecenteringPositionSignal(float x, float y, float z);
     void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
-    void delSegmentSignal(uint sourceNodeID, uint targetNodeID, segmentListElement *segToDel);
-    void addCommentSignal(const char *content, nodeListElement *node, uint nodeID);
+    void delSegmentSignal(segmentListElement *segToDel);
     bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
-    void addSegmentSignal(uint sourceNodeID, uint targetNodeID);
+    void addSegmentSignal(nodeListElement & sourceNode, nodeListElement & targetNode);
 
     void compressionRatioToggled();
 };

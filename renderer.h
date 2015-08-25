@@ -32,6 +32,7 @@
 #include <QSet>
 
 #include <boost/multi_array.hpp>
+#include <boost/optional.hpp>
 
 constexpr int defaultFonsSize = 10;
 
@@ -84,7 +85,7 @@ protected:
     bool updateFrustumClippingPlanes(uint viewportType);
 
 public slots:
-    uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());

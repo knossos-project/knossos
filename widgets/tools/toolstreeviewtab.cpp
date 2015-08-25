@@ -524,14 +524,15 @@ void ToolsTreeviewTab::linkNodesAction() {
     const auto node1 = state->skeletonState->selectedNodes[1];
     auto & skel = Skeletonizer::singleton();
     //segments are only stored and searched in one direction so we have to search for both
-    if (Skeletonizer::findSegmentByNodeIDs(node0->nodeID, node1->nodeID) != nullptr) {
-        skel.delSegment(node0->nodeID, node1->nodeID, nullptr);
-    } else if (Skeletonizer::findSegmentByNodeIDs(node1->nodeID, node0->nodeID) != nullptr) {
-        skel.delSegment(node1->nodeID, node0->nodeID, nullptr);
+    auto * segment = Skeletonizer::findSegmentBetween(*node0, *node1);
+    if (segment) {
+        skel.delSegment(segment);
+    } else if ((segment = Skeletonizer::findSegmentBetween(*node1, *node0))) {
+        skel.delSegment(segment);
     } else if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*node0, *node1)) {
         QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
     } else {//nodes are not already linked
-        skel.addSegment(node0->nodeID, node1->nodeID);
+        skel.addSegment(*node0, *node1);
     }
 }
 
@@ -711,7 +712,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
             }
         }
         else if(item->text().isEmpty() == false) {
-            Skeletonizer::singleton().addComment(item->text(), activeNode, 0);
+            Skeletonizer::singleton().addComment(item->text(), *activeNode);
         }
         if (activeRow != -1) {//remove not matching
             if (matches) {
@@ -796,7 +797,7 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
                 Skeletonizer::singleton().editComment(selectedNode->comment, 0, item->text(), selectedNode, 0);
             }
         } else {
-            Skeletonizer::singleton().addComment(item->text(), selectedNode, 0);
+            Skeletonizer::singleton().addComment(item->text(), *selectedNode);
         }
         if (!matches) {
             nodeTable->selectionProtection = true;
@@ -904,7 +905,7 @@ void ToolsTreeviewTab::activeNodeTableSelectionChanged() {
     }
 
     if (activeNodeTable->selectionModel()->selectedRows().size() == 1) {
-        Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode, 0);
+        Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
     }
 }
 
@@ -926,7 +927,7 @@ void ToolsTreeviewTab::nodeTableSelectionChanged() {
 
 void ToolsTreeviewTab::activateFirstSelectedNode() {
     if (state->skeletonState->selectedNodes.size() == 1) {
-        Skeletonizer::singleton().setActiveNode(nullptr, state->skeletonState->selectedNodes.front()->nodeID);
+        Skeletonizer::singleton().setActiveNode(state->skeletonState->selectedNodes.front());
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     }
 }

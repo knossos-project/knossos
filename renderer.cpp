@@ -1677,13 +1677,12 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
+boost::optional<nodeListElement &> Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
     const auto & nodes = retrieveAllObjectsBeneathSquare(currentVP, x, y, width, width);
     if (nodes.size() != 0) {
-        return (*std::begin(nodes))->nodeID;
-    } else {
-        return 0;//no node found
+        return *(*std::begin(nodes));
     }
+    return boost::none;
 }
 
 QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
