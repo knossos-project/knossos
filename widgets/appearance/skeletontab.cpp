@@ -56,7 +56,7 @@ SkeletonTab::SkeletonTab(QWidget *parent) : QWidget(parent) {
         }
     });
     QObject::connect(&loadTreeLUTButton, &QPushButton::clicked, [this]() { loadTreeLUTButtonClicked(); });
-    QObject::connect(&depthCutoffSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int value) { state->viewerState->depthCutOff = value; });
+    QObject::connect(&depthCutoffSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->depthCutOff = value; });
     QObject::connect(&renderQualitySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int value) { state->viewerState->cumDistRenderThres = value; });
     // tree visibility
     QObject::connect(&wholeSkeletonRadio, &QRadioButton::toggled, [](const bool checked) {
