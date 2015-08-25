@@ -50,14 +50,16 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (!index.isValid()) {
         return false;
     }
-    auto * tree = Skeletonizer::singleton().treesOrdered[index.row()];
+    auto * const tree = Skeletonizer::singleton().treesOrdered[index.row()];
 
     if (index.column() == 4 && role == Qt::CheckStateRole) {
         tree->render = value.toBool();
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 2) {
-        //TODO
+        const QColor color{value.value<QColor>()};
+        tree->color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
-        strcpy(tree->comment, value.toString().toUtf8().data());
+        const QString comment{value.toString()};
+        Skeletonizer::singleton().addTreeComment(tree->treeID, comment);
     } else {
         return false;
     }
@@ -91,18 +93,23 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (state->skeletonState->firstTree == nullptr || !index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
         return false;
     }
-    auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
+    auto * const node = Skeletonizer::singleton().nodesOrdered[index.row()];
 
     if (index.column() == 1) {
-        strcpy(node->comment->content, value.toString().toUtf8().data());
+        const QString comment{value.toString()};
+        Skeletonizer::singleton().setComment(*node, comment);
     } else if (index.column() == 2) {
-        node->position.x = value.toInt();
+        const Coordinate position{value.toInt(), node->position.y, node->position.z};
+        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
     } else if (index.column() == 3) {
-        node->position.y = value.toInt();
+        const Coordinate position{node->position.x, value.toInt(), node->position.z};
+        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
     } else if (index.column() == 4) {
-        node->position.z = value.toInt();
-    } else if (index.column() == 4) {
-        node->radius = value.toFloat();
+        const Coordinate position{node->position.x, node->position.y, value.toInt()};
+        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
+    } else if (index.column() == 5) {
+        const float radius{value.toFloat()};
+        Skeletonizer::singleton().editNode(0, node, radius, node->position, node->createdInMag);
     } else {
         return false;
     }
