@@ -313,7 +313,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
         if (askExtractConnectedComponent) {
             const auto msg = tr("Do you really want to extract all nodes in this component into a new tree?");
 
-            QMessageBox msgBox;
+            QMessageBox msgBox(this);
             msgBox.setIcon(QMessageBox::Question);
             msgBox.setText(msg);
             msgBox.addButton(QMessageBox::Ok);
