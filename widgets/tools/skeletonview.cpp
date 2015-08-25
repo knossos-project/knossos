@@ -131,7 +131,7 @@ std::vector<treeListElement*> ordered() {
 }
 
 template<typename T>
-auto selectElems = [](const bool & selectionProtection){
+auto selectElems(const bool & selectionProtection) {
     return [&selectionProtection](const QItemSelection & selected, const QItemSelection & deselected){
         if (!selectionProtection) {
             auto indices = selected.indexes();
@@ -145,10 +145,10 @@ auto selectElems = [](const bool & selectionProtection){
             Skeletonizer::singleton().toggleSelection(elems);
         }
     };
-};
+}
 
-template<typename T>
-auto updateSelection = [](QTreeView & view, auto & model){
+template<typename T, typename U>
+auto updateSelection(QTreeView & view, U & model) {
     const auto selectedIndices = blockSelection(model, ordered<T>());
     model.selectionProtection = true;
     view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
@@ -157,7 +157,7 @@ auto updateSelection = [](QTreeView & view, auto & model){
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
         view.scrollTo(selectedIndices.indexes().front());
     }
-};
+}
 
 template<typename Func>
 void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText, const bool condition = true) {
