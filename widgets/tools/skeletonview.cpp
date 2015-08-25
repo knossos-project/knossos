@@ -342,11 +342,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
         if (applied) {
             prevComment = comment;
             for (auto node : state->skeletonState->selectedNodes) {
-                if (!comment.isEmpty()) {
-                    Skeletonizer::singleton().setComment(comment.toUtf8().data(), node, 0);
-                } else if (node->comment != nullptr) {
-                    Skeletonizer::singleton().delComment(node->comment, node->nodeID);
-                }
+                Skeletonizer::singleton().setComment(*node,comment);
             }
         }
     });

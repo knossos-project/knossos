@@ -221,6 +221,7 @@ public slots:
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement *node, uint nodeID);
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
+    void setComment(nodeListElement & commentNode, const QString & newContent);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
     void setSubobject(const quint64 nodeId, const quint64 subobjectId);

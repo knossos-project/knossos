@@ -1920,10 +1920,19 @@ bool Skeletonizer::setComment(QString newContent, nodeListElement *commentNode, 
         qDebug() << "Please provide a valid comment node to set!";
         return false;
     }
-    if(commentNode->comment) {
-        return editComment(commentNode->comment, 0, newContent, NULL, 0);
+    setComment(*commentNode, newContent);
+    return true;
+}
+
+void Skeletonizer::setComment(nodeListElement & commentNode, const QString & newContent) {
+    if (commentNode.comment) {
+        if (newContent.isEmpty()) {
+            delComment(commentNode.comment, 0);
+        } else {
+            editComment(commentNode.comment, 0, newContent, nullptr, 0);
+        }
     }
-    return addComment(newContent, commentNode, 0);
+    addComment(newContent, &commentNode, 0);
 }
 
 bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNodeID) {
