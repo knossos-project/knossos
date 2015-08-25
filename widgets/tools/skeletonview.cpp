@@ -10,6 +10,22 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
+template<typename Func>
+void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText, const bool condition = true) {
+    if (condition) {
+        QMessageBox prompt(parent);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText(text);
+        prompt.setInformativeText(extraText);
+        const auto & confirmButton = *prompt.addButton(acceptButtonText, QMessageBox::AcceptRole);
+        prompt.addButton(QMessageBox::Cancel);
+        prompt.exec();
+        if (prompt.clickedButton() == &confirmButton) {
+            func();
+        }
+    }
+}
+
 template<typename ConcreteModel>
 int AbstractSkeletonModel<ConcreteModel>::columnCount(const QModelIndex &) const {
     return static_cast<ConcreteModel const * const>(this)->header.size();
@@ -116,6 +132,14 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     return true;
 }
 
+bool TreeModel::dropMimeData(const QMimeData *, Qt::DropAction, int, int, const QModelIndex & parent) {
+    if (parent.isValid()) {
+        emit moveNodes(parent);
+        return true;
+    }
+    return false;
+}
+
 void TreeModel::recreate() {
     beginResetModel();
     endResetModel();
@@ -124,6 +148,15 @@ void TreeModel::recreate() {
 void NodeModel::recreate() {
     beginResetModel();
     endResetModel();
+}
+
+void NodeView::mousePressEvent(QMouseEvent * event) {
+    const auto index = indexAt(event->pos());
+    if (index.isValid()) {
+        const auto selected = Skeletonizer::singleton().nodesOrdered[index.row()]->selected;
+        setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
+    }
+    QTreeView::mousePressEvent(event);
 }
 
 template<typename T>
@@ -166,22 +199,6 @@ auto updateSelection(QTreeView & view, U & model) {
     }
 }
 
-template<typename Func>
-void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText, const bool condition = true) {
-    if (condition) {
-        QMessageBox prompt(parent);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setText(text);
-        prompt.setInformativeText(extraText);
-        const auto & confirmButton = *prompt.addButton(acceptButtonText, QMessageBox::AcceptRole);
-        prompt.addButton(QMessageBox::Cancel);
-        prompt.exec();
-        if (prompt.clickedButton() == &confirmButton) {
-            func();
-        }
-    }
-}
-
 template<typename... Args>
 void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args) {
     auto * deleteAction = menu.addAction(QIcon(":/resources/icons/user-trash.png"), text);
@@ -195,6 +212,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
     treeView.setUniformRowHeights(true);//perf hint from doc
     treeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeView.setDragDropMode(QAbstractItemView::DropOnly);
+    treeView.setDropIndicatorShown(true);
+
     nodeView.setModel(&nodeModel);
     nodeView.setUniformRowHeights(true);//perf hint from doc
     nodeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -236,6 +256,13 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [&, this](){
         treeRecreate();
         nodeRecreate();
+    });
+
+    QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
+        const auto index = parent.row();
+        const auto droppedOnTreeID = Skeletonizer::singleton().treesOrdered[index]->treeID;
+        const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID);
+        question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text, tr(""));
     });
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel.selectionProtection));

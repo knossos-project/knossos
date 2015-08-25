@@ -18,9 +18,24 @@ public:
 };
 
 class TreeModel : public AbstractSkeletonModel<TreeModel> {
+    Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
     const std::vector<QString> header = {"Tree ID", "Comment", ""/*color*/, "Node Count", "Render"};
-    const std::vector<Qt::ItemFlags> flagModifier = {0, Qt::ItemIsEditable, Qt::ItemIsEditable, 0, Qt::ItemIsUserCheckable};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, 0, Qt::ItemIsUserCheckable};
+public:
+    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
+    virtual bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
+    void recreate();
+signals:
+    void moveNodes(const QModelIndex &);
+};
+
+class NodeModel : public AbstractSkeletonModel<NodeModel> {
+    friend class AbstractSkeletonModel<NodeModel>;
+    const std::vector<QString> header = {"Node ID", "Comment", "x", "y", "z", "Radius"};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
@@ -28,15 +43,8 @@ public:
     void recreate();
 };
 
-class NodeModel : public AbstractSkeletonModel<NodeModel> {
-    friend class AbstractSkeletonModel<NodeModel>;
-    const std::vector<QString> header = {"Node ID", "Comment", "x", "y", "z", "Radius"};
-    const std::vector<Qt::ItemFlags> flagModifier = {0, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
-public:
-    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-    virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
-    void recreate();
+class NodeView : public QTreeView {
+    virtual void mousePressEvent(QMouseEvent * event) override;
 };
 
 class SkeletonView : public QWidget {
@@ -45,7 +53,7 @@ class SkeletonView : public QWidget {
     TreeModel treeModel;
     NodeModel nodeModel;
     QTreeView treeView;
-    QTreeView nodeView;
+    NodeView nodeView;
 
     QHBoxLayout bottomHLayout;
     QLabel treeCountLabel{"trees"};
