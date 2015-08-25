@@ -124,11 +124,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pedantic-errors")
-#target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
-#set(CMAKE_C_COMPILER "clang")
-#set(CMAKE_CXX_COMPILER "clang++")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-color=always")
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
