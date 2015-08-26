@@ -154,6 +154,7 @@ struct SkeletonState {
 class Skeletonizer : public QObject {
     Q_OBJECT
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
+    QSet<QString> nodeProperties;
 public:
     SkeletonState skeletonState;
     explicit Skeletonizer(QObject *parent = 0);
@@ -184,7 +185,7 @@ public slots:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
-    boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
+    boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks);
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
@@ -256,6 +257,8 @@ public:
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
+    QSet<QString> getNodeProperties() const;
+    void insertProperties(nodeListElement & node, const QVariantHash newProperties);
 };
 
 #endif // SKELETONIZER_H

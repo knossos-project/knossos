@@ -654,7 +654,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             if (merge) {
                                 nodeID += greatestNodeIDbeforeLoading;
                             }
-                            addNode(nodeID, radius, treeID, currentCoordinate, inVP, inMag, ms, false, properties);
+                            auto node = addNode(nodeID, radius, treeID, currentCoordinate, inVP, inMag, ms, false);
+                            insertProperties(node.get(), properties);
                         }
                         xml.skipCurrentElement();
                     } // end while nodes
@@ -751,7 +752,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
         setActiveNode(state->skeletonState->firstTree->firstNode.get());
     }
-
     return true;
 }
 
@@ -1082,7 +1082,7 @@ uint64_t Skeletonizer::findAvailableNodeID() {
 }
 
 boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
-        , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
+        , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks) {
     state->skeletonState->branchpointUnresolved = false;
 
      // respectLocks refers to locking the position to a specific coordinate such as to
@@ -1131,7 +1131,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
         time = Session::singleton().getAnnotationTime() + Session::singleton().currentTimeSliceMs();
     }
 
-    auto * const tempNode = new nodeListElement{nodeID, radius, position, inMag, VPtype, time.get(), properties, *tempTree};
+    auto * const tempNode = new nodeListElement{nodeID, radius, position, inMag, VPtype, time.get(), *tempTree};
     auto & currentNode = tempTree->firstNode;
     if (currentNode == nullptr) {
         // Requested to add a node to a list that hasn't yet been started.
@@ -2505,11 +2505,17 @@ bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement 
     return false;
 }
 
-//void Skeletonizer::insertProperties(nodeListElement & node, const QVariantHash<QString, QVariant> newProperties) {
-//    const auto keys = newProperties.keys().toSet();
-//    nodeProperties |= keys;
-//    for (const auto property : newProperties) {
-//        node.properties.insert(property.first, property.second);
-//    }
-//    emit nodeChangedSignal(node);
-//}
+QSet<QString> Skeletonizer::getNodeProperties() const {
+    return nodeProperties;
+}
+
+void Skeletonizer::insertProperties(nodeListElement & node, const QVariantHash newProperties) {
+    const auto keys = newProperties.keys().toSet();
+    nodeProperties |= keys;
+    auto iter = newProperties.constBegin();
+    while (iter != newProperties.constEnd()) {
+        node.properties.insert(iter.key(), iter.value());
+        iter++;
+    }
+    emit nodeChangedSignal(node);
+}
