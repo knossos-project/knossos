@@ -41,6 +41,8 @@ Qt::ItemFlags AbstractSkeletonModel<ConcreteModel>::flags(const QModelIndex &ind
     return QAbstractItemModel::flags(index) | Qt::ItemNeverHasChildren | static_cast<ConcreteModel const * const>(this)->flagModifier[index.column()];
 }
 
+template class AbstractSkeletonModel<TreeModel>;//please clang, should actually be implicitly instantiated in here anyway
+
 int TreeModel::rowCount(const QModelIndex &) const {
     return state->skeletonState->treeElements;
 }
