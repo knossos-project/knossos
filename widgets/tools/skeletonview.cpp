@@ -214,12 +214,14 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     treeView.setModel(&treeModel);
     treeView.setUniformRowHeights(true);//perf hint from doc
     treeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeView.setRootIsDecorated(false);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
 
     nodeView.setModel(&nodeModel);
     nodeView.setUniformRowHeights(true);//perf hint from doc
     nodeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
+    nodeView.setRootIsDecorated(false);
 
     splitter.addWidget(&treeView);
     splitter.addWidget(&nodeView);
