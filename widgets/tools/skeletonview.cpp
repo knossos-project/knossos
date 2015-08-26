@@ -274,26 +274,36 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
 
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
-        treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
-        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() >= 2);//merge trees action
-        treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//show
-        treeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//hide
-        treeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//restore default color
+        int i = 0;
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1);//show
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() >= 2);//merge trees action
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//show
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//hide
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//restore default color
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
     });
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
-        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
-        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
-        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set comment
-        nodeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set radius
-        nodeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//delete
+        int i = 0;
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to node
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set comment
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set radius
+        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
     });
 
 
+    QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [this](){
+        const auto * node = state->skeletonState->selectedTrees.front()->firstNode.get();
+        if (node != nullptr) {
+            Skeletonizer::singleton().jumpToNode(*node);
+        }
+    });
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(treeID);
@@ -336,8 +346,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
         question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete the selected trees?"), tr(""), !state->skeletonState->selectedTrees.empty());
     });
+    treeContextMenu.setDefaultAction(treeContextMenu.actions().front());
 
 
+    QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
+    });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
         static bool askExtractConnectedComponent = true;
@@ -402,4 +416,5 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
             question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"), tr(""));
         }
     });
+    nodeContextMenu.setDefaultAction(nodeContextMenu.actions().front());
 }
