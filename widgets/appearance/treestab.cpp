@@ -1,4 +1,4 @@
-#include "skeletontab.h"
+#include "treestab.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
@@ -6,10 +6,9 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
-SkeletonTab::SkeletonTab(QWidget *parent) : QWidget(parent) {
+TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderQualitySpin.setMinimum(1);
     renderQualitySpin.setMaximum(20);
-    edgeNodeRatioSpin.setSingleStep(0.1);
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
 
@@ -19,28 +18,17 @@ SkeletonTab::SkeletonTab(QWidget *parent) : QWidget(parent) {
     treeDisplayLayout->addWidget(&skeletonInOrthoVPsCheck);
     treeDisplayLayout->addWidget(&skeletonIn3DVPCheck);
 
-    treeSeparator.setFrameShape(QFrame::HLine);
-    treeSeparator.setFrameShadow(QFrame::Sunken);
-    nodeSeparator.setFrameShape(QFrame::HLine);
-    nodeSeparator.setFrameShadow(QFrame::Sunken);
-
     auto row = 0;
+    // trees
     mainLayout.setAlignment(Qt::AlignTop);
-    mainLayout.addWidget(&treeHeaeder, row++, 0);
-    mainLayout.addWidget(&treeSeparator, row++, 0, 1, 4);
     mainLayout.addWidget(&highlightActiveTreeCheck, row, 0);  mainLayout.addLayout(treeDisplayLayout, row++, 3, 4, 1);
     mainLayout.addWidget(&highlightIntersectionsCheck, row++, 0);
     mainLayout.addWidget(&lightEffectsCheck, row++, 0);
     mainLayout.addWidget(&ownTreeColorsCheck, row, 0);  mainLayout.addWidget(&loadTreeLUTButton, row++, 1);
     mainLayout.addWidget(&depthCutOffLabel, row, 0);  mainLayout.addWidget(&depthCutoffSpin, row++, 1);
     mainLayout.addWidget(&renderQualityLabel, row, 0);  mainLayout.addWidget(&renderQualitySpin, row++, 1);
-    mainLayout.addWidget(&nodeHeaeder, row++, 0);
-    mainLayout.addWidget(&nodeSeparator, row++, 0, 1, 4);
-    mainLayout.addWidget(&allNodeIDsCheck, row++, 0);
-    mainLayout.addWidget(&nodeCommentsCheck, row++, 0);
-    mainLayout.addWidget(&overrideNodeRadiusCheck, row, 0); mainLayout.addWidget(&nodeRadiusSpin, row++, 1);
-    mainLayout.addWidget(&edgeNodeRatioLabel, row, 0);  mainLayout.addWidget(&edgeNodeRatioSpin, row++, 1);
     setLayout(&mainLayout);
+
     // trees render options
     QObject::connect(&highlightActiveTreeCheck, &QCheckBox::toggled, [](const bool on) { state->skeletonState->highlightActiveTree = on; });
     QObject::connect(&highlightIntersectionsCheck, &QCheckBox::toggled, [this](const bool checked) {
@@ -85,18 +73,9 @@ SkeletonTab::SkeletonTab(QWidget *parent) : QWidget(parent) {
             state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
         }
     });
-    // nodes
-    QObject::connect(&allNodeIDsCheck, &QCheckBox::toggled, [](const bool on) { state->skeletonState->showNodeIDs = on; });
-    QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->skeletonState->overrideNodeRadiusVal = value; });
-    QObject::connect(&nodeCommentsCheck, &QCheckBox::toggled, [](const bool checked) { Viewport::showNodeComments = checked; });
-    QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::toggled, [this](const bool on) {
-        state->skeletonState->overrideNodeRadiusBool = on;
-        nodeRadiusSpin.setEnabled(on);
-    });
-    QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->skeletonState->segRadiusToNodeRadius = value; });
 }
 
-void SkeletonTab::loadTreeLUTButtonClicked(QString path) {
+void TreesTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
         path = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }

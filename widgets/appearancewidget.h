@@ -26,7 +26,8 @@
  */
 
 #include "appearance/datasetsegmentationtab.h"
-#include "appearance/skeletontab.h"
+#include "appearance/nodestab.h"
+#include "appearance/treestab.h"
 #include "appearance/viewporttab.h"
 
 #include <QDialog>
@@ -40,7 +41,8 @@ class AppearanceWidget : public QDialog
 public:
     explicit AppearanceWidget(QWidget *parent = 0);
     DatasetAndSegmentationTab datasetAndSegmentationTab;
-    SkeletonTab skeletonTab;
+    NodesTab nodesTab;
+    TreesTab treesTab;
     ViewportTab viewportTab;
     QVBoxLayout mainLayout;
 

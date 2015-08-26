@@ -856,7 +856,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        auto & skelSettings = state->viewer->window->widgetContainer.appearanceWidget.skeletonTab;
+        auto & skelSettings = state->viewer->window->widgetContainer.appearanceWidget.treesTab;
         const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
         skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
         skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);

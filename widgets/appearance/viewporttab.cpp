@@ -2,7 +2,7 @@
 
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
-#include "../viewport.h"
+#include "widgets/viewport.h"
 
 ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
 {
