@@ -346,7 +346,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
         question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete the selected trees?"), tr(""), !state->skeletonState->selectedTrees.empty());
     });
-    treeContextMenu.setDefaultAction(treeContextMenu.actions().front());
 
 
     QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
@@ -416,5 +415,13 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
             question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"), tr(""));
         }
     });
+
+    treeContextMenu.setDefaultAction(treeContextMenu.actions().front());
+    QObject::connect(&treeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex &){
+        treeContextMenu.defaultAction()->trigger();
+    });
     nodeContextMenu.setDefaultAction(nodeContextMenu.actions().front());
+    QObject::connect(&nodeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex &){
+        nodeContextMenu.defaultAction()->trigger();
+    });
 }
