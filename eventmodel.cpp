@@ -131,20 +131,21 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         }
         //Set Connection between Active Node and Clicked Node
         if (QApplication::keyboardModifiers() == Qt::ALT) {
-            auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10) != 0;
+            auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
             auto * activeNode = state->skeletonState->activeNode;
-            if (clickedNodeId != 0 && activeNode != nullptr) {
+            if (clickedNode && activeNode != nullptr) {
                 auto & skel = Skeletonizer::singleton();
-                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNodeId)) {
-                    emit delSegmentSignal(activeNode->nodeID, clickedNodeId, NULL);
-                } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNodeId, activeNode->nodeID, NULL);
+                auto * segment = skel.findSegmentBetween(*activeNode, clickedNode.get());
+                if (segment) {
+                    emit delSegmentSignal(segment);
+                } else if ((segment = skel.findSegmentBetween(clickedNode.get(), *activeNode))) {
+                    emit delSegmentSignal(segment);
                 } else{
-                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, clickedNode.get())) {
                         QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
-                    emit addSegmentSignal(activeNode->nodeID, clickedNodeId);
+                    emit addSegmentSignal(*activeNode, clickedNode.get());
                 }
             }
         }
@@ -153,27 +154,28 @@ void EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 
 void EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        auto clickedNodeId = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
-        if (clickedNodeId != 0) {
+        if (clickedNode) {
             auto & skel = Skeletonizer::singleton();
             auto activeNode = state->skeletonState->activeNode;
             Qt::KeyboardModifiers keyMod = event->modifiers();
             if (keyMod.testFlag(Qt::ShiftModifier) && activeNode != nullptr) {
                 // Toggle segment between clicked and active node
-                if (skel.findSegmentByNodeIDs(activeNode->nodeID, clickedNodeId)) {
-                    emit delSegmentSignal(activeNode->nodeID, clickedNodeId, 0);
-                } else if (skel.findSegmentByNodeIDs(clickedNodeId, activeNode->nodeID)) {
-                    emit delSegmentSignal(clickedNodeId, activeNode->nodeID, 0);
+                auto * segment = skel.findSegmentBetween(*activeNode, clickedNode.get());
+                if (segment) {
+                    emit delSegmentSignal(segment);
+                } else if ((segment = skel.findSegmentBetween(clickedNode.get(), *activeNode))) {
+                    emit delSegmentSignal(segment);
                 } else {
-                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, *Skeletonizer::findNodeByNodeID(clickedNodeId))) {
+                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, clickedNode.get())) {
                         QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
                         return;
                     }
-                    emit addSegmentSignal(activeNode->nodeID, clickedNodeId);
+                    emit addSegmentSignal(*activeNode, clickedNode.get());
                 }
             } else if (keyMod.testFlag(Qt::NoModifier)) {
-                state->viewerState->vpConfigs[VPfound].draggedNode = Skeletonizer::findNodeByNodeID(clickedNodeId);
+                state->viewerState->vpConfigs[VPfound].draggedNode = &clickedNode.get();
             }
         }
     }
@@ -198,33 +200,33 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return;
     }
 
-    uint64_t oldNodeId = state->skeletonState->activeNode != nullptr ? state->skeletonState->activeNode->nodeID : 0;
-    uint64_t newNodeId = 0;
+    nodeListElement * oldNode = state->skeletonState->activeNode;
+    boost::optional<nodeListElement &> newNode;
 
     if (annotationMode.testFlag(AnnotationMode::UnlinkedNodes)) {
-        newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
     } else if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
-        if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
+        if (oldNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
-                const auto splitNodeId = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-                if (splitNodeId != 0) {
+                const auto splitNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+                if (splitNode) {
                     const auto comment = background ? "ecs" : "split";
-                    Skeletonizer::singleton().setSubobject(splitNodeId, subobjectId);
-                    Skeletonizer::singleton().addComment(comment, nullptr, splitNodeId);
-                    Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
+                    Skeletonizer::singleton().setSubobject(splitNode.get(), subobjectId);
+                    Skeletonizer::singleton().addComment(comment, splitNode.get());
+                    Skeletonizer::singleton().setActiveNode(oldNode);
                 }
-            } else if (const auto stumpNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
+            } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, false)) {
                 //Add a "stump", a branch node to which we don't automatically move.
-                Skeletonizer::singleton().pushBranchNode(true, true, NULL, stumpNodeId);
-                Skeletonizer::singleton().setActiveNode(nullptr, oldNodeId);
+                Skeletonizer::singleton().pushBranchNode(true, true, stumpNode.get());
+                Skeletonizer::singleton().setActiveNode(oldNode);
             }
         } else {
             const auto lastPos = state->skeletonState->activeNode->position;
-            newNodeId = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, true);
-            if (newNodeId == 0) {
+            newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type, true);
+            if (!newNode) {
                 return;
             }
             const auto movement = clickedCoordinate - lastPos;
@@ -265,9 +267,9 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
     }
 
-    if (newNodeId != 0) {
+    if (newNode) {
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
-            Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNodeId, subobjectId, oldNodeId);
+            Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, *oldNode);
         }
         // Move to the new node position
         if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_ARBITRARY) {
@@ -409,10 +411,9 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
-        auto nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
-        nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(nodeID);
-        if (nodeID != 0 && selectedNode != nullptr) {
-            selectedNodes = {selectedNode};
+        auto selectedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
+        if (selectedNode) {
+            selectedNodes = {&selectedNode.get()};
         }
     } else if (state->viewerState->nodeSelectSquareVpId != -1) {
         selectedNodes = nodeSelection(event->pos().x(), event->pos().y(), VPfound);
@@ -930,7 +931,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             prompt.addButton("No", QMessageBox::ActionRole);
             prompt.exec();
             if(prompt.clickedButton() == confirmButton) {
-                Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode, 0);
+                Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
     }

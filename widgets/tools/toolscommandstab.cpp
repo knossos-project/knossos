@@ -222,7 +222,7 @@ void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
 //        }
     }
     if(node) {
-        Skeletonizer::singleton().setActiveNode(node, 0);
+        Skeletonizer::singleton().setActiveNode(node);
     }
     return;
 }
@@ -243,7 +243,9 @@ void ToolsCommandsTab::newTreeButtonClicked() {
 }
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
-    Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
+    if(state->skeletonState->activeNode) {
+        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+    }
 }
 
 void ToolsCommandsTab::popBranchButtonClicked() {

@@ -23,8 +23,7 @@ void Skeletonizer::selectObjectForNode(const nodeListElement & node) {
     });
 }
 
-void Skeletonizer::setSubobject(const quint64 nodeId, const quint64 subobjectId) {
-    auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
+void Skeletonizer::setSubobject(nodeListElement & node, const quint64 subobjectId) {
     node.properties.insert(subobjectPropertyKey, subobjectId);
     ++node.correspondingTree->subobjectCount[subobjectId];
 }
@@ -38,12 +37,8 @@ void setSubobjectSelectAndMerge(nodeListElement & node, const quint64 subobjectI
     Segmentation::singleton().mergeSelectedObjects();
 }
 
-void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(const quint64 nodeId, const quint64 subobjectId, const quint64 previousActiveNodeId) {
-    auto & node = *Skeletonizer::singleton().findNodeByNodeID(nodeId);
-    if (previousActiveNodeId != 0) {
-        const auto & node2 = *Skeletonizer::singleton().findNodeByNodeID(previousActiveNodeId);
-        selectObjectForNode(node2);//reselect the previous active node as it got unselected during new node creation
-    }
+void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement & previousNode) {
+    selectObjectForNode(previousNode);//reselect the previous active node as it got unselected during new node creation
     setSubobjectSelectAndMerge(node, subobjectId);
 }
 

@@ -1088,7 +1088,9 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    Skeletonizer::singleton().pushBranchNode(true, true, state->skeletonState->activeNode, 0);
+    if(state->skeletonState->activeNode) {
+        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+    }
 }
 
 void MainWindow::popBranchNodeSlot() {

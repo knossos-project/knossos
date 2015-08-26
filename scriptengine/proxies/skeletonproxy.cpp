@@ -176,7 +176,12 @@ void SkeletonProxy::export_converter(const QString &path) {
 }
 
 segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
-    return Skeletonizer::findSegmentByNodeIDs(source_id, target_id);
+    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
+    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
+    if(sourceNode && targetNode) {
+        return Skeletonizer::findSegmentBetween(*sourceNode, *targetNode);
+    }
+    return nullptr;
 }
 
 void SkeletonProxy::jump_to_node(nodeListElement *node) {
@@ -194,11 +199,11 @@ void SkeletonProxy::delete_skeleton() {
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {
-    if(!Skeletonizer::delSegment(source_id, target_id, NULL)) {
-        emit echo(QString("could not delete the segment with source id %1 and target id %2").arg(source_id).arg(target_id));
-        return false;
+    if(auto *segment = find_segment(source_id, target_id)) {
+        Skeletonizer::delSegment(segment);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool SkeletonProxy::delete_node(int node_id) {
@@ -210,7 +215,7 @@ bool SkeletonProxy::delete_node(int node_id) {
 }
 
 bool SkeletonProxy::set_active_node(int node_id) {
-    if (!Skeletonizer::singleton().setActiveNode(0, node_id)) {
+    if (!Skeletonizer::singleton().setActiveNode(find_node_by_id(node_id))) {
         emit echo(QString("could not set the node with id %1 to active node").arg(node_id));
         return false;
     }
@@ -283,20 +288,25 @@ bool SkeletonProxy::delete_comment(int node_id) {
 }
 
 bool SkeletonProxy::add_segment(int source_id, int target_id) {
-    if (!Skeletonizer::addSegment(source_id, target_id)) {
-        emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
-        return false;
+    auto * sourceNode = Skeletonizer::findNodeByNodeID(source_id);
+    auto * targetNode = Skeletonizer::findNodeByNodeID(target_id);
+    if(sourceNode != nullptr && targetNode != nullptr) {
+        if (!Skeletonizer::addSegment(*sourceNode, *targetNode)) {
+            emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
+            return false;
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool SkeletonProxy::set_branch_node(int node_id) {
     nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
-    if(NULL == currentNode) {
+    if(nullptr == currentNode) {
         emit echo(QString("no node with id %1 found").arg(node_id));
         return false;
     }
-    if (!Skeletonizer::singleton().pushBranchNode(true, false, currentNode, 0)) {
+    if (!Skeletonizer::singleton().pushBranchNode(true, false, *currentNode)) {
         emit echo(QString("An unexpected error occured while adding a branch node"));
         return false;
     }

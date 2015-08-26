@@ -23,7 +23,7 @@
  */
 #include "knossos.h"
 
-#include "datatset.h"
+#include "dataset.h"
 #include "eventmodel.h"
 #include "file_io.h"
 #include "loader.h"

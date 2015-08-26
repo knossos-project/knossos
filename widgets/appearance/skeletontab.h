@@ -27,7 +27,7 @@ class SkeletonTab : public QWidget
     QString lutFilePath;
     QPushButton loadTreeLUTButton{"Load …"};
     QLabel depthCutOffLabel{"Depth cutoff:"};
-    QSpinBox depthCutoffSpin;
+    QDoubleSpinBox depthCutoffSpin;
     QLabel renderQualityLabel{"Rendering quality (1 best, 20 fastest):"};
     QSpinBox renderQualitySpin;
     // tree visibility

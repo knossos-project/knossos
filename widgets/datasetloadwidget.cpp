@@ -1,6 +1,6 @@
 #include "datasetloadwidget.h"
 
-#include "datatset.h"
+#include "dataset.h"
 #include "GuiConstants.h"
 #include "knossos.h"
 #include "loader.h"
