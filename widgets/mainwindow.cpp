@@ -167,16 +167,19 @@ void MainWindow::createToolbars() {
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
+    xField->setPrefix("x: ");
     xField->setRange(1, 1000000);
     xField->setMinimumWidth(75);
     xField->setValue(state->viewerState->currentPosition.x + 1);
 
     yField = new QSpinBox();
+    yField->setPrefix("y: ");
     yField->setRange(1, 1000000);
     yField->setMinimumWidth(75);
     yField->setValue(state->viewerState->currentPosition.y + 1);
 
     zField = new QSpinBox();
+    zField->setPrefix("z: ");
     zField->setRange(1, 1000000);
     zField->setMinimumWidth(75);
     zField->setValue(state->viewerState->currentPosition.z + 1);
@@ -185,11 +188,8 @@ void MainWindow::createToolbars() {
     QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
     QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
 
-    basicToolbar.addWidget(new QLabel("<font color='black'>x</font>"));
     basicToolbar.addWidget(xField);
-    basicToolbar.addWidget(new QLabel("<font color='black'>y</font>"));
     basicToolbar.addWidget(yField);
-    basicToolbar.addWidget(new QLabel("<font color='black'>z</font>"));
     basicToolbar.addWidget(zField);
 
     addToolBar(&basicToolbar);
