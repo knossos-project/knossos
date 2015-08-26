@@ -714,8 +714,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         auto * targetNode = findNodeByNodeID(elem.second);
         if(sourceNode != nullptr && targetNode != nullptr) {
             addSegment(*sourceNode, *targetNode);
+        } else {
+            qDebug() << "Could not add segment between nodes" << elem.first << "and" << elem.second;
         }
-        qDebug() << "Could not add segment between nodes" << elem.first << "and" << elem.second;
     }
 
     for (const auto & elem : branchVector) {
