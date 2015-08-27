@@ -154,7 +154,7 @@ void NodeModel::recreate() {
 
 void NodeView::mousePressEvent(QMouseEvent * event) {
     const auto index = indexAt(event->pos());
-    if (index.isValid()) {
+    if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
         const auto selected = Skeletonizer::singleton().nodesOrdered[index.row()]->selected;
         setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
     }
