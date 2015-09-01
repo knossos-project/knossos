@@ -292,6 +292,7 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
+    settings.setValue(DATASET_CUBE_EDGE, state->cubeEdgeLength);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
     settings.setValue(DATASET_OVERLAY, state->overlay);
 
@@ -359,6 +360,7 @@ void DatasetLoadWidget::loadSettings() {
     tableWidget.blockSignals(false);
     updateDatasetInfo();
 
+    state->cubeEdgeLength = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     }
