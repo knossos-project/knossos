@@ -45,7 +45,7 @@ const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";
 const QString SKELETON_VIEW = "skeleton_view";
 const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 
-// Appearance Skeleton Tab
+// Appearance Tree Tab
 const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString LIGHT_EFFECTS = "light_effects";
@@ -57,11 +57,17 @@ const QString WHOLE_SKELETON = "whole_skeleton";
 const QString ONLY_SELECTED_TREES = "only_selected_trees";
 const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
 const QString SHOW_SKELETON_SKELVP = "Show_skeleton_skelvp";
-const QString SHOW_ALL_NODE_ID = "show_all_node_id";
-const QString SHOW_NODE_COMMENTS = "show_node_comments";
+
+// Appearance Nodes Tab
+const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
+const QString NODE_PROPERTY_LUT_PATH = "node_property_lut_path";
+const QString NODE_PROPERTY_MAP_MIN = "node_property_map_min";
+const QString NODE_PROPERTY_MAP_MAX = "node_property_map_max";
+const QString NODE_PROPERTY_RADIUS_SCALE = "node_property_radius_scale";
 const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
-const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
+const QString SHOW_ALL_NODE_ID = "show_all_node_id";
+const QString SHOW_NODE_COMMENTS = "show_node_comments";
 
 // Appearance Dataset & Segmentation Tab
 const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";

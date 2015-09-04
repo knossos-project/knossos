@@ -140,6 +140,12 @@ struct ViewerState {
 
     float movementAreaFactor{80.f};
     bool showOverlay{true};
+
+    QString highlightedNodePropertyByRadius{""};
+    double nodePropertyRadiusScale{1};
+    QString highlightedNodePropertyByColor{""};
+    double nodePropertyColorMapMin{0};
+    double nodePropertyColorMapMax{0};
 };
 
 /**

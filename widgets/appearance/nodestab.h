@@ -13,6 +13,7 @@
 
 class PropertyModel : public QAbstractListModel {
     Q_OBJECT
+    friend class NodesTab;
     std::vector<QString> properties;
 public:
     virtual int rowCount(const QModelIndex &) const override;
@@ -35,19 +36,18 @@ class NodesTab : public QWidget
     QDoubleSpinBox edgeNodeRatioSpin;
     // property visualization
     QLabel propertyHeader{"<strong>Property Highlighting</strong>"};
-    QComboBox propertyCombo;
     PropertyModel propertyModel;
+    QComboBox propertyRadiusCombo;
+    QLabel propertyRadiusLabel{"Scale property and use as node radius:"};
+    QDoubleSpinBox propertyRadiusScaleSpin;
+    QComboBox propertyColorCombo;
     QDoubleSpinBox propertyMinSpin;
     QDoubleSpinBox propertyMaxSpin;
-    QLabel propertyColorLabel{"Color LUT"};
-    QString lutFilePath;
-    QPushButton propertyLUTButton{"default (…)"};
-    QCheckBox propertyUseLutCheck;
-    QLabel propertyRadiusLabel{"Radius scale"};
-    QDoubleSpinBox propertyRadiusScaleSpin;
-    QCheckBox propertyUseRadiusScaleCheck;
-
-    void loadNodeLUTButtonClicked(QString path = "");
+    QLabel propertyColorLabel{"Map property and use as node color:"};
+    QString lutPath;
+    QLabel lutLabel{"Current LUT: none"};
+    QPushButton propertyLUTButton{"Load color LUT …"};
+    void loadNodeLUTRequest(QString path = "");
 public:
     explicit NodesTab(QWidget *parent = 0);
 

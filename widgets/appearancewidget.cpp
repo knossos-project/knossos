@@ -68,7 +68,7 @@ void AppearanceWidget::loadSettings() {
     }
     visible = settings.value(VISIBLE, false).toBool();
 
-    // skeleton
+    // trees
     treesTab.lightEffectsCheck.setChecked(settings.value(LIGHT_EFFECTS, true).toBool());
     treesTab.highlightActiveTreeCheck.setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE, true).toBool());
     treesTab.highlightIntersectionsCheck.setChecked(settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool());
@@ -81,6 +81,8 @@ void AppearanceWidget::loadSettings() {
     treesTab.selectedTreesRadio.setChecked(settings.value(ONLY_SELECTED_TREES, false).toBool());
     treesTab.skeletonInOrthoVPsCheck.setChecked(settings.value(SHOW_SKELETON_ORTHOVPS, true).toBool());
     treesTab.skeletonIn3DVPCheck.setChecked(settings.value(SHOW_SKELETON_SKELVP, true).toBool());
+
+    // nodes
     nodesTab.allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
     nodesTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
     nodesTab.overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
@@ -88,6 +90,19 @@ void AppearanceWidget::loadSettings() {
     nodesTab.nodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
     nodesTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 0.5).toFloat());
     nodesTab.nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());
+
+    const auto scale = settings.value(NODE_PROPERTY_RADIUS_SCALE, 1).toDouble();
+    nodesTab.propertyRadiusScaleSpin.setValue(scale);
+    nodesTab.propertyRadiusScaleSpin.valueChanged(scale);
+    // from http://www.ncl.ucar.edu/Document/Graphics/ColorTables/NCV_blu_red.shtml;
+    nodesTab.lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/NCV_blu_red.json").toString();
+
+    const auto min = settings.value(NODE_PROPERTY_MAP_MIN, 0).toDouble();
+    nodesTab.propertyMinSpin.setValue(min);
+    nodesTab.propertyMinSpin.valueChanged(min);
+    const auto max = settings.value(NODE_PROPERTY_MAP_MAX, 0).toDouble();
+    nodesTab.propertyMaxSpin.setValue(max);
+    nodesTab.propertyMaxSpin.valueChanged(max);
 
     // dataset & segmentation
     datasetAndSegmentationTab.datasetLinearFilteringCheckBox.setChecked(settings.value(DATASET_LINEAR_FILTERING, true).toBool());
@@ -129,7 +144,7 @@ void AppearanceWidget::saveSettings() {
     settings.setValue(POS_X, geometry().x());
     settings.setValue(POS_Y, geometry().y());
     settings.setValue(VISIBLE, isVisible());
-    // skeleton
+    // trees
     settings.setValue(LIGHT_EFFECTS, treesTab.lightEffectsCheck.isChecked());
     settings.setValue(HIGHLIGHT_ACTIVE_TREE, treesTab.highlightActiveTreeCheck.isChecked());
     settings.setValue(HIGHLIGHT_INTERSECTIONS, treesTab.highlightIntersectionsCheck.isChecked());
@@ -141,11 +156,16 @@ void AppearanceWidget::saveSettings() {
     settings.setValue(ONLY_SELECTED_TREES, treesTab.selectedTreesRadio.isChecked());
     settings.setValue(SHOW_SKELETON_ORTHOVPS, treesTab.skeletonInOrthoVPsCheck.isChecked());
     settings.setValue(SHOW_SKELETON_SKELVP, treesTab.skeletonIn3DVPCheck.isChecked());
+    // nodes
     settings.setValue(SHOW_ALL_NODE_ID, nodesTab.allNodeIDsCheck.isChecked());
     settings.setValue(EDGE_TO_NODE_RADIUS, nodesTab.edgeNodeRatioSpin.value());
     settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, nodesTab.overrideNodeRadiusCheck.isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, nodesTab.nodeRadiusSpin.value());
     settings.setValue(SHOW_NODE_COMMENTS, nodesTab.nodeCommentsCheck.isChecked());
+    settings.setValue(NODE_PROPERTY_RADIUS_SCALE, nodesTab.propertyRadiusScaleSpin.value());
+    settings.setValue(NODE_PROPERTY_LUT_PATH, nodesTab.lutPath);
+    settings.setValue(NODE_PROPERTY_MAP_MIN, nodesTab.propertyMinSpin.value());
+    settings.setValue(NODE_PROPERTY_MAP_MAX, nodesTab.propertyMaxSpin.value());
     // dataset & segmentation
     settings.setValue(DATASET_LINEAR_FILTERING, datasetAndSegmentationTab.datasetLinearFilteringCheckBox.isChecked());
     settings.setValue(BIAS, datasetAndSegmentationTab.biasSpinBox.value());

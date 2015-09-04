@@ -154,7 +154,10 @@ struct SkeletonState {
 class Skeletonizer : public QObject {
     Q_OBJECT
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
-    QSet<QString> nodeProperties;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> nodeColors;
+    QSet<QString> textProperties;
+    QSet<QString> numberProperties;
+
 public:
     SkeletonState skeletonState;
     explicit Skeletonizer(QObject *parent = 0);
@@ -185,7 +188,7 @@ public slots:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
-    boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks);
+    boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
@@ -244,6 +247,7 @@ public slots:
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
+    void loadNodeLUT(const QString & path);
     void updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentBetween(const nodeListElement & sourceNode, const nodeListElement & targetNode);
@@ -257,8 +261,7 @@ public:
     void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-    QSet<QString> getNodeProperties() const;
-    void insertProperties(nodeListElement & node, const QVariantHash newProperties);
+    QSet<QString> getNumberProperties() const;
 };
 
 #endif // SKELETONIZER_H
