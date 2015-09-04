@@ -21,11 +21,11 @@ QVariant PropertyModel::data(const QModelIndex & index, int role) const {
 void PropertyModel::recreate()  {
     beginResetModel();
     properties.clear();
-    properties.emplace_back("none (select property)");
     for (const auto & property : Skeletonizer::singleton().getNumberProperties()) {
         properties.emplace_back(property);
     }
     std::sort(std::begin(properties), std::end(properties));
+    properties.insert(std::begin(properties), "none (select property)");
     endResetModel();
 }
 
