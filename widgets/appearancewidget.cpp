@@ -94,8 +94,8 @@ void AppearanceWidget::loadSettings() {
     const auto scale = settings.value(NODE_PROPERTY_RADIUS_SCALE, 1).toDouble();
     nodesTab.propertyRadiusScaleSpin.setValue(scale);
     nodesTab.propertyRadiusScaleSpin.valueChanged(scale);
-    // from http://www.ncl.ucar.edu/Document/Graphics/ColorTables/NCV_blu_red.shtml;
-    nodesTab.lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/NCV_blu_red.json").toString();
+    // from http://peterkovesi.com/projects/colourmaps/index.html
+    nodesTab.lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/linear_kry_5-98_c75.json").toString();
 
     const auto min = settings.value(NODE_PROPERTY_MAP_MIN, 0).toDouble();
     nodesTab.propertyMinSpin.setValue(min);
