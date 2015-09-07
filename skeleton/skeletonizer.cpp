@@ -1610,7 +1610,7 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     tree = findTreeByTreeID(treeID);
 
     if((!comment.isNull()) && tree) {
-        strncpy(tree->comment, comment.toStdString().c_str(), 8192);
+        strncpy(tree->comment, comment.toStdString().c_str(), sizeof(tree->comment) - 1);//space for '\0'
     }
 
     Session::singleton().unsavedChanges = true;
