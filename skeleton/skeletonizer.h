@@ -108,8 +108,6 @@ struct SkeletonState {
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    uint displayMode{0};
-
     float segRadiusToNodeRadius{.5f};
     int overrideNodeRadiusBool{false};
     float overrideNodeRadiusVal{1.f};

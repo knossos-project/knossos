@@ -1970,18 +1970,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
     state->skeletonState->pointVertBuffer.colsIndex = 0;
     color4F currentColor = {1.f, 0.f, 0.f, 1.f};
 
-    if((state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-        if(viewportType != VIEWPORT_SKELETON) {
-            return;
-        }
+    if((!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && viewportType != VIEWPORT_SKELETON) ||
+       (!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP) && viewportType == VIEWPORT_SKELETON)) {
+        return;
     }
-
-    if((state->skeletonState->displayMode & DSP_SKEL_VP_HIDE)) {
-        if(viewportType == VIEWPORT_SKELETON) {
-            return;
-        }
-    }
-
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
@@ -2005,11 +1997,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
         lastRenderedNode = NULL;
         cumDistToLastRenderedNode = 0.f;
 
-        if(state->skeletonState->displayMode & DSP_SELECTED_TREES) {
-            if(currentTree->selected == false) {
-                currentTree = currentTree->next.get();
-                continue;
-            }
+        if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree->selected) {
+            currentTree = currentTree->next.get();
+            continue;
         }
 
         currentNode = currentTree->firstNode.get();
@@ -2224,10 +2214,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
     //qDebug("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex);
 
     /* Highlight active node */
+    const auto onlySelectedTrees = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
     if(state->skeletonState->activeNode && options.highlightActiveNode
-       && (state->skeletonState->displayMode & DSP_WHOLE
-           || (state->skeletonState->displayMode & DSP_SELECTED_TREES
-               && state->skeletonState->activeNode->correspondingTree->selected))) {
+       && (!onlySelectedTrees || onlySelectedTrees && state->skeletonState->activeNode->correspondingTree->selected)) {
         nodeListElement *active = state->skeletonState->activeNode;
         /* Set the default color for the active node */
         currentColor = {1.f, 0.f, 0.f, 0.2f};

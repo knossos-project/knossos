@@ -34,6 +34,7 @@ class TreesTab : public QWidget
     QRadioButton wholeSkeletonRadio{"Show whole skeleton"};
     QRadioButton selectedTreesRadio{"Show only selected trees"};
 
+    void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");
 public:
     explicit TreesTab(QWidget *parent = 0);

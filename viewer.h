@@ -54,6 +54,12 @@
 
 #define MAX_COLORVAL 255.
 
+enum class SkeletonDisplay {
+    OnlySelected = 0x1,
+    ShowIn3DVP = 0x2,
+    ShowInOrthoVPs = 0x4
+};
+
 struct ViewerState {
     ViewerState() {
         state->viewerState = this;
@@ -140,7 +146,7 @@ struct ViewerState {
 
     float movementAreaFactor{80.f};
     bool showOverlay{true};
-
+    QFlags<SkeletonDisplay> skeletonDisplay{SkeletonDisplay::ShowIn3DVP, SkeletonDisplay::ShowInOrthoVPs};
     QString highlightedNodePropertyByRadius{""};
     double nodePropertyRadiusScale{1};
     QString highlightedNodePropertyByColor{""};

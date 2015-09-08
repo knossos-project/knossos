@@ -47,32 +47,23 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&depthCutoffSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->depthCutOff = value; });
     QObject::connect(&renderQualitySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int value) { state->viewerState->cumDistRenderThres = value; });
     // tree visibility
-    QObject::connect(&wholeSkeletonRadio, &QRadioButton::toggled, [](const bool checked) {
-        if (checked) {
-            state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES);
-            state->skeletonState->displayMode |= DSP_WHOLE;
-        }
-    });
-    QObject::connect(&selectedTreesRadio, &QRadioButton::toggled, [](const bool checked) {
-        if (checked) {
-            state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES);
-            state->skeletonState->displayMode |= DSP_SELECTED_TREES;
-        }
-    });
-    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::toggled, [](const bool checked) {
-        if (checked) {
-            state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
-        } else {
-            state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
-        }
-    });
-    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::toggled, [](const bool checked) {
-        if (checked) {
-            state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
-        } else {
-            state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-        }
-    });
+    QObject::connect(&wholeSkeletonRadio, &QRadioButton::toggled, this, &TreesTab::updateTreeDisplay);
+    QObject::connect(&selectedTreesRadio, &QRadioButton::toggled, this, &TreesTab::updateTreeDisplay);
+    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::toggled, this, &TreesTab::updateTreeDisplay);
+    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::toggled, this, &TreesTab::updateTreeDisplay);
+}
+
+void TreesTab::updateTreeDisplay() {
+    state->viewerState->skeletonDisplay = 0x0;
+    if (selectedTreesRadio.isChecked()) {
+        state->viewerState->skeletonDisplay |= SkeletonDisplay::OnlySelected;
+    }
+    if (skeletonIn3DVPCheck.isChecked()) {
+        state->viewerState->skeletonDisplay |= SkeletonDisplay::ShowIn3DVP;
+    }
+    if (skeletonInOrthoVPsCheck.isChecked()) {
+        state->viewerState->skeletonDisplay |= SkeletonDisplay::ShowInOrthoVPs;
+    }
 }
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
