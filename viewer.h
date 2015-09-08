@@ -76,9 +76,6 @@ struct ViewerState {
 
     // don't jump between mags on zooming
     bool datasetMagLock;
-
-    float depthCutOff{5.f};
-
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
@@ -88,20 +85,15 @@ struct ViewerState {
     uint recenteringTimeOrth{500};
     bool walkOrth{false};
 
-    //SDL_Surface *screen;
-
     //Keyboard repeat rate
     uint stepsPerSec{40};
     int multisamplingOnOff;
     int lightOnOff;
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
-    bool drawVPCrosshairs{true};
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
     int nodeSelectSquareVpId{-1};
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
-
-    bool showScalebar{false};
 
     bool selectModeFlag{false};
 
@@ -117,14 +109,6 @@ struct ViewerState {
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
     uint clickReaction{ON_CLICK_DRAG};
-
-    int luminanceBias{0};
-    int luminanceRangeDelta{255};
-
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
-    bool datasetColortableOn{false};
-    bool datasetAdjustmentOn{false};
 
     // Advanced Tracing Modes Stuff
     navigationMode autoTracingMode{navigationMode::recenter};
@@ -145,13 +129,38 @@ struct ViewerState {
     QString lockComment;
 
     float movementAreaFactor{80.f};
+
+    // dataset & segmentation rendering options
+    int luminanceRangeDelta{255};
+    int luminanceBias{0};
     bool showOverlay{true};
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
+    bool datasetColortableOn{false};
+    bool datasetAdjustmentOn{false};
+    // skeleton rendering options
+    float depthCutOff{5.f};
     QFlags<SkeletonDisplay> skeletonDisplay{SkeletonDisplay::ShowIn3DVP, SkeletonDisplay::ShowInOrthoVPs};
+    int highlightActiveTree{true};
+    int showNodeIDs{false};
+    float segRadiusToNodeRadius{.5f};
+    int overrideNodeRadiusBool{false};
+    float overrideNodeRadiusVal{1.f};
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> nodeColors;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
     QString highlightedNodePropertyByRadius{""};
     double nodePropertyRadiusScale{1};
     QString highlightedNodePropertyByColor{""};
     double nodePropertyColorMapMin{0};
     double nodePropertyColorMapMax{0};
+    // viewport rendering options
+    bool drawVPCrosshairs{true};
+    int rotateAroundActiveNode;
+    int showIntersections{false};
+    bool showScalebar{false};
+    int showXYplane{true};
+    int showXZplane{true};
+    int showYZplane{true};
 };
 
 /**
@@ -198,7 +207,9 @@ public:
     std::atomic_bool oc_xy_changed{true};
     std::atomic_bool oc_xz_changed{true};
     std::atomic_bool oc_zy_changed{true};
-
+    void loadNodeLUT(const QString & path);
+    void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
+    void setColorFromNode(const nodeListElement & node, color4F & color) const;
 signals:
     void loadSignal();
     void coordinateChangedSignal(int x, int y, int z);

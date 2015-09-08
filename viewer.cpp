@@ -45,6 +45,7 @@
 Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
+    loadTreeLUT();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
@@ -1563,6 +1564,7 @@ void Viewer::rewire() {
     // --- widget signals ---
     //  appearance widget signals --
     QObject::connect(&window->widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
+    QObject::connect(skeletonizer, &Skeletonizer::propertiesChanged, &window->widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     //  -- end appearance widget signals
     //  dataset options signals --
     QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
@@ -1611,4 +1613,39 @@ void Viewer::resetRotation() {
     state->viewerState->vpConfigs[VP_UPPERRIGHT].v1 = v3;
     state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 = v2;
     state->viewerState->vpConfigs[VP_UPPERRIGHT].n = v1;
+}
+
+void Viewer::loadTreeLUT(const QString & path) {
+    state->viewerState->treeColors = loadLookupTable(path);
+    skeletonizer->updateTreeColors();
+}
+
+void Viewer::loadNodeLUT(const QString & path) {
+    state->viewerState->nodeColors = loadLookupTable(path);
+}
+
+
+void Viewer::setColorFromNode(const nodeListElement & node, color4F & color) const {
+    const auto property = state->viewerState->highlightedNodePropertyByColor;
+    const auto range = state->viewerState->nodePropertyColorMapMax - state->viewerState->nodePropertyColorMapMin;
+    const auto & nodeColors = state->viewerState->nodeColors;
+    if (!property.isEmpty() && node.properties.contains(property) && range > 0) {
+        const int index = node.properties[property].toDouble() / range * MAX_COLORVAL;
+        color = {std::get<0>(nodeColors[index])/255.f, std::get<1>(nodeColors[index])/255.f, std::get<2>(nodeColors[index])/255.f, 1.f};
+        return;
+    }
+    if (node.isBranchNode) { //branch nodes are always blue
+        color = {0.f, 0.f, 1.f, 1.f};
+        return;
+    }
+
+    if (node.comment != NULL && strlen(node.comment->content) != 0) {
+        // default color for comment nodes
+        color = {1.f, 1.f, 0.f, 1.f};
+
+        auto newColor = CommentSetting::getColor(QString(node.comment->content));
+        if(newColor.alpha() != 0) {
+            color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
+        }
+    }
 }

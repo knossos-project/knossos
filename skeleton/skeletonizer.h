@@ -108,18 +108,6 @@ struct SkeletonState {
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    float segRadiusToNodeRadius{.5f};
-    int overrideNodeRadiusBool{false};
-    float overrideNodeRadiusVal{1.f};
-
-    int highlightActiveTree{true};
-    int showIntersections{false};
-    int rotateAroundActiveNode;
-    int showXYplane{true};
-    int showXZplane{true};
-    int showYZplane{true};
-    int showNodeIDs{false};
-
     int treeElements{0};
     int totalNodeElements{0};
     int totalSegmentElements{0};
@@ -151,14 +139,12 @@ struct SkeletonState {
 
 class Skeletonizer : public QObject {
     Q_OBJECT
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> treeColors;
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> nodeColors;
     QSet<QString> textProperties;
     QSet<QString> numberProperties;
 
 public:
     SkeletonState skeletonState;
-    explicit Skeletonizer(QObject *parent = 0);
+    explicit Skeletonizer(QObject *parent = 0) : QObject(parent) {}
     static Skeletonizer & singleton() {
         static Skeletonizer skeletonizer;
         return skeletonizer;
@@ -170,6 +156,7 @@ signals:
     void nodeAddedSignal(const nodeListElement & node);
     void nodeChangedSignal(const nodeListElement & node);
     void nodeRemovedSignal(const uint nodeID);
+    void propertiesChanged(const QSet<QString> & numberProperties);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
     void treeRemovedSignal(const int treeID);
@@ -244,8 +231,6 @@ public slots:
     int findAvailableTreeID();
     treeListElement *addTreeListElement(int treeID, color4F color);
     bool mergeTrees(int treeID1, int treeID2);
-    void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
-    void loadNodeLUT(const QString & path);
     void updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentBetween(const nodeListElement & sourceNode, const nodeListElement & targetNode);
@@ -256,10 +241,8 @@ public slots:
 
 public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
-    void setColorFromNode(nodeListElement *node, color4F *color) const;
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
-    QSet<QString> getNumberProperties() const;
 };
 
 #endif // SKELETONIZER_H

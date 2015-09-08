@@ -24,7 +24,6 @@
 #include "appearancewidget.h"
 
 #include "GuiConstants.h"
-#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QSettings>
@@ -86,7 +85,7 @@ void AppearanceWidget::loadSettings() {
     nodesTab.allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
     nodesTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
     nodesTab.overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
-    nodesTab.nodeRadiusSpin.setEnabled(state->skeletonState->overrideNodeRadiusBool);
+    nodesTab.nodeRadiusSpin.setEnabled(state->viewerState->overrideNodeRadiusBool);
     nodesTab.nodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
     nodesTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 0.5).toFloat());
     nodesTab.nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());

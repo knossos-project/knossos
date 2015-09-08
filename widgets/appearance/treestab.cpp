@@ -1,5 +1,4 @@
 #include "treestab.h"
-#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QFileDialog>
@@ -30,17 +29,17 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     setLayout(&mainLayout);
 
     // trees render options
-    QObject::connect(&highlightActiveTreeCheck, &QCheckBox::toggled, [](const bool on) { state->skeletonState->highlightActiveTree = on; });
+    QObject::connect(&highlightActiveTreeCheck, &QCheckBox::toggled, [](const bool on) { state->viewerState->highlightActiveTree = on; });
     QObject::connect(&highlightIntersectionsCheck, &QCheckBox::toggled, [this](const bool checked) {
         emit showIntersectionsSignal(checked);
-        state->skeletonState->showIntersections = checked;
+        state->viewerState->showIntersections = checked;
     });
     QObject::connect(&lightEffectsCheck, &QCheckBox::toggled, [](const bool on) { state->viewerState->lightOnOff = on; });
     QObject::connect(&ownTreeColorsCheck, &QCheckBox::toggled, [this](const bool checked) {
         if (checked) {//load file if none is cached
             loadTreeLUTButtonClicked(lutFilePath);
         } else {
-            Skeletonizer::singleton().loadTreeLUT();
+            state->viewer->loadTreeLUT();
         }
     });
     QObject::connect(&loadTreeLUTButton, &QPushButton::clicked, [this]() { loadTreeLUTButtonClicked(); });
@@ -72,7 +71,7 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {
-            Skeletonizer::singleton().loadTreeLUT(path);
+            state->viewer->loadTreeLUT(path);
             lutFilePath = path;
             ownTreeColorsCheck.setChecked(true);
         }  catch (...) {

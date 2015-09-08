@@ -1,6 +1,7 @@
 #ifndef VIEWPORTTAB_H
 #define VIEWPORTTAB_H
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QLabel>
@@ -29,6 +30,7 @@ class ViewportTab : public QWidget
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
     QCheckBox showYZPlaneCheckBox{"Show YZ Plane"};
+    QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};

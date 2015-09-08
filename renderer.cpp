@@ -251,7 +251,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str, const int
 }
 
 uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
-    if(!state->skeletonState->showIntersections) return true;
+    if(!state->viewerState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
         int i, distToCurrPos;
@@ -346,15 +346,15 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
 
                     glColor4f(0.,0.,0.,1.);
 
-                    if(state->skeletonState->overrideNodeRadiusBool)
+                    if(state->viewerState->overrideNodeRadiusBool)
                         gluCylinder(gluCylObj,
-                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
-                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            state->viewerState->overrideNodeRadiusVal * state->viewerState->segRadiusToNodeRadius*1.2,
+                            state->viewerState->overrideNodeRadiusVal * state->viewerState->segRadiusToNodeRadius*1.2,
                             1.5, 3, 1);
 
                     else gluCylinder(gluCylObj,
-                            radius * state->skeletonState->segRadiusToNodeRadius*1.2,
-                            radius * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            radius * state->viewerState->segRadiusToNodeRadius*1.2,
+                            radius * state->viewerState->segRadiusToNodeRadius*1.2,
                             1.5, 3, 1);
 
                     gluDeleteQuadric(gluCylObj);
@@ -1069,7 +1069,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
 
     // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
     if(state->skeletonState->rotdx || state->skeletonState->rotdy) {
-        if((state->skeletonState->rotateAroundActiveNode) && (state->skeletonState->activeNode)) {
+        if((state->viewerState->rotateAroundActiveNode) && (state->skeletonState->activeNode)) {
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->skeletonState->activeNode->position.x,
                          (float)state->skeletonState->activeNode->position.y,
@@ -1233,7 +1233,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
 
             switch(state->viewerState->vpConfigs[i].type) {
             case VIEWPORT_XY:
-                if(!state->skeletonState->showXYplane) break;
+                if(!state->viewerState->showXYplane) break;
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
                 glLoadName(VIEWPORT_XY);
                 glBegin(GL_QUADS);
@@ -1250,7 +1250,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_XZ:
-                if(!state->skeletonState->showXZplane) break;
+                if(!state->viewerState->showXZplane) break;
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
                 glLoadName(VIEWPORT_XZ);
                 glBegin(GL_QUADS);
@@ -1267,7 +1267,7 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_YZ:
-                if(!state->skeletonState->showYZplane) break;
+                if(!state->viewerState->showYZplane) break;
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
                 glLoadName(VIEWPORT_YZ);
                 glBegin(GL_QUADS);
@@ -1289,9 +1289,9 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
         for(size_t i = 0; i < Viewport::numberViewports; i++) {
             const auto & viewport = state->viewerState->vpConfigs[i];
             if (viewport.type == VIEWPORT_ARBITRARY) {
-                if ( (viewport.id == VP_UPPERLEFT && state->skeletonState->showXYplane)
-                    || (viewport.id == VP_LOWERLEFT && state->skeletonState->showXZplane)
-                    || (viewport.id == VP_UPPERRIGHT && state->skeletonState->showYZplane) )
+                if ( (viewport.id == VP_UPPERLEFT && state->viewerState->showXYplane)
+                    || (viewport.id == VP_LOWERLEFT && state->viewerState->showXZplane)
+                    || (viewport.id == VP_UPPERRIGHT && state->viewerState->showYZplane) )
                 {
                     renderArbitrarySlicePane(viewport);
                 }
@@ -2077,7 +2077,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
             if(renderNode) {
                 /* This sets the current color for the segment rendering */
                 if((currentTree->treeID == state->skeletonState->activeTree->treeID)
-                    && (state->skeletonState->highlightActiveTree)) {
+                    && (state->viewerState->highlightActiveTree)) {
                         currentColor = {1.f, 0.f, 0.f, 1.f};
                 }
                 else {
@@ -2094,9 +2094,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
                         glLoadName(3);
                     }
                     renderCylinder(&(lastRenderedNode->position),
-                                   skeletonizer.segmentSizeAt(*lastRenderedNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*lastRenderedNode) * state->viewerState->segRadiusToNodeRadius,
                                    &(currentNode->position),
-                                   skeletonizer.segmentSizeAt(*currentNode) * state->skeletonState->segRadiusToNodeRadius,
+                                   skeletonizer.segmentSizeAt(*currentNode) * state->viewerState->segRadiusToNodeRadius,
                                    currentColor,
                                    currentVP,
                                    viewportType);
@@ -2118,12 +2118,12 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderCylinder(&(currentSegment->source->position), skeletonizer.segmentSizeAt(*currentSegment->source) * state->skeletonState->segRadiusToNodeRadius,
-                        &(currentSegment->target->position), skeletonizer.segmentSizeAt(*currentSegment->target) * state->skeletonState->segRadiusToNodeRadius,
+                    renderCylinder(&(currentSegment->source->position), skeletonizer.segmentSizeAt(*currentSegment->source) * state->viewerState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position), skeletonizer.segmentSizeAt(*currentSegment->target) * state->viewerState->segRadiusToNodeRadius,
                         currentColor, currentVP, viewportType);
 
                     if(viewportType != VIEWPORT_SKELETON) {
-                        if(state->skeletonState->showIntersections)
+                        if(state->viewerState->showIntersections)
                             renderSegPlaneIntersection(currentSegment);
                     }
                     currentSegment = currentSegment->next;
@@ -2135,7 +2135,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
 
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
-                skeletonizer.setColorFromNode(currentNode, &currentColor);
+                state->viewer->setColorFromNode(*currentNode, currentColor);
                 const float currentRadius = skeletonizer.radius(*currentNode);
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
@@ -2151,7 +2151,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
                 // Render the node description
                 if(currentNode != state->skeletonState->activeNode) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
-                    QString id = (state->skeletonState->showNodeIDs)? QString::number(currentNode->nodeID) : "";
+                    QString id = (state->viewerState->showNodeIDs)? QString::number(currentNode->nodeID) : "";
                     QString comment = (currentVP != VIEWPORT_SKELETON && Viewport::showNodeComments && currentNode->comment)?
                                 QString(":%1").arg(currentNode->comment->content) : "";
                     if(id.isEmpty() == false || comment.isEmpty() == false) {
@@ -2188,8 +2188,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 
-    if(state->skeletonState->overrideNodeRadiusBool)
-        glPointSize(state->skeletonState->overrideNodeRadiusVal);
+    if(state->viewerState->overrideNodeRadiusBool)
+        glPointSize(state->viewerState->overrideNodeRadiusVal);
     else
         glPointSize(3.f);
 
@@ -2223,7 +2223,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
 
         /* Color gets changes in case there is a comment & conditional comment
         highlighting */
-        skeletonizer.setColorFromNode(active, &currentColor);
+        state->viewer->setColorFromNode(*active, currentColor);
         currentColor.a = 0.2f;
         renderSphere(&(active->position), skeletonizer.radius(*active) * 1.5, currentColor, currentVP, viewportType);
 

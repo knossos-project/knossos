@@ -1,6 +1,5 @@
 #include "nodestab.h"
 
-#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "widgets/viewport.h"
 
@@ -18,10 +17,10 @@ QVariant PropertyModel::data(const QModelIndex & index, int role) const {
     return QVariant();
 }
 
-void PropertyModel::recreate()  {
+void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
     beginResetModel();
     properties.clear();
-    for (const auto & property : Skeletonizer::singleton().getNumberProperties()) {
+    for (const auto & property : numberProperties) {
         properties.emplace_back(property);
     }
     std::sort(std::begin(properties), std::end(properties));
@@ -32,7 +31,7 @@ void PropertyModel::recreate()  {
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     edgeNodeRatioSpin.setSingleStep(0.1);
 
-    propertyModel.recreate();
+    propertyModel.recreate({});
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
     propertyRadiusScaleSpin.setPrefix("×");
@@ -67,23 +66,15 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&lutLabel, row++, 0, 1, 4, Qt::AlignRight);
     mainLayout.setColumnStretch(0, 1);
     setLayout(&mainLayout);
-    QObject::connect(&allNodeIDsCheck, &QCheckBox::toggled, [](const bool on) { state->skeletonState->showNodeIDs = on; });
-    QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->skeletonState->overrideNodeRadiusVal = value; });
+    QObject::connect(&allNodeIDsCheck, &QCheckBox::toggled, [](const bool on) { state->viewerState->showNodeIDs = on; });
+    QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
     QObject::connect(&nodeCommentsCheck, &QCheckBox::toggled, [](const bool checked) { Viewport::showNodeComments = checked; });
     QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::toggled, [this](const bool on) {
-        state->skeletonState->overrideNodeRadiusBool = on;
+        state->viewerState->overrideNodeRadiusBool = on;
         nodeRadiusSpin.setEnabled(on);
     });
-    QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->skeletonState->segRadiusToNodeRadius = value; });
+    QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](const nodeListElement &) { propertyModel.recreate(); });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this]() {
-        const auto radiusText = propertyRadiusCombo.currentText();
-        const auto colorText = propertyColorCombo.currentText();
-        propertyModel.recreate();
-        propertyRadiusCombo.setCurrentText(radiusText);
-        propertyColorCombo.setCurrentText(colorText);
-    });
     QObject::connect(&propertyRadiusCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
         state->viewerState->highlightedNodePropertyByRadius = (index > 0) ? propertyModel.properties[index] : "";
         propertyRadiusScaleSpin.setEnabled(index > 0);
@@ -104,13 +95,21 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&propertyLUTButton, &QPushButton::clicked, [this]() { loadNodeLUTRequest(); });
 }
 
+void NodesTab::updateProperties(const QSet<QString> & numberProperties) {
+    const auto radiusText = propertyRadiusCombo.currentText();
+    const auto colorText = propertyColorCombo.currentText();
+    propertyModel.recreate(numberProperties);
+    propertyRadiusCombo.setCurrentText(radiusText);
+    propertyColorCombo.setCurrentText(colorText);
+}
+
 void NodesTab::loadNodeLUTRequest(QString path) {
     if (path.isEmpty()) {
         path = QFileDialog::getOpenFileName(this, "Load Node Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {
-            Skeletonizer::singleton().loadNodeLUT(path);
+            state->viewer->loadNodeLUT(path);
             lutPath = path;
             lutLabel.setText("Current LUT: " + lutPath);
         }  catch (...) {

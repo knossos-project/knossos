@@ -860,7 +860,7 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-        Skeletonizer::singleton().loadTreeLUT();
+        state->viewer->loadTreeLUT();
         state->viewer->defaultDatasetLUT();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
                           QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1024, 800);

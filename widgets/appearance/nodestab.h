@@ -18,7 +18,7 @@ class PropertyModel : public QAbstractListModel {
 public:
     virtual int rowCount(const QModelIndex &) const override;
     virtual QVariant data(const QModelIndex & index, int role) const override;
-    void recreate();
+    void recreate(const QSet<QString> & numberProperties);
 };
 
 class NodesTab : public QWidget
@@ -50,7 +50,7 @@ class NodesTab : public QWidget
     void loadNodeLUTRequest(QString path = "");
 public:
     explicit NodesTab(QWidget *parent = 0);
-
+    void updateProperties(const QSet<QString> & numberProperties);
 signals:
 
 public slots:

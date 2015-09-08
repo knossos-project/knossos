@@ -1,14 +1,12 @@
 #include "viewporttab.h"
 
-#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "widgets/viewport.h"
 
 ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
 {
-    auto boundaryGroup = new QButtonGroup(this);
-    boundaryGroup->addButton(&boundariesPixelRadioBtn);
-    boundaryGroup->addButton(&boundariesPhysicalRadioBtn);
+    boundaryGroup.addButton(&boundariesPixelRadioBtn);
+    boundaryGroup.addButton(&boundariesPhysicalRadioBtn);
 
     resetVPsButton.setFocusPolicy(Qt::NoFocus);
 
@@ -42,13 +40,13 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
         emit setVPOrientationSignal(checked);
     });
     // 3D viewport
-    QObject::connect(&showXYPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showXYplane = checked; });
-    QObject::connect(&showYZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showYZplane = checked; });
-    QObject::connect(&showXZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->skeletonState->showXZplane = checked; });
-    QObject::connect(boundaryGroup, static_cast<void(QButtonGroup::*)(int, bool)>(&QButtonGroup::buttonToggled), [this](const int, const bool) {
+    QObject::connect(&showXYPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->viewerState->showXYplane = checked; });
+    QObject::connect(&showYZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->viewerState->showYZplane = checked; });
+    QObject::connect(&showXZPlaneCheckBox, &QCheckBox::toggled, [](bool checked) { state->viewerState->showXZplane = checked; });
+    QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
         Viewport::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
-    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::toggled, [](bool checked) {state->skeletonState->rotateAroundActiveNode = checked; });
+    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::toggled, [](bool checked) {state->viewerState->rotateAroundActiveNode = checked; });
 
     QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportTab::resetViewportPositions);
 }
