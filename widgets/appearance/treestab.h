@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSettings>
 #include <QSpinBox>
 #include <QGridLayout>
 #include <QWidget>
@@ -36,6 +37,8 @@ class TreesTab : public QWidget
 
     void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");
+    void saveSettings(QSettings & settings) const;
+    void loadSettings(const QSettings & settings);
 public:
     explicit TreesTab(QWidget *parent = 0);
 

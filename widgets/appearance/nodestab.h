@@ -9,6 +9,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QSettings>
 #include <QWidget>
 
 class PropertyModel : public QAbstractListModel {
@@ -48,6 +49,8 @@ class NodesTab : public QWidget
     QLabel lutLabel{"Current LUT: none"};
     QPushButton propertyLUTButton{"Load color LUT …"};
     void loadNodeLUTRequest(QString path = "");
+    void saveSettings(QSettings &settings) const;
+    void loadSettings(const QSettings &settings);
 public:
     explicit NodesTab(QWidget *parent = 0);
     void updateProperties(const QSet<QString> & numberProperties);

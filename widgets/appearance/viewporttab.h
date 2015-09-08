@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSettings>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -35,6 +36,9 @@ class ViewportTab : public QWidget
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
+
+    void saveSettings(QSettings & settings) const;
+    void loadSettings(const QSettings & settings);
 public:
     explicit ViewportTab(QWidget *parent = 0);
 

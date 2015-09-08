@@ -1,5 +1,5 @@
 #include "datasetsegmentationtab.h"
-
+#include "widgets/GuiConstants.h"
 #include "segmentation/segmentation.h"
 #include "viewer.h"
 
@@ -52,14 +52,14 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     mainLayout.addWidget(&volumeColorLabel, row, 0); mainLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
     setLayout(&mainLayout);
 
-    QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::toggled, [](const bool checked) {
+    QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
         if (checked) {
             state->viewer->applyTextureFilterSetting(GL_LINEAR);
         } else {
             state->viewer->applyTextureFilterSetting(GL_NEAREST);
         }
     });
-    QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::toggled, [this](const bool checked) {
+    QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::clicked, [this](const bool checked) {
         if (checked) {//load file if none is cached
             useOwnDatasetColorsButtonClicked(lutFilePath);
         } else {
@@ -97,7 +97,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
     });
-    QObject::connect(&volumeRenderCheckBox, &QCheckBox::toggled, [this](bool checked){
+    QObject::connect(&volumeRenderCheckBox, &QCheckBox::clicked, [this](bool checked){
         Segmentation::singleton().volume_render_toggle = checked;
         emit volumeRenderToggled();
     });
@@ -138,4 +138,37 @@ void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
     } else {
         useOwnDatasetColorsCheckBox.setChecked(false);
     }
+}
+
+void DatasetAndSegmentationTab::saveSettings(QSettings & settings) const {
+    settings.setValue(DATASET_LINEAR_FILTERING, datasetLinearFilteringCheckBox.isChecked());
+    settings.setValue(BIAS, biasSpinBox.value());
+    settings.setValue(RANGE_DELTA, rangeDeltaSpinBox.value());
+    settings.setValue(SEGMENTATION_OVERLAY_ALPHA, segmentationOverlaySlider.value());
+    settings.setValue(DATASET_LUT_FILE, lutFilePath);
+    settings.setValue(DATASET_LUT_FILE_USED, useOwnDatasetColorsCheckBox.isChecked());
+    settings.setValue(RENDER_VOLUME, volumeRenderCheckBox.isChecked());
+    settings.setValue(VOLUME_ALPHA, volumeOpaquenessSpinBox.value());
+    settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color);
+}
+
+void DatasetAndSegmentationTab::loadSettings(const QSettings & settings) {
+    datasetLinearFilteringCheckBox.setChecked(settings.value(DATASET_LINEAR_FILTERING, true).toBool());
+    datasetLinearFilteringCheckBox.clicked(datasetLinearFilteringCheckBox.isChecked());
+    lutFilePath = settings.value(DATASET_LUT_FILE, "").toString();
+    // again, load the path-string first, before populating the checkbox
+    useOwnDatasetColorsCheckBox.setChecked(settings.value(DATASET_LUT_FILE_USED, false).toBool());
+    useOwnDatasetColorsCheckBox.clicked(useOwnDatasetColorsCheckBox.isChecked());
+    biasSpinBox.setValue(settings.value(BIAS, 0).toInt());
+    biasSpinBox.valueChanged(biasSpinBox.value());
+    rangeDeltaSpinBox.setValue(settings.value(RANGE_DELTA, 255).toInt());
+    rangeDeltaSpinBox.valueChanged(rangeDeltaSpinBox.value());
+    segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
+    segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
+    volumeRenderCheckBox.setChecked(settings.value(RENDER_VOLUME, false).toBool());
+    volumeRenderCheckBox.clicked(volumeRenderCheckBox.isChecked());
+    volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
+    volumeOpaquenessSpinBox.valueChanged(volumeOpaquenessSpinBox.value());
+    Segmentation::singleton().volume_background_color = settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).value<QColor>();
+    volumeColorButton.setStyleSheet("background-color: " + Segmentation::singleton().volume_background_color.name() + ";");
 }

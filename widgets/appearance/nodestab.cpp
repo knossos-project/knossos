@@ -1,5 +1,5 @@
 #include "nodestab.h"
-
+#include "widgets/GuiConstants.h"
 #include "viewer.h"
 #include "widgets/viewport.h"
 
@@ -66,10 +66,10 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&lutLabel, row++, 0, 1, 4, Qt::AlignRight);
     mainLayout.setColumnStretch(0, 1);
     setLayout(&mainLayout);
-    QObject::connect(&allNodeIDsCheck, &QCheckBox::toggled, [](const bool on) { state->viewerState->showNodeIDs = on; });
+    QObject::connect(&allNodeIDsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->showNodeIDs = on; });
     QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
-    QObject::connect(&nodeCommentsCheck, &QCheckBox::toggled, [](const bool checked) { Viewport::showNodeComments = checked; });
-    QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::toggled, [this](const bool on) {
+    QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { Viewport::showNodeComments = checked; });
+    QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::clicked, [this](const bool on) {
         state->viewerState->overrideNodeRadiusBool = on;
         nodeRadiusSpin.setEnabled(on);
     });
@@ -118,4 +118,40 @@ void NodesTab::loadNodeLUTRequest(QString path) {
             lutErrorBox.exec();
         }
     }
+}
+
+void NodesTab::saveSettings(QSettings & settings) const {
+    settings.setValue(SHOW_ALL_NODE_ID, allNodeIDsCheck.isChecked());
+    settings.setValue(EDGE_TO_NODE_RADIUS, edgeNodeRatioSpin.value());
+    settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, overrideNodeRadiusCheck.isChecked());
+    settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, nodeRadiusSpin.value());
+    settings.setValue(SHOW_NODE_COMMENTS, nodeCommentsCheck.isChecked());
+    settings.setValue(NODE_PROPERTY_RADIUS_SCALE, propertyRadiusScaleSpin.value());
+    settings.setValue(NODE_PROPERTY_LUT_PATH, lutPath);
+    settings.setValue(NODE_PROPERTY_MAP_MIN, propertyMinSpin.value());
+    settings.setValue(NODE_PROPERTY_MAP_MAX, propertyMaxSpin.value());
+}
+
+void NodesTab::loadSettings(const QSettings & settings) {
+    allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
+    allNodeIDsCheck.clicked(allNodeIDsCheck.isChecked());
+    edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
+    edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
+    overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
+    overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
+    nodeRadiusSpin.setEnabled(state->viewerState->overrideNodeRadiusBool);
+    nodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
+    nodeRadiusSpin.valueChanged(nodeRadiusSpin.value());
+    edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 0.5).toFloat());
+    edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
+    nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());
+    nodeCommentsCheck.clicked(nodeCommentsCheck.isChecked());
+    propertyRadiusScaleSpin.setValue(settings.value(NODE_PROPERTY_RADIUS_SCALE, 1).toDouble());
+    propertyRadiusScaleSpin.valueChanged(propertyRadiusScaleSpin.value());
+    // from http://peterkovesi.com/projects/colourmaps/index.html
+    lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/linear_kry_5-98_c75.json").toString();
+    propertyMinSpin.setValue(settings.value(NODE_PROPERTY_MAP_MIN, 0).toDouble());
+    propertyMinSpin.valueChanged(propertyMinSpin.value());
+    propertyMaxSpin.setValue(settings.value(NODE_PROPERTY_MAP_MAX, 0).toDouble());
+    propertyMaxSpin.valueChanged(propertyMaxSpin.value());
 }
