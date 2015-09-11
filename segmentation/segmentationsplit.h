@@ -29,7 +29,7 @@ public:
 class brush_subject : public QObject, private brush_t {
     Q_OBJECT
 public:
-    brush_t value() {
+    brush_t value() const {
         return static_cast<brush_t>(*this);
     }
     void setInverse(const bool newInverse) {
