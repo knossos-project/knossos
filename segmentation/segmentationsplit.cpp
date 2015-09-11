@@ -11,12 +11,14 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
     std::vector<Coordinate> work = {seed};
     std::unordered_set<Coordinate> visitedVoxels;
 
+    const auto clickedsoid = readVoxel(seed);
+
     while (!work.empty()) {
         auto pos = work.back();
         work.pop_back();
 
         auto subobjectId = readVoxel(pos);
-        if (subobjectId != fillsoid) {
+        if (subobjectId == clickedsoid) {
             visitedVoxels.emplace(pos.x, pos.y, pos.z);
 
             auto walk = [&](const Coordinate & newPos){
