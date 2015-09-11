@@ -440,9 +440,10 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Segmentation::singleton().selectedObjectsCount() == 1) {
-            uint64_t soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject(clickedCoordinate);
-            auto brush_copy = Segmentation::singleton().brush.value();
+        auto & seg = Segmentation::singleton();
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
+            auto brush_copy = seg.brush.value();
+            uint64_t soid = brush_copy.inverse ? seg.getBackgroundId() : seg.subobjectIdOfFirstSelectedObject(clickedCoordinate);
             brush_copy.shape = brush_t::shape_t::angular;
             brush_copy.radius = state->viewerState->vpConfigs[0].displayedlengthInNmX / 2;//set brush to fill visible area
             subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
