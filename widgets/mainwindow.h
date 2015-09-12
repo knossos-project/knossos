@@ -152,6 +152,7 @@ public:
 
     SkeletonProxy *skeletonProxy;
 
+    QLabel cursorPositionLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
 
@@ -175,7 +176,7 @@ public:
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
-
+    void updateCursorLabel(const Coordinate & position, const uint vpID);
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);
     void updateRecentFile(const QString &fileName);

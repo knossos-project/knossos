@@ -95,7 +95,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
-
     QObject::connect(&Session::singleton(), &Session::autoSaveSignal, this, &MainWindow::autoSaveSlot);
 
     createToolbars();
@@ -107,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     setAcceptDrops(true);
 
     statusBar()->setSizeGripEnabled(false);
+    statusBar()->addWidget(&cursorPositionLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
@@ -117,6 +117,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 #endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+}
+
+void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
+    cursorPositionLabel.setHidden(vpID == VIEWPORT_SKELETON || vpID == VIEWPORT_UNDEFINED);
+    cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
 }
 
 void MainWindow::createViewports() {
@@ -137,6 +142,9 @@ void MainWindow::createViewports() {
     viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
     viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
     viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    for (auto & vp : viewports) {
+        QObject::connect(vp.get(), &Viewport::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
+    }
 }
 
 void MainWindow::createToolbars() {

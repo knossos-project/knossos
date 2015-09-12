@@ -1071,8 +1071,7 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
         loader_notify();
     }
 
-    emit coordinateChangedSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
-
+    emit coordinateChangedSignal(viewerState->currentPosition);
     return true;
 }
 
@@ -1525,7 +1524,15 @@ void Viewer::datasetColorAdjustmentsChanged() {
 void Viewer::rewire() {
     // viewer signals
     QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(this, &Viewer::coordinateChangedSignal, window, &MainWindow::updateCoordinateBar);
+    QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
+    QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
+        for (auto & vp : window->viewports) {
+            if(vp.get()->hasCursor) {
+                vp.get()->sendCursorPosition();
+                return;
+            }
+        }
+    });
     // end viewer signals
     // skeletonizer signals
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);

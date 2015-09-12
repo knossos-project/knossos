@@ -165,6 +165,7 @@ public:
     static void resetTextureProperties();
     void drawViewport(int vpID);
     void drawSkeletonViewport();
+    bool hasCursor{false};
     void setDock(bool isDock);
     void showHideButtons(bool isShow);
     bool renderVolumeVP();
@@ -172,9 +173,9 @@ public:
     void updateVolumeTexture();
     void posAdapt();
     void posAdapt(const QPoint & desiredPos);
+    void sendCursorPosition();
     void sizeAdapt();
     void sizeAdapt(const QPoint & desiredSize);
-
     QSize dockSize;
     QPoint dockPos;
     EventModel *eventDelegate;
@@ -188,6 +189,7 @@ protected:
     void paintGL() override;
     void resizeGL(int w, int h) override;
     void enterEvent(QEvent * event) override;
+    void leaveEvent(QEvent * event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -218,6 +220,7 @@ signals:
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetOptionsWidget();
     void loadSkeleton(const QString &path);
+    void cursorPositionChanged(const Coordinate & position, const uint id);
 public slots:
     void zoomOrthogonals(float step);
     void zoomInSkeletonVP();

@@ -212,7 +212,7 @@ public:
     void setColorFromNode(const nodeListElement & node, color4F & color) const;
 signals:
     void loadSignal();
-    void coordinateChangedSignal(int x, int y, int z);
+    void coordinateChangedSignal(const Coordinate & pos);
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();
 protected:
