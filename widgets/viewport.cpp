@@ -314,7 +314,9 @@ void Viewport::paintGL() {
 
 void Viewport::enterEvent(QEvent *) {
     hasCursor = true;
-    activateWindow();//steal keyboard from other active windows
+    if (QApplication::activeWindow() != 0) {
+        activateWindow();//steal keyboard from other active windows
+    }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
 
