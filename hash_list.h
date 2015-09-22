@@ -97,10 +97,8 @@ public:
     reference(reference &&) = default;
     reference & operator=(reference &&) = default;
     reference & operator=(const T & newValue) {
-        auto it = owner.positions.find(value);
-        owner.positions.emplace(std::piecewise_construct, std::forward_as_tuple(newValue), std::forward_as_tuple(it->second));
-        owner.positions.erase(value);
-        value = newValue;
+        owner.replace(value, newValue);
+        assert(newValue == value && *owner.positions[value]->second == value);
         return *this;
     }
     operator T() const {
