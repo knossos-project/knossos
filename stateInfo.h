@@ -6,6 +6,7 @@
 
 #include <QElapsedTimer>
 #include <QMutex>
+#include <QString>
 #include <QWaitCondition>
 
 class stateInfo;
