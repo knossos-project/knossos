@@ -92,6 +92,8 @@ class hash_list<T>::reference {
     friend class hash_list;
     reference(hash_list & owner, T & value) : owner{owner}, value{value} {}
 public:
+    reference(const reference &) = delete;
+    reference & operator=(const reference &) = delete;
     reference(reference &&) = default;
     reference & operator=(reference &&) = default;
     reference & operator=(const T & newValue) {
