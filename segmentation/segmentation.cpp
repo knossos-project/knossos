@@ -617,10 +617,7 @@ void Segmentation::mergeSelectedObjects() {
             secondObj.todo = false;//secondObj will get invalidated
             uint64_t newIndex = const_merge(secondObj, firstObj).index;//create new object from merge result
 
-            selectedObjectIndices.emplace_back(newIndex);
-            //move new index to front, so it gets the new merge origin
-            swap(selectedObjectIndices.back(), selectedObjectIndices.front());
-            //delay deselection after we swapped new with first
+            selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
             flat_deselect(objects[selectedObjectIndices.back()]);//firstObj got invalidated
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);

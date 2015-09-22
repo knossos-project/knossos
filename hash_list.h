@@ -47,7 +47,14 @@ public:
     template<typename... Args>
     void emplace_back(Args &&... args) {
         data.emplace_back(std::forward<Args...>(args...));
-        positions.emplace(std::piecewise_construct, std::forward_as_tuple(args...), std::forward_as_tuple(std::prev(std::end(data))));
+        auto it = std::prev(std::end(data));
+        positions.emplace(std::piecewise_construct, std::forward_as_tuple(*it), std::forward_as_tuple(it));
+    }
+    template<typename... Args>
+    void emplace_front(Args &&... args) {
+        data.emplace_front(std::forward<Args...>(args...));
+        auto it = std::begin(data);
+        positions.emplace(std::piecewise_construct, std::forward_as_tuple(*it), std::forward_as_tuple(it));
     }
     bool empty() const noexcept {
         return data.empty();
@@ -103,9 +110,6 @@ public:
     }
     operator T() const {
         return value;
-    }
-    friend void swap(reference lhs, reference rhs) {
-        std::swap(lhs, rhs);
     }
 };
 
