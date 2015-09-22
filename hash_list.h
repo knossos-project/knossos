@@ -34,11 +34,11 @@ public:
     reference back() {
         return reference(*this, data.back());
     }
-    const_iterator begin() const {
-        return std::begin(data);
+    const_iterator cbegin() const {
+        return data.cbegin();
     }
     iterator begin() {
-        return iterator(*this, *std::begin(data));
+        return iterator(*this, std::begin(data));
     }
     void clear() {
         data.clear();
@@ -52,11 +52,11 @@ public:
     bool empty() const noexcept {
         return data.empty();
     }
-    decltype(std::end(data)) end() const {
-        return std::end(data);
+    const_iterator cend() const {
+        return data.cend();
     }
     iterator end() {
-        return iterator(*this, *std::end(data));
+        return iterator(*this, std::end(data));
     }
     void erase(const T & expired) {
         auto it = positions.find(expired);
@@ -112,23 +112,26 @@ public:
 template<typename T>
 class hash_list<T>::iterator : public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, reference*, reference> {
     hash_list & owner;
-    T & value;
+    typename decltype(hash_list<T>::data)::iterator it;
     friend class hash_list;
-    iterator(hash_list & owner, T & value) : owner{owner}, value{value} {}
+    iterator(decltype(owner) & owner, const decltype(it) & it) : owner{owner}, it{it} {}
 public:
+    bool operator!=(const iterator & other) {
+        return it != other.it;
+    }
     reference operator*() {
-        return reference(owner, value);
+        return reference(owner, *it);
     }
     T operator*() const {
-        return value;
+        return *it;
     }
-    iterator operator++() {
-        //lookup list iterator, increment and return iterator of its value
-        return iterator(owner, *std::next(owner.positions[value]));
+    iterator & operator++() {
+        it = std::next(it);
+        return *this;
     }
-    iterator operator--() {
-        //lookup list iterator, increment and return iterator of its value
-        return iterator(owner, *std::prev(owner.positions[value]));
+    iterator & operator--() {
+        it = std::prev(it);
+        return *this;
     }
 };
 
