@@ -24,7 +24,6 @@
 #include "appearancewidget.h"
 
 #include "GuiConstants.h"
-#include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
 #include <QSettings>
@@ -39,7 +38,8 @@
 AppearanceWidget::AppearanceWidget(QWidget *parent) : QDialog(parent) {
     setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
     setWindowTitle("Appearance Settings");
-    tabs.addTab(&skeletonTab, "Skeleton");
+    tabs.addTab(&treesTab, "Trees");
+    tabs.addTab(&nodesTab, "Nodes");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
     tabs.addTab(&viewportTab, "Viewports");
 
@@ -67,51 +67,10 @@ void AppearanceWidget::loadSettings() {
     }
     visible = settings.value(VISIBLE, false).toBool();
 
-    // skeleton
-    skeletonTab.lightEffectsCheck.setChecked(settings.value(LIGHT_EFFECTS, true).toBool());
-    skeletonTab.highlightActiveTreeCheck.setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE, true).toBool());
-    skeletonTab.allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
-    skeletonTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
-    skeletonTab.renderQualitySpin.setValue(settings.value(RENDERING_QUALITY, 7).toInt());
-    skeletonTab.wholeSkeletonRadio.setChecked(settings.value(WHOLE_SKELETON, true).toBool());
-    skeletonTab.selectedTreesRadio.setChecked(settings.value(ONLY_SELECTED_TREES, false).toBool());
-    skeletonTab.skeletonInOrthoVPsCheck.setChecked(settings.value(SHOW_SKELETON_ORTHOVPS, true).toBool());
-    skeletonTab.skeletonIn3DVPCheck.setChecked(settings.value(SHOW_SKELETON_SKELVP, true).toBool());
-    skeletonTab.overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
-    skeletonTab.nodeRadiusSpin.setEnabled(state->skeletonState->overrideNodeRadiusBool);
-    skeletonTab.nodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
-    skeletonTab.edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 0.5).toFloat());
-    skeletonTab.highlightIntersectionsCheck.setChecked(settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool());
-    skeletonTab.depthCutoffSpin.setValue(settings.value(DEPTH_CUTOFF, 5.).toDouble());
-    skeletonTab.nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());
-    skeletonTab.lutFilePath = settings.value(TREE_LUT_FILE, "").toString();
-    //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
-    skeletonTab.ownTreeColorsCheck.setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());
-
-    // dataset & segmentation
-    datasetAndSegmentationTab.datasetLinearFilteringCheckBox.setChecked(settings.value(DATASET_LINEAR_FILTERING, true).toBool());
-    datasetAndSegmentationTab.lutFilePath = settings.value(DATASET_LUT_FILE, "").toString();
-    // again, load the path-string first, before populating the checkbox
-    datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.setChecked(settings.value(DATASET_LUT_FILE_USED, false).toBool());
-    datasetAndSegmentationTab.biasSpinBox.setValue(settings.value(BIAS, 0).toInt());
-    datasetAndSegmentationTab.rangeDeltaSpinBox.setValue(settings.value(RANGE_DELTA, 255).toInt());
-    datasetAndSegmentationTab.segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
-    datasetAndSegmentationTab.volumeRenderCheckBox.setChecked(settings.value(RENDER_VOLUME, false).toBool());
-    datasetAndSegmentationTab.volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
-    Segmentation::singleton().volume_background_color = settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).value<QColor>();
-    datasetAndSegmentationTab.volumeColorButton.setStyleSheet("background-color: " + Segmentation::singleton().volume_background_color.name() + ";");
-
-    // viewports
-    viewportTab.showScalebarCheckBox.setChecked(settings.value(SHOW_SCALEBAR, false).toBool());
-    viewportTab.showVPDecorationCheckBox.setChecked(settings.value(SHOW_VP_DECORATION, true).toBool());
-    viewportTab.drawIntersectionsCrossHairCheckBox.setChecked(settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool());
-    viewportTab.showXYPlaneCheckBox.setChecked(settings.value(SHOW_XY_PLANE, true).toBool());
-    viewportTab.showXZPlaneCheckBox.setChecked(settings.value(SHOW_XZ_PLANE, true).toBool());
-    viewportTab.showYZPlaneCheckBox.setChecked(settings.value(SHOW_YZ_PLANE, true).toBool());
-    const auto showPhysicalBoundaries = settings.value(SHOW_PHYSICAL_BOUNDARIES, false).toBool();
-    viewportTab.boundariesPixelRadioBtn.setChecked(!showPhysicalBoundaries);
-    viewportTab.boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);
-    viewportTab.rotateAroundActiveNodeCheckBox.setChecked(settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool());
+    datasetAndSegmentationTab.loadSettings(settings);
+    nodesTab.loadSettings(settings);
+    treesTab.loadSettings(settings);
+    viewportTab.loadSettings(settings);
 
     tabs.setCurrentIndex(settings.value(VP_TAB_INDEX, 0).toInt());
 
@@ -128,42 +87,11 @@ void AppearanceWidget::saveSettings() {
     settings.setValue(POS_X, geometry().x());
     settings.setValue(POS_Y, geometry().y());
     settings.setValue(VISIBLE, isVisible());
-    // skeleton
-    settings.setValue(LIGHT_EFFECTS, skeletonTab.lightEffectsCheck.isChecked());
-    settings.setValue(HIGHLIGHT_ACTIVE_TREE, skeletonTab.highlightActiveTreeCheck.isChecked());
-    settings.setValue(HIGHLIGHT_INTERSECTIONS, skeletonTab.highlightIntersectionsCheck.isChecked());
-    settings.setValue(TREE_LUT_FILE_USED, skeletonTab.ownTreeColorsCheck.isChecked());
-    settings.setValue(TREE_LUT_FILE, skeletonTab.lutFilePath);
-    settings.setValue(DEPTH_CUTOFF, skeletonTab.depthCutoffSpin.value());
-    settings.setValue(SHOW_ALL_NODE_ID, skeletonTab.allNodeIDsCheck.isChecked());
-    settings.setValue(EDGE_TO_NODE_RADIUS, skeletonTab.edgeNodeRatioSpin.value());
-    settings.setValue(RENDERING_QUALITY, skeletonTab.renderQualitySpin.value());
-    settings.setValue(WHOLE_SKELETON, skeletonTab.wholeSkeletonRadio.isChecked());
-    settings.setValue(ONLY_SELECTED_TREES, skeletonTab.selectedTreesRadio.isChecked());
-    settings.setValue(SHOW_SKELETON_ORTHOVPS, skeletonTab.skeletonInOrthoVPsCheck.isChecked());
-    settings.setValue(SHOW_SKELETON_SKELVP, skeletonTab.skeletonIn3DVPCheck.isChecked());
-    settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, skeletonTab.overrideNodeRadiusCheck.isChecked());
-    settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, skeletonTab.nodeRadiusSpin.value());
-    settings.setValue(SHOW_NODE_COMMENTS, skeletonTab.nodeCommentsCheck.isChecked());
-    // dataset & segmentation
-    settings.setValue(DATASET_LINEAR_FILTERING, datasetAndSegmentationTab.datasetLinearFilteringCheckBox.isChecked());
-    settings.setValue(BIAS, datasetAndSegmentationTab.biasSpinBox.value());
-    settings.setValue(RANGE_DELTA, datasetAndSegmentationTab.rangeDeltaSpinBox.value());
-    settings.setValue(SEGMENTATION_OVERLAY_ALPHA, datasetAndSegmentationTab.segmentationOverlaySlider.value());
-    settings.setValue(DATASET_LUT_FILE, datasetAndSegmentationTab.lutFilePath);
-    settings.setValue(DATASET_LUT_FILE_USED, datasetAndSegmentationTab.useOwnDatasetColorsCheckBox.isChecked());
-    settings.setValue(RENDER_VOLUME, datasetAndSegmentationTab.volumeRenderCheckBox.isChecked());
-    settings.setValue(VOLUME_ALPHA, datasetAndSegmentationTab.volumeOpaquenessSpinBox.value());
-    settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color);
-    // viewports
-    settings.setValue(SHOW_SCALEBAR, viewportTab.showScalebarCheckBox.isChecked());
-    settings.setValue(SHOW_VP_DECORATION, viewportTab.showVPDecorationCheckBox.isChecked());
-    settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, viewportTab.drawIntersectionsCrossHairCheckBox.isChecked());
-    settings.setValue(SHOW_XY_PLANE, viewportTab.showXYPlaneCheckBox.isChecked());
-    settings.setValue(SHOW_XZ_PLANE, viewportTab.showXZPlaneCheckBox.isChecked());
-    settings.setValue(SHOW_YZ_PLANE, viewportTab.showYZPlaneCheckBox.isChecked());
-    settings.setValue(SHOW_PHYSICAL_BOUNDARIES, viewportTab.boundariesPhysicalRadioBtn.isChecked());
-    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, viewportTab.rotateAroundActiveNodeCheckBox.isChecked());
+
+    datasetAndSegmentationTab.saveSettings(settings);
+    nodesTab.saveSettings(settings);
+    treesTab.saveSettings(settings);
+    viewportTab.saveSettings(settings);
 
     settings.setValue(VP_TAB_INDEX, tabs.currentIndex());
 

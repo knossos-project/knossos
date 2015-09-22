@@ -313,11 +313,20 @@ void Viewport::paintGL() {
 }
 
 void Viewport::enterEvent(QEvent *) {
-    activateWindow();//steal keyboard from other active windows
+    hasCursor = true;
+    if (QApplication::activeWindow() != 0) {
+        activateWindow();//steal keyboard from other active windows
+    }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
 
+void Viewport::leaveEvent(QEvent *) {
+    hasCursor = false;
+    emit cursorPositionChanged(Coordinate(), VIEWPORT_UNDEFINED);
+}
+
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(event->x(), event->y(), id), id);
     const auto mouseBtn = event->buttons();
     const auto penmode = state->viewerState->penmode;
 
@@ -962,4 +971,9 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     image.save(path);
     glPopAttrib(); // restore viewport setting
     fbo.release();
+}
+
+void Viewport::sendCursorPosition() {
+    const auto cursorPos = mapFromGlobal(QCursor::pos());
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), id), id);
 }

@@ -49,10 +49,6 @@ auto treeCompare = [](const treeListElement * const lhs, const int & rhs){
     return lhs->treeID < rhs;
 };
 
-Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
-    loadTreeLUT();
-}
-
 segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
     nodeListElement *sourceNode,
     nodeListElement *targetNode) {
@@ -540,6 +536,23 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 }
                 xml.skipCurrentElement();
             }
+        } else if(xml.name() == "properties") {
+            while(xml.readNextStartElement()) {
+                if(xml.name() == "property") {
+                    const auto attributes = xml.attributes();
+                    const auto name = attributes.value("name").toString();
+                    const auto type = attributes.value("type").toString();
+                    if (name.isEmpty() == false && type.isEmpty() == false) {
+                        if (type == "number") {
+                            numberProperties.insert(name);
+                        }
+                        else {
+                            textProperties.insert(name);
+                        }
+                    }
+                }
+                xml.skipCurrentElement();
+            }
         } else if(xml.name() == "branchpoints") {
             while(xml.readNextStartElement()) {
                 if(xml.name() == "branchpoint") {
@@ -722,8 +735,9 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         auto * targetNode = findNodeByNodeID(elem.second);
         if(sourceNode != nullptr && targetNode != nullptr) {
             addSegment(*sourceNode, *targetNode);
+        } else {
+            qDebug() << "Could not add segment between nodes" << elem.first << "and" << elem.second;
         }
-        qDebug() << "Could not add segment between nodes" << elem.first << "and" << elem.second;
     }
 
     for (const auto & elem : branchVector) {
@@ -741,6 +755,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     blockSignals(blockState);
     emit resetData();
+    emit propertiesChanged(numberProperties);
 
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
@@ -758,7 +773,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
         setActiveNode(state->skeletonState->firstTree->firstNode.get());
     }
-
     return true;
 }
 
@@ -1609,7 +1623,7 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     tree = findTreeByTreeID(treeID);
 
     if((!comment.isNull()) && tree) {
-        strncpy(tree->comment, comment.toStdString().c_str(), 8192);
+        strncpy(tree->comment, comment.toStdString().c_str(), sizeof(tree->comment) - 1);//space for '\0'
     }
 
     Session::singleton().unsavedChanges = true;
@@ -2208,20 +2222,15 @@ nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const pa
 }
 
 void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
-    const auto index = (tree.treeID - 1) % treeColors.size();
-    tree.color.r = std::get<0>(treeColors[index]) / MAX_COLORVAL;
-    tree.color.g = std::get<1>(treeColors[index]) / MAX_COLORVAL;
-    tree.color.b = std::get<2>(treeColors[index]) / MAX_COLORVAL;
+    const auto index = (tree.treeID - 1) % state->viewerState->treeColors.size();
+    tree.color.r = std::get<0>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
+    tree.color.g = std::get<1>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
+    tree.color.b = std::get<2>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
     tree.color.a = 1.;
 
     tree.colorSetManually = false;
     Session::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
-}
-
-void Skeletonizer::loadTreeLUT(const QString & path) {
-    treeColors = loadLookupTable(path);
-    updateTreeColors();
 }
 
 void Skeletonizer::updateTreeColors() {
@@ -2250,35 +2259,22 @@ bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     return true;
 }
 
-void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) const {
-    if(node->isBranchNode) { //branch nodes are always blue
-        *color = {0.f, 0.f, 1.f, 1.f};
-        return;
-    }
-
-    if(node->comment != NULL && strlen(node->comment->content) != 0) {
-        // default color for comment nodes
-        *color = {1.f, 1.f, 0.f, 1.f};
-
-        auto newColor = CommentSetting::getColor(QString(node->comment->content));
-        if(newColor.alpha() != 0) {
-            *color = color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
-        }
-    }
-}
-
 float Skeletonizer::radius(const nodeListElement & node) const {
-    if(node.comment && CommentSetting::useCommentNodeRadius) {
+    const auto propertyName = state->viewerState->highlightedNodePropertyByRadius;
+    if(!propertyName.isEmpty() && node.properties.contains(propertyName)) {
+        return state->viewerState->nodePropertyRadiusScale * node.properties.value(propertyName).toDouble();
+    }
+    else if(node.comment && CommentSetting::useCommentNodeRadius) {
         float newRadius = CommentSetting::getRadius(QString(node.comment->content));
         if(newRadius != 0) {
             return newRadius;
         }
     }
-    return state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
+    return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
 }
 
 float Skeletonizer::segmentSizeAt(const nodeListElement & node) const {
-    float radius = state->skeletonState->overrideNodeRadiusBool ? state->skeletonState->overrideNodeRadiusVal : node.radius;
+    float radius = state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
     if(node.comment && CommentSetting::useCommentNodeRadius) {
         float newRadius = CommentSetting::getRadius(QString(node.comment->content));
         if(newRadius != 0 && newRadius < radius) {
@@ -2591,12 +2587,3 @@ bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement 
     }
     return false;
 }
-
-//void Skeletonizer::insertProperties(nodeListElement & node, const QVariantHash<QString, QVariant> newProperties) {
-//    const auto keys = newProperties.keys().toSet();
-//    nodeProperties |= keys;
-//    for (const auto property : newProperties) {
-//        node.properties.insert(property.first, property.second);
-//    }
-//    emit nodeChangedSignal(node);
-//}

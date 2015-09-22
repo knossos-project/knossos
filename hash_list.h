@@ -34,11 +34,11 @@ public:
     reference back() {
         return reference(*this, data.back());
     }
-    const_iterator begin() const {
-        return std::begin(data);
+    const_iterator cbegin() const {
+        return data.cbegin();
     }
     iterator begin() {
-        return iterator(*this, *std::begin(data));
+        return iterator(*this, std::begin(data));
     }
     void clear() {
         data.clear();
@@ -47,16 +47,23 @@ public:
     template<typename... Args>
     void emplace_back(Args &&... args) {
         data.emplace_back(std::forward<Args...>(args...));
-        positions.emplace(std::piecewise_construct, std::forward_as_tuple(args...), std::forward_as_tuple(std::prev(std::end(data))));
+        auto it = std::prev(std::end(data));
+        positions.emplace(std::piecewise_construct, std::forward_as_tuple(*it), std::forward_as_tuple(it));
+    }
+    template<typename... Args>
+    void emplace_front(Args &&... args) {
+        data.emplace_front(std::forward<Args...>(args...));
+        auto it = std::begin(data);
+        positions.emplace(std::piecewise_construct, std::forward_as_tuple(*it), std::forward_as_tuple(it));
     }
     bool empty() const noexcept {
         return data.empty();
     }
-    decltype(std::end(data)) end() const {
-        return std::end(data);
+    const_iterator cend() const {
+        return data.cend();
     }
     iterator end() {
-        return iterator(*this, *std::end(data));
+        return iterator(*this, std::end(data));
     }
     void erase(const T & expired) {
         auto it = positions.find(expired);
@@ -92,43 +99,43 @@ class hash_list<T>::reference {
     friend class hash_list;
     reference(hash_list & owner, T & value) : owner{owner}, value{value} {}
 public:
+    reference(const reference &) = delete;
+    reference & operator=(const reference &) = delete;
     reference(reference &&) = default;
     reference & operator=(reference &&) = default;
     reference & operator=(const T & newValue) {
-        auto it = owner.positions.find(value);
-        owner.positions.emplace(std::piecewise_construct, std::forward_as_tuple(newValue), std::forward_as_tuple(it->second));
-        owner.positions.erase(value);
-        value = newValue;
+        owner.replace(value, newValue);
+        assert(newValue == value && *owner.positions[value]->second == value);
         return *this;
     }
     operator T() const {
         return value;
-    }
-    friend void swap(reference lhs, reference rhs) {
-        std::swap(lhs, rhs);
     }
 };
 
 template<typename T>
 class hash_list<T>::iterator : public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, reference*, reference> {
     hash_list & owner;
-    T & value;
+    typename decltype(hash_list<T>::data)::iterator it;
     friend class hash_list;
-    iterator(hash_list & owner, T & value) : owner{owner}, value{value} {}
+    iterator(decltype(owner) & owner, const decltype(it) & it) : owner{owner}, it{it} {}
 public:
+    bool operator!=(const iterator & other) {
+        return it != other.it;
+    }
     reference operator*() {
-        return reference(owner, value);
+        return reference(owner, *it);
     }
     T operator*() const {
-        return value;
+        return *it;
     }
-    iterator operator++() {
-        //lookup list iterator, increment and return iterator of its value
-        return iterator(owner, *std::next(owner.positions[value]));
+    iterator & operator++() {
+        it = std::next(it);
+        return *this;
     }
-    iterator operator--() {
-        //lookup list iterator, increment and return iterator of its value
-        return iterator(owner, *std::prev(owner.positions[value]));
+    iterator & operator--() {
+        it = std::prev(it);
+        return *this;
     }
 };
 

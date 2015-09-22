@@ -95,7 +95,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
-
     QObject::connect(&Session::singleton(), &Session::autoSaveSignal, this, &MainWindow::autoSaveSlot);
 
     createToolbars();
@@ -107,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     setAcceptDrops(true);
 
     statusBar()->setSizeGripEnabled(false);
+    statusBar()->addWidget(&cursorPositionLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
@@ -117,6 +117,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 #endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+}
+
+void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
+    cursorPositionLabel.setHidden(vpID == VIEWPORT_SKELETON || vpID == VIEWPORT_UNDEFINED);
+    cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
 }
 
 void MainWindow::createViewports() {
@@ -137,6 +142,9 @@ void MainWindow::createViewports() {
     viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
     viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
     viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    for (auto & vp : viewports) {
+        QObject::connect(vp.get(), &Viewport::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
+    }
 }
 
 void MainWindow::createToolbars() {
@@ -167,16 +175,19 @@ void MainWindow::createToolbars() {
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
     xField = new QSpinBox();
+    xField->setPrefix("x: ");
     xField->setRange(1, 1000000);
     xField->setMinimumWidth(75);
     xField->setValue(state->viewerState->currentPosition.x + 1);
 
     yField = new QSpinBox();
+    yField->setPrefix("y: ");
     yField->setRange(1, 1000000);
     yField->setMinimumWidth(75);
     yField->setValue(state->viewerState->currentPosition.y + 1);
 
     zField = new QSpinBox();
+    zField->setPrefix("z: ");
     zField->setRange(1, 1000000);
     zField->setMinimumWidth(75);
     zField->setValue(state->viewerState->currentPosition.z + 1);
@@ -185,11 +196,8 @@ void MainWindow::createToolbars() {
     QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
     QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
 
-    basicToolbar.addWidget(new QLabel("<font color='black'>x</font>"));
     basicToolbar.addWidget(xField);
-    basicToolbar.addWidget(new QLabel("<font color='black'>y</font>"));
     basicToolbar.addWidget(yField);
-    basicToolbar.addWidget(new QLabel("<font color='black'>z</font>"));
     basicToolbar.addWidget(zField);
 
     addToolBar(&basicToolbar);
@@ -860,7 +868,7 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-        Skeletonizer::singleton().loadTreeLUT();
+        state->viewer->loadTreeLUT();
         state->viewer->defaultDatasetLUT();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
                           QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1024, 800);

@@ -36,5 +36,6 @@
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
         <file>resources/color_palette/default.json</file>
+        <file>resources/color_palette/linear_kry_5-98_c75.json</file>
     </qresource>
 </RCC>

@@ -1,5 +1,5 @@
-#ifndef SKELETONTAB_H
-#define SKELETONTAB_H
+#ifndef TREESTAB_H
+#define TREESTAB_H
 
 #include <QCheckBox>
 #include <QDoubleSpinBox>
@@ -7,19 +7,18 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSettings>
 #include <QSpinBox>
 #include <QGridLayout>
 #include <QWidget>
 
-class SkeletonTab : public QWidget
+class TreesTab : public QWidget
 {
     friend class AppearanceWidget;
     friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
     QGridLayout mainLayout;
     // tree render options
-    QLabel treeHeaeder{"<strong>Trees</strong>"};
-    QFrame treeSeparator;
     QCheckBox highlightActiveTreeCheck{"Highlight active tree"};
     QCheckBox highlightIntersectionsCheck{"Highlight intersections"};
     QCheckBox lightEffectsCheck{"Enable light effects"};
@@ -35,23 +34,17 @@ class SkeletonTab : public QWidget
     QCheckBox skeletonIn3DVPCheck{"Show skeleton in 3D VP"};
     QRadioButton wholeSkeletonRadio{"Show whole skeleton"};
     QRadioButton selectedTreesRadio{"Show only selected trees"};
-    // node render options
-    QLabel nodeHeaeder{"<strong>Nodes</strong>"};
-    QFrame nodeSeparator;
-    QCheckBox allNodeIDsCheck{"Show all node IDs"};
-    QCheckBox nodeCommentsCheck{"Show node comments"};
-    QCheckBox overrideNodeRadiusCheck{"Override node radius"};
-    QDoubleSpinBox nodeRadiusSpin;
-    QLabel edgeNodeRatioLabel{"Edge : Node radius ratio"};
-    QDoubleSpinBox edgeNodeRatioSpin;
 
+    void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");
+    void saveSettings(QSettings & settings) const;
+    void loadSettings(const QSettings & settings);
 public:
-    explicit SkeletonTab(QWidget *parent = 0);
+    explicit TreesTab(QWidget *parent = 0);
 
 signals:
     void showIntersectionsSignal(const bool checked);
 public slots:
 };
 
-#endif // SKELETONTAB_H
+#endif // TREESTAB_H

@@ -6,6 +6,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QSettings>
 #include <QSlider>
 #include <QSpinBox>
 #include <QWidget>
@@ -41,6 +42,8 @@ class DatasetAndSegmentationTab : public QWidget
     QPushButton volumeColorButton;
 
     void useOwnDatasetColorsButtonClicked(QString path = "");
+    void saveSettings(QSettings & settings) const;
+    void loadSettings(const QSettings & settings);
 public:
     explicit DatasetAndSegmentationTab(QWidget *parent = 0);
 

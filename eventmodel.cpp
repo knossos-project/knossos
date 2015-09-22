@@ -440,9 +440,10 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent * event, int VPfound) {
     if (mouseEventAtValidDatasetPosition(event, VPfound)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, VPfound, event);
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Segmentation::singleton().selectedObjectsCount() == 1) {
-            uint64_t soid = Segmentation::singleton().subobjectIdOfFirstSelectedObject(clickedCoordinate);
-            auto brush_copy = Segmentation::singleton().brush.value();
+        auto & seg = Segmentation::singleton();
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
+            auto brush_copy = seg.brush.value();
+            uint64_t soid = brush_copy.inverse ? seg.getBackgroundId() : seg.subobjectIdOfFirstSelectedObject(clickedCoordinate);
             brush_copy.shape = brush_t::shape_t::angular;
             brush_copy.radius = state->viewerState->vpConfigs[0].displayedlengthInNmX / 2;//set brush to fill visible area
             subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
@@ -856,7 +857,7 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        auto & skelSettings = state->viewer->window->widgetContainer.appearanceWidget.skeletonTab;
+        auto & skelSettings = state->viewer->window->widgetContainer.appearanceWidget.treesTab;
         const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
         skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
         skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
@@ -961,60 +962,40 @@ void EventModel::handleKeyRelease(QKeyEvent *event) {
 }
 
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound) {
-    int x = 0, y = 0, z = 0;
-
-    switch(state->viewerState->vpConfigs[VPfound].type) {
-        case VIEWPORT_XY:
-            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)x_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)y_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            z = state->viewerState->currentPosition.z;
-            break;
-        case VIEWPORT_XZ:
-            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)x_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)y_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            y = state->viewerState->currentPosition.y;
-            break;
-        case VIEWPORT_YZ:
-            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)x_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)y_dist)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            x = state->viewerState->currentPosition.x;
-            break;
-        case VIEWPORT_ARBITRARY:
-            x = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.x
-                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v1.x
-                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v2.x
-                );
-
-            y = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.y
-                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v1.y
-                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v2.y
-                );
-
-            z = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.z
-                    + ((float)x_dist / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v1.z
-                    + ((float)y_dist / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
-                    * state->viewerState->vpConfigs[VPfound].v2.z
-                );
-            break;
+    const auto & currentPos = state->viewerState->currentPosition;
+    const auto & vp = state->viewerState->vpConfigs[VPfound];
+    switch(vp.type) {
+    case VIEWPORT_XY: {
+        const int leftUpperX = currentPos.x - vp.edgeLength / 2 / vp.screenPxXPerDataPx;
+        const int leftUpperY = currentPos.y - vp.edgeLength / 2 / vp.screenPxYPerDataPx;
+        return {leftUpperX + static_cast<int>(x_dist / vp.screenPxXPerDataPx),
+                leftUpperY + static_cast<int>(y_dist / vp.screenPxYPerDataPx),
+                state->viewerState->currentPosition.z};
+        }
+    case VIEWPORT_XZ: {
+        const int leftUpperX = currentPos.x - vp.edgeLength / 2 / vp.screenPxXPerDataPx;
+        const int leftUpperZ = currentPos.z - vp.edgeLength / 2 / vp.screenPxYPerDataPx;
+        return {leftUpperX + static_cast<int>(x_dist / vp.screenPxXPerDataPx),
+                state->viewerState->currentPosition.y,
+                leftUpperZ + static_cast<int>(y_dist / vp.screenPxYPerDataPx)};
+        }
+    case VIEWPORT_YZ: {
+        const int leftUpperZ = currentPos.z - vp.edgeLength / 2 / vp.screenPxXPerDataPx;
+        const int leftUpperY = currentPos.y - vp.edgeLength / 2 / vp.screenPxYPerDataPx;
+        return {state->viewerState->currentPosition.x,
+                leftUpperY + static_cast<int>(y_dist / vp.screenPxYPerDataPx),
+                leftUpperZ + static_cast<int>(x_dist / vp.screenPxXPerDataPx)};
+        }
+    case VIEWPORT_ARBITRARY: {
+        const auto leftUpper = currentPos - (vp.v1 * vp.edgeLength / 2 / vp.screenPxXPerDataPx) - (vp.v2 * vp.edgeLength / 2 / vp.screenPxYPerDataPx);
+        return {roundFloat(leftUpper.x + (x_dist / vp.screenPxXPerDataPx) * vp.v1.x + (y_dist / vp.screenPxYPerDataPx) * vp.v2.x),
+                roundFloat(leftUpper.y + (x_dist / vp.screenPxXPerDataPx) * vp.v1.y + (y_dist / vp.screenPxYPerDataPx) * vp.v2.y),
+                roundFloat(leftUpper.z + (x_dist / vp.screenPxXPerDataPx) * vp.v1.z + (y_dist / vp.screenPxYPerDataPx) * vp.v2.z)};
+        }
+    case VIEWPORT_UNDEFINED:
+    default:
+        return {0, 0, 0};
     }
-    return Coordinate(x, y, z);
 }
 
 bool EventModel::mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound) {

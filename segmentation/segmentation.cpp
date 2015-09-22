@@ -120,7 +120,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(cons
 
 Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Segmentation::Object & other) {
     emit beforeAppendRow();
-    objects.emplace_back(one, other);
+    objects.emplace_back(one, other);//invoke merge ctor
     emit appendedRow();
     return objects.back();
 }
@@ -614,15 +614,11 @@ void Segmentation::mergeSelectedObjects() {
         if (secondObj.immutable && firstObj.immutable) {
             flat_deselect(secondObj);
 
-            uint64_t newid;
-            newid = const_merge(secondObj, firstObj).index; // merge second object into first object
-            secondObj.todo = false;
+            secondObj.todo = false;//secondObj will get invalidated
+            uint64_t newIndex = const_merge(secondObj, firstObj).index;//create new object from merge result
 
-            selectedObjectIndices.emplace_back(newid);
-            //move new index to front, so it gets the new merge origin
-            swap(selectedObjectIndices.back(), selectedObjectIndices.front());
-            //delay deselection after we swapped new with first
-            flat_deselect(firstObj);
+            selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
+            flat_deselect(objects[selectedObjectIndices.back()]);//firstObj got invalidated
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
