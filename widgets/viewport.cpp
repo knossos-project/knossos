@@ -26,7 +26,6 @@
 #include "functions.h"
 #include "GuiConstants.h"
 #include "profiler.h"
-#include "renderer.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -307,7 +306,7 @@ void Viewport::paintGL() {
         } else {
             drawSkeletonViewport();
         }
-        state->viewer->renderer->renderViewportFrontFace(id);
+        renderViewportFrontFace(id);
     }
 }
 
@@ -472,7 +471,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    renderOrthogonalVP(vpID, RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -484,7 +483,7 @@ void Viewport::drawSkeletonViewport() {
         }
         renderVolumeVP();
     } else {
-        state->viewer->renderer->renderSkeletonVP();
+        renderSkeletonVP();
     }
 }
 
@@ -870,15 +869,15 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
             renderVolumeVP();
         }
         else {
-            state->viewer->renderer->renderSkeletonVP(options);
+            renderSkeletonVP(options);
         }
     }
     else {
-        state->viewer->renderer->renderOrthogonalVP(id, options);
+        renderOrthogonalVP(id, options);
     }
     if(withScale) {
-        state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderScaleBar(id, std::ceil(0.02*size));
+        setFrontFacePerspective(id);
+        renderScaleBar(id, std::ceil(0.02*size));
     }
 
     QImage fboImage(fbo.toImage());

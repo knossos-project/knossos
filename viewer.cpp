@@ -25,7 +25,6 @@
 
 #include "file_io.h"
 #include "functions.h"
-#include "renderer.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
@@ -56,12 +55,12 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     /* order of the initialization of the rendering system is
      * 1. initViewer
      * 2. new Skeletonizer
-     * 3. new Renderer
+     * 3. initRenderer
      * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
     */
 
     initViewer();
-    renderer = new Renderer();
+    Viewport::initRenderer();
 
     QDesktopWidget *desktop = QApplication::desktop();
 
@@ -73,13 +72,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                             desktop->availableGeometry().topLeft().y() + 50,
                             1024, 800);
     }
-
-
-    // This is needed for the viewport text rendering
-    renderer->refVPXY = vpUpperLeft;
-    renderer->refVPXZ = vpLowerLeft;
-    renderer->refVPYZ = vpUpperRight;
-    renderer->refVPSkel = vpLowerRight;
 
     frames = 0;
     state->viewerState->renderInterval = FAST;

@@ -29,12 +29,10 @@
 #include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
-#include "renderer.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "segmentation/segmentationsplit.h"
 #include "viewer.h"
-#include "renderer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 
@@ -131,7 +129,7 @@ void Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         }
         //Set Connection between Active Node and Clicked Node
         if (QApplication::keyboardModifiers() == Qt::ALT) {
-            auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+            auto clickedNode = retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
             auto * activeNode = state->skeletonState->activeNode;
             if (clickedNode && activeNode != nullptr) {
                 auto & skel = Skeletonizer::singleton();
@@ -154,7 +152,7 @@ void Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 
 void Viewport::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        auto clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        auto clickedNode = retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if (clickedNode) {
             auto & skel = Skeletonizer::singleton();
@@ -411,7 +409,7 @@ void Viewport::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
         // mouse released on same spot on which it was pressed down: single node selection
-        auto selectedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
+        auto selectedNode = retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
         if (selectedNode) {
             selectedNodes = {&selectedNode.get()};
         }
@@ -1115,7 +1113,7 @@ QSet<nodeListElement*> Viewport::nodeSelection(int x, int y, int vpId) {
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    return state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
+    return retrieveAllObjectsBeneathSquare(vpId, centerX, centerY, width, height);
 }
 
 int Viewport::xrel(const int x) {

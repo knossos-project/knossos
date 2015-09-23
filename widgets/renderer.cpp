@@ -21,7 +21,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "renderer.h"
+#include "widgets/viewport.h"
 
 #include "profiler.h"
 #include "segmentation/cubeloader.h"
@@ -31,7 +31,6 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "viewer.h"
-#include "widgets/viewport.h"
 
 #include <QMatrix4x4>
 #include <QOpenGLPaintDevice>
@@ -58,34 +57,12 @@
 #define ROTATIONSTATEYZ    2
 #define ROTATIONSTATERESET 3
 
-Renderer::Renderer(QObject *parent) : QObject(parent) {
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    /* Initialize the basic model view matrix for the skeleton VP
-    Perform basic coordinate system rotations */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glTranslatef((float)state->skeletonState->volBoundary / 2.,
-        (float)state->skeletonState->volBoundary / 2.,
-        -((float)state->skeletonState->volBoundary / 2.));
-
-    glScalef(-1., 1., 1.);
-    //);
-    //qDebug("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
-    glRotatef(235., 1., 0., 0.);
-    glRotatef(210., 0., 0., 1.);
-    setRotationState(ROTATIONSTATERESET);
-    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-    /* save the matrix for further use... */
-    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
-    glLoadIdentity();
-
+void Viewport::initRenderer() {
     initMesh(&(state->skeletonState->lineVertBuffer), 1024);
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 }
 
-uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
+uint Viewport::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
     float currentAngle = 0.;
         floatCoordinate segDirection, tempVec, tempVec2;
         GLUquadricObj *gluCylObj = NULL;
@@ -153,7 +130,7 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         return true;
 }
 
-uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint /*viewportType*/) {
+uint Viewport::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint /*viewportType*/) {
     GLUquadricObj *gluSphereObj = NULL;
 
         /* Render only a point if the sphere wouldn't be visible anyway */
@@ -231,7 +208,7 @@ static void restore_gl_state() {
     glPopClientAttrib();
 }
 
-void Renderer::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
+void Viewport::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
     GLdouble x, y, z, model[16], projection[16];
     GLint gl_viewport[4];
     glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
@@ -241,7 +218,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str, const int
     backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
-    painter.setFont(QFont(painter.font().family(), fontSize * refVPSkel->devicePixelRatio()));
+    painter.setFont(QFont(painter.font().family(), fontSize * devicePixelRatio()));
     gluProject(pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
     painter.drawText(centered ? x - QFontMetrics(painter.font()).width(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
@@ -249,7 +226,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str, const int
     restore_gl_state();
 }
 
-uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
+uint Viewport::renderSegPlaneIntersection(segmentListElement *segment) {
     if(!state->viewerState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
@@ -367,7 +344,7 @@ uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
 
 }
 
-void Renderer::setFrontFacePerspective(uint currentVP) {
+void Viewport::setFrontFacePerspective(uint currentVP) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -378,7 +355,7 @@ void Renderer::setFrontFacePerspective(uint currentVP) {
     glLoadIdentity();
 }
 
-void Renderer::renderViewportFrontFace(uint currentVP) {
+void Viewport::renderViewportFrontFace(uint currentVP) {
     setFrontFacePerspective(currentVP);
 
     switch(state->viewerState->vpConfigs[currentVP].type) {
@@ -461,7 +438,7 @@ void Renderer::renderViewportFrontFace(uint currentVP) {
     }
 }
 
-void Renderer::renderScaleBar(uint currentVP, const int fontSize) {
+void Viewport::renderScaleBar(uint currentVP, const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[currentVP];
     const auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
@@ -489,7 +466,7 @@ void Renderer::renderScaleBar(uint currentVP, const int fontSize) {
 /* @todo update from trunk */
 //static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
-bool Renderer::renderOrthogonalVP(uint currentVP, const RenderOptions &options) {
+bool Viewport::renderOrthogonalVP(uint currentVP, const RenderOptions &options) {
     floatCoordinate * n = &(state->viewerState->vpConfigs[currentVP].n);
     floatCoordinate * v1 = &(state->viewerState->vpConfigs[currentVP].v1);
     floatCoordinate * v2 = &(state->viewerState->vpConfigs[currentVP].v2);
@@ -996,7 +973,7 @@ bool Viewport::renderVolumeVP() {
     return true;
 }
 
-bool Renderer::renderSkeletonVP(const RenderOptions &options) {
+bool Viewport::renderSkeletonVP(const RenderOptions &options) {
     if(!state->viewerState->selectModeFlag) {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -1543,11 +1520,11 @@ bool Renderer::renderSkeletonVP(const RenderOptions &options) {
     return true;
 }
 
-void Renderer::renderBrush(uint viewportType, Coordinate coord) {
+void Viewport::renderBrush(uint viewportType, Coordinate coord) {
     glLineWidth(2.0f);
 
     auto & seg = Segmentation::singleton();
-    auto drawCursor = [&seg, viewportType, coord]() {
+    auto drawCursor = [this, &seg, viewportType, coord]() {
         const auto bradius = seg.brush.getRadius();
         const auto bview = seg.brush.getView();
         const auto xsize = bradius / state->scale.x;
@@ -1585,11 +1562,11 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            auto verticalPixelBorder = [](float x, float y, float z){
+            auto verticalPixelBorder = [this](float x, float y, float z){
                 glVertex3f(x, y    , z);
                 glVertex3f(x, y + 1, z);
             };
-            auto horizontalPixelBorder = [](float x, float y, float z){
+            auto horizontalPixelBorder = [this](float x, float y, float z){
                 glVertex3f(x    , y, z);
                 glVertex3f(x + 1, y, z);
             };
@@ -1648,7 +1625,7 @@ void Renderer::renderBrush(uint viewportType, Coordinate coord) {
     drawCursor();
 }
 
-void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
+void Viewport::renderArbitrarySlicePane(const vpConfig & vp) {
     const auto & n = vp.n;
     const auto & v1 = vp.v1;
     const auto & v2 = vp.v2;
@@ -1676,7 +1653,7 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-boost::optional<nodeListElement &> Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
+boost::optional<nodeListElement &> Viewport::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
     const auto & nodes = retrieveAllObjectsBeneathSquare(currentVP, x, y, width, width);
     if (nodes.size() != 0) {
         return *(*std::begin(nodes));
@@ -1684,16 +1661,8 @@ boost::optional<nodeListElement &> Renderer::retrieveVisibleObjectBeneathSquare(
     return boost::none;
 }
 
-QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
-    if(currentVP == VIEWPORT_XY) {
-        refVPXY->makeCurrent();
-    } else if(currentVP == VIEWPORT_XZ) {
-        refVPXZ->makeCurrent();
-    } else if(currentVP == VIEWPORT_YZ) {
-        refVPYZ->makeCurrent();
-    } else if(currentVP == VIEWPORT_SKELETON) {
-        refVPSkel->makeCurrent();
-    }
+QSet<nodeListElement *> Viewport::retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
+    makeCurrent();
 
     //4 elems per node: hit_count(always 1), min, max and 1 name
     //generous amount of addional space for non-node-glloadname-calls
@@ -1709,19 +1678,15 @@ QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    GLdouble vp_height = refVPSkel->height();
+    GLdouble vp_height = height();
 
-    if(currentVP == VIEWPORT_XY) {
-        vp_height = refVPXY->height() * refVPXY->devicePixelRatio();
-    } else if(currentVP == VIEWPORT_XZ) {
-        vp_height = refVPXZ->height() * refVPXZ->devicePixelRatio();
-    } else if(currentVP == VIEWPORT_YZ) {
-        vp_height = refVPYZ->height() * refVPYZ->devicePixelRatio();
+    if(currentVP != VIEWPORT_SKELETON) {
+        vp_height = height() * devicePixelRatio();
     }
-    centerX *= refVPXY->devicePixelRatio();
-    centerY *= refVPXY->devicePixelRatio();
-    selectionWidth *= refVPXY->devicePixelRatio();
-    selectionHeight *= refVPXY->devicePixelRatio();
+    centerX *= devicePixelRatio();
+    centerY *= devicePixelRatio();
+    selectionWidth *= devicePixelRatio();
+    selectionHeight *= devicePixelRatio();
 
     GLint openGLviewport[4];
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
@@ -1764,7 +1729,7 @@ QSet<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP
     return foundNodes;
 }
 
-bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
+bool Viewport::updateRotationStateMatrix(float M1[16], float M2[16]){
     //multiply matrix m2 to matrix m1 and save result in rotationState matrix
     int i;
     float M3[16];
@@ -1792,7 +1757,7 @@ bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
     return true;
 }
 
-bool Renderer::rotateSkeletonViewport(){
+bool Viewport::rotateSkeletonViewport(){
 
     // for general information look at http://de.wikipedia.org/wiki/Rolling-Ball-Rotation
 
@@ -1861,7 +1826,7 @@ bool Renderer::rotateSkeletonViewport(){
 }
 
 
-bool Renderer::setRotationState(uint setTo) {
+bool Viewport::setRotationState(uint setTo) {
     if (setTo == ROTATIONSTATERESET){
             state->skeletonState->rotationState[0] = 0.866025;
             state->skeletonState->rotationState[1] = 0.286788;
@@ -1950,7 +1915,7 @@ bool Renderer::setRotationState(uint setTo) {
  * Ugly code, not nice to read, should be simplified...
  */
 
-void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOptions &options) {
+void Viewport::renderSkeleton(uint currentVP, uint viewportType, const RenderOptions &options) {
     treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     segmentListElement *currentSegment;
@@ -2241,7 +2206,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType, const RenderOpt
 }
 
 
-bool Renderer::resizemeshCapacity(mesh *toResize, uint n) {
+bool Viewport::resizemeshCapacity(mesh *toResize, uint n) {
     (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
     (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
     (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
@@ -2253,13 +2218,11 @@ bool Renderer::resizemeshCapacity(mesh *toResize, uint n) {
     return true;
 }
 
-bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+bool Viewport::doubleMeshCapacity(mesh *toDouble) {
     return resizemeshCapacity(toDouble, 2);
 }
 
-bool Renderer::initMesh(mesh *toInit, uint initialSize) {
-
-
+bool Viewport::initMesh(mesh *toInit, uint initialSize) {
     (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
     (*toInit).normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
     (*toInit).colors = (color4F *)malloc(initialSize * sizeof(color4F));
@@ -2271,13 +2234,11 @@ bool Renderer::initMesh(mesh *toInit, uint initialSize) {
     (*toInit).vertsIndex = 0;
     (*toInit).normsIndex = 0;
     (*toInit).colsIndex = 0;
-
-
     return true;
 }
 
 
-bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
+bool Viewport::updateFrustumClippingPlanes(uint viewportType) {
    float   frustum[6][4];
    float   proj[16];
    float   modl[16];
@@ -2398,7 +2359,7 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
 }
 
 /* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
-bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
+bool Viewport::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
     int p;
 
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */

@@ -6,7 +6,6 @@
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
-#include "renderer.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 

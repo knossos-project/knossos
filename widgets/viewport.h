@@ -26,6 +26,7 @@
  */
 
 #include "coordinate.h"
+#include "scriptengine/decorators/meshdecorator.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
 #include <QDebug>
@@ -36,6 +37,9 @@
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QWidget>
+
+#include <boost/multi_array.hpp>
+#include <boost/optional.hpp>
 
 enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
 
@@ -135,6 +139,21 @@ struct vpConfig {
     float frustum[6][4];
 };
 
+struct RenderOptions {
+    RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
+                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true)
+        : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
+          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection) {}
+    bool drawBoundaryAxes;
+    bool drawBoundaryBox;
+    bool drawCrosshairs;
+    bool drawOverlay;
+    bool drawSkeleton;
+    bool drawViewportPlanes;
+    bool highlightActiveNode;
+    bool highlightSelection;
+};
+
 class Viewport;
 class ResizeButton : public QPushButton {
     Q_OBJECT
@@ -145,13 +164,14 @@ signals:
     void vpResize(const QPoint & globalPos);
 };
 
-Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
 
 class QViewportFloatWidget : public QWidget {
 public:
     explicit QViewportFloatWidget(QWidget *parent, int id);
 };
 
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
+constexpr int defaultFonsSize = 10;
 class commentListElement;
 class nodeListElement;
 class segmentListElement;
@@ -185,6 +205,30 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QPointF userMouseSlide;
     floatCoordinate arbNodeDragCache;
 
+    // rendering
+    const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
+    void renderArbitrarySlicePane(const vpConfig &);
+    void setFrontFacePerspective(uint currentVP);
+    void renderViewportFrontFace(uint currentVP);
+    bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
+    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
+    void renderBrush(uint viewportType, Coordinate coord);
+    void renderScaleBar(uint currentVP, const int fontSize = defaultFonsSize);
+    bool rotateSkeletonViewport();
+    bool updateRotationStateMatrix(float M1[16], float M2[16]);
+    uint renderSegPlaneIntersection(segmentListElement *segment);
+    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
+    uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
+    void renderSkeleton(uint currentVP,uint viewportType, const RenderOptions & options = RenderOptions());
+    bool doubleMeshCapacity(mesh *toDouble);
+    static bool initMesh(mesh *meshToInit, uint initialSize);
+    bool setRotationState(uint setTo);
+    bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
+    bool updateFrustumClippingPlanes(uint viewportType);
+    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
+
 public:
     const static int numberViewports = 4;
     explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
@@ -210,6 +254,8 @@ public:
     static bool showBoundariesInUm;
 
     Coordinate getMouseCoordinate();
+    static void initRenderer();
+    static bool resizemeshCapacity(mesh *toResize, uint n);
 protected:
     void initializeGL() override;
     void createOverlayTextures();

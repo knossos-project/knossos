@@ -1,8 +1,8 @@
 #include "meshdecorator.h"
 
 #include "mesh.h"
-#include "renderer.h"
 #include "viewer.h"
+#include "widgets/viewport.h"
 
 #include <QDebug>
 
@@ -49,7 +49,7 @@ QList<color4F *> *MeshDecorator::colors(mesh *self) {
 }
 
 void MeshDecorator::set_vertices(mesh *self, QList<QVariant> &vertices) {
-    state->viewer->renderer->resizemeshCapacity(self, vertices.size());
+    Viewport::resizemeshCapacity(self, vertices.size());
 
     for(int i = 0; i < vertices.size(); i++) {
         if(vertices.at(i).canConvert<floatCoordinate>()) {
