@@ -300,9 +300,6 @@ signals:
     void rotationSignal(float x, float y, float z, float angle);
     void pasteCoordinateSignal();
     void zoomReset();
-    void zoomOrthoSignal(float step);
-    void zoomInSkeletonVPSignal();
-    void zoomOutSkeletonVPSignal();
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();

@@ -470,13 +470,13 @@ void Viewport::wheelEvent(QWheelEvent *event) {
             seg.volume_mouse_zoom *= (directionSign == -1) ? 1.1f : 0.9f;
         } else {
             if (directionSign == -1) {
-                emit zoomInSkeletonVPSignal();
+                zoomInSkeletonVP();
             } else {
-                emit zoomOutSkeletonVPSignal();
+                zoomOutSkeletonVP();
             }
         }
     } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
-        emit zoomOrthoSignal(directionSign * 0.1);
+        zoomOrthogonals(directionSign * 0.1);
     } else {
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
         const auto type = state->viewerState->vpConfigs[id].type;
@@ -911,17 +911,17 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
     } else if(event->key() == Qt::Key_I) {
         if(id != VIEWPORT_SKELETON) {
-            emit zoomOrthoSignal(-0.1);
+            zoomOrthogonals(-0.1);
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX) {
-            emit zoomInSkeletonVPSignal();
+            zoomInSkeletonVP();
         }
     } else if(event->key() == Qt::Key_O) {
         if(id != VIEWPORT_SKELETON) {
-            emit zoomOrthoSignal(0.1);
+            zoomOrthogonals(0.1);
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-            emit zoomOutSkeletonVPSignal();
+            zoomOutSkeletonVP();
         }
     } else if(event->key() == Qt::Key_V) {
        if(ctrl) {
