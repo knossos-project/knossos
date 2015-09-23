@@ -306,7 +306,7 @@ void Viewport::paintGL() {
         } else {
             drawSkeletonViewport();
         }
-        renderViewportFrontFace(id);
+        renderViewportFrontFace();
     }
 }
 
@@ -336,14 +336,14 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         if(ctrl && alt) { // drag viewport around
             moveVP(event->globalPos());
         } else {
-            handleMouseMotionLeftHold(event, id);
+            handleMouseMotionLeftHold(event);
         }
     } else if(mouseBtn == Qt::MidButton) {
-        handleMouseMotionMiddleHold(event, id);
+        handleMouseMotionMiddleHold(event);
     } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
-        handleMouseMotionRightHold(event, id);
+        handleMouseMotionRightHold(event);
     }
-    handleMouseHover(event, id);
+    handleMouseHover(event);
 
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 
@@ -403,12 +403,12 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
             baseEventX = event->x();
             baseEventY = event->y();
         } else {
-            handleMouseButtonLeft(event, id);
+            handleMouseButtonLeft(event);
         }
     } else if(event->button() == Qt::MiddleButton) {
-        handleMouseButtonMiddle(event, id);
+        handleMouseButtonMiddle(event);
     } else if((penmode && event->button() == Qt::LeftButton) || (!penmode && event->button() == Qt::RightButton)) {
-        handleMouseButtonRight(event, id);
+        handleMouseButtonRight(event);
     }
 }
 
@@ -428,13 +428,13 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     }
 
     if(event->button() == Qt::LeftButton) {
-        handleMouseReleaseLeft(event, id);
+        handleMouseReleaseLeft(event);
     }
     if(event->button() == Qt::RightButton) {
-        handleMouseReleaseRight(event, id);
+        handleMouseReleaseRight(event);
     }
     if(event->button() == Qt::MiddleButton) {
-        handleMouseReleaseMiddle(event, id);
+        handleMouseReleaseMiddle(event);
     }
 
     userMouseSlide = {};
@@ -471,7 +471,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    renderOrthogonalVP(vpID, RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    renderOrthogonalVP(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -873,11 +873,11 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
         }
     }
     else {
-        renderOrthogonalVP(id, options);
+        renderOrthogonalVP(options);
     }
     if(withScale) {
-        setFrontFacePerspective(id);
-        renderScaleBar(id, std::ceil(0.02*size));
+        setFrontFacePerspective();
+        renderScaleBar(std::ceil(0.02*size));
     }
 
     QImage fboImage(fbo.toImage());

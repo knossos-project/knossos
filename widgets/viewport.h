@@ -184,21 +184,20 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
 
     void handleKeyRelease(QKeyEvent *event);
     QPoint mouseDown;
-    void handleMouseButtonLeft(QMouseEvent *event, int VPfound);
-    void handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
-    void handleMouseButtonRight(QMouseEvent *event, int VPfound);
-    void handleMouseHover(QMouseEvent *event, int VPfound);
-    void handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
-    void handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
-    void handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
-    void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
-    void handleMouseReleaseRight(QMouseEvent *event, int VPfound);
-    void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
-    void handleMouseWheel(QWheelEvent * const event, int VPfound);
+    void handleMouseButtonLeft(QMouseEvent *event);
+    void handleMouseButtonMiddle(QMouseEvent *event);
+    void handleMouseButtonRight(QMouseEvent *event);
+    void handleMouseHover(QMouseEvent *event);
+    void handleMouseMotionLeftHold(QMouseEvent *event);
+    void handleMouseMotionMiddleHold(QMouseEvent *event);
+    void handleMouseMotionRightHold(QMouseEvent *event);
+    void handleMouseReleaseLeft(QMouseEvent *event);
+    void handleMouseReleaseRight(QMouseEvent *event);
+    void handleMouseReleaseMiddle(QMouseEvent *event);
 
-    bool mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound);
-    void startNodeSelection(int x, int y, int vpId);
-    QSet<nodeListElement *> nodeSelection(int x, int y, int vpId);
+    bool mouseEventAtValidDatasetPosition(QMouseEvent *event);
+    void startNodeSelection(int x, int y);
+    QSet<nodeListElement *> nodeSelection(int x, int y);
     int xrel(const int x);
     int yrel(const int y);
     QPoint prevMouseMove;
@@ -208,26 +207,26 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     // rendering
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
-    void setFrontFacePerspective(uint currentVP);
-    void renderViewportFrontFace(uint currentVP);
-    bool renderOrthogonalVP(uint currentVP, const RenderOptions & options = RenderOptions());
+    void setFrontFacePerspective();
+    void renderViewportFrontFace();
+    bool renderOrthogonalVP(const RenderOptions & options = RenderOptions());
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     void renderBrush(uint viewportType, Coordinate coord);
-    void renderScaleBar(uint currentVP, const int fontSize = defaultFonsSize);
+    void renderScaleBar(const int fontSize = defaultFonsSize);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     uint renderSegPlaneIntersection(segmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
-    uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
-    void renderSkeleton(uint currentVP,uint viewportType, const RenderOptions & options = RenderOptions());
+    uint renderSphere(Coordinate *pos, float radius, color4F color);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
+    void renderSkeleton(uint viewportType, const RenderOptions & options = RenderOptions());
     bool doubleMeshCapacity(mesh *toDouble);
     static bool initMesh(mesh *meshToInit, uint initialSize);
     bool setRotationState(uint setTo);
-    bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
-    bool updateFrustumClippingPlanes(uint viewportType);
-    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
-    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint centerX, uint centerY, uint width, uint height);
+    bool sphereInFrustum(floatCoordinate pos, float radius);
+    bool updateFrustumClippingPlanes();
+    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
+    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
 
 public:
     const static int numberViewports = 4;
