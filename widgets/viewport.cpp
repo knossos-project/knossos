@@ -23,7 +23,6 @@
  */
 #include "viewport.h"
 
-#include "eventmodel.h"
 #include "functions.h"
 #include "GuiConstants.h"
 #include "profiler.h"
@@ -337,19 +336,19 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
         if(ctrl && alt) { // drag viewport around
             moveVP(event->globalPos());
-        } else {// delegate behaviour
-            eventDelegate->handleMouseMotionLeftHold(event, id);
+        } else {
+            handleMouseMotionLeftHold(event, id);
         }
     } else if(mouseBtn == Qt::MidButton) {
-        eventDelegate->handleMouseMotionMiddleHold(event, id);
+        handleMouseMotionMiddleHold(event, id);
     } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
-        eventDelegate->handleMouseMotionRightHold(event, id);
+        handleMouseMotionRightHold(event, id);
     }
-    eventDelegate->handleMouseHover(event, id);
+    handleMouseHover(event, id);
 
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 
-    eventDelegate->prevMouseMove = event->pos();
+    prevMouseMove = event->pos();
 }
 
 void Viewport::setDock(bool isDock) {
@@ -391,7 +390,7 @@ void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
 
-    eventDelegate->mouseDown = event->pos();
+    mouseDown = event->pos();
 
     auto penmode = state->viewerState->penmode;
 
@@ -405,12 +404,12 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
             baseEventX = event->x();
             baseEventY = event->y();
         } else {
-            eventDelegate->handleMouseButtonLeft(event, id);
+            handleMouseButtonLeft(event, id);
         }
     } else if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseButtonMiddle(event, id);
+        handleMouseButtonMiddle(event, id);
     } else if((penmode && event->button() == Qt::LeftButton) || (!penmode && event->button() == Qt::RightButton)) {
-        eventDelegate->handleMouseButtonRight(event, id);
+        handleMouseButtonRight(event, id);
     }
 }
 
@@ -430,102 +429,18 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     }
 
     if(event->button() == Qt::LeftButton) {
-        eventDelegate->handleMouseReleaseLeft(event, id);
+        handleMouseReleaseLeft(event, id);
     }
     if(event->button() == Qt::RightButton) {
-        eventDelegate->handleMouseReleaseRight(event, id);
+        handleMouseReleaseRight(event, id);
     }
     if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseReleaseMiddle(event, id);
+        handleMouseReleaseMiddle(event, id);
     }
 
-    eventDelegate->userMouseSlide = {};
-    eventDelegate->arbNodeDragCache = {};
+    userMouseSlide = {};
+    arbNodeDragCache = {};
     state->viewerState->vpConfigs[id].draggedNode = nullptr;
-}
-
-void Viewport::wheelEvent(QWheelEvent *event) {
-    eventDelegate->handleMouseWheel(event, id);
-}
-
-void Viewport::keyPressEvent(QKeyEvent *event) {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
-    const auto alt = modifiers.testFlag(Qt::AltModifier);
-
-    if (ctrl && alt) {
-        setCursor(Qt::OpenHandCursor);
-    } else if (ctrl) {
-        setCursor(Qt::ArrowCursor);
-    } else {
-        setCursor(Qt::CrossCursor);
-    }
-
-    //events
-    //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
-    //^ os delay ^       ^---^ os key repeat
-
-    //intended behavior:
-    //↓          # # # # # # # # # # # # # # # ↑  ↓          # # # #…
-    //^ os delay ^       ^-^ knossos specified interval
-
-    //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
-
-    //›#‹ events are marked isAutoRepeat correctly on Windows
-    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
-    //to emulate this the time to the previous time the same event occured is measured
-    //drawbacks of this emulation are:
-    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
-    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
-
-    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->viewerKeyRepeat = event->isAutoRepeat();
-    }
-    if (event->key() == Qt::Key_H) {
-        if (isDocked) {
-            hide();
-        }
-        else {
-            floatParent->hide();
-        }
-        state->viewerState->defaultVPSizeAndPos = false;
-    }
-    if (event->key() == Qt::Key_U) {
-        if (isDocked) {
-            // Currently docked and normal
-            // Undock and go fullscreen from docked
-            setDock(false);
-            floatParent->setWindowState(Qt::WindowFullScreen);
-            isFullOrigDocked = true;
-        }
-        else {
-            // Currently undocked
-            if (floatParent->isFullScreen()) {
-                // Currently fullscreen
-                // Go normal and back to original docking state
-                floatParent->setWindowState(Qt::WindowNoState);
-                if (isFullOrigDocked) {
-                    setDock(isFullOrigDocked);
-                }
-            }
-            else {
-                // Currently not fullscreen
-                // Go fullscreen from undocked
-                floatParent->setWindowState(Qt::WindowFullScreen);
-                isFullOrigDocked = false;
-            }
-        }
-    }
-    if (!event->isAutoRepeat()) {
-        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
-        //seperate timer for each key, but only one across all vps
-        if (event->key() == Qt::Key_D) {
-            state->viewerKeyRepeat = timeDBase.restart() < 150;
-        } else if (event->key() == Qt::Key_F) {
-            state->viewerKeyRepeat = timeFBase.restart() < 150;
-        }
-    }
-    eventDelegate->handleKeyPress(event, id);
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -552,7 +467,7 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 
         Segmentation::singleton().brush.setInverse(false);
     } else {
-        eventDelegate->handleKeyRelease(event);
+        handleKeyRelease(event);
     }
 }
 
@@ -687,8 +602,8 @@ void Viewport::moveVP(const QPoint & globalPos) {
     }
     //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
     const auto position = mapFromGlobal(globalPos);
-    const auto desiredX = x() + position.x() - eventDelegate->mouseDown.x();
-    const auto desiredY = y() + position.y() - eventDelegate->mouseDown.y();
+    const auto desiredX = x() + position.x() - mouseDown.x();
+    const auto desiredY = y() + position.y() - mouseDown.y();
 
     posAdapt({desiredX, desiredY});
 

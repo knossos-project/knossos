@@ -23,7 +23,6 @@
  */
 #include "viewer.h"
 
-#include "eventmodel.h"
 #include "file_io.h"
 #include "functions.h"
 #include "renderer.h"
@@ -51,8 +50,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();
     vpLowerRight = window->viewports[VIEWPORT_SKELETON].get();
-    eventModel = new EventModel();
-    vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
     timer = new QTimer();
 
@@ -1537,35 +1534,21 @@ void Viewer::rewire() {
     // skeletonizer signals
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
     // end skeletonizer signals
-    //event model signals
-    QObject::connect(eventModel, &EventModel::userMoveSignal, this, &Viewer::userMove);
-    QObject::connect(eventModel, &EventModel::userMoveArbSignal, this, &Viewer::userMove_arb);
-    QObject::connect(eventModel, &EventModel::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
-    QObject::connect(eventModel, &EventModel::zoomOrthoSignal, vpUpperLeft, &Viewport::zoomOrthogonals);
-    QObject::connect(eventModel, &EventModel::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
-    QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
-    QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-    QObject::connect(eventModel, &EventModel::updateWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
-    QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
-    QObject::connect(eventModel, &EventModel::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
-    QObject::connect(eventModel, &EventModel::rotationSignal, this, &Viewer::setRotation);
-    //end event handler signals
     //viewport signals
-    QObject::connect(vpUpperLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpLowerLeft, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpUpperRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    QObject::connect(vpLowerRight, &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-
-    QObject::connect(vpUpperLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(vpLowerLeft, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(vpUpperRight, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-    QObject::connect(vpLowerRight, &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-
-    QObject::connect(vpUpperLeft, &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(vpLowerLeft, &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(vpUpperRight, &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    QObject::connect(vpLowerRight, &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
+    for (auto & vp : window->viewports) {
+        QObject::connect(vp.get(), &Viewport::userMoveSignal, this, &Viewer::userMove);
+        QObject::connect(vp.get(), &Viewport::userMoveArbSignal, this, &Viewer::userMove_arb);
+        QObject::connect(vp.get(), &Viewport::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
+        QObject::connect(vp.get(), &Viewport::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
+        QObject::connect(vp.get(), &Viewport::updateWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+        QObject::connect(vp.get(), &Viewport::delSegmentSignal, &Skeletonizer::delSegment);
+        QObject::connect(vp.get(), &Viewport::addSegmentSignal, &Skeletonizer::addSegment);
+        QObject::connect(vp.get(), &Viewport::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+        QObject::connect(vp.get(), &Viewport::rotationSignal, this, &Viewer::setRotation);
+        QObject::connect(vp.get(), &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+        QObject::connect(vp.get(), &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
+        QObject::connect(vp.get(), &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
+    }
     // end viewport signals
 
     // --- widget signals ---

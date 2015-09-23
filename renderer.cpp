@@ -23,7 +23,6 @@
  */
 #include "renderer.h"
 
-#include "eventmodel.h"
 #include "profiler.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -671,7 +670,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP, const RenderOptions &options) 
             glLoadIdentity();
             view();
 
-            renderBrush(currentVP, state->viewer->eventModel->getMouseCoordinate(currentVP));
+            renderBrush(currentVP, state->viewer->window->viewports[currentVP]->getMouseCoordinate());
 
             glPopMatrix();
         }

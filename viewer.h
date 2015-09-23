@@ -174,7 +174,6 @@ struct ViewerState {
  */
 class Skeletonizer;
 class Renderer;
-class EventModel;
 class Viewport;
 class Viewer : public QThread {
     Q_OBJECT
@@ -188,7 +187,6 @@ private:
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
-    EventModel *eventModel;
     Renderer *renderer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;

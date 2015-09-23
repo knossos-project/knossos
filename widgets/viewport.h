@@ -28,16 +28,14 @@
 #include "coordinate.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
-
 #include <QDebug>
 #include <QDockWidget>
 #include <QFont>
 #include <QOpenGLDebugLogger>
+#include <QOpenGLFunctions_2_0>
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QWidget>
-
-class EventModel;
 
 enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
 
@@ -147,18 +145,46 @@ signals:
     void vpResize(const QPoint & globalPos);
 };
 
-#include <QOpenGLFunctions_2_0>
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
 
 class QViewportFloatWidget : public QWidget {
 public:
     explicit QViewportFloatWidget(QWidget *parent, int id);
 };
 
+class commentListElement;
+class nodeListElement;
+class segmentListElement;
+
 class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
     QElapsedTimer timeDBase;
     QElapsedTimer timeFBase;
+
+    void handleKeyRelease(QKeyEvent *event);
+    QPoint mouseDown;
+    void handleMouseButtonLeft(QMouseEvent *event, int VPfound);
+    void handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
+    void handleMouseButtonRight(QMouseEvent *event, int VPfound);
+    void handleMouseHover(QMouseEvent *event, int VPfound);
+    void handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
+    void handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseRight(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
+    void handleMouseWheel(QWheelEvent * const event, int VPfound);
+
+    bool mouseEventAtValidDatasetPosition(QMouseEvent *event, int VPfound);
+    void startNodeSelection(int x, int y, int vpId);
+    QSet<nodeListElement *> nodeSelection(int x, int y, int vpId);
+    int xrel(const int x);
+    int yrel(const int y);
+    QPoint prevMouseMove;
+    QPointF userMouseSlide;
+    floatCoordinate arbNodeDragCache;
+
 public:
     const static int numberViewports = 4;
     explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
@@ -178,11 +204,12 @@ public:
     void sizeAdapt(const QPoint & desiredSize);
     QSize dockSize;
     QPoint dockPos;
-    EventModel *eventDelegate;
     static bool arbitraryOrientation;
     static bool oglDebug;
     static bool showNodeComments;
     static bool showBoundariesInUm;
+
+    Coordinate getMouseCoordinate();
 protected:
     void initializeGL() override;
     void createOverlayTextures();
@@ -221,6 +248,26 @@ signals:
     void updateDatasetOptionsWidget();
     void loadSkeleton(const QString &path);
     void cursorPositionChanged(const Coordinate & position, const uint id);
+
+    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
+    void userMoveArbSignal(float x, float y, float z);
+    void rotationSignal(float x, float y, float z, float angle);
+    void pasteCoordinateSignal();
+    void zoomReset();
+    void zoomOrthoSignal(float step);
+    void zoomInSkeletonVPSignal();
+    void zoomOutSkeletonVPSignal();
+    void showSelectedTreesAndNodesSignal();
+
+    void updateWidgetSignal();
+
+    void setRecenteringPositionSignal(float x, float y, float z);
+    void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
+    void delSegmentSignal(segmentListElement *segToDel);
+    bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
+    void addSegmentSignal(nodeListElement & sourceNode, nodeListElement & targetNode);
+
+    void compressionRatioToggled();
 public slots:
     void zoomOrthogonals(float step);
     void zoomInSkeletonVP();

@@ -18,7 +18,6 @@
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
 
-#include "eventmodel.h"
 #include "highlighter.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
@@ -70,7 +69,6 @@ Scripting::Scripting() : _ctx(NULL) {
     addObject("skeleton", skeletonProxy);
     addObject("knossos_global_viewer", state->viewer);
     addObject("knossos_global_mainwindow", state->viewer->window);
-    addObject("knossos_global_eventmodel", state->viewer->eventModel);
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     addObject("knossos_global_segmentation", &Segmentation::singleton());
     addObject("knossos_global_loader", &Loader::Controller::singleton());

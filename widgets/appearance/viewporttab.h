@@ -14,7 +14,7 @@
 class ViewportTab : public QWidget
 {
     friend class AppearanceWidget;
-    friend class EventModel;
+    friend class Viewport;
     friend class MainWindow;
     Q_OBJECT
     QGridLayout mainLayout;
