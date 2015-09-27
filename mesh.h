@@ -6,8 +6,8 @@
 
 class mesh {
 public:
-    mesh();
-    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
+    mesh() {}
+    mesh(int mode) { this->mode = mode; } /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
