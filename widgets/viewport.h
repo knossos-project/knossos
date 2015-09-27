@@ -36,6 +36,7 @@
 #include <QOpenGLFunctions_2_0>
 #include <QOpenGLWidget>
 #include <QPushButton>
+#include <QVBoxLayout>
 #include <QWidget>
 
 #include <boost/multi_array.hpp>
@@ -154,12 +155,12 @@ struct RenderOptions {
     bool highlightSelection;
 };
 
-class Viewport;
+class ViewportBase;
 class ResizeButton : public QPushButton {
     Q_OBJECT
     void mouseMoveEvent(QMouseEvent * event) override;
 public:
-    explicit ResizeButton(Viewport * parent);
+    explicit ResizeButton(QWidget *parent) : QPushButton(parent) {}
 signals:
     void vpResize(const QPoint & globalPos);
 };
@@ -176,11 +177,33 @@ class commentListElement;
 class nodeListElement;
 class segmentListElement;
 
-class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
+class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
-    QElapsedTimer timeDBase;
-    QElapsedTimer timeFBase;
+    bool isDocked;
+    bool isFullOrigDocked;
+    QWidget *dockParent;
+    QViewportFloatWidget *floatParent;
+    ResizeButton resizeButton;
+    bool resizeButtonHold;
+    void moveVP(const QPoint & globalPos);
+
+    void initializeGL() override;
+    void resizeGL(int w, int h) override;
+    // events
+    void enterEvent(QEvent * event) override;
+    void leaveEvent(QEvent * event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override {
+        if (event->button() == Qt::MouseButton::LeftButton) {
+            setDock(!isDocked);
+        }
+    }
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
     void handleKeyRelease(QKeyEvent *event);
     QPoint mouseDown;
@@ -198,100 +221,80 @@ class Viewport : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     bool mouseEventAtValidDatasetPosition(QMouseEvent *event);
     void startNodeSelection(int x, int y);
     QSet<nodeListElement *> nodeSelection(int x, int y);
-    int xrel(const int x);
-    int yrel(const int y);
+    int xrel(const int x) { return x - prevMouseMove.x(); }
+    int yrel(const int y) { return y - prevMouseMove.y(); }
     QPoint prevMouseMove;
     QPointF userMouseSlide;
     floatCoordinate arbNodeDragCache;
-
     // rendering
+    void createOverlayTextures();
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
+    bool renderViewport(const RenderOptions & options = RenderOptions());
     void renderArbitrarySlicePane(const vpConfig &);
-    void setFrontFacePerspective();
-    void renderViewportFrontFace();
-    bool renderOrthogonalVP(const RenderOptions & options = RenderOptions());
-    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
-    void renderBrush(uint viewportType, Coordinate coord);
-    void renderScaleBar(const int fontSize = defaultFonsSize);
     bool rotateSkeletonViewport();
-    bool updateRotationStateMatrix(float M1[16], float M2[16]);
     uint renderSegPlaneIntersection(segmentListElement *segment);
-    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
     uint renderSphere(Coordinate *pos, float radius, color4F color);
+    void renderBrush(uint viewportType, Coordinate coord);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
+    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
     void renderSkeleton(uint viewportType, const RenderOptions & options = RenderOptions());
-    bool doubleMeshCapacity(mesh *toDouble);
-    static bool initMesh(mesh *meshToInit, uint initialSize);
-    bool setRotationState(uint setTo);
     bool sphereInFrustum(floatCoordinate pos, float radius);
     bool updateFrustumClippingPlanes();
+    bool updateRotationStateMatrix(float M1[16], float M2[16]);
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
     QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
 
+protected:
+    QVBoxLayout vpLayout;
+
+    QElapsedTimer timeDBase;
+    QElapsedTimer timeFBase;
+
+    void setFrontFacePerspective();
+    void renderScaleBar(const int fontSize = defaultFonsSize);
+    bool renderOrthogonalVP(const RenderOptions & options = RenderOptions());
+    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
+    void updateOverlayTexture();
+    void renderViewportFrontFace();
 public:
     const static int numberViewports = 4;
-    explicit Viewport(QWidget *parent, ViewportType viewportType, uint newId);
-    static void resetTextureProperties();
-    void drawViewport(int vpID);
-    void drawSkeletonViewport();
+    ViewportType viewportType; // XY_VIEWPORT, ...
+    uint id; // VP_UPPERLEFT,
+
     bool hasCursor{false};
-    void setDock(bool isDock);
-    void showHideButtons(bool isShow);
-    bool renderVolumeVP();
-    void updateOverlayTexture();
-    void updateVolumeTexture();
-    void posAdapt();
-    void posAdapt(const QPoint & desiredPos);
-    void sendCursorPosition();
-    void sizeAdapt();
-    void sizeAdapt(const QPoint & desiredSize);
+    virtual void showHideButtons(bool isShow) { resizeButton.setVisible(isShow); }
+    void posAdapt() { posAdapt(pos()); }
+    void posAdapt(const QPoint & desiredPos) {
+        const auto horizontalSpace = parentWidget()->width() - width();
+        const auto verticalSpace = parentWidget()->height() - height();
+        const auto newX = std::max(0, std::min(horizontalSpace, desiredPos.x()));
+        const auto newY = std::max(0, std::min(verticalSpace, desiredPos.y()));
+        move(newX, newY);
+    }
+    void sizeAdapt() { sizeAdapt({size().width(), size().height()}); }
+    void sizeAdapt(const QPoint & desiredSize) {
+        const auto MIN_VP_SIZE = 50;
+        const auto horizontalSpace = parentWidget()->width() - x();
+        const auto verticalSpace = parentWidget()->height() - y();
+        const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
+        resize({size, size});
+    }
+
     QSize dockSize;
     QPoint dockPos;
-    static bool arbitraryOrientation;
+    void setDock(bool isDock);
     static bool oglDebug;
-    static bool showNodeComments;
-    static bool showBoundariesInUm;
 
+    explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
+
+    static void resetTextureProperties();
     Coordinate getMouseCoordinate();
-    static void initRenderer();
-    static bool resizemeshCapacity(mesh *toResize, uint n);
-protected:
-    void initializeGL() override;
-    void createOverlayTextures();
-    void paintGL() override;
-    void resizeGL(int w, int h) override;
-    void enterEvent(QEvent * event) override;
-    void leaveEvent(QEvent * event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseDoubleClickEvent(QMouseEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
 
-    uint id; // VP_UPPERLEFT, ...
-    ViewportType viewportType; // XY_VIEWPORT, ...
-    int baseEventX; //last x position
-    int baseEventY; //last y position
-
-    bool isDocked;
-    bool isFullOrigDocked;
-    QWidget *dockParent;
-    QViewportFloatWidget *floatParent;
-    ResizeButton *resizeButton;
-    QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
-    QMenu *contextMenu;
-private:
-    bool resizeButtonHold;
-    void resizeVP(const QPoint & globalPos);
-    void moveVP(const QPoint & globalPos);
+    static bool initMesh(mesh & toInit, uint initialSize);
+    static bool doubleMeshCapacity(mesh & toDouble);
+    static bool resizemeshCapacity(mesh & toResize, uint n);
+    void sendCursorPosition();
 signals:
-    void recalcTextureOffsetsSignal();
-    void runSignal();
-    void changeDatasetMagSignal(uint upOrDownFlag);
-    void updateDatasetOptionsWidget();
-    void loadSkeleton(const QString &path);
     void cursorPositionChanged(const Coordinate & position, const uint id);
 
     void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
@@ -299,29 +302,56 @@ signals:
     void rotationSignal(float x, float y, float z, float angle);
     void pasteCoordinateSignal();
     void zoomReset();
-    void showSelectedTreesAndNodesSignal();
 
-    void updateWidgetSignal();
-
-    void setRecenteringPositionSignal(float x, float y, float z);
-    void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
     void delSegmentSignal(segmentListElement *segToDel);
-    bool editCommentSignal(commentListElement *currentComment, uint nodeID, char *newContent, nodeListElement *newNode, uint newNodeID);
     void addSegmentSignal(nodeListElement & sourceNode, nodeListElement & targetNode);
 
     void compressionRatioToggled();
+    void setRecenteringPositionSignal(float x, float y, float z);
+    void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
+
+    void recalcTextureOffsetsSignal();
+    void changeDatasetMagSignal(uint upOrDownFlag);
+    void updateDatasetOptionsWidget();
 public slots:
     void zoomOrthogonals(float step);
     void zoomInSkeletonVP();
     void zoomOutSkeletonVP();
-    void xyButtonClicked();
-    void xzButtonClicked();
-    void yzButtonClicked();
-    void r90ButtonClicked();
-    void r180ButtonClicked();
-    void resetButtonClicked();
-    bool setOrientation(ViewportType orientation);
-    void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {}
+};
+
+class Viewport3D : public ViewportBase {
+    Q_OBJECT
+    QPushButton xyButton{"xy"}, xzButton{"xz"}, yzButton{"yz"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+
+    void paintGL() override;
+public:
+    explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
+    virtual void showHideButtons(bool isShow);
+    bool renderVolumeVP();
+    void updateVolumeTexture();
+    static bool showBoundariesInUm;
+
+signals:
+    void rotationSignal(float x, float y, float z, float angle);
+public slots:
+    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+};
+
+class ViewportOrtho : public ViewportBase {
+    Q_OBJECT
+    void paintGL() override;
+public:
+    static bool arbitraryOrientation;
+    static bool showNodeComments;
+    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id);
+    void setOrientation(ViewportType orientation);
+
+signals:
+
+
+public slots:
+    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // VIEWPORT_H

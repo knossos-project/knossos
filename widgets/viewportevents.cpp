@@ -102,7 +102,7 @@ void segmentation_brush_work(QMouseEvent *event, const int vp) {
 }
 
 
-void Viewport::handleMouseHover(QMouseEvent *event) {
+void ViewportBase::handleMouseHover(QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
@@ -112,12 +112,12 @@ void Viewport::handleMouseHover(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseButtonLeft(QMouseEvent *event) {
+void ViewportBase::handleMouseButtonLeft(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
             startNodeSelection(event->pos().x(), event->pos().y());
-        } else if (state->viewerState->vpConfigs[id].type != VIEWPORT_SKELETON) {
+        } else if (viewportType != VIEWPORT_SKELETON) {
             // check click mode of orthogonal viewports
             if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
                 if(mouseEventAtValidDatasetPosition(event)) {
@@ -150,7 +150,7 @@ void Viewport::handleMouseButtonLeft(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseButtonMiddle(QMouseEvent *event) {
+void ViewportBase::handleMouseButtonMiddle(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         auto clickedNode = retrieveVisibleObjectBeneathSquare(event->x(), event->y(), 10);
 
@@ -179,7 +179,7 @@ void Viewport::handleMouseButtonMiddle(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseButtonRight(QMouseEvent *event) {
+void ViewportBase::handleMouseButtonRight(QMouseEvent *event) {
     const auto & annotationMode = Session::singleton().annotationMode;
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
     if (annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
@@ -202,28 +202,28 @@ void Viewport::handleMouseButtonRight(QMouseEvent *event) {
     boost::optional<nodeListElement &> newNode;
 
     if (annotationMode.testFlag(AnnotationMode::UnlinkedNodes)) {
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[id].type);
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate,viewportType);
     } else if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
         if (oldNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
-            newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[id].type);
+            newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, viewportType);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
-                const auto splitNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, state->viewerState->vpConfigs[id].type);
+                const auto splitNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, viewportType);
                 if (splitNode) {
                     const auto comment = background ? "ecs" : "split";
                     Skeletonizer::singleton().setSubobject(splitNode.get(), subobjectId);
                     Skeletonizer::singleton().addComment(comment, splitNode.get());
                     Skeletonizer::singleton().setActiveNode(oldNode);
                 }
-            } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[id].type, false)) {
+            } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, viewportType, false)) {
                 //Add a "stump", a branch node to which we don't automatically move.
                 Skeletonizer::singleton().pushBranchNode(true, true, stumpNode.get());
                 Skeletonizer::singleton().setActiveNode(oldNode);
             }
         } else {
             const auto lastPos = state->skeletonState->activeNode->position;
-            newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, state->viewerState->vpConfigs[id].type, true);
+            newNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, viewportType, true);
             if (!newNode) {
                 return;
             }
@@ -247,7 +247,7 @@ void Viewport::handleMouseButtonRight(QMouseEvent *event) {
 
             //Additional move of specified steps along clicked viewport
             if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
-                const auto move = state->viewerState->vpKeyDirection[state->viewerState->vpConfigs[id].type] * state->viewerState->autoTracingSteps;
+                const auto move = state->viewerState->vpKeyDirection[viewportType] * state->viewerState->autoTracingSteps;
                 clickedCoordinate += {(id == VIEWPORT_YZ) * move, (id == VIEWPORT_XZ) * move, (id == VIEWPORT_XY) * move};
             }
 
@@ -270,7 +270,7 @@ void Viewport::handleMouseButtonRight(QMouseEvent *event) {
             Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, *oldNode);
         }
         // Move to the new node position
-        if (state->viewerState->vpConfigs[id].type == VIEWPORT_ARBITRARY) {
+        if (viewportType == VIEWPORT_ARBITRARY) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z, id);
         } else {
             emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
@@ -281,7 +281,7 @@ void Viewport::handleMouseButtonRight(QMouseEvent *event) {
     }
 }
 
-Coordinate deviationVP(const vpConfig & config, const QPoint deviation){
+Coordinate deviationVP(const vpConfig & config, const QPoint deviation) {
     switch (config.type) {
     case VIEWPORT_XY: return {deviation.x(), deviation.y(), 0};
     case VIEWPORT_XZ: return {deviation.x(), 0, deviation.y()};
@@ -301,7 +301,7 @@ boost::optional<Coordinate> handleMovement(const vpConfig & config, const QPoint
     return boost::none;
 }
 
-void Viewport::handleMouseMotionLeftHold(QMouseEvent *event) {
+void ViewportBase::handleMouseMotionLeftHold(QMouseEvent *event) {
     // pull selection square
     if (state->viewerState->nodeSelectSquareVpId != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
@@ -309,7 +309,7 @@ void Viewport::handleMouseMotionLeftHold(QMouseEvent *event) {
         return;
     }
 
-    if (state->viewerState->vpConfigs[id].type == VIEWPORT_SKELETON) {
+    if (viewportType == VIEWPORT_SKELETON) {
         if(Segmentation::singleton().volume_render_toggle) {
             auto & seg = Segmentation::singleton();
             seg.volume_mouse_move_x -= xrel(event->x());
@@ -327,25 +327,25 @@ void Viewport::handleMouseMotionLeftHold(QMouseEvent *event) {
     } else if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         const auto & config = state->viewerState->vpConfigs[id];
         const QPointF posDelta(xrel(event->x()), yrel(event->y()));
-        if (config.type == VIEWPORT_ARBITRARY) {
+        if (viewportType == VIEWPORT_ARBITRARY) {
             const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
             const auto v1 = config.v1 * arbitraryMouseSlide.x();
             const auto v2 = config.v2 * arbitraryMouseSlide.y();
             const auto move = v1 + v2;
             state->viewer->userMove_arb(move.x, move.y, move.z);//subpixel movements are accumulated within userMove_arb
         } else if (auto moveIt = handleMovement(config, posDelta, userMouseSlide)) {
-            state->viewer->userMove(moveIt->x, moveIt->y, moveIt->z, USERMOVE_HORIZONTAL, config.type);
+            state->viewer->userMove(moveIt->x, moveIt->y, moveIt->z, USERMOVE_HORIZONTAL, viewportType);
         }
     }
 }
 
-void Viewport::handleMouseMotionMiddleHold(QMouseEvent *event) {
+void ViewportBase::handleMouseMotionMiddleHold(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const auto & config = state->viewerState->vpConfigs[id];
         if (config.draggedNode != nullptr) {
             const QPointF posDelta(xrel(event->x()), yrel(event->y()));
             boost::optional<Coordinate> moveIt;
-            if (config.type == VIEWPORT_ARBITRARY) {
+            if (viewportType == VIEWPORT_ARBITRARY) {
                 const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
                 const auto v1 = config.v1 * arbitraryMouseSlide.x();
                 const auto v2 = config.v2 * arbitraryMouseSlide.y();
@@ -363,7 +363,7 @@ void Viewport::handleMouseMotionMiddleHold(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseMotionRightHold(QMouseEvent *event) {
+void ViewportBase::handleMouseMotionRightHold(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
         if (notOrigin) {
@@ -377,7 +377,7 @@ void Viewport::handleMouseMotionRightHold(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseReleaseLeft(QMouseEvent *event) {
+void ViewportBase::handleMouseReleaseLeft(QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched
         if (event->pos() == mouseDown) {
@@ -426,7 +426,7 @@ void Viewport::handleMouseReleaseLeft(QMouseEvent *event) {
     state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
 }
 
-void Viewport::handleMouseReleaseRight(QMouseEvent *event) {
+void ViewportBase::handleMouseReleaseRight(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
             segmentation_brush_work(event, id);
@@ -434,7 +434,7 @@ void Viewport::handleMouseReleaseRight(QMouseEvent *event) {
     }
 }
 
-void Viewport::handleMouseReleaseMiddle(QMouseEvent * event) {
+void ViewportBase::handleMouseReleaseMiddle(QMouseEvent * event) {
     if (mouseEventAtValidDatasetPosition(event)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, id, event);
@@ -449,7 +449,7 @@ void Viewport::handleMouseReleaseMiddle(QMouseEvent * event) {
     }
 }
 
-void Viewport::wheelEvent(QWheelEvent *event) {
+void ViewportBase::wheelEvent(QWheelEvent *event) {
     const int directionSign = event->delta() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
@@ -479,14 +479,13 @@ void Viewport::wheelEvent(QWheelEvent *event) {
         zoomOrthogonals(directionSign * 0.1);
     } else {
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
-        const auto type = state->viewerState->vpConfigs[id].type;
-        if (type == VIEWPORT_XY) {
-            emit userMoveSignal(0, 0, multiplier, USERMOVE_DRILL, type);
-        } else if (type == VIEWPORT_XZ) {
-            emit userMoveSignal(0, multiplier, 0, USERMOVE_DRILL, type);
-        } else if (type == VIEWPORT_YZ) {
-            emit userMoveSignal(multiplier, 0, 0, USERMOVE_DRILL, type);
-        } else if (type == VIEWPORT_ARBITRARY) {
+        if (viewportType == VIEWPORT_XY) {
+            emit userMoveSignal(0, 0, multiplier, USERMOVE_DRILL, viewportType);
+        } else if (viewportType == VIEWPORT_XZ) {
+            emit userMoveSignal(0, multiplier, 0, USERMOVE_DRILL, viewportType);
+        } else if (viewportType == VIEWPORT_YZ) {
+            emit userMoveSignal(multiplier, 0, 0, USERMOVE_DRILL, viewportType);
+        } else if (viewportType == VIEWPORT_ARBITRARY) {
             emit userMoveArbSignal(state->viewerState->vpConfigs[id].n.x * multiplier
                 , state->viewerState->vpConfigs[id].n.y * multiplier
                 , state->viewerState->vpConfigs[id].n.z * multiplier);
@@ -494,7 +493,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
     }
 }
 
-void Viewport::keyPressEvent(QKeyEvent *event) {
+void ViewportBase::keyPressEvent(QKeyEvent *event) {
     Qt::KeyboardModifiers modifiers = event->modifiers();
     const auto shift = modifiers.testFlag(Qt::ShiftModifier);
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
@@ -572,24 +571,21 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
             state->viewerKeyRepeat = timeFBase.restart() < 150;
         }
     }
-    // keyPressEvent
-    const auto type = state->viewerState->vpConfigs[id].type;
 
-    // new qt version
     if(event->key() == Qt::Key_Left) {
         if(shift) {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(-10 * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(-10 * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, 0, -10 * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -599,18 +595,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
                 break;
             }
         } else {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(-state->viewerState->vpConfigs[id].v1.x
@@ -624,18 +620,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Right) {
         if(shift) {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(10 * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(10 * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, 0, 10 * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -645,18 +641,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
                  break;
             }
         } else {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(state->viewerState->vpConfigs[id].v1.x
@@ -670,18 +666,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Down) {
         if(shift) {
-            switch(type) {
+            switch(viewportType) {
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, -10 * state->magnification, 0,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_XZ:
                     emit userMoveSignal(0, 0, -10 * state->magnification,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_YZ:
                     emit userMoveSignal(0, -10 * state->magnification, 0,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_ARBITRARY:
                     emit userMoveArbSignal(
@@ -691,18 +687,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
                      break;
             }
         } else {
-            switch(type) {
+            switch(viewportType) {
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_XZ:
                     emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_YZ:
                     emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0,
-                                        USERMOVE_HORIZONTAL, type);
+                                        USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_ARBITRARY:
                     emit userMoveArbSignal(-state->viewerState->vpConfigs[id].v2.x
@@ -716,18 +712,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Up) {
         if(shift) {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(0, 10 * state->magnification, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(0, 0, 10 * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, 10 * state->magnification, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(
@@ -737,18 +733,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
                 break;
             }
         } else {
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0,
-                                    USERMOVE_HORIZONTAL, type);
+                                    USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 emit userMoveArbSignal(state->viewerState->vpConfigs[id].v2.x
@@ -762,7 +758,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_R) {
         state->viewerState->walkOrth = 1;
-        switch(type) {
+        switch(viewportType) {
         case VIEWPORT_XY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
                                               state->viewerState->currentPosition.y,
@@ -796,7 +792,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_E) {
         state->viewerState->walkOrth = 1;
-        switch(type) {
+        switch(viewportType) {
         case VIEWPORT_XY:
             emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
                                               state->viewerState->currentPosition.y,
@@ -835,21 +831,21 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
             const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
             const float shiftMultiplier = shift? 10 : 1;
             const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
-            switch(type) {
+            switch(viewportType) {
             case VIEWPORT_XY:
                 state->repeatDirection = {{0, 0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XY]}};
                 emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
-                        USERMOVE_DRILL, type);
+                        USERMOVE_DRILL, viewportType);
                 break;
             case VIEWPORT_XZ:
                 state->repeatDirection = {{0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XZ], 0}};
                 emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
-                        USERMOVE_DRILL, type);
+                        USERMOVE_DRILL, viewportType);
                 break;
             case VIEWPORT_YZ:
                 state->repeatDirection = {{multiplier * state->viewerState->vpKeyDirection[VIEWPORT_YZ], 0, 0}};
                 emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2],
-                        USERMOVE_DRILL, type);
+                        USERMOVE_DRILL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
                 state->repeatDirection = {{
@@ -868,7 +864,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L || event->key() == Qt::Key_M || event->key() == Qt::Key_Comma) {
-        if(Viewport::arbitraryOrientation == false) {
+        if(ViewportOrtho::arbitraryOrientation == false) {
             QMessageBox prompt;
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Information);
@@ -1014,7 +1010,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-void Viewport::handleKeyRelease(QKeyEvent *event) {
+void ViewportBase::handleKeyRelease(QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->viewerState->showOverlay = true;
         state->viewer->oc_reslice_notify_visible();
@@ -1069,8 +1065,8 @@ Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, 
     }
 }
 
-bool Viewport::mouseEventAtValidDatasetPosition(QMouseEvent *event) {
-    if(id == -1 || state->viewerState->vpConfigs[id].type == VIEWPORT_SKELETON ||
+bool ViewportBase::mouseEventAtValidDatasetPosition(QMouseEvent *event) {
+    if(id == -1 || viewportType == VIEWPORT_SKELETON ||
        event->x() < 0 || event->x() > (int)state->viewerState->vpConfigs[id].edgeLength ||
        event->y() < 0 || event->y() > (int)state->viewerState->vpConfigs[id].edgeLength) {
             return false;
@@ -1088,7 +1084,7 @@ bool Viewport::mouseEventAtValidDatasetPosition(QMouseEvent *event) {
     return true;
 }
 
-void Viewport::startNodeSelection(int x, int y) {
+void ViewportBase::startNodeSelection(int x, int y) {
     state->viewerState->nodeSelectionSquare.first.x = x;
     state->viewerState->nodeSelectionSquare.first.y = y;
 
@@ -1097,7 +1093,7 @@ void Viewport::startNodeSelection(int x, int y) {
     state->viewerState->nodeSelectSquareVpId = id;
 }
 
-QSet<nodeListElement*> Viewport::nodeSelection(int x, int y) {
+QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
     // node selection square
     state->viewerState->nodeSelectionSquare.second.x = x;
     state->viewerState->nodeSelectionSquare.second.y = y;
@@ -1116,14 +1112,6 @@ QSet<nodeListElement*> Viewport::nodeSelection(int x, int y) {
     return retrieveAllObjectsBeneathSquare(centerX, centerY, width, height);
 }
 
-int Viewport::xrel(const int x) {
-    return x - prevMouseMove.x();
-}
-
-int Viewport::yrel(const int y) {
-    return y - prevMouseMove.y();
-}
-
-Coordinate Viewport::getMouseCoordinate() {
+Coordinate ViewportBase::getMouseCoordinate() {
     return getCoordinateFromOrthogonalClick(prevMouseMove.x(), prevMouseMove.y(), id);
 }

@@ -49,7 +49,7 @@ QList<color4F *> *MeshDecorator::colors(mesh *self) {
 }
 
 void MeshDecorator::set_vertices(mesh *self, QList<QVariant> &vertices) {
-    Viewport::resizemeshCapacity(self, vertices.size());
+    ViewportBase::resizemeshCapacity(*self, vertices.size());
 
     for(int i = 0; i < vertices.size(); i++) {
         if(vertices.at(i).canConvert<floatCoordinate>()) {

@@ -19,7 +19,7 @@ class SnapshotWidget : public QDialog
     QCheckBox withAxesCheck{"Dataset Axes"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
     QVBoxLayout mainLayout;
-    ViewportType getCheckedViewport() const;
+    uint getCheckedViewport() const;
     QString defaultFilename() const;
 public:
     explicit SnapshotWidget(QWidget *parent = 0);
@@ -28,7 +28,7 @@ public:
 public slots:
     void updateOptionVisibility();
 signals:
-    void snapshotRequest(const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void snapshotRequest(const QString & path, const uint id, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // SNAPSHOTWIDGET_H

@@ -23,6 +23,7 @@
  */
 #include "widgets/viewport.h"
 
+#include "mesh.h"
 #include "profiler.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -57,12 +58,115 @@
 #define ROTATIONSTATEYZ    2
 #define ROTATIONSTATERESET 3
 
-void Viewport::initRenderer() {
-    initMesh(&(state->skeletonState->lineVertBuffer), 1024);
-    initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+bool ViewportBase::initMesh(mesh & toInit, uint initialSize) {
+    toInit.vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
+    toInit.normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
+    toInit.colors = (color4F *)malloc(initialSize * sizeof(color4F));
+
+    toInit.vertsBuffSize = initialSize;
+    toInit.normsBuffSize = initialSize;
+    toInit.colsBuffSize = initialSize;
+
+    toInit.vertsIndex = 0;
+    toInit.normsIndex = 0;
+    toInit.colsIndex = 0;
+    return true;
 }
 
-uint Viewport::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color) {
+bool ViewportBase::doubleMeshCapacity(mesh & toDouble) {
+    return resizemeshCapacity(toDouble, 2);
+}
+
+bool ViewportBase::resizemeshCapacity(mesh & toResize, uint n) {
+    toResize.vertices = (floatCoordinate *)realloc(toResize.vertices, n * toResize.vertsBuffSize * sizeof(floatCoordinate));
+    toResize.normals = (floatCoordinate *)realloc(toResize.normals, n * toResize.normsBuffSize * sizeof(floatCoordinate));
+    toResize.colors = (color4F *)realloc(toResize.colors, n * toResize.colsBuffSize * sizeof(color4F));
+
+    toResize.vertsBuffSize = n * toResize.vertsBuffSize;
+    toResize.normsBuffSize = n * toResize.normsBuffSize;
+    toResize.colsBuffSize = n * toResize.colsBuffSize;
+
+    return true;
+}
+
+bool setRotationState(uint setTo) {
+    if (setTo == ROTATIONSTATERESET){
+        state->skeletonState->rotationState[0] = 0.866025;
+        state->skeletonState->rotationState[1] = 0.286788;
+        state->skeletonState->rotationState[2] = 0.409576;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = -0.5;
+        state->skeletonState->rotationState[5] = 0.496732;
+        state->skeletonState->rotationState[6] = 0.709407;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 0.819152;
+        state->skeletonState->rotationState[10] = -0.573576;
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;
+    }
+    if (setTo == ROTATIONSTATEXY){//x @ 0°
+        state->skeletonState->rotationState[0] = 1.0;//1
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = 0.0;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = 1.0;//cos
+        state->skeletonState->rotationState[6] = 0.0;//-sin
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 0.0;//sin
+        state->skeletonState->rotationState[10] = 1.0;//cos
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;//1
+    }
+    if (setTo == ROTATIONSTATEXZ){//x @ 90°
+        state->skeletonState->rotationState[0] = 1.0;//1
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = 0.0;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = 0.0;//cos
+        state->skeletonState->rotationState[6] = -1.0;//-sin
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 1.0;//sin
+        state->skeletonState->rotationState[10] = 0.0;//cos
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;//1
+    }
+    if (setTo == ROTATIONSTATEYZ){//y @ -90°
+        state->skeletonState->rotationState[0] = 0.0;//cos
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = -1.0;//sin
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = 1.0;//1
+        state->skeletonState->rotationState[6] = 0.0;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 1.0;//-sin
+        state->skeletonState->rotationState[9] = 0.0;
+        state->skeletonState->rotationState[10] = 0.0;//cos
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;//1
+    }
+    return true;
+}
+
+
+uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color) {
     float currentAngle = 0.;
     floatCoordinate segDirection, tempVec, tempVec2;
     GLUquadricObj *gluCylObj = NULL;
@@ -73,7 +177,7 @@ uint Viewport::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
         if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
-            doubleMeshCapacity(&(state->skeletonState->lineVertBuffer));
+            doubleMeshCapacity(state->skeletonState->lineVertBuffer);
 
         state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
         state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
@@ -126,7 +230,7 @@ uint Viewport::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
     return true;
 }
 
-uint Viewport::renderSphere(Coordinate *pos, float radius, color4F color) {
+uint ViewportBase::renderSphere(Coordinate *pos, float radius, color4F color) {
     GLUquadricObj *gluSphereObj = NULL;
 
         /* Render only a point if the sphere wouldn't be visible anyway */
@@ -147,7 +251,7 @@ uint Viewport::renderSphere(Coordinate *pos, float radius, color4F color) {
             }
             else {
                 if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
-                    doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
+                    doubleMeshCapacity(state->skeletonState->pointVertBuffer);
 
                 state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex] = Coordinate{pos->x, pos->y, pos->z};
                 state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
@@ -204,7 +308,7 @@ static void restore_gl_state() {
     glPopClientAttrib();
 }
 
-void Viewport::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
+void ViewportBase::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
     GLdouble x, y, z, model[16], projection[16];
     GLint gl_viewport[4];
     glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
@@ -222,7 +326,8 @@ void Viewport::renderText(const Coordinate & pos, const QString & str, const int
     restore_gl_state();
 }
 
-uint Viewport::renderSegPlaneIntersection(segmentListElement *segment) {
+
+uint ViewportBase::renderSegPlaneIntersection(segmentListElement *segment) {
     if(!state->viewerState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
@@ -340,7 +445,7 @@ uint Viewport::renderSegPlaneIntersection(segmentListElement *segment) {
 
 }
 
-void Viewport::setFrontFacePerspective() {
+void ViewportBase::setFrontFacePerspective() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -351,10 +456,10 @@ void Viewport::setFrontFacePerspective() {
     glLoadIdentity();
 }
 
-void Viewport::renderViewportFrontFace() {
+void ViewportBase::renderViewportFrontFace() {
     setFrontFacePerspective();
 
-    switch(state->viewerState->vpConfigs[id].type) {
+    switch(viewportType) {
         case VIEWPORT_XY:
             glColor4f(0.7, 0., 0., 1.);
             break;
@@ -385,7 +490,7 @@ void Viewport::renderViewportFrontFace() {
         glVertex3d(1, 1, -1);
     glEnd();
 
-    if(state->viewerState->vpConfigs[id].type == state->viewerState->highlightVp) {
+    if(viewportType == state->viewerState->highlightVp) {
         // Draw an orange border to highlight the viewport.
         glColor4f(1., 0.3, 0., 1.);
         glBegin(GL_LINE_LOOP);
@@ -429,7 +534,7 @@ void Viewport::renderViewportFrontFace() {
     }
 }
 
-void Viewport::renderScaleBar(const int fontSize) {
+void ViewportBase::renderScaleBar(const int fontSize) {
     const auto & vp = state->viewerState->vpConfigs[id];
     const auto vp_edgelen_um = 0.001 * vp.displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
@@ -453,7 +558,7 @@ void Viewport::renderScaleBar(const int fontSize) {
     renderText(Coordinate(min_x + vp.edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
 }
 
-bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
+bool ViewportBase::renderOrthogonalVP(const RenderOptions &options) {
     floatCoordinate * n = &(state->viewerState->vpConfigs[id].n);
     floatCoordinate * v1 = &(state->viewerState->vpConfigs[id].v1);
     floatCoordinate * v2 = &(state->viewerState->vpConfigs[id].v2);
@@ -499,10 +604,10 @@ bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
             * 0.5;
 //            * (float)state->magnification;
 
-    const bool xy = state->viewerState->vpConfigs[id].type == VIEWPORT_XY;
-    const bool xz = state->viewerState->vpConfigs[id].type == VIEWPORT_XZ;
-    const bool zy = state->viewerState->vpConfigs[id].type == VIEWPORT_YZ;
-    const bool arb = state->viewerState->vpConfigs[id].type == VIEWPORT_ARBITRARY;
+    const bool xy = viewportType == VIEWPORT_XY;
+    const bool xz = viewportType == VIEWPORT_XZ;
+    const bool zy = viewportType == VIEWPORT_YZ;
+    const bool arb = viewportType == VIEWPORT_ARBITRARY;
     if (!arb) {
         if (!state->viewerState->selectModeFlag) {
             glMatrixMode(GL_PROJECTION);
@@ -587,7 +692,7 @@ bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
             view();
 
             glTranslatef((xy || xz) * 0.5, (xy || zy) * 0.5, (xz || zy) * 0.5);//arrange to pixel center
-            renderSkeleton(state->viewerState->vpConfigs[id].type, options);
+            renderSkeleton(viewportType, options);
 
             glPopMatrix();
         }
@@ -634,7 +739,7 @@ bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
             glLoadIdentity();
             view();
 
-            renderBrush(id, state->viewer->window->viewports[id]->getMouseCoordinate());
+            renderBrush(id, getMouseCoordinate());
 
             glPopMatrix();
         }
@@ -730,7 +835,7 @@ bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
             glPushMatrix();
             glTranslatef(-state->viewerState->currentPosition.x, -state->viewerState->currentPosition.y, -state->viewerState->currentPosition.z);
             glTranslatef(0.5, 0.5, 0.5);//arrange to pixel center, this is never correct, TODO angle adjustments
-            renderSkeleton(state->viewerState->vpConfigs[id].type, options);
+            renderSkeleton(viewportType, options);
             glPopMatrix();
         }
         glLoadName(3);
@@ -815,7 +920,7 @@ bool Viewport::renderOrthogonalVP(const RenderOptions &options) {
     return true;
 }
 
-bool Viewport::renderVolumeVP() {
+bool Viewport3D::renderVolumeVP() {
     auto& seg = Segmentation::singleton();
 
     std::array<double, 3> background_color;
@@ -960,7 +1065,7 @@ bool Viewport::renderVolumeVP() {
     return true;
 }
 
-bool Viewport::renderSkeletonVP(const RenderOptions &options) {
+bool ViewportBase::renderSkeletonVP(const RenderOptions &options) {
     if(!state->viewerState->selectModeFlag) {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -1185,7 +1290,7 @@ bool Viewport::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
-        for(size_t i = 0; i < Viewport::numberViewports; i++) {
+        for(size_t i = 0; i < ViewportBase::numberViewports; i++) {
             // Used for calculation of slice pane length inside the 3d view
             float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
@@ -1249,7 +1354,7 @@ bool Viewport::renderSkeletonVP(const RenderOptions &options) {
             }
         }
 
-        for(size_t i = 0; i < Viewport::numberViewports; i++) {
+        for(size_t i = 0; i < ViewportBase::numberViewports; i++) {
             const auto & viewport = state->viewerState->vpConfigs[i];
             if (viewport.type == VIEWPORT_ARBITRARY) {
                 if ( (viewport.id == VP_UPPERLEFT && state->viewerState->showXYplane)
@@ -1263,7 +1368,7 @@ bool Viewport::renderSkeletonVP(const RenderOptions &options) {
 
         glDisable(GL_TEXTURE_2D);
 
-        for(size_t i = 0; i < Viewport::numberViewports; i++) {
+        for(size_t i = 0; i < ViewportBase::numberViewports; i++) {
             GLUquadricObj * gluCylObj;
             float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
@@ -1470,7 +1575,7 @@ bool Viewport::renderSkeletonVP(const RenderOptions &options) {
         glLoadIdentity();
         glTranslatef(origin[0], gl_viewport[3] - origin[1], origin[2]);
         glColor4f(0, 0, 0, 1);
-        if(Viewport::showBoundariesInUm) {
+        if(Viewport3D::showBoundariesInUm) {
             renderAxis(axis_x, QString("x: %1 µm").arg(state->boundary.x * state->scale.x * 0.001));
             renderAxis(axis_y, QString("y: %1 µm").arg(state->boundary.y * state->scale.y * 0.001));
             renderAxis(axis_z, QString("z: %1 µm").arg(state->boundary.z * state->scale.z * 0.001));
@@ -1507,7 +1612,7 @@ bool Viewport::renderSkeletonVP(const RenderOptions &options) {
     return true;
 }
 
-void Viewport::renderBrush(uint viewportType, Coordinate coord) {
+void ViewportBase::renderBrush(uint viewportType, Coordinate coord) {
     glLineWidth(2.0f);
 
     auto & seg = Segmentation::singleton();
@@ -1612,7 +1717,7 @@ void Viewport::renderBrush(uint viewportType, Coordinate coord) {
     drawCursor();
 }
 
-void Viewport::renderArbitrarySlicePane(const vpConfig & vp) {
+void ViewportBase::renderArbitrarySlicePane(const vpConfig & vp) {
     const auto & n = vp.n;
     const auto & v1 = vp.v1;
     const auto & v2 = vp.v2;
@@ -1640,7 +1745,7 @@ void Viewport::renderArbitrarySlicePane(const vpConfig & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-boost::optional<nodeListElement &> Viewport::retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width) {
+boost::optional<nodeListElement &> ViewportBase::retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width) {
     const auto & nodes = retrieveAllObjectsBeneathSquare(x, y, width, width);
     if (nodes.size() != 0) {
         return *(*std::begin(nodes));
@@ -1648,7 +1753,7 @@ boost::optional<nodeListElement &> Viewport::retrieveVisibleObjectBeneathSquare(
     return boost::none;
 }
 
-QSet<nodeListElement *> Viewport::retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
+QSet<nodeListElement *> ViewportBase::retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     makeCurrent();
 
     //4 elems per node: hit_count(always 1), min, max and 1 name
@@ -1680,7 +1785,7 @@ QSet<nodeListElement *> Viewport::retrieveAllObjectsBeneathSquare(uint centerX, 
 
     gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
-    if(state->viewerState->vpConfigs[id].type == VIEWPORT_SKELETON) {
+    if(viewportType == VIEWPORT_SKELETON) {
         renderSkeletonVP();
     } else {
         glDisable(GL_DEPTH_TEST);
@@ -1716,7 +1821,7 @@ QSet<nodeListElement *> Viewport::retrieveAllObjectsBeneathSquare(uint centerX, 
     return foundNodes;
 }
 
-bool Viewport::updateRotationStateMatrix(float M1[16], float M2[16]){
+bool ViewportBase::updateRotationStateMatrix(float M1[16], float M2[16]){
     //multiply matrix m2 to matrix m1 and save result in rotationState matrix
     int i;
     float M3[16];
@@ -1744,7 +1849,7 @@ bool Viewport::updateRotationStateMatrix(float M1[16], float M2[16]){
     return true;
 }
 
-bool Viewport::rotateSkeletonViewport(){
+bool ViewportBase::rotateSkeletonViewport(){
 
     // for general information look at http://de.wikipedia.org/wiki/Rolling-Ball-Rotation
 
@@ -1812,84 +1917,6 @@ bool Viewport::rotateSkeletonViewport(){
     return true;
 }
 
-
-bool Viewport::setRotationState(uint setTo) {
-    if (setTo == ROTATIONSTATERESET){
-            state->skeletonState->rotationState[0] = 0.866025;
-            state->skeletonState->rotationState[1] = 0.286788;
-            state->skeletonState->rotationState[2] = 0.409576;
-            state->skeletonState->rotationState[3] = 0.0;
-            state->skeletonState->rotationState[4] = -0.5;
-            state->skeletonState->rotationState[5] = 0.496732;
-            state->skeletonState->rotationState[6] = 0.709407;
-            state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = 0.0;
-            state->skeletonState->rotationState[9] = 0.819152;
-            state->skeletonState->rotationState[10] = -0.573576;
-            state->skeletonState->rotationState[11] = 0.0;
-            state->skeletonState->rotationState[12] = 0.0;
-            state->skeletonState->rotationState[13] = 0.0;
-            state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;
-        }
-        if (setTo == ROTATIONSTATEXY){//x @ 0°
-            state->skeletonState->rotationState[0] = 1.0;//1
-            state->skeletonState->rotationState[1] = 0.0;
-            state->skeletonState->rotationState[2] = 0.0;
-            state->skeletonState->rotationState[3] = 0.0;
-            state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = 1.0;//cos
-            state->skeletonState->rotationState[6] = 0.0;//-sin
-            state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = 0.0;
-            state->skeletonState->rotationState[9] = 0.0;//sin
-            state->skeletonState->rotationState[10] = 1.0;//cos
-            state->skeletonState->rotationState[11] = 0.0;
-            state->skeletonState->rotationState[12] = 0.0;
-            state->skeletonState->rotationState[13] = 0.0;
-            state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;//1
-        }
-        if (setTo == ROTATIONSTATEXZ){//x @ 90°
-            state->skeletonState->rotationState[0] = 1.0;//1
-            state->skeletonState->rotationState[1] = 0.0;
-            state->skeletonState->rotationState[2] = 0.0;
-            state->skeletonState->rotationState[3] = 0.0;
-            state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = 0.0;//cos
-            state->skeletonState->rotationState[6] = -1.0;//-sin
-            state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = 0.0;
-            state->skeletonState->rotationState[9] = 1.0;//sin
-            state->skeletonState->rotationState[10] = 0.0;//cos
-            state->skeletonState->rotationState[11] = 0.0;
-            state->skeletonState->rotationState[12] = 0.0;
-            state->skeletonState->rotationState[13] = 0.0;
-            state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;//1
-        }
-        if (setTo == ROTATIONSTATEYZ){//y @ -90°
-            state->skeletonState->rotationState[0] = 0.0;//cos
-            state->skeletonState->rotationState[1] = 0.0;
-            state->skeletonState->rotationState[2] = -1.0;//sin
-            state->skeletonState->rotationState[3] = 0.0;
-            state->skeletonState->rotationState[4] = 0.0;
-            state->skeletonState->rotationState[5] = 1.0;//1
-            state->skeletonState->rotationState[6] = 0.0;
-            state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = 1.0;//-sin
-            state->skeletonState->rotationState[9] = 0.0;
-            state->skeletonState->rotationState[10] = 0.0;//cos
-            state->skeletonState->rotationState[11] = 0.0;
-            state->skeletonState->rotationState[12] = 0.0;
-            state->skeletonState->rotationState[13] = 0.0;
-            state->skeletonState->rotationState[14] = 0.0;
-            state->skeletonState->rotationState[15] = 1.0;//1
-        }
-    return true;
-}
-
-
 /*
  * Fast and simplified tree rendering that uses frustum culling and
  * a heuristic level-of-detail implementation that exploits the implicit
@@ -1902,7 +1929,7 @@ bool Viewport::setRotationState(uint setTo) {
  * Ugly code, not nice to read, should be simplified...
  */
 
-void Viewport::renderSkeleton(uint viewportType, const RenderOptions &options) {
+void ViewportBase::renderSkeleton(uint viewportType, const RenderOptions &options) {
     treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     segmentListElement *currentSegment;
@@ -2100,7 +2127,7 @@ void Viewport::renderSkeleton(uint viewportType, const RenderOptions &options) {
                 if(currentNode != state->skeletonState->activeNode) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
                     QString nodeID = (state->viewerState->showNodeIDs)? QString::number(currentNode->nodeID) : "";
-                    QString comment = (id != VIEWPORT_SKELETON && Viewport::showNodeComments && currentNode->comment)?
+                    QString comment = (id != VIEWPORT_SKELETON && ViewportOrtho::showNodeComments && currentNode->comment)?
                                 QString(":%1").arg(currentNode->comment->content) : "";
                     if(nodeID.isEmpty() == false || comment.isEmpty() == false) {
                         renderText(currentNode->position, nodeID.append(comment));
@@ -2178,7 +2205,7 @@ void Viewport::renderSkeleton(uint viewportType, const RenderOptions &options) {
         // ID of active node is always rendered, ignoring state->skeletonState->showNodeIDs.
         // Comment should only be rendered in orthogonal viewports.
         glColor4f(0., 0., 0., 1.);
-        QString description = (id != VIEWPORT_SKELETON && Viewport::showNodeComments && active->comment)?
+        QString description = (id != VIEWPORT_SKELETON && ViewportOrtho::showNodeComments && active->comment)?
                     QString("%1:%2").arg(active->nodeID).arg(active->comment->content) : QString::number(active->nodeID);
         renderText(active->position, description);
     }
@@ -2189,40 +2216,7 @@ void Viewport::renderSkeleton(uint viewportType, const RenderOptions &options) {
     glEnable(GL_BLEND);
 }
 
-
-bool Viewport::resizemeshCapacity(mesh *toResize, uint n) {
-    (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
-    (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
-    (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
-
-    (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
-    (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;
-    (*toResize).colsBuffSize = n * (*toResize).colsBuffSize;
-
-    return true;
-}
-
-bool Viewport::doubleMeshCapacity(mesh *toDouble) {
-    return resizemeshCapacity(toDouble, 2);
-}
-
-bool Viewport::initMesh(mesh *toInit, uint initialSize) {
-    (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    (*toInit).normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    (*toInit).colors = (color4F *)malloc(initialSize * sizeof(color4F));
-
-    (*toInit).vertsBuffSize = initialSize;
-    (*toInit).normsBuffSize = initialSize;
-    (*toInit).colsBuffSize = initialSize;
-
-    (*toInit).vertsIndex = 0;
-    (*toInit).normsIndex = 0;
-    (*toInit).colsIndex = 0;
-    return true;
-}
-
-
-bool Viewport::updateFrustumClippingPlanes() {
+bool ViewportBase::updateFrustumClippingPlanes() {
    float   frustum[6][4];
    float   proj[16];
    float   modl[16];
@@ -2339,7 +2333,7 @@ bool Viewport::updateFrustumClippingPlanes() {
 }
 
 /* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
-bool Viewport::sphereInFrustum(floatCoordinate pos, float radius) {
+bool ViewportBase::sphereInFrustum(floatCoordinate pos, float radius) {
     int p;
 
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */

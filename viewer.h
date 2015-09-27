@@ -173,7 +173,7 @@ struct ViewerState {
  *  from the loader thread.
  */
 class Skeletonizer;
-class Viewport;
+class ViewportBase;
 class Viewer : public QThread {
     Q_OBJECT
 private:
@@ -190,7 +190,8 @@ public:
     MainWindow *window = &mainWindow;
 
     floatCoordinate v1, v2, v3;
-    Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
+    ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
+    Viewport3D *vpLowerRight;
     QTimer *timer;
     int frames;
 

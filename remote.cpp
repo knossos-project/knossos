@@ -166,7 +166,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
     *
     */
     auto rotation = Rotation(); // initially no rotation
-    if(Viewport::arbitraryOrientation) {
+    if(ViewportOrtho::arbitraryOrientation) {
         std::deque<floatCoordinate> lastRecenterings;
         lastRecenterings = getLastNodes();
         if(rotate && lastRecenterings.empty() == false) {
@@ -215,11 +215,11 @@ bool Remote::remoteWalk(int x, int y, int z) {
     floatCoordinate singleMove = walkVector / totalMoves;
     floatCoordinate residuals;
     float anglesPerStep = 0;
-    if(Viewport::arbitraryOrientation) {
+    if(ViewportOrtho::arbitraryOrientation) {
         anglesPerStep = rotation.alpha/totalMoves;
     }
     for(int i = 0; i < totalMoves; i++) {
-        if(Viewport::arbitraryOrientation) {
+        if(ViewportOrtho::arbitraryOrientation) {
             emit rotationSignal(rotation.axis.x, rotation.axis.y, rotation.axis.z, anglesPerStep);
         }
         Coordinate doMove;

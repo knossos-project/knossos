@@ -116,11 +116,10 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<floatCoordinate>();
 
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-
-    for(auto & vp : viewer.window->viewports) {
-        QObject::connect(vp.get(), &Viewport::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-        QObject::connect(vp.get(), &Viewport::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
-    }
+    viewer.window->forEachVPDo( [&remote](ViewportBase * vp) {
+        QObject::connect(vp, &ViewportBase::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
+        QObject::connect(vp, &ViewportBase::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
+    });
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 

@@ -129,7 +129,10 @@ class MainWindow : public QMainWindow {
 
     void placeComment(const int index);
 public:
-    std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
+    std::unique_ptr<ViewportOrtho> viewportXY;
+    std::unique_ptr<ViewportOrtho> viewportXZ;
+    std::unique_ptr<ViewportOrtho> viewportYZ;
+    std::unique_ptr<Viewport3D> viewport3D;
 
     // contains all widgets
     WidgetContainer widgetContainer;
@@ -168,7 +171,18 @@ public:
     void clearSettings();
 
     explicit MainWindow(QWidget *parent = 0);
+    template<typename Function> void forEachVPDo(Function func) {
+        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportYZ.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
+            func(vp);
+        }
+    }
+    template<typename Function> void forEachOrthoVPDo(Function func) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportYZ.get() }) {
+            func(vp);
+        }
+    }
 
+    ViewportBase* viewport(const uint id);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();

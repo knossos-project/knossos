@@ -68,7 +68,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     setLayout(&mainLayout);
     QObject::connect(&allNodeIDsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->showNodeIDs = on; });
     QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
-    QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { Viewport::showNodeComments = checked; });
+    QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { ViewportOrtho::showNodeComments = checked; });
     QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::clicked, [this](const bool on) {
         state->viewerState->overrideNodeRadiusBool = on;
         nodeRadiusSpin.setEnabled(on);

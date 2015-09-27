@@ -45,22 +45,27 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    vpUpperLeft = window->viewports[VIEWPORT_XY].get();
-    vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
-    vpUpperRight = window->viewports[VIEWPORT_YZ].get();
-    vpLowerRight = window->viewports[VIEWPORT_SKELETON].get();
+    qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
+             << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
+             << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+    vpUpperLeft = window->viewportXY.get();
+    vpLowerLeft = window->viewportXZ.get();
+    vpUpperRight = window->viewportYZ.get();
+    vpLowerRight = window->viewport3D.get();
 
     timer = new QTimer();
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
      * 2. new Skeletonizer
-     * 3. initRenderer
+     * 3. init mesh
      * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
     */
 
     initViewer();
-    Viewport::initRenderer();
+
+    ViewportBase::initMesh(state->skeletonState->lineVertBuffer, 1024);
+    ViewportBase::initMesh(state->skeletonState->pointVertBuffer, 1024);
 
     QDesktopWidget *desktop = QApplication::desktop();
 
@@ -77,7 +82,7 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     state->viewerState->renderInterval = FAST;
 
     // for arbitrary viewport orientation
-    for (uint i = 0; i < Viewport::numberViewports; i++){
+    for (uint i = 0; i < ViewportBase::numberViewports; i++){
         state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max =
                 (
                     (
@@ -626,7 +631,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
-    for (i = 0; i < Viewport::numberViewports; i++) {
+    for (i = 0; i < ViewportBase::numberViewports; i++) {
         floatCoordinate v1, v2;
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
@@ -767,7 +772,7 @@ void Viewer::initViewer() {
                                                      * 3);
 
     /* @arb */
-    for (std::size_t i = 0; i < Viewport::numberViewports; ++i){
+    for (std::size_t i = 0; i < ViewportBase::numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (char *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             qDebug() << "Out of memory.";
@@ -798,7 +803,7 @@ bool Viewer::calcDisplayedEdgeLength() {
     FOVinDCs = ((float)state->M) - 1.f;
 
 
-    for(i = 0; i < Viewport::numberViewports; i++) {
+    for(i = 0; i < ViewportBase::numberViewports; i++) {
         if (state->viewerState->vpConfigs[i].type==VIEWPORT_ARBITRARY){
             state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
                 state->viewerState->vpConfigs[i].s_max / (float) state->viewerState->vpConfigs[i].texture.edgeLengthPx;
@@ -832,7 +837,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         case MAG_DOWN:
             if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
                 state->magnification /= 2;
-                for(i = 0; i < Viewport::numberViewports; i++) {
+                for(i = 0; i < ViewportBase::numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
@@ -845,7 +850,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
         case MAG_UP:
             if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
                 state->magnification *= 2;
-                for(i = 0; i < Viewport::numberViewports; i++) {
+                for(i = 0; i < ViewportBase::numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
@@ -936,36 +941,24 @@ void Viewer::run() {
     }
 
     recalcTextureOffsets();//should be in userMove and setVPOrientation but that’s infeasable because vp update is async
-    for (int drawCounter = 0; drawCounter < 3 && !state->quitSignal; ++drawCounter) {
-        vpConfig & currentVp = state->viewerState->vpConfigs[drawCounter];
-        // This condition relies on the ugly assumption, that the vpConfigs
-        // index corresponds to the viewports vector index, which is ugly true
-        if (state->viewer->window->viewports[drawCounter]->isVisible()) {
-            if (currentVp.id == VP_UPPERLEFT) {
-                vpUpperLeft->makeCurrent();
-            } else if (currentVp.id == VP_LOWERLEFT) {
-                vpLowerLeft->makeCurrent();
-            } else if (currentVp.id == VP_UPPERRIGHT) {
-                vpUpperRight->makeCurrent();
-            }
-
-            if(currentVp.type != VIEWPORT_ARBITRARY) {
-                vpGenerateTexture(currentVp);
-            } else {
-                vpGenerateTexture_arb(currentVp);
-            }
+    window->forEachOrthoVPDo([this](ViewportOrtho * vp) {
+        auto & currentVP = state->viewerState->vpConfigs[vp->id];
+        if (vp->isVisible()) {
+            vp->makeCurrent();
         }
-    }
+        if (!ViewportOrtho::arbitraryOrientation) {
+            vpGenerateTexture(currentVP);
+        } else {
+            vpGenerateTexture_arb(currentVP);
+        }
+        vp->update();
+    });
+    window->viewport3D.get()->update();
     window->updateTitlebar(); //display changes after filename
-
-    vpUpperLeft->update();
-    vpLowerLeft->update();
-    vpUpperRight->update();
-    vpLowerRight->update();
 }
 
 void Viewer::applyTextureFilterSetting(const GLint texFiltering) {
-    for (uint i = 0; i < Viewport::numberViewports; i++) {
+    for (uint i = 0; i < ViewportBase::numberViewports; i++) {
         if (i == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
         } else if (i == VP_LOWERLEFT) {
@@ -997,7 +990,7 @@ void Viewer::updateCurrentPosition() {
 bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
     auto * viewerState = state->viewerState;
 
-    if (Viewport::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
+    if (ViewportOrtho::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
         dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
     } else {
         if (z != 0) {
@@ -1112,7 +1105,7 @@ bool Viewer::recalcTextureOffsets() {
 
     calcDisplayedEdgeLength();
 
-    for(i = 0; i < Viewport::numberViewports; i++) {
+    for(i = 0; i < ViewportBase::numberViewports; i++) {
         /* Do this only for orthogonal VPs... */
         if (state->viewerState->vpConfigs[i].type == VIEWPORT_XY
             || state->viewerState->vpConfigs[i].type == VIEWPORT_XZ
@@ -1515,32 +1508,34 @@ void Viewer::rewire() {
     QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
-        for (auto & vp : window->viewports) {
-            if(vp.get()->hasCursor) {
-                vp.get()->sendCursorPosition();
-                return;
+        window->forEachVPDo([](ViewportBase * vp) {
+            if (vp->hasCursor) {
+                vp->sendCursorPosition();
             }
-        }
+        });
     });
     // end viewer signals
     // skeletonizer signals
     QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
     // end skeletonizer signals
     //viewport signals
-    for (auto & vp : window->viewports) {
-        QObject::connect(vp.get(), &Viewport::userMoveSignal, this, &Viewer::userMove);
-        QObject::connect(vp.get(), &Viewport::userMoveArbSignal, this, &Viewer::userMove_arb);
-        QObject::connect(vp.get(), &Viewport::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
-        QObject::connect(vp.get(), &Viewport::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(vp.get(), &Viewport::updateWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-        QObject::connect(vp.get(), &Viewport::delSegmentSignal, &Skeletonizer::delSegment);
-        QObject::connect(vp.get(), &Viewport::addSegmentSignal, &Skeletonizer::addSegment);
-        QObject::connect(vp.get(), &Viewport::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
-        QObject::connect(vp.get(), &Viewport::rotationSignal, this, &Viewer::setRotation);
-        QObject::connect(vp.get(), &Viewport::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-        QObject::connect(vp.get(), &Viewport::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
-        QObject::connect(vp.get(), &Viewport::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-    }
+    window->forEachVPDo([this](ViewportBase * vp) {
+        QObject::connect(vp, &ViewportBase::userMoveSignal, this, &Viewer::userMove);
+        QObject::connect(vp, &ViewportBase::userMoveArbSignal, this, &Viewer::userMove_arb);
+        QObject::connect(vp, &ViewportBase::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
+        QObject::connect(vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
+        QObject::connect(vp, &ViewportBase::delSegmentSignal, &Skeletonizer::delSegment);
+        QObject::connect(vp, &ViewportBase::addSegmentSignal, &Skeletonizer::addSegment);
+        QObject::connect(vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
+        QObject::connect(vp, &ViewportBase::rotationSignal, this, &Viewer::setRotation);
+        QObject::connect(vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    });
+
+    window->forEachOrthoVPDo([this](ViewportOrtho * orthoVP) {
+        QObject::connect(orthoVP, &ViewportOrtho::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
+        QObject::connect(orthoVP, &ViewportOrtho::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
+    });
+
     // end viewport signals
 
     // --- widget signals ---
@@ -1549,8 +1544,8 @@ void Viewer::rewire() {
     QObject::connect(skeletonizer, &Skeletonizer::propertiesChanged, &window->widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     //  -- end appearance widget signals
     //  dataset options signals --
-    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
-    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
+    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, static_cast<Viewport3D*>(vpLowerRight), &Viewport3D::zoomInSkeletonVP);
+    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, static_cast<Viewport3D*>(vpLowerRight), &Viewport3D::zoomOutSkeletonVP);
     //  -- end dataset options signals
     // dataset load signals --
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
@@ -1568,13 +1563,11 @@ void Viewer::setRotation(float x, float y, float z, float angle) {
 
 void Viewer::setVPOrientation(const bool arbitrary) {
     if (arbitrary) {
-        window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
-        window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_ARBITRARY);
-        window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_ARBITRARY);
+         window->forEachOrthoVPDo([this](ViewportOrtho * orthoVP) { orthoVP->setOrientation(VIEWPORT_ARBITRARY); });
     } else {
-        window->viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
-        window->viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
-        window->viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
+        window->viewportXY->setOrientation(VIEWPORT_XY);
+        window->viewportXZ->setOrientation(VIEWPORT_XZ);
+        window->viewportYZ->setOrientation(VIEWPORT_YZ);
         resetRotation();
     }
     dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
