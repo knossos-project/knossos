@@ -89,57 +89,6 @@ struct viewportTexture {
     float zoomLevel;
 };
 
-/**
-  * @struct vpConfig
-  * @brief Contains attributes for widget size, screen pixels per data pixels,
-  *        as well as flags about user interaction with the widget
-  */
-struct vpConfig {
-    // s*v1 + t*v2 = px
-    floatCoordinate n;
-    floatCoordinate v1; // vector in x direction
-    floatCoordinate v2; // vector in y direction
-    floatCoordinate leftUpperPxInAbsPx_float;
-    floatCoordinate leftUpperDataPxOnScreen_float;
-    int s_max;
-    int t_max;
-
-    char * viewPortData;
-
-    viewportTexture texture;
-
-    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
-    Coordinate leftUpperDataPxOnScreen;
-
-    //This is a bit confusing..the screen coordinate system has always
-    //x on the horizontal and y on the verical axis, but the displayed
-    //data pixels can have a different axis. Keep this in mind.
-    //These values depend on texUnitsPerDataPx (in struct viewportTexture),
-    //the current zoom value and the data pixel voxel dimensions.
-    float screenPxXPerDataPx;
-    float screenPxYPerDataPx;
-
-    float displayedlengthInNmX;
-    float displayedlengthInNmY;
-
-    ViewportType type; // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_ARBITRARY}
-    uint id; // id e {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT}
-    // CORRECT THIS COMMENT TODO BUG
-    //lower left corner of viewport in screen pixel coords (max: window borders)
-    //we use here the lower left corner, because the openGL intrinsic coordinate system
-    //is defined over the lower left window corner. All operations inside the viewports
-    //use a coordinate system with lowest coordinates in the upper left corner.
-    Coordinate upperLeftCorner;
-    //edge length in screen pixel coordinates; only squarish VPs are allowed
-
-    uint edgeLength;
-
-    class nodeListElement *draggedNode;
-
-    /* Stores the current view frustum planes */
-    float frustum[6][4];
-};
-
 struct RenderOptions {
     RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
                   const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true)
@@ -171,12 +120,12 @@ public:
     explicit QViewportFloatWidget(QWidget *parent, int id);
 };
 
-Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound);
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportBase & vp);
 constexpr int defaultFonsSize = 10;
 class commentListElement;
 class nodeListElement;
 class segmentListElement;
-
+class ViewportOrtho;
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
     QOpenGLDebugLogger oglLogger;
@@ -230,7 +179,7 @@ class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     void createOverlayTextures();
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     bool renderViewport(const RenderOptions & options = RenderOptions());
-    void renderArbitrarySlicePane(const vpConfig &);
+    void renderArbitrarySlicePane(const ViewportOrtho & vp);
     bool rotateSkeletonViewport();
     uint renderSegPlaneIntersection(segmentListElement *segment);
     uint renderSphere(Coordinate *pos, float radius, color4F color);
@@ -279,7 +228,6 @@ public:
         const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
         resize({size, size});
     }
-
     QSize dockSize;
     QPoint dockPos;
     void setDock(bool isDock);
@@ -287,13 +235,43 @@ public:
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
 
-    static void resetTextureProperties();
     Coordinate getMouseCoordinate();
 
     static bool initMesh(mesh & toInit, uint initialSize);
     static bool doubleMeshCapacity(mesh & toDouble);
     static bool resizemeshCapacity(mesh & toResize, uint n);
     void sendCursorPosition();
+
+    // plane vectors. s*v1 + t*v2 = px
+    floatCoordinate n;
+    floatCoordinate v1; // vector in x direction
+    floatCoordinate v2; // vector in y direction
+    floatCoordinate leftUpperPxInAbsPx_float;
+    floatCoordinate leftUpperDataPxOnScreen_float;
+    int s_max;
+    int t_max;
+
+    char * viewPortData;
+    viewportTexture texture;
+
+    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
+    Coordinate leftUpperDataPxOnScreen;
+    //This is a bit confusing..the screen coordinate system has always
+    //x on the horizontal and y on the verical axis, but the displayed
+    //data pixels can have a different axis. Keep this in mind.
+    //These values depend on texUnitsPerDataPx (in struct viewportTexture),
+    //the current zoom value and the data pixel voxel dimensions.
+    float screenPxXPerDataPx;
+    float screenPxYPerDataPx;
+    float displayedlengthInNmX;
+    float displayedlengthInNmY;
+
+    Coordinate upperLeftCorner; //upper left corner of viewport in screen pixel coords (max: window borders)
+    uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
+
+    float frustum[6][4]; // Stores the current view frustum planes
+
+    class nodeListElement *draggedNode;
 signals:
     void cursorPositionChanged(const Coordinate & position, const uint id);
 

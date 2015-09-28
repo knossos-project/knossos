@@ -184,26 +184,6 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id
     });
 }
 
-void ViewportBase::resetTextureProperties() {
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
-    //reset viewerState texture properties
-    for (uint i = 0; i < ViewportBase::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].draggedNode = nullptr;
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-        //This variable indicates the current zoom value for a viewport.
-        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-    }
-}
-
 void ViewportBase::initializeGL() {
     if (!initializeOpenGLFunctions()) {
         qDebug() << "initializeOpenGLFunctions failed";
@@ -217,9 +197,9 @@ void ViewportBase::initializeGL() {
     }
 
     if(viewportType != VIEWPORT_SKELETON) {
-        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
+        glGenTextures(1, &texture.texHandle);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -233,8 +213,8 @@ void ViewportBase::initializeGL() {
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
-                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
+                     texture.edgeLengthPx,
+                     texture.edgeLengthPx,
                      0,
                      GL_RGB,
                      GL_UNSIGNED_BYTE,
@@ -245,18 +225,14 @@ void ViewportBase::initializeGL() {
 
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed viewport.
-    glViewport(state->viewerState->vpConfigs[id].upperLeftCorner.x,
-               state->viewerState->vpConfigs[id].upperLeftCorner.y,
-               state->viewerState->vpConfigs[id].edgeLength,
-               state->viewerState->vpConfigs[id].edgeLength);
+    glViewport(upperLeftCorner.x, upperLeftCorner.y, edgeLength, edgeLength);
     //select the projection matrix
     glMatrixMode(GL_PROJECTION);
     //reset it
     glLoadIdentity();
     //define coordinate system for our viewport: left right bottom top near far
     //coordinate values
-    glOrtho(0, state->viewerState->vpConfigs[id].edgeLength,
-            state->viewerState->vpConfigs[id].edgeLength, 0, 25, -25);
+    glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
     //select the modelview matrix for modification
     glMatrixMode(GL_MODELVIEW);
     //reset it
@@ -284,13 +260,12 @@ void ViewportBase::initializeGL() {
 
 void ViewportOrtho::setOrientation(ViewportType orientation) {
     viewportType = orientation;
-    state->viewerState->vpConfigs[id].type = orientation;
 }
 
 void ViewportBase::createOverlayTextures() {
-    glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glGenTextures(1, &texture.overlayHandle);
 
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
 
     //Set the parameters for the texture.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -298,7 +273,7 @@ void ViewportBase::createOverlayTextures() {
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    const auto size = state->viewerState->vpConfigs[id].texture.edgeLengthPx;
+    const auto size = texture.edgeLengthPx;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
@@ -311,8 +286,8 @@ void ViewportBase::resizeGL(int w, int h) {
     glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
     glMatrixMode(GL_MODELVIEW);
 
-    state->viewerState->vpConfigs[id].upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
-    state->viewerState->vpConfigs[id].edgeLength = width();
+    upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
+    edgeLength = width();
 }
 
 void Viewport3D::paintGL() {
@@ -355,7 +330,7 @@ void ViewportBase::leaveEvent(QEvent *) {
 }
 
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(event->x(), event->y(), id), id);
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(event->x(), event->y(), *this), id);
     const auto mouseBtn = event->buttons();
     const auto penmode = state->viewerState->penmode;
 
@@ -429,7 +404,7 @@ void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
 
     userMouseSlide = {};
     arbNodeDragCache = {};
-    state->viewerState->vpConfigs[id].draggedNode = nullptr;
+    draggedNode = nullptr;
 }
 
 void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
@@ -462,43 +437,40 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
 
 void ViewportBase::zoomOrthogonals(float step){
     int triggerMagChange = false;
-    for(uint i = 0; i < ViewportBase::numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            /* check if mag is locked */
-            if(state->viewerState->datasetMagLock) {
-                if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
-                   !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                }
+    state->viewer->window->forEachOrthoVPDo([&step, &triggerMagChange](ViewportOrtho & orthoVP) {
+        if(state->viewerState->datasetMagLock) {
+            if(!(orthoVP.texture.zoomLevel + step < VPZOOMMAX) &&
+               !(orthoVP.texture.zoomLevel + step > VPZOOMMIN)) {
+                orthoVP.texture.zoomLevel += step;
             }
-            else {
-                /* trigger a mag change when possible */
-                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
-                    && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
-                    && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    triggerMagChange = MAG_DOWN;
+        }
+        else {
+            /* trigger a mag change when possible */
+            if((orthoVP.texture.zoomLevel + step < 0.5)
+                && (orthoVP.texture.zoomLevel >= 0.5)
+                && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
+                orthoVP.texture.zoomLevel += step;
+                triggerMagChange = MAG_DOWN;
+            }
+            if((orthoVP.texture.zoomLevel + step > 1.0)
+                && (orthoVP.texture.zoomLevel <= 1.0)
+                && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
+                orthoVP.texture.zoomLevel += step;
+                triggerMagChange = MAG_UP;
+            }
+            /* performe normal zooming otherwise. This case also covers
+            * the special case of zooming in further than 0.5 on mag1 */
+            if(!triggerMagChange) {
+                float zoomLevel = orthoVP.texture.zoomLevel += step;
+                if(zoomLevel < VPZOOMMAX) {
+                    orthoVP.texture.zoomLevel = VPZOOMMAX;
                 }
-                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
-                    && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
-                    && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    triggerMagChange = MAG_UP;
-                }
-                /* performe normal zooming otherwise. This case also covers
-                * the special case of zooming in further than 0.5 on mag1 */
-                if(!triggerMagChange) {
-                    float zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    if(zoomLevel < VPZOOMMAX) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMAX;
-                    }
-                    else if (zoomLevel > VPZOOMMIN) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-                    }
+                else if (zoomLevel > VPZOOMMIN) {
+                    orthoVP.texture.zoomLevel = VPZOOMMIN;
                 }
             }
         }
-    }
+    });
 
    if(triggerMagChange) {
         emit changeDatasetMagSignal(triggerMagChange);
@@ -549,12 +521,11 @@ void ViewportBase::updateOverlayTexture() {
 
     const int width = state->M * state->cubeEdgeLength;
     const int height = width;
-    const auto & config = state->viewerState->vpConfigs[id];
-    const auto begin = config.leftUpperPxInAbsPx_float;
+    const auto begin = leftUpperPxInAbsPx_float;
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + config.v1 * state->magnification * x + config.v2 * state->magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {
@@ -566,7 +537,7 @@ void ViewportBase::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->overlayData);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -783,5 +754,5 @@ void ViewportOrtho::takeSnapshot(const QString & path, const int size, const boo
 
 void ViewportBase::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), id), id);
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
 }

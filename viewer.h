@@ -64,7 +64,6 @@ struct ViewerState {
     ViewerState() {
         state->viewerState = this;
     }
-    std::vector<vpConfig> vpConfigs;
     char *texData;
     char *overlayData;
     char *defaultTexData;
@@ -213,12 +212,12 @@ signals:
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();
 protected:
-    void vpGenerateTexture_arb(vpConfig &currentVp);
+    void vpGenerateTexture_arb(ViewportOrtho & vp);
 
-    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
+    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
 
-    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig);
+    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
 
     void rewire();
 public slots:
@@ -234,7 +233,7 @@ public slots:
     void defaultDatasetLUT();
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
-    bool vpGenerateTexture(vpConfig &currentVp);
+    bool vpGenerateTexture(ViewportOrtho & vp);
     void setRotation(float x, float y, float z, float angle);
     void resetRotation();
     void setVPOrientation(const bool arbitrary);

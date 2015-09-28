@@ -310,7 +310,7 @@ void DatasetLoadWidget::applyGeometrySettings() {
     state->cubeSetElements = std::pow(state->M, 3);
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
-    ViewportBase::resetTextureProperties();
+    state->viewer->window->resetTextureProperties();
 }
 
 void DatasetLoadWidget::loadSettings() {

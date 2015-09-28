@@ -43,7 +43,7 @@
 #include <unordered_set>
 
 
-void merging(QMouseEvent *event, const int vp) {
+void merging(QMouseEvent *event, ViewportBase & vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
@@ -86,7 +86,7 @@ void merging(QMouseEvent *event, const int vp) {
     }
 }
 
-void segmentation_brush_work(QMouseEvent *event, const int vp) {
+void segmentation_brush_work(QMouseEvent *event, ViewportBase & vp) {
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
     auto & seg = Segmentation::singleton();
 
@@ -103,7 +103,7 @@ void segmentation_brush_work(QMouseEvent *event, const int vp) {
 
 
 void ViewportBase::handleMouseHover(QMouseEvent *event) {
-    auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+    auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, id, event);
@@ -121,7 +121,7 @@ void ViewportBase::handleMouseButtonLeft(QMouseEvent *event) {
             // check click mode of orthogonal viewports
             if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
                 if(mouseEventAtValidDatasetPosition(event)) {
-                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+                    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
                     emit setRecenteringPositionSignal(clickedCoordinate.x, clickedCoordinate.y, clickedCoordinate.z);
                     Knossos::sendRemoteSignal();
                 }
@@ -173,7 +173,7 @@ void ViewportBase::handleMouseButtonMiddle(QMouseEvent *event) {
                     emit addSegmentSignal(*activeNode, clickedNode.get());
                 }
             } else if (keyMod.testFlag(Qt::NoModifier)) {
-                state->viewerState->vpConfigs[id].draggedNode = &clickedNode.get();
+                draggedNode = &clickedNode.get();
             }
         }
     }
@@ -181,10 +181,10 @@ void ViewportBase::handleMouseButtonMiddle(QMouseEvent *event) {
 
 void ViewportBase::handleMouseButtonRight(QMouseEvent *event) {
     const auto & annotationMode = Session::singleton().annotationMode;
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
     if (annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
-        segmentation_brush_work(event, id);
+        segmentation_brush_work(event, *this);
         return;
     }
 
@@ -281,22 +281,22 @@ void ViewportBase::handleMouseButtonRight(QMouseEvent *event) {
     }
 }
 
-Coordinate deviationVP(const vpConfig & config, const QPoint deviation) {
-    switch (config.type) {
+Coordinate deviationVP(const ViewportType viewportType, const QPoint deviation) {
+    switch (viewportType) {
     case VIEWPORT_XY: return {deviation.x(), deviation.y(), 0};
     case VIEWPORT_XZ: return {deviation.x(), 0, deviation.y()};
     case VIEWPORT_YZ: return {0, deviation.y(), deviation.x()};
     }
 }
 
-boost::optional<Coordinate> handleMovement(const vpConfig & config, const QPointF & posDelta, QPointF & userMouseSlide) {
-    userMouseSlide -= {posDelta.x() / config.screenPxXPerDataPx, posDelta.y() / config.screenPxYPerDataPx};
+boost::optional<Coordinate> handleMovement(const ViewportBase & vp, const QPointF & posDelta, QPointF & userMouseSlide) {
+    userMouseSlide -= {posDelta.x() / vp.screenPxXPerDataPx, posDelta.y() / vp.screenPxYPerDataPx};
 
     const QPoint deviationTrunc(std::trunc(userMouseSlide.x()), std::trunc(userMouseSlide.y()));
 
     if (!deviationTrunc.isNull()) {
         userMouseSlide -= deviationTrunc;
-        return deviationVP(config, deviationTrunc);
+        return deviationVP(vp.viewportType, deviationTrunc);
     }
     return boost::none;
 }
@@ -318,22 +318,19 @@ void ViewportBase::handleMouseMotionLeftHold(QMouseEvent *event) {
             state->skeletonState->translateX += -xrel(event->x()) * 2.
                 * ((float)state->skeletonState->volBoundary
                 * (0.5 - state->skeletonState->zoomLevel))
-                / ((float)state->viewerState->vpConfigs[id].edgeLength);
+                / ((float)edgeLength);
             state->skeletonState->translateY += -yrel(event->y()) * 2.
                 * ((float)state->skeletonState->volBoundary
                 * (0.5 - state->skeletonState->zoomLevel))
-                / ((float)state->viewerState->vpConfigs[id].edgeLength);
+                / ((float)edgeLength);
         }
     } else if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
-        const auto & config = state->viewerState->vpConfigs[id];
         const QPointF posDelta(xrel(event->x()), yrel(event->y()));
         if (viewportType == VIEWPORT_ARBITRARY) {
-            const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
-            const auto v1 = config.v1 * arbitraryMouseSlide.x();
-            const auto v2 = config.v2 * arbitraryMouseSlide.y();
-            const auto move = v1 + v2;
+            const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
+            const auto move = v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();
             state->viewer->userMove_arb(move.x, move.y, move.z);//subpixel movements are accumulated within userMove_arb
-        } else if (auto moveIt = handleMovement(config, posDelta, userMouseSlide)) {
+        } else if (auto moveIt = handleMovement(*this, posDelta, userMouseSlide)) {
             state->viewer->userMove(moveIt->x, moveIt->y, moveIt->z, USERMOVE_HORIZONTAL, viewportType);
         }
     }
@@ -341,23 +338,20 @@ void ViewportBase::handleMouseMotionLeftHold(QMouseEvent *event) {
 
 void ViewportBase::handleMouseMotionMiddleHold(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        const auto & config = state->viewerState->vpConfigs[id];
-        if (config.draggedNode != nullptr) {
+        if (draggedNode != nullptr) {
             const QPointF posDelta(xrel(event->x()), yrel(event->y()));
             boost::optional<Coordinate> moveIt;
             if (viewportType == VIEWPORT_ARBITRARY) {
-                const QPointF arbitraryMouseSlide = {-posDelta.x() / config.screenPxXPerDataPx, -posDelta.y() / config.screenPxYPerDataPx};
-                const auto v1 = config.v1 * arbitraryMouseSlide.x();
-                const auto v2 = config.v2 * arbitraryMouseSlide.y();
-                arbNodeDragCache += v1 + v2;//accumulate subpixel movements
+                const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
+                arbNodeDragCache += v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();//accumulate subpixel movements
                 moveIt = arbNodeDragCache;//truncate
                 arbNodeDragCache -= *moveIt;//only keep remaining fraction
             } else {
-                moveIt = handleMovement(config, posDelta, userMouseSlide);
+                moveIt = handleMovement(*this, posDelta, userMouseSlide);
             }
             if (moveIt) {
-                const auto newPos = config.draggedNode->position - *moveIt;
-                Skeletonizer::singleton().editNode(0, config.draggedNode, 0., newPos, state->magnification);
+                const auto newPos = draggedNode->position - *moveIt;
+                Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, state->magnification);
             }
         }
     }
@@ -367,7 +361,7 @@ void ViewportBase::handleMouseMotionRightHold(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
         if (notOrigin) {
-            segmentation_brush_work(event, id);
+            segmentation_brush_work(event, *this);
         }
         return;
     }
@@ -381,7 +375,7 @@ void ViewportBase::handleMouseReleaseLeft(QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched
         if (event->pos() == mouseDown) {
-            const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+            const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
             const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != segmentation.getBackgroundId()) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
@@ -429,21 +423,21 @@ void ViewportBase::handleMouseReleaseLeft(QMouseEvent *event) {
 void ViewportBase::handleMouseReleaseRight(QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && id != VIEWPORT_SKELETON) {
         if (event->pos() != mouseDown) {//merge took already place on mouse down
-            segmentation_brush_work(event, id);
+            segmentation_brush_work(event, *this);
         }
     }
 }
 
 void ViewportBase::handleMouseReleaseMiddle(QMouseEvent * event) {
     if (mouseEventAtValidDatasetPosition(event)) {
-        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, id, event);
         auto & seg = Segmentation::singleton();
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
             auto brush_copy = seg.brush.value();
             uint64_t soid = brush_copy.inverse ? seg.getBackgroundId() : seg.subobjectIdOfFirstSelectedObject(clickedCoordinate);
             brush_copy.shape = brush_t::shape_t::angular;
-            brush_copy.radius = state->viewerState->vpConfigs[0].displayedlengthInNmX / 2;//set brush to fill visible area
+            brush_copy.radius = displayedlengthInNmX / 2;//set brush to fill visible area
             subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
         }
     }
@@ -486,9 +480,7 @@ void ViewportBase::wheelEvent(QWheelEvent *event) {
         } else if (viewportType == VIEWPORT_YZ) {
             emit userMoveSignal(multiplier, 0, 0, USERMOVE_DRILL, viewportType);
         } else if (viewportType == VIEWPORT_ARBITRARY) {
-            emit userMoveArbSignal(state->viewerState->vpConfigs[id].n.x * multiplier
-                , state->viewerState->vpConfigs[id].n.y * multiplier
-                , state->viewerState->vpConfigs[id].n.z * multiplier);
+            emit userMoveArbSignal(n.x * multiplier, n.y * multiplier, n.z * multiplier);
         }
     }
 }
@@ -588,10 +580,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(
-                         -10 * state->viewerState->vpConfigs[id].v1.x * state->magnification,
-                         -10 * state->viewerState->vpConfigs[id].v1.y * state->magnification,
-                         -10 * state->viewerState->vpConfigs[id].v1.z * state->magnification);
+                emit userMoveArbSignal(-10 * v1.x * state->magnification, -10 * v1.y * state->magnification, -10 * v1.z * state->magnification);
                 break;
             }
         } else {
@@ -609,12 +598,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(-state->viewerState->vpConfigs[id].v1.x
-                            * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[id].v1.y
-                            * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[id].v1.z
-                            * state->viewerState->dropFrames * state->magnification);
+                emit userMoveArbSignal(-v1.x * state->viewerState->dropFrames * state->magnification,
+                                       -v1.y * state->viewerState->dropFrames * state->magnification,
+                                       -v1.z * state->viewerState->dropFrames * state->magnification);
                 break;
             }
         }
@@ -634,10 +620,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(
-                            10 * state->viewerState->vpConfigs[id].v1.x * state->magnification,
-                            10 * state->viewerState->vpConfigs[id].v1.y * state->magnification,
-                            10 * state->viewerState->vpConfigs[id].v1.z * state->magnification);
+                emit userMoveArbSignal(10 * v1.x * state->magnification, 10 * v1.y * state->magnification, 10 * v1.z * state->magnification);
                  break;
             }
         } else {
@@ -655,12 +638,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[id].v1.x
-                            * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[id].v1.y
-                            * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[id].v1.z
-                            * state->viewerState->dropFrames * state->magnification);
+                emit userMoveArbSignal(v1.x * state->viewerState->dropFrames * state->magnification,
+                                       v1.y * state->viewerState->dropFrames * state->magnification,
+                                       v1.z * state->viewerState->dropFrames * state->magnification);
                 break;
             }
         }
@@ -680,10 +660,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                         USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    emit userMoveArbSignal(
-                        -10 * state->viewerState->vpConfigs[id].v2.x * state->magnification,
-                        -10 * state->viewerState->vpConfigs[id].v2.y * state->magnification,
-                        -10 * state->viewerState->vpConfigs[id].v2.z * state->magnification);
+                    emit userMoveArbSignal(-10 * v2.x * state->magnification, -10 * v2.y * state->magnification, -10 * v2.z * state->magnification);
                      break;
             }
         } else {
@@ -701,12 +678,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                         USERMOVE_HORIZONTAL, viewportType);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    emit userMoveArbSignal(-state->viewerState->vpConfigs[id].v2.x
-                            * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[id].v2.y
-                            * state->viewerState->dropFrames * state->magnification,
-                        -state->viewerState->vpConfigs[id].v2.z
-                            * state->viewerState->dropFrames * state->magnification);
+                    emit userMoveArbSignal(-v2.x * state->viewerState->dropFrames * state->magnification,
+                                           -v2.y * state->viewerState->dropFrames * state->magnification,
+                                           -v2.z * state->viewerState->dropFrames * state->magnification);
                     break;
             }
         }
@@ -726,10 +700,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(
-                            10 * state->viewerState->vpConfigs[id].v2.x * state->magnification,
-                            10 * state->viewerState->vpConfigs[id].v2.y * state->magnification,
-                            10 * state->viewerState->vpConfigs[id].v2.z * state->magnification);
+                emit userMoveArbSignal(10 * v2.x * state->magnification, 10 * v2.y * state->magnification, 10 * v2.z * state->magnification);
                 break;
             }
         } else {
@@ -747,12 +718,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                                     USERMOVE_HORIZONTAL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[id].v2.x
-                            * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[id].v2.y
-                            * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[id].v2.z
-                            * state->viewerState->dropFrames * state->magnification);
+                emit userMoveArbSignal(v2.x * state->viewerState->dropFrames * state->magnification,
+                                       v2.y * state->viewerState->dropFrames * state->magnification,
+                                       v2.z * state->viewerState->dropFrames * state->magnification);
                 break;
             }
         }
@@ -781,12 +749,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
             Knossos::sendRemoteSignal();
             break;
         case VIEWPORT_ARBITRARY:
-            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[id].n.x * state->magnification,
-                    state->viewerState->currentPosition.y + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[id].n.y * state->magnification,
-                    state->viewerState->currentPosition.z + state->viewerState->walkFrames
-                            * state->viewerState->vpConfigs[id].n.z * state->magnification);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames * n.x * state->magnification,
+                                              state->viewerState->currentPosition.y + state->viewerState->walkFrames * n.y * state->magnification,
+                                              state->viewerState->currentPosition.z + state->viewerState->walkFrames * n.z * state->magnification);
             Knossos::sendRemoteSignal();
             break;
         }
@@ -815,12 +780,9 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
             Knossos::sendRemoteSignal();
             break;
         case VIEWPORT_ARBITRARY:
-            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x - state->viewerState->walkFrames
-                                * state->viewerState->vpConfigs[id].n.x * state->magnification,
-                        state->viewerState->currentPosition.y - state->viewerState->walkFrames
-                                * state->viewerState->vpConfigs[id].n.y * state->magnification,
-                        state->viewerState->currentPosition.z - state->viewerState->walkFrames
-                                * state->viewerState->vpConfigs[id].n.z * state->magnification);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x - state->viewerState->walkFrames * n.x * state->magnification,
+                                              state->viewerState->currentPosition.y - state->viewerState->walkFrames * n.y * state->magnification,
+                                              state->viewerState->currentPosition.z - state->viewerState->walkFrames * n.z * state->magnification);
             Knossos::sendRemoteSignal();
             break;
         }
@@ -848,11 +810,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                         USERMOVE_DRILL, viewportType);
                 break;
             case VIEWPORT_ARBITRARY:
-                state->repeatDirection = {{
-                    multiplier * state->viewerState->vpConfigs[id].n.x
-                    , multiplier * state->viewerState->vpConfigs[id].n.y
-                    , multiplier * state->viewerState->vpConfigs[id].n.z
-                }};
+                state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
                 emit userMoveArbSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
                 break;
             }
@@ -1028,10 +986,9 @@ void ViewportBase::handleKeyRelease(QKeyEvent *event) {
     }
 }
 
-Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, int VPfound) {
+Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportBase &vp) {
     const auto & currentPos = state->viewerState->currentPosition;
-    const auto & vp = state->viewerState->vpConfigs[VPfound];
-    switch(vp.type) {
+    switch(vp.viewportType) {
     case VIEWPORT_XY: {
         const int leftUpperX = currentPos.x - vp.edgeLength / 2 / vp.screenPxXPerDataPx;
         const int leftUpperY = currentPos.y - vp.edgeLength / 2 / vp.screenPxYPerDataPx;
@@ -1067,12 +1024,12 @@ Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, 
 
 bool ViewportBase::mouseEventAtValidDatasetPosition(QMouseEvent *event) {
     if(id == -1 || viewportType == VIEWPORT_SKELETON ||
-       event->x() < 0 || event->x() > (int)state->viewerState->vpConfigs[id].edgeLength ||
-       event->y() < 0 || event->y() > (int)state->viewerState->vpConfigs[id].edgeLength) {
+       event->x() < 0 || event->x() > (int)edgeLength ||
+       event->y() < 0 || event->y() > (int)edgeLength) {
             return false;
     }
 
-    Coordinate pos = getCoordinateFromOrthogonalClick(event->x(), event->y(), id);
+    Coordinate pos = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
     const auto min = Session::singleton().movementAreaMin;
     const auto max = Session::singleton().movementAreaMax;
     //check if coordinates are in range
@@ -1113,5 +1070,5 @@ QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
 }
 
 Coordinate ViewportBase::getMouseCoordinate() {
-    return getCoordinateFromOrthogonalClick(prevMouseMove.x(), prevMouseMove.y(), id);
+    return getCoordinateFromOrthogonalClick(prevMouseMove.x(), prevMouseMove.y(), *this);
 }

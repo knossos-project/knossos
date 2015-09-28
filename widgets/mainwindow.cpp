@@ -124,6 +124,26 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID)
     cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
 }
 
+void MainWindow::resetTextureProperties() {
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+    //reset viewerState texture properties
+    forEachVPDo([](ViewportBase & vp) {
+        vp.draggedNode = nullptr;
+        vp.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        vp.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        vp.texture.usedTexLengthDc = state->M;
+        vp.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        vp.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        vp.texture.zoomLevel = VPZOOMMIN;
+    });
+}
+
 void MainWindow::createViewports() {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setMajorVersion(2);
@@ -137,44 +157,24 @@ void MainWindow::createViewports() {
         format.setOption(QSurfaceFormat::DebugContext);
     }
     QSurfaceFormat::setDefaultFormat(format);
-    state->viewerState->vpConfigs.resize(ViewportBase::numberViewports);
-    for (int i = 0; i < ViewportBase::numberViewports; ++i) {
-        switch(i) {
-        case VP_UPPERLEFT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
-            state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
-            state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
-            break;
-        case VP_LOWERLEFT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
-            state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
-            state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
-            break;
-        case VP_UPPERRIGHT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
-            state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
-            state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
-            break;
-        case VP_LOWERRIGHT:
-            state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
-            state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
-            state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
-            break;
-        }
-    }
-    ViewportBase::resetTextureProperties();
+
     viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
     viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
     viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
     viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
-    forEachVPDo([this](ViewportBase *vp) { QObject::connect(vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
+    viewportXY->upperLeftCorner = {5, 30, 0};
+    viewportXZ->upperLeftCorner = {5, 385, 0};
+    viewportYZ->upperLeftCorner = {360, 30, 0};
+    viewport3D->upperLeftCorner = {360, 385, 0};
+    resetTextureProperties();
+    forEachVPDo([this](ViewportBase & vp) { QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
 
 }
 
-ViewportBase* MainWindow::viewport(const uint id) {
-    return (viewportXY.get()->id == id)? static_cast<ViewportBase *>(viewportXY.get()) :
-           (viewportXZ.get()->id == id)? static_cast<ViewportBase *>(viewportXZ.get()) :
-           (viewportYZ.get()->id == id)? static_cast<ViewportBase *>(viewportYZ.get()) :
+ViewportBase * MainWindow::viewport(const uint id) {
+    return (viewportXY->id == id)? static_cast<ViewportBase *>(viewportXY.get()) :
+           (viewportXZ->id == id)? static_cast<ViewportBase *>(viewportXZ.get()) :
+           (viewportYZ->id == id)? static_cast<ViewportBase *>(viewportYZ.get()) :
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
@@ -330,7 +330,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
-        forEachVPDo([] (ViewportBase * vp) { vp->hide(); });
+        forEachVPDo([] (ViewportBase & vp) { vp.hide(); });
         viewportXY.get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
     } else {
         menuBar()->show();
@@ -455,7 +455,7 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &this->widgetContainer.datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
@@ -585,7 +585,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     Knossos::sendQuitSignal();
-    forEachVPDo([](ViewportBase * vp) { vp->setParent(nullptr); });
+    forEachVPDo([](ViewportBase & vp) { vp.setParent(nullptr); });
     event->accept();//mainwindow takes the qapp with it
 }
 
@@ -945,17 +945,17 @@ void MainWindow::saveSettings() {
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
 
-    forEachVPDo([&settings] (ViewportBase * vp) {
-        settings.setValue(VP_I_POS.arg(vp->id), vp->dockPos.isNull() ? vp->pos() : vp->dockPos);
-        settings.setValue(VP_I_SIZE.arg(vp->id), vp->dockSize.isEmpty() ? vp->size() : vp->dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(vp->id), vp->isVisible());
+    forEachVPDo([&settings] (ViewportBase & vp) {
+        settings.setValue(VP_I_POS.arg(vp.id), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(vp.id), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(vp.id), vp.isVisible());
 
     });
     QList<QVariant> order;
     for (const auto & w : centralWidget()->children()) {
-        forEachVPDo([&w, &order](ViewportBase * vp) {
-            if (w == vp) {
-                order.append(vp->id);
+        forEachVPDo([&w, &order](ViewportBase & vp) {
+            if (w == &vp) {
+                order.append(vp.id);
             }
         });
     }
@@ -999,10 +999,10 @@ void MainWindow::loadSettings() {
     if (state->viewerState->defaultVPSizeAndPos) {
         resetViewports();
     } else {
-        forEachVPDo([&settings](ViewportBase * vp) {
-            vp->move(settings.value(VP_I_POS.arg(vp->id)).toPoint());
-            vp->resize(settings.value(VP_I_SIZE.arg(vp->id)).toSize());
-            vp->setVisible(settings.value(VP_I_VISIBLE.arg(vp->id), true).toBool());
+        forEachVPDo([&settings](ViewportBase & vp) {
+            vp.move(settings.value(VP_I_POS.arg(vp.id)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(vp.id)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.id), true).toBool());
         });
     }
     for (const auto & i : settings.value(VP_ORDER).toList()) {
@@ -1059,9 +1059,9 @@ void MainWindow::resizeEvent(QResizeEvent *) {
         // don't resize viewports when user positioned and resized them manually
         resetViewports();
     } else {//ensure viewports fit the window
-        forEachVPDo([](ViewportBase * vp) {
-            vp->posAdapt();
-            vp->sizeAdapt();
+        forEachVPDo([](ViewportBase & vp) {
+            vp.posAdapt();
+            vp.sizeAdapt();
         });
     }
 }
@@ -1093,9 +1093,9 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    forEachVPDo([](ViewportBase * vp) {
-        vp->setDock(true);
-        vp->setVisible(true);
+    forEachVPDo([](ViewportBase & vp) {
+        vp.setDock(true);
+        vp.setVisible(true);
     });
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
@@ -1103,7 +1103,7 @@ void MainWindow::resetViewports() {
 
 void MainWindow::showVPDecorationClicked() {
     bool isShow = widgetContainer.appearanceWidget.viewportTab.showVPDecorationCheckBox.isChecked();
-    forEachVPDo([&isShow](ViewportBase * vp) { vp->showHideButtons(isShow); });
+    forEachVPDo([&isShow](ViewportBase & vp) { vp.showHideButtons(isShow); });
 }
 
 void MainWindow::newTreeSlot() {
@@ -1156,7 +1156,7 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
     viewportYZ->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
     viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
-    forEachVPDo([&mindim](ViewportBase *vp) { vp->resize(mindim-DEFAULT_VP_MARGIN, mindim-DEFAULT_VP_MARGIN); });
+    forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
 }
 
 void MainWindow::pythonSlot() {

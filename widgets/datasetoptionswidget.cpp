@@ -136,15 +136,15 @@ void DatasetOptionsWidget::updateCompressionRatioDisplay() {
  * @param value increment/decrement zoom by value
  */
 void DatasetOptionsWidget::orthogonalSpinBoxChanged(double value) {
-    for(int i = 0; i < VIEWPORT_SKELETON; i++) {
+    state->viewer->window->forEachOrthoVPDo([&value](ViewportOrtho & orthoVP) {
         // conversion from percent to zoom level is inverted, because VPZOOMMAX < VPZOOMMIN,
         // because zoom level directly translates to displayed edge length
         float zoomLevel = 1 - value/100*VPZOOMMIN;
         if(zoomLevel < VPZOOMMAX) {
             zoomLevel = VPZOOMMAX;
         }
-        state->viewerState->vpConfigs[i].texture.zoomLevel = zoomLevel;
-    }
+        orthoVP.texture.zoomLevel = zoomLevel;
+    });
 }
 /**
  * @brief DatasetOptionsWidget::skeletonSpinBoxChanged increments or decrements the zoom. The step width is relative to
@@ -203,11 +203,11 @@ void DatasetOptionsWidget::zoomDefaultsClicked() {
 void DatasetOptionsWidget::update() {
     orthogonalDataViewportLabel->setText(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
     float vpZoomPercent;
-    if(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel == (float)VPZOOMMAX) {
+    if(state->viewer->vpUpperLeft->texture.zoomLevel == (float)VPZOOMMAX) {
         vpZoomPercent = 100;
     }
     else {
-        vpZoomPercent = (1 - state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel)*100;
+        vpZoomPercent = (1 - state->viewer->vpUpperLeft->texture.zoomLevel)*100;
     }
     orthogonalDataViewportSpinBox->setValue(vpZoomPercent);
     skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);

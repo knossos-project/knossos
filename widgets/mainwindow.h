@@ -173,16 +173,16 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     template<typename Function> void forEachVPDo(Function func) {
         for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportYZ.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
-            func(vp);
+            func(*vp);
         }
     }
     template<typename Function> void forEachOrthoVPDo(Function func) {
         for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportYZ.get() }) {
-            func(vp);
+            func(*vp);
         }
     }
-
-    ViewportBase* viewport(const uint id);
+    void resetTextureProperties();
+    ViewportBase *viewport(const uint id);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();
