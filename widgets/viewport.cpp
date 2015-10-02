@@ -289,20 +289,16 @@ void ViewportBase::resizeGL(int w, int h) {
 }
 
 void Viewport3D::paintGL() {
-    if(state->viewerState->viewerReady) {
-        renderViewport();
-        renderViewportFrontFace();
-    }
+    renderViewport();
+    renderViewportFrontFace();
 }
 
 void ViewportOrtho::paintGL() {
-    if(state->viewerState->viewerReady) {
-        if (viewportType == VIEWPORT_ARBITRARY) {
-            updateOverlayTexture();
-        }
-        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
-        renderViewportFrontFace();
+    if (viewportType == VIEWPORT_ARBITRARY) {
+        updateOverlayTexture();
     }
+    renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    renderViewportFrontFace();
 }
 
 void ViewportBase::enterEvent(QEvent *) {

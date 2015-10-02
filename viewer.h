@@ -68,7 +68,6 @@ struct ViewerState {
     char *overlayData;
     char *defaultTexData;
     char *defaultOverlayData;
-    bool viewerReady{false};
 
     int highlightVp{VIEWPORT_UNDEFINED};
     int vpKeyDirection[3]{1,1,1};

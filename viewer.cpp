@@ -901,10 +901,6 @@ void Viewer::run() {
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
 
-    state->viewerState->viewerReady = true;
-
-    // Display info about skeleton save path here TODO
-
     // for arbitrary viewport orientation
     if(rotation.alpha != 0) {
         rotateAndNormalize(v1, rotation.axis, rotation.alpha);
