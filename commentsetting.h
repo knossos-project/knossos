@@ -15,6 +15,7 @@ public:
     float nodeRadius;
 
     static bool useCommentNodeRadius;
+    static bool useCommentNodeColor;
     static bool appendComment;
     static std::vector<CommentSetting> comments;
 

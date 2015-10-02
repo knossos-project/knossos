@@ -30,6 +30,7 @@ public:
 class CommentsTab : public QWidget
 {
     Q_OBJECT
+    QCheckBox useCommentColorCheckbox{"Use custom comment color"};
     QCheckBox useCommentRadiusCheckbox{"Use custom comment radius"};
     QCheckBox appendCommentCheckbox{"Append comments"};
     CommentsModel commentModel;
