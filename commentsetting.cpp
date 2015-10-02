@@ -13,7 +13,7 @@ QColor CommentSetting::getColor(const QString comment) {
             return item.color;
         }
     }
-    return QColor(0, 0, 0, 0);
+    return QColor(255, 255, 0, 255);
 }
 
 float CommentSetting::getRadius(const QString comment) {

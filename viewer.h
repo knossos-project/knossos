@@ -205,7 +205,7 @@ public:
     std::atomic_bool oc_zy_changed{true};
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
-    void setColorFromNode(const nodeListElement & node, color4F & color) const;
+    color4F getNodeColor(const nodeListElement & node) const;
 signals:
     void loadSignal();
     void coordinateChangedSignal(const Coordinate & pos);

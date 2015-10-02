@@ -43,7 +43,7 @@ public:
     explicit TreesTab(QWidget *parent = 0);
 
 signals:
-    void showIntersectionsSignal(const bool checked);
+
 public slots:
 };
 

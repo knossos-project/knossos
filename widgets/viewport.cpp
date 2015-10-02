@@ -196,32 +196,6 @@ void ViewportBase::initializeGL() {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
 
-    if(viewportType != VIEWPORT_SKELETON) {
-        glGenTextures(1, &texture.texHandle);
-
-        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        // loads an empty texture into video memory - during user movement, this
-        // texture is updated via glTexSubImage2D in vpGenerateTexture
-        // We need GL_RGB as texture internal format to color the textures
-
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_RGB,
-                     texture.edgeLengthPx,
-                     texture.edgeLengthPx,
-                     0,
-                     GL_RGB,
-                     GL_UNSIGNED_BYTE,
-                     state->viewerState->defaultTexData);
-
-        //Handle overlay textures.
-    }
 
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed viewport.
@@ -252,17 +226,37 @@ void ViewportBase::initializeGL() {
     glDisable(GL_DITHER);
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_COLOR_MATERIAL);
-
-    if (viewportType != VIEWPORT_SKELETON) {
-        createOverlayTextures();
-    }
 }
 
-void ViewportOrtho::setOrientation(ViewportType orientation) {
-    viewportType = orientation;
+void ViewportOrtho::initializeGL() {
+    ViewportBase::initializeGL();
+    glGenTextures(1, &texture.texHandle);
+
+    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    // loads an empty texture into video memory - during user movement, this
+    // texture is updated via glTexSubImage2D in vpGenerateTexture
+    // We need GL_RGB as texture internal format to color the textures
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 texture.edgeLengthPx,
+                 texture.edgeLengthPx,
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 state->viewerState->defaultTexData);
+
+    createOverlayTextures();
 }
 
-void ViewportBase::createOverlayTextures() {
+void ViewportOrtho::createOverlayTextures() {
     glGenTextures(1, &texture.overlayHandle);
 
     glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
@@ -275,6 +269,10 @@ void ViewportBase::createOverlayTextures() {
 
     const auto size = texture.edgeLengthPx;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
+}
+
+void ViewportOrtho::setOrientation(ViewportType orientation) {
+    viewportType = orientation;
 }
 
 void ViewportBase::resizeGL(int w, int h) {
@@ -292,16 +290,7 @@ void ViewportBase::resizeGL(int w, int h) {
 
 void Viewport3D::paintGL() {
     if(state->viewerState->viewerReady) {
-        auto& seg = Segmentation::singleton();
-        if (seg.volume_render_toggle) {
-            if(seg.volume_update_required) {
-                seg.volume_update_required = false;
-                updateVolumeTexture();
-            }
-            renderVolumeVP();
-        } else {
-            renderSkeletonVP();
-        }
+        renderViewport();
         renderViewportFrontFace();
     }
 }
@@ -311,7 +300,7 @@ void ViewportOrtho::paintGL() {
         if (viewportType == VIEWPORT_ARBITRARY) {
             updateOverlayTexture();
         }
-        renderOrthogonalVP(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
         renderViewportFrontFace();
     }
 }
@@ -509,7 +498,7 @@ void Viewport3D::showHideButtons(bool isShow) {
     resetButton.setVisible(isShow);
 }
 
-void ViewportBase::updateOverlayTexture() {
+void ViewportOrtho::updateOverlayTexture() {
     if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
         return;
     }
@@ -702,7 +691,7 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport3D::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
+void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
@@ -710,37 +699,7 @@ void Viewport3D::takeSnapshot(const QString & path, const int size, const bool w
     const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    auto& seg = Segmentation::singleton();
-    if (seg.volume_render_toggle) {
-        if(seg.volume_update_required) {
-            seg.volume_update_required = false;
-            updateVolumeTexture();
-        }
-        renderVolumeVP();
-    }
-    else {
-        renderSkeletonVP(options);
-    }
-    if(withScale) {
-        setFrontFacePerspective();
-        renderScaleBar(std::ceil(0.02*size));
-    }
-    QImage fboImage(fbo.toImage());
-    QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
-    image.save(path);
-    glPopAttrib(); // restore viewport setting
-    fbo.release();
-}
-
-void ViewportOrtho::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
-    makeCurrent();
-    glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
-    glViewport(0, 0, size, size);
-    QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
-    fbo.bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderOrthogonalVP(options);
+    renderViewport(options);
     if(withScale) {
         setFrontFacePerspective();
         renderScaleBar(std::ceil(0.02*size));

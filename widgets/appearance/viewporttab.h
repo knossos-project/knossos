@@ -43,7 +43,6 @@ public:
     explicit ViewportTab(QWidget *parent = 0);
 
 signals:
-    void showIntersectionsSignal(const bool value);
     void setVPOrientationSignal(const bool arbitrary);
     void setViewportDecorations(const bool);
     void resetViewportPositions();

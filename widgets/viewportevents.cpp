@@ -1023,7 +1023,7 @@ Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, 
 }
 
 bool ViewportBase::mouseEventAtValidDatasetPosition(QMouseEvent *event) {
-    if(id == -1 || viewportType == VIEWPORT_SKELETON ||
+    if(viewportType == VIEWPORT_SKELETON ||
        event->x() < 0 || event->x() > (int)edgeLength ||
        event->y() < 0 || event->y() > (int)edgeLength) {
             return false;

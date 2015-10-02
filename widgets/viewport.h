@@ -91,9 +91,9 @@ struct viewportTexture {
 
 struct RenderOptions {
     RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
-                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true)
+                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
         : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
-          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection) {}
+          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
@@ -102,6 +102,7 @@ struct RenderOptions {
     bool drawViewportPlanes;
     bool highlightActiveNode;
     bool highlightSelection;
+    bool selectionBuffer;
 };
 
 class ViewportBase;
@@ -137,7 +138,6 @@ class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     bool resizeButtonHold;
     void moveVP(const QPoint & globalPos);
 
-    void initializeGL() override;
     void resizeGL(int w, int h) override;
     // events
     void enterEvent(QEvent * event) override;
@@ -176,20 +176,8 @@ class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     QPointF userMouseSlide;
     floatCoordinate arbNodeDragCache;
     // rendering
-    void createOverlayTextures();
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
-    bool renderViewport(const RenderOptions & options = RenderOptions());
-    void renderArbitrarySlicePane(const ViewportOrtho & vp);
-    bool rotateSkeletonViewport();
-    uint renderSegPlaneIntersection(segmentListElement *segment);
-    uint renderSphere(Coordinate *pos, float radius, color4F color);
-    void renderBrush(uint viewportType, Coordinate coord);
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
-    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
-    void renderSkeleton(uint viewportType, const RenderOptions & options = RenderOptions());
     bool sphereInFrustum(floatCoordinate pos, float radius);
-    bool updateFrustumClippingPlanes();
-    bool updateRotationStateMatrix(float M1[16], float M2[16]);
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
     QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
 
@@ -199,11 +187,17 @@ protected:
     QElapsedTimer timeDBase;
     QElapsedTimer timeFBase;
 
+    void initializeGL() override;
     void setFrontFacePerspective();
     void renderScaleBar(const int fontSize = defaultFonsSize);
-    bool renderOrthogonalVP(const RenderOptions & options = RenderOptions());
-    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
-    void updateOverlayTexture();
+    virtual void renderViewport(const RenderOptions &options) = 0;
+    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
+    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
+    void renderSkeleton(const RenderOptions & options = RenderOptions());
+    virtual void renderSegment(const segmentListElement & segment, const color4F &color);
+    virtual void renderNode(const nodeListElement & node, const RenderOptions &options);
+    bool updateFrustumClippingPlanes();
     void renderViewportFrontFace();
 public:
     const static int numberViewports = 4;
@@ -295,7 +289,7 @@ public slots:
     void zoomOrthogonals(float step);
     void zoomInSkeletonVP();
     void zoomOutSkeletonVP();
-    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {}
+    void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 class Viewport3D : public ViewportBase {
@@ -303,22 +297,35 @@ class Viewport3D : public ViewportBase {
     QPushButton xyButton{"xy"}, xzButton{"xz"}, yzButton{"yz"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
 
     void paintGL() override;
+    bool renderVolumeVP();
+    bool renderSkeletonVP(const RenderOptions &options);
+    bool updateRotationStateMatrix(float M1[16], float M2[16]);
+    bool rotateViewport();
+    void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    void renderArbitrarySlicePane(const ViewportOrtho & vp);
+    void renderNode(const nodeListElement & node, const RenderOptions &options) override;
 public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
     virtual void showHideButtons(bool isShow);
-    bool renderVolumeVP();
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 
 signals:
     void rotationSignal(float x, float y, float z, float angle);
 public slots:
-    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
+    void initializeGL() override;
     void paintGL() override;
+    void createOverlayTextures();
+    void updateOverlayTexture();
+    void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    void renderSegment(const segmentListElement & segment, const color4F &color) override;
+    uint renderSegPlaneIntersection(const segmentListElement & segment);
+    void renderNode(const nodeListElement & node, const RenderOptions &options) override;
+    void renderBrush(uint viewportType, Coordinate coord);
 public:
     static bool arbitraryOrientation;
     static bool showNodeComments;
@@ -329,7 +336,6 @@ signals:
 
 
 public slots:
-    virtual void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // VIEWPORT_H
