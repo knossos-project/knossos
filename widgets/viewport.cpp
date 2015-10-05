@@ -254,6 +254,68 @@ void ViewportOrtho::initializeGL() {
                  state->viewerState->defaultTexData);
 
     createOverlayTextures();
+
+    if (state->gpuSlicer) {
+        GLint iUnits, texture_units, max_tu;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iUnits);
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_tu);
+        std::cout << "MultiTexture: " << iUnits << ' ' << texture_units << ' ' << max_tu << std::endl;
+
+        glEnable(GL_TEXTURE_3D);
+        // glEnable(GL_DEPTH_TEST);
+        // glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        auto vertex_shader_code = R"shaderSource(
+        #version 110
+        uniform mat4 model_matrix;
+        uniform mat4 view_matrix;
+        uniform mat4 projection_matrix;
+        attribute vec3 vertex;
+        attribute vec3 texCoordVertex;
+        varying vec3 texCoordFrag;
+        void main() {
+            mat4 mvp_mat = projection_matrix * view_matrix * model_matrix;
+            gl_Position = mvp_mat * vec4(vertex, 1.0);
+            texCoordFrag = texCoordVertex;
+        })shaderSource";
+
+        raw_data_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader_code);
+        raw_data_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        #version 110
+        uniform float textureOpacity;
+        uniform sampler3D texture;
+        varying vec3 texCoordFrag;//in
+        //varying vec4 gl_FragColor;//out
+        void main() {
+            gl_FragColor = vec4(vec3(texture3D(texture, texCoordFrag).r), textureOpacity);
+        })shaderSource");
+
+        raw_data_shader.link();
+
+        overlay_data_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader_code);
+        overlay_data_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        #version 110
+        uniform float textureOpacity;
+        uniform sampler3D indexTexture;
+        uniform sampler1D textureLUT;
+        uniform float lutSize;//float(textureSize1D(textureLUT, 0));
+        uniform float factor;//expand float to uint8 range
+        varying vec3 texCoordFrag;//in
+        void main() {
+            float index = texture3D(indexTexture, texCoordFrag).r;
+            index *= factor;
+            gl_FragColor = texture1D(textureLUT, (index + 0.5) / lutSize);
+            gl_FragColor.a = textureOpacity;
+        })shaderSource");
+
+        overlay_data_shader.link();
+
+        glDisable(GL_TEXTURE_3D);
+    }
 }
 
 void ViewportOrtho::createOverlayTextures() {
@@ -297,7 +359,11 @@ void ViewportOrtho::paintGL() {
     if (viewportType == VIEWPORT_ARBITRARY) {
         updateOverlayTexture();
     }
-    renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    if (state->gpuSlicer && state->viewer->gpuRendering) {
+        renderViewportFast();
+    } else {
+        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    }
     renderViewportFrontFace();
 }
 

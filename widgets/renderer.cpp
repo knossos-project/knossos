@@ -596,6 +596,186 @@ void ViewportBase::renderScaleBar(const int fontSize) {
     renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
 }
 
+void ViewportOrtho::renderViewportFast() {
+    if (state->viewer->layers.empty()) {
+        return;
+    }
+    static QElapsedTimer time;
+//    qDebug() << time.restart();
+
+    QOpenGLTimeMonitor times;
+    times.setSampleCount(3);
+    times.create();
+    times.recordSample();
+
+    glClearColor(1, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_YZ;
+    const auto gpucubeedge = state->viewer->gpucubeedge;
+    const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
+//    QVector3D offset;
+    const auto cpos = state->viewerState->currentPosition;
+    const int xxx = cpos.x % gpucubeedge;
+    const int yyy = cpos.y % gpucubeedge;
+    const int zzz = cpos.z % gpucubeedge;
+    const float frame = xy ? zzz : xz ? yyy : xxx;
+//    QVector3D deviation(zy ? 0 : xxx, xz ? 0 : -yyy - zy * gpucubeedge * state->scale.z / state->scale.y, xy ? 0 : -zzz - xz * gpucubeedge * state->scale.z / state->scale.x);
+    QVector3D deviation(zy ? 0 : xxx, xz ? 0 : -yyy, xy ? 0 : -zzz);
+//    qDebug() << deviation;
+
+    std::vector<std::array<GLfloat, 3>> triangleVertices;//flipped y
+    triangleVertices.push_back({{0.0f, 1.0f, 0.0f}});
+    triangleVertices.push_back({{0.0f, 0.0f, 0.0f}});
+    triangleVertices.push_back({{1.0f, 0.0f, 0.0f}});
+    triangleVertices.push_back({{1.0f, 1.0f, 0.0f}});
+    std::vector<std::array<GLfloat, 3>> textureVertices;
+    for (float z = 0.0f; z < (xy ? 1 : supercubeedge); ++z)
+    for (float y = 0.0f; y < (xz ? 1 : supercubeedge); ++y)
+    for (float x = 0.0f; x < (zy ? 1 : supercubeedge); ++x) {
+        const float cubeedgef = gpucubeedge;
+        const auto depthOffset = frame;//xy ? deviation.z() : xz ? deviation.y() : deviation.x();
+        const auto starttexR = (0.5f + depthOffset) / cubeedgef;
+        const auto endtexR = (0.5f + depthOffset) / cubeedgef;
+
+        if (xy) {
+            textureVertices.push_back({{0.0f, 1.0f, starttexR}});
+            textureVertices.push_back({{0.0f, 0.0f, starttexR}});
+            textureVertices.push_back({{1.0f, 0.0f, endtexR}});
+            textureVertices.push_back({{1.0f, 1.0f, endtexR}});
+        } else if (xz) {
+            textureVertices.push_back({{0.0f, starttexR, 1.0f}});
+            textureVertices.push_back({{0.0f, starttexR, 0.0f}});
+            textureVertices.push_back({{1.0f, endtexR, 0.0f}});
+            textureVertices.push_back({{1.0f, endtexR, 1.0f}});
+        } else if (zy) {
+            textureVertices.push_back({{starttexR, 1.0f, 0.0f}});
+            textureVertices.push_back({{starttexR, 0.0f, 0.0f}});
+            textureVertices.push_back({{endtexR, 0.0f, 1.0f}});
+            textureVertices.push_back({{endtexR, 1.0f, 1.0f}});
+        }
+    }
+
+    QMatrix4x4 modelMatrix; //identity
+    QMatrix4x4 viewMatrix; //identity
+    QMatrix4x4 projectionMatrix;
+    const float width = 1.0f * this->width();
+    const float height = 1.0f * this->height();
+    projectionMatrix.ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);//origin top left
+
+//    viewMatrix.scale(zy ? state->scale.z / state->scale.y : 1, xz ? state->scale.z / state->scale.x : 1, 1);
+    viewMatrix.scale(width / (gpucubeedge * supercubeedge - state->cubeEdgeLength), height / (gpucubeedge * supercubeedge - state->cubeEdgeLength));
+    if (xz) {
+        viewMatrix.rotate(-90.0f, QVector3D(1.0f, 0.0f, 0.0f));
+    } else if (zy) {
+        viewMatrix.rotate(-90.0f, QVector3D(0.0f, -1.0f, 0.0f));
+    }
+    viewMatrix.translate(deviation / QVector3D{-1.0f, 1.0f, 1.0f});
+
+//    viewMatrix.translate(0, 0, -zy * gpucubeedge * supercubeedge * 0.5 / state->scale.z / state->scale.y -xz * gpucubeedge * supercubeedge * 0.5 / state->scale.z / state->scale.x);
+
+    // raw data shader
+    raw_data_shader.bind();
+    int vertexLocation = raw_data_shader.attributeLocation("vertex");
+    int texLocation = raw_data_shader.attributeLocation("texCoordVertex");
+    raw_data_shader.enableAttributeArray(vertexLocation);
+    raw_data_shader.enableAttributeArray(texLocation);
+    raw_data_shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), 3);
+    raw_data_shader.setAttributeArray(texLocation, textureVertices.data()->data(), 3);
+    raw_data_shader.setUniformValue("model_matrix", modelMatrix);
+    raw_data_shader.setUniformValue("view_matrix", viewMatrix);
+    raw_data_shader.setUniformValue("projection_matrix", projectionMatrix);
+    raw_data_shader.setUniformValue("texture", 0);
+
+    // overlay data shader
+    overlay_data_shader.bind();
+    int overtexLocation = overlay_data_shader.attributeLocation("vertex");
+    int otexLocation = overlay_data_shader.attributeLocation("texCoordVertex");
+    overlay_data_shader.enableAttributeArray(overtexLocation);
+    overlay_data_shader.enableAttributeArray(otexLocation);
+    overlay_data_shader.setAttributeArray(overtexLocation, triangleVertices.data()->data(), 3);
+    overlay_data_shader.setAttributeArray(otexLocation, textureVertices.data()->data(), 3);
+    overlay_data_shader.setUniformValue("model_matrix", modelMatrix);
+    overlay_data_shader.setUniformValue("view_matrix", viewMatrix);
+    overlay_data_shader.setUniformValue("projection_matrix", projectionMatrix);
+    overlay_data_shader.setUniformValue("indexTexture", 0);
+    overlay_data_shader.setUniformValue("textureLUT", 1);
+    overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_3D);
+
+    for (auto & layer : state->viewer->layers) {
+        if (layer.enabled && layer.opacity >= 0.0f) {
+            if (layer.isOverlayData) {
+                overlay_data_shader.bind();
+                overlay_data_shader.setUniformValue("textureOpacity", Segmentation::singleton().alpha / 256.0f);
+            } else {
+                raw_data_shader.bind();
+                raw_data_shader.setUniformValue("textureOpacity", layer.opacity);
+            }
+
+//            const float offsetx = 82;
+//            const float offsety = 82;
+//            const float offsetz = 42;
+            const float halfsc = (supercubeedge * gpucubeedge - state->cubeEdgeLength) * 0.5f / gpucubeedge;
+            const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
+            const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
+            const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
+//            qDebug() << offsetx << offsety << offsetz << gpucubeedge << supercubeedge;
+            const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
+            const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
+            const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
+            const float endx = startx + (zy ? 1 : supercubeedge);
+            const float endy = starty + (xz ? 1 : supercubeedge);
+            const float endz = startz + (xy ? 1 : supercubeedge);
+            for (float z = startz; z < endz; ++z)
+            for (float y = starty; y < endy; ++y)
+            for (float x = startx; x < endx; ++x) {
+                auto pos = QVector3D(offsetx + x, offsety + y, offsetz + z);
+                auto it = layer.textures.find(pos);
+                auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
+                modelMatrix.setToIdentity();
+                modelMatrix.translate(x * gpucubeedge, y * gpucubeedge, z * gpucubeedge);
+                if (xz) {
+                    modelMatrix.rotate(90.0f, QVector3D(1.0f, 0.0f, 0.0f));
+                } else if (zy) {
+                    modelMatrix.rotate(90.0f, QVector3D(0.0f, -1.0f, 0.0f));
+                }
+                modelMatrix.scale(gpucubeedge);
+                modelMatrix.scale(1, 1, 1);
+
+                if (layer.isOverlayData) {
+                    auto & punned = static_cast<gpu_lut_cube&>(ptr);
+                    punned.cube.bind(0);
+                    punned.lut.bind(1);
+                    overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
+                    overlay_data_shader.setUniformValue("model_matrix", modelMatrix);
+                } else {
+                    ptr.cube.bind(0);
+                    raw_data_shader.setUniformValue("model_matrix", modelMatrix);
+                }
+                glDrawArrays(GL_QUADS, 0, 4);
+            }
+        }
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_3D);
+
+    raw_data_shader.disableAttributeArray(vertexLocation);
+    raw_data_shader.disableAttributeArray(texLocation);
+    raw_data_shader.release();
+    overlay_data_shader.disableAttributeArray(overtexLocation);
+    overlay_data_shader.disableAttributeArray(otexLocation);
+    overlay_data_shader.release();
+
+    times.recordSample();
+
+//    qDebug() << "render time: " << times.waitForIntervals();
+}
+
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     if(options.selectionBuffer) {
         glDisable(GL_DEPTH_TEST);

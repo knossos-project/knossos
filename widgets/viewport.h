@@ -34,6 +34,7 @@
 #include <QFont>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_2_0>
+#include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -317,10 +318,13 @@ public slots:
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
+    QOpenGLShaderProgram raw_data_shader;
+    QOpenGLShaderProgram overlay_data_shader;
     void initializeGL() override;
     void paintGL() override;
     void createOverlayTextures();
     void updateOverlayTexture();
+    void renderViewportFast();
     void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderSegment(const segmentListElement & segment, const color4F &color) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);

@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
+#include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
@@ -186,6 +187,10 @@ public:
     Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
+
+    std::list<TextureLayer> layers;//has to outlive mainWindow, ctx must still be available
+    int gpucubeedge = 64;
+    bool gpuRendering = false;
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;

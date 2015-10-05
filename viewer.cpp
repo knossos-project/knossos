@@ -126,6 +126,18 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
+    if (gpuSlicer) {
+        gpucubeedge = 128;
+        auto getctx = [this](){window->viewportXY->makeCurrent();};
+        layers.emplace_back(getctx);
+        layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
+        layers.emplace_back(getctx);
+        layers.back().enabled = true;
+        layers.back().opacity = 0.5f;
+        layers.back().isOverlayData = true;
+        layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
+    }
+
     baseTime.start();//keyRepeat timer
 }
 
@@ -1033,6 +1045,15 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         dc_reslice_notify_visible();
     }
+    if (gpuSlicer) {
+        QTimer::singleShot(0, this, [this, coord](){
+            state->protectCube2Pointer.lock();
+            const auto & dc = *state->Dc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
+            state->protectCube2Pointer.unlock();
+            const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
+            layers.front().cubeAll(&dc, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+        });
+    }
 }
 
 void Viewer::dc_reslice_notify_visible() {
@@ -1044,6 +1065,15 @@ void Viewer::dc_reslice_notify_visible() {
 void Viewer::oc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         oc_reslice_notify_visible();
+    }
+    if (gpuSlicer) {
+        QTimer::singleShot(0, this, [this, coord](){
+            state->protectCube2Pointer.lock();
+            const auto & dc = *state->Oc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
+            state->protectCube2Pointer.unlock();
+            const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
+            layers.back().cubeAll(&dc, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+        });
     }
     // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;
