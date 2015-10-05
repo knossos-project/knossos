@@ -126,7 +126,7 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
-    if (gpuSlicer) {
+    if (state->gpuSlicer) {
         gpucubeedge = 128;
         auto getctx = [this](){window->viewportXY->makeCurrent();};
         layers.emplace_back(getctx);
@@ -1045,7 +1045,7 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         dc_reslice_notify_visible();
     }
-    if (gpuSlicer) {
+    if (state->gpuSlicer) {
         QTimer::singleShot(0, this, [this, coord](){
             state->protectCube2Pointer.lock();
             const auto & dc = *state->Dc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
@@ -1066,7 +1066,7 @@ void Viewer::oc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         oc_reslice_notify_visible();
     }
-    if (gpuSlicer) {
+    if (state->gpuSlicer) {
         QTimer::singleShot(0, this, [this, coord](){
             state->protectCube2Pointer.lock();
             const auto & dc = *state->Oc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
