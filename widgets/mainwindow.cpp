@@ -117,6 +117,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 #endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+
+    {
+        auto & action = *new QAction(this);
+        action.setShortcut(Qt::Key_6);
+        QObject::connect(&action, &QAction::triggered, [](){
+            for (auto & elem : state->viewer->layers.front().textures) {
+                qDebug() << elem.first;
+            }
+        });
+        addAction(&action);
+    }
+    {
+        auto & action = *new QAction(this);
+        action.setShortcut(Qt::Key_7);
+        QObject::connect(&action, &QAction::triggered, [](){
+            state->viewer->gpuRendering = !state->viewer->gpuRendering;
+        });
+        addAction(&action);
+    }
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
