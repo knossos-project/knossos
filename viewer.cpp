@@ -1048,10 +1048,12 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
     if (state->gpuSlicer) {
         QTimer::singleShot(0, this, [this, coord](){
             state->protectCube2Pointer.lock();
-            const auto & dc = *state->Dc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
+            const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], coord.cube(state->cubeEdgeLength, state->magnification));
             state->protectCube2Pointer.unlock();
-            const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
-            layers.front().cubeAll(&dc, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+            if (ptr != nullptr) {
+                const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
+                layers.front().cubeAll(ptr, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+            }
         });
     }
 }
@@ -1069,10 +1071,12 @@ void Viewer::oc_reslice_notify_all(const Coordinate coord) {
     if (state->gpuSlicer) {
         QTimer::singleShot(0, this, [this, coord](){
             state->protectCube2Pointer.lock();
-            const auto & dc = *state->Oc2Pointer[int_log(state->magnification)][coord.cube(state->cubeEdgeLength, state->magnification)];
+            const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], coord.cube(state->cubeEdgeLength, state->magnification));
             state->protectCube2Pointer.unlock();
-            const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
-            layers.back().cubeAll(&dc, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+            if (ptr != nullptr) {
+                const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
+                layers.back().cubeAll(ptr, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
+            }
         });
     }
     // if anything has changed, update the volume texture data
