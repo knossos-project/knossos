@@ -936,10 +936,12 @@ void Viewer::run() {
         if (vp.isVisible()) {
             vp.makeCurrent();
         }
-        if (!ViewportOrtho::arbitraryOrientation) {
-            vpGenerateTexture(vp);
-        } else {
-            vpGenerateTexture_arb(vp);
+        if (!gpuRendering) {
+            if (!ViewportOrtho::arbitraryOrientation) {
+                vpGenerateTexture(vp);
+            } else {
+                vpGenerateTexture_arb(vp);
+            }
         }
         vp.update();
     });
