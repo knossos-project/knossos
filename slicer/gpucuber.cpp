@@ -56,14 +56,19 @@ void gpu_lut_cube::generate(boost::multi_array_ref<uint64_t, 3>::const_array_vie
     lut.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt32_RGBA8_Rev, colors.data());
 }
 
-TextureLayer::TextureLayer(std::function<void()> getctx) : getctx{getctx} {}
+TextureLayer::TextureLayer(QOpenGLContext & sharectx) {
+    surface.create();
+    ctx.setFormat(surface.format());
+    ctx.setShareContext(&sharectx);
+    ctx.create();
+}
 TextureLayer::~TextureLayer() {
-    getctx();//QOpenGLTexture dtor needs a current ctx
+    ctx.makeCurrent(&surface);//QOpenGLTexture dtor needs a current ctx
 }
 
 template<typename cube_type, typename elem_type>
 void TextureLayer::createBogusCube(const int cpucubeedge, const int gpucubeedge) {
-    getctx();
+    ctx.makeCurrent(&surface);
     std::vector<char> data;
     data.resize(std::pow(cpucubeedge, 3) * sizeof(elem_type));
     std::fill(std::begin(data), std::end(data), 0);
@@ -83,7 +88,7 @@ void TextureLayer::createBogusCube(const int cpucubeedge, const int gpucubeedge)
 
 template<typename cube_type, typename elem_type>
 void TextureLayer::cubeAll(const boost::const_multi_array_ref<elem_type, 3> cube, const int cpucubeedge, const int gpucubeedge, const int x, const int y, const int z) {
-    getctx();
+    ctx.makeCurrent(&surface);
     const auto factor = cpucubeedge / gpucubeedge;
     for (int zi = z * factor; zi < (z + 1) * factor; ++zi)
     for (int yi = y * factor; yi < (y + 1) * factor; ++yi)

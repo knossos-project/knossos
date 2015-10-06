@@ -1,6 +1,7 @@
 #ifndef GPUCUBER_H
 #define GPUCUBER_H
 
+#include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLTexture>
 #include <QVector3D>
@@ -45,13 +46,14 @@ public:
 
 class TextureLayer {
 public:
+    QOffscreenSurface surface;
+    QOpenGLContext ctx;//ctx has to live past textures
     std::unordered_map<QVector3D, std::unique_ptr<gpu_raw_cube>> textures;
     std::unique_ptr<gpu_raw_cube> bogusCube;
     float opacity = 1.0f;
     bool enabled = true;
     bool isOverlayData = false;
-    std::function<void()> getctx;
-    TextureLayer(std::function<void()> getctx);
+    TextureLayer(QOpenGLContext & sharectx);
     ~TextureLayer();
     template<typename cube_type, typename elem_type>
     void createBogusCube(const int cpucubeedge, const int gpucubeedge);

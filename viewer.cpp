@@ -128,10 +128,9 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
 
     if (state->gpuSlicer) {
         gpucubeedge = 128;
-        auto getctx = [this](){window->viewportXY->makeCurrent();};
-        layers.emplace_back(getctx);
+        layers.emplace_back(*window->viewportXY->context());
         layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
-        layers.emplace_back(getctx);
+        layers.emplace_back(*window->viewportXY->context());
         layers.back().enabled = true;
         layers.back().opacity = 0.5f;
         layers.back().isOverlayData = true;

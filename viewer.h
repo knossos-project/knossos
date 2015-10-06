@@ -188,7 +188,7 @@ public:
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
 
-    std::list<TextureLayer> layers;//has to outlive mainWindow, ctx must still be available
+    std::list<TextureLayer> layers;
     int gpucubeedge = 64;
     bool gpuRendering = false;
 
