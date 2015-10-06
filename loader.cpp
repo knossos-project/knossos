@@ -243,7 +243,7 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) 
     return cubes;
 }
 
-Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader::CubeType typeDc, const Loader::CubeType typeOc, const QString & experimentName)
+Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Loader::CubeType typeDc, const Loader::CubeType typeOc, const QString & experimentName)
     : baseUrl{baseUrl}, api{api}, typeDc{typeDc}, typeOc{typeOc}, experimentName{experimentName}, OcModifiedCacheQueue(std::log2(state->highestAvailableMag)+1), snappyCache(std::log2(state->highestAvailableMag)+1)
 {
 
@@ -684,14 +684,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
 
         auto apiSwitch = [this](const Coordinate globalCoord, const CubeType type){
             switch (api) {
-            case Loader::API::GoogleBrainmaps:
+            case Dataset::API::GoogleBrainmaps:
                 return googleCubeUrl(baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
-            case Loader::API::Heidelbrain:
+            case Dataset::API::Heidelbrain:
                 return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, state->cubeEdgeLength, state->magnification, type);
-            case Loader::API::WebKnossos:
+            case Dataset::API::WebKnossos:
                 return webKnossosCubeUrl(baseUrl, globalCoord, loaderMagnification + 1, state->cubeEdgeLength, type);
             }
-            throw std::runtime_error("unknown value for Loader::API");
+            throw std::runtime_error("unknown value for Dataset::API");
         };
         QUrl dcUrl = apiSwitch(globalCoord, type);
 

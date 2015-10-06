@@ -15,6 +15,7 @@
 
 Dataset Dataset::dummyDataset() {
     Dataset info;
+    info.api = API::Heidelbrain;
     info.boundary = {1000, 1000, 1000};
     info.scale = {1.f, 1.f, 1.f};
     info.lowestAvailableMag = 1;
@@ -27,6 +28,7 @@ Dataset Dataset::dummyDataset() {
 
 Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     Dataset info;
+    info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
     const auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();
@@ -54,6 +56,7 @@ Dataset Dataset::parseGoogleJson(const QString & json_raw) {
 
 Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
     Dataset info;
+    info.api = API::WebKnossos;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
     const auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
@@ -83,6 +86,7 @@ Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
 
 Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     Dataset info;
+    info.api = API::Heidelbrain;
 
     QTextStream stream(&config);
     QString line;

@@ -241,12 +241,9 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     }
 
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
-
-    Loader::API api;
     Dataset info;
     Loader::CubeType raw_compression;
     {
-        api = Loader::API::Heidelbrain;
         info = Dataset::fromLegacyConf(datasetUrl, download.second);
         info.checkMagnifications();
         info.applyToState();
@@ -268,7 +265,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    Loader::Controller::singleton().restart(info.url, api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
+    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 

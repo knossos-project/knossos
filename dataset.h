@@ -7,6 +7,10 @@
 #include <QUrl>
 
 struct Dataset {
+    enum class API {
+        Heidelbrain, WebKnossos, GoogleBrainmaps
+    };
+
     static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
@@ -14,6 +18,7 @@ struct Dataset {
     void checkMagnifications();
     void applyToState() const;
 
+    API api;
     Coordinate boundary{0,0,0};
     floatCoordinate scale{0,0,0};
     int magnification{0};

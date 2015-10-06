@@ -24,6 +24,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "dataset.h"
 #include "hashtable.h"
 #include "segmentation/segmentation.h"
 
@@ -64,9 +65,6 @@ class Worker;
 
 namespace Loader {
 class Worker;
-enum class API {
-    Heidelbrain, WebKnossos, GoogleBrainmaps
-};
 enum class CubeType {
     RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED, SEGMENTATION_SZ_ZIP
 };
@@ -108,7 +106,7 @@ private:
     void abortDownloadsFinishDecompression(Func);
 
     const QUrl baseUrl;
-    const API api;
+    const Dataset::API api;
     const CubeType typeDc;
     const CubeType typeOc;
     const QString experimentName;
@@ -127,7 +125,7 @@ public://matsch
     void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
     void snappyCacheFlush();
     void broadcastProgress(bool startup = false);
-    Worker(const QUrl & baseUrl, const API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
+    Worker(const QUrl & baseUrl, const Dataset::API api, const CubeType typeDc, const CubeType typeOc, const QString & experimentName);
     ~Worker();
 signals:
     void progress(bool incremented, int count);
