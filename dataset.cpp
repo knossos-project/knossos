@@ -54,6 +54,35 @@ Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     return info;
 }
 
+Dataset Dataset::parseOpenConnectomeJson(const QUrl & infoUrl, const QString & json_raw) {
+    Dataset info;
+    info.api = API::OpenConnectome;
+    info.url = infoUrl;
+    info.url.setPath(info.url.path().replace("/info", "/image/jpeg/"));
+    const auto dataset = QJsonDocument::fromJson(json_raw.toUtf8()).object()["dataset"].toObject();
+    const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
+    info.boundary = {
+        imagesize0[0].toInt(),
+        imagesize0[1].toInt(),
+        imagesize0[2].toInt(),
+    };
+    const auto voxelres0 = dataset["voxelres"].toObject()["0"].toArray();
+    info.scale = {
+        static_cast<float>(voxelres0[0].toDouble()),
+        static_cast<float>(voxelres0[1].toDouble()),
+        static_cast<float>(voxelres0[2].toDouble()),
+    };
+    const auto mags = dataset["resolutions"].toArray();
+
+    info.lowestAvailableMag = std::pow(2, mags[0].toInt());
+    info.magnification = info.lowestAvailableMag;
+    info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
+    info.compressionRatio = 1000;//jpeg
+    info.overlay = false;
+
+    return info;
+}
+
 Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;

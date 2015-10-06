@@ -146,7 +146,8 @@ void DatasetLoadWidget::updateDatasetInfo() {
         return;
     }
 
-    const auto datasetinfo = Dataset::fromLegacyConf(url, download.second);
+    const auto ocp = url.toString().contains("/ocp/ca/");
+    const auto datasetinfo = ocp ? Dataset::parseOpenConnectomeJson(url, download.second) : Dataset::fromLegacyConf(url, download.second);
 
     //make sure supercubeedge is small again
     auto supercubeedge = superCubeEdgeSpin.value() * cubeEdgeSpin.value() / datasetinfo.cubeEdgeLength;
@@ -243,13 +244,15 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     Dataset info;
     Loader::CubeType raw_compression;
-    {
+    if (datasetUrl.toString().contains("/ocp/ca/")) {
+        info = Dataset::parseOpenConnectomeJson(datasetUrl, download.second);
+    } else {
         info = Dataset::fromLegacyConf(datasetUrl, download.second);
         info.checkMagnifications();
-        info.applyToState();
-        raw_compression = info.compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
-                : info.compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
     }
+    info.applyToState();
+    raw_compression = info.compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
+            : info.compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();

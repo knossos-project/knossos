@@ -8,11 +8,12 @@
 
 struct Dataset {
     enum class API {
-        Heidelbrain, WebKnossos, GoogleBrainmaps
+        Heidelbrain, WebKnossos, GoogleBrainmaps, OpenConnectome
     };
 
     static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
+    static Dataset parseOpenConnectomeJson(const QUrl & infoUrl, const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
     static Dataset fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();

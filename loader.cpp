@@ -553,6 +553,24 @@ QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeE
     return base;
 }
 
+QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeEdgeLength) {
+    auto query = QUrlQuery(base);
+    auto path = base.path();
+
+    path += "/" + QString::number(scale);// >= 0
+    coord.x /= std::pow(2, scale);
+    coord.y /= std::pow(2, scale);
+    coord.z += 1;//offset
+    path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength);
+    path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength);
+    path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeEdgeLength);
+
+    base.setPath(path + "/");
+    base.setQuery(query);
+    //(string: server_name)/ocp/ca/(string: token_name)/(string: channel_name)/jpeg/(int: resolution)/(int: min_x),(int: max_x)/(int: min_y),(int: max_y)/(int: min_z),(int: max_z)/
+    return base;
+}
+
 QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Loader::CubeType type) {
     auto query = QUrlQuery(base);
     query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
@@ -688,6 +706,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return googleCubeUrl(baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
             case Dataset::API::Heidelbrain:
                 return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, state->cubeEdgeLength, state->magnification, type);
+            case Dataset::API::OpenConnectome:
+                return openConnectomeCubeUrl(baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength);
             case Dataset::API::WebKnossos:
                 return webKnossosCubeUrl(baseUrl, globalCoord, loaderMagnification + 1, state->cubeEdgeLength, type);
             }
