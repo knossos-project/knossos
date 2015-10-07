@@ -243,7 +243,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
 
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     Dataset info;
-    Loader::CubeType raw_compression;
+    Dataset::CubeType raw_compression;
     if (datasetUrl.toString().contains("/ocp/ca/")) {
         info = Dataset::parseOpenConnectomeJson(datasetUrl, download.second);
     } else {
@@ -251,8 +251,8 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         info.checkMagnifications();
     }
     info.applyToState();
-    raw_compression = info.compressionRatio == 0 ? Loader::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Loader::CubeType::RAW_JPG
-            : info.compressionRatio == 6 ? Loader::CubeType::RAW_JP2_6 : Loader::CubeType::RAW_J2K;
+    raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
+            : info.compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6 : Dataset::CubeType::RAW_J2K;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
@@ -268,7 +268,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
 
-    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Loader::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
+    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 
