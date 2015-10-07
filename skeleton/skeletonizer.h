@@ -163,7 +163,6 @@ signals:
     void treesMerged(const int treeID,const int treeID2);
     void nodeSelectionChangedSignal();
     void treeSelectionChangedSignal();
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void resetData();
     void setRecenteringPositionSignal(int x, int y, int z);
 public slots:

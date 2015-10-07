@@ -759,7 +759,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
            (loadedPosition.y != 0) &&
            (loadedPosition.z != 0)) {
             Coordinate jump = loadedPosition - 1 - state->viewerState->currentPosition;
-            state->viewer->userMove(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+            state->viewer->userMove(jump, USERMOVE_NEUTRAL);
         }
     }
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
@@ -2138,10 +2138,7 @@ nodeListElement* Skeletonizer::popBranchNode() {
 
         branchNode->isBranchNode = 0;
 
-        emit userMoveSignal(branchNode->position.x - state->viewerState->currentPosition.x,
-                            branchNode->position.y - state->viewerState->currentPosition.y,
-                            branchNode->position.z - state->viewerState->currentPosition.z,
-                            USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+        state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 
         state->skeletonState->branchpointUnresolved = true;
         emit branchPoppedSignal();
@@ -2172,10 +2169,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
 }
 
 void Skeletonizer::jumpToNode(const nodeListElement & node) {
-    emit userMoveSignal(node.position.x - state->viewerState->currentPosition.x,
-                        node.position.y - state->viewerState->currentPosition.y,
-                        node.position.z - state->viewerState->currentPosition.z,
-                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    state->viewer->userMove(node.position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {

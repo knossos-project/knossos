@@ -60,7 +60,7 @@ void Remote::run() {
         //distance vector
         floatCoordinate currToNext = recenteringPosition - state->viewerState->currentPosition;
         if(euclidicNorm(currToNext) > jumpThreshold) {
-            remoteJump(recenteringPosition.x, recenteringPosition.y, recenteringPosition.z);
+            remoteJump(recenteringPosition);
         } else {
             remoteWalk(round(currToNext.x), round(currToNext.y), round(currToNext.z));
         }
@@ -71,14 +71,9 @@ void Remote::run() {
     }
 }
 
-bool Remote::remoteJump(int x, int y, int z) {
+bool Remote::remoteJump(const Coordinate & jumpVec) {
     // is not threadsafe
-
-    emit userMoveSignal(x - state->viewerState->currentPosition.x,
-                        y - state->viewerState->currentPosition.y,
-                        z - state->viewerState->currentPosition.z,
-                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
-
+    emit userMoveSignal(jumpVec - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
     return true;
 }
 
@@ -220,7 +215,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
     }
     for(int i = 0; i < totalMoves; i++) {
         if(ViewportOrtho::arbitraryOrientation) {
-            emit rotationSignal(rotation.axis.x, rotation.axis.y, rotation.axis.z, anglesPerStep);
+            emit rotationSignal(rotation.axis, anglesPerStep);
         }
         Coordinate doMove;
         residuals += singleMove;
@@ -253,30 +248,24 @@ bool Remote::remoteWalk(int x, int y, int z) {
         }
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
-            emit userMoveSignal(doMove.x, doMove.y, doMove.z,
-                                USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+            emit userMoveSignal(doMove, USERMOVE_NEUTRAL);
         }
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
         msleep(timePerStep);
     }
-    emit userMoveSignal(round(residuals.x), round(residuals.y), round(residuals.z),
-                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    emit userMoveSignal(residuals, USERMOVE_NEUTRAL);
     return true;
 }
 
-void Remote::setRecenteringPosition(float x, float y, float z) {
-    recenteringPosition.x = x;
-    recenteringPosition.y = y;
-    recenteringPosition.z = z;
+void Remote::setRecenteringPosition(const floatCoordinate & newPos) {
+    recenteringPosition = newPos;
     rotate = false;
 }
 
-void Remote::setRecenteringPositionWithRotation(float x, float y, float z, uint vp) {
-    recenteringPosition.x = x;
-    recenteringPosition.y = y;
-    recenteringPosition.z = z;
+void Remote::setRecenteringPositionWithRotation(const floatCoordinate & newPos, const uint vp) {
+    recenteringPosition = newPos;
     rotate = true;
     activeVP = vp;
 }

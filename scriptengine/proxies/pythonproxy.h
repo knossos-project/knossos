@@ -11,7 +11,7 @@
 class PythonProxySignalDelegate : public QObject  {
     Q_OBJECT
 signals:
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
+    void userMoveSignal(const floatCoordinate & floatStep, UserMoveType userMoveType, const floatCoordinate & viewportNormal = {0, 0, 0});
 };
 
 extern PythonProxySignalDelegate *pythonProxySignalDelegate;

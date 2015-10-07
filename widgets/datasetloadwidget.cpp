@@ -276,7 +276,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     // ...beginning with loading the middle of dataset
     state->viewerState->currentPosition = {state->boundary / 2};
     state->viewer->changeDatasetMag(DATA_SET);
-    state->viewer->userMove(0, 0, 0, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     emit datasetChanged(segmentationOverlayCheckbox.isChecked());
 
     return true;

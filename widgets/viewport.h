@@ -236,7 +236,9 @@ public:
     static bool doubleMeshCapacity(mesh & toDouble);
     static bool resizemeshCapacity(mesh & toResize, uint n);
     void sendCursorPosition();
-
+    // ortho begin
+    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
+    Coordinate leftUpperDataPxOnScreen;
     // plane vectors. s*v1 + t*v2 = px
     floatCoordinate n;
     floatCoordinate v1; // vector in x direction
@@ -248,9 +250,7 @@ public:
 
     char * viewPortData;
     viewportTexture texture;
-
-    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
-    Coordinate leftUpperDataPxOnScreen;
+    // ortho end
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed
     //data pixels can have a different axis. Keep this in mind.
@@ -270,9 +270,7 @@ public:
 signals:
     void cursorPositionChanged(const Coordinate & position, const uint id);
 
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-    void userMoveArbSignal(float x, float y, float z);
-    void rotationSignal(float x, float y, float z, float angle);
+    void rotationSignal(const floatCoordinate & axis, const float angle);
     void pasteCoordinateSignal();
     void zoomReset();
 
@@ -280,8 +278,8 @@ signals:
     void addSegmentSignal(nodeListElement & sourceNode, nodeListElement & targetNode);
 
     void compressionRatioToggled();
-    void setRecenteringPositionSignal(float x, float y, float z);
-    void setRecenteringPositionWithRotationSignal(float x, float y, float z, uint vp);
+    void setRecenteringPositionSignal(const floatCoordinate & newPos);
+    void setRecenteringPositionWithRotationSignal(const floatCoordinate & newPos, const uint vp);
 
     void recalcTextureOffsetsSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
@@ -312,7 +310,7 @@ public:
     static bool showBoundariesInUm;
 
 signals:
-    void rotationSignal(float x, float y, float z, float angle);
+    void rotationSignal(const floatCoordinate & axis, const float angle);
 public slots:
 };
 
@@ -331,10 +329,10 @@ class ViewportOrtho : public ViewportBase {
     void renderNode(const nodeListElement & node, const RenderOptions &options) override;
     void renderBrush(uint viewportType, Coordinate coord);
 public:
-    static bool arbitraryOrientation;
-    static bool showNodeComments;
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id);
+    static bool arbitraryOrientation;
     void setOrientation(ViewportType orientation);
+    static bool showNodeComments;
 
 signals:
 

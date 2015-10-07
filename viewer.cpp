@@ -95,15 +95,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     });
     moveCache = {};
     resetRotation();
-    window->viewportXY.get()->v1 = v1;
-    window->viewportXY.get()->v2 = v2;
-    window->viewportXY.get()->n = v3;
-    window->viewportXZ.get()->v1 = v1;
-    window->viewportXZ.get()->v2 = v3;
-    window->viewportXZ.get()->n = v2;
-    window->viewportYZ.get()->v1 = v3;
-    window->viewportYZ.get()->v2 = v2;
-    window->viewportYZ.get()->n = v1;
 
     state->viewerState->movementAreaFactor = 80;
     state->viewerState->showOverlay = true;
@@ -581,8 +572,6 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
 
     char *datacube = NULL;
 
-    floatCoordinate *v1 = &vp.v1;
-    floatCoordinate *v2 = &vp.v2;
     rowPx_float = vp.texture.leftUpperPxInAbsPx / state->magnification;
     currentPx_float = rowPx_float;
 
@@ -610,10 +599,10 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
                                &currentPxInDc_float,
                                s, &t,
                                state->viewerState->datasetAdjustmentOn);
-            currentPx_float = currentPx_float + *v2 * (t - t_old);
+            currentPx_float = currentPx_float + vp.v2 * (t - t_old);
         }
         s++;
-        rowPx_float += *v1;
+        rowPx_float += vp.v1;
         currentPx_float = rowPx_float;
     }
 
@@ -641,7 +630,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
     window->forEachOrthoVPDo([&viewerState, &currentPosition_dc](ViewportOrtho & orthoVP) {
-        floatCoordinate v1, v2;
         switch (orthoVP.viewportType) {
         case VIEWPORT_XY:
             //Set the coordinate of left upper data pixel currently stored in the texture
@@ -703,16 +691,14 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             };
             break;
         case VIEWPORT_ARBITRARY:
-            v1 = orthoVP.v1;
-            v2 = orthoVP.v2;
-            orthoVP.leftUpperPxInAbsPx_float = viewerState.currentPosition - (v1 * orthoVP.s_max/2 + v2 * orthoVP.t_max/2) * state->magnification;
+            orthoVP.leftUpperPxInAbsPx_float = viewerState.currentPosition - (orthoVP.v1 * orthoVP.s_max/2 + orthoVP.v2 * orthoVP.t_max/2) * state->magnification;
 
             orthoVP.texture.leftUpperPxInAbsPx = orthoVP.leftUpperPxInAbsPx_float;
 
             orthoVP.leftUpperDataPxOnScreen_float =
                 viewerState.currentPosition
-                - v1 * ((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                - v2 * ((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
+                - orthoVP.v1 * ((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
+                - orthoVP.v2 * ((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
             ;
 
             orthoVP.leftUpperDataPxOnScreen = {
@@ -899,9 +885,9 @@ void Viewer::run() {
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
             if (vpUpperLeft->viewportType != VIEWPORT_ARBITRARY) {
-                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], USERMOVE_DRILL, vpUpperLeft->viewportType);
+                userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_DRILL);
             } else {
-                userMove_arb(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
+                userMove_arb({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
             }
         }
     }
@@ -968,23 +954,23 @@ void Viewer::updateCurrentPosition() {
     if (session.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
         const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
-        userMove(newPos.x - currPos.x, newPos.y - currPos.y, newPos.z - currPos.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+        userMove(newPos - currPos, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
     }
 }
 
-bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType) {
-    auto * viewerState = state->viewerState;
+void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    auto & viewerState = *state->viewerState;
 
-    if (ViewportOrtho::arbitraryOrientation && (z != 0 || x != 0 || y != 0)) {//slices are arbitrary…
+    if (ViewportOrtho::arbitraryOrientation && (step.z != 0 || step.x != 0 || step.y != 0)) {//slices are arbitrary…
         dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
     } else {
-        if (z != 0) {
+        if (step.z != 0) {
             dc_xy_changed = oc_xy_changed = true;
         }
-        if (x != 0) {
+        if (step.x != 0) {
             dc_zy_changed = oc_zy_changed = true;
         }
-        if (y != 0) {
+        if (step.y != 0) {
             dc_xz_changed = oc_xz_changed = true;
         }
     }
@@ -992,54 +978,36 @@ bool Viewer::userMove(int x, int y, int z, UserMoveType userMoveType, ViewportTy
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
-    const auto lastPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
+    const auto lastPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
-    const Coordinate movement{x, y, z};
-    auto newPos = viewerState->currentPosition + movement;
+    const Coordinate movement = step;
+    auto newPos = viewerState.currentPosition + movement;
     if (!Session::singleton().outsideMovementArea(newPos)) {
-            viewerState->currentPosition += movement;
+            viewerState.currentPosition += movement;
     } else {
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + 1).arg(newPos.y + 1).arg(newPos.z + 1);
     }
 
-    const auto newPosition_dc = viewerState->currentPosition.cube(state->cubeEdgeLength, state->magnification);
+    const auto newPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
 
     if (newPosition_dc != lastPosition_dc) {
         dc_reslice_notify_visible();
         oc_reslice_notify_visible();
 
         state->loaderUserMoveType = userMoveType;
-        Coordinate direction;
-        switch (userMoveType) {
-        case USERMOVE_DRILL:
-            direction = {x, y, z};
-            break;
-        case USERMOVE_HORIZONTAL:
-            switch (viewportType) {
-            case VIEWPORT_XZ:
-                direction = {0, 1, 0};
-                break;
-            case VIEWPORT_YZ:
-                direction = {1, 0, 0};
-                break;
-            case VIEWPORT_XY:
-            default:
-                direction = {0, 0, 1};
-                break;
-            }
-            break;
-        case USERMOVE_NEUTRAL:
-            direction = {0, 0, 0};
-            break;
-        default:
-            break;
-        }
+        Coordinate direction = (userMoveType == USERMOVE_DRILL)? step : (userMoveType == USERMOVE_HORIZONTAL)? viewportNormal : Coordinate(0, 0, 0);
         state->loaderUserMoveViewportDirection = direction;
         loader_notify();
     }
 
-    emit coordinateChangedSignal(viewerState->currentPosition);
-    return true;
+    emit coordinateChangedSignal(viewerState.currentPosition);
+}
+
+void Viewer::userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    moveCache += floatStep;
+    Coordinate step = {static_cast<int>(moveCache.x), static_cast<int>(moveCache.y), static_cast<int>(moveCache.z)};
+    moveCache -= step;
+    userMove(step, userMoveType, viewportNormal);
 }
 
 void Viewer::dc_reslice_notify_all(const Coordinate coord) {
@@ -1090,20 +1058,6 @@ void Viewer::oc_reslice_notify_visible() {
     oc_zy_changed = true;
     // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;
-}
-
-bool Viewer::userMove_arb(float x, float y, float z) {
-    Coordinate step;
-    moveCache.x += x;
-    moveCache.y += y;
-    moveCache.z += z;
-    step.x = roundFloat(moveCache.x);
-    step.y = roundFloat(moveCache.y);
-    step.z = roundFloat(moveCache.z);
-    moveCache -= step;
-    // In fact the movement most likely is not neutral, but since arbitrary horizontal or drilling movement
-    // makes little difference for the (currently) orthogonal loading order, we leave it as such
-    return userMove(step.x, step.y, step.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
 }
 
 bool Viewer::recalcTextureOffsets() {
@@ -1242,10 +1196,8 @@ bool Viewer::recalcTextureOffsets() {
             //v1: vector in Viewport x-direction, parameter s corresponds to v1
             //v2: vector in Viewport y-direction, parameter t corresponds to v2
             orthoVP.s_max = orthoVP.t_max = (((int)((state->M / 2 + 1) * state->cubeEdgeLength / sqrt(2.))) / 2) * 2;
-            floatCoordinate *v1 = &(orthoVP.v1);
-            floatCoordinate *v2 = &(orthoVP.v2);
-            float voxelV1X = sqrtf(powf(v1->x, 2.0) + powf(v1->y / state->viewerState->voxelXYRatio, 2.0) + powf(v1->z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
-            float voxelV2X = sqrtf((powf(v2->x, 2.0) + powf(v2->y / state->viewerState->voxelXYRatio, 2.0) + powf(v2->z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0)));
+            float voxelV1X = sqrtf(powf(orthoVP.v1.x, 2.0) + powf(orthoVP.v1.y / state->viewerState->voxelXYRatio, 2.0) + powf(orthoVP.v1.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
+            float voxelV2X = sqrtf((powf(orthoVP.v2.x, 2.0) + powf(orthoVP.v2.y / state->viewerState->voxelXYRatio, 2.0) + powf(orthoVP.v2.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0)));
 
             orthoVP.texture.displayedEdgeLengthX /= voxelV1X;
             orthoVP.texture.displayedEdgeLengthY /= voxelV2X;
@@ -1277,15 +1229,15 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
             orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
             orthoVP.displayedlengthInNmX =
-                sqrtf(powf(state->viewerState->voxelDimX * v1->x,2.)
-                      + powf(state->viewerState->voxelDimY * v1->y,2.)
-                      + powf(state->viewerState->voxelDimZ * v1->z,2.)
+                sqrtf(powf(state->viewerState->voxelDimX * orthoVP.v1.x,2.)
+                      + powf(state->viewerState->voxelDimY * orthoVP.v1.y,2.)
+                      + powf(state->viewerState->voxelDimZ * orthoVP.v1.z,2.)
                 ) * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
 
             orthoVP.displayedlengthInNmY =
-                sqrtf(powf(state->viewerState->voxelDimX * v2->x,2.)
-                      + powf(state->viewerState->voxelDimY * v2->y,2.)
-                      + powf(state->viewerState->voxelDimZ * v2->z,2.)
+                sqrtf(powf(state->viewerState->voxelDimX * orthoVP.v2.x,2.)
+                      + powf(state->viewerState->voxelDimY * orthoVP.v2.y,2.)
+                      + powf(state->viewerState->voxelDimZ * orthoVP.v2.z,2.)
                 ) * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
 
             //Update orthoVP.leftUpperDataPxOnScreen with this call
@@ -1364,13 +1316,8 @@ void Viewer::rewire() {
         });
     });
     // end viewer signals
-    // skeletonizer signals
-    QObject::connect(skeletonizer, &Skeletonizer::userMoveSignal, this, &Viewer::userMove);
-    // end skeletonizer signals
     //viewport signals
     window->forEachVPDo([this](ViewportBase & vp) {
-        QObject::connect(&vp, &ViewportBase::userMoveSignal, this, &Viewer::userMove);
-        QObject::connect(&vp, &ViewportBase::userMoveArbSignal, this, &Viewer::userMove_arb);
         QObject::connect(&vp, &ViewportBase::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
         QObject::connect(&vp, &ViewportBase::delSegmentSignal, &Skeletonizer::delSegment);
@@ -1404,9 +1351,9 @@ void Viewer::rewire() {
     // --- end widget signals
 }
 
-void Viewer::setRotation(float x, float y, float z, float angle) {
+void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
     alphaCache += angle; // angles are added up here until they are processed in the thread loop
-    rotation = Rotation(x, y, z, alphaCache);
+    rotation = Rotation(axis, alphaCache);
     dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
 }
 

@@ -200,7 +200,6 @@ public:
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
-    static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
     std::atomic_bool dc_xy_changed{true};
     std::atomic_bool dc_xz_changed{true};
     std::atomic_bool dc_zy_changed{true};
@@ -227,8 +226,8 @@ protected:
 public slots:
     void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    bool userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-    bool userMove_arb(float x, float y, float z);
+    void userMove(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);
@@ -238,7 +237,7 @@ public slots:
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
     bool vpGenerateTexture(ViewportOrtho & vp);
-    void setRotation(float x, float y, float z, float angle);
+    void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
     void setVPOrientation(const bool arbitrary);
     void dc_reslice_notify_visible();

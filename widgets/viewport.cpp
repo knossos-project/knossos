@@ -129,6 +129,24 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
 }
 
 ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        v1 = {1, 0, 0};
+        v2 = {0, 1, 0};
+        n = {0, 0, 1};
+        break;
+    case VIEWPORT_XZ:
+        v1 = {1, 0, 0};
+        v2 = {0, 0, 1};
+        n = {0, 1, 0};
+        break;
+    case VIEWPORT_YZ:
+        v1 = {0, 0, 1};
+        v2 = {0, 1, 0};
+        n = {1, 0, 0};
+        break;
+    default: break;
+    }
     timeDBase.start();
     timeFBase.start();
 }

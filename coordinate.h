@@ -78,6 +78,11 @@ public:
     constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z  * rhs.z);
     }
+
+    constexpr CoordinateDerived operator*(const ComponentType scalar) const {
+        return CoordinateDerived(x * scalar, y * scalar, z * scalar);
+    }
+
     CoordinateDerived & operator*=(const CoordinateDerived & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this * rhs);
     }
