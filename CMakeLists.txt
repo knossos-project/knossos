@@ -40,6 +40,11 @@ find_package(Snappy REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
 
+get_target_property(QtCoreLibraryType Qt5::Core TYPE)
+if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
+    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set, but the Qt version found is not static")
+endif()
+
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
