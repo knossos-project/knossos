@@ -915,7 +915,7 @@ void Viewer::run() {
         alphaCache = 0;
     }
 
-    if (state->gpuSlicer) {
+    if (state->gpuSlicer && gpuRendering) {
         for (auto & layer : layers) {
             const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
             const int halfSupercube = supercubeedge * 0.5;
