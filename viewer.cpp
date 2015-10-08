@@ -916,6 +916,8 @@ void Viewer::run() {
     }
 
     if (state->gpuSlicer && gpuRendering) {
+        QElapsedTimer timer;
+        timer.start();
         for (auto & layer : layers) {
             const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
             const int halfSupercube = supercubeedge * 0.5;
@@ -934,7 +936,7 @@ void Viewer::run() {
                     if (ptr != nullptr) {
                         const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
                         layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, x, y, z, offset.x, offset.y, offset.z);
-                        done = true;//only one cube per call
+                        done = timer.hasExpired(3);
                     }
                 }
             }
