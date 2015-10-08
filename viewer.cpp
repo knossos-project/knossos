@@ -916,6 +916,32 @@ void Viewer::run() {
         alphaCache = 0;
     }
 
+    if (state->gpuSlicer) {
+        for (auto & layer : layers) {
+            const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
+            const int halfSupercube = supercubeedge * 0.5;
+            const auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
+            const auto end = edge + supercubeedge;
+            bool done = false;
+            for (int x = edge.x; !done && x < end.x; ++x)
+            for (int y = edge.y; !done && y < end.y; ++y)
+            for (int z = edge.z; !done && z < end.z; ++z) {
+                const auto globalCoord = CoordOfCube{x, y, z}.cube2Global(gpucubeedge, state->magnification);
+                if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, globalCoord) && layer.textures.count({static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}) == 0) {
+                    state->protectCube2Pointer.lock();
+                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
+                    state->protectCube2Pointer.unlock();
+                    if (ptr != nullptr) {
+                        const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+                        layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, x, y, z, offset.x, offset.y, offset.z);
+                        done = true;//only one cube per call
+                    }
+                }
+            }
+        }
+    }
+
     recalcTextureOffsets();//should be in userMove and setVPOrientation but that’s infeasable because vp update is async
     window->forEachOrthoVPDo([this](ViewportOrtho & vp) {
         if (vp.isVisible()) {
@@ -979,16 +1005,18 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
     // to its client or not.
 
     const auto lastPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
+    const auto lastPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, state->magnification);
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
     if (!Session::singleton().outsideMovementArea(newPos)) {
-            viewerState.currentPosition += movement;
+            viewerState.currentPosition = newPos;
     } else {
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + 1).arg(newPos.y + 1).arg(newPos.z + 1);
     }
 
     const auto newPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
+    const auto newPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, state->magnification);
 
     if (newPosition_dc != lastPosition_dc) {
         dc_reslice_notify_visible();
@@ -998,6 +1026,23 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
         Coordinate direction = (userMoveType == USERMOVE_DRILL)? step : (userMoveType == USERMOVE_HORIZONTAL)? viewportNormal : Coordinate(0, 0, 0);
         state->loaderUserMoveViewportDirection = direction;
         loader_notify();
+    }
+
+    if (state->gpuSlicer && newPosition_gpudc != lastPosition_gpudc) {
+        for (auto & layer : layers) {
+            layer.ctx.makeCurrent(&layer.surface);
+            std::vector<QVector3D> obsoleteCubes;
+            for (const auto & pair : layer.textures) {
+                const auto pos = pair.first;
+                const Coordinate coord{static_cast<int>(pos.x() * gpucubeedge), static_cast<int>(pos.y() * gpucubeedge), static_cast<int>(pos.z() * gpucubeedge)};
+                if (!currentlyVisibleWrapWrap(viewerState.currentPosition, coord)) {
+                    obsoleteCubes.emplace_back(pos);
+                }
+            }
+            for (const auto & pos : obsoleteCubes) {
+                layer.textures.erase(pos);
+            }
+        }
     }
 
     emit coordinateChangedSignal(viewerState.currentPosition);
@@ -1014,17 +1059,6 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         dc_reslice_notify_visible();
     }
-    if (state->gpuSlicer) {
-        QTimer::singleShot(0, this, [this, coord](){
-            state->protectCube2Pointer.lock();
-            const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], coord.cube(state->cubeEdgeLength, state->magnification));
-            state->protectCube2Pointer.unlock();
-            if (ptr != nullptr) {
-                const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
-                layers.front().cubeAll(ptr, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
-            }
-        });
-    }
 }
 
 void Viewer::dc_reslice_notify_visible() {
@@ -1036,17 +1070,6 @@ void Viewer::dc_reslice_notify_visible() {
 void Viewer::oc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         oc_reslice_notify_visible();
-    }
-    if (state->gpuSlicer) {
-        QTimer::singleShot(0, this, [this, coord](){
-            state->protectCube2Pointer.lock();
-            const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], coord.cube(state->cubeEdgeLength, state->magnification));
-            state->protectCube2Pointer.unlock();
-            if (ptr != nullptr) {
-                const auto cubeCoord = coord.cube(state->cubeEdgeLength, state->magnification);
-                layers.back().cubeAll(ptr, state->cubeEdgeLength, gpucubeedge, cubeCoord.x, cubeCoord.y, cubeCoord.z);
-            }
-        });
     }
     // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;

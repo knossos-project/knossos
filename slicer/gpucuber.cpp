@@ -87,28 +87,20 @@ void TextureLayer::createBogusCube(const int cpucubeedge, const int gpucubeedge)
 }
 
 template<typename cube_type, typename elem_type>
-void TextureLayer::cubeAll(const boost::const_multi_array_ref<elem_type, 3> cube, const int cpucubeedge, const int gpucubeedge, const int x, const int y, const int z) {
+void TextureLayer::cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const int xi, const int yi, const int zi, const int x_offset, const int y_offset, const int z_offset) {
     ctx.makeCurrent(&surface);
-    const auto factor = cpucubeedge / gpucubeedge;
-    for (int zi = z * factor; zi < (z + 1) * factor; ++zi)
-    for (int yi = y * factor; yi < (y + 1) * factor; ++yi)
-    for (int xi = x * factor; xi < (x + 1) * factor; ++xi) {
-        const auto x_offset = gpucubeedge * (xi % factor);
-        const auto y_offset = gpucubeedge * (yi % factor);
-        const auto z_offset = gpucubeedge * (zi % factor);
-        using range = boost::multi_array_types::index_range;
-        const auto view = cube[boost::indices[range(0+z_offset,gpucubeedge+z_offset)][range(0+y_offset,gpucubeedge+y_offset)][range(0+x_offset,gpucubeedge+x_offset)]];
-        textures[QVector3D(xi, yi, zi)].reset(new cube_type(gpucubeedge));
-        static_cast<cube_type*>(textures[QVector3D(xi, yi, zi)].get())->generate(view);
-    }
+    using range = boost::multi_array_types::index_range;
+    const auto view = cube[boost::indices[range(0+z_offset,gpucubeedge+z_offset)][range(0+y_offset,gpucubeedge+y_offset)][range(0+x_offset,gpucubeedge+x_offset)]];
+    textures[QVector3D(xi, yi, zi)].reset(new cube_type(gpucubeedge));
+    static_cast<cube_type*>(textures[QVector3D(xi, yi, zi)].get())->generate(view);
 }
 
-void TextureLayer::cubeAll(const char * data, const int cpucubeedge, const int gpucubeedge, const int x, const int y, const int z) {
+void TextureLayer::cubeSubArray(const char * data, const int cpucubeedge, const int gpucubeedge, const int x, const int y, const int z, const int x_offset, const int y_offset, const int z_offset) {
     if (isOverlayData) {
         boost::const_multi_array_ref<std::uint64_t, 3> cube(reinterpret_cast<const std::uint64_t *>(data), boost::extents[cpucubeedge][cpucubeedge][cpucubeedge]);
-        cubeAll<gpu_lut_cube>(cube, cpucubeedge, gpucubeedge, x, y, z);
+        cubeSubArray<gpu_lut_cube>(cube, gpucubeedge, x, y, z, x_offset, y_offset, z_offset);
     } else {
         boost::const_multi_array_ref<std::uint8_t, 3> cube(reinterpret_cast<const std::uint8_t *>(data), boost::extents[cpucubeedge][cpucubeedge][cpucubeedge]);
-        cubeAll<gpu_raw_cube>(cube, cpucubeedge, gpucubeedge, x, y, z);
+        cubeSubArray<gpu_raw_cube>(cube, gpucubeedge, x, y, z, x_offset, y_offset, z_offset);
     }
 }
