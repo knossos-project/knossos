@@ -118,12 +118,11 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
     if (state->gpuSlicer) {
-        gpucubeedge = 128;
+//        gpucubeedge = 128;
         layers.emplace_back(*window->viewportXY->context());
         layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
         layers.emplace_back(*window->viewportXY->context());
-        layers.back().enabled = true;
-        layers.back().opacity = 0.5f;
+//        layers.back().enabled = false;
         layers.back().isOverlayData = true;
         layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
     }
