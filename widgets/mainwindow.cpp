@@ -120,16 +120,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     {
         auto & action = *new QAction(this);
-        action.setShortcut(Qt::Key_6);
-        QObject::connect(&action, &QAction::triggered, [](){
-            for (auto & elem : state->viewer->layers.front().textures) {
-                qDebug() << elem.first;
-            }
-        });
-        addAction(&action);
-    }
-    {
-        auto & action = *new QAction(this);
         action.setShortcut(Qt::Key_7);
         QObject::connect(&action, &QAction::triggered, [](){
             state->viewer->gpuRendering = !state->viewer->gpuRendering;

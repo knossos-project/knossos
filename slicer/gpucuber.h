@@ -1,6 +1,8 @@
 #ifndef GPUCUBER_H
 #define GPUCUBER_H
 
+#include "coordinate.h"
+
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLTexture>
@@ -48,7 +50,7 @@ class TextureLayer {
 public:
     QOffscreenSurface surface;
     QOpenGLContext ctx;//ctx has to live past textures
-    std::unordered_map<QVector3D, std::unique_ptr<gpu_raw_cube>> textures;
+    std::unordered_map<CoordOfGPUCube, std::unique_ptr<gpu_raw_cube>> textures;
     std::unique_ptr<gpu_raw_cube> bogusCube;
     float opacity = 1.0f;
     bool enabled = true;
@@ -59,8 +61,8 @@ public:
     void createBogusCube(const int cpucubeedge, const int gpucubeedge);
     void createBogusCube(const int cpucubeedge, const int gpucubeedge);
     template<typename cube_type, typename elem_type>
-    void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const int xi, const int yi, const int zi, const int x_offset, const int y_offset, const int z_offset);
-    void cubeSubArray(const char * data, const int cpucubeedge, const int gpucubeedge, const int x, const int y, const int z, const int x_offset, const int y_offset, const int z_offset);
+    void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
+    void cubeSubArray(const char * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
 };
 
 #endif//GPUCUBER_H

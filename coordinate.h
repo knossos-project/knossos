@@ -119,6 +119,7 @@ public:
 using Coordinate = Coord<int, 0>;
 using CoordOfCube = Coord<int, 1>;
 using CoordInCube = Coord<int, 2>;
+using CoordOfGPUCube = Coord<int, 3>;
 using floatCoordinate = Coord<float>;
 
 template<>
@@ -143,6 +144,13 @@ public:
     constexpr Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const int magnification) const;
 };
 
+template<>
+class Coord<int, 3> : public CoordinateBase<int, CoordOfGPUCube> {
+public:
+    using CoordinateBase<int, CoordOfGPUCube>::CoordinateBase;
+    constexpr Coordinate cube2Global(const int cubeEdgeLength, const int magnification) const;
+};
+
 constexpr CoordOfCube Coordinate::cube(const int size, const int mag) const {
     return {this->x / size / mag, this->y / size / mag, this->z / size / mag};
 }
@@ -151,6 +159,10 @@ constexpr CoordInCube Coordinate::insideCube(const int size, const int mag) cons
 }
 
 constexpr Coordinate CoordOfCube::cube2Global(const int cubeEdgeLength, const int magnification) const {
+    return {this->x * cubeEdgeLength * magnification, this->y * cubeEdgeLength * magnification, this->z * cubeEdgeLength * magnification};
+}
+
+constexpr Coordinate CoordOfGPUCube::cube2Global(const int cubeEdgeLength, const int magnification) const {
     return {this->x * cubeEdgeLength * magnification, this->y * cubeEdgeLength * magnification, this->z * cubeEdgeLength * magnification};
 }
 
@@ -166,6 +178,14 @@ namespace std {
 template<typename T, std::size_t x>
 struct hash<Coord<T, x>> {
     std::size_t operator()(const Coord<T, x> & cord) const {
+        return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
+    }
+};
+}
+namespace std {
+template<>
+struct hash<CoordOfGPUCube> {
+    std::size_t operator()(const CoordOfGPUCube & cord) const {
         return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
     }
 };

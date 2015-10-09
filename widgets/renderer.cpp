@@ -716,14 +716,10 @@ void ViewportOrtho::renderViewportFast() {
                 raw_data_shader.setUniformValue("textureOpacity", layer.opacity);
             }
 
-//            const float offsetx = 82;
-//            const float offsety = 82;
-//            const float offsetz = 42;
             const float halfsc = (supercubeedge * gpucubeedge - state->cubeEdgeLength) * 0.5f / gpucubeedge;
             const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
             const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
             const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
-//            qDebug() << offsetx << offsety << offsetz << gpucubeedge << supercubeedge;
             const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
             const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
             const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
@@ -733,7 +729,7 @@ void ViewportOrtho::renderViewportFast() {
             for (float z = startz; z < endz; ++z)
             for (float y = starty; y < endy; ++y)
             for (float x = startx; x < endx; ++x) {
-                auto pos = QVector3D(offsetx + x, offsety + y, offsetz + z);
+                const auto pos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
                 auto it = layer.textures.find(pos);
                 auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
                 modelMatrix.setToIdentity();

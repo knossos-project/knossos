@@ -927,15 +927,16 @@ void Viewer::run() {
             for (int x = edge.x; !done && x < end.x; ++x)
             for (int y = edge.y; !done && y < end.y; ++y)
             for (int z = edge.z; !done && z < end.z; ++z) {
-                const auto globalCoord = CoordOfCube{x, y, z}.cube2Global(gpucubeedge, state->magnification);
-                if (currentlyVisible(globalCoord, state->viewerState->currentPosition, supercubeedge, gpucubeedge) && layer.textures.count({static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}) == 0) {
+                const auto gpuCoord = CoordOfGPUCube{x, y, z};
+                const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
+                if (currentlyVisible(globalCoord, state->viewerState->currentPosition, supercubeedge, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
                     state->protectCube2Pointer.lock();
                     const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
                     const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
                     state->protectCube2Pointer.unlock();
                     if (ptr != nullptr) {
                         const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
-                        layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, x, y, z, offset.x, offset.y, offset.z);
+                        layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, gpuCoord, offset);
                         done = timer.hasExpired(3);
                     }
                 }
@@ -1033,11 +1034,11 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
         const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
         for (auto & layer : layers) {
             layer.ctx.makeCurrent(&layer.surface);
-            std::vector<QVector3D> obsoleteCubes;
+            std::vector<CoordOfGPUCube> obsoleteCubes;
             for (const auto & pair : layer.textures) {
                 const auto pos = pair.first;
-                const Coordinate coord{static_cast<int>(pos.x() * gpucubeedge), static_cast<int>(pos.y() * gpucubeedge), static_cast<int>(pos.z() * gpucubeedge)};
-                if (!currentlyVisible(coord, viewerState.currentPosition, supercubeedge, gpucubeedge)) {
+                const auto globalCoord = pos.cube2Global(gpucubeedge, state->magnification);
+                if (!currentlyVisible(globalCoord, viewerState.currentPosition, supercubeedge, gpucubeedge)) {
                     obsoleteCubes.emplace_back(pos);
                 }
             }
