@@ -919,7 +919,7 @@ void Viewer::run() {
         QElapsedTimer timer;
         timer.start();
         for (auto & layer : layers) {
-            const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
+            const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
             const int halfSupercube = supercubeedge * 0.5;
             const auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
             const auto end = edge + supercubeedge;
@@ -928,7 +928,7 @@ void Viewer::run() {
             for (int y = edge.y; !done && y < end.y; ++y)
             for (int z = edge.z; !done && z < end.z; ++z) {
                 const auto globalCoord = CoordOfCube{x, y, z}.cube2Global(gpucubeedge, state->magnification);
-                if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, globalCoord) && layer.textures.count({static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}) == 0) {
+                if (currentlyVisible(globalCoord, state->viewerState->currentPosition, supercubeedge, gpucubeedge) && layer.textures.count({static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}) == 0) {
                     state->protectCube2Pointer.lock();
                     const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
                     const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
@@ -1030,13 +1030,14 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
     }
 
     if (state->gpuSlicer && newPosition_gpudc != lastPosition_gpudc) {
+        const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
         for (auto & layer : layers) {
             layer.ctx.makeCurrent(&layer.surface);
             std::vector<QVector3D> obsoleteCubes;
             for (const auto & pair : layer.textures) {
                 const auto pos = pair.first;
                 const Coordinate coord{static_cast<int>(pos.x() * gpucubeedge), static_cast<int>(pos.y() * gpucubeedge), static_cast<int>(pos.z() * gpucubeedge)};
-                if (!currentlyVisibleWrapWrap(viewerState.currentPosition, coord)) {
+                if (!currentlyVisible(coord, viewerState.currentPosition, supercubeedge, gpucubeedge)) {
                     obsoleteCubes.emplace_back(pos);
                 }
             }

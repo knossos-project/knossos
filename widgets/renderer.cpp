@@ -613,7 +613,7 @@ void ViewportOrtho::renderViewportFast() {
 
     const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_YZ;
     const auto gpucubeedge = state->viewer->gpucubeedge;
-    const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge;
+    const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
 //    QVector3D offset;
     const auto cpos = state->viewerState->currentPosition;
     const int xxx = cpos.x % gpucubeedge;
