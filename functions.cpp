@@ -6,6 +6,33 @@
 
 /** this file contains function which are not dependent from any state */
 
+constexpr bool inRange(const int value, const int min, const int max) {
+    return value >= min && value < max;
+}
+
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
+    const int halfSupercube = cubeSize * cubesPerDimension * 0.5;
+    const int xcube = center.x - center.x % cubeSize + cubeSize / 2;
+    const int ycube = center.y - center.y % cubeSize + cubeSize / 2;
+    const int zcube = center.z - center.z % cubeSize + cubeSize / 2;
+    bool valid = true;
+    valid &= inRange(coord.x, xcube - halfSupercube, xcube + halfSupercube);
+    valid &= inRange(coord.y, ycube - halfSupercube, ycube + halfSupercube);
+    valid &= inRange(coord.z, zcube - halfSupercube, zcube + halfSupercube);
+    return valid;
+}
+
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
+    const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
+    const int xmin = center.x - center.x % cubeSize;
+    const int ymin = center.y - center.y % cubeSize;
+    const int zmin = center.z - center.z % cubeSize;
+    const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize);
+    const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize);
+    const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize);
+    return xvalid || yvalid || zvalid;
+}
+
 int roundFloat(float number) {
     if(number >= 0) return (int)(number + 0.5);
     else return (int)(number - 0.5);
