@@ -1178,5 +1178,15 @@ void MainWindow::pythonFileSlot() {
     state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     state->viewerState->renderInterval = FAST;
-    state->scripting->runFile(pyFileName);
+    QMessageBox msgBox;
+    msgBox.setText(tr("Execute or Import?"));
+    QAbstractButton* pButtonExecute = msgBox.addButton(tr("Execute"), QMessageBox::ActionRole);
+    QAbstractButton* pButtonImport = msgBox.addButton(tr("Import"), QMessageBox::ActionRole);
+    msgBox.exec();
+    if (msgBox.clickedButton()==pButtonExecute) {
+        state->scripting->runFile(pyFileName);
+    }
+    else if (msgBox.clickedButton()==pButtonImport) {
+        state->scripting->importModule(pyFileName);
+    }
 }
