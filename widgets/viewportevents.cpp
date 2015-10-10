@@ -275,7 +275,7 @@ void ViewportBase::handleMouseButtonRight(QMouseEvent *event) {
 
     if (newNode) {
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
-            Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, *oldNode);
+            Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, oldNode);
         }
         // Move to the new node position
         if (viewportType == VIEWPORT_ARBITRARY) {
