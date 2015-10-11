@@ -121,7 +121,7 @@ struct SkeletonState {
     float defaultNodeRadius{1.5f};
 
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
-    float zoomLevel;
+    double zoomLevel;
 
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */

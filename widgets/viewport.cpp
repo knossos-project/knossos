@@ -57,7 +57,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(pa
 }
 
 ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uint id) :
-    QOpenGLWidget(parent), isDocked(true), floatParent(nullptr), resizeButton(this), resizeButtonHold(false), viewportType(viewportType), id(id) {
+    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), id(id) {
     dockParent = parent;
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
@@ -399,7 +399,6 @@ void ViewportBase::leaveEvent(QEvent *) {
 }
 
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(event->x(), event->y(), *this), id);
     const auto mouseBtn = event->buttons();
     const auto penmode = state->viewerState->penmode;
 
@@ -470,7 +469,10 @@ void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
     if(event->button() == Qt::MiddleButton) {
         handleMouseReleaseMiddle(event);
     }
+}
 
+void ViewportOrtho::mouseReleaseEvent(QMouseEvent *event) {
+    ViewportBase::mouseReleaseEvent(event);
     userMouseSlide = {};
     arbNodeDragCache = {};
     draggedNode = nullptr;
@@ -504,7 +506,7 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
     }
 }
 
-void ViewportBase::zoomOrthogonals(float step){
+void ViewportOrtho::zoom(const float step) {
     int triggerMagChange = false;
     state->viewer->window->forEachOrthoVPDo([&step, &triggerMagChange](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
@@ -549,23 +551,14 @@ void ViewportBase::zoomOrthogonals(float step){
 
 }
 
-void ViewportBase::zoomOutSkeletonVP() {
-    if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-        state->skeletonState->zoomLevel -= (0.1* (0.5 - state->skeletonState->zoomLevel));
-        if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
-            state->skeletonState->zoomLevel = SKELZOOMMIN;
-        }
-        emit updateDatasetOptionsWidget();
-    }
+float Viewport3D::zoomStep() const {
+    return (0.1* (0.5 - state->skeletonState->zoomLevel));
 }
-void ViewportBase::zoomInSkeletonVP() {
-    if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
-        state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-        if(state->skeletonState->zoomLevel > SKELZOOMMAX) {
-            state->skeletonState->zoomLevel = SKELZOOMMAX;
-        }
-        emit updateDatasetOptionsWidget();
-    }
+
+void Viewport3D::zoom(const float step) {
+    auto & zoomLvl = state->skeletonState->zoomLevel;
+    zoomLvl = (step < 0 && zoomLvl >= SKELZOOMMIN)? std::max(zoomLvl + step, SKELZOOMMIN) : (step > 0 && zoomLvl <= SKELZOOMMAX)? std::min(zoomLvl + step, SKELZOOMMAX) : zoomLvl;
+    emit updateDatasetOptionsWidget();
 }
 
 void Viewport3D::showHideButtons(bool isShow) {
@@ -791,7 +784,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     fbo.release();
 }
 
-void ViewportBase::sendCursorPosition() {
+void ViewportOrtho::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
     emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
 }

@@ -82,9 +82,9 @@ class SignalRelay : public QObject
 public:
     explicit SignalRelay() {state->signalRelay = this;}
 signals:
-    void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int,QMouseEvent*);
-    void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class ViewportBase*,QMouseEvent*);
-    void Signal_EventModel_handleMouseReleaseMiddle(EmitOnCtorDtor*,Coordinate,int,QMouseEvent*);
+    void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int, const QMouseEvent*);
+    void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class ViewportBase*, const QMouseEvent*);
+    void Signal_EventModel_handleMouseReleaseMiddle(EmitOnCtorDtor*,Coordinate,int,const QMouseEvent*);
     void Signal_MainWindow_closeEvent(EmitOnCtorDtor*,QCloseEvent*);
 };
 

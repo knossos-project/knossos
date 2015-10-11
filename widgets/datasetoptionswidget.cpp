@@ -170,10 +170,10 @@ void DatasetOptionsWidget::skeletonSpinBoxChanged(double value) {
         }
         else { // up or down button pressed, find out which.
             if(value > lastZoomSkel && value < lastZoomSkel + 2) { // user wants to zoom in
-                emit zoomInSkeletonVPSignal();
+                state->viewer->window->viewport3D->zoomIn();
             }
             else if(value < lastZoomSkel && value > lastZoomSkel - 2) { // user wants to zoom out
-                emit zoomOutSkeletonVPSignal();
+                state->viewer->window->viewport3D->zoomOut();
             }
             // the following line will lead to signal emission and another call to this slot,
             // but since userZoomSkel was set to false above, no further recursion takes place.

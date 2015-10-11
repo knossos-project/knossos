@@ -1335,11 +1335,15 @@ void Viewer::rewire() {
     QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
-        window->forEachVPDo([](ViewportBase & vp) {
-            if (vp.hasCursor) {
-                vp.sendCursorPosition();
-            }
-        });
+        if (window->viewport3D->hasCursor) {
+            window->updateCursorLabel(Coordinate(), VIEWPORT_SKELETON);
+        } else {
+            window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
+                if (orthoVP.hasCursor) {
+                    orthoVP.sendCursorPosition();
+                }
+            });
+        }
     });
     // end viewer signals
     //viewport signals
@@ -1365,10 +1369,6 @@ void Viewer::rewire() {
     QObject::connect(&window->widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
     QObject::connect(skeletonizer, &Skeletonizer::propertiesChanged, &window->widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     //  -- end appearance widget signals
-    //  dataset options signals --
-    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomInSkeletonVPSignal, static_cast<Viewport3D*>(vpLowerRight), &Viewport3D::zoomInSkeletonVP);
-    QObject::connect(&window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomOutSkeletonVPSignal, static_cast<Viewport3D*>(vpLowerRight), &Viewport3D::zoomOutSkeletonVP);
-    //  -- end dataset options signals
     // dataset load signals --
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);

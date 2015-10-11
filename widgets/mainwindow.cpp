@@ -141,7 +141,6 @@ void MainWindow::resetTextureProperties() {
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
     forEachVPDo([](ViewportBase & vp) {
-        vp.draggedNode = nullptr;
         vp.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
         vp.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
         vp.texture.usedTexLengthDc = state->M;
