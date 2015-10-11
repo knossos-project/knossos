@@ -122,11 +122,20 @@ void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     ViewportBase::handleMouseHover(event);
 }
 
+void startNodeSelection(const int x, const int y, const int viewportID, const Qt::KeyboardModifiers modifiers) {
+    state->viewerState->nodeSelectionSquare.first.x = x;
+    state->viewerState->nodeSelectionSquare.first.y = y;
+
+    // reset second point from a possible previous selection square.
+    state->viewerState->nodeSelectionSquare.second = state->viewerState->nodeSelectionSquare.first;
+    state->viewerState->nodeSelectSquareData = std::make_pair(viewportID, modifiers);
+}
+
 void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
-            startNodeSelection(event->pos().x(), event->pos().y());
+            startNodeSelection(event->pos().x(), event->pos().y(), id, event->modifiers());
             return;
         }
         //Set Connection between Active Node and Clicked Node
@@ -302,7 +311,7 @@ boost::optional<Coordinate> handleMovement(const ViewportBase & vp, const QPoint
 
 void ViewportBase::handleMouseMotionLeftHold(const QMouseEvent *event) {
     // pull selection square
-    if (state->viewerState->nodeSelectSquareVpId != -1) {
+    if (state->viewerState->nodeSelectSquareData.first != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
     }
@@ -391,17 +400,17 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
             if (selectedNode) {
                 selectedNodes = {&selectedNode.get()};
             }
-        } else if (state->viewerState->nodeSelectSquareVpId != -1) {
+        } else if (state->viewerState->nodeSelectSquareData.first != -1) {
             selectedNodes = nodeSelection(event->pos().x(), event->pos().y());
         }
-        if (state->viewerState->nodeSelectSquareVpId != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
-            if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        if (state->viewerState->nodeSelectSquareData.first != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
+            if (state->viewerState->nodeSelectSquareData.second == Qt::ControlModifier) {
                 Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
             } else {
                 Skeletonizer::singleton().selectNodes(selectedNodes);
             }
         }
-        state->viewerState->nodeSelectSquareVpId = -1;//disable node selection square
+        state->viewerState->nodeSelectSquareData = std::make_pair(-1, Qt::NoModifier);//disable node selection square
     }
 }
 
@@ -810,15 +819,6 @@ bool ViewportOrtho::mouseEventAtValidDatasetPosition(const QMouseEvent *event) {
         return false;
     }
     return true;
-}
-
-void ViewportBase::startNodeSelection(int x, int y) {
-    state->viewerState->nodeSelectionSquare.first.x = x;
-    state->viewerState->nodeSelectionSquare.first.y = y;
-
-    // reset second point from a possible previous selection square.
-    state->viewerState->nodeSelectionSquare.second = state->viewerState->nodeSelectionSquare.first;
-    state->viewerState->nodeSelectSquareVpId = id;
 }
 
 QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {

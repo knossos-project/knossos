@@ -542,7 +542,7 @@ void ViewportBase::renderViewportFrontFace() {
     glLineWidth(1.);
 
     // render node selection box
-    if (state->viewerState->nodeSelectSquareVpId == static_cast<int>(id)) {
+    if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(id)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 

@@ -141,7 +141,6 @@ private:
     bool resizeButtonHold = false;
     void moveVP(const QPoint & globalPos);
 
-    void startNodeSelection(int x, int y);
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
     void resizeGL(int w, int h) override;

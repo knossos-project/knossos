@@ -91,7 +91,7 @@ struct ViewerState {
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
-    int nodeSelectSquareVpId{-1};
+    std::pair<int, Qt::KeyboardModifiers> nodeSelectSquareData{-1, Qt::NoModifier};
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     bool selectModeFlag{false};
