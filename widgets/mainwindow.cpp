@@ -282,6 +282,7 @@ void MainWindow::createToolbars() {
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
+    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Manager", this, SLOT(pythonPluginMgrSlot()));
     defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
@@ -1188,4 +1189,17 @@ void MainWindow::pythonFileSlot() {
     else if (msgBox.clickedButton()==pButtonImport) {
         state->scripting->importModule(pyFileName);
     }
+}
+
+void MainWindow::pythonPluginMgrSlot() {
+    auto pluginDir = QString("%1/plugins").arg(QCoreApplication::applicationDirPath());
+    if (!QDir().mkpath(pluginDir)) {
+        return;
+    }
+    QString pluginMgrFn("pluginMgr.py");
+    QString pluginMgrPath(QString("%1/%2").arg(pluginDir).arg(pluginMgrFn));
+    if (!QFile::exists(pluginMgrPath)) {
+        QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath);
+    }
+    state->scripting->importModule(pluginMgrPath);
 }

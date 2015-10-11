@@ -237,6 +237,7 @@ public slots:
     void pythonSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
+    void pythonPluginMgrSlot();
 };
 
 #endif // MAINWINDOW_H
