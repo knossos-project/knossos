@@ -1193,13 +1193,15 @@ void MainWindow::pythonFileSlot() {
 
 void MainWindow::pythonPluginMgrSlot() {
     auto pluginDir = QString("%1/plugins").arg(QCoreApplication::applicationDirPath());
-    if (!QDir().mkpath(pluginDir)) {
-        return;
-    }
     QString pluginMgrFn("pluginMgr.py");
     QString pluginMgrPath(QString("%1/%2").arg(pluginDir).arg(pluginMgrFn));
     if (!QFile::exists(pluginMgrPath)) {
-        QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath);
+        if (!QDir().mkpath(pluginDir)) {
+            return;
+        }
+        if (!QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
+            return;
+        }
     }
     state->scripting->importModule(pluginMgrPath);
 }
