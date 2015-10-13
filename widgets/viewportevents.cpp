@@ -296,7 +296,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
     ViewportBase::handleMouseButtonRight(event);
 }
 
-boost::optional<Coordinate> handleMovement(const ViewportBase & vp, const QPointF & posDelta, QPointF & userMouseSlide) {
+boost::optional<Coordinate> handleMovement(const ViewportOrtho & vp, const QPointF & posDelta, QPointF & userMouseSlide) {
     userMouseSlide -= {posDelta.x() / vp.screenPxXPerDataPx, posDelta.y() / vp.screenPxYPerDataPx};
 
     const QPoint deviationTrunc(std::trunc(userMouseSlide.x()), std::trunc(userMouseSlide.y()));
@@ -513,40 +513,9 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
     ViewportBase::handleWheelEvent(event);
 }
 
-void ViewportBase::keyPressEvent(QKeyEvent *event) {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-    const auto shift = modifiers.testFlag(Qt::ShiftModifier);
-    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
-    const auto alt = modifiers.testFlag(Qt::AltModifier);
-
-    if (ctrl && alt) {
-        setCursor(Qt::OpenHandCursor);
-    } else if (ctrl) {
-        setCursor(Qt::ArrowCursor);
-    } else {
-        setCursor(Qt::CrossCursor);
-    }
-
-    //events
-    //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
-    //^ os delay ^       ^---^ os key repeat
-
-    //intended behavior:
-    //↓          # # # # # # # # # # # # # # # ↑  ↓          # # # #…
-    //^ os delay ^       ^-^ knossos specified interval
-
-    //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
-
-    //›#‹ events are marked isAutoRepeat correctly on Windows
-    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
-    //to emulate this the time to the previous time the same event occured is measured
-    //drawbacks of this emulation are:
-    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
-    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
-
-    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->viewerKeyRepeat = event->isAutoRepeat();
-    }
+void ViewportBase::handleKeyPress(const QKeyEvent *event) {
+    const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
+    const auto alt = event->modifiers().testFlag(Qt::AltModifier);
     if (event->key() == Qt::Key_H) {
         if (isDocked) {
             hide();
@@ -555,8 +524,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
             floatParent->hide();
         }
         state->viewerState->defaultVPSizeAndPos = false;
-    }
-    if (event->key() == Qt::Key_U) {
+    } else if (event->key() == Qt::Key_U) {
         if (isDocked) {
             // Currently docked and normal
             // Undock and go fullscreen from docked
@@ -580,59 +548,6 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                 floatParent->setWindowState(Qt::WindowFullScreen);
                 isFullOrigDocked = false;
             }
-        }
-    }
-    if (!event->isAutoRepeat()) {
-        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
-        //seperate timer for each key, but only one across all vps
-        if (event->key() == Qt::Key_D) {
-            state->viewerKeyRepeat = timeDBase.restart() < 150;
-        } else if (event->key() == Qt::Key_F) {
-            state->viewerKeyRepeat = timeFBase.restart() < 150;
-        }
-    }
-
-    if(event->key() == Qt::Key_Left) {
-        if(shift) {
-            userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            userMove(v1 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_Right) {
-        if(shift) {
-            userMove(v1 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            userMove(v1 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_Down) {
-        if(shift) {
-            userMove(v2 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            userMove(v2 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_Up) {
-        if(shift) {
-            userMove(v2 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            userMove(v2 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_R) {
-        state->viewerState->walkOrth = true;
-        emit setRecenteringPositionSignal(state->viewerState->currentPosition + n * state->viewerState->walkFrames * state->magnification);
-        Knossos::sendRemoteSignal();
-    } else if(event->key() == Qt::Key_E) {
-        state->viewerState->walkOrth = true;
-        emit setRecenteringPositionSignal(state->viewerState->currentPosition - n * state->viewerState->walkFrames * state->magnification);
-        Knossos::sendRemoteSignal();
-    } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->keyD = event->key() == Qt::Key_D;
-        state->keyF = event->key() == Qt::Key_F;
-        if (!state->viewerKeyRepeat) {
-            const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
-            const float shiftMultiplier = shift? 10 : 1;
-            const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
-            state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
-            userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_HORIZONTAL, n);
         }
     } else if (event->key() == Qt::Key_Shift) {
         state->repeatDirection[0] *= 10;
@@ -749,8 +664,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                 Skeletonizer::singleton().deleteSelectedNodes();
             }
         }
-    }
-    else if(event->key() == Qt::Key_Escape) {
+    } else if(event->key() == Qt::Key_Escape) {
         if(state->skeletonState->selectedNodes.size() == 1
            && state->skeletonState->activeNode->selected) {
             // active node must always be selected if nothing else is selected.
@@ -769,12 +683,88 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
                 Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
-    }
-    else if(event->key() == Qt::Key_F4) {
+    } else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
         }
     }
+}
+
+void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
+    const auto shift = event->modifiers().testFlag(Qt::ShiftModifier);
+    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
+        state->viewerKeyRepeat = event->isAutoRepeat();
+    }
+    //events
+    //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
+    //^ os delay ^       ^---^ os key repeat
+
+    //intended behavior:
+    //↓          # # # # # # # # # # # # # # # ↑  ↓          # # # #…
+    //^ os delay ^       ^-^ knossos specified interval
+
+    //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
+
+    //›#‹ events are marked isAutoRepeat correctly on Windows
+    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
+    //to emulate this the time to the previous time the same event occured is measured
+    //drawbacks of this emulation are:
+    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
+    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
+    if (!event->isAutoRepeat()) {
+        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
+        //seperate timer for each key, but only one across all vps
+        if (event->key() == Qt::Key_D) {
+            state->viewerKeyRepeat = timeDBase.restart() < 150;
+        } else if (event->key() == Qt::Key_F) {
+            state->viewerKeyRepeat = timeFBase.restart() < 150;
+        }
+    }
+
+    if(event->key() == Qt::Key_Left) {
+        if(shift) {
+            userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
+        } else {
+            userMove(v1 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+        }
+    } else if(event->key() == Qt::Key_Right) {
+        if(shift) {
+            userMove(v1 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
+        } else {
+            userMove(v1 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+        }
+    } else if(event->key() == Qt::Key_Down) {
+        if(shift) {
+            userMove(v2 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
+        } else {
+            userMove(v2 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+        }
+    } else if(event->key() == Qt::Key_Up) {
+        if(shift) {
+            userMove(v2 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
+        } else {
+            userMove(v2 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+        }
+    } else if(event->key() == Qt::Key_R) {
+        state->viewerState->walkOrth = true;
+        emit setRecenteringPositionSignal(state->viewerState->currentPosition + n * state->viewerState->walkFrames * state->magnification);
+        Knossos::sendRemoteSignal();
+    } else if(event->key() == Qt::Key_E) {
+        state->viewerState->walkOrth = true;
+        emit setRecenteringPositionSignal(state->viewerState->currentPosition - n * state->viewerState->walkFrames * state->magnification);
+        Knossos::sendRemoteSignal();
+    } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
+        state->keyD = event->key() == Qt::Key_D;
+        state->keyF = event->key() == Qt::Key_F;
+        if (!state->viewerKeyRepeat) {
+            const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
+            const float shiftMultiplier = shift? 10 : 1;
+            const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
+            state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
+            userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_HORIZONTAL, n);
+        }
+    }
+    ViewportBase::handleKeyPress(event);
 }
 
 void ViewportBase::handleKeyRelease(const QKeyEvent *event) {

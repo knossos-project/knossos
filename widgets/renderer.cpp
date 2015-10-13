@@ -500,35 +500,6 @@ void ViewportBase::setFrontFacePerspective() {
 void ViewportBase::renderViewportFrontFace() {
     setFrontFacePerspective();
 
-    switch(viewportType) {
-        case VIEWPORT_XY:
-            glColor4f(0.7, 0., 0., 1.);
-            break;
-        case VIEWPORT_XZ:
-            glColor4f(0., 0.7, 0., 1.);
-            break;
-        case VIEWPORT_YZ:
-            glColor4f(0., 0., 0.7, 1.);
-            break;
-        case VIEWPORT_SKELETON:
-            glColor4f(0., 0., 0., 1.);
-            break;
-        case VIEWPORT_ARBITRARY:
-            glColor4f(n.z, n.y, n.x, 1.);
-        break;
-    }
-    glLineWidth(2.);
-    glBegin(GL_LINES);
-        glVertex3d(1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, 1, -1);
-    glEnd();
-
     if(viewportType == state->viewerState->highlightVp) {
         // Draw an orange border to highlight the viewport.
         glColor4f(1., 0.3, 0., 1.);
@@ -565,10 +536,56 @@ void ViewportBase::renderViewportFrontFace() {
         glEnd();
         glDisable(GL_BLEND);
     }
+}
+
+void ViewportOrtho::renderViewportFrontFace() {
+    ViewportBase::renderViewportFrontFace();
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        glColor4f(0.7, 0., 0., 1.);
+        break;
+    case VIEWPORT_XZ:
+        glColor4f(0., 0.7, 0., 1.);
+        break;
+    case VIEWPORT_YZ:
+        glColor4f(0., 0., 0.7, 1.);
+        break;
+    default:
+        glColor4f(n.z, n.y, n.x, 1.);
+        break;
+    }
+    glLineWidth(2.);
+    glBegin(GL_LINES);
+        glVertex3d(1, 1, -1);
+        glVertex3d(edgeLength - 1, 1, -1);
+        glVertex3d(edgeLength - 1, 1, -1);
+        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+        glVertex3d(1, edgeLength - 1, -1);
+        glVertex3d(1, edgeLength - 1, -1);
+        glVertex3d(1, 1, -1);
+    glEnd();
+
     if(state->viewerState->showScalebar) {
-        if(id == VIEWPORT_SKELETON && Segmentation::singleton().volume_render_toggle) {
-            return;
-        }
+        renderScaleBar();
+    }
+}
+
+void Viewport3D::renderViewportFrontFace() {
+    ViewportBase::renderViewportFrontFace();
+    glColor4f(0, 0, 0, 1.);
+    glLineWidth(2.);
+    glBegin(GL_LINES);
+        glVertex3d(1, 1, -1);
+        glVertex3d(edgeLength - 1, 1, -1);
+        glVertex3d(edgeLength - 1, 1, -1);
+        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+        glVertex3d(1, edgeLength - 1, -1);
+        glVertex3d(1, edgeLength - 1, -1);
+        glVertex3d(1, 1, -1);
+    glEnd();
+    if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
         renderScaleBar();
     }
 }
@@ -851,8 +868,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             if (zy) {
                 std::swap(dataPxX, dataPxY);
             }
-            std::swap(state->viewer->window->viewport(VIEWPORT_YZ)->texture.texRUx, state->viewer->window->viewport(VIEWPORT_YZ)->texture.texLLx);
-            std::swap(state->viewer->window->viewport(VIEWPORT_YZ)->texture.texRUy, state->viewer->window->viewport(VIEWPORT_YZ)->texture.texLLy);
+            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texRUx, state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texLLx);
+            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texRUy, state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texLLy);
         };
 
         if(state->viewerState->selectModeFlag) {

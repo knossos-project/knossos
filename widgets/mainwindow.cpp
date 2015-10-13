@@ -140,15 +140,15 @@ void MainWindow::resetTextureProperties() {
     state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
-    forEachVPDo([](ViewportBase & vp) {
-        vp.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        vp.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        vp.texture.usedTexLengthDc = state->M;
-        vp.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        vp.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+    forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
+        orthoVP.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        orthoVP.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        orthoVP.texture.usedTexLengthDc = state->M;
+        orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
         //This variable indicates the current zoom value for a viewport.
         //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        vp.texture.zoomLevel = VPZOOMMIN;
+        orthoVP.texture.zoomLevel = VPZOOMMIN;
     });
 }
 
@@ -186,6 +186,11 @@ ViewportBase * MainWindow::viewport(const uint id) {
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
+ViewportOrtho * MainWindow::viewportOrtho(const uint id) {
+    return (viewportXY->id == id)? viewportXY.get() :
+           (viewportXZ->id == id)? viewportXZ.get() :
+           viewportYZ.get();
+}
 
 void MainWindow::createToolbars() {
     basicToolbar.setObjectName(basicToolbar.windowTitle());

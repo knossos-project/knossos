@@ -183,6 +183,7 @@ public:
     }
     void resetTextureProperties();
     ViewportBase *viewport(const uint id);
+    ViewportOrtho *viewportOrtho(const uint id);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();

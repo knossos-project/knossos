@@ -794,13 +794,13 @@ bool Viewer::calcDisplayedEdgeLength() {
 
     FOVinDCs = ((float)state->M) - 1.f;
 
-    window->forEachVPDo([&](ViewportBase & vp) {
-        if (vp.viewportType==VIEWPORT_ARBITRARY) {
-            vp.texture.displayedEdgeLengthX = vp.s_max / (float) vp.texture.edgeLengthPx;
-            vp.texture.displayedEdgeLengthY = vp.t_max / (float) vp.texture.edgeLengthPx;
+    window->forEachOrthoVPDo([&](ViewportOrtho & vpOrtho) {
+        if (vpOrtho.viewportType==VIEWPORT_ARBITRARY) {
+            vpOrtho.texture.displayedEdgeLengthX = vpOrtho.s_max / (float) vpOrtho.texture.edgeLengthPx;
+            vpOrtho.texture.displayedEdgeLengthY = vpOrtho.t_max / (float) vpOrtho.texture.edgeLengthPx;
         }
         else {
-            vp.texture.displayedEdgeLengthX = vp.texture.displayedEdgeLengthY = FOVinDCs * (float)state->cubeEdgeLength / (float) vp.texture.edgeLengthPx;
+            vpOrtho.texture.displayedEdgeLengthX = vpOrtho.texture.displayedEdgeLengthY = FOVinDCs * (float)state->cubeEdgeLength / (float) vpOrtho.texture.edgeLengthPx;
         }
     });
     return true;

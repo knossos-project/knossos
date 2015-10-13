@@ -174,9 +174,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
             floatCoordinate delta = {recenteringPosition.x - avg.x, recenteringPosition.y - avg.y, recenteringPosition.z - avg.z};
             normalizeVector(delta);
-            float scalar = scalarProduct(state->viewer->window->viewport(activeVP)->n, delta);
+            float scalar = scalarProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
             rotation.alpha = acosf(std::min(1.f, std::max(-1.f, scalar)));
-            rotation.axis = crossProduct(state->viewer->window->viewport(activeVP)->n, delta);
+            rotation.axis = crossProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
             normalizeVector(rotation.axis);
         }
     }

@@ -165,7 +165,7 @@ protected:
     virtual void renderSegment(const segmentListElement & segment, const color4F &color);
     virtual void renderNode(const nodeListElement & node, const RenderOptions &options);
     bool updateFrustumClippingPlanes();
-    void renderViewportFrontFace();
+    virtual void renderViewportFrontFace();
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
     QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
 
@@ -188,6 +188,7 @@ protected:
     QPoint prevMouseMove;
     int xrel(const int x) { return x - prevMouseMove.x(); }
     int yrel(const int y) { return y - prevMouseMove.y(); }
+    virtual void handleKeyPress(const QKeyEvent *event);
     virtual void handleKeyRelease(const QKeyEvent *event);
     virtual void handleMouseHover(const QMouseEvent *) {}
     virtual void handleMouseButtonLeft(const QMouseEvent *event);
@@ -234,21 +235,7 @@ public:
     static bool initMesh(mesh & toInit, uint initialSize);
     static bool doubleMeshCapacity(mesh & toDouble);
     static bool resizemeshCapacity(mesh & toResize, uint n);
-    // ortho begin
-    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
-    Coordinate leftUpperDataPxOnScreen;
-    // plane vectors. s*v1 + t*v2 = px
-    floatCoordinate n;
-    floatCoordinate v1; // vector in x direction
-    floatCoordinate v2; // vector in y direction
-    floatCoordinate leftUpperPxInAbsPx_float;
-    floatCoordinate leftUpperDataPxOnScreen_float;
-    int s_max;
-    int t_max;
 
-    char * viewPortData;
-    viewportTexture texture;
-    // ortho end
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed
     //data pixels can have a different axis. Keep this in mind.
@@ -298,6 +285,7 @@ class Viewport3D : public ViewportBase {
     void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
     void renderNode(const nodeListElement & node, const RenderOptions &options) override;
+    void renderViewportFrontFace() override;
 
     void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     void handleMouseMotionRightHold(const QMouseEvent *event) override;
@@ -333,6 +321,7 @@ class ViewportOrtho : public ViewportBase {
     uint renderSegPlaneIntersection(const segmentListElement & segment);
     void renderNode(const nodeListElement & node, const RenderOptions &options) override;
     void renderBrush(uint viewportType, Coordinate coord);
+    void renderViewportFrontFace() override;
 
     void mouseReleaseEvent(QMouseEvent *event) override;
 
@@ -340,6 +329,7 @@ class ViewportOrtho : public ViewportBase {
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
     bool mouseEventAtValidDatasetPosition(const QMouseEvent *event);
+    void handleKeyPress(const QKeyEvent *event) override;
     void handleMouseHover(const QMouseEvent *event) override;
     void handleMouseReleaseLeft(const QMouseEvent *event) override;
     void handleMouseMotionLeftHold(const QMouseEvent *event) override;
@@ -358,6 +348,20 @@ public:
 
     void sendCursorPosition();
     Coordinate getMouseCoordinate();
+
+    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
+    Coordinate leftUpperDataPxOnScreen;
+    // plane vectors. s*v1 + t*v2 = px
+    floatCoordinate n;
+    floatCoordinate v1; // vector in x direction
+    floatCoordinate v2; // vector in y direction
+    floatCoordinate leftUpperPxInAbsPx_float;
+    floatCoordinate leftUpperDataPxOnScreen_float;
+    int s_max;
+    int t_max;
+
+    char * viewPortData;
+    viewportTexture texture;
 signals:
 
 

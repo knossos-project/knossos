@@ -398,6 +398,19 @@ void ViewportBase::leaveEvent(QEvent *) {
     emit cursorPositionChanged(Coordinate(), VIEWPORT_UNDEFINED);
 }
 
+void ViewportBase::keyPressEvent(QKeyEvent *event) {
+    const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
+    const auto alt = event->modifiers().testFlag(Qt::AltModifier);
+    if (ctrl && alt) {
+        setCursor(Qt::OpenHandCursor);
+    } else if (ctrl) {
+        setCursor(Qt::ArrowCursor);
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
+    handleKeyPress(event);
+}
+
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
     const auto mouseBtn = event->buttons();
     const auto penmode = state->viewerState->penmode;
