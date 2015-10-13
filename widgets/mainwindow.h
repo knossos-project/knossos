@@ -51,6 +51,10 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
+enum class SegmentState {
+    On, Off, Off_Once
+};
+
 class WorkModeModel : public QAbstractListModel {
     Q_OBJECT
     std::vector<std::pair<AnnotationMode, QString>> workModes;
@@ -92,12 +96,12 @@ class MainWindow : public QMainWindow {
     std::map<AnnotationMode, QString> workModes{ {AnnotationMode::Mode_MergeTracing, tr("Merge Tracing")},
                                                  {AnnotationMode::Mode_Tracing, tr("Tracing")},
                                                  {AnnotationMode::Mode_TracingAdvanced, tr("Tracing Advanced")},
-                                                 {AnnotationMode::Mode_TracingUnlinked, tr("Tracing Unlinked")},
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
+    QAction *toggleSegmentsAction;
     QAction *newTreeAction;
     QAction *pushBranchAction;
     QAction *popBranchAction;
@@ -128,6 +132,7 @@ class MainWindow : public QMainWindow {
     void updateTodosLeft();
 
     void placeComment(const int index);
+    void toggleSegments();
 public:
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
@@ -156,6 +161,7 @@ public:
     SkeletonProxy *skeletonProxy;
 
     QLabel cursorPositionLabel;
+    QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
 
@@ -188,6 +194,8 @@ public:
     void notifyUnsavedChanges();
     void updateTitlebar();
 
+    SegmentState segmentState{SegmentState::On};
+    void setSegmentState(const SegmentState newState);
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);

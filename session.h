@@ -34,23 +34,21 @@
 #include <QTimer>
 
 enum class AnnotationMode {
-    NodeEditing = 0x80,
-    LinkedNodes = 0x100,
-    UnlinkedNodes = 0x200,
-    SkeletonCycles = 0x400,
-    Brush = 0x800,
-    ObjectSelection = 0x1000,
-    ObjectMerge = 0x2000,
+    NodeEditing = 0x40,
+    LinkedNodes = 0x80,
+    SkeletonCycles = 0x100,
+    Brush = 0x200,
+    ObjectSelection = 0x400,
+    ObjectMerge = 0x800,
 
-    Mode_Tracing = 0x1 | NodeEditing | LinkedNodes,
-    Mode_TracingAdvanced = 0x2 | NodeEditing | LinkedNodes | SkeletonCycles,
-    Mode_TracingUnlinked = 0x4 | NodeEditing | UnlinkedNodes | SkeletonCycles,
+    Mode_Tracing = 0x1 | NodeEditing,
+    Mode_TracingAdvanced = 0x2 | NodeEditing | SkeletonCycles,
 
-    Mode_Paint = 0x8 | Brush | ObjectSelection,
-    Mode_Merge = 0x10 | Brush | ObjectSelection | ObjectMerge,
-    Mode_MergeSimple = 0x20 | Brush | ObjectMerge,
+    Mode_Paint = 0x4 | Brush | ObjectSelection,
+    Mode_Merge = 0x8 | Brush | ObjectSelection | ObjectMerge,
+    Mode_MergeSimple = 0x10 | Brush | ObjectMerge,
 
-    Mode_MergeTracing = 0x40 | NodeEditing | LinkedNodes | SkeletonCycles,
+    Mode_MergeTracing = 0x20 | NodeEditing | LinkedNodes | SkeletonCycles,
 };
 
 class Session : public QObject {

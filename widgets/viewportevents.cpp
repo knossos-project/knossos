@@ -215,9 +215,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
     nodeListElement * oldNode = state->skeletonState->activeNode;
     boost::optional<nodeListElement &> newNode;
 
-    if (annotationMode.testFlag(AnnotationMode::UnlinkedNodes)) {
-        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate,viewportType);
-    } else if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
+    if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
         if (oldNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
             //no node to link with or no empty tree
             newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, viewportType);
@@ -277,6 +275,8 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             }
             clickedCoordinate.capped(0, state->boundary);// Do not allow clicks outside the dataset
         }
+    } else { // unlinked
+        newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate,viewportType);
     }
 
     if (newNode) {
@@ -288,6 +288,10 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             emit setRecenteringPositionWithRotationSignal(clickedCoordinate, id);
         } else {
             emit setRecenteringPositionSignal(clickedCoordinate);
+        }
+        auto & mainWin = *state->viewer->window;
+        if (mainWin.segmentState == SegmentState::Off_Once) {
+            mainWin.setSegmentState(SegmentState::On);
         }
     }
     if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
@@ -771,8 +775,7 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->viewerState->showOverlay = true;
         state->viewer->oc_reslice_notify_visible();
-    }
-    else if (event->key() == Qt::Key_5) {
+    } else if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;
         if (state->compressionRatio != 0) {
             originalCompressionRatio = state->compressionRatio;

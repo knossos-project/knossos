@@ -75,8 +75,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {
             const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
-                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]},
-                                                             {AnnotationMode::Mode_TracingUnlinked, workModes[AnnotationMode::Mode_TracingUnlinked]}};
+                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
             workModeModel.recreate(rawModes);
             setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : AnnotationMode::Mode_Tracing);
         }
@@ -107,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     statusBar()->setSizeGripEnabled(false);
     statusBar()->addWidget(&cursorPositionLabel);
+    statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
@@ -213,8 +213,7 @@ void MainWindow::createToolbars() {
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
-                         "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>"
-                         "<b>" + workModes[AnnotationMode::Mode_TracingUnlinked] + ":</b> Skeletonization with unlinked nodes<br/>");
+                         "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>");
     basicToolbar.addSeparator();
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
@@ -486,6 +485,8 @@ void MainWindow::createMenus() {
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
+    const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
+    toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
@@ -811,21 +812,61 @@ void MainWindow::exportToNml() {
 }
 
 void MainWindow::setWorkMode(AnnotationMode workMode) {
-    if(workModes.find(workMode) == std::end(workModes)) {
+    if (workModes.find(workMode) == std::end(workModes)) {
         workMode = AnnotationMode::Mode_Tracing;
     }
     modeCombo.setCurrentText(workModes[workMode]);
     auto & mode = Session::singleton().annotationMode;
     mode = workMode;
-    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    toggleSegmentsAction->setVisible(!segmentation);
+    segmentStateLabel.setVisible(!segmentation);
+    if (!segmentation) {
+        setSegmentState(segmentState);
+    }
     newTreeAction->setVisible(trees);
     widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
+}
+
+void MainWindow::setSegmentState(const SegmentState newState) {
+    segmentState = newState;
+    QString stateString = "";
+    switch(segmentState) {
+    case SegmentState::On:
+        stateString = tr("<font color='green'>On</font>");
+        Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
+        break;
+    case SegmentState::Off_Once:
+        stateString = tr("<font color='darkGoldenRod'>Off once</font>");
+        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        break;
+    case SegmentState::Off:
+        stateString = tr("<font color='blue'>Off</font>");
+        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        break;
+    }
+    toggleSegmentsAction->setText("Segments: " + stateString);
+    segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateString);
+}
+
+void MainWindow::toggleSegments() {
+    switch(segmentState) {
+    case SegmentState::On:
+        setSegmentState(SegmentState::Off_Once);
+        break;
+    case SegmentState::Off_Once:
+        setSegmentState(SegmentState::Off);
+        break;
+    case SegmentState::Off:
+        setSegmentState(SegmentState::On);
+        break;
+    }
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
@@ -1033,6 +1074,8 @@ void MainWindow::loadSettings() {
     for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
         updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
     }
+
+    setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
     settings.endGroup();
 
