@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+    xmlns:bal='http://schemas.microsoft.com/wix/BalExtension'>
+  <Bundle Version='4.1.2' UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'>
+    <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLargeLicense'>
+      <bal:WixStandardBootstrapperApplication
+        LicenseFile='test.rtf'
+        LicenseUrl='http://example.com/license.html'
+        LogoFile='logo_small.bmp'
+        LogoSideFile='bar.bmp'
+        ShowVersion='yes'
+        />
+    </BootstrapperApplicationRef>
+    <Chain>
+      <MsiPackage SourceFile='knossos.msi' EnableFeatureSelection='yes' />
+    </Chain>
+  </Bundle>
+</Wix>

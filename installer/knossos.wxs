@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+  <?define Version='4.2.1'?>
+
+  <!-- <Product Name='KNOSSOS $(var.Version)' Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
+    Id='b836aaf3-c2dd-4976-b28d-2836865657eb' 
+    UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
+    Language='1033' Codepage='1252' Version='$(var.Version)'>
+    <Package Id='*' Platform='x64' Keywords='Installer' Description='KNOSSOS $(var.Version) Installer for Windows x64'
+      Comments='Foobar is a registered trademark of Acme Ltd.' Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
+      InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252' /> -->
+
+  <Product Codepage='1252'
+    Id='b836aaf3-c2dd-4976-b28d-2836865657eb' 
+    Language='1033'
+    Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
+    Name='KNOSSOS $(var.Version)'
+    UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
+    Version='$(var.Version)' >
+    <Package Comments='comments'
+      Compressed='yes'
+      Description='KNOSSOS $(var.Version) Installer for Windows x64'
+      Id='*'
+      InstallerVersion='200'
+      InstallScope='perMachine'
+      Keywords='Installer'
+      Languages='1033'
+      Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
+      Platform='x64' />
+
+
+    <!-- <Condition Message="A later version of [ProductName] is already installed.">NOT NEWERVERSIONDETECTED</Condition> -->
+    <!-- <MajorUpgrade AllowSameVersionUpgrades='yes' DowngradeErrorMessage='A newer version of [ProductName] is already installed.' /> -->
+
+    <Media Id='1' Cabinet='data.cab' EmbedCab='yes' />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFiles64Folder'>
+        <Directory Id='mpi' Name='MPImF'>
+          <Directory Id='INSTALLDIR' Name='KNOSSOS $(var.Version)'>
+          </Directory>
+        </Directory>
+        <Directory Id='ProgramMenuFolder'>
+          <Directory Id='ApplicationProgramsFolder' Name='KNOSSOS'/>
+        </Directory>
+      </Directory>
+      <Directory Id='DesktopFolder' />
+    </Directory>
+
+    <DirectoryRef Id='INSTALLDIR'>
+      <Component Id='MainExecutable' Win64='yes' Guid='b836aaf3-c2dd-4976-b28d-2836865657eb'>
+        <File Id='knossos.exe' Name='knossos.exe' Source='knossos64.exe' KeyPath='yes'>
+          <Shortcut Id='ApplicationStartMenuShortcut'
+            Directory='ApplicationProgramsFolder'
+            Name='KNOSSOS' 
+            Description='tell me'
+            WorkingDirectory='INSTALLDIR'
+            Icon='knossos64.exe' 
+            Advertise='yes' />
+          <Shortcut Id='desktopKNOSSOS'
+            Directory='DesktopFolder'
+            Name='KNOSSOS'
+            WorkingDirectory='INSTALLDIR'
+            Icon='knossos64.exe'
+            IconIndex='0'
+            Advertise='yes' />
+        </File>
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id='ApplicationProgramsFolder'>
+      <Component Id='ApplicationShortcut' Win64='yes' Guid='a836aaf3-c2dd-4976-b28d-2836865657eb'>
+        <RemoveFolder Id='ApplicationProgramsFolder' On='uninstall'/>
+        <RegistryValue Root='HKCU' Key='Software\MPImF\KNOSSOS' Name='installed' Type='integer' Value='1' KeyPath='yes'/>
+     </Component>
+    </DirectoryRef>
+
+    <Feature Id='Complete' Level='1'>
+      <ComponentRef Id='MainExecutable' />
+      <ComponentRef Id='ApplicationShortcut' />
+    </Feature>
+
+    <Icon Id='knossos64.exe' SourceFile='logo_small.bmp' />
+  </Product>
+</Wix>
