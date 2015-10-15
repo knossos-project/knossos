@@ -687,6 +687,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
+
+    if(success) { //on success update zoomWidget
+        state->viewer->window->widgetContainer.datasetOptionsWidget.update();
+    }
+
     return success;
 }
 
