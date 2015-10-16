@@ -41,9 +41,8 @@ private:
 
 public:
     explicit Remote(QObject *parent = 0);
-    void msleep(unsigned long msec);
 
-    bool remoteWalk(int x, int y, int z);
+    void remoteWalk(int x, int y, int z);
     void run();
 
     floatCoordinate recenteringPosition;

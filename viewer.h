@@ -80,8 +80,8 @@ struct ViewerState {
     //   is currently loaded.)
     Coordinate currentPosition;
 
-    uint recenteringTime;
-    uint recenteringTimeOrth{500};
+    uint recenteringTime{250};
+    uint recenteringTimeOrth{250};
     bool walkOrth{false};
 
     //Keyboard repeat rate

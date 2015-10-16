@@ -78,10 +78,6 @@ bool Remote::remoteJump(const Coordinate & jumpVec) {
     return true;
 }
 
-void Remote::msleep(unsigned long msec) {
-    QThread::msleep(msec);
-}
-
 std::deque<floatCoordinate> Remote::getLastNodes() {
 
     std::deque<floatCoordinate> nodelist;
@@ -145,8 +141,7 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
     return nodelist;
 }
 
-bool Remote::remoteWalk(int x, int y, int z) {
-
+void Remote::remoteWalk(int x, int y, int z) {
     /*
     * This function breaks the big walk distance into many small movements
     * where the maximum length of the movement along any single axis is
@@ -184,7 +179,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     floatCoordinate walkVector = Coordinate{x, y, z};
 
-    uint recenteringTime = 0;
+    float recenteringTime = 0;
     if (state->viewerState->recenteringTime > 5000){
         state->viewerState->recenteringTime = 5000;
     }
@@ -205,9 +200,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
         recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
     }
 
-    float walkLength = std::max(10.f, euclidicNorm(walkVector));
-    uint timePerStep = std::max(10u, recenteringTime / ((uint)walkLength));
-    float totalMoves = std::max(std::max(abs(x), abs(y)), abs(z));
+    float walkLength = std::max(1.0f, euclidicNorm(walkVector));
+    float µsPerStep = 1000.0f * recenteringTime / walkLength;
+    float totalMoves = std::max(std::max(std::abs(x), std::abs(y)), std::abs(z));
     floatCoordinate singleMove = walkVector / totalMoves;
     floatCoordinate residuals;
     float anglesPerStep = 0;
@@ -254,10 +249,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
-        msleep(timePerStep);
+        QThread::usleep(µsPerStep);
     }
     emit userMoveSignal(residuals, USERMOVE_NEUTRAL);
-    return true;
 }
 
 void Remote::setRecenteringPosition(const floatCoordinate & newPos) {
