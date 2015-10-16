@@ -292,7 +292,7 @@ class Viewport3D : public ViewportBase {
     void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
-    virtual void showHideButtons(bool isShow);
+    virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 
