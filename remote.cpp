@@ -201,7 +201,7 @@ void Remote::remoteWalk(int x, int y, int z) {
     }
 
     float walkLength = std::max(1.0f, euclidicNorm(walkVector));
-    float µsPerStep = 1000.0f * recenteringTime / walkLength;
+    float usPerStep = 1000.0f * recenteringTime / walkLength;
     float totalMoves = std::max(std::max(std::abs(x), std::abs(y)), std::abs(z));
     floatCoordinate singleMove = walkVector / totalMoves;
     floatCoordinate residuals;
@@ -249,7 +249,7 @@ void Remote::remoteWalk(int x, int y, int z) {
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
-        QThread::usleep(µsPerStep);
+        QThread::usleep(usPerStep);
     }
     emit userMoveSignal(residuals, USERMOVE_NEUTRAL);
 }
