@@ -44,7 +44,7 @@ void gpu_lut_cube::generate(boost::multi_array_ref<uint64_t, 3>::const_array_vie
         data.emplace_back(index);
         if (!existing) {
             const auto color = Segmentation::singleton().colorObjectFromSubobjectId(elem);
-            colors.push_back({std::get<0>(color), std::get<1>(color), std::get<2>(color), std::get<3>(color)});
+            colors.push_back({{std::get<0>(color), std::get<1>(color), std::get<2>(color), std::get<3>(color)}});
         }
     }
     const auto lutSize = std::pow(2, std::ceil(std::log2(colors.size())));
