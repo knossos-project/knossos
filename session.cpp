@@ -65,8 +65,8 @@ bool Session::outsideMovementArea(const Coordinate & pos) {
 }
 
 void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
-    movementAreaMin = min.capped(0, state->boundary);
-    movementAreaMax = max.capped(0, state->boundary);
+    movementAreaMin = min.capped({0, 0, 0}, state->boundary);
+    movementAreaMax = max.capped({0, 0, 0}, state->boundary);
     emit movementAreaChanged();
 }
 

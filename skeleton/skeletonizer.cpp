@@ -1645,7 +1645,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
     nodeID = node->nodeID;
 
     auto oldPos = node->position;
-    node->position = newPos.capped(0, state->boundary);
+    node->position = newPos.capped({0, 0, 0}, state->boundary);
 
     if(newRadius != 0.) {
         node->radius = newRadius;
@@ -2267,10 +2267,7 @@ bool Skeletonizer::moveToPrevTree() {
             return true;
         } else {
             setActiveNode(node);
-            emit setRecenteringPositionSignal(node->position.x,
-                                         node->position.y,
-                                         node->position.z);
-
+            emit setRecenteringPositionSignal(node->position);
             Knossos::sendRemoteSignal();
         }
         return true;
@@ -2302,11 +2299,8 @@ bool Skeletonizer::moveToNextTree() {
             return true;
         } else {
             setActiveNode(node);
-
-                emit setRecenteringPositionSignal(node->position.x,
-                                             node->position.y,
-                                             node->position.z);
-                Knossos::sendRemoteSignal();
+            emit setRecenteringPositionSignal(node->position);
+            Knossos::sendRemoteSignal();
         }
         return true;
     }
@@ -2324,9 +2318,7 @@ bool Skeletonizer::moveToPrevNode() {
     nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(prevNode);
-        emit setRecenteringPositionSignal(prevNode->position.x,
-                                     prevNode->position.y,
-                                     prevNode->position.z);
+        emit setRecenteringPositionSignal(prevNode->position);
         Knossos::sendRemoteSignal();
         return true;
     }
@@ -2337,9 +2329,7 @@ bool Skeletonizer::moveToNextNode() {
     nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(nextNode);
-        emit setRecenteringPositionSignal(nextNode->position.x,
-                                     nextNode->position.y,
-                                     nextNode->position.z);
+        emit setRecenteringPositionSignal(nextNode->position);
         Knossos::sendRemoteSignal();
         return true;
     }

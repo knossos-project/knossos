@@ -36,11 +36,11 @@
 template<typename ComponentType, typename CoordinateDerived>
 class CoordinateBase {
 public:
-    ComponentType x;
-    ComponentType y;
-    ComponentType z;
+    ComponentType x = 0;
+    ComponentType y = 0;
+    ComponentType z = 0;
 
-    constexpr CoordinateBase(ComponentType every = 0) : x(every), y(every), z(every) {}
+    constexpr CoordinateBase() = default;
     constexpr CoordinateBase(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr CoordinateBase(QVector<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr CoordinateBase(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
@@ -61,36 +61,50 @@ public:
         return !(*this == rhs);
     }
 
+    template<typename T>
+    using CoordinateDerived_if_valid_t = typename std::enable_if<std::is_convertible<T, CoordinateDerived>::value || std::is_convertible<T, ComponentType>::value, CoordinateDerived>::type;
+
     constexpr CoordinateDerived operator+(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x + rhs.x, y + rhs.y, z  + rhs.z);
+        return CoordinateDerived(x + rhs.x, y + rhs.y, z + rhs.z);
     }
-    CoordinateDerived & operator+=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator+(const ComponentType scalar) const {
+        return CoordinateDerived(x + scalar, y + scalar, z + scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator+=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this + rhs);
     }
 
     constexpr CoordinateDerived operator-(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x - rhs.x, y - rhs.y, z  - rhs.z);
+        return CoordinateDerived(x - rhs.x, y - rhs.y, z - rhs.z);
     }
-    CoordinateDerived & operator-=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator-(const ComponentType scalar) const {
+        return CoordinateDerived(x - scalar, y - scalar, z - scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator-=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
     constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x * rhs.x, y * rhs.y, z  * rhs.z);
+        return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
-
     constexpr CoordinateDerived operator*(const ComponentType scalar) const {
         return CoordinateDerived(x * scalar, y * scalar, z * scalar);
     }
-
-    CoordinateDerived & operator*=(const CoordinateDerived & rhs) {
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator*=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this * rhs);
     }
 
     constexpr CoordinateDerived operator/(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x / rhs.x, y / rhs.y, z  / rhs.z);
+        return CoordinateDerived(x / rhs.x, y / rhs.y, z / rhs.z);
     }
-    CoordinateDerived & operator/=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator/(const ComponentType scalar) const {
+        return CoordinateDerived(x / scalar, y / scalar, z / scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 

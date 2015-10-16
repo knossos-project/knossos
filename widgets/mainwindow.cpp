@@ -990,7 +990,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
 void MainWindow::coordinateEditingFinished() {
     floatCoordinate inputCoord{xField->value() - 1.f, yField->value() - 1.f, zField->value() - 1.f};
-    state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
 void MainWindow::saveSettings() {

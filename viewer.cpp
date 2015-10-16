@@ -982,7 +982,7 @@ void Viewer::updateCurrentPosition() {
     if (session.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
         const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
-        userMove(newPos - currPos, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+        userMove(newPos - currPos, USERMOVE_NEUTRAL);
     }
 }
 

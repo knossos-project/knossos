@@ -388,7 +388,7 @@ void Segmentation::unselectObject(Object & object) {
 }
 
 void Segmentation::jumpToObject(Object & object) {
-    emit setRecenteringPositionSignal(object.location.x, object.location.y, object.location.z);
+    emit setRecenteringPositionSignal(object.location);
     Knossos::sendRemoteSignal();
 }
 
