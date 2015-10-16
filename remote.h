@@ -38,7 +38,6 @@ class Remote : public QThread {
 private:
     bool rotate;
     uint activeVP;
-    int jumpThreshold = 500; //for moving to next/prev node
 
 public:
     explicit Remote(QObject *parent = 0);

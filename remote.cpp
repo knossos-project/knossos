@@ -59,7 +59,8 @@ void Remote::run() {
         }
         //distance vector
         floatCoordinate currToNext = recenteringPosition - state->viewerState->currentPosition;
-        if(euclidicNorm(currToNext) > jumpThreshold) {
+        int jumpThreshold = 0.5 * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
+        if (euclidicNorm(currToNext) > jumpThreshold) {
             remoteJump(recenteringPosition);
         } else {
             remoteWalk(round(currToNext.x), round(currToNext.y), round(currToNext.z));
@@ -206,7 +207,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     float walkLength = std::max(10.f, euclidicNorm(walkVector));
     uint timePerStep = std::max(10u, recenteringTime / ((uint)walkLength));
-    float totalMoves = std::max(std::max(abs(x), abs(y)), abs(z)) / state->magnification;
+    float totalMoves = std::max(std::max(abs(x), abs(y)), abs(z));
     floatCoordinate singleMove = walkVector / totalMoves;
     floatCoordinate residuals;
     float anglesPerStep = 0;
