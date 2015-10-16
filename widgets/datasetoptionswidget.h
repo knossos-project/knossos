@@ -75,8 +75,6 @@ protected:
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
 signals:
-    void zoomInSkeletonVPSignal();
-    void zoomOutSkeletonVPSignal();
     void visibilityChanged(bool);
 private:
     void showEvent(QShowEvent *) override {

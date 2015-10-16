@@ -172,7 +172,7 @@ bool PythonProxy::writeOverlayVoxel(QList<int> coord, quint64 val) {
 }
 
 void PythonProxy::setPosition(QList<int> coord) {
-    emit pythonProxySignalDelegate->userMoveSignal(coord[0], coord[1], coord[2], USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    emit pythonProxySignalDelegate->userMoveSignal({1.f * coord[0], 1.f * coord[1], 1.f * coord[2]}, USERMOVE_NEUTRAL);
 }
 
 void PythonProxy::resetMovementArea() {

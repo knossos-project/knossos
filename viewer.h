@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
+#include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
@@ -64,12 +65,10 @@ struct ViewerState {
     ViewerState() {
         state->viewerState = this;
     }
-    std::vector<vpConfig> vpConfigs;
     char *texData;
     char *overlayData;
     char *defaultTexData;
     char *defaultOverlayData;
-    bool viewerReady{false};
 
     int highlightVp{VIEWPORT_UNDEFINED};
     int vpKeyDirection[3]{1,1,1};
@@ -81,8 +80,8 @@ struct ViewerState {
     //   is currently loaded.)
     Coordinate currentPosition;
 
-    uint recenteringTime;
-    uint recenteringTimeOrth{500};
+    uint recenteringTime{250};
+    uint recenteringTimeOrth{250};
     bool walkOrth{false};
 
     //Keyboard repeat rate
@@ -92,7 +91,7 @@ struct ViewerState {
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
-    int nodeSelectSquareVpId{-1};
+    std::pair<int, Qt::KeyboardModifiers> nodeSelectSquareData{-1, Qt::NoModifier};
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     bool selectModeFlag{false};
@@ -173,9 +172,7 @@ struct ViewerState {
  *  from the loader thread.
  */
 class Skeletonizer;
-class Renderer;
-class EventModel;
-class Viewport;
+class ViewportBase;
 class Viewer : public QThread {
     Q_OBJECT
 private:
@@ -188,19 +185,21 @@ private:
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
-    EventModel *eventModel;
-    Renderer *renderer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
 
+    std::list<TextureLayer> layers;
+    int gpucubeedge = 64;
+    bool gpuRendering = false;
+
     floatCoordinate v1, v2, v3;
-    Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
+    ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
+    Viewport3D *vpLowerRight;
     QTimer *timer;
     int frames;
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
-    static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
     std::atomic_bool dc_xy_changed{true};
     std::atomic_bool dc_xz_changed{true};
     std::atomic_bool dc_zy_changed{true};
@@ -209,26 +208,26 @@ public:
     std::atomic_bool oc_zy_changed{true};
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
-    void setColorFromNode(const nodeListElement & node, color4F & color) const;
+    color4F getNodeColor(const nodeListElement & node) const;
 signals:
     void loadSignal();
     void coordinateChangedSignal(const Coordinate & pos);
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();
 protected:
-    void vpGenerateTexture_arb(vpConfig &currentVp);
+    void vpGenerateTexture_arb(ViewportOrtho & vp);
 
-    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
+    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
 
-    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, vpConfig *vpConfig);
+    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
 
     void rewire();
 public slots:
     void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    bool userMove(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-    bool userMove_arb(float x, float y, float z);
+    void userMove(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);
@@ -237,8 +236,8 @@ public slots:
     void defaultDatasetLUT();
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
-    bool vpGenerateTexture(vpConfig &currentVp);
-    void setRotation(float x, float y, float z, float angle);
+    bool vpGenerateTexture(ViewportOrtho & vp);
+    void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
     void setVPOrientation(const bool arbitrary);
     void dc_reslice_notify_visible();

@@ -38,13 +38,11 @@ class Remote : public QThread {
 private:
     bool rotate;
     uint activeVP;
-    int jumpThreshold = 500; //for moving to next/prev node
 
 public:
     explicit Remote(QObject *parent = 0);
-    void msleep(unsigned long msec);
 
-    bool remoteWalk(int x, int y, int z);
+    void remoteWalk(int x, int y, int z);
     void run();
 
     floatCoordinate recenteringPosition;
@@ -52,12 +50,12 @@ public:
 
 signals:
     void finished();
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
-    void rotationSignal(float x, float y, float z, float angle);
+    void userMoveSignal(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
+    void rotationSignal(const floatCoordinate & axis, const float angle);
 public slots:
-    void setRecenteringPosition(float x, float y, float z);
-    void setRecenteringPositionWithRotation(float x, float y, float z, uint vp);
-    bool remoteJump(int x, int y, int z);
+    void setRecenteringPosition(const floatCoordinate &newPos);
+    void setRecenteringPositionWithRotation(const floatCoordinate & newPos, const uint vp);
+    bool remoteJump(const Coordinate & jumpVec);
 };
 
 #endif // REMOTE_H

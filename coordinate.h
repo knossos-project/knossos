@@ -36,11 +36,11 @@
 template<typename ComponentType, typename CoordinateDerived>
 class CoordinateBase {
 public:
-    ComponentType x;
-    ComponentType y;
-    ComponentType z;
+    ComponentType x = 0;
+    ComponentType y = 0;
+    ComponentType z = 0;
 
-    constexpr CoordinateBase(ComponentType every = 0) : x(every), y(every), z(every) {}
+    constexpr CoordinateBase() = default;
     constexpr CoordinateBase(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr CoordinateBase(QVector<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
     constexpr CoordinateBase(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
@@ -61,31 +61,50 @@ public:
         return !(*this == rhs);
     }
 
+    template<typename T>
+    using CoordinateDerived_if_valid_t = typename std::enable_if<std::is_convertible<T, CoordinateDerived>::value || std::is_convertible<T, ComponentType>::value, CoordinateDerived>::type;
+
     constexpr CoordinateDerived operator+(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x + rhs.x, y + rhs.y, z  + rhs.z);
+        return CoordinateDerived(x + rhs.x, y + rhs.y, z + rhs.z);
     }
-    CoordinateDerived & operator+=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator+(const ComponentType scalar) const {
+        return CoordinateDerived(x + scalar, y + scalar, z + scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator+=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this + rhs);
     }
 
     constexpr CoordinateDerived operator-(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x - rhs.x, y - rhs.y, z  - rhs.z);
+        return CoordinateDerived(x - rhs.x, y - rhs.y, z - rhs.z);
     }
-    CoordinateDerived & operator-=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator-(const ComponentType scalar) const {
+        return CoordinateDerived(x - scalar, y - scalar, z - scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator-=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
     constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x * rhs.x, y * rhs.y, z  * rhs.z);
+        return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
-    CoordinateDerived & operator*=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator*(const ComponentType scalar) const {
+        return CoordinateDerived(x * scalar, y * scalar, z * scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator*=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this * rhs);
     }
 
     constexpr CoordinateDerived operator/(const CoordinateDerived & rhs) const {
-        return CoordinateDerived(x / rhs.x, y / rhs.y, z  / rhs.z);
+        return CoordinateDerived(x / rhs.x, y / rhs.y, z / rhs.z);
     }
-    CoordinateDerived & operator/=(const CoordinateDerived & rhs) {
+    constexpr CoordinateDerived operator/(const ComponentType scalar) const {
+        return CoordinateDerived(x / scalar, y / scalar, z / scalar);
+    }
+    template<typename T>
+    CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
@@ -114,6 +133,7 @@ public:
 using Coordinate = Coord<int, 0>;
 using CoordOfCube = Coord<int, 1>;
 using CoordInCube = Coord<int, 2>;
+using CoordOfGPUCube = Coord<int, 3>;
 using floatCoordinate = Coord<float>;
 
 template<>
@@ -138,6 +158,13 @@ public:
     constexpr Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const int magnification) const;
 };
 
+template<>
+class Coord<int, 3> : public CoordinateBase<int, CoordOfGPUCube> {
+public:
+    using CoordinateBase<int, CoordOfGPUCube>::CoordinateBase;
+    constexpr Coordinate cube2Global(const int cubeEdgeLength, const int magnification) const;
+};
+
 constexpr CoordOfCube Coordinate::cube(const int size, const int mag) const {
     return {this->x / size / mag, this->y / size / mag, this->z / size / mag};
 }
@@ -146,6 +173,10 @@ constexpr CoordInCube Coordinate::insideCube(const int size, const int mag) cons
 }
 
 constexpr Coordinate CoordOfCube::cube2Global(const int cubeEdgeLength, const int magnification) const {
+    return {this->x * cubeEdgeLength * magnification, this->y * cubeEdgeLength * magnification, this->z * cubeEdgeLength * magnification};
+}
+
+constexpr Coordinate CoordOfGPUCube::cube2Global(const int cubeEdgeLength, const int magnification) const {
     return {this->x * cubeEdgeLength * magnification, this->y * cubeEdgeLength * magnification, this->z * cubeEdgeLength * magnification};
 }
 
@@ -161,6 +192,14 @@ namespace std {
 template<typename T, std::size_t x>
 struct hash<Coord<T, x>> {
     std::size_t operator()(const Coord<T, x> & cord) const {
+        return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
+    }
+};
+}
+namespace std {
+template<>
+struct hash<CoordOfGPUCube> {
+    std::size_t operator()(const CoordOfGPUCube & cord) const {
         return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
     }
 };

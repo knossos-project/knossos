@@ -37,8 +37,10 @@ void setSubobjectSelectAndMerge(nodeListElement & node, const quint64 subobjectI
     Segmentation::singleton().mergeSelectedObjects();
 }
 
-void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement & previousNode) {
-    selectObjectForNode(previousNode);//reselect the previous active node as it got unselected during new node creation
+void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode) {
+    if (previousNode != nullptr) {
+        selectObjectForNode(*previousNode);//reselect the previous active node as it got unselected during new node creation
+    }
     setSubobjectSelectAndMerge(node, subobjectId);
 }
 

@@ -82,9 +82,9 @@ class SignalRelay : public QObject
 public:
     explicit SignalRelay() {state->signalRelay = this;}
 signals:
-    void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int,QMouseEvent*);
-    void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class Viewport*,QMouseEvent*);
-    void Signal_EventModel_handleMouseReleaseMiddle(EmitOnCtorDtor*,Coordinate,int,QMouseEvent*);
+    void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int, const QMouseEvent*);
+    void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class ViewportBase*, const QMouseEvent*);
+    void Signal_EventModel_handleMouseReleaseMiddle(EmitOnCtorDtor*,Coordinate,int,const QMouseEvent*);
     void Signal_MainWindow_closeEvent(EmitOnCtorDtor*,QCloseEvent*);
 };
 
@@ -97,6 +97,7 @@ public:
     void runFile(const QString &filename);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
+    void importModule(const QString &moduleFullPath);
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -115,11 +116,13 @@ protected:
     QSettings *settings;
 private:
     PythonQtObjectPtr _ctx;
+    QStringList _customPathDirs;
     void moveSymbolIntoKnossosModule(const QString& name);
     void executeFromUserDirectory();
     void executeResourceStartup();
     void changeWorkingDirectory();
-    void addCustomPythonPath();
+    void addPresetCustomPythonPaths();
+    void addCustomPythonPath(const QString &customPath);
     void addWidgets();
     void autoStartTerminal();
 };

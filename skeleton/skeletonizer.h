@@ -121,7 +121,7 @@ struct SkeletonState {
     float defaultNodeRadius{1.5f};
 
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
-    float zoomLevel;
+    double zoomLevel;
 
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
@@ -174,9 +174,8 @@ signals:
     void treesMerged(const int treeID,const int treeID2);
     void nodeSelectionChangedSignal();
     void treeSelectionChangedSignal();
-    void userMoveSignal(int x, int y, int z, UserMoveType userMoveType, ViewportType viewportType);
     void resetData();
-    void setRecenteringPositionSignal(int x, int y, int z);
+    void setRecenteringPositionSignal(const floatCoordinate & pos);
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
@@ -214,7 +213,7 @@ public slots:
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
-    void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement & previousNode);
+    void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode);
     void updateSubobjectCountFromProperty(nodeListElement & node);
     void unsetSubobjectOfHybridNode(nodeListElement & node);
     void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);

@@ -51,6 +51,10 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
+enum class SegmentState {
+    On, Off, Off_Once
+};
+
 class WorkModeModel : public QAbstractListModel {
     Q_OBJECT
     std::vector<std::pair<AnnotationMode, QString>> workModes;
@@ -92,12 +96,12 @@ class MainWindow : public QMainWindow {
     std::map<AnnotationMode, QString> workModes{ {AnnotationMode::Mode_MergeTracing, tr("Merge Tracing")},
                                                  {AnnotationMode::Mode_Tracing, tr("Tracing")},
                                                  {AnnotationMode::Mode_TracingAdvanced, tr("Tracing Advanced")},
-                                                 {AnnotationMode::Mode_TracingUnlinked, tr("Tracing Unlinked")},
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
+    QAction *toggleSegmentsAction;
     QAction *newTreeAction;
     QAction *pushBranchAction;
     QAction *popBranchAction;
@@ -128,8 +132,12 @@ class MainWindow : public QMainWindow {
     void updateTodosLeft();
 
     void placeComment(const int index);
+    void toggleSegments();
 public:
-    std::array<std::unique_ptr<Viewport>, Viewport::numberViewports> viewports;
+    std::unique_ptr<ViewportOrtho> viewportXY;
+    std::unique_ptr<ViewportOrtho> viewportXZ;
+    std::unique_ptr<ViewportOrtho> viewportYZ;
+    std::unique_ptr<Viewport3D> viewport3D;
 
     // contains all widgets
     WidgetContainer widgetContainer;
@@ -153,6 +161,7 @@ public:
     SkeletonProxy *skeletonProxy;
 
     QLabel cursorPositionLabel;
+    QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
 
@@ -168,11 +177,25 @@ public:
     void clearSettings();
 
     explicit MainWindow(QWidget *parent = 0);
-
+    template<typename Function> void forEachVPDo(Function func) {
+        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportYZ.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
+            func(*vp);
+        }
+    }
+    template<typename Function> void forEachOrthoVPDo(Function func) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportYZ.get() }) {
+            func(*vp);
+        }
+    }
+    void resetTextureProperties();
+    ViewportBase *viewport(const uint id);
+    ViewportOrtho *viewportOrtho(const uint id);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();
 
+    SegmentState segmentState{SegmentState::On};
+    void setSegmentState(const SegmentState newState);
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
@@ -223,6 +246,7 @@ public slots:
     void pythonSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
+    void pythonPluginMgrSlot();
 };
 
 #endif // MAINWINDOW_H

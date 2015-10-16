@@ -18,7 +18,6 @@
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
 
-#include "eventmodel.h"
 #include "highlighter.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
@@ -70,7 +69,6 @@ Scripting::Scripting() : _ctx(NULL) {
     addObject("skeleton", skeletonProxy);
     addObject("knossos_global_viewer", state->viewer);
     addObject("knossos_global_mainwindow", state->viewer->window);
-    addObject("knossos_global_eventmodel", state->viewer->eventModel);
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     addObject("knossos_global_segmentation", &Segmentation::singleton());
     addObject("knossos_global_loader", &Loader::Controller::singleton());
@@ -112,7 +110,7 @@ Scripting::Scripting() : _ctx(NULL) {
     PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
 
-    addCustomPythonPath();
+    addPresetCustomPythonPaths();
 
 #ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
     _ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
@@ -154,12 +152,20 @@ void Scripting::changeWorkingDirectory() {
     _ctx.evalScript(QString("os.chdir('%1')").arg(workingDir));
 }
 
-void Scripting::addCustomPythonPath() {
+void Scripting::addCustomPythonPath(const QString &customPath) {
+    if (_customPathDirs.contains(customPath)) {
+        return;
+    }
+    _customPathDirs.append(customPath);
+    _ctx.evalScript(QString("sys.path.append('%1')").arg(customPath));
+}
+
+void Scripting::addPresetCustomPythonPaths() {
     auto value = getSettingsValue(PYTHON_CUSTOM_PATHS);
     if (value.isNull()) { return; }
     auto customPaths = value.toStringList();
     for (const auto & customPath : customPaths) {
-        _ctx.evalScript(QString("sys.path.append('%1')").arg(customPath));
+        addCustomPythonPath(customPath);
     }
 }
 
@@ -176,6 +182,14 @@ void Scripting::runFile(const QString &filename) {
 
 void Scripting::moveSymbolIntoKnossosModule(const QString& name) {
     _ctx.evalScript(QString("%1.%2 = %2; del %2").arg(SCRIPTING_KNOSSOS_MODULE).arg(name));
+}
+
+void Scripting::importModule(const QString &moduleFullPath) {
+    auto fileInfo = QFileInfo(moduleFullPath);
+    auto dirName = fileInfo.absolutePath();
+    auto baseName = fileInfo.baseName();
+    addCustomPythonPath(dirName);
+    _ctx.evalScript(QString("import %1").arg(baseName));
 }
 
 void Scripting::addObject(const QString& name, QObject* object) {

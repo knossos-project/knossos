@@ -24,7 +24,6 @@
 #include "knossos.h"
 
 #include "dataset.h"
-#include "eventmodel.h"
 #include "file_io.h"
 #include "loader.h"
 #include "network.h"
@@ -37,6 +36,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/widgetcontainer.h"
+#include "widgets/viewport.h"
 
 #include <QApplication>
 #include <QFileInfo>
@@ -116,9 +116,10 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<floatCoordinate>();
 
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-
-    QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-    QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
+    viewer.window->forEachVPDo( [&remote](ViewportBase & vp) {
+        QObject::connect(&vp, &ViewportBase::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
+        QObject::connect(&vp, &ViewportBase::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
+    });
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 

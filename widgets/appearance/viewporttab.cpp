@@ -36,7 +36,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, &ViewportTab::setViewportDecorations);
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
     QObject::connect(&arbitraryModeCheckBox, &QCheckBox::clicked, [&](bool checked) {
-        Viewport::arbitraryOrientation = checked;
+        ViewportOrtho::arbitraryOrientation = checked;
         emit setVPOrientationSignal(checked);
     });
     // 3D viewport
@@ -44,7 +44,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showYZplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXZplane = checked; });
     QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
-        Viewport::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
+        Viewport3D::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked) {state->viewerState->rotateAroundActiveNode = checked; });
 

@@ -1,5 +1,6 @@
 #include "commentsetting.h"
 
+bool CommentSetting::useCommentNodeColor;
 bool CommentSetting::useCommentNodeRadius;
 bool CommentSetting::appendComment;
 std::vector<CommentSetting> CommentSetting::comments;
@@ -13,7 +14,7 @@ QColor CommentSetting::getColor(const QString comment) {
             return item.color;
         }
     }
-    return QColor(0, 0, 0, 0);
+    return QColor(255, 255, 0, 255);
 }
 
 float CommentSetting::getRadius(const QString comment) {

@@ -75,8 +75,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         if (!showOverlays) {
             const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
-                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]},
-                                                             {AnnotationMode::Mode_TracingUnlinked, workModes[AnnotationMode::Mode_TracingUnlinked]}};
+                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
             workModeModel.recreate(rawModes);
             setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : AnnotationMode::Mode_Tracing);
         }
@@ -87,8 +86,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
-        [this](const QString & path, ViewportType vp, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
-            viewports[vp]->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
+        [this](const QString & path, const uint id, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
+            viewport(id)->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
         });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -107,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     statusBar()->setSizeGripEnabled(false);
     statusBar()->addWidget(&cursorPositionLabel);
+    statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
@@ -117,11 +117,39 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 #endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+
+    {
+        auto & action = *new QAction(this);
+        action.setShortcut(Qt::Key_7);
+        QObject::connect(&action, &QAction::triggered, [](){
+            state->viewer->gpuRendering = !state->viewer->gpuRendering;
+        });
+        addAction(&action);
+    }
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
     cursorPositionLabel.setHidden(vpID == VIEWPORT_SKELETON || vpID == VIEWPORT_UNDEFINED);
     cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
+}
+
+void MainWindow::resetTextureProperties() {
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+    //reset viewerState texture properties
+    forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
+        orthoVP.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        orthoVP.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        orthoVP.texture.usedTexLengthDc = state->M;
+        orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        //This variable indicates the current zoom value for a viewport.
+        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
+        orthoVP.texture.zoomLevel = VPZOOMMIN;
+    });
 }
 
 void MainWindow::createViewports() {
@@ -133,18 +161,35 @@ void MainWindow::createViewports() {
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
     format.setOption(QSurfaceFormat::DeprecatedFunctions);
-    if (Viewport::oglDebug) {
+    if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
     }
     QSurfaceFormat::setDefaultFormat(format);
 
-    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
-    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
-    for (auto & vp : viewports) {
-        QObject::connect(vp.get(), &Viewport::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
-    }
+    viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
+    viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    viewportXY->upperLeftCorner = {5, 30, 0};
+    viewportXZ->upperLeftCorner = {5, 385, 0};
+    viewportYZ->upperLeftCorner = {360, 30, 0};
+    viewport3D->upperLeftCorner = {360, 385, 0};
+    resetTextureProperties();
+    forEachVPDo([this](ViewportBase & vp) { QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
+
+}
+
+ViewportBase * MainWindow::viewport(const uint id) {
+    return (viewportXY->id == id)? static_cast<ViewportBase *>(viewportXY.get()) :
+           (viewportXZ->id == id)? static_cast<ViewportBase *>(viewportXZ.get()) :
+           (viewportYZ->id == id)? static_cast<ViewportBase *>(viewportYZ.get()) :
+           static_cast<ViewportBase *>(viewport3D.get());
+}
+
+ViewportOrtho * MainWindow::viewportOrtho(const uint id) {
+    return (viewportXY->id == id)? viewportXY.get() :
+           (viewportXZ->id == id)? viewportXZ.get() :
+           viewportYZ.get();
 }
 
 void MainWindow::createToolbars() {
@@ -168,8 +213,7 @@ void MainWindow::createToolbars() {
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
-                         "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>"
-                         "<b>" + workModes[AnnotationMode::Mode_TracingUnlinked] + ":</b> Skeletonization with unlinked nodes<br/>");
+                         "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>");
     basicToolbar.addSeparator();
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
@@ -242,6 +286,7 @@ void MainWindow::createToolbars() {
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
+    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Manager", this, SLOT(pythonPluginMgrSlot()));
     defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
@@ -298,10 +343,8 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&defaultToolbar);
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
-        for(uint i = 1; i < Viewport::numberViewports; ++i) {
-            viewports[i].get()->hide();
-        }
-        viewports[VIEWPORT_XY].get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
+        forEachVPDo([] (ViewportBase & vp) { vp.hide(); });
+        viewportXY.get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
     } else {
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
@@ -425,7 +468,7 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &this->widgetContainer.datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
@@ -442,6 +485,8 @@ void MainWindow::createMenus() {
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
+    const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
+    toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
@@ -555,10 +600,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     Knossos::sendQuitSignal();
-    for(int i = 0; i < 4; i++) {
-        viewports[i].get()->setParent(NULL);
-    }
-
+    forEachVPDo([](ViewportBase & vp) { vp.setParent(nullptr); });
     event->accept();//mainwindow takes the qapp with it
 }
 
@@ -645,6 +687,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
+
+    if(success) { //on success update zoomWidget
+        state->viewer->window->widgetContainer.datasetOptionsWidget.update();
+    }
+
     return success;
 }
 
@@ -770,21 +817,61 @@ void MainWindow::exportToNml() {
 }
 
 void MainWindow::setWorkMode(AnnotationMode workMode) {
-    if(workModes.find(workMode) == std::end(workModes)) {
+    if (workModes.find(workMode) == std::end(workModes)) {
         workMode = AnnotationMode::Mode_Tracing;
     }
     modeCombo.setCurrentText(workModes[workMode]);
     auto & mode = Session::singleton().annotationMode;
     mode = workMode;
-    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_TracingUnlinked) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
+    toggleSegmentsAction->setVisible(!segmentation);
+    segmentStateLabel.setVisible(!segmentation);
+    if (!segmentation) {
+        setSegmentState(segmentState);
+    }
     newTreeAction->setVisible(trees);
     widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
+}
+
+void MainWindow::setSegmentState(const SegmentState newState) {
+    segmentState = newState;
+    QString stateString = "";
+    switch(segmentState) {
+    case SegmentState::On:
+        stateString = tr("<font color='green'>On</font>");
+        Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
+        break;
+    case SegmentState::Off_Once:
+        stateString = tr("<font color='darkGoldenRod'>Off once</font>");
+        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        break;
+    case SegmentState::Off:
+        stateString = tr("<font color='blue'>Off</font>");
+        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        break;
+    }
+    toggleSegmentsAction->setText("Segments: " + stateString);
+    segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateString);
+}
+
+void MainWindow::toggleSegments() {
+    switch(segmentState) {
+    case SegmentState::On:
+        setSegmentState(SegmentState::Off_Once);
+        break;
+    case SegmentState::Off_Once:
+        setSegmentState(SegmentState::Off);
+        break;
+    case SegmentState::Off:
+        setSegmentState(SegmentState::On);
+        break;
+    }
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
@@ -902,10 +989,8 @@ void MainWindow::pasteClipboardCoordinates(){
 }
 
 void MainWindow::coordinateEditingFinished() {
-    const auto viewer_offset_x = xField->value() - 1 - state->viewerState->currentPosition.x;
-    const auto viewer_offset_y = yField->value() - 1 - state->viewerState->currentPosition.y;
-    const auto viewer_offset_z = zField->value() - 1 - state->viewerState->currentPosition.z;
-    state->viewer->userMove(viewer_offset_x, viewer_offset_y, viewer_offset_z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    floatCoordinate inputCoord{xField->value() - 1.f, yField->value() - 1.f, zField->value() - 1.f};
+    state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
 void MainWindow::saveSettings() {
@@ -917,19 +1002,20 @@ void MainWindow::saveSettings() {
 
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-    for (int i = 0; i < Viewport::numberViewports; ++i) {
-        const Viewport & vp = *viewports[i];
-        settings.setValue(VP_I_POS.arg(i), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
-        settings.setValue(VP_I_SIZE.arg(i), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(i), vp.isVisible());
-    }
+
+    forEachVPDo([&settings] (ViewportBase & vp) {
+        settings.setValue(VP_I_POS.arg(vp.id), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(vp.id), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(vp.id), vp.isVisible());
+
+    });
     QList<QVariant> order;
     for (const auto & w : centralWidget()->children()) {
-        for (int i = 0; i < Viewport::numberViewports; ++i) {
-            if (w == viewports[i].get()) {
-                order.append(i);
+        forEachVPDo([&w, &order](ViewportBase & vp) {
+            if (w == &vp) {
+                order.append(vp.id);
             }
-        }
+        });
     }
     settings.setValue(VP_ORDER, order);
 
@@ -971,15 +1057,14 @@ void MainWindow::loadSettings() {
     if (state->viewerState->defaultVPSizeAndPos) {
         resetViewports();
     } else {
-        for (int i = 0; i < Viewport::numberViewports; ++i) {
-            Viewport & vp = *viewports[i];
-            vp.move(settings.value(VP_I_POS.arg(i)).toPoint());
-            vp.resize(settings.value(VP_I_SIZE.arg(i)).toSize());
-            vp.setVisible(settings.value(VP_I_VISIBLE.arg(i), true).toBool());
-        }
+        forEachVPDo([&settings](ViewportBase & vp) {
+            vp.move(settings.value(VP_I_POS.arg(vp.id)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(vp.id)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.id), true).toBool());
+        });
     }
     for (const auto & i : settings.value(VP_ORDER).toList()) {
-        viewports[i.toInt()]->raise();
+        viewport(i.toInt())->raise();
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
@@ -994,6 +1079,8 @@ void MainWindow::loadSettings() {
     for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
         updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
     }
+
+    setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
     settings.endGroup();
 
@@ -1032,10 +1119,10 @@ void MainWindow::resizeEvent(QResizeEvent *) {
         // don't resize viewports when user positioned and resized them manually
         resetViewports();
     } else {//ensure viewports fit the window
-        for (auto & vp : viewports) {
-            vp->posAdapt();
-            vp->sizeAdapt();
-        }
+        forEachVPDo([](ViewportBase & vp) {
+            vp.posAdapt();
+            vp.sizeAdapt();
+        });
     }
 }
 
@@ -1066,19 +1153,17 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    for (auto & vp : viewports) {
-        vp->setDock(true);
-        vp->setVisible(true);
-    }
+    forEachVPDo([](ViewportBase & vp) {
+        vp.setDock(true);
+        vp.setVisible(true);
+    });
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
 void MainWindow::showVPDecorationClicked() {
     bool isShow = widgetContainer.appearanceWidget.viewportTab.showVPDecorationCheckBox.isChecked();
-    for(uint i = 0; i < Viewport::numberViewports; i++) {
-        viewports[i]->showHideButtons(isShow);
-    }
+    forEachVPDo([&isShow](ViewportBase & vp) { vp.showHideButtons(isShow); });
 }
 
 void MainWindow::newTreeSlot() {
@@ -1127,13 +1212,11 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN) / 2;
     height = (height - DEFAULT_VP_MARGIN) / 2;
     int mindim = std::min(width, height);
-    viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-    viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
-    viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
-    viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
-    for(int i = 0; i < 4; i++) {
-        viewports[i]->resize(mindim-DEFAULT_VP_MARGIN, mindim-DEFAULT_VP_MARGIN);
-    }
+    viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+    viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
+    viewportYZ->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+    viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+    forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
 }
 
 void MainWindow::pythonSlot() {
@@ -1148,5 +1231,30 @@ void MainWindow::pythonFileSlot() {
     state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     state->viewerState->renderInterval = FAST;
-    state->scripting->runFile(pyFileName);
+    QMessageBox msgBox;
+    msgBox.setText(tr("Execute or Import?"));
+    QAbstractButton* pButtonExecute = msgBox.addButton(tr("Execute"), QMessageBox::ActionRole);
+    QAbstractButton* pButtonImport = msgBox.addButton(tr("Import"), QMessageBox::ActionRole);
+    msgBox.exec();
+    if (msgBox.clickedButton()==pButtonExecute) {
+        state->scripting->runFile(pyFileName);
+    }
+    else if (msgBox.clickedButton()==pButtonImport) {
+        state->scripting->importModule(pyFileName);
+    }
+}
+
+void MainWindow::pythonPluginMgrSlot() {
+    auto pluginDir = QString("%1/plugins").arg(QCoreApplication::applicationDirPath());
+    QString pluginMgrFn("pluginMgr.py");
+    QString pluginMgrPath(QString("%1/%2").arg(pluginDir).arg(pluginMgrFn));
+    if (!QFile::exists(pluginMgrPath)) {
+        if (!QDir().mkpath(pluginDir)) {
+            return;
+        }
+        if (!QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
+            return;
+        }
+    }
+    state->scripting->importModule(pluginMgrPath);
 }

@@ -93,8 +93,10 @@ CommentsTab::CommentsTab(QWidget *parent) : QWidget(parent) {
     auto mainlayout = new QVBoxLayout();
 
     auto checkboxLayout = new QHBoxLayout();
+    checkboxLayout->addWidget(&useCommentColorCheckbox);
     checkboxLayout->addWidget(&useCommentRadiusCheckbox);
     checkboxLayout->addWidget(&appendCommentCheckbox);
+    QObject::connect(&useCommentColorCheckbox, &QCheckBox::stateChanged, [this](bool checked) { CommentSetting::useCommentNodeColor = checked; commentsTable.header()->setSectionHidden(2, !checked); });
     QObject::connect(&useCommentRadiusCheckbox, &QCheckBox::stateChanged, [this](bool checked) { CommentSetting::useCommentNodeRadius = checked; commentsTable.header()->setSectionHidden(3, !checked); });
     QObject::connect(&appendCommentCheckbox, &QCheckBox::stateChanged, [](bool checked) { CommentSetting::appendComment = checked;});
 
@@ -125,6 +127,7 @@ void CommentsTab::loadSettings() {
         CommentSetting::comments[i].color = settings.value(QString("color%0").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
         CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%0").arg(i+1), 1.5).toFloat();
     }
+    useCommentColorCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODECOLOR, true).toBool());
     useCommentRadiusCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODERADIUS, false).toBool());
     useCommentRadiusCheckbox.stateChanged(useCommentRadiusCheckbox.isChecked());
     appendCommentCheckbox.setChecked(settings.value(CUSTOM_COMMENT_APPEND, false).toBool());
@@ -140,6 +143,7 @@ void CommentsTab::saveSettings() {
         settings.setValue(QString("radius%0").arg(i+1), CommentSetting::comments[i].nodeRadius);
     }
 
+    settings.setValue(CUSTOM_COMMENT_NODECOLOR, useCommentColorCheckbox.isChecked());
     settings.setValue(CUSTOM_COMMENT_NODERADIUS, useCommentRadiusCheckbox.isChecked());
     settings.setValue(CUSTOM_COMMENT_APPEND, appendCommentCheckbox.isChecked());
     settings.endGroup();

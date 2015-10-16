@@ -280,9 +280,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
-    xml.writeAttribute("XYPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel));
-    xml.writeAttribute("XZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
-    xml.writeAttribute("YZPlane", QString::number(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
+    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.zoomLevel));
+    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.zoomLevel));
+    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportYZ.get()->texture.zoomLevel));
     xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
     xml.writeEndElement();
 
@@ -489,15 +489,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
                     if(attribute.isNull() == false) {
-                        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXY.get()->texture.zoomLevel = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("XZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXZ.get()->texture.zoomLevel = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("YZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportYZ.get()->texture.zoomLevel = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("SkelVP");
                     if(attribute.isNull() == false) {
@@ -767,7 +767,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
            (loadedPosition.y != 0) &&
            (loadedPosition.z != 0)) {
             Coordinate jump = loadedPosition - 1 - state->viewerState->currentPosition;
-            state->viewer->userMove(jump.x, jump.y, jump.z, USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+            state->viewer->userMove(jump, USERMOVE_NEUTRAL);
         }
     }
     if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
@@ -1101,7 +1101,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
 }
 
 uint64_t Skeletonizer::findAvailableNodeID() {
-    return {state->skeletonState->greatestNodeID + 1};
+    return state->skeletonState->greatestNodeID + 1;
 }
 
 boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
@@ -1661,7 +1661,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
     nodeID = node->nodeID;
 
     auto oldPos = node->position;
-    node->position = newPos.capped(0, state->boundary);
+    node->position = newPos.capped({0, 0, 0}, state->boundary);
 
     if(newRadius != 0.) {
         node->radius = newRadius;
@@ -2163,10 +2163,7 @@ nodeListElement* Skeletonizer::popBranchNode() {
 
         branchNode->isBranchNode = 0;
 
-        emit userMoveSignal(branchNode->position.x - state->viewerState->currentPosition.x,
-                            branchNode->position.y - state->viewerState->currentPosition.y,
-                            branchNode->position.z - state->viewerState->currentPosition.z,
-                            USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+        state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 
         state->skeletonState->branchpointUnresolved = true;
         emit branchPoppedSignal();
@@ -2197,10 +2194,7 @@ bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpo
 }
 
 void Skeletonizer::jumpToNode(const nodeListElement & node) {
-    emit userMoveSignal(node.position.x - state->viewerState->currentPosition.x,
-                        node.position.y - state->viewerState->currentPosition.y,
-                        node.position.z - state->viewerState->currentPosition.z,
-                        USERMOVE_NEUTRAL, VIEWPORT_UNDEFINED);
+    state->viewer->userMove(node.position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
@@ -2298,10 +2292,7 @@ bool Skeletonizer::moveToPrevTree() {
             return true;
         } else {
             setActiveNode(node);
-            emit setRecenteringPositionSignal(node->position.x,
-                                         node->position.y,
-                                         node->position.z);
-
+            emit setRecenteringPositionSignal(node->position);
             Knossos::sendRemoteSignal();
         }
         return true;
@@ -2333,11 +2324,8 @@ bool Skeletonizer::moveToNextTree() {
             return true;
         } else {
             setActiveNode(node);
-
-                emit setRecenteringPositionSignal(node->position.x,
-                                             node->position.y,
-                                             node->position.z);
-                Knossos::sendRemoteSignal();
+            emit setRecenteringPositionSignal(node->position);
+            Knossos::sendRemoteSignal();
         }
         return true;
     }
@@ -2355,9 +2343,7 @@ bool Skeletonizer::moveToPrevNode() {
     nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(prevNode);
-        emit setRecenteringPositionSignal(prevNode->position.x,
-                                     prevNode->position.y,
-                                     prevNode->position.z);
+        emit setRecenteringPositionSignal(prevNode->position);
         Knossos::sendRemoteSignal();
         return true;
     }
@@ -2368,9 +2354,7 @@ bool Skeletonizer::moveToNextNode() {
     nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(nextNode);
-        emit setRecenteringPositionSignal(nextNode->position.x,
-                                     nextNode->position.y,
-                                     nextNode->position.z);
+        emit setRecenteringPositionSignal(nextNode->position);
         Knossos::sendRemoteSignal();
         return true;
     }

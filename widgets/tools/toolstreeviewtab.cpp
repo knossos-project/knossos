@@ -31,7 +31,7 @@
 template <typename Table, typename Func>
 void applySelection(Table table, Func func) {
     QItemSelection selectedItems;
-    std::size_t startIndex;
+    std::size_t startIndex = 0;
     bool blockSelection = false;
     int row;
     for (row = 0; row < table->rowCount(); ++row) {

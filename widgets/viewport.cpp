@@ -23,11 +23,9 @@
  */
 #include "viewport.h"
 
-#include "eventmodel.h"
 #include "functions.h"
 #include "GuiConstants.h"
 #include "profiler.h"
-#include "renderer.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -42,12 +40,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-bool Viewport::arbitraryOrientation = false;
-bool Viewport::oglDebug = false;
-bool Viewport::showNodeComments = false;
-bool Viewport::showBoundariesInUm = false;
-
-ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
+bool ViewportBase::oglDebug = false;
+bool Viewport3D::showBoundariesInUm = false;
+bool ViewportOrtho::arbitraryOrientation = false;
+bool ViewportOrtho::showNodeComments = false;
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
@@ -55,304 +51,41 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
 
 QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
     setWindowFlags(Qt::Window);
-    const std::array<const char * const, Viewport::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "3D"}};
+    const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "3D"}};
     setWindowTitle(VP_TITLES[id]);
     new QVBoxLayout(this);
 }
 
-Viewport::Viewport(QWidget *parent, ViewportType viewportType, uint newId) :
-        QOpenGLWidget(parent), id(newId), viewportType(viewportType),
-        isDocked(true), floatParent(nullptr), resizeButtonHold(false) {
+ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uint id) :
+    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), id(id) {
     dockParent = parent;
-    setContextMenuPolicy(Qt::CustomContextMenu);
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
     setFocusPolicy(Qt::WheelFocus);
 
-    resizeButton = new ResizeButton(this);
-    resizeButton->setCursor(Qt::SizeFDiagCursor);
-    resizeButton->setIcon(QIcon(":/resources/icons/resize.gif"));
-    resizeButton->setMinimumSize(20, 20);
-    resizeButton->setMaximumSize(resizeButton->minimumSize());
-
-    QObject::connect(resizeButton, &ResizeButton::vpResize, this, &Viewport::resizeVP);
-
-    const auto vpLayout = new QVBoxLayout();
-    vpLayout->setMargin(0);//attach buttons to vp border
-
-    if(viewportType == VIEWPORT_SKELETON) {
-        //vpconfig init
-        state->viewerState->vpConfigs.resize(Viewport::numberViewports);
-        for(uint i = 0; i < Viewport::numberViewports; i++) {
-            switch(i) {
-            case VP_UPPERLEFT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 30, 0};
-                state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
-                break;
-            case VP_LOWERLEFT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {5, 385, 0};
-                state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
-                break;
-            case VP_UPPERRIGHT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 30, 0};
-                state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
-                break;
-            case VP_LOWERRIGHT:
-                state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
-                state->viewerState->vpConfigs[i].upperLeftCorner = {360, 385, 0};
-                state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
-                break;
-            }
+    resizeButton.setCursor(Qt::SizeFDiagCursor);
+    resizeButton.setIcon(QIcon(":/resources/icons/resize.gif"));
+    resizeButton.setMinimumSize(20, 20);
+    resizeButton.setMaximumSize(resizeButton.minimumSize());
+    QObject::connect(&resizeButton, &ResizeButton::vpResize, [this](const QPoint & globalPos) {
+        if (!isDocked) {
+            // Floating viewports are resized indirectly by container window
+            return;
         }
-        resetTextureProperties();
-
-        xyButton = new QPushButton("xy", this);
-        xzButton = new QPushButton("xz", this);
-        yzButton = new QPushButton("yz", this);
-        r90Button = new QPushButton("r90", this);
-        r180Button = new QPushButton("r180", this);
-        resetButton = new QPushButton("reset", this);
-
-        const auto svpLayout = new QHBoxLayout();
-        svpLayout->setSpacing(0);
-        svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
-
-        for (auto button : {xyButton, xzButton, yzButton}) {
-            button->setMinimumSize(30, 20);
-        }
-        r90Button->setMinimumSize(35, 20);
-        r180Button->setMinimumSize(40, 20);
-        resetButton->setMinimumSize(45, 20);
-
-        for (auto button : {xyButton, xzButton, yzButton, r90Button, r180Button, resetButton}) {
-            button->setMaximumSize(button->minimumSize());
-            button->setCursor(Qt::ArrowCursor);
-            svpLayout->addWidget(button);
-        }
-
-        vpLayout->addLayout(svpLayout);
-
-        connect(xyButton, SIGNAL(clicked()), this, SLOT(xyButtonClicked()));
-        connect(xzButton, SIGNAL(clicked()), this, SLOT(xzButtonClicked()));
-        connect(yzButton, SIGNAL(clicked()), this, SLOT(yzButtonClicked()));
-        connect(r90Button, SIGNAL(clicked()), this, SLOT(r90ButtonClicked()));
-        connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
-        connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
-    }
-    vpLayout->addStretch(1);
-    vpLayout->addWidget(resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
-    setLayout(vpLayout);
-
-    timeDBase.start();
-    timeFBase.start();
-}
-
-void Viewport::resetTextureProperties() {
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
-    //reset viewerState texture properties
-    for (uint i = 0; i < Viewport::numberViewports; i++) {
-        state->viewerState->vpConfigs[i].draggedNode = nullptr;
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-        //This variable indicates the current zoom value for a viewport.
-        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-    }
-}
-
-void Viewport::initializeGL() {
-    if (viewportType == VIEWPORT_XY) {//we want only one output
-        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
-                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
-                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
-    }
-    if (!initializeOpenGLFunctions()) {
-        qDebug() << "initializeOpenGLFunctions failed";
-    }
-    oglLogger.initialize();
-    QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
-        qDebug() << msg;
+        raise();//we come from the resize button
+        //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
+        const auto desiredSize = mapFromGlobal(globalPos);
+        sizeAdapt(desiredSize);
+        state->viewerState->defaultVPSizeAndPos = false;
     });
-    if (oglDebug) {
-        oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    }
 
-    if(viewportType != VIEWPORT_SKELETON) {
-        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
-
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        // loads an empty texture into video memory - during user movement, this
-        // texture is updated via glTexSubImage2D in vpGenerateTexture
-        // We need GL_RGB as texture internal format to color the textures
-
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_RGB,
-                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                     0,
-                     GL_RGB,
-                     GL_UNSIGNED_BYTE,
-                     state->viewerState->defaultTexData);
-
-        //Handle overlay textures.
-    }
-
-    // The following code configures openGL to draw into the current VP
-    //set the drawing area in the window to our actually processed viewport.
-    glViewport(state->viewerState->vpConfigs[id].upperLeftCorner.x,
-               state->viewerState->vpConfigs[id].upperLeftCorner.y,
-               state->viewerState->vpConfigs[id].edgeLength,
-               state->viewerState->vpConfigs[id].edgeLength);
-    //select the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    //reset it
-    glLoadIdentity();
-    //define coordinate system for our viewport: left right bottom top near far
-    //coordinate values
-    glOrtho(0, state->viewerState->vpConfigs[id].edgeLength,
-            state->viewerState->vpConfigs[id].edgeLength, 0, 25, -25);
-    //select the modelview matrix for modification
-    glMatrixMode(GL_MODELVIEW);
-    //reset it
-    glLoadIdentity();
-    //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
-
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-
-    /* performance tricks from mesa3d  */
-
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-    glShadeModel(GL_FLAT);
-    glDisable(GL_DITHER);
-    glDisable(GL_SCISSOR_TEST);
-    glDisable(GL_COLOR_MATERIAL);
-
-    if (viewportType != VIEWPORT_SKELETON) {
-        createOverlayTextures();
-    }
+    vpLayout.setMargin(0);//attach buttons to vp border
+    vpLayout.addStretch(1);
+    vpLayout.addWidget(&resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
+    setLayout(&vpLayout);
 }
 
-bool Viewport::setOrientation(ViewportType orientation) {
-    if(orientation != VIEWPORT_XY
-       && orientation != VIEWPORT_XZ
-       && orientation != VIEWPORT_YZ
-       && orientation != VIEWPORT_ARBITRARY) {
-        return false;
-    }
-    viewportType = orientation;
-    state->viewerState->vpConfigs[id].type = orientation;
-    return true;
-}
-
-void Viewport::createOverlayTextures() {
-    glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
-
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
-
-    //Set the parameters for the texture.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    const auto size = state->viewerState->vpConfigs[id].texture.edgeLengthPx;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
-}
-
-void Viewport::resizeGL(int w, int h) {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    GLfloat x = (GLfloat)width() / height();
-
-    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
-    glMatrixMode(GL_MODELVIEW);
-
-    state->viewerState->vpConfigs[id].upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
-    state->viewerState->vpConfigs[id].edgeLength = width();
-}
-
-void Viewport::paintGL() {
-    if (!isVisible()) {
-        return;
-    }
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    if(state->viewerState->viewerReady) {
-        if (viewportType != VIEWPORT_SKELETON) {
-            if (viewportType == VIEWPORT_ARBITRARY) {
-                updateOverlayTexture();
-            }
-            drawViewport(id);
-        } else {
-            drawSkeletonViewport();
-        }
-        state->viewer->renderer->renderViewportFrontFace(id);
-    }
-}
-
-void Viewport::enterEvent(QEvent *) {
-    hasCursor = true;
-    if (QApplication::activeWindow() != 0) {
-        activateWindow();//steal keyboard from other active windows
-    }
-    setFocus();//get keyboard focus for this widget for viewport specific shortcuts
-}
-
-void Viewport::leaveEvent(QEvent *) {
-    hasCursor = false;
-    emit cursorPositionChanged(Coordinate(), VIEWPORT_UNDEFINED);
-}
-
-void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(event->x(), event->y(), id), id);
-    const auto mouseBtn = event->buttons();
-    const auto penmode = state->viewerState->penmode;
-
-    if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
-        Qt::KeyboardModifiers modifiers = event->modifiers();
-        bool ctrl = modifiers.testFlag(Qt::ControlModifier);
-        bool alt = modifiers.testFlag(Qt::AltModifier);
-
-        if(ctrl && alt) { // drag viewport around
-            moveVP(event->globalPos());
-        } else {// delegate behaviour
-            eventDelegate->handleMouseMotionLeftHold(event, id);
-        }
-    } else if(mouseBtn == Qt::MidButton) {
-        eventDelegate->handleMouseMotionMiddleHold(event, id);
-    } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
-        eventDelegate->handleMouseMotionRightHold(event, id);
-    }
-    eventDelegate->handleMouseHover(event, id);
-
-    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
-
-    eventDelegate->prevMouseMove = event->pos();
-}
-
-void Viewport::setDock(bool isDock) {
+void ViewportBase::setDock(bool isDock) {
     bool wasVisible = isVisible();
     isDocked = isDock;
     if (isDock) {
@@ -382,19 +115,332 @@ void Viewport::setDock(bool isDock) {
     }
 }
 
-void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
-    if (event->button() == Qt::MouseButton::LeftButton) {
-        setDock(!isDocked);
+void ViewportBase::moveVP(const QPoint & globalPos) {
+    if (!isDocked) {
+        // Moving viewports is relevant only when docked
+        return;
+    }
+    //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
+    const auto position = mapFromGlobal(globalPos);
+    const auto desiredX = x() + position.x() - mouseDown.x();
+    const auto desiredY = y() + position.y() - mouseDown.y();
+    posAdapt({desiredX, desiredY});
+    state->viewerState->defaultVPSizeAndPos = false;
+}
+
+ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        v1 = {1, 0, 0};
+        v2 = {0, 1, 0};
+        n = {0, 0, 1};
+        break;
+    case VIEWPORT_XZ:
+        v1 = {1, 0, 0};
+        v2 = {0, 0, 1};
+        n = {0, 1, 0};
+        break;
+    case VIEWPORT_YZ:
+        v1 = {0, 0, 1};
+        v2 = {0, 1, 0};
+        n = {1, 0, 0};
+        break;
+    default: break;
+    }
+    timeDBase.start();
+    timeFBase.start();
+}
+
+Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+    const auto svpLayout = new QHBoxLayout();
+    svpLayout->setSpacing(0);
+    svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
+
+    for (auto * button : {&xyButton, &xzButton, &yzButton}) {
+        button->setMinimumSize(30, 20);
+    }
+    r90Button.setMinimumSize(35, 20);
+    r180Button.setMinimumSize(40, 20);
+    resetButton.setMinimumSize(45, 20);
+
+    for (auto * button : {&xyButton, &xzButton, &yzButton, &r90Button, &r180Button, &resetButton}) {
+        button->setMaximumSize(button->minimumSize());
+        button->setCursor(Qt::ArrowCursor);
+        svpLayout->addWidget(button);
+    }
+    vpLayout.insertLayout(0, svpLayout);
+
+    connect(&xyButton, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_XY_VIEW;
+        }
+    });
+    connect(&xzButton, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
+        }
+    });
+    connect(&yzButton, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_YZ_VIEW;
+        }
+    });
+    connect(&r90Button, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_R90;
+        }
+    });
+    connect(&r180Button, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_R180;
+        }
+    });
+    connect(&resetButton, &QPushButton::clicked, []() {
+        if(state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+        }
+    });
+}
+
+void ViewportBase::initializeGL() {
+    if (!initializeOpenGLFunctions()) {
+        qDebug() << "initializeOpenGLFunctions failed";
+    }
+    oglLogger.initialize();
+    QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
+        qDebug() << msg;
+    });
+    if (oglDebug) {
+        oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
+    }
+
+
+    // The following code configures openGL to draw into the current VP
+    //set the drawing area in the window to our actually processed viewport.
+    glViewport(upperLeftCorner.x, upperLeftCorner.y, edgeLength, edgeLength);
+    //select the projection matrix
+    glMatrixMode(GL_PROJECTION);
+    //reset it
+    glLoadIdentity();
+    //define coordinate system for our viewport: left right bottom top near far
+    //coordinate values
+    glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
+    //select the modelview matrix for modification
+    glMatrixMode(GL_MODELVIEW);
+    //reset it
+    glLoadIdentity();
+    //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
+
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+
+    /* performance tricks from mesa3d  */
+
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+    glShadeModel(GL_FLAT);
+    glDisable(GL_DITHER);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+}
+
+void ViewportOrtho::initializeGL() {
+    ViewportBase::initializeGL();
+    glGenTextures(1, &texture.texHandle);
+
+    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    // loads an empty texture into video memory - during user movement, this
+    // texture is updated via glTexSubImage2D in vpGenerateTexture
+    // We need GL_RGB as texture internal format to color the textures
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 texture.edgeLengthPx,
+                 texture.edgeLengthPx,
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 state->viewerState->defaultTexData);
+
+    createOverlayTextures();
+
+    if (state->gpuSlicer) {
+        GLint iUnits, texture_units, max_tu;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iUnits);
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_tu);
+        std::cout << "MultiTexture: " << iUnits << ' ' << texture_units << ' ' << max_tu << std::endl;
+
+        glEnable(GL_TEXTURE_3D);
+        // glEnable(GL_DEPTH_TEST);
+        // glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        auto vertex_shader_code = R"shaderSource(
+        #version 110
+        uniform mat4 model_matrix;
+        uniform mat4 view_matrix;
+        uniform mat4 projection_matrix;
+        attribute vec3 vertex;
+        attribute vec3 texCoordVertex;
+        varying vec3 texCoordFrag;
+        void main() {
+            mat4 mvp_mat = projection_matrix * view_matrix * model_matrix;
+            gl_Position = mvp_mat * vec4(vertex, 1.0);
+            texCoordFrag = texCoordVertex;
+        })shaderSource";
+
+        raw_data_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader_code);
+        raw_data_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        #version 110
+        uniform float textureOpacity;
+        uniform sampler3D texture;
+        varying vec3 texCoordFrag;//in
+        //varying vec4 gl_FragColor;//out
+        void main() {
+            gl_FragColor = vec4(vec3(texture3D(texture, texCoordFrag).r), textureOpacity);
+        })shaderSource");
+
+        raw_data_shader.link();
+
+        overlay_data_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader_code);
+        overlay_data_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        #version 110
+        uniform float textureOpacity;
+        uniform sampler3D indexTexture;
+        uniform sampler1D textureLUT;
+        uniform float lutSize;//float(textureSize1D(textureLUT, 0));
+        uniform float factor;//expand float to uint8 range
+        varying vec3 texCoordFrag;//in
+        void main() {
+            float index = texture3D(indexTexture, texCoordFrag).r;
+            index *= factor;
+            gl_FragColor = texture1D(textureLUT, (index + 0.5) / lutSize);
+            gl_FragColor.a = textureOpacity;
+        })shaderSource");
+
+        overlay_data_shader.link();
+
+        glDisable(GL_TEXTURE_3D);
     }
 }
 
-void Viewport::mousePressEvent(QMouseEvent *event) {
+void ViewportOrtho::createOverlayTextures() {
+    glGenTextures(1, &texture.overlayHandle);
+
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+
+    //Set the parameters for the texture.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    const auto size = texture.edgeLengthPx;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
+}
+
+void ViewportOrtho::setOrientation(ViewportType orientation) {
+    viewportType = orientation;
+}
+
+void ViewportBase::resizeGL(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    GLfloat x = (GLfloat)width() / height();
+
+    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
+    glMatrixMode(GL_MODELVIEW);
+
+    upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
+    edgeLength = width();
+}
+
+void Viewport3D::paintGL() {
+    renderViewport();
+    renderViewportFrontFace();
+}
+
+void ViewportOrtho::paintGL() {
+    if (viewportType == VIEWPORT_ARBITRARY) {
+        updateOverlayTexture();
+    }
+    if (state->gpuSlicer && state->viewer->gpuRendering) {
+        renderViewportFast();
+    } else {
+        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+    }
+    renderViewportFrontFace();
+}
+
+void ViewportBase::enterEvent(QEvent *) {
+    hasCursor = true;
+    if (QApplication::activeWindow() != 0) {
+        activateWindow();//steal keyboard from other active windows
+    }
+    setFocus();//get keyboard focus for this widget for viewport specific shortcuts
+}
+
+void ViewportBase::leaveEvent(QEvent *) {
+    hasCursor = false;
+    emit cursorPositionChanged(Coordinate(), VIEWPORT_UNDEFINED);
+}
+
+void ViewportBase::keyPressEvent(QKeyEvent *event) {
+    const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
+    const auto alt = event->modifiers().testFlag(Qt::AltModifier);
+    if (ctrl && alt) {
+        setCursor(Qt::OpenHandCursor);
+    } else if (ctrl) {
+        setCursor(Qt::ArrowCursor);
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
+    handleKeyPress(event);
+}
+
+void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
+    const auto mouseBtn = event->buttons();
+    const auto penmode = state->viewerState->penmode;
+
+    if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
+        Qt::KeyboardModifiers modifiers = event->modifiers();
+        bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+        bool alt = modifiers.testFlag(Qt::AltModifier);
+
+        if(ctrl && alt) { // drag viewport around
+            moveVP(event->globalPos());
+        } else {
+            handleMouseMotionLeftHold(event);
+        }
+    } else if(mouseBtn == Qt::MidButton) {
+        handleMouseMotionMiddleHold(event);
+    } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
+        handleMouseMotionRightHold(event);
+    }
+    handleMouseHover(event);
+
+    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
+
+    prevMouseMove = event->pos();
+}
+
+void ViewportBase::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
-
-    eventDelegate->mouseDown = event->pos();
-
+    mouseDown = event->pos();
     auto penmode = state->viewerState->penmode;
-
     if((penmode && event->button() == Qt::RightButton) || (!penmode && event->button() == Qt::LeftButton)) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
@@ -402,19 +448,17 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 
         if(ctrl && alt) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
-            baseEventX = event->x();
-            baseEventY = event->y();
         } else {
-            eventDelegate->handleMouseButtonLeft(event, id);
+            handleMouseButtonLeft(event);
         }
     } else if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseButtonMiddle(event, id);
+        handleMouseButtonMiddle(event);
     } else if((penmode && event->button() == Qt::LeftButton) || (!penmode && event->button() == Qt::RightButton)) {
-        eventDelegate->handleMouseButtonRight(event, id);
+        handleMouseButtonRight(event);
     }
 }
 
-void Viewport::mouseReleaseEvent(QMouseEvent *event) {
+void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_Viewort_mouseReleaseEvent, state->signalRelay, this, event);
 
     Qt::KeyboardModifiers modifiers = event->modifiers();
@@ -430,105 +474,24 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     }
 
     if(event->button() == Qt::LeftButton) {
-        eventDelegate->handleMouseReleaseLeft(event, id);
+        handleMouseReleaseLeft(event);
     }
     if(event->button() == Qt::RightButton) {
-        eventDelegate->handleMouseReleaseRight(event, id);
+        handleMouseReleaseRight(event);
     }
     if(event->button() == Qt::MiddleButton) {
-        eventDelegate->handleMouseReleaseMiddle(event, id);
+        handleMouseReleaseMiddle(event);
     }
-
-    eventDelegate->userMouseSlide = {};
-    eventDelegate->arbNodeDragCache = {};
-    state->viewerState->vpConfigs[id].draggedNode = nullptr;
 }
 
-void Viewport::wheelEvent(QWheelEvent *event) {
-    eventDelegate->handleMouseWheel(event, id);
+void ViewportOrtho::mouseReleaseEvent(QMouseEvent *event) {
+    ViewportBase::mouseReleaseEvent(event);
+    userMouseSlide = {};
+    arbNodeDragCache = {};
+    draggedNode = nullptr;
 }
 
-void Viewport::keyPressEvent(QKeyEvent *event) {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
-    const auto alt = modifiers.testFlag(Qt::AltModifier);
-
-    if (ctrl && alt) {
-        setCursor(Qt::OpenHandCursor);
-    } else if (ctrl) {
-        setCursor(Qt::ArrowCursor);
-    } else {
-        setCursor(Qt::CrossCursor);
-    }
-
-    //events
-    //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
-    //^ os delay ^       ^---^ os key repeat
-
-    //intended behavior:
-    //↓          # # # # # # # # # # # # # # # ↑  ↓          # # # #…
-    //^ os delay ^       ^-^ knossos specified interval
-
-    //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
-
-    //›#‹ events are marked isAutoRepeat correctly on Windows
-    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
-    //to emulate this the time to the previous time the same event occured is measured
-    //drawbacks of this emulation are:
-    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
-    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
-
-    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->viewerKeyRepeat = event->isAutoRepeat();
-    }
-    if (event->key() == Qt::Key_H) {
-        if (isDocked) {
-            hide();
-        }
-        else {
-            floatParent->hide();
-        }
-        state->viewerState->defaultVPSizeAndPos = false;
-    }
-    if (event->key() == Qt::Key_U) {
-        if (isDocked) {
-            // Currently docked and normal
-            // Undock and go fullscreen from docked
-            setDock(false);
-            floatParent->setWindowState(Qt::WindowFullScreen);
-            isFullOrigDocked = true;
-        }
-        else {
-            // Currently undocked
-            if (floatParent->isFullScreen()) {
-                // Currently fullscreen
-                // Go normal and back to original docking state
-                floatParent->setWindowState(Qt::WindowNoState);
-                if (isFullOrigDocked) {
-                    setDock(isFullOrigDocked);
-                }
-            }
-            else {
-                // Currently not fullscreen
-                // Go fullscreen from undocked
-                floatParent->setWindowState(Qt::WindowFullScreen);
-                isFullOrigDocked = false;
-            }
-        }
-    }
-    if (!event->isAutoRepeat()) {
-        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
-        //seperate timer for each key, but only one across all vps
-        if (event->key() == Qt::Key_D) {
-            state->viewerKeyRepeat = timeDBase.restart() < 150;
-        } else if (event->key() == Qt::Key_F) {
-            state->viewerKeyRepeat = timeFBase.restart() < 150;
-        }
-    }
-    eventDelegate->handleKeyPress(event, id);
-}
-
-void Viewport::keyReleaseEvent(QKeyEvent *event) {
+void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
     Qt::KeyboardModifiers modifiers = event->modifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
     const auto alt = modifiers.testFlag(Qt::AltModifier);
@@ -552,66 +515,46 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 
         Segmentation::singleton().brush.setInverse(false);
     } else {
-        eventDelegate->handleKeyRelease(event);
+        handleKeyRelease(event);
     }
 }
 
-void Viewport::drawViewport(int vpID) {
-    state->viewer->renderer->renderOrthogonalVP(vpID, RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
-}
-
-void Viewport::drawSkeletonViewport() {
-    auto& seg = Segmentation::singleton();
-    if (seg.volume_render_toggle) {
-        if(seg.volume_update_required) {
-            seg.volume_update_required = false;
-            updateVolumeTexture();
-        }
-        renderVolumeVP();
-    } else {
-        state->viewer->renderer->renderSkeletonVP();
-    }
-}
-
-void Viewport::zoomOrthogonals(float step){
+void ViewportOrtho::zoom(const float step) {
     int triggerMagChange = false;
-    for(uint i = 0; i < Viewport::numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            /* check if mag is locked */
-            if(state->viewerState->datasetMagLock) {
-                if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
-                   !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                }
+    state->viewer->window->forEachOrthoVPDo([&step, &triggerMagChange](ViewportOrtho & orthoVP) {
+        if(state->viewerState->datasetMagLock) {
+            if(!(orthoVP.texture.zoomLevel + step < VPZOOMMAX) &&
+               !(orthoVP.texture.zoomLevel + step > VPZOOMMIN)) {
+                orthoVP.texture.zoomLevel += step;
             }
-            else {
-                /* trigger a mag change when possible */
-                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
-                    && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
-                    && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    triggerMagChange = MAG_DOWN;
+        }
+        else {
+            /* trigger a mag change when possible */
+            if((orthoVP.texture.zoomLevel + step < 0.5)
+                && (orthoVP.texture.zoomLevel >= 0.5)
+                && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
+                orthoVP.texture.zoomLevel += step;
+                triggerMagChange = MAG_DOWN;
+            }
+            if((orthoVP.texture.zoomLevel + step > 1.0)
+                && (orthoVP.texture.zoomLevel <= 1.0)
+                && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
+                orthoVP.texture.zoomLevel += step;
+                triggerMagChange = MAG_UP;
+            }
+            /* performe normal zooming otherwise. This case also covers
+            * the special case of zooming in further than 0.5 on mag1 */
+            if(!triggerMagChange) {
+                float zoomLevel = orthoVP.texture.zoomLevel += step;
+                if(zoomLevel < VPZOOMMAX) {
+                    orthoVP.texture.zoomLevel = VPZOOMMAX;
                 }
-                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
-                    && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
-                    && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    triggerMagChange = MAG_UP;
-                }
-                /* performe normal zooming otherwise. This case also covers
-                * the special case of zooming in further than 0.5 on mag1 */
-                if(!triggerMagChange) {
-                    float zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    if(zoomLevel < VPZOOMMAX) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMAX;
-                    }
-                    else if (zoomLevel > VPZOOMMIN) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
-                    }
+                else if (zoomLevel > VPZOOMMIN) {
+                    orthoVP.texture.zoomLevel = VPZOOMMIN;
                 }
             }
         }
-    }
+    });
 
    if(triggerMagChange) {
         emit changeDatasetMagSignal(triggerMagChange);
@@ -621,93 +564,27 @@ void Viewport::zoomOrthogonals(float step){
 
 }
 
-void Viewport::zoomOutSkeletonVP() {
-    if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-        state->skeletonState->zoomLevel -= (0.1* (0.5 - state->skeletonState->zoomLevel));
-        if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
-            state->skeletonState->zoomLevel = SKELZOOMMIN;
-        }
-        emit updateDatasetOptionsWidget();
-    }
-}
-void Viewport::zoomInSkeletonVP() {
-    if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
-        state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-        if(state->skeletonState->zoomLevel > SKELZOOMMAX) {
-            state->skeletonState->zoomLevel = SKELZOOMMAX;
-        }
-        emit updateDatasetOptionsWidget();
-    }
+float Viewport3D::zoomStep() const {
+    return (0.1* (0.5 - state->skeletonState->zoomLevel));
 }
 
-void Viewport::sizeAdapt() {
-    sizeAdapt({size().width(), size().height()});
+void Viewport3D::zoom(const float step) {
+    auto & zoomLvl = state->skeletonState->zoomLevel;
+    zoomLvl = (step < 0 && zoomLvl >= SKELZOOMMIN)? std::max(zoomLvl + step, SKELZOOMMIN) : (step > 0 && zoomLvl <= SKELZOOMMAX)? std::min(zoomLvl + step, SKELZOOMMAX) : zoomLvl;
+    emit updateDatasetOptionsWidget();
 }
 
-void Viewport::sizeAdapt(const QPoint & desiredSize) {
-    const auto MIN_VP_SIZE = 50;
-    const auto horizontalSpace = parentWidget()->width() - x();
-    const auto verticalSpace = parentWidget()->height() - y();
-    const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
-
-    resize({size, size});
+void Viewport3D::showHideButtons(bool isShow) {
+    ViewportBase::showHideButtons(isShow);
+    xyButton.setVisible(isShow);
+    xzButton.setVisible(isShow);
+    yzButton.setVisible(isShow);
+    r90Button.setVisible(isShow);
+    r180Button.setVisible(isShow);
+    resetButton.setVisible(isShow);
 }
 
-void Viewport::resizeVP(const QPoint & globalPos) {
-    if (!isDocked) {
-        // Floating viewports are resized indirectly by container window
-        return;
-    }
-    raise();//we come from the resize button
-    //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
-    const auto desiredSize = mapFromGlobal(globalPos);
-
-    sizeAdapt(desiredSize);
-
-    state->viewerState->defaultVPSizeAndPos = false;
-}
-
-void Viewport::posAdapt() {
-    posAdapt(pos());
-}
-
-void Viewport::posAdapt(const QPoint & desiredPos) {
-    const auto horizontalSpace = parentWidget()->width() - width();
-    const auto verticalSpace = parentWidget()->height() - height();
-    const auto newX = std::max(0, std::min(horizontalSpace, desiredPos.x()));
-    const auto newY = std::max(0, std::min(verticalSpace, desiredPos.y()));
-
-    move(newX, newY);
-}
-
-void Viewport::moveVP(const QPoint & globalPos) {
-    if (!isDocked) {
-        // Moving viewports is relevant only when docked
-        return;
-    }
-    //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
-    const auto position = mapFromGlobal(globalPos);
-    const auto desiredX = x() + position.x() - eventDelegate->mouseDown.x();
-    const auto desiredY = y() + position.y() - eventDelegate->mouseDown.y();
-
-    posAdapt({desiredX, desiredY});
-
-    state->viewerState->defaultVPSizeAndPos = false;
-}
-
-void Viewport::showHideButtons(bool isShow) {
-    resizeButton->setVisible(isShow);
-    if(viewportType == VIEWPORT_SKELETON) {
-        xyButton->setVisible(isShow);
-        xzButton->setVisible(isShow);
-        yzButton->setVisible(isShow);
-        r90Button->setVisible(isShow);
-        r180Button->setVisible(isShow);
-        resetButton->setVisible(isShow);
-    }
-}
-
-void Viewport::updateOverlayTexture() {
+void ViewportOrtho::updateOverlayTexture() {
     if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
         return;
     }
@@ -719,12 +596,11 @@ void Viewport::updateOverlayTexture() {
 
     const int width = state->M * state->cubeEdgeLength;
     const int height = width;
-    const auto & config = state->viewerState->vpConfigs[id];
-    const auto begin = config.leftUpperPxInAbsPx_float;
+    const auto begin = leftUpperPxInAbsPx_float;
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + config.v1 * state->magnification * x + config.v2 * state->magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {
@@ -736,12 +612,12 @@ void Viewport::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->overlayData);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Viewport::updateVolumeTexture() {
+void Viewport3D::updateVolumeTexture() {
     auto& seg = Segmentation::singleton();
     int texLen = seg.volume_tex_len;
     if(seg.volume_tex_id == 0) {
@@ -901,43 +777,7 @@ void Viewport::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport::xyButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_XY_VIEW;
-    }
-}
-
-void Viewport::xzButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
-    }
-}
-
-void Viewport::yzButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_YZ_VIEW;
-    }
-}
-
-void Viewport::r90ButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_R90;
-    }
-}
-
-void Viewport::r180ButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_R180;
-    }
-}
-
-void Viewport::resetButtonClicked() {
-    if(state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
-    }
-}
-
-void Viewport::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
+void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
@@ -945,27 +785,11 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    if(viewportType == VIEWPORT_SKELETON) {
-        auto& seg = Segmentation::singleton();
-        if (seg.volume_render_toggle) {
-            if(seg.volume_update_required) {
-                seg.volume_update_required = false;
-                updateVolumeTexture();
-            }
-            renderVolumeVP();
-        }
-        else {
-            state->viewer->renderer->renderSkeletonVP(options);
-        }
-    }
-    else {
-        state->viewer->renderer->renderOrthogonalVP(id, options);
-    }
+    renderViewport(options);
     if(withScale) {
-        state->viewer->renderer->setFrontFacePerspective(id);
-        state->viewer->renderer->renderScaleBar(id, std::ceil(0.02*size));
+        setFrontFacePerspective();
+        renderScaleBar(std::ceil(0.02*size));
     }
-
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
     image.save(path);
@@ -973,7 +797,7 @@ void Viewport::takeSnapshot(const QString & path, const int size, const bool wit
     fbo.release();
 }
 
-void Viewport::sendCursorPosition() {
+void ViewportOrtho::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), id), id);
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
 }

@@ -14,7 +14,7 @@
 class ViewportTab : public QWidget
 {
     friend class AppearanceWidget;
-    friend class EventModel;
+    friend class ViewportBase;
     friend class MainWindow;
     Q_OBJECT
     QGridLayout mainLayout;
@@ -43,7 +43,6 @@ public:
     explicit ViewportTab(QWidget *parent = 0);
 
 signals:
-    void showIntersectionsSignal(const bool value);
     void setVPOrientationSignal(const bool arbitrary);
     void setViewportDecorations(const bool);
     void resetViewportPositions();

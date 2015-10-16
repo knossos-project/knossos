@@ -23,6 +23,7 @@
  */
 #include "loader.h"
 
+#include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
@@ -56,34 +57,6 @@ extern "C" {
 #include <turbojpeg.h>
 #endif
 
-bool isOverlay(const Loader::CubeType type);
-
-constexpr bool inRange(const int value, const int min, const int max) {
-    return value >= min && value < max;
-}
-
-bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
-    const int halfSupercube = cubeSize * cubesPerDimension * 0.5;
-    const int xcube = center.x - center.x % cubeSize + cubeSize /2;
-    const int ycube = center.y - center.y % cubeSize + cubeSize / 2 ;
-    const int zcube = center.z - center.z % cubeSize + cubeSize / 2;
-    bool valid = true;
-    valid &= inRange(coord.x, xcube - halfSupercube, xcube + halfSupercube);
-    valid &= inRange(coord.y, ycube - halfSupercube, ycube + halfSupercube);
-    valid &= inRange(coord.z, zcube - halfSupercube, zcube + halfSupercube);
-    return valid;
-}
-
-bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
-    bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
-    const int xmin = center.x - center.x % cubeSize;
-    const int ymin = center.y - center.y % cubeSize;
-    const int zmin = center.z - center.z % cubeSize;
-    const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize);
-    const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize);
-    const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize);
-    return xvalid || yvalid || zvalid;
-}
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center){
     return [&center](const Coordinate & coord){
@@ -243,7 +216,7 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) 
     return cubes;
 }
 
-Loader::Worker::Worker(const QUrl & baseUrl, const Loader::API api, const Loader::CubeType typeDc, const Loader::CubeType typeOc, const QString & experimentName)
+Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Dataset::CubeType typeDc, const Dataset::CubeType typeOc, const QString & experimentName)
     : baseUrl{baseUrl}, api{api}, typeDc{typeDc}, typeOc{typeOc}, experimentName{experimentName}, OcModifiedCacheQueue(std::log2(state->highestAvailableMag)+1), snappyCache(std::log2(state->highestAvailableMag)+1)
 {
 
@@ -432,38 +405,38 @@ void Loader::Worker::abortDownloadsFinishDecompression(Func keep) {
     finishDecompression(ocDecompression, keep);
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Loader::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
+std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Dataset::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
     const std::size_t availableSize = data.size();
-    if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
+    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         const std::size_t expectedSize = state->cubeBytes;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), currentSlot);
             success = true;
         }
-    } else if (type == Loader::CubeType::RAW_JPG) {
+    } else if (type == Dataset::CubeType::RAW_JPG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
         if (image.byteCount() == expectedSize) {
             std::copy(image.bits(), image.bits() + image.byteCount(), currentSlot);
             success = true;
         }
-    } else if (type == Loader::CubeType::RAW_J2K || type == Loader::CubeType::RAW_JP2_6) {
-        QTemporaryFile file(QDir::tempPath() + QString("/XXXXXX.%1").arg(type == Loader::CubeType::RAW_J2K ? "j2k" : "jp2"));
+    } else if (type == Dataset::CubeType::RAW_J2K || type == Dataset::CubeType::RAW_JP2_6) {
+        QTemporaryFile file(QDir::tempPath() + QString("/XXXXXX.%1").arg(type == Dataset::CubeType::RAW_J2K ? "j2k" : "jp2"));
         success = file.open();
         success &= file.write(data) == data.size();
         file.close();
         success &= EXIT_SUCCESS == jp2_decompress_main(file.fileName().toUtf8().data(), reinterpret_cast<char*>(currentSlot), state->cubeBytes);
-    } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
+    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
         const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), currentSlot);
             success = true;
         }
-    } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
+    } else if (type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
         QBuffer buffer(&data);
         QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
         if (archive.open(QuaZip::mdUnzip)) {
@@ -488,7 +461,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
         state->protectCube2Pointer.lock();
         cubeHash[globalCoord.cube(state->cubeEdgeLength, magnification)] = currentSlot;
         state->protectCube2Pointer.unlock();
-        if (isOverlay(type)) {
+        if (Dataset::isOverlay(type)) {
             state->viewer->oc_reslice_notify_all(globalCoord);
         } else {
             state->viewer->dc_reslice_notify_all(globalCoord);
@@ -496,80 +469,6 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
     }
 
     return {success, currentSlot};
-}
-
-QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Loader::CubeType type) {
-    const auto cubeCoord = coord.cube(cubeEdgeLength, magnification);
-    auto pos = QString("/mag%1/x%2/y%3/z%4/")
-            .arg(magnification)
-            .arg(cubeCoord.x, 4, 10, QChar('0'))
-            .arg(cubeCoord.y, 4, 10, QChar('0'))
-            .arg(cubeCoord.z, 4, 10, QChar('0'));
-    auto filename = QString(("%1_mag%2_x%3_y%4_z%5%6"))//2012-03-07_AreaX14_mag1_x0000_y0000_z0000.j2k
-            .arg(experimentName.section(QString("_mag"), 0, 0))
-            .arg(magnification)
-            .arg(cubeCoord.x, 4, 10, QChar('0'))
-            .arg(cubeCoord.y, 4, 10, QChar('0'))
-            .arg(cubeCoord.z, 4, 10, QChar('0'));
-
-    if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
-        filename = filename.arg(".raw");
-    } else if (type == Loader::CubeType::RAW_JPG) {
-        filename = filename.arg(".jpg");
-    } else if (type == Loader::CubeType::RAW_J2K) {
-        filename = filename.arg(".j2k");
-    } else if (type == Loader::CubeType::RAW_JP2_6) {
-        filename = filename.arg(".6.jp2");
-    } else if (type == Loader::CubeType::SEGMENTATION_SZ_ZIP) {
-        filename = filename.arg(".seg.sz.zip");
-    } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
-        filename = filename.arg(".seg");
-    }
-
-    base.setPath(base.path() + pos + filename);
-
-    return base;
-}
-
-QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeEdgeLength, const Loader::CubeType type) {
-    auto query = QUrlQuery(base);
-    auto path = base.path() + "/binary/subvolume";
-
-    if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
-        path += "/format=raw";
-    } else if (type == Loader::CubeType::RAW_JPG) {
-        path += "/format=singleimage";
-    }
-
-    path += "/scale=" + QString::number(scale);// >= 0
-    path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
-    path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
-
-    query.addQueryItem("alt", "media");
-
-    base.setPath(path);
-    base.setQuery(query);
-    //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
-    return base;
-}
-
-QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Loader::CubeType type) {
-    auto query = QUrlQuery(base);
-    query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
-
-    QString layer;
-    if (type == Loader::CubeType::RAW_UNCOMPRESSED) {
-        layer = "color";
-    } else if (type == Loader::CubeType::SEGMENTATION_UNCOMPRESSED) {
-        layer = "volume";
-    }
-
-    auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    path = path.arg(unknownScale).arg(coord.x / state->cubeEdgeLength).arg(coord.y / state->cubeEdgeLength).arg(coord.z / state->cubeEdgeLength);
-    base.setPath(path);
-    base.setQuery(query);
-
-    return base;
 }
 
 void Loader::Worker::cleanup(const Coordinate center) {
@@ -591,20 +490,6 @@ void Loader::Controller::startLoading(const Coordinate & center) {
         worker->isFinished = false;
         emit loadSignal(++loadingNr, center);
     }
-}
-
-bool isOverlay(const Loader::CubeType type) {
-    switch (type) {
-    case Loader::CubeType::RAW_UNCOMPRESSED:
-    case Loader::CubeType::RAW_JPG:
-    case Loader::CubeType::RAW_J2K:
-    case Loader::CubeType::RAW_JP2_6:
-        return false;
-    case Loader::CubeType::SEGMENTATION_UNCOMPRESSED:
-    case Loader::CubeType::SEGMENTATION_SZ_ZIP:
-        return true;
-    };
-    throw std::runtime_error("unknown value for Loader::CubeType");
 }
 
 void Loader::Worker::broadcastProgress(bool startup) {
@@ -641,8 +526,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    auto startDownload = [this, center](const Coordinate globalCoord, const CubeType type, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
-        if (isOverlay(type)) {
+    auto startDownload = [this, center](const Coordinate globalCoord, const Dataset::CubeType type, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
+        if (Dataset::isOverlay(type)) {
             auto snappyIt = snappyCache[loaderMagnification].find(globalCoord.cube(state->cubeEdgeLength, state->magnification));
             if (snappyIt != std::end(snappyCache[loaderMagnification])) {
                 if (!freeSlots.empty()) {
@@ -681,19 +566,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
         }
-
-        auto apiSwitch = [this](const Coordinate globalCoord, const CubeType type){
-            switch (api) {
-            case Loader::API::GoogleBrainmaps:
-                return googleCubeUrl(baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
-            case Loader::API::Heidelbrain:
-                return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, state->cubeEdgeLength, state->magnification, type);
-            case Loader::API::WebKnossos:
-                return webKnossosCubeUrl(baseUrl, globalCoord, loaderMagnification + 1, state->cubeEdgeLength, type);
-            }
-            throw std::runtime_error("unknown value for Loader::API");
-        };
-        QUrl dcUrl = apiSwitch(globalCoord, type);
+        QUrl dcUrl = Dataset::apiSwitch(api, baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
 
         state->protectCube2Pointer.lock();
         const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification)) == nullptr;
@@ -761,7 +634,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     watcher->setFuture(future);
                 } else {
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
-                        std::fill(currentSlot, currentSlot + state->cubeBytes * (isOverlay(type) ? OBJID_BYTES : 1), 0);
+                        std::fill(currentSlot, currentSlot + state->cubeBytes * (Dataset::isOverlay(type) ? OBJID_BYTES : 1), 0);
                         state->protectCube2Pointer.lock();
                         cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer.unlock();
@@ -783,7 +656,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     };
 
     const auto workaroundProcessLocalImmediately = baseUrl.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
-    auto typeDcOverride = state->compressionRatio == 0 ? CubeType::RAW_UNCOMPRESSED : typeDc;
+    auto typeDcOverride = state->compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);

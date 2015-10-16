@@ -15,7 +15,7 @@
 class TreesTab : public QWidget
 {
     friend class AppearanceWidget;
-    friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
+    friend class ViewportBase;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
     QGridLayout mainLayout;
     // tree render options
@@ -43,7 +43,7 @@ public:
     explicit TreesTab(QWidget *parent = 0);
 
 signals:
-    void showIntersectionsSignal(const bool checked);
+
 public slots:
 };
 
