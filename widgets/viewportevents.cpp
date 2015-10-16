@@ -273,7 +273,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             if (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove) {
                 clickedCoordinate += movement;
             }
-            clickedCoordinate.capped(0, state->boundary);// Do not allow clicks outside the dataset
+            clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, state->boundary);// Do not allow clicks outside the dataset
         }
     } else { // unlinked
         newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate,viewportType);
