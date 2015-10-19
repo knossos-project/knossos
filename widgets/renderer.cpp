@@ -630,7 +630,8 @@ void ViewportOrtho::renderViewportFast() {
 
     const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_YZ;
     const auto gpucubeedge = state->viewer->gpucubeedge;
-    const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
+    const auto fov = (state->M - 1) * state->cubeEdgeLength;//remove cpu overlap
+    const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
 //    QVector3D offset;
     const auto cpos = state->viewerState->currentPosition;
     const int xxx = cpos.x % gpucubeedge;
@@ -647,9 +648,9 @@ void ViewportOrtho::renderViewportFast() {
     triangleVertices.push_back({{1.0f, 0.0f, 0.0f}});
     triangleVertices.push_back({{1.0f, 1.0f, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
-    for (float z = 0.0f; z < (xy ? 1 : supercubeedge); ++z)
-    for (float y = 0.0f; y < (xz ? 1 : supercubeedge); ++y)
-    for (float x = 0.0f; x < (zy ? 1 : supercubeedge); ++x) {
+    for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
+    for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
+    for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
         const float cubeedgef = gpucubeedge;
         const auto depthOffset = frame;//xy ? deviation.z() : xz ? deviation.y() : deviation.x();
         const auto starttexR = (0.5f + depthOffset) / cubeedgef;
@@ -681,7 +682,8 @@ void ViewportOrtho::renderViewportFast() {
     projectionMatrix.ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);//origin top left
 
 //    viewMatrix.scale(zy ? state->scale.z / state->scale.y : 1, xz ? state->scale.z / state->scale.x : 1, 1);
-    viewMatrix.scale(width / (gpucubeedge * supercubeedge - state->cubeEdgeLength), height / (gpucubeedge * supercubeedge - state->cubeEdgeLength));
+
+    viewMatrix.scale(width / fov, height / fov);
     if (xz) {
         viewMatrix.rotate(-90.0f, QVector3D(1.0f, 0.0f, 0.0f));
     } else if (zy) {
@@ -733,16 +735,16 @@ void ViewportOrtho::renderViewportFast() {
                 raw_data_shader.setUniformValue("textureOpacity", layer.opacity);
             }
 
-            const float halfsc = (supercubeedge * gpucubeedge - state->cubeEdgeLength) * 0.5f / gpucubeedge;
+            const float halfsc = fov * 0.5f / gpucubeedge;
             const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
             const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
             const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
             const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
             const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
             const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
-            const float endx = startx + (zy ? 1 : supercubeedge);
-            const float endy = starty + (xz ? 1 : supercubeedge);
-            const float endz = startz + (xy ? 1 : supercubeedge);
+            const float endx = startx + (zy ? 1 : gpusupercube);
+            const float endy = starty + (xz ? 1 : gpusupercube);
+            const float endz = startz + (xy ? 1 : gpusupercube);
             for (float z = startz; z < endz; ++z)
             for (float y = starty; y < endy; ++y)
             for (float x = startx; x < endx; ++x) {
