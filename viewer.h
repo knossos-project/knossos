@@ -240,6 +240,7 @@ public slots:
     void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
     void setVPOrientation(const bool arbitrary);
+    void calculateMissingGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();

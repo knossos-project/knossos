@@ -919,26 +919,17 @@ void Viewer::run() {
         QElapsedTimer timer;
         timer.start();
         for (auto & layer : layers) {
-            const auto supercubeedge = state->M * state->cubeEdgeLength / gpucubeedge - (state->cubeEdgeLength / gpucubeedge - 1);
-            const int halfSupercube = supercubeedge * 0.5;
-            const auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
-            const auto end = edge + supercubeedge;
-            bool done = false;
-            for (int x = edge.x; !done && x < end.x; ++x)
-            for (int y = edge.y; !done && y < end.y; ++y)
-            for (int z = edge.z; !done && z < end.z; ++z) {
-                const auto gpuCoord = CoordOfGPUCube{x, y, z};
-                const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
-                if (currentlyVisible(globalCoord, state->viewerState->currentPosition, supercubeedge, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
-                    state->protectCube2Pointer.lock();
-                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
-                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
-                    state->protectCube2Pointer.unlock();
-                    if (ptr != nullptr) {
-                        const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
-                        layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, gpuCoord, offset);
-                        done = timer.hasExpired(3);
-                    }
+            calculateMissingGPUCubes(layer);
+            while (!layer.pendingCubes.empty() && !timer.hasExpired(3)) {
+                const auto pair = layer.pendingCubes.back();
+                layer.pendingCubes.pop_back();
+                const auto globalCoord = pair.first.cube2Global(gpucubeedge, state->magnification);
+                const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                state->protectCube2Pointer.lock();
+                const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
+                state->protectCube2Pointer.unlock();
+                if (ptr != nullptr) {
+                    layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, pair.first, pair.second);
                 }
             }
         }
@@ -1045,6 +1036,7 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
             for (const auto & pos : obsoleteCubes) {
                 layer.textures.erase(pos);
             }
+            calculateMissingGPUCubes(layer);
         }
     }
 
@@ -1056,6 +1048,26 @@ void Viewer::userMove_arb(const floatCoordinate & floatStep, UserMoveType userMo
     Coordinate step = {static_cast<int>(moveCache.x), static_cast<int>(moveCache.y), static_cast<int>(moveCache.z)};
     moveCache -= step;
     userMove(step, userMoveType, viewportNormal);
+}
+
+void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {
+    layer.pendingCubes.clear();
+
+    const auto gpusupercube = (state->M - 1) * state->cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
+    const int halfSupercube = gpusupercube * 0.5;
+    const auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
+    const auto end = edge + gpusupercube;
+    for (int x = edge.x; x < end.x; ++x)
+    for (int y = edge.y; y < end.y; ++y)
+    for (int z = edge.z; z < end.z; ++z) {
+        const auto gpuCoord = CoordOfGPUCube{x, y, z};
+        const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
+        if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
+            const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+            const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+            layer.pendingCubes.emplace_back(gpuCoord, offset);
+        }
+    }
 }
 
 void Viewer::dc_reslice_notify_all(const Coordinate coord) {
