@@ -14,9 +14,6 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-#the *.cpp file of openjpeg (why ever its named *.cpp) is skipped because it causes problems
-file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
-
 file(GLOB root *.cpp *.h *.qrc *.h.in)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
 file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
@@ -24,7 +21,7 @@ file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
 file(GLOB_RECURSE slicer ./slicer/*.cpp ./slicer/*.h)
 file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
-set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
+set(SRC_LIST ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc

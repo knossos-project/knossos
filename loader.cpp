@@ -47,16 +47,6 @@
 #include <fstream>
 #include <stdexcept>
 
-extern "C" {
-    int jp2_decompress_main(char *infile, char *buf, int bufsize);
-}
-
-#include <dirent.h>
-#include <sys/stat.h>
-#ifdef KNOSSOS_USE_TURBOJPEG
-#include <turbojpeg.h>
-#endif
-
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center){
     return [&center](const Coordinate & coord){
@@ -417,19 +407,13 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
             std::copy(std::begin(data), std::end(data), currentSlot);
             success = true;
         }
-    } else if (type == Dataset::CubeType::RAW_JPG) {
+    } else if (type == Dataset::CubeType::RAW_JPG || type == Dataset::CubeType::RAW_J2K || type == Dataset::CubeType::RAW_JP2_6) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
         if (image.byteCount() == expectedSize) {
             std::copy(image.bits(), image.bits() + image.byteCount(), currentSlot);
             success = true;
         }
-    } else if (type == Dataset::CubeType::RAW_J2K || type == Dataset::CubeType::RAW_JP2_6) {
-        QTemporaryFile file(QDir::tempPath() + QString("/XXXXXX.%1").arg(type == Dataset::CubeType::RAW_J2K ? "j2k" : "jp2"));
-        success = file.open();
-        success &= file.write(data) == data.size();
-        file.close();
-        success &= EXIT_SUCCESS == jp2_decompress_main(file.fileName().toUtf8().data(), reinterpret_cast<char*>(currentSlot), state->cubeBytes);
     } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
         const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
         if (availableSize == expectedSize) {
