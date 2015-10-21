@@ -877,7 +877,7 @@ void Viewer::run() {
     }
 
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
-    timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
+    timer->singleShot(mainWindow.isActiveWindow() ? state->viewerState->renderInterval : SLOW, this, SLOT(run()));
 
     if (state->viewerKeyRepeat && (state->keyF || state->keyD)) {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;
