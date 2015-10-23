@@ -210,6 +210,13 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id
 }
 
 void ViewportBase::initializeGL() {
+    static bool printed = false;
+    if (!printed) {
+        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
+                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
+                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        printed = true;
+    }
     if (!initializeOpenGLFunctions()) {
         qDebug() << "initializeOpenGLFunctions failed";
     }

@@ -45,9 +45,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
-             << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
-             << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
     vpUpperLeft = window->viewportXY.get();
     vpLowerLeft = window->viewportXZ.get();
     vpUpperRight = window->viewportYZ.get();
