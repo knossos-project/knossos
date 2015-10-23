@@ -231,7 +231,7 @@ public:
     static bool oglDebug;
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
-    virtual ~ViewportBase() = default;
+    virtual ~ViewportBase();
 
     static bool initMesh(mesh & toInit, uint initialSize);
     static bool doubleMeshCapacity(mesh & toDouble);

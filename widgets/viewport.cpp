@@ -85,6 +85,13 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uin
     setLayout(&vpLayout);
 }
 
+ViewportBase::~ViewportBase() {
+    if (oglDebug && oglLogger.isLogging()) {
+        makeCurrent();
+        oglLogger.stopLogging();
+    }
+}
+
 void ViewportBase::setDock(bool isDock) {
     bool wasVisible = isVisible();
     isDocked = isDock;
@@ -206,11 +213,10 @@ void ViewportBase::initializeGL() {
     if (!initializeOpenGLFunctions()) {
         qDebug() << "initializeOpenGLFunctions failed";
     }
-    oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
     });
-    if (oglDebug) {
+    if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
 
