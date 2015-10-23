@@ -393,8 +393,8 @@ void ViewportOrtho::paintGL() {
 
 void ViewportBase::enterEvent(QEvent *) {
     hasCursor = true;
-    if (QApplication::activeWindow() != 0) {
-        activateWindow();//steal keyboard from other active windows
+    if (QApplication::activeWindow() != nullptr) {//only if active widget belongs to application
+        activateWindow();//steal keyboard focus
     }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
