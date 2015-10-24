@@ -820,10 +820,12 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    toggleSegmentsAction->setVisible(!segmentation);
-    segmentStateLabel.setVisible(!segmentation);
-    if (!segmentation) {
+    toggleSegmentsAction->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
+    segmentStateLabel.setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
+    if (mode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
         setSegmentState(segmentState);
+    } else if (mode.testFlag(AnnotationMode::Mode_Tracing)) {
+        setSegmentState(SegmentState::On);
     }
     newTreeAction->setVisible(trees);
     widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
