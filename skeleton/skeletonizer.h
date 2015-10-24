@@ -156,7 +156,6 @@ signals:
     void nodeAddedSignal(const nodeListElement & node);
     void nodeChangedSignal(const nodeListElement & node);
     void nodeRemovedSignal(const uint nodeID);
-    void propertiesChanged(const QSet<QString> & numberProperties);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
     void treeRemovedSignal(const int treeID);
@@ -242,6 +241,7 @@ public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
+    const QSet<QString> getNumberProperties() const { return numberProperties; }
 };
 
 #endif // SKELETONIZER_H

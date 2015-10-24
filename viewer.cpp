@@ -1376,7 +1376,6 @@ void Viewer::rewire() {
     // --- widget signals ---
     //  appearance widget signals --
     QObject::connect(&window->widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
-    QObject::connect(skeletonizer, &Skeletonizer::propertiesChanged, &window->widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     //  -- end appearance widget signals
     // dataset load signals --
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);

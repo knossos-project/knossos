@@ -668,6 +668,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
+    widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
     Session::singleton().unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
