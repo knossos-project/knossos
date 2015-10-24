@@ -110,12 +110,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
-#ifdef Q_OS_WIN
-    //manually tweak padding between widgets and both window borders and statusbar seperators
-    unsavedChangesLabel.setContentsMargins(0, 0, 3, 0);
-    annotationTimeLabel.setContentsMargins(0, 0, 4, 0);
-#endif
-
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
     {
@@ -401,8 +395,8 @@ void MainWindow::updateTitlebar() {
     unsavedChangesLabel.setToolTip("");
     if (session.unsavedChanges) {
         title.append("*");
-        auto autosave = tr("<font color='red'>(autosave: off)</font> ");
-        if(session.autoSaveTimer.isActive()) {
+        auto autosave = tr("<font color='red'>(autosave: off)</font>");
+        if (session.autoSaveTimer.isActive()) {
             autosave = tr("<font color='green'>(autosave: on)</font>");
             const auto minutes = session.autoSaveTimer.remainingTime() / 1000 / 60;
             const auto seconds = session.autoSaveTimer.remainingTime() / 1000 % 60;
