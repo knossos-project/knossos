@@ -316,7 +316,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
     }
     // Render the node description
     glColor4f(0.f, 0.f, 0.f, 1.f);
-    auto nodeID = (state->viewerState->showNodeIDs || state->skeletonState->activeNode == &node)? QString::number(node.nodeID) : "";
+    auto nodeID = (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node))? QString::number(node.nodeID) : "";
     const auto comment = (ViewportOrtho::showNodeComments && node.comment)? QString(":%1").arg(node.comment->content) : "";
     if(nodeID.isEmpty() == false || comment.isEmpty() == false) {
         renderText(node.position, nodeID.append(comment));
@@ -326,7 +326,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
 void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & options) {
     ViewportBase::renderNode(node, options);
     // Render the node description
-    if(state->viewerState->showNodeIDs || state->skeletonState->activeNode == &node) {
+    if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
         glColor4f(0.f, 0.f, 0.f, 1.f);
         renderText(node.position, QString::number(node.nodeID));
     }

@@ -61,6 +61,12 @@ enum class SkeletonDisplay {
     ShowInOrthoVPs = 0x4
 };
 
+enum class IdDisplay {
+    None = 0x0,
+    ActiveNode = 0x1,
+    AllNodes = 0x2 | ActiveNode
+};
+
 struct ViewerState {
     ViewerState() {
         state->viewerState = this;
@@ -140,8 +146,8 @@ struct ViewerState {
     // skeleton rendering options
     float depthCutOff{5.f};
     QFlags<SkeletonDisplay> skeletonDisplay{SkeletonDisplay::ShowIn3DVP, SkeletonDisplay::ShowInOrthoVPs};
+    QFlags<IdDisplay> idDisplay{IdDisplay::None};
     int highlightActiveTree{true};
-    int showNodeIDs{false};
     float segRadiusToNodeRadius{.5f};
     int overrideNodeRadiusBool{false};
     float overrideNodeRadiusVal{1.f};

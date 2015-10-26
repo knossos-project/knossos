@@ -66,7 +66,7 @@ const QString NODE_PROPERTY_MAP_MAX = "node_property_map_max";
 const QString NODE_PROPERTY_RADIUS_SCALE = "node_property_radius_scale";
 const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
-const QString SHOW_ALL_NODE_ID = "show_all_node_id";
+const QString NODE_ID_DISPLAY = "node_id_display";
 const QString SHOW_NODE_COMMENTS = "show_node_comments";
 
 // Appearance Dataset & Segmentation Tab

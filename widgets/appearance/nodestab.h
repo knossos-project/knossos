@@ -27,9 +27,9 @@ class NodesTab : public QWidget
     friend class AppearanceWidget;
     Q_OBJECT
     QGridLayout mainLayout;
-    QLabel nodeHeaeder{"<strong>Nodes</strong>"};
     QFrame nodeSeparator;
-    QCheckBox allNodeIDsCheck{"Show all node IDs"};
+    QLabel idLabel{"Show node IDs"};
+    QComboBox idCombo;
     QCheckBox nodeCommentsCheck{"Show node comments"};
     QCheckBox overrideNodeRadiusCheck{"Override node radius"};
     QDoubleSpinBox nodeRadiusSpin;
