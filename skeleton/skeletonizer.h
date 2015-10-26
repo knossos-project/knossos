@@ -156,6 +156,7 @@ signals:
     void nodeAddedSignal(const nodeListElement & node);
     void nodeChangedSignal(const nodeListElement & node);
     void nodeRemovedSignal(const uint nodeID);
+    void propertiesChanged(const QSet<QString> & numberProperties);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
     void treeRemovedSignal(const int treeID);

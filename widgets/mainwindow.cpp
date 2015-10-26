@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
-
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {

@@ -746,7 +746,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
 
     blockSignals(blockState);
-
+    emit resetData();
+    emit propertiesChanged(numberProperties);
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if (!merge) {
