@@ -594,7 +594,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     Knossos::sendQuitSignal();
-    forEachVPDo([](ViewportBase & vp) { vp.setParent(nullptr); });
     event->accept();//mainwindow takes the qapp with it
 }
 
