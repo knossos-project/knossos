@@ -92,15 +92,16 @@ struct viewportTexture {
 
 struct RenderOptions {
     RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
-                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
+                  const bool drawViewportPlanes = true, const bool enableSkeletonDownsampling = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
         : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
-          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
+          drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(enableSkeletonDownsampling), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
     bool drawOverlay;
     bool drawSkeleton;
     bool drawViewportPlanes;
+    bool enableSkeletonDownsampling;
     bool highlightActiveNode;
     bool highlightSelection;
     bool selectionBuffer;
@@ -157,13 +158,13 @@ protected:
     virtual void initializeGL() override;
     void setFrontFacePerspective();
     void renderScaleBar(const int fontSize = defaultFonsSize);
-    virtual void renderViewport(const RenderOptions &options) = 0;
+    virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
-    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color);
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
+    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color, const RenderOptions & options = RenderOptions());
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
-    virtual void renderSegment(const segmentListElement & segment, const color4F &color);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions &options);
+    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions());
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
@@ -280,12 +281,12 @@ class Viewport3D : public ViewportBase {
     virtual float zoomStep() const override;
     virtual void paintGL() override;
     bool renderVolumeVP();
-    bool renderSkeletonVP(const RenderOptions &options);
+    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     bool rotateViewport();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions &options) override;
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     virtual void renderViewportFrontFace() override;
 
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
@@ -317,9 +318,9 @@ class ViewportOrtho : public ViewportBase {
     void updateOverlayTexture();
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    virtual void renderSegment(const segmentListElement & segment, const color4F &color) override;
+    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions &options) override;
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(uint viewportType, Coordinate coord);
     virtual void renderViewportFrontFace() override;
 

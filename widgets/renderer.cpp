@@ -165,13 +165,13 @@ bool setRotationState(uint setTo) {
     return true;
 }
 
-
-uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color) {
+uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options) {
     float currentAngle = 0.;
     floatCoordinate segDirection, tempVec, tempVec2;
     GLUquadricObj *gluCylObj = NULL;
 
-    if(((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
+    if (options.enableSkeletonDownsampling &&
+        (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
         if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
             doubleMeshCapacity(state->skeletonState->lineVertBuffer);
@@ -227,11 +227,12 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     return true;
 }
 
-uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const color4F & color) {
+uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const color4F & color, const RenderOptions & options) {
     GLUquadricObj *gluSphereObj = NULL;
 
     /* Render only a point if the sphere wouldn't be visible anyway */
-    if(((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
+    if (options.enableSkeletonDownsampling &&
+        (((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
         /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
         Color buffer picking brings its own issues on the other hand, so we
         stick with SELECT mode for the time being. */
@@ -278,13 +279,13 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
     return true;
 }
 
-void ViewportBase::renderSegment(const segmentListElement & segment, const color4F & color) {
+void ViewportBase::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
     renderCylinder(&(segment.source->position), Skeletonizer::singleton().segmentSizeAt(*segment.source) * state->viewerState->segRadiusToNodeRadius,
-        &(segment.target->position), Skeletonizer::singleton().segmentSizeAt(*segment.target) * state->viewerState->segRadiusToNodeRadius, color);
+        &(segment.target->position), Skeletonizer::singleton().segmentSizeAt(*segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
 }
 
-void ViewportOrtho::renderSegment(const segmentListElement & segment, const color4F & color) {
-    ViewportBase::renderSegment(segment, color);
+void ViewportOrtho::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
+    ViewportBase::renderSegment(segment, color, options);
     if (state->viewerState->showIntersections) {
         renderSegPlaneIntersection(segment);
     }
@@ -294,7 +295,7 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
     auto color = state->viewer->getNodeColor(node);
     const float radius = Skeletonizer::singleton().radius(node);
 
-    renderSphere(node.position, radius, color);
+    renderSphere(node.position, radius, color, options);
 
     if(node.selected && options.highlightSelection) { // highlight selected nodes
         renderSphere(node.position, radius * 2, {0.f, 1.f, 0.f, 0.5f});
@@ -2264,7 +2265,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     segmentListElement virtualSegment;
                     virtualSegment.source = lastRenderedNode;
                     virtualSegment.target = currentNode;
-                    renderSegment(virtualSegment, currentColor);
+                    renderSegment(virtualSegment, currentColor, options);
                 }
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
@@ -2283,7 +2284,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderSegment(*currentSegment, currentColor);
+                    renderSegment(*currentSegment, currentColor, options);
                     currentSegment = currentSegment->next;
                 }
 

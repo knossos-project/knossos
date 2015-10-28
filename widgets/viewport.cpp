@@ -795,7 +795,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
+    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);
