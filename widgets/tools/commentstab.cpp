@@ -1,4 +1,5 @@
 #include "commentstab.h"
+#include "viewer.h"
 #include "widgets/GuiConstants.h"
 
 #include <QColorDialog>
@@ -81,7 +82,9 @@ Qt::ItemFlags CommentsModel::flags(const QModelIndex & index) const {
 void CommentsTab::itemDoubleClicked(const QModelIndex &index) {
     auto & comment = CommentSetting::comments[index.row()];
     if (index.column() == 2) {
+        state->viewerState->renderInterval = SLOW;
         auto color = QColorDialog::getColor(comment.color, this, "Select comment color", QColorDialog::ShowAlphaChannel);
+        state->viewerState->renderInterval = FAST;
         if (color.isValid() == QColorDialog::Accepted) {
             comment.color = color;
         }

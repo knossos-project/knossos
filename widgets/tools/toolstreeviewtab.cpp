@@ -4,6 +4,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "viewer.h"
 
 #include <QColorDialog>
 #include <QInputDialog>
@@ -885,7 +886,9 @@ void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
         activateFirstSelectedTree();
     } else if (item->column() == TreeTable::TREE_COLOR) {
         auto initial_color = state->skeletonState->selectedTrees.front()->color;
+        state->viewerState->renderInterval = SLOW;
         auto color = QColorDialog::getColor(QColor(255.f*initial_color.r, 255.f*initial_color.g, 255.f*initial_color.b, 255.f*initial_color.a), this, "Select Tree Color", QColorDialog::ShowAlphaChannel);
+        state->viewerState->renderInterval = FAST;
         if (color.isValid() == QColorDialog::Accepted) {
             state->skeletonState->selectedTrees.front()->color.r = color.redF();
             state->skeletonState->selectedTrees.front()->color.g = color.greenF();
