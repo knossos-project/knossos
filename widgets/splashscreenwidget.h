@@ -36,7 +36,7 @@ private:
     QFormLayout mainLayout;
     QLabel versionLabel;
     QLabel revisionLabel;
-    QLabel buildDateLabel;
+    QLabel revisionDateLabel;
     QLabel splash;
 };
 
