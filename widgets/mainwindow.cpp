@@ -37,9 +37,13 @@
 
 #include <PythonQt/PythonQt.h>
 #include <QAction>
+#include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QColor>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QDesktopWidget>
 #include <QDir>
 #include <QEvent>
 #include <QFile>
@@ -50,10 +54,14 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QRegExp>
 #include <QSettings>
 #include <QSpinBox>
+#include <QStandardPaths>
+#include <QStatusBar>
 #include <QStringList>
 #include <QThread>
 #include <QToolButton>

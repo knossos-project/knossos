@@ -40,6 +40,8 @@
 
 #include <QApplication>
 #include <QFileInfo>
+#include <QSplashScreen>
+#include <QStandardPaths>
 
 #include <cmath>
 #include <iostream>

@@ -35,6 +35,7 @@
 #include <QComboBox>
 #include <QDropEvent>
 #include <QList>
+#include <QMenu>
 #include <QMainWindow>
 #include <QToolBar>
 #include <QUndoStack>

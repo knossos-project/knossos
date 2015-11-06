@@ -9,6 +9,7 @@
 #include "widgets/mainwindow.h"
 
 #include <QApplication>
+#include <QDir>
 #include <QFile>
 
 SkeletonProxySignalDelegate *skeletonProxySignalDelegate = new SkeletonProxySignalDelegate();

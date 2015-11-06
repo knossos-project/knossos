@@ -12,7 +12,9 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QHeaderView>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>

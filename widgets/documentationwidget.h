@@ -1,30 +1,28 @@
-#ifndef DOCUMENTATION_H
-#define DOCUMENTATION_H
+#ifndef DOCUMENTATIONWIDGET_H
+#define DOCUMENTATIONWIDGET_H
 
 #include <QDialog>
-#include <QtHelp>
+#include <QHelpEngine>
+#include <QSplitter>
 #include <QTextBrowser>
+#include <QVBoxLayout>
 
 class HelpBrowser : public QTextBrowser {
+    QHelpEngine & helpEngine;
 public:
-    HelpBrowser(QHelpEngine *helpEngine, QWidget *parent = 0);
+    HelpBrowser(QWidget & parent, QHelpEngine & helpEngine);
     QVariant loadResource(int type, const QUrl &url);
-private:
-    QHelpEngine *helpEngine;
 };
 
-class DocumentationWidget : public QDialog
-{
+class DocumentationWidget : public QDialog {
     Q_OBJECT
+    QHelpEngine helpEngine;
+
+    QVBoxLayout layout;
+    QSplitter splitter;
+    HelpBrowser helpBrowser;
 public:
     explicit DocumentationWidget(QWidget *parent = 0);
-
-protected:
-    QSplitter *splitter;
-signals:
-
-public slots:
-
 };
 
-#endif // DOCUMENTATION_H
+#endif// DOCUMENTATIONWIDGET_H

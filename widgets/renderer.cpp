@@ -35,6 +35,7 @@
 
 #include <QMatrix4x4>
 #include <QOpenGLPaintDevice>
+#include <QOpenGLTimeMonitor>
 #include <QPainter>
 #include <QVector3D>
 

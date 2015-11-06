@@ -3,10 +3,11 @@
 #include "segmentation/segmentation.h"
 #include "viewer.h"
 
+#include <QColorDialog>
+#include <QFileDialog>
 #include <QMessageBox>
 
-DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent)
-{
+DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent) {
     biasSpinBox.setMaximum(255);
     biasSpinBox.setSingleStep(1);
     biasSlider.setMaximum(255);

@@ -36,6 +36,9 @@
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 
+#include <QApplication>
+#include <QMessageBox>
+
 #include <boost/math/constants/constants.hpp>
 #include <boost/optional.hpp>
 

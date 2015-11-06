@@ -1,4 +1,5 @@
 #include <QSettings>
+#include <QApplication>
 #include <QDir>
 #include <QFileInfoList>
 #include <QToolBar>

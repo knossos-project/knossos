@@ -34,6 +34,11 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QMessageBox>
+#include <QXmlStreamAttributes>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
 #include <cstring>
 #include <queue>
 #include <unordered_set>

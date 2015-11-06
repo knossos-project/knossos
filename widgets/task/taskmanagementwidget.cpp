@@ -6,6 +6,8 @@
 
 #include <QByteArray>
 #include <QDir>
+#include <QStandardPaths>
+#include <QXmlStreamReader>
 
 #include <fstream>
 

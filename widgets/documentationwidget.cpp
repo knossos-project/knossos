@@ -1,22 +1,24 @@
 #include "documentationwidget.h"
 
+#include <QDir>
 #include <QFile>
-#include <QHelpEngine>
+#include <QHelpContentWidget>
+#include <QIcon>
+#include <QStandardPaths>
 
-HelpBrowser::HelpBrowser(QHelpEngine *helpEngine, QWidget *parent)
-    : QTextBrowser(parent), helpEngine(helpEngine) {
-
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+HelpBrowser::HelpBrowser(QWidget & parent, QHelpEngine & helpEngine) : QTextBrowser(&parent), helpEngine(helpEngine) {
+    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 QVariant HelpBrowser::loadResource(int type, const QUrl &url) {
-    if (url.scheme() == "qthelp")
-        return QVariant(helpEngine->fileData(url));
-    else
+    if (url.scheme() == "qthelp") {
+        return QVariant(helpEngine.fileData(url));
+    } else {
         return QTextBrowser::loadResource(type, url);
+    }
 }
 
-DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent) {
+QString pathOfExtractedHelp() {
     //extract the docs from the ressource to appdata and read it from there
     //as QHelpEngine doesn’t support reading from ressource files directly
     const auto docDir = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/doc";
@@ -29,31 +31,24 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent) {
     QFile::copy(":/resources/doc/collection.qhc", collectionFilePath);
     QFile::copy(":/resources/doc/doc.qch", docFilePath);
 
-    QHelpEngine *helpEngine = new QHelpEngine(collectionFilePath);
-    helpEngine->setupData();
+    return collectionFilePath;
+}
 
-    HelpBrowser *helpBrowser = new HelpBrowser(helpEngine);
-
-    QHelpContentWidget *contentWidget = helpEngine->contentWidget();
-    contentWidget->setModel(helpEngine->contentModel());
+DocumentationWidget::DocumentationWidget(QWidget *parent) : QDialog(parent), helpEngine(pathOfExtractedHelp()), helpBrowser(*this, helpEngine) {
+    helpEngine.setupData();
 
     setWindowIcon(QIcon(":/resources/icons/edit-select-all.png"));
     setWindowTitle("Documentation");
-    splitter = new QSplitter();
-    splitter->addWidget(contentWidget);
-    splitter->addWidget(helpBrowser);
-    QList<int> sizeList;
-    sizeList.append(223);
-    sizeList.append(788);
-    splitter->setSizes(sizeList);
 
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(splitter);
-    setLayout(layout);
+    splitter.addWidget(helpEngine.contentWidget());
+    splitter.addWidget(&helpBrowser);
+
+    splitter.setSizes({223, 788});
+
+    layout.addWidget(&splitter);
+    setLayout(&layout);
 
     resize(1024, 640);
 
-    connect(contentWidget, SIGNAL(linkActivated(const QUrl &)), helpBrowser, SLOT(setSource(const QUrl &)));
+    QObject::connect(helpEngine.contentWidget(), &QHelpContentWidget::linkActivated, &helpBrowser, &HelpBrowser::setSource);
 }
-
-
