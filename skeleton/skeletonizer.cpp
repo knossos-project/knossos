@@ -1292,8 +1292,8 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
         if (lastNodeTree2->next != nullptr) {
             lastNodeTree2->next->previous = lastNodeTree2;
         }
+        tree1->firstNode = std::move(tree2->firstNode);
     }
-    tree1->firstNode = std::move(tree2->firstNode);
 
     // The new node count for tree1 is the old node count of tree1 plus the node
     // count of tree2
