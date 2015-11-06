@@ -52,8 +52,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     vpUpperRight = window->viewportYZ.get();
     vpLowerRight = window->viewport3D.get();
 
-    timer = new QTimer();
-
     /* order of the initialization of the rendering system is
      * 1. initViewer
      * 2. new Skeletonizer
@@ -876,7 +874,7 @@ void Viewer::run() {
     }
 
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
-    timer->singleShot(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW, this, &Viewer::run);
+    timer.singleShot(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW, this, &Viewer::run);
 
     if (state->viewerKeyRepeat && (state->keyF || state->keyD)) {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;

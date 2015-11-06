@@ -219,7 +219,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     vLayout->addWidget(nodeTable);
     nodeSide->setLayout(vLayout);
 
-    splitter = new QSplitter(this);
+    splitter = new QSplitter();
     splitter->addWidget(treeSide);
     splitter->addWidget(nodeSide);
     mainLayout->addWidget(splitter, 1);

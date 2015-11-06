@@ -103,12 +103,8 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     generalGroup->setLayout(formLayout);
     mainLayout->addWidget(generalGroup);
 
-    QGroupBox *advanceGroup = new QGroupBox("Advance Tracing Modes");
+    QGroupBox *advanceGroup = new QGroupBox("Advance Tracing Modes", this);
     mainLayout->addSpacing(10);
-
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
 
     normalModeButton = new QRadioButton("Normal Mode (Recentering)");
     additionalViewportDirectionMoveButton = new QRadioButton("Additional Viewport Direction Move");

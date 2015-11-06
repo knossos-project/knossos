@@ -201,7 +201,7 @@ public:
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
     Viewport3D *vpLowerRight;
-    QTimer *timer;
+    QTimer timer;
     int frames;
 
     bool initialized;

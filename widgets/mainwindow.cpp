@@ -282,7 +282,7 @@ void MainWindow::createToolbars() {
     defaultToolbar.addSeparator();
 
     auto * const pythonButton = new QToolButton();
-    pythonButton->setMenu(new QMenu());
+    pythonButton->setMenu(new QMenu(pythonButton));
     pythonButton->setIcon(QIcon(":/resources/icons/python.png"));
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
