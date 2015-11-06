@@ -602,9 +602,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
-        zoom(zoomStep());
-    } else if(event->key() == Qt::Key_O) {
         zoom(-zoomStep());
+    } else if(event->key() == Qt::Key_O) {
+        zoom(zoomStep());
     } else if(event->key() == Qt::Key_V) {
         if(ctrl) {
             emit pasteCoordinateSignal();
