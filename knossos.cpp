@@ -67,6 +67,9 @@ public:
 void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
     QString intro;
     switch (type) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+    case QtInfoMsg:     intro = QString("Info: ");     break;
+#endif
     case QtDebugMsg:    intro = QString("Debug: ");    break;
     case QtWarningMsg:  intro = QString("Warning: ");  break;
     case QtCriticalMsg: intro = QString("Critical: "); break;
