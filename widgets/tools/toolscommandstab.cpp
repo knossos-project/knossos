@@ -155,51 +155,42 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
 }
 
 void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
-    treeListElement *tree = Skeletonizer::singleton().findTreeByTreeID(value);
-    if(tree == NULL) {
-        return;
-//        // no tree with this value.
-//        // jump to next or previous tree, depending on wether spin box value is greater or smaller than active tree id
-//        if(state->skeletonState->activeTree == NULL) { // no active node, activate first node found
-//            tree = Skeletonizer::getTreeWithNextID(NULL);
-//        }
-//        else {
-//            if(value > state->skeletonState->activeTree->treeID) { // move to next node
-//                tree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
-//            }
-//            else if(value < state->skeletonState->activeTree->treeID) {
-//                tree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
-//            }
-//        }
+    treeListElement * tree = Skeletonizer::singleton().findTreeByTreeID(value);
+    if (tree == nullptr) {// no tree with this value.
+        // jump to next or previous tree, depending on wether spin box value is greater or smaller than active tree id
+        if (state->skeletonState->activeTree == nullptr) { // no active node, activate first node found
+            tree = Skeletonizer::getTreeWithNextID(nullptr);
+        } else {
+            if (value > state->skeletonState->activeTree->treeID) { // move to next node
+                tree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
+            } else if(value < state->skeletonState->activeTree->treeID) {
+                tree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
+            }
+        }
     }
-    if(tree) {
+    if (tree != nullptr) {
         Skeletonizer::singleton().setActiveTreeByID(tree->treeID);
     }
-    return;
 }
 
 void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
-    nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(value);
-    if(node == NULL) {
-        return;
-//        // no node with this value.
-//        // jump to next or previous node, depending on wether spin box value is greater or smaller than active node id
-//        if(state->skeletonState->activeNode == NULL) { // no active node, activate first node found
-//            node = Skeletonizer::getNodeWithNextID(NULL, false);
-//        }
-//        else {
-//            if((uint)value > state->skeletonState->activeNode->nodeID) { // move to next node
-//                node = Skeletonizer::getNodeWithNextID(state->skeletonState->activeNode, false);
-//            }
-//            else if((uint)value < state->skeletonState->activeNode->nodeID) {
-//                node = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode, false);
-//            }
-//        }
+    std::uint64_t nodeID = value;
+    nodeListElement * node = Skeletonizer::singleton().findNodeByNodeID(value);
+    if (node == nullptr) {// no node with this value.
+        // jump to next or previous node, depending on wether spin box value is greater or smaller than active node id
+        if(state->skeletonState->activeNode == nullptr) { // no active node, activate first node found
+            node = Skeletonizer::getNodeWithNextID(nullptr, false);
+        } else {
+            if (nodeID > state->skeletonState->activeNode->nodeID) { // move to next node
+                node = Skeletonizer::getNodeWithNextID(state->skeletonState->activeNode, false);
+            } else if (nodeID < state->skeletonState->activeNode->nodeID) {
+                node = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode, false);
+            }
+        }
     }
-    if(node) {
+    if (node != nullptr) {
         Skeletonizer::singleton().setActiveNode(node);
     }
-    return;
 }
 
 void ToolsCommandsTab::jumpToActiveButtonClicked() {
