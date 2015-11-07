@@ -139,30 +139,8 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, this, &ToolsCommandsTab::updateBranchCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, this, &ToolsCommandsTab::updateBranchCount);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
-        activeNodeIDSpin->blockSignals(true);
-        if(state->skeletonState->activeNode) {
-            activeNodeLabel->setText(QString("Active Node: %1").arg(state->skeletonState->activeNode->nodeID));
-            activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
-        } else {
-            activeNodeLabel->setText("Active Node: None");
-            activeNodeIDSpin->setValue(0);
-        }
-        activeNodeIDSpin->blockSignals(false);
-    });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
-        activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
-        activeTreeIDSpin->blockSignals(true);
-        if(state->skeletonState->activeTree) {
-            activeTreeLabel->setText(QString("Active Tree: %1").arg(state->skeletonState->activeTree->treeID));
-            activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
-        } else {
-            activeTreeLabel->setText("Active Tree: None");
-            activeTreeIDSpin->setValue(0);
-        }
-        activeTreeIDSpin->blockSignals(false);
-    });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, this, &ToolsCommandsTab::updateNodeCount);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, this, &ToolsCommandsTab::updateTreeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, this, &ToolsCommandsTab::updateTreeCount);
@@ -300,9 +278,25 @@ void ToolsCommandsTab::updateBranchCount() {
 }
 
 void ToolsCommandsTab::updateNodeCount() {
-    activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
+    activeNodeIDSpin->blockSignals(true);
+    if (state->skeletonState->activeNode != nullptr) {
+        activeNodeIDSpin->setRange(1, state->skeletonState->greatestNodeID);
+        activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
+    } else {
+        activeNodeIDSpin->setMinimum(0);
+        activeNodeIDSpin->setValue(0);
+    }
+    activeNodeIDSpin->blockSignals(false);
 }
 
 void ToolsCommandsTab::updateTreeCount() {
-    activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
+    activeTreeIDSpin->blockSignals(true);
+    if (state->skeletonState->activeTree != nullptr) {
+        activeTreeIDSpin->setRange(1, state->skeletonState->greatestTreeID);
+        activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
+    } else {
+        activeTreeIDSpin->setMinimum(0);
+        activeTreeIDSpin->setValue(0);
+    }
+    activeTreeIDSpin->blockSignals(false);
 }
