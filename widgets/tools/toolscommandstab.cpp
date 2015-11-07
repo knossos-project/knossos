@@ -18,14 +18,10 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QWidget(parent)
 {
     treeLabel = new QLabel("Tree");
-    activeTreeLabel = new QLabel("Active Tree: None");
-    activeNodeLabel = new QLabel("Active Node: None");
     activeTreeIDLabel = new QLabel("Active Tree ID:");
     activeTreeIDSpin = new QSpinBox();
-    activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
     activeNodeIDLabel = new QLabel("Active Node ID:");
     activeNodeIDSpin = new QSpinBox();
-    activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
     newTreeButton = new QPushButton("New Tree (C)"); // TODO MODES
 
     newTreeButton->setToolTip("Create a new tree");
@@ -73,10 +69,6 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
     mainLayout->addWidget(line);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(activeTreeLabel);
-    hLayout->addWidget(activeNodeLabel);
-    mainLayout->addLayout(hLayout);
     hLayout = new QHBoxLayout();
     hLayout->addWidget(activeTreeIDLabel);
     hLayout->addWidget(activeTreeIDSpin);
