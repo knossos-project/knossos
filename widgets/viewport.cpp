@@ -85,6 +85,13 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uin
     setLayout(&vpLayout);
 }
 
+ViewportBase::~ViewportBase() {
+    if (oglDebug && oglLogger.isLogging()) {
+        makeCurrent();
+        oglLogger.stopLogging();
+    }
+}
+
 void ViewportBase::setDock(bool isDock) {
     bool wasVisible = isVisible();
     isDocked = isDock;
@@ -203,14 +210,20 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id
 }
 
 void ViewportBase::initializeGL() {
+    static bool printed = false;
+    if (!printed) {
+        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
+                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
+                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        printed = true;
+    }
     if (!initializeOpenGLFunctions()) {
         qDebug() << "initializeOpenGLFunctions failed";
     }
-    oglLogger.initialize();
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         qDebug() << msg;
     });
-    if (oglDebug) {
+    if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
 
@@ -387,8 +400,8 @@ void ViewportOrtho::paintGL() {
 
 void ViewportBase::enterEvent(QEvent *) {
     hasCursor = true;
-    if (QApplication::activeWindow() != 0) {
-        activateWindow();//steal keyboard from other active windows
+    if (QApplication::activeWindow() != nullptr) {//only if active widget belongs to application
+        activateWindow();//steal keyboard focus
     }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 }
@@ -782,7 +795,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false);
+    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false, false);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);

@@ -36,6 +36,9 @@
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 
+#include <QApplication>
+#include <QMessageBox>
+
 #include <boost/math/constants/constants.hpp>
 #include <boost/optional.hpp>
 
@@ -230,7 +233,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 }
             } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, viewportType, false)) {
                 //Add a "stump", a branch node to which we don't automatically move.
-                Skeletonizer::singleton().pushBranchNode(true, true, stumpNode.get());
+                Skeletonizer::singleton().pushBranchNode(stumpNode.get());
                 Skeletonizer::singleton().setActiveNode(oldNode);
             }
         } else {
@@ -602,9 +605,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
-        zoom(zoomStep());
-    } else if(event->key() == Qt::Key_O) {
         zoom(-zoomStep());
+    } else if(event->key() == Qt::Key_O) {
+        zoom(zoomStep());
     } else if(event->key() == Qt::Key_V) {
         if(ctrl) {
             emit pasteCoordinateSignal();

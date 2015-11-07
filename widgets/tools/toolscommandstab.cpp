@@ -18,14 +18,10 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QWidget(parent)
 {
     treeLabel = new QLabel("Tree");
-    activeTreeLabel = new QLabel("Active Tree: None");
-    activeNodeLabel = new QLabel("Active Node: None");
     activeTreeIDLabel = new QLabel("Active Tree ID:");
     activeTreeIDSpin = new QSpinBox();
-    activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
     activeNodeIDLabel = new QLabel("Active Node ID:");
     activeNodeIDSpin = new QSpinBox();
-    activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
     newTreeButton = new QPushButton("New Tree (C)"); // TODO MODES
 
     newTreeButton->setToolTip("Create a new tree");
@@ -73,10 +69,6 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
     mainLayout->addWidget(line);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(activeTreeLabel);
-    hLayout->addWidget(activeNodeLabel);
-    mainLayout->addLayout(hLayout);
     hLayout = new QHBoxLayout();
     hLayout->addWidget(activeTreeIDLabel);
     hLayout->addWidget(activeTreeIDSpin);
@@ -147,84 +139,58 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, this, &ToolsCommandsTab::updateBranchCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, this, &ToolsCommandsTab::updateBranchCount);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
-        activeNodeIDSpin->blockSignals(true);
-        if(state->skeletonState->activeNode) {
-            activeNodeLabel->setText(QString("Active Node: %1").arg(state->skeletonState->activeNode->nodeID));
-            activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
-        } else {
-            activeNodeLabel->setText("Active Node: None");
-            activeNodeIDSpin->setValue(0);
-        }
-        activeNodeIDSpin->blockSignals(false);
-    });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
-        activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
-        activeTreeIDSpin->blockSignals(true);
-        if(state->skeletonState->activeTree) {
-            activeTreeLabel->setText(QString("Active Tree: %1").arg(state->skeletonState->activeTree->treeID));
-            activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
-        } else {
-            activeTreeLabel->setText("Active Tree: None");
-            activeTreeIDSpin->setValue(0);
-        }
-        activeTreeIDSpin->blockSignals(false);
-    });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, this, &ToolsCommandsTab::updateNodeCount);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, this, &ToolsCommandsTab::updateTreeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, this, &ToolsCommandsTab::updateTreeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, this, &ToolsCommandsTab::updateTreeCount);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){
+        updateNodeCount();
+        updateTreeCount();
+        updateBranchCount();
+    });
 
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
 }
 
 void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
-    treeListElement *tree = Skeletonizer::singleton().findTreeByTreeID(value);
-    if(tree == NULL) {
-        return;
-//        // no tree with this value.
-//        // jump to next or previous tree, depending on wether spin box value is greater or smaller than active tree id
-//        if(state->skeletonState->activeTree == NULL) { // no active node, activate first node found
-//            tree = Skeletonizer::getTreeWithNextID(NULL);
-//        }
-//        else {
-//            if(value > state->skeletonState->activeTree->treeID) { // move to next node
-//                tree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
-//            }
-//            else if(value < state->skeletonState->activeTree->treeID) {
-//                tree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
-//            }
-//        }
+    treeListElement * tree = Skeletonizer::singleton().findTreeByTreeID(value);
+    if (tree == nullptr) {// no tree with this value.
+        // jump to next or previous tree, depending on wether spin box value is greater or smaller than active tree id
+        if (state->skeletonState->activeTree == nullptr) { // no active node, activate first node found
+            tree = Skeletonizer::getTreeWithNextID(nullptr);
+        } else {
+            if (value > state->skeletonState->activeTree->treeID) { // move to next node
+                tree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
+            } else if(value < state->skeletonState->activeTree->treeID) {
+                tree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
+            }
+        }
     }
-    if(tree) {
+    if (tree != nullptr) {
         Skeletonizer::singleton().setActiveTreeByID(tree->treeID);
     }
-    return;
 }
 
 void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
-    nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(value);
-    if(node == NULL) {
-        return;
-//        // no node with this value.
-//        // jump to next or previous node, depending on wether spin box value is greater or smaller than active node id
-//        if(state->skeletonState->activeNode == NULL) { // no active node, activate first node found
-//            node = Skeletonizer::getNodeWithNextID(NULL, false);
-//        }
-//        else {
-//            if((uint)value > state->skeletonState->activeNode->nodeID) { // move to next node
-//                node = Skeletonizer::getNodeWithNextID(state->skeletonState->activeNode, false);
-//            }
-//            else if((uint)value < state->skeletonState->activeNode->nodeID) {
-//                node = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode, false);
-//            }
-//        }
+    std::uint64_t nodeID = value;
+    nodeListElement * node = Skeletonizer::singleton().findNodeByNodeID(value);
+    if (node == nullptr) {// no node with this value.
+        // jump to next or previous node, depending on wether spin box value is greater or smaller than active node id
+        if(state->skeletonState->activeNode == nullptr) { // no active node, activate first node found
+            node = Skeletonizer::getNodeWithNextID(nullptr, false);
+        } else {
+            if (nodeID > state->skeletonState->activeNode->nodeID) { // move to next node
+                node = Skeletonizer::getNodeWithNextID(state->skeletonState->activeNode, false);
+            } else if (nodeID < state->skeletonState->activeNode->nodeID) {
+                node = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode, false);
+            }
+        }
     }
-    if(node) {
+    if (node != nullptr) {
         Skeletonizer::singleton().setActiveNode(node);
     }
-    return;
 }
 
 void ToolsCommandsTab::jumpToActiveButtonClicked() {
@@ -244,7 +210,7 @@ void ToolsCommandsTab::newTreeButtonClicked() {
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
     if(state->skeletonState->activeNode) {
-        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+        Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
 }
 
@@ -299,13 +265,29 @@ void ToolsCommandsTab::enableNewTreeButton(const bool value) {
 }
 
 void ToolsCommandsTab::updateBranchCount() {
-    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
+    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack.size()));
 }
 
 void ToolsCommandsTab::updateNodeCount() {
-    activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
+    activeNodeIDSpin->blockSignals(true);
+    if (state->skeletonState->activeNode != nullptr) {
+        activeNodeIDSpin->setRange(1, state->skeletonState->greatestNodeID);
+        activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
+    } else {
+        activeNodeIDSpin->setMinimum(0);
+        activeNodeIDSpin->setValue(0);
+    }
+    activeNodeIDSpin->blockSignals(false);
 }
 
 void ToolsCommandsTab::updateTreeCount() {
-    activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
+    activeTreeIDSpin->blockSignals(true);
+    if (state->skeletonState->activeTree != nullptr) {
+        activeTreeIDSpin->setRange(1, state->skeletonState->greatestTreeID);
+        activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
+    } else {
+        activeTreeIDSpin->setMinimum(0);
+        activeTreeIDSpin->setValue(0);
+    }
+    activeTreeIDSpin->blockSignals(false);
 }

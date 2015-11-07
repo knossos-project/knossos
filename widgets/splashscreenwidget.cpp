@@ -34,13 +34,13 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
 
     versionLabel.setText(KVERSION);
     revisionLabel.setText(KREVISION);
-    buildDateLabel.setText(KBUILDDATE);
+    revisionDateLabel.setText(KREVISIONDATE);
 
     splash.setPixmap(QPixmap(":/resources/splash"));
 
-    mainLayout.addRow(tr("Version: "), &versionLabel);
-    mainLayout.addRow(tr("Revision: "), &revisionLabel);
-    mainLayout.addRow(tr("Build Date: "), &buildDateLabel);
+    mainLayout.addRow(tr("Version"), &versionLabel);
+    mainLayout.addRow(tr("Revision"), &revisionLabel);
+    mainLayout.addRow(tr("Revision Date"), &revisionDateLabel);
     mainLayout.addRow(&splash);
     mainLayout.setSizeConstraint(QLayout::SetFixedSize);
     setLayout(&mainLayout);

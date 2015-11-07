@@ -92,15 +92,16 @@ struct viewportTexture {
 
 struct RenderOptions {
     RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
-                  const bool drawViewportPlanes = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
+                  const bool drawViewportPlanes = true, const bool enableSkeletonDownsampling = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
         : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
-          drawViewportPlanes(drawViewportPlanes), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
+          drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(enableSkeletonDownsampling), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
     bool drawOverlay;
     bool drawSkeleton;
     bool drawViewportPlanes;
+    bool enableSkeletonDownsampling;
     bool highlightActiveNode;
     bool highlightSelection;
     bool selectionBuffer;
@@ -109,7 +110,7 @@ struct RenderOptions {
 class ViewportBase;
 class ResizeButton : public QPushButton {
     Q_OBJECT
-    void mouseMoveEvent(QMouseEvent * event) override;
+    virtual void mouseMoveEvent(QMouseEvent * event) override;
 public:
     explicit ResizeButton(QWidget *parent) : QPushButton(parent) {}
 signals:
@@ -143,7 +144,7 @@ private:
 
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
-    void resizeGL(int w, int h) override;
+    virtual void resizeGL(int w, int h) override;
     const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
@@ -154,16 +155,16 @@ protected:
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
     // rendering
-    void initializeGL() override;
+    virtual void initializeGL() override;
     void setFrontFacePerspective();
     void renderScaleBar(const int fontSize = defaultFonsSize);
-    virtual void renderViewport(const RenderOptions &options) = 0;
+    virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
-    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color);
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color);
+    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color, const RenderOptions & options = RenderOptions());
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
-    virtual void renderSegment(const segmentListElement & segment, const color4F &color);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions &options);
+    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions());
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
@@ -231,6 +232,7 @@ public:
     static bool oglDebug;
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
+    virtual ~ViewportBase();
 
     static bool initMesh(mesh & toInit, uint initialSize);
     static bool doubleMeshCapacity(mesh & toDouble);
@@ -275,21 +277,21 @@ class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, yzButton{"yz"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
 
-    void zoom(const float zoomStep) override;
-    float zoomStep() const override;
-    void paintGL() override;
+    virtual void zoom(const float zoomStep) override;
+    virtual float zoomStep() const override;
+    virtual void paintGL() override;
     bool renderVolumeVP();
-    bool renderSkeletonVP(const RenderOptions &options);
+    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     bool rotateViewport();
-    void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
-    void renderNode(const nodeListElement & node, const RenderOptions &options) override;
-    void renderViewportFrontFace() override;
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
+    virtual void renderViewportFrontFace() override;
 
-    void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    void handleWheelEvent(const QWheelEvent *event) override;
+    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
+    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
     virtual void showHideButtons(bool isShow) override;
@@ -300,7 +302,6 @@ public:
     void zoomOut() { zoom(-zoomStep()); }
 signals:
     void rotationSignal(const floatCoordinate & axis, const float angle);
-public slots:
 };
 
 class ViewportOrtho : public ViewportBase {
@@ -308,38 +309,38 @@ class ViewportOrtho : public ViewportBase {
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
 
-    void zoom(const float zoomStep) override;
-    float zoomStep() const override { return 0.1; }
+    virtual void zoom(const float zoomStep) override;
+    virtual float zoomStep() const override { return 0.1; }
 
-    void initializeGL() override;
-    void paintGL() override;
+    virtual void initializeGL() override;
+    virtual void paintGL() override;
     void createOverlayTextures();
     void updateOverlayTexture();
     void renderViewportFast();
-    void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    void renderSegment(const segmentListElement & segment, const color4F &color) override;
+    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);
-    void renderNode(const nodeListElement & node, const RenderOptions &options) override;
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(uint viewportType, Coordinate coord);
-    void renderViewportFrontFace() override;
+    virtual void renderViewportFrontFace() override;
 
-    void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
 
     QPointF userMouseSlide = {};
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
     bool mouseEventAtValidDatasetPosition(const QMouseEvent *event);
-    void handleKeyPress(const QKeyEvent *event) override;
-    void handleMouseHover(const QMouseEvent *event) override;
-    void handleMouseReleaseLeft(const QMouseEvent *event) override;
-    void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    void handleMouseButtonRight(const QMouseEvent *event) override;
-    void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    void handleMouseReleaseRight(const QMouseEvent *event) override;
-    void handleMouseButtonMiddle(const QMouseEvent *event) override;
-    void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
-    void handleMouseReleaseMiddle(const QMouseEvent *event) override;
-    void handleWheelEvent(const QWheelEvent *event) override;
+    virtual void handleKeyPress(const QKeyEvent *event) override;
+    virtual void handleMouseHover(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
+    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
+    virtual void handleMouseButtonRight(const QMouseEvent *event) override;
+    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseRight(const QMouseEvent *event) override;
+    virtual void handleMouseButtonMiddle(const QMouseEvent *event) override;
+    virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
+    virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id);
     static bool arbitraryOrientation;
@@ -362,10 +363,6 @@ public:
 
     char * viewPortData;
     viewportTexture texture;
-signals:
-
-
-public slots:
 };
 
 #endif // VIEWPORT_H

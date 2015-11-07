@@ -21,8 +21,6 @@ public:
     void enableNewTreeButton(const bool value);
 protected:
     QLabel *treeLabel;
-    QLabel *activeTreeLabel;
-    QLabel *activeNodeLabel;
     QLabel *activeTreeIDLabel;
     QLabel *activeNodeIDLabel;
     QSpinBox *activeTreeIDSpin;

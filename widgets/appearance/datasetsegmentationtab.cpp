@@ -3,10 +3,11 @@
 #include "segmentation/segmentation.h"
 #include "viewer.h"
 
+#include <QColorDialog>
+#include <QFileDialog>
 #include <QMessageBox>
 
-DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent)
-{
+DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent) {
     biasSpinBox.setMaximum(255);
     biasSpinBox.setSingleStep(1);
     biasSlider.setMaximum(255);
@@ -101,8 +102,10 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().volume_render_toggle = checked;
         emit volumeRenderToggled();
     });
-    QObject::connect(&volumeColorButton, &QPushButton::clicked, [&](){
+    QObject::connect(&volumeColorButton, &QPushButton::clicked, [&]() {
+        state->viewerState->renderInterval = SLOW;
         auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
+        state->viewerState->renderInterval = FAST;
         if (color.isValid() == QColorDialog::Accepted) {
             Segmentation::singleton().volume_background_color = color;
             volumeColorButton.setStyleSheet("background-color: " + color.name() + ";");

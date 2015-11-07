@@ -37,9 +37,13 @@
 
 #include <PythonQt/PythonQt.h>
 #include <QAction>
+#include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QColor>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QDesktopWidget>
 #include <QDir>
 #include <QEvent>
 #include <QFile>
@@ -50,10 +54,14 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QRegExp>
 #include <QSettings>
 #include <QSpinBox>
+#include <QStandardPaths>
+#include <QStatusBar>
 #include <QStringList>
 #include <QThread>
 #include <QToolButton>
@@ -68,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
-
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
@@ -109,12 +117,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
-
-#ifdef Q_OS_WIN
-    //manually tweak padding between widgets and both window borders and statusbar seperators
-    unsavedChangesLabel.setContentsMargins(0, 0, 3, 0);
-    annotationTimeLabel.setContentsMargins(0, 0, 4, 0);
-#endif
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
@@ -280,7 +282,7 @@ void MainWindow::createToolbars() {
     defaultToolbar.addSeparator();
 
     auto * const pythonButton = new QToolButton();
-    pythonButton->setMenu(new QMenu());
+    pythonButton->setMenu(new QMenu(pythonButton));
     pythonButton->setIcon(QIcon(":/resources/icons/python.png"));
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
@@ -401,8 +403,8 @@ void MainWindow::updateTitlebar() {
     unsavedChangesLabel.setToolTip("");
     if (session.unsavedChanges) {
         title.append("*");
-        auto autosave = tr("<font color='red'>(autosave: off)</font> ");
-        if(session.autoSaveTimer.isActive()) {
+        auto autosave = tr("<font color='red'>(autosave: off)</font>");
+        if (session.autoSaveTimer.isActive()) {
             autosave = tr("<font color='green'>(autosave: on)</font>");
             const auto minutes = session.autoSaveTimer.remainingTime() / 1000 / 60;
             const auto seconds = session.autoSaveTimer.remainingTime() / 1000 % 60;
@@ -600,7 +602,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     Knossos::sendQuitSignal();
-    forEachVPDo([](ViewportBase & vp) { vp.setParent(nullptr); });
     event->accept();//mainwindow takes the qapp with it
 }
 
@@ -674,6 +675,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
+    widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
     Session::singleton().unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
 
@@ -826,10 +828,12 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool segmentation = mode.testFlag(AnnotationMode::Brush) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    toggleSegmentsAction->setVisible(!segmentation);
-    segmentStateLabel.setVisible(!segmentation);
-    if (!segmentation) {
+    toggleSegmentsAction->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
+    segmentStateLabel.setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
+    if (mode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
         setSegmentState(segmentState);
+    } else if (mode.testFlag(AnnotationMode::Mode_Tracing)) {
+        setSegmentState(SegmentState::On);
     }
     newTreeAction->setVisible(trees);
     widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
@@ -841,23 +845,27 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
 
 void MainWindow::setSegmentState(const SegmentState newState) {
     segmentState = newState;
-    QString stateString = "";
+    QString stateName = "";
+    QString nextState = "";
     switch(segmentState) {
     case SegmentState::On:
-        stateString = tr("<font color='green'>On</font>");
+        stateName = tr("<font color='green'>On</font>");
+        nextState = tr("off once");
         Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
         break;
     case SegmentState::Off_Once:
-        stateString = tr("<font color='darkGoldenRod'>Off once</font>");
+        stateName = tr("<font color='darkGoldenRod'>Off once</font>");
+        nextState = tr("off");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     case SegmentState::Off:
-        stateString = tr("<font color='blue'>Off</font>");
+        stateName = tr("<font color='blue'>Off</font>");
+        nextState = tr("on");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     }
-    toggleSegmentsAction->setText("Segments: " + stateString);
-    segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateString);
+    toggleSegmentsAction->setText(tr("Turn segments %1").arg(nextState));
+    segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateName);
 }
 
 void MainWindow::toggleSegments() {
@@ -1182,7 +1190,7 @@ void MainWindow::previousCommentNodeSlot() {
 
 void MainWindow::pushBranchNodeSlot() {
     if(state->skeletonState->activeNode) {
-        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+        Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
 }
 

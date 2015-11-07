@@ -42,17 +42,6 @@ class nodeListElement;
 class segmentListElement;
 class commentListElement;
 
-struct stack {
-    uint elementsOnStack;
-    void **elements;
-    int stackpointer;
-    int size;
-};
-void *popStack(stack *stack);
-bool pushStack(stack *stack, void *element);
-stack *newStack(int size);
-bool delStack(stack *stack);
-
 // skeleton vp orientation
 #define SKELVP_XY_VIEW 0
 #define SKELVP_XZ_VIEW 1
@@ -77,14 +66,13 @@ struct SkeletonState {
     commentListElement * currentComment{nullptr};
     QString commentBuffer;
 
-    stack * branchStack{newStack(1048576)};
+    std::vector<std::uint64_t> branchStack;
 
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
 
     uint volBoundary;
 
     uint totalComments{0};
-    uint totalBranchpoints{0};
 
     bool lockPositions{false};
     bool positionLocked{false};
@@ -226,7 +214,7 @@ public slots:
 
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
-    bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement & branchNode);
+    void pushBranchNode(nodeListElement & branchNode);
     bool moveToNextTree();
     bool moveToPrevTree();
     bool moveToPrevNode();
@@ -255,6 +243,7 @@ public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
     float segmentSizeAt(const nodeListElement &node) const;
+    const QSet<QString> getNumberProperties() const { return numberProperties; }
 };
 
 #endif // SKELETONIZER_H

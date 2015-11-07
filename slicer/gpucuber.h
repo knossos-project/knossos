@@ -55,6 +55,7 @@ public:
     float opacity = 1.0f;
     bool enabled = true;
     bool isOverlayData = false;
+    std::vector<std::pair<CoordOfGPUCube, Coordinate>> pendingCubes;
     TextureLayer(QOpenGLContext & sharectx);
     ~TextureLayer();
     template<typename cube_type, typename elem_type>

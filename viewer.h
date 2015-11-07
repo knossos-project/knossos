@@ -61,6 +61,12 @@ enum class SkeletonDisplay {
     ShowInOrthoVPs = 0x4
 };
 
+enum class IdDisplay {
+    None = 0x0,
+    ActiveNode = 0x1,
+    AllNodes = 0x2 | ActiveNode
+};
+
 struct ViewerState {
     ViewerState() {
         state->viewerState = this;
@@ -140,8 +146,8 @@ struct ViewerState {
     // skeleton rendering options
     float depthCutOff{5.f};
     QFlags<SkeletonDisplay> skeletonDisplay{SkeletonDisplay::ShowIn3DVP, SkeletonDisplay::ShowInOrthoVPs};
+    QFlags<IdDisplay> idDisplay{IdDisplay::None};
     int highlightActiveTree{true};
-    int showNodeIDs{false};
     float segRadiusToNodeRadius{.5f};
     int overrideNodeRadiusBool{false};
     float overrideNodeRadiusVal{1.f};
@@ -195,7 +201,7 @@ public:
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
     Viewport3D *vpLowerRight;
-    QTimer *timer;
+    QTimer timer;
     int frames;
 
     bool initialized;
@@ -240,6 +246,7 @@ public slots:
     void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
     void setVPOrientation(const bool arbitrary);
+    void calculateMissingGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();

@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
 option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
@@ -14,9 +14,6 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-#the *.cpp file of openjpeg (why ever its named *.cpp) is skipped because it causes problems
-file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
-
 file(GLOB root *.cpp *.h *.qrc *.h.in)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
 file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
@@ -24,7 +21,7 @@ file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
 file(GLOB_RECURSE slicer ./slicer/*.cpp ./slicer/*.h)
 file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
 file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
-set(SRC_LIST ${openjpeg} ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
+set(SRC_LIST ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resources.qrc
@@ -148,4 +145,10 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "R
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_PARALLEL")
     target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/CMake/cotire.cmake)
+    set(COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
+    include(CMake/cotire.cmake)#https://github.com/sakra/cotire/releases/latest
+    cotire(${PROJECT_NAME})
 endif()

@@ -29,6 +29,7 @@ void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
 }
 
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
+    idCombo.addItems({"None", "Active Node", "All Nodes"});
     edgeNodeRatioSpin.setSingleStep(0.1);
 
     propertyModel.recreate({});
@@ -47,7 +48,8 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     nodeSeparator.setFrameShadow(QFrame::Sunken);
     mainLayout.setAlignment(Qt::AlignTop);
     int row = 0;
-    mainLayout.addWidget(&allNodeIDsCheck, row++, 0);
+    mainLayout.addWidget(&idLabel, row, 0);
+    mainLayout.addWidget(&idCombo, row++, 1);
     mainLayout.addWidget(&nodeCommentsCheck, row++, 0);
     mainLayout.addWidget(&overrideNodeRadiusCheck, row, 0);
     mainLayout.addWidget(&nodeRadiusSpin, row++, 1);
@@ -66,7 +68,9 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&lutLabel, row++, 0, 1, 4, Qt::AlignRight);
     mainLayout.setColumnStretch(0, 1);
     setLayout(&mainLayout);
-    QObject::connect(&allNodeIDsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->showNodeIDs = on; });
+    QObject::connect(&idCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
+        state->viewerState->idDisplay = index == 2 ? IdDisplay::AllNodes : index == 1 ? IdDisplay::ActiveNode : IdDisplay::None;
+    });
     QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
     QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { ViewportOrtho::showNodeComments = checked; });
     QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::clicked, [this](const bool on) {
@@ -121,7 +125,7 @@ void NodesTab::loadNodeLUTRequest(QString path) {
 }
 
 void NodesTab::saveSettings(QSettings & settings) const {
-    settings.setValue(SHOW_ALL_NODE_ID, allNodeIDsCheck.isChecked());
+    settings.setValue(NODE_ID_DISPLAY, idCombo.currentIndex());
     settings.setValue(EDGE_TO_NODE_RADIUS, edgeNodeRatioSpin.value());
     settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, overrideNodeRadiusCheck.isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, nodeRadiusSpin.value());
@@ -133,8 +137,7 @@ void NodesTab::saveSettings(QSettings & settings) const {
 }
 
 void NodesTab::loadSettings(const QSettings & settings) {
-    allNodeIDsCheck.setChecked(settings.value(SHOW_ALL_NODE_ID, false).toBool());
-    allNodeIDsCheck.clicked(allNodeIDsCheck.isChecked());
+    idCombo.setCurrentIndex(settings.value(NODE_ID_DISPLAY, 0).toInt());
     edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
     edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
     overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
