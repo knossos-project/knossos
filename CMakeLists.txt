@@ -146,3 +146,9 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "R
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_PARALLEL")
     target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
 endif()
+
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/CMake/cotire.cmake)
+    set(COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
+    include(CMake/cotire.cmake)#https://github.com/sakra/cotire/releases/latest
+    cotire(${PROJECT_NAME})
+endif()
