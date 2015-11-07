@@ -1936,13 +1936,14 @@ bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNo
         }
     }
 
+    auto & node = *currentComment->node;
     free(currentComment);
 
     Session::singleton().unsavedChanges = true;
 
     state->skeletonState->totalComments--;
 
-    emit nodeChangedSignal(*currentComment->node);
+    emit nodeChangedSignal(node);
 
     return true;
 }
