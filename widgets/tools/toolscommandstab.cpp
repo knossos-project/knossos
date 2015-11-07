@@ -175,6 +175,11 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, this, &ToolsCommandsTab::updateNodeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, this, &ToolsCommandsTab::updateTreeCount);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, this, &ToolsCommandsTab::updateTreeCount);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){
+        updateNodeCount();
+        updateTreeCount();
+        updateBranchCount();
+    });
 
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
 }
@@ -244,7 +249,7 @@ void ToolsCommandsTab::newTreeButtonClicked() {
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
     if(state->skeletonState->activeNode) {
-        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+        Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
 }
 
@@ -299,7 +304,7 @@ void ToolsCommandsTab::enableNewTreeButton(const bool value) {
 }
 
 void ToolsCommandsTab::updateBranchCount() {
-    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
+    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack.size()));
 }
 
 void ToolsCommandsTab::updateNodeCount() {

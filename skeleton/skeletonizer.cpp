@@ -130,7 +130,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
 
     if(state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-        pushBranchNode(true, true, addedNode.get());
+        pushBranchNode(addedNode.get());
         addComment("First Node", addedNode.get());
     }
     return addedNode.get();
@@ -164,7 +164,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     }
     if (state->skeletonState->activeTree->size == 1) {
         /* First node in this tree */
-        pushBranchNode(true, true, targetNode.get());
+        pushBranchNode(targetNode.get());
         addComment("First Node", targetNode.get());
     }
 
@@ -172,29 +172,6 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
 }
 
 bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
-    //  This function should always be called through UI_saveSkeleton
-    // for proper error and file name display to the user.
-
-    // We need to do this to be able to save the branch point stack to a file
-    //and still have the branch points available to the user afterwards.
-
-    stack * const reverseBranchStack = newStack(2048);
-    stack * const tempReverseStack = newStack(2048);
-    while (const auto currentBranchPointID = popStack(state->skeletonState->branchStack)) {
-        pushStack(reverseBranchStack, currentBranchPointID);
-        pushStack(tempReverseStack, currentBranchPointID);
-    }
-
-    while (const auto currentBranchPointID = (ptrdiff_t)popStack(tempReverseStack)) {
-        auto currentNode = findNodeByNodeID(currentBranchPointID);
-        if(currentNode) {
-            state->viewer->skeletonizer->pushBranchNode(false, false, *currentNode);
-        }
-        else {
-            qDebug() << "Could not find node with ID" << currentBranchPointID;
-        }
-    }
-
     QXmlStreamWriter xml(&file);
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
@@ -352,9 +329,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement(); // end comments
 
     xml.writeStartElement("branchpoints");
-    while (const auto currentBranchPointID = reinterpret_cast<std::size_t>(popStack(reverseBranchStack))) {
+    for (const auto branchNodeID : state->skeletonState->branchStack) {
         xml.writeStartElement("branchpoint");
-        xml.writeAttribute("id", QString::number(currentBranchPointID));
+        xml.writeAttribute("id", QString::number(branchNodeID));
         xml.writeEndElement();
     }
     xml.writeEndElement(); // end branchpoints
@@ -740,7 +717,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     for (const auto & elem : branchVector) {
         const auto & currentNode = findNodeByNodeID(elem);
         if(currentNode != nullptr)
-            pushBranchNode(true, false, *currentNode);
+            pushBranchNode(*currentNode);
     }
 
     for (const auto & elem : commentsVector) {
@@ -831,7 +808,8 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         delComment(nodeToDel->comment, 0);
     }
     if (nodeToDel->isBranchNode) {
-        state->skeletonState->totalBranchpoints--;
+        auto foundIt = std::find(std::begin(state->skeletonState->branchStack), std::end(state->skeletonState->branchStack), nodeToDel->nodeID);
+        state->skeletonState->branchStack.erase(foundIt);
     }
 
     for (auto * currentSegment = nodeToDel->firstSegment; currentSegment != nullptr;) {
@@ -1243,7 +1221,7 @@ void Skeletonizer::clearSkeleton() {
 
     skeletonState->nodesByNodeID.clear();
     skeletonState->treesByID.clear();
-    delStack(skeletonState->branchStack);
+    skeletonState->branchStack.clear();
 
     //Generate empty tree structures
     skeletonState->firstTree = NULL;
@@ -1254,8 +1232,6 @@ void Skeletonizer::clearSkeleton() {
     skeletonState->activeNode = NULL;
     skeletonState->greatestNodeID = 0;
     skeletonState->greatestTreeID = 0;
-
-    skeletonState->branchStack = newStack(1048576);
 
     Session::singleton().resetMovementArea();
     Session::singleton().setAnnotationTime(0);
@@ -1667,82 +1643,6 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
     return true;
 }
 
-void * popStack(stack *stack) {
-    //The stack should hold values != NULL only, NULL indicates an error.
-    void *element = NULL;
-
-    if(stack->stackpointer >= 0) {
-        element = stack->elements[stack->stackpointer];
-    }
-    else {
-        return NULL;
-    }
-    stack->stackpointer--;
-    stack->elementsOnStack--;
-
-    return element;
-}
-
-bool pushStack(stack *stack, void *element) {
-    if(element == NULL) {
-        qDebug() << "Stack can't hold NULL.";
-        return false;
-    }
-
-    if(stack->stackpointer + 1 == stack->size) {
-        stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
-        if(stack->elements == NULL) {
-            qDebug() << "Out of memory.";
-            _Exit(false);
-        }
-        stack->size = stack->size * 2;
-    }
-
-    stack->stackpointer++;
-    stack->elementsOnStack++;
-
-    stack->elements[stack->stackpointer] = element;
-
-    return true;
-}
-
-stack * newStack(int size) {
-    struct stack *newStack = NULL;
-
-    if(size <= 0) {
-        qDebug() << "That doesn't really make any sense, right? Cannot create stack with size <= 0.";
-        return NULL;
-    }
-
-    newStack = (stack *)malloc(sizeof(struct stack));
-    if(newStack == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(newStack, '\0', sizeof(struct stack));
-
-    newStack->elements = (void **)malloc(sizeof(void *) * size);
-    if(newStack->elements == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(newStack->elements, '\0', sizeof(void *) * size);
-
-    newStack->size = size;
-    newStack->stackpointer = -1;
-    newStack->elementsOnStack = 0;
-
-    return newStack;
-
-}
-
-bool delStack(stack *stack) {
-    free(stack->elements);
-    free(stack);
-
-    return true;
-}
-
 bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  This function takes a node and splits the connected component
     //  containing that node into a new tree, unless the connected component
@@ -2110,67 +2010,37 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     return true;
 }
 
-/* @todo loader gets out of sync (endless loop) */
-nodeListElement* Skeletonizer::popBranchNode() {
-    nodeListElement *branchNode = NULL;
-    std::size_t branchNodeID = 0;
-
-    // Nodes on the branch stack may not actually exist anymore
-    while(true){
-        if (branchNode != NULL)
-            if (branchNode->isBranchNode == true) {
-                break;
-            }
-        branchNodeID = reinterpret_cast<std::size_t>(popStack(state->skeletonState->branchStack));
-        if(branchNodeID == 0) {
-            QMessageBox box;
-            box.setWindowTitle("Knossos Information");
-            box.setIcon(QMessageBox::Information);
-            box.setInformativeText("No branch points remain");
-            box.exec();
-            qDebug() << "No branch points remain.";
-
-            goto exit_popbranchnode;
-        }
-
-        branchNode = findNodeByNodeID(branchNodeID);
+nodeListElement * Skeletonizer::popBranchNode() {
+    if (state->skeletonState->branchStack.empty()) {
+        return nullptr;
     }
+    std::size_t branchNodeID = state->skeletonState->branchStack.back();
+    state->skeletonState->branchStack.pop_back();
 
-    if(branchNode && branchNode->isBranchNode) {
-        qDebug() << "Branch point (" << branchNodeID << ") deleted.";
+    auto * branchNode = findNodeByNodeID(branchNodeID);
+    assert(branchNode->isBranchNode);
+    branchNode->isBranchNode = false;
+    state->skeletonState->branchpointUnresolved = true;
+    qDebug() << "Branch point" << branchNodeID << "deleted.";
 
-        setActiveNode(branchNode);
+    setActiveNode(branchNode);
+    state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 
-        branchNode->isBranchNode = 0;
-
-        state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
-
-        state->skeletonState->branchpointUnresolved = true;
-        emit branchPoppedSignal();
-    }
-
-exit_popbranchnode:
+    emit branchPoppedSignal();
     Session::singleton().unsavedChanges = true;
-    state->skeletonState->totalBranchpoints--;
     return branchNode;
 }
 
-bool Skeletonizer::pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement &branchNode) {
-    if(branchNode.isBranchNode == 0 || !checkDoubleBranchpoint) {
-        pushStack(state->skeletonState->branchStack, reinterpret_cast<void *>(static_cast<std::size_t>(branchNode.nodeID)));
-        if(setBranchNodeFlag) {
-            branchNode.isBranchNode = true;
-            qDebug() << "Branch point (node ID" << branchNode.nodeID << ") added.";
-            emit branchPushedSignal();
-        }
-    }
-    else {
+void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
+    if (!branchNode.isBranchNode) {
+        state->skeletonState->branchStack.emplace_back(branchNode.nodeID);
+        branchNode.isBranchNode = true;
+        qDebug() << "Branch point" << branchNode.nodeID << "added.";
+        emit branchPushedSignal();
+        Session::singleton().unsavedChanges = true;
+    } else {
         qDebug() << "Active node is already a branch point";
-        return true;
     }
-    Session::singleton().unsavedChanges = true;
-    state->skeletonState->totalBranchpoints++;
-    return true;
 }
 
 void Skeletonizer::jumpToNode(const nodeListElement & node) {
@@ -2178,12 +2048,18 @@ void Skeletonizer::jumpToNode(const nodeListElement & node) {
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
-    if (state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
+    if (state->skeletonState->branchStack.empty()) {
+        QMessageBox box(parent);
+        box.setIcon(QMessageBox::Information);
+        box.setText("No branch points remain.");
+        box.exec();
+        qDebug() << "No branch points remain.";
+    } else if (state->skeletonState->branchpointUnresolved) {
         QMessageBox prompt(parent);
         prompt.setIcon(QMessageBox::Question);
-        prompt.setText("Nothing has been modified after jumping to the last branch point.");
-        prompt.setInformativeText("Do you really want to jump?");
-        prompt.addButton("Jump", QMessageBox::AcceptRole);
+        prompt.setText("Unresolved branch point. \nDo you really want to jump to the next one?");
+        prompt.setInformativeText("No node has been added after jumping to the last branch point.");
+        prompt.addButton("Jump anyway", QMessageBox::AcceptRole);
         auto * cancel = prompt.addButton("Cancel", QMessageBox::RejectRole);
 
         prompt.exec();

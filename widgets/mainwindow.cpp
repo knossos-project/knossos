@@ -1190,7 +1190,7 @@ void MainWindow::previousCommentNodeSlot() {
 
 void MainWindow::pushBranchNodeSlot() {
     if(state->skeletonState->activeNode) {
-        Skeletonizer::singleton().pushBranchNode(true, true, *state->skeletonState->activeNode);
+        Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
 }
 

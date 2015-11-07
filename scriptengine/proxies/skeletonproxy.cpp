@@ -307,10 +307,7 @@ bool SkeletonProxy::set_branch_node(int node_id) {
         emit echo(QString("no node with id %1 found").arg(node_id));
         return false;
     }
-    if (!Skeletonizer::singleton().pushBranchNode(true, false, *currentNode)) {
-        emit echo(QString("An unexpected error occured while adding a branch node"));
-        return false;
-    }
+    Skeletonizer::singleton().pushBranchNode(*currentNode);
     return true;
 }
 

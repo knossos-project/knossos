@@ -233,7 +233,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 }
             } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, viewportType, false)) {
                 //Add a "stump", a branch node to which we don't automatically move.
-                Skeletonizer::singleton().pushBranchNode(true, true, stumpNode.get());
+                Skeletonizer::singleton().pushBranchNode(stumpNode.get());
                 Skeletonizer::singleton().setActiveNode(oldNode);
             }
         } else {
