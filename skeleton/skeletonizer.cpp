@@ -2237,9 +2237,8 @@ bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
         --node->correspondingTree->size;
 
         // add node to new tree
-        if (newTree->firstNode) {
-            node->previous = newTree->firstNode->previous;
-        }
+        node->previous = nullptr;//we always insert at the beginning
+        node->next.release();
         node->next = std::move(newTree->firstNode);
         if (node->next != nullptr) {
             node->next->previous = node;
