@@ -544,7 +544,7 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
     if(askExtractConnectedComponent) {
         const QString msg("Do you really want to extract all nodes in this component into a new tree?");
 
-        QMessageBox msgBox;
+        QMessageBox msgBox(this);
         msgBox.setText(msg);
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.addButton(QMessageBox::Ok);
@@ -566,7 +566,11 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
 
         const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
         if (!extracted) {
-            QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
+            QMessageBox msgBox(this);
+            msgBox.setText("Nothing to extract");
+            msgBox.setInformativeText("The component spans an entire tree.");
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.exec();
         } else {
             auto msg = QString("Extracted from %1").arg(treeID);
 
