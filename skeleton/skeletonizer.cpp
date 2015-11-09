@@ -1700,7 +1700,6 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     treeCol.r = -1.;
     auto newTree = addTreeListElement(0, treeCol);
     // Splitting the connected component.
-    std::vector<int> deletedTrees;
     nodeListElement * last = nullptr;
     for (auto * node : visitedNodes) {
         // Removing node list element from its old position
@@ -1716,7 +1715,6 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
             node->correspondingTree->firstNode = std::move(node->next);
         }
         if (node->correspondingTree->size == 0) {//remove empty trees
-            deletedTrees.emplace_back(node->correspondingTree->treeID);
             delTree(node->correspondingTree->treeID);
         }
         // Inserting node list element into new list.
