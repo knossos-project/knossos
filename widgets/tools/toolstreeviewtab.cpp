@@ -524,18 +524,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
 void ToolsTreeviewTab::linkNodesAction() {
     const auto node0 = state->skeletonState->selectedNodes[0];
     const auto node1 = state->skeletonState->selectedNodes[1];
-    auto & skel = Skeletonizer::singleton();
-    //segments are only stored and searched in one direction so we have to search for both
-    auto * segment = Skeletonizer::findSegmentBetween(*node0, *node1);
-    if (segment) {
-        skel.delSegment(segment);
-    } else if ((segment = Skeletonizer::findSegmentBetween(*node1, *node0))) {
-        skel.delSegment(segment);
-    } else if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*node0, *node1)) {
-        QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
-    } else {//nodes are not already linked
-        skel.addSegment(*node0, *node1);
-    }
+    checkedToggleNodeLink(this, *node0, *node1);
 }
 
 void ToolsTreeviewTab::extractConnectedComponentAction() {

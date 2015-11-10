@@ -25,7 +25,6 @@ class QMenu;
 
 class treeListElement;
 class nodeListElement;
-class segmentListElement;
 
 class ToolsTreeviewTab : public QWidget
 {

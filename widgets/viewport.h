@@ -169,6 +169,7 @@ protected:
     virtual void renderViewportFrontFace();
     boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
     QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
+    void handleLinkToggle(const QMouseEvent & event);
 
     // event-handling
     virtual void enterEvent(QEvent * event) override;
@@ -258,9 +259,6 @@ signals:
     void rotationSignal(const floatCoordinate & axis, const float angle);
     void pasteCoordinateSignal();
     void zoomReset();
-
-    void delSegmentSignal(segmentListElement *segToDel);
-    void addSegmentSignal(nodeListElement & sourceNode, nodeListElement & targetNode);
 
     void compressionRatioToggled();
     void setRecenteringPositionSignal(const floatCoordinate & newPos);

@@ -1,5 +1,6 @@
 #include "gui_wrapper.h"
 
+#include "session.h"
 #include "skeleton/skeletonizer.h"
 
 #include <QMessageBox>
@@ -16,4 +17,16 @@ void checkedMoveNodes(QWidget * parent, int treeID) {
     if (prompt.clickedButton() == confirmButton) {
         Skeletonizer::singleton().moveSelectedNodesToTree(treeID);
     }
+}
+
+void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs) {
+    if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(lhs, rhs)) {
+        QMessageBox prompt(parent);
+        prompt.setIcon(QMessageBox::Warning);
+        prompt.setText(QObject::tr("Cycle detected!"));
+        prompt.setInformativeText(QObject::tr("If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar."));
+        prompt.exec();
+        return;
+    }
+    Skeletonizer::singleton().toggleLink(lhs, rhs);
 }

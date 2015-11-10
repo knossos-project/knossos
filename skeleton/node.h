@@ -14,7 +14,7 @@ class treeListElement;
 class nodeListElement {
 public:
     nodeListElement(const uint64_t nodeID, const float radius, const Coordinate & position, const int inMag, const ViewportType inVP, const uint64_t ms, const QVariantHash & properties, treeListElement & tree);
-    bool operator==(const nodeListElement & other);
+    bool operator==(const nodeListElement & other) const;
     uint64_t nodeID;
     float radius;
     Coordinate position;
@@ -26,8 +26,7 @@ public:
 
     std::unique_ptr<nodeListElement> next = nullptr;
     nodeListElement * previous = nullptr;
-    segmentListElement * firstSegment = nullptr;
-    int numSegs;// counts forward AND backward segments!!!
+    std::list<segmentListElement> segments;
     commentListElement * comment = nullptr;
     // circumsphere radius - max. of length of all segments and node radius.
     //Used for frustum culling
@@ -38,32 +37,16 @@ public:
     QList<segmentListElement *> *getSegments();
 };
 
-#define SEGMENT_FORWARD true
-#define SEGMENT_BACKWARD false
-
 class segmentListElement {
 public:
-    segmentListElement() {}
-    segmentListElement *next;
-    segmentListElement *previous;
+    segmentListElement(nodeListElement & source, nodeListElement & target, const bool forward = true) : source{source}, target{target}, forward(forward) {}
 
-    //Contains the reference to the segment inside the target node
-    segmentListElement *reverseSegment;
-
-    // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
-    bool flag;
-    float length;
-    //char *comment;
-
-    //Those coordinates are not the same as the coordinates of the source / target nodes
-    //when a segment crosses the skeleton DC boundaries. Then these coordinates
-    //lie at the skeleton DC borders. This applies only, when we use the segment inside
-    //a skeleton DC, not inside of a tree list.
-    //Coordinate pos1;
-    //Coordinate pos2;
-
-    nodeListElement *source;
-    nodeListElement *target;
+    nodeListElement & source;
+    nodeListElement & target;
+    const bool forward;
+    float length = 0;
+    //reference to the segment inside the target node
+    std::list<segmentListElement>::iterator sisterSegment;
 };
 
 class commentListElement {

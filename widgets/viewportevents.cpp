@@ -25,6 +25,7 @@
 #include "widgets/viewport.h"
 
 #include "functions.h"
+#include "gui_wrapper.h"
 #include "knossos.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
@@ -134,6 +135,14 @@ void startNodeSelection(const int x, const int y, const int viewportID, const Qt
     state->viewerState->nodeSelectSquareData = std::make_pair(viewportID, modifiers);
 }
 
+void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
+    auto * activeNode = state->skeletonState->activeNode;
+    auto clickedNode = retrieveVisibleObjectBeneathSquare(event.x(), event.y(), 10);
+    if (clickedNode && activeNode != nullptr) {
+        checkedToggleNodeLink(this, *activeNode, clickedNode.get());
+    }
+}
+
 void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
@@ -143,47 +152,14 @@ void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
         }
         //Set Connection between Active Node and Clicked Node
         else if (QApplication::keyboardModifiers() == Qt::ALT) {
-            auto clickedNode = retrieveVisibleObjectBeneathSquare(event->x(), event->y(), 10);
-            auto * activeNode = state->skeletonState->activeNode;
-            if (clickedNode && activeNode != nullptr) {
-                auto & skel = Skeletonizer::singleton();
-                auto * segment = skel.findSegmentBetween(*activeNode, clickedNode.get());
-                if (segment) {
-                    emit delSegmentSignal(segment);
-                } else if ((segment = skel.findSegmentBetween(clickedNode.get(), *activeNode))) {
-                    emit delSegmentSignal(segment);
-                } else{
-                    if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, clickedNode.get())) {
-                        QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
-                        return;
-                    }
-                    emit addSegmentSignal(*activeNode, clickedNode.get());
-                }
-            }
+            handleLinkToggle(*event);
         }
     }
 }
 
 void ViewportBase::handleMouseButtonMiddle(const QMouseEvent *event) {
     if (event->modifiers().testFlag(Qt::ShiftModifier) && Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        auto & skel = Skeletonizer::singleton();
-        auto activeNode = state->skeletonState->activeNode;
-        auto clickedNode = retrieveVisibleObjectBeneathSquare(event->x(), event->y(), 10);
-        if (clickedNode && activeNode) {
-            // Toggle segment between clicked and active node
-            auto * segment = skel.findSegmentBetween(*activeNode, clickedNode.get());
-            if (segment) {
-                emit delSegmentSignal(segment);
-            } else if ((segment = skel.findSegmentBetween(clickedNode.get(), *activeNode))) {
-                emit delSegmentSignal(segment);
-            } else {
-                if(!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*activeNode, clickedNode.get())) {
-                    QMessageBox::information(nullptr, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
-                    return;
-                }
-                emit addSegmentSignal(*activeNode, clickedNode.get());
-            }
-        }
+        handleLinkToggle(*event);
     }
 }
 

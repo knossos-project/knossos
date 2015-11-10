@@ -176,15 +176,6 @@ void SkeletonProxy::export_converter(const QString &path) {
 
 }
 
-segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
-    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
-    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
-    if(sourceNode && targetNode) {
-        return Skeletonizer::findSegmentBetween(*sourceNode, *targetNode);
-    }
-    return nullptr;
-}
-
 void SkeletonProxy::jump_to_node(nodeListElement *node) {
     if(node) {
         Skeletonizer::singleton().jumpToNode(*node);
@@ -200,9 +191,14 @@ void SkeletonProxy::delete_skeleton() {
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {
-    if(auto *segment = find_segment(source_id, target_id)) {
-        Skeletonizer::delSegment(segment);
-        return true;
+    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
+    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
+    if (sourceNode && targetNode) {
+        auto segmentIt = Skeletonizer::findSegmentBetween(*sourceNode, *targetNode);
+        if (segmentIt != std::end(sourceNode->segments)) {
+            Skeletonizer::singleton().delSegment(segmentIt);
+            return true;
+        }
     }
     return false;
 }
@@ -292,7 +288,7 @@ bool SkeletonProxy::add_segment(int source_id, int target_id) {
     auto * sourceNode = Skeletonizer::findNodeByNodeID(source_id);
     auto * targetNode = Skeletonizer::findNodeByNodeID(target_id);
     if(sourceNode != nullptr && targetNode != nullptr) {
-        if (!Skeletonizer::addSegment(*sourceNode, *targetNode)) {
+        if (!Skeletonizer::singleton().addSegment(*sourceNode, *targetNode)) {
             emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
             return false;
         }

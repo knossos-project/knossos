@@ -1359,8 +1359,6 @@ void Viewer::rewire() {
     window->forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(&vp, &ViewportBase::delSegmentSignal, &Skeletonizer::delSegment);
-        QObject::connect(&vp, &ViewportBase::addSegmentSignal, &Skeletonizer::addSegment);
         QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::rotationSignal, this, &Viewer::setRotation);
         QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);

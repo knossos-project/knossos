@@ -281,8 +281,8 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
 }
 
 void ViewportBase::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
-    renderCylinder(&(segment.source->position), Skeletonizer::singleton().segmentSizeAt(*segment.source) * state->viewerState->segRadiusToNodeRadius,
-        &(segment.target->position), Skeletonizer::singleton().segmentSizeAt(*segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
+    renderCylinder(&(segment.source.position), Skeletonizer::singleton().segmentSizeAt(segment.source) * state->viewerState->segRadiusToNodeRadius,
+        &(segment.target.position), Skeletonizer::singleton().segmentSizeAt(segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
 }
 
 void ViewportOrtho::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
@@ -382,16 +382,16 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
     floatCoordinate tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
     GLUquadricObj *gluCylObj = NULL;
 
-    sSp_local.x = (float)segment.source->position.x;
-    sSp_local.y = (float)segment.source->position.y;
-    sSp_local.z = (float)segment.source->position.z;
+    sSp_local.x = (float)segment.source.position.x;
+    sSp_local.y = (float)segment.source.position.y;
+    sSp_local.z = (float)segment.source.position.z;
 
-    sTp_local.x = (float)segment.target->position.x;
-    sTp_local.y = (float)segment.target->position.y;
-    sTp_local.z = (float)segment.target->position.z;
+    sTp_local.x = (float)segment.target.position.x;
+    sTp_local.y = (float)segment.target.position.y;
+    sTp_local.z = (float)segment.target.position.z;
 
-    sSr_local = (float)segment.source->radius;
-    sTr_local = (float)segment.target->radius;
+    sSr_local = (float)segment.source.radius;
+    sTr_local = (float)segment.target.radius;
 
     //n contains the normal vectors of the 3 orthogonal planes
     float n[3][3] = {{1.,0.,0.},
@@ -2132,7 +2132,6 @@ bool Viewport3D::rotateViewport() {
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
     treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
-    segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
     floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
@@ -2201,48 +2200,35 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
             allowHeuristic = false;
-            if(currentNode->next && (!(currentNode->numSegs > 2))) {
-                currentSegment = currentNode->next->firstSegment;
-                while(currentSegment) {
-
-                    if((currentSegment->target == currentNode) ||
-                       (currentSegment->source == currentNode)) {
+            if (currentNode->next && !(currentNode->segments.size() > 2)) {
+                for (const auto & currentSegment : currentNode->next->segments) {
+                    if (currentSegment.target == *currentNode || currentSegment.source == *currentNode) {
                         /* Connected, heuristic is allowed */
                         allowHeuristic = true;
                         break;
                     }
-                    currentSegment = currentSegment->next;
                 }
             }
 
-
-            currentSegment = currentNode->firstSegment;
-            while(currentSegment && allowHeuristic && !state->viewerState->selectModeFlag) {
+            for (const auto & currentSegment : currentNode->segments) {
+                if (lastNode == nullptr || !allowHeuristic || state->viewerState->selectModeFlag) {
+                    break;
+                }
                 /* isBranchNode tells you only whether the node is on the branch point stack,
                  * not whether it is actually a node connected to more than two other nodes! */
-                if((currentSegment->target == lastNode)
-                    || ((currentSegment->source == lastNode)
-                    &&
-                    (!(
-                       (currentNode->comment)
-                       || (currentNode->isBranchNode)
-                       || (currentNode->numSegs > 2)
-                       || (currentNode->radius * screenPxXPerDataPx > 5.f))))) {
-
+                const bool shouldRender = currentNode->comment != nullptr || currentNode->isBranchNode || currentNode->segments.size() > 2 || currentNode->radius * screenPxXPerDataPx > 5.f;
+                const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
+                if (cullingCandidate) {
                     /* Node is a candidate for LOD culling */
-
                     /* Do we really skip this node? Test cum dist. to last rendered node! */
-                    cumDistToLastRenderedNode += currentSegment->length * screenPxXPerDataPx;
-
-                    if(cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
+                    cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
+                    if (cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
                         break;
-                    }
-                    else {
+                    } else {
                         nodeVisible = false;
                         break;
                     }
                 }
-                currentSegment = currentSegment->next;
             }
 
             if(nodeVisible) {
@@ -2263,30 +2249,19 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    segmentListElement virtualSegment;
-                    virtualSegment.source = lastRenderedNode;
-                    virtualSegment.target = currentNode;
+                    segmentListElement virtualSegment(*lastRenderedNode, *currentNode);
                     renderSegment(virtualSegment, currentColor, options);
                 }
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
-                currentSegment = currentNode->firstSegment;
-                while(currentSegment) {
-                    if(currentSegment->flag == SEGMENT_BACKWARD){
-                        currentSegment = currentSegment->next;
+                for (const auto & currentSegment : currentNode->segments) {
+                    if (!currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
                         continue;
                     }
-
-                    if(virtualSegRendered && (currentSegment->source == lastNode || currentSegment->target == lastNode)) {
-                        currentSegment = currentSegment->next;
-                        continue;
-                    }
-
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderSegment(*currentSegment, currentColor, options);
-                    currentSegment = currentSegment->next;
+                    renderSegment(currentSegment, currentColor, options);
                 }
 
                 if(state->viewerState->selectModeFlag) {

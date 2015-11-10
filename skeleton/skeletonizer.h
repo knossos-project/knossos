@@ -98,7 +98,6 @@ struct SkeletonState {
 
     int treeElements{0};
     int totalNodeElements{0};
-    int totalSegmentElements{0};
 
     uint64_t greatestNodeID{0};
     int greatestTreeID{0};
@@ -162,8 +161,6 @@ public slots:
     uint64_t findAvailableNodeID();
     boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
-    static segmentListElement* addSegmentListElement(segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
-
     void selectNodes(QSet<nodeListElement *> nodes);
     void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
     void selectTrees(const std::vector<treeListElement*> & trees);
@@ -180,7 +177,6 @@ public slots:
     static bool lockPosition(Coordinate lockCoordinate);
     commentListElement *nextComment(QString searchString);
     commentListElement *previousComment(QString searchString);
-    static bool delSegment(segmentListElement *segToDel);
     bool editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement &node);
@@ -211,7 +207,9 @@ public slots:
     static QList<treeListElement *> findTrees(const QString & comment);
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(const treeListElement & tree, const QString & comment);
-    static bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
+    bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
+    bool delSegment(std::list<segmentListElement>::iterator segToDelIt);
+    void toggleLink(nodeListElement & lhs, nodeListElement & rhs);
     void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(int nodeID);
@@ -220,7 +218,7 @@ public slots:
     bool mergeTrees(int treeID1, int treeID2);
     void updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
-    static segmentListElement *findSegmentBetween(const nodeListElement & sourceNode, const nodeListElement & targetNode);
+    static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     bool searchInComment(char *searchString, commentListElement *comment);

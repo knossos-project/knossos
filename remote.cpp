@@ -79,60 +79,59 @@ bool Remote::remoteJump(const Coordinate & jumpVec) {
 }
 
 std::deque<floatCoordinate> Remote::getLastNodes() {
-
     std::deque<floatCoordinate> nodelist;
     nodelist.clear();
     floatCoordinate pos;
 
-    nodeListElement *node = state->skeletonState->activeNode;
-    nodeListElement *lastnode=NULL;
+    nodeListElement const * node = state->skeletonState->activeNode;
+    nodeListElement const * previousNode=NULL;
 
-    if(node == NULL) {
+    if (node == nullptr) {
         return nodelist;
     }
-    if(node->firstSegment == NULL || node->getSegments()->size() > 1) { //we are in the middle of our skeleton or we don't have a skeleton
+    if (node->segments.size() != 1) { //we are in the middle of our skeleton or we don't have a skeleton
         return nodelist;
     }
 
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         qDebug() << node->nodeID;
 
-        if(node->getSegments()->size() == 1) {
-            if(node->firstSegment->source == lastnode || node->firstSegment->target == lastnode) break;
-            if(node->firstSegment->source == node) {
-                lastnode = node;
-                node = node->firstSegment->target;
-            } else {
-                lastnode = node;
-                node= node->firstSegment->source;
+        if (node->segments.size() == 1) {
+            if (node->segments.front().source == *previousNode || node->segments.front().target == *previousNode) {
+                break;
             }
-        } else if(node->getSegments()->size() == 0) {
+            if (node->segments.front().source == *node) {
+                previousNode = node;
+                node = &node->segments.front().target;
+            } else {
+                previousNode = node;
+                node = &node->segments.front().source;
+            }
+        } else if(node->segments.empty()) {
             break;
         } else {
-            if(node->firstSegment->next->source == lastnode || node->firstSegment->next->target == lastnode) {
+            auto nextIt = std::next(std::begin(node->segments));
+            if (nextIt->source == *previousNode || nextIt->target == *previousNode) {
                 //user firstSegment
-                if(node->firstSegment->source == node) {
-                    lastnode = node;
-                    node = node->firstSegment->target;
+                if (node->segments.front().source == *node) {
+                    previousNode = node;
+                    node = &node->segments.front().target;
                 } else {
-                    lastnode = node;
-                    node = node->firstSegment->source;
+                    previousNode = node;
+                    node = &node->segments.front().source;
                 }
             } else {
-                if(node->firstSegment->next->source == node) {
-                    lastnode = node;
-                    node = node->firstSegment->next->target;
+                if (nextIt->source == *node) {
+                    previousNode = node;
+                    node = &nextIt->target;
                 } else {
-                    lastnode = node;
-                    node = node->firstSegment->next->source;
+                    previousNode = node;
+                    node = &nextIt->source;
                 }
             }
         }
 
-        pos.x = node->position.x;
-        pos.y = node->position.y;
-        pos.z = node->position.z;
-
+        pos = node->position;
         nodelist.push_back(pos);
     }
 

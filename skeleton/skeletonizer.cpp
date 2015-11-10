@@ -46,41 +46,29 @@
 
 #define CATCH_RADIUS 10
 
-segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
-    nodeListElement *sourceNode,
-    nodeListElement *targetNode) {
-    segmentListElement *newElement = NULL;
+template<typename T, typename Func>
+bool connectedComponent(T & node, Func func) {
+    std::queue<T*> queue;
+    std::unordered_set<const T*> visitedNodes;
+    visitedNodes.emplace(&node);
+    queue.push(&node);
+    while (!queue.empty()) {
+        auto * nextNode = queue.front();
+        queue.pop();
 
-    /*
-    * This skeleton modifying function does not lock the skeleton and therefore
-    * has to be called from functions that do lock and NEVER directly.
-    */
+        if (func(*nextNode)) {
+            return true;
+        }
 
-    newElement = (segmentListElement*) malloc(sizeof(segmentListElement));
-    if(newElement == NULL) {
-        qDebug() << "Out of memory while trying to allocate memory for a new segmentListElement.";
-        return NULL;
+        for (auto & segment : nextNode->segments) {
+            auto & neighbor = segment.forward ? segment.target : segment.source;
+            if (visitedNodes.find(&neighbor) == visitedNodes.end()) {
+                visitedNodes.emplace(&neighbor);
+                queue.push(&neighbor);
+            }
+        }
     }
-    memset(newElement, '\0', sizeof(segmentListElement));
-    if(*currentSegment == NULL) {
-        // Requested to start a new list
-        *currentSegment = newElement;
-        newElement->previous = NULL;
-        newElement->next = NULL;
-    }
-    else {
-        newElement->previous = *currentSegment;
-        newElement->next = (*currentSegment)->next;
-        (*currentSegment)->next = newElement;
-        if(newElement->next)
-            newElement->next->previous = newElement;
-    }
-
-    //Valid segment
-    newElement->flag = SEGMENT_FORWARD;
-    newElement->source = sourceNode;
-    newElement->target = targetNode;
-    return newElement;
+    return false;
 }
 
 treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
@@ -302,11 +290,11 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
         xml.writeStartElement("edges");
         for (auto currentNode = currentTree->firstNode.get(); currentNode != nullptr; currentNode = currentNode->next.get()) {
-            for (auto currentSegment = currentNode->firstSegment; currentSegment != nullptr; currentSegment = currentSegment->next) {
-                if (currentSegment->flag == SEGMENT_FORWARD) {
+            for (auto & currentSegment : currentNode->segments) {
+                if (currentSegment.forward) {
                     xml.writeStartElement("edge");
-                    xml.writeAttribute("source", QString::number(currentSegment->source->nodeID));
-                    xml.writeAttribute("target", QString::number(currentSegment->target->nodeID));
+                    xml.writeAttribute("source", QString::number(currentSegment.source.nodeID));
+                    xml.writeAttribute("target", QString::number(currentSegment.target.nodeID));
                     xml.writeEndElement();
                 }
             }
@@ -749,45 +737,16 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     return true;
 }
 
-bool Skeletonizer::delSegment(segmentListElement *segToDel) {
+bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
     // Delete the segment out of the segment list and out of the visualization structure!
-    if(!segToDel) {
-        qDebug() << "Cannot delete segment, no segment with corresponding node IDs available!";
-        return false;
-    }
-
-    /* numSegs counts forward AND backward segments!!! */
-    segToDel->source->numSegs--;
-    segToDel->target->numSegs--;
-
-    if(segToDel == segToDel->source->firstSegment)
-        segToDel->source->firstSegment = segToDel->next;
-    else {
-        //if(segToDel->previous) //Why??? Previous EXISTS if its not the first seg...
-            segToDel->previous->next = segToDel->next;
-        if(segToDel->next)
-            segToDel->next->previous = segToDel->previous;
-    }
-
-    //Delete reverse segment in target node
-    if(segToDel->reverseSegment == segToDel->target->firstSegment)
-        segToDel->target->firstSegment = segToDel->reverseSegment->next;
-    else {
-        //if(segToDel->reverseSegment->previous)
-            segToDel->reverseSegment->previous->next = segToDel->reverseSegment->next;
-        if(segToDel->reverseSegment->next)
-            segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
-    }
-
     /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
-    segToDel->length = 0.f;
-    updateCircRadius(segToDel->source);
+    segToDelIt->length = 0.f;
+    updateCircRadius(&segToDelIt->source);
 
-    free(segToDel);
-    state->skeletonState->totalSegmentElements--;
+    segToDelIt->target.segments.erase(segToDelIt->sisterSegment);
+    segToDelIt->source.segments.erase(segToDelIt);
 
     Session::singleton().unsavedChanges = true;
-
     return true;
 }
 
@@ -812,16 +771,9 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         state->skeletonState->branchStack.erase(foundIt);
     }
 
-    for (auto * currentSegment = nodeToDel->firstSegment; currentSegment != nullptr;) {
-        auto * const nextSegment = currentSegment->next;
-        if (currentSegment->flag == SEGMENT_FORWARD) {
-            delSegment(currentSegment);
-        } else if (currentSegment->flag == SEGMENT_BACKWARD) {
-            delSegment(currentSegment->reverseSegment);
-        }
-        currentSegment = nextSegment;
+    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); ++segmentIt) {
+        delSegment(segmentIt);
     }
-    nodeToDel->firstSegment = nullptr;
 
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
 
@@ -1159,45 +1111,42 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
 }
 
 bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & targetNode) {
-    segmentListElement *sourceSeg;
-
-    if(findSegmentBetween(sourceNode, targetNode)) {
+    if (findSegmentBetween(sourceNode, targetNode) != std::end(sourceNode.segments)) {
         qDebug() << "Segment between nodes" << sourceNode.nodeID << "and" << targetNode.nodeID << "exists already.";
         return false;
     }
-
-    if(sourceNode == targetNode) {
+    if (sourceNode == targetNode) {
         qDebug() << "Cannot link node with itself!";
         return false;
     }
 
-    //One segment more in all trees
-    state->skeletonState->totalSegmentElements++;
-
      // Add the segment to the tree structure
-
-    sourceSeg = addSegmentListElement(&(sourceNode.firstSegment), &sourceNode, &targetNode);
-    sourceSeg->reverseSegment = addSegmentListElement(&(targetNode.firstSegment), &sourceNode, &targetNode);
-
-    sourceSeg->reverseSegment->flag = SEGMENT_BACKWARD;
-
-    sourceSeg->reverseSegment->reverseSegment = sourceSeg;
-
-    /* numSegs counts forward AND backward segments!!! */
-    sourceNode.numSegs++;
-    targetNode.numSegs++;
+    sourceNode.segments.emplace_back(sourceNode, targetNode);
+    targetNode.segments.emplace_back(sourceNode, targetNode, false);//although it’s the ›reverse‹ segment, its direction doesn’t change
+    auto sourceSegIt = std::prev(std::end(sourceNode.segments));
+    auto targetSegIt = std::prev(std::end(targetNode.segments));
+    sourceSegIt->sisterSegment = targetSegIt;
+    sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    const floatCoordinate node1 = {(float)sourceNode.position.x, (float)sourceNode.position.y, (float)sourceNode.position.z};
-    const floatCoordinate node2 = {(float)targetNode.position.x - node1.x, (float)targetNode.position.y - node1.y, (float)targetNode.position.z - node1.z};
-
-    sourceSeg->length = sourceSeg->reverseSegment->length = sqrtf(scalarProduct(node2, node2));
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = sqrtf(scalarProduct(sourceNode.position, targetNode.position));
 
     updateCircRadius(&sourceNode);
 
     Session::singleton().unsavedChanges = true;
 
     return true;
+}
+
+void Skeletonizer::toggleLink(nodeListElement & lhs, nodeListElement & rhs) {
+    auto segmentIt = findSegmentBetween(lhs, rhs);
+    if (segmentIt != std::end(lhs.segments)) {
+        delSegment(segmentIt);
+    } else if ((segmentIt = findSegmentBetween(rhs, lhs)) != std::end(rhs.segments)) {
+        delSegment(segmentIt);
+    } else {
+        addSegment(lhs, rhs);
+    }
 }
 
 void Skeletonizer::clearSkeleton() {
@@ -1226,7 +1175,6 @@ void Skeletonizer::clearSkeleton() {
     //Generate empty tree structures
     skeletonState->firstTree = NULL;
     skeletonState->totalNodeElements = 0;
-    skeletonState->totalSegmentElements = 0;
     skeletonState->treeElements = 0;
     skeletonState->activeTree = NULL;
     skeletonState->activeNode = NULL;
@@ -1596,21 +1544,16 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     return true;
 }
 
-segmentListElement* Skeletonizer::findSegmentBetween(const nodeListElement & sourceNode, const nodeListElement & targetNode) {
-    segmentListElement *currentSegment;
-
-    currentSegment = sourceNode.firstSegment;
-    while(currentSegment) {
-        if(currentSegment->flag == SEGMENT_BACKWARD) {
-            currentSegment = currentSegment->next;
+std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode) {
+    for (auto segmentIt = std::begin(sourceNode.segments); segmentIt != std::end(sourceNode.segments); ++segmentIt) {
+        if (!segmentIt->forward) {
             continue;
         }
-        if(*currentSegment->target == targetNode) {
-            return currentSegment;
+        if (segmentIt->target == targetNode) {
+            return segmentIt;
         }
-        currentSegment = currentSegment->next;
     }
-    return NULL;
+    return std::end(sourceNode.segments);
 }
 
 bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
@@ -1652,31 +1595,19 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
 
-    auto node = findNodeByNodeID(nodeID);
+    auto * node = findNodeByNodeID(nodeID);
     if (!node) {
         return false;
     }
 
     std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
-    std::queue<nodeListElement*> queue;
     std::unordered_set<nodeListElement*> visitedNodes;
     visitedNodes.insert(node);
-    queue.push(node);
-    while(queue.size() > 0) {
-        auto nextNode = queue.front();
-        queue.pop();
-        treesSeen.insert(nextNode->correspondingTree);
-
-        auto segment = nextNode->firstSegment;
-        while(segment) {
-            auto *neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
-            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
-                visitedNodes.insert(neighbor);
-                queue.push(neighbor);
-            }
-            segment = segment->next;
-        }
-    }
+    connectedComponent(*node, [&treesSeen, &visitedNodes](nodeListElement & node){
+        visitedNodes.emplace(&node);
+        treesSeen.emplace(node.correspondingTree);
+        return false;
+    });
 
     //  If the total number of nodes visited is smaller than the sum of the
     //  number of nodes in all trees we've seen, the connected component is a
@@ -2095,14 +2026,12 @@ void Skeletonizer::updateTreeColors() {
  * @return
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
-    segmentListElement *currentSegment = NULL;
     node->circRadius = singleton().radius(*node);
     /* Any segment longer than the current circ radius?*/
-    currentSegment = node->firstSegment;
-    while(currentSegment) {
-        if(currentSegment->length > node->circRadius)
-            node->circRadius = currentSegment->length;
-        currentSegment = currentSegment->next;
+    for (auto & currentSegment : node->segments) {
+        if (currentSegment.length > node->circRadius) {
+            node->circRadius = currentSegment.length;
+        }
     }
     return true;
 }
@@ -2338,26 +2267,8 @@ void Skeletonizer::deleteSelectedNodes() {
     emit resetData();
 }
 
-bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement & w) const {
-    std::queue<const nodeListElement*> queue;
-    std::unordered_set<const nodeListElement*> visitedNodes;
-    visitedNodes.insert(&v);
-    queue.push(&v);
-    while(queue.size() > 0) {
-        auto nextNode = queue.front();
-        queue.pop();
-        if(nextNode == &w) {
-            return true;
-        }
-        auto segment = nextNode->firstSegment;
-        while(segment) {
-            auto neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
-            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
-                visitedNodes.insert(neighbor);
-                queue.push(neighbor);
-            }
-            segment = segment->next;
-        }
-    }
-    return false;
+bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElement & rhs) const {
+    return connectedComponent(lhs, [&rhs](const nodeListElement & node){
+        return node == rhs;
+    });
 }

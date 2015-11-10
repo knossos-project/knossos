@@ -73,7 +73,6 @@ public slots:
     bool set_branch_node(int node_id);
     bool add_segment(int source_id, int target_id);
     bool delete_segment(int source_id, int target_id);
-    segmentListElement *find_segment(int source_id, int target_id);
     bool delete_comment(int node_id);
     bool set_comment(int node_id, char *comment);
 
