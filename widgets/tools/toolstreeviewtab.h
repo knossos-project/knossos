@@ -117,7 +117,6 @@ public slots:
     // node context menu
     void setNodeRadiusAction();
     void linkNodesAction();
-    void moveNodesAction();
     void extractConnectedComponentAction();
     void setNodeCommentAction();
     void deleteNodesAction();

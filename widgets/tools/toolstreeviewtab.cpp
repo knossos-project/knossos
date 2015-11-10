@@ -1,5 +1,6 @@
 #include "toolstreeviewtab.h"
 
+#include "gui_wrapper.h"
 #include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
@@ -408,7 +409,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
     } else if (activeTreeTable->hasFocus()) {
         QMenu treeContextMenu;
         QObject::connect(treeContextMenu.addAction("Set comment for tree"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
-        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, [this](){return checkedMoveNodes(this, state->skeletonState->selectedTrees.front()->treeID);});
         QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
         QObject::connect(treeContextMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "(DEL)ete tree"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
@@ -420,7 +421,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         treeContextMenu.exec(activeTreeTable->viewport()->mapToGlobal(pos));
     } else if (treeTable->hasFocus()) {
         QMenu treeContextMenu;
-        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, [this](){return checkedMoveNodes(this, state->skeletonState->selectedTrees.front()->treeID);});
         QObject::connect(treeContextMenu.addAction("Merge trees"), &QAction::triggered, this, &ToolsTreeviewTab::mergeTreesAction);
         QObject::connect(treeContextMenu.addAction("Set comment for tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
         QObject::connect(treeContextMenu.addAction("Show selected tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::showSelectedTrees);
@@ -580,21 +581,6 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
             Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
 
         }
-    }
-}
-
-void ToolsTreeviewTab::moveNodesAction() {
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Confirmation Requested");
-    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
-                            arg(state->skeletonState->selectedTrees.front()->treeID));
-    QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        Skeletonizer::singleton().moveSelectedNodesToTree(state->skeletonState->selectedTrees.front()->treeID);
     }
 }
 
