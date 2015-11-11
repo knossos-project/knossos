@@ -290,7 +290,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
         xml.writeStartElement("edges");
         for (auto currentNode = currentTree->firstNode.get(); currentNode != nullptr; currentNode = currentNode->next.get()) {
-            for (auto & currentSegment : currentNode->segments) {
+            for (const auto & currentSegment : currentNode->segments) {
                 if (currentSegment.forward) {
                     xml.writeStartElement("edge");
                     xml.writeAttribute("source", QString::number(currentSegment.source.nodeID));
@@ -771,7 +771,7 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         state->skeletonState->branchStack.erase(foundIt);
     }
 
-    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); ++segmentIt) {
+    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); segmentIt = std::begin(nodeToDel->segments)) {
         delSegment(segmentIt);
     }
 
@@ -2028,7 +2028,7 @@ void Skeletonizer::updateTreeColors() {
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
     node->circRadius = singleton().radius(*node);
     /* Any segment longer than the current circ radius?*/
-    for (auto & currentSegment : node->segments) {
+    for (const auto & currentSegment : node->segments) {
         if (currentSegment.length > node->circRadius) {
             node->circRadius = currentSegment.length;
         }
