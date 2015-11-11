@@ -2133,7 +2133,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     float cumDistToLastRenderedNode;
-    floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
@@ -2181,9 +2180,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
              * currently rendered viewports are discarded. This is very fast. */
 
             /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
-            currNodePos.x = (float)currentNode->position.x;
-            currNodePos.y = (float)currentNode->position.y;
-            currNodePos.z = (float)currentNode->position.z;
+            floatCoordinate currNodePos = currentNode->position;
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
@@ -2200,7 +2197,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
             allowHeuristic = false;
-            if (currentNode->next && !(currentNode->segments.size() > 2)) {
+            if (currentNode->next != nullptr && currentNode->segments.size() <= 2) {
                 for (const auto & currentSegment : currentNode->next->segments) {
                     if (currentSegment.target == *currentNode || currentSegment.source == *currentNode) {
                         /* Connected, heuristic is allowed */
@@ -2210,22 +2207,19 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 }
             }
 
-            for (const auto & currentSegment : currentNode->segments) {
-                if (lastNode == nullptr || !allowHeuristic || state->viewerState->selectModeFlag) {
-                    break;
-                }
-                /* isBranchNode tells you only whether the node is on the branch point stack,
-                 * not whether it is actually a node connected to more than two other nodes! */
-                const bool shouldRender = currentNode->comment != nullptr || currentNode->isBranchNode || currentNode->segments.size() > 2 || currentNode->radius * screenPxXPerDataPx > 5.f;
-                const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
-                if (cullingCandidate) {
-                    /* Node is a candidate for LOD culling */
-                    /* Do we really skip this node? Test cum dist. to last rendered node! */
-                    cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
-                    if (cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
-                        break;
-                    } else {
-                        nodeVisible = false;
+            if (lastNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
+                for (auto & currentSegment : currentNode->segments) {
+                    /* isBranchNode tells you only whether the node is on the branch point stack,
+                     * not whether it is actually a node connected to more than two other nodes! */
+                    const bool shouldRender = currentNode->comment != nullptr || currentNode->isBranchNode || currentNode->segments.size() > 2 || currentNode->radius * screenPxXPerDataPx > 5.f;
+                    const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
+                    if (cullingCandidate) {
+                        /* Node is a candidate for LOD culling */
+                        /* Do we really skip this node? Test cum dist. to last rendered node! */
+                        cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
+                        if (cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) {
+                            nodeVisible = false;
+                        }
                         break;
                     }
                 }
