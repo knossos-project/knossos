@@ -68,7 +68,7 @@ enum {
 
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
-    QWidget(parent), selectedNodes("selected nodes")
+    QWidget(parent), selectedNodesRadio("selected nodes")
     , radiusBuffer(Skeletonizer::singleton().skeletonState.defaultNodeRadius), draggedNodeID(0), displayedNodes(1000)
 {
     treeSearchField = new QLineEdit();
@@ -89,7 +89,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     branchNodesChckBx = new QCheckBox("... with branch mark");
     commentNodesChckBx = new QCheckBox("... with comments");
 
-    displayedNodesTable = new QLabel("Displayed Nodes:");
+    displayedNodesLabel = new QLabel("Displayed Nodes:");
     displayedNodesCombo = new QComboBox();
     displayedNodesCombo->addItem("1000");
     displayedNodesCombo->addItem("2000");
@@ -180,45 +180,44 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     bottomHLayout.addWidget(&nodeCountLabel, 0, Qt::AlignRight);
 
     mainLayout = new QVBoxLayout();
-    QVBoxLayout *vLayout = new QVBoxLayout();
-    QHBoxLayout *hLayout = new QHBoxLayout();
 
     treeSide = new QWidget();
-    vLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(treeSearchField);
-    hLayout->addWidget(treeRegExCheck);
-    vLayout->addLayout(hLayout);
-    vLayout->addWidget(activeTreeTable);
-    vLayout->addWidget(treeTable);
-    treeSide->setLayout(vLayout);
+    QVBoxLayout * treeLayout = new QVBoxLayout();
+    QHBoxLayout * treeFilterOptionsLayout = new QHBoxLayout();
+    treeFilterOptionsLayout->addWidget(treeSearchField);
+    treeFilterOptionsLayout->addWidget(treeRegExCheck);
+    treeLayout->addLayout(treeFilterOptionsLayout);
+    treeLayout->addWidget(activeTreeTable);
+    treeLayout->addWidget(treeTable);
+    treeSide->setLayout(treeLayout);
 
     nodeSide = new QWidget();
-    vLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodeSearchField);
-    hLayout->addWidget(nodeRegExCheck);
-    vLayout->addLayout(hLayout);
-    QLabel *showLabel = new QLabel("Show...");
-    vLayout->addWidget(showLabel);
-    vLayout->addWidget(allNodesRadio);
+    QVBoxLayout * const nodeLayout = new QVBoxLayout();
+    QHBoxLayout * const nodeFilterOptionsLayout = new QHBoxLayout();
+    QHBoxLayout * const nodeFilterOptions2Layout = new QHBoxLayout();
+    QHBoxLayout * const nodeFilterOptions3Layout = new QHBoxLayout();
+    QHBoxLayout * const nodeDisplayLayout = new QHBoxLayout();
+    QLabel * showLabel = new QLabel("Show...");
 
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodesOfSelectedTreesRadio);
-    hLayout->addWidget(&selectedNodes);
+    nodeFilterOptionsLayout->addWidget(nodeSearchField);
+    nodeFilterOptionsLayout->addWidget(nodeRegExCheck);
+    nodeFilterOptions2Layout->addWidget(nodesOfSelectedTreesRadio);
+    nodeFilterOptions2Layout->addWidget(&selectedNodesRadio);
+    nodeFilterOptions3Layout->addWidget(branchNodesChckBx);
+    nodeFilterOptions3Layout->addWidget(commentNodesChckBx);
+    nodeDisplayLayout->addWidget(displayedNodesLabel);
+    nodeDisplayLayout->addWidget(displayedNodesCombo);
 
-    vLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(branchNodesChckBx);
-    hLayout->addWidget(commentNodesChckBx);
-    vLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(displayedNodesTable);
-    hLayout->addWidget(displayedNodesCombo);
-    vLayout->addLayout(hLayout);
-    vLayout->addWidget(activeNodeTable);
-    vLayout->addWidget(nodeTable);
-    nodeSide->setLayout(vLayout);
+    nodeLayout->addLayout(nodeFilterOptionsLayout);
+    nodeLayout->addWidget(showLabel);
+    nodeLayout->addWidget(allNodesRadio);
+    nodeLayout->addLayout(nodeFilterOptions2Layout);
+    nodeLayout->addLayout(nodeFilterOptions3Layout);
+    nodeLayout->addLayout(nodeDisplayLayout);
+    nodeLayout->addWidget(activeNodeTable);
+    nodeLayout->addWidget(nodeTable);
+
+    nodeSide->setLayout(nodeLayout);
 
     splitter = new QSplitter();
     splitter->addWidget(treeSide);
@@ -238,7 +237,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // display events
     QObject::connect(allNodesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
     QObject::connect(nodesOfSelectedTreesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
-    QObject::connect(&selectedNodes, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);//special :D
+    QObject::connect(&selectedNodesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);//special :D
 
     QObject::connect(branchNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
     QObject::connect(commentNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
@@ -296,7 +295,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, this, &ToolsTreeviewTab::branchPopped);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, this, &ToolsTreeviewTab::branchPushed);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        if (selectedNodes.isChecked()) {
+        if (selectedNodesRadio.isChecked()) {
             recreateNodesTable();
         } else {
             applyNodeSelection();
@@ -1048,7 +1047,7 @@ void ToolsTreeviewTab::recreateNodesTable() {
                     continue;
                 }
             }
-            if ((selectedNodes.isChecked() && !node->selected)
+            if ((selectedNodesRadio.isChecked() && !node->selected)
                     || (branchNodesChckBx->isChecked() && !node->isBranchNode)
                     || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
                 continue;
@@ -1259,7 +1258,7 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
                 return;
             }
         }
-        if ((selectedNodes.isChecked() && !node->selected)
+        if ((selectedNodesRadio.isChecked() && !node->selected)
                 || (branchNodesChckBx->isChecked() && !node->isBranchNode)
                 || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
             return;

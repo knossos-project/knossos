@@ -43,11 +43,11 @@ public:
     QCheckBox *nodeRegExCheck;
     QRadioButton *nodesOfSelectedTreesRadio;
     QRadioButton *allNodesRadio;
-    QRadioButton selectedNodes;//i wanna be special
+    QRadioButton selectedNodesRadio;//i wanna be special
 
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
-    QLabel *displayedNodesTable;
+    QLabel *displayedNodesLabel;
     QComboBox *displayedNodesCombo;
     QMenu *treeContextMenu;
     QMenu *nodeContextMenu;
