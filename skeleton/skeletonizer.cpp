@@ -1129,7 +1129,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = sqrtf(scalarProduct(sourceNode.position, targetNode.position));
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = euclidicNorm(targetNode.position - sourceNode.position);
 
     updateCircRadius(&sourceNode);
 
