@@ -43,11 +43,9 @@
 #include <QSplashScreen>
 #include <QStandardPaths>
 
-#include <cmath>
+
 #include <iostream>
 #include <fstream>
-
-#define NUMTHREADS 4
 
 #if defined(Q_OS_WIN) && defined(QT_STATIC)
 #include <QtPlugin>
