@@ -24,7 +24,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     sizeCombo.setCurrentIndex(0); // 1000 elements default
 
     auto viewportChoiceLayout = new QVBoxLayout();
-    auto vpGroup = new QButtonGroup();
+    auto vpGroup = new QButtonGroup(this);
     vpGroup->addButton(&vpXYRadio);
     vpGroup->addButton(&vpXZRadio);
     vpGroup->addButton(&vpYZRadio);
