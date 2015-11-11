@@ -31,7 +31,6 @@
 #include "widgets/viewport.h"
 
 #include <QObject>
-#include <QThread>
 #include <QDebug>
 #include <QCursor>
 #include <QTimer>
@@ -42,7 +41,6 @@
 
 #define SLOW 1000
 #define FAST 10
-#define RGB_LUTSIZE 768
 
 // MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
 // a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
@@ -179,7 +177,7 @@ struct ViewerState {
  */
 class Skeletonizer;
 class ViewportBase;
-class Viewer : public QThread {
+class Viewer : public QObject {
     Q_OBJECT
 private:
     QElapsedTimer baseTime;
@@ -189,7 +187,7 @@ private:
 
     ViewerState viewerState;
 public:
-    explicit Viewer(QObject *parent = 0);
+    explicit Viewer();
     Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
@@ -200,12 +198,8 @@ public:
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
-    Viewport3D *vpLowerRight;
     QTimer timer;
-    int frames;
 
-    bool initialized;
-    bool moveVPonTop(uint currentVP);
     std::atomic_bool dc_xy_changed{true};
     std::atomic_bool dc_xz_changed{true};
     std::atomic_bool dc_zy_changed{true};
@@ -216,7 +210,6 @@ public:
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     color4F getNodeColor(const nodeListElement & node) const;
 signals:
-    void loadSignal();
     void coordinateChangedSignal(const Coordinate & pos);
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();

@@ -177,7 +177,7 @@ std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString
         throw std::runtime_error(msg.toUtf8());
     };
 
-    const int expectedBinaryLutSize = RGB_LUTSIZE;
+    const std::size_t expectedBinaryLutSize = 256 * 3;//RGB
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> table;
     QFile overlayLutFile(path);
     if (overlayLutFile.open(QIODevice::ReadOnly)) {

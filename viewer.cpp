@@ -42,7 +42,7 @@
 
 #include <cmath>
 
-Viewer::Viewer(QObject *parent) : QThread(parent) {
+Viewer::Viewer() {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
@@ -50,14 +50,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     vpUpperLeft = window->viewportXY.get();
     vpLowerLeft = window->viewportXZ.get();
     vpUpperRight = window->viewportYZ.get();
-    vpLowerRight = window->viewport3D.get();
-
-    /* order of the initialization of the rendering system is
-     * 1. initViewer
-     * 2. new Skeletonizer
-     * 3. init mesh
-     * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
-    */
 
     initViewer();
 
@@ -75,7 +67,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                             1024, 800);
     }
 
-    frames = 0;
     state->viewerState->renderInterval = FAST;
 
     // for arbitrary viewport orientation
@@ -90,7 +81,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                     / 2)
                 *2;
     });
-    moveCache = {};
     resetRotation();
 
     state->viewerState->movementAreaFactor = 80;
