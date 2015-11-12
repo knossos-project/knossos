@@ -195,7 +195,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
     boost::optional<nodeListElement &> newNode;
 
     if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
-        if (oldNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
+        if (oldNode == nullptr || state->skeletonState->activeTree->nodes.empty()) {
             //no node to link with or no empty tree
             newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, viewportType);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {

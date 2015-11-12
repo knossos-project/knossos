@@ -5,12 +5,10 @@
 #include <QString>
 
 QList<nodeListElement *> *treeListElement::getNodes() {
-    QList<nodeListElement *> *nodes = new QList<nodeListElement *>();
+    QList<nodeListElement *> * nodes = new QList<nodeListElement *>();
 
-    nodeListElement *currentNode = firstNode.get();
-    while(currentNode) {
-        nodes->append(currentNode);
-        currentNode = currentNode->next.get();
+    for (auto & node : this->nodes) {
+        nodes->append(&node);
     }
 
     return nodes;
@@ -32,5 +30,3 @@ QList<segmentListElement *> treeListElement::getSegments() {
 
     return complete_segments->toList();
 }
-
-

@@ -70,7 +70,7 @@ nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }
 
-QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(const treeListElement & tree, const QString & comment) {
+QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tree, const QString & comment) {
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 

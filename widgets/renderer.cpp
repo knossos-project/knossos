@@ -2131,9 +2131,7 @@ bool Viewport3D::rotateViewport() {
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
     treeListElement *currentTree;
-    nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     float cumDistToLastRenderedNode;
-    uint virtualSegRendered, allowHeuristic;
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
     state->skeletonState->lineVertBuffer.normsIndex = 0;
@@ -2155,6 +2153,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     /* We iterate over the whole tree structure. */
     currentTree = state->skeletonState->firstTree.get();
 
+    nodeListElement * lastNode = NULL, *lastRenderedNode = NULL;
     while(currentTree) {
 
         /* Render only trees we want to be rendered*/
@@ -2172,34 +2171,31 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             continue;
         }
 
-        currentNode = currentTree->firstNode.get();
-        while(currentNode) {
-
+        for (auto nodeIt = std::begin(currentTree->nodes); nodeIt != std::end(currentTree->nodes); ++nodeIt) {
             /* We start with frustum culling:
              * all nodes that are not in the current viewing frustum for the
              * currently rendered viewports are discarded. This is very fast. */
 
             /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
-            floatCoordinate currNodePos = currentNode->position;
+            floatCoordinate currNodePos = nodeIt->position;
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
 
-            if(!sphereInFrustum(currNodePos, currentNode->circRadius)) {
-                currentNode = currentNode->next.get();
-                lastNode = lastRenderedNode = NULL;
+            if (!sphereInFrustum(currNodePos, nodeIt->circRadius)) {
+                lastNode = lastRenderedNode = nullptr;
                 continue;
             }
 
-            virtualSegRendered = false;
+            bool virtualSegRendered = false;
             bool nodeVisible = true;
 
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
-            allowHeuristic = false;
-            if (currentNode->next != nullptr && currentNode->segments.size() <= 2) {
-                for (const auto & currentSegment : currentNode->next->segments) {
-                    if (currentSegment.target == *currentNode || currentSegment.source == *currentNode) {
+            bool allowHeuristic = false;
+            if (std::next(nodeIt) != std::end(currentTree->nodes) && nodeIt->segments.size() <= 2) {
+                for (const auto & currentSegment : std::next(nodeIt)->segments) {
+                    if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
                         /* Connected, heuristic is allowed */
                         allowHeuristic = true;
                         break;
@@ -2208,10 +2204,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             }
 
             if (lastNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
-                for (auto & currentSegment : currentNode->segments) {
+                for (auto & currentSegment : nodeIt->segments) {
                     /* isBranchNode tells you only whether the node is on the branch point stack,
                      * not whether it is actually a node connected to more than two other nodes! */
-                    const bool shouldRender = currentNode->comment != nullptr || currentNode->isBranchNode || currentNode->segments.size() > 2 || currentNode->radius * screenPxXPerDataPx > 5.f;
+                    const bool shouldRender = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
                     const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
                     if (cullingCandidate) {
                         /* Node is a candidate for LOD culling */
@@ -2243,12 +2239,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    segmentListElement virtualSegment(*lastRenderedNode, *currentNode);
+                    segmentListElement virtualSegment(*lastRenderedNode, *nodeIt);
                     renderSegment(virtualSegment, currentColor, options);
                 }
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
-                for (const auto & currentSegment : currentNode->segments) {
+                for (const auto & currentSegment : nodeIt->segments) {
                     if (!currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
                         continue;
                     }
@@ -2259,18 +2255,14 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 }
 
                 if(state->viewerState->selectModeFlag) {
-                    glLoadName(GLNAME_NODEID_OFFSET + currentNode->nodeID);
+                    glLoadName(GLNAME_NODEID_OFFSET + nodeIt->nodeID);
                 }
-                renderNode(*currentNode, options);
+                renderNode(*nodeIt, options);
 
-                lastRenderedNode = currentNode;
+                lastRenderedNode = &*nodeIt;
             }
-
-            lastNode = currentNode;
-
-            currentNode = currentNode->next.get();
+            lastNode = &*nodeIt;
         }
-
         currentTree = currentTree->next.get();
     }
 

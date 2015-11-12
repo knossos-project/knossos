@@ -22,10 +22,9 @@ public:
     ViewportType createdInVp;
     uint64_t timestamp;
     QVariantHash properties;
+    std::list<nodeListElement>::iterator iterator;
     treeListElement * correspondingTree = nullptr;
 
-    std::unique_ptr<nodeListElement> next = nullptr;
-    nodeListElement * previous = nullptr;
     std::list<segmentListElement> segments;
     commentListElement * comment = nullptr;
     // circumsphere radius - max. of length of all segments and node radius.

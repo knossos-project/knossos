@@ -7,6 +7,7 @@
 #include <QHash>
 #include <QList>
 
+#include <list>
 #include <memory>
 
 class segmentListElement;
@@ -15,7 +16,7 @@ class treeListElement {
 public:
     std::unique_ptr<treeListElement> next;
     treeListElement * previous = nullptr;
-    std::unique_ptr<nodeListElement> firstNode;
+    std::list<nodeListElement> nodes;
 
     bool render = true;
 
@@ -23,7 +24,6 @@ public:
     color4F color;
     bool selected;
     bool colorSetManually;
-    std::size_t size;
 
     char comment[8192];
 

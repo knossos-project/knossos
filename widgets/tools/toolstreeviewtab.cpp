@@ -1030,32 +1030,32 @@ void ToolsTreeviewTab::recreateNodesTable() {
 
     int nodeIndex = 0;
     for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
-        for (nodeListElement * node = currentTree->firstNode.get(); node != nullptr; node = node->next.get()) {
+        for (const auto & node : currentTree->nodes) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
                 break;
             }
             // filter for comment search string
             if (nodeSearchField->text().length() > 0) {
-                if(node->comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node->comment->content), nodeRegExCheck->isChecked())) {
+                if (node.comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node.comment->content), nodeRegExCheck->isChecked())) {
                     continue;
                 }
             }
             // filter for nodes of selected trees
             if (nodesOfSelectedTreesRadio->isChecked()) {
-                if (node->correspondingTree->selected == false) {// node not in one of the selected trees
+                if (!node.correspondingTree->selected) {// node not in one of the selected trees
                     continue;
                 }
             }
-            if ((selectedNodesRadio.isChecked() && !node->selected)
-                    || (branchNodesChckBx->isChecked() && !node->isBranchNode)
-                    || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
+            if ((selectedNodesRadio.isChecked() && !node.selected)
+                    || (branchNodesChckBx->isChecked() && !node.isBranchNode)
+                    || (commentNodesChckBx->isChecked() && node.comment == nullptr)) {
                 continue;
             }
 
-            nodeTable->setRow(nodeIndex, QString::number(node->nodeID), node->comment == nullptr ? "" : node->comment->content
-                    , QString::number(node->position.x + 1), QString::number(node->position.y + 1), QString::number(node->position.z + 1)
-                    , QString::number(node->radius));
+            nodeTable->setRow(nodeIndex, QString::number(node.nodeID), node.comment == nullptr ? "" : node.comment->content
+                    , QString::number(node.position.x + 1), QString::number(node.position.y + 1), QString::number(node.position.z + 1)
+                    , QString::number(node.radius));
 
             ++nodeIndex;
         }
@@ -1273,7 +1273,7 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
     int position = 0;//insert on first position if node is firstnode or on activeNodeTable
     if (table == nodeTable) {
         for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
-            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->firstNode->nodeID) {
+            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->nodes.front().nodeID) {
                 position = i+1;//we want to add one row after this
                 break;
             }
