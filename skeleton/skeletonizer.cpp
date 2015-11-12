@@ -860,16 +860,11 @@ bool Skeletonizer::delTree(int treeID) {
 }
 
 nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition) {
-    nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
-    treeListElement *currentTree = NULL;
+    nodeListElement * nodeWithCurrentlySmallestDistance = nullptr;
     float smallestDistance = 0;
 
-
-    //  If available, search for a node within nearbyTree first.
-
-
-    if(nearbyTree) {
-        for (auto & currentNode : nearbyTree->nodes) {
+    auto searchTree = [&smallestDistance, &nodeWithCurrentlySmallestDistance, searchPosition](treeListElement & tree){
+        for (auto & currentNode : tree.nodes) {
             // We make the nearest node the next active node
             const floatCoordinate distanceVector = searchPosition - currentNode.position;
             //set nearest distance to distance to first node found, then to distance of any nearer node found.
@@ -878,35 +873,22 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
                 nodeWithCurrentlySmallestDistance = &currentNode;
             }
         }
+    };
 
-        if(nodeWithCurrentlySmallestDistance) {
-            return nodeWithCurrentlySmallestDistance;
+    //  If available, search for a node within nearbyTree first.
+    if (nearbyTree != nullptr) {
+        searchTree(*nearbyTree);
+    }
+
+    if (nodeWithCurrentlySmallestDistance == nullptr) {
+        // Ok, we didn't find any node in nearbyTree.
+        // Now we take the nearest node, independent of the tree it belongs to.
+        for (auto * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
+            searchTree(*currentTree);
         }
     }
 
-     // Ok, we didn't find any node in nearbyTree.
-     // Now we take the nearest node, independent of the tree it belongs to.
-
-
-    currentTree = state->skeletonState->firstTree.get();
-    smallestDistance = 0;
-    while(currentTree) {
-        for (auto & currentNode : currentTree->nodes) {
-            // We make the nearest node the next active node
-            const floatCoordinate distanceVector = searchPosition - currentNode.position;
-            if (smallestDistance == 0 || euclidicNorm(distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(distanceVector);
-                nodeWithCurrentlySmallestDistance = &currentNode;
-            }
-        }
-       currentTree = currentTree->next.get();
-    }
-
-    if(nodeWithCurrentlySmallestDistance) {
-        return nodeWithCurrentlySmallestDistance;
-    }
-
-    return NULL;
+    return nodeWithCurrentlySmallestDistance;
 }
 
 nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
@@ -924,7 +906,7 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
                 nodeWithCurrentlySmallestDistance = &currentNode;
             }
         }
-       currentTree = currentTree->next.get();
+        currentTree = currentTree->next.get();
     }
 
     if(nodeWithCurrentlySmallestDistance) {
@@ -1014,9 +996,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
                 return boost::none;
             }
 
-            const floatCoordinate lockVector = {(float)(position.x - state->skeletonState->lockedPosition.x),
-                                                (float)(position.y - state->skeletonState->lockedPosition.y),
-                                                (float)(position.z - state->skeletonState->lockedPosition.z)};
+            const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
             float lockDistance = euclidicNorm(lockVector);
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
