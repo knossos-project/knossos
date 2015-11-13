@@ -461,10 +461,11 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, state->magnification);;
     } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
-        seg.brush.setRadius(seg.brush.getRadius() + event->delta() / 120);
-        if(seg.brush.getRadius() < 0) {
-            seg.brush.setRadius(0);
-        };
+        auto curRadius = seg.brush.getRadius();
+        seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *
+                                                  // brush radius delta factor (float), as a function of current radius
+                                                  std::pow(curRadius + 1, 0.5)
+                                                  ), 0));
     }
 }
 
