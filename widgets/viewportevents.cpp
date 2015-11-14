@@ -564,9 +564,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 break;
             }
         }
-    } else if(event->key() == Qt::Key_G) {
-        //emit genTestNodesSignal(50000);
-        // emit updateTreeviewSignal();
     } else if (event->key() == Qt::Key_0) {
         if (ctrl) {
             emit zoomReset();
