@@ -387,7 +387,7 @@ void Viewport3D::paintGL() {
 }
 
 void ViewportOrtho::paintGL() {
-    if (viewportType == VIEWPORT_ARBITRARY) {
+    if (state->overlay && state->viewerState->showOverlay && viewportType == VIEWPORT_ARBITRARY) {
         updateOverlayTexture();
     }
     if (state->gpuSlicer && state->viewer->gpuRendering) {
