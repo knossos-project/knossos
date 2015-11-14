@@ -742,7 +742,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
             const float shiftMultiplier = shift? 10 : 1;
             const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
             state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
-            userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_HORIZONTAL, n);
+            userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_HORIZONTAL, n);
         }
     }
     ViewportBase::handleKeyPress(event);
