@@ -84,7 +84,7 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
     floatCoordinate pos;
 
     nodeListElement const * node = state->skeletonState->activeNode;
-    nodeListElement const * previousNode=NULL;
+    nodeListElement const * previousNode = nullptr;
 
     if (node == nullptr) {
         return nodelist;
@@ -97,7 +97,7 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
         qDebug() << node->nodeID;
 
         if (node->segments.size() == 1) {
-            if (node->segments.front().source == *previousNode || node->segments.front().target == *previousNode) {
+            if (previousNode != nullptr && (node->segments.front().source == *previousNode || node->segments.front().target == *previousNode)) {
                 break;
             }
             if (node->segments.front().source == *node) {
@@ -111,7 +111,7 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
             break;
         } else {
             auto nextIt = std::next(std::begin(node->segments));
-            if (nextIt->source == *previousNode || nextIt->target == *previousNode) {
+            if (previousNode != nullptr && (nextIt->source == *previousNode || nextIt->target == *previousNode)) {
                 //user firstSegment
                 if (node->segments.front().source == *node) {
                     previousNode = node;
