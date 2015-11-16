@@ -36,6 +36,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <version.h>
 
 class nodeListElement;
 class segmentListElement;
@@ -50,28 +51,31 @@ class commentListElement;
 #define SKELVP_RESET 5
 
 struct SkeletonState {
-    SkeletonState() {
-        state->skeletonState = this;
-    }
-    std::unique_ptr<treeListElement> firstTree;
     treeListElement * activeTree{nullptr};
     nodeListElement * activeNode{nullptr};
 
+    std::list<treeListElement> trees;
     std::unordered_map<int, treeListElement *> treesByID;
+    std::unordered_map<uint, nodeListElement *> nodesByNodeID;
+    int treeElements{0};
+    int totalNodeElements{0};
+    int greatestTreeID{0};
+    std::uint64_t greatestNodeID{0};
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
+    std::vector<std::uint64_t> branchStack;
+    bool branchpointUnresolved{false};
+
     commentListElement * currentComment{nullptr};
     QString commentBuffer;
-
-    std::vector<std::uint64_t> branchStack;
-
-    std::unordered_map<uint, nodeListElement *> nodesByNodeID;
-
-    uint volBoundary;
-
     uint totalComments{0};
+
+    QString nodeCommentFilter;
+    QString treeCommentFilter;
+
+    float defaultNodeRadius{1.5f};
 
     bool lockPositions{false};
     bool positionLocked{false};
@@ -82,40 +86,26 @@ struct SkeletonState {
     float rotdx;
     float rotdy;
     int rotationcounter;
-
-    int definedSkeletonVpView{SKELVP_RESET};
+    // Stores the angles of the cube in the SkeletonVP
+    float rotationState[16];
 
     float translateX;
     float translateY;
 
+    int definedSkeletonVpView{SKELVP_RESET};
+
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
+    // Current zoom level. 0: no zoom; near 1: maximum zoom.
+    double zoomLevel;
+    //boundary of the visualized volume in the skeleton viewport
+    int volBoundary{2 * std::max({state->boundary.x, state->boundary.y, state->boundary.z})};
 
-    // Stores the angles of the cube in the SkeletonVP
-    float rotationState[16];
-    // The next three flags cause recompilation of the above specified display lists.
-
-    int treeElements{0};
-    int totalNodeElements{0};
-
-    uint64_t greatestNodeID{0};
-    int greatestTreeID{0};
+    QString skeletonCreatedInVersion{KVERSION};
+    QString skeletonLastSavedInVersion;
 
     //If true, loadSkeleton merges the current skeleton with the provided
     bool mergeOnLoadFlag;
-
-    float defaultNodeRadius{1.5f};
-
-    // Current zoom level. 0: no zoom; near 1: maximum zoom.
-    double zoomLevel;
-
-    bool branchpointUnresolved{false};
-
-    QString skeletonCreatedInVersion;
-    QString skeletonLastSavedInVersion;
-
-    QString nodeCommentFilter;
-    QString treeCommentFilter;
 };
 
 class Skeletonizer : public QObject {
@@ -125,11 +115,26 @@ class Skeletonizer : public QObject {
 
 public:
     SkeletonState skeletonState;
-    explicit Skeletonizer(QObject *parent = 0) : QObject(parent) {}
+    Skeletonizer() {
+        state->skeletonState = &skeletonState;
+    }
     static Skeletonizer & singleton() {
         static Skeletonizer skeletonizer;
         return skeletonizer;
     }
+
+    template<typename Func>
+    treeListElement * getTreeWithRelationalID(treeListElement * currentTree, Func func);
+    treeListElement * getTreeWithPrevID(treeListElement * currentTree);
+    treeListElement * getTreeWithNextID(treeListElement * currentTree);
+
+    template<typename Func>
+    nodeListElement * getNodeWithRelationalID(nodeListElement * currentNode, bool sameTree, Func func);
+    nodeListElement * getNodeWithPrevID(nodeListElement * currentNode, bool sameTree);
+    nodeListElement * getNodeWithNextID(nodeListElement * currentNode, bool sameTree);
+    nodeListElement * findNearbyNode(treeListElement * nearbyTree, Coordinate searchPosition);
+
+    QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
 signals:
     void branchPoppedSignal();
@@ -147,11 +152,6 @@ signals:
     void resetData();
     void setRecenteringPositionSignal(const floatCoordinate & pos);
 public slots:
-    static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
-    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
-    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
-    static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
-    static treeListElement *getTreeWithNextID(treeListElement *currentTree);
     uint64_t findAvailableNodeID();
     boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
@@ -198,7 +198,6 @@ public slots:
     bool moveToNextNode();
     bool moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
-    static QList<treeListElement *> findTrees(const QString & comment);
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);
     bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
@@ -208,10 +207,10 @@ public slots:
 
     bool extractConnectedComponent(int nodeID);
     int findAvailableTreeID();
-    treeListElement *addTreeListElement(int treeID, color4F color);
+    treeListElement * addTreeListElement();
+    treeListElement * addTreeListElement(int treeID, color4F color = {-1, -1, -1, 1});
     bool mergeTrees(int treeID1, int treeID2);
     void updateTreeColors();
-    static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 

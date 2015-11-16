@@ -566,8 +566,7 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
             if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
                 msg = QString("Extracted from deleted %1").arg(treeID);
             }
-            Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
-
+            Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.front().treeID, msg);
         }
     }
 }
@@ -980,20 +979,20 @@ void ToolsTreeviewTab::recreateTreesTable() {
     treeTable->selectionProtection = false;
 
     size_t treeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
+    for (auto & currentTree : state->skeletonState->trees) {
         // filter comment for search string match
         if(treeSearchField->text().length() > 0) {
-            if(strlen(currentTree->comment) == 0) {
+            if(strlen(currentTree.comment) == 0) {
                 continue;
             }
-            if(matchesSearchString(treeSearchField->text(), currentTree->comment, treeRegExCheck->isChecked()) == false) {
+            if(matchesSearchString(treeSearchField->text(), currentTree.comment, treeRegExCheck->isChecked()) == false) {
                 continue;
             }
         }
 
-        treeTable->setRow(treeIndex, QString::number(currentTree->treeID)
-                , QColor(currentTree->color.r*255, currentTree->color.g*255, currentTree->color.b*255, 0.6*255)
-                , currentTree->comment);
+        treeTable->setRow(treeIndex, QString::number(currentTree.treeID)
+                , QColor(currentTree.color.r*255, currentTree.color.g*255, currentTree.color.b*255, 0.6*255)
+                , currentTree.comment);
 
         treeIndex++;//this is here so it doesn’t get incremented on continue
     }
@@ -1029,8 +1028,8 @@ void ToolsTreeviewTab::recreateNodesTable() {
     nodeTable->selectionProtection = false;
 
     int nodeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
-        for (const auto & node : currentTree->nodes) {
+    for (auto & currentTree : state->skeletonState->trees) {
+        for (const auto & node : currentTree.nodes) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
                 break;
@@ -1270,8 +1269,9 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
         table->removeRow(nodeTable->rowCount() - 1);
     }
 
-    int position = 0;//insert on first position if node is firstnode or on activeNodeTable
+    int position = 0;//insert on first position in activeNodeTable
     if (table == nodeTable) {
+        position = nodeTable->rowCount();//add first nodes at the end
         for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
             if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->nodes.front().nodeID) {
                 position = i + node->correspondingTree->nodes.size() - 1;//tree size already includes new node

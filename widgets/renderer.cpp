@@ -2130,7 +2130,6 @@ bool Viewport3D::rotateViewport() {
  */
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    treeListElement *currentTree;
     float cumDistToLastRenderedNode;
 
     state->viewerState->lineVertBuffer.vertsIndex = 0;
@@ -2150,15 +2149,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPushMatrix();
 
-    /* We iterate over the whole tree structure. */
-    currentTree = state->skeletonState->firstTree.get();
-
     nodeListElement * lastNode = NULL, *lastRenderedNode = NULL;
-    while(currentTree) {
-
+    for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         /* Render only trees we want to be rendered*/
-        if(!currentTree->render) {
-            currentTree = currentTree->next.get();
+        if (!currentTree.render) {
+            continue;
+        }
+        if (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree.selected) {
             continue;
         }
 
@@ -2166,12 +2163,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         lastRenderedNode = NULL;
         cumDistToLastRenderedNode = 0.f;
 
-        if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree->selected) {
-            currentTree = currentTree->next.get();
-            continue;
-        }
-
-        for (auto nodeIt = std::begin(currentTree->nodes); nodeIt != std::end(currentTree->nodes); ++nodeIt) {
+        for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
             /* We start with frustum culling:
              * all nodes that are not in the current viewing frustum for the
              * currently rendered viewports are discarded. This is very fast. */
@@ -2193,7 +2185,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
             bool allowHeuristic = false;
-            if (std::next(nodeIt) != std::end(currentTree->nodes) && nodeIt->segments.size() <= 2) {
+            if (std::next(nodeIt) != std::end(currentTree.nodes) && nodeIt->segments.size() <= 2) {
                 for (const auto & currentSegment : std::next(nodeIt)->segments) {
                     if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
                         /* Connected, heuristic is allowed */
@@ -2223,12 +2215,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             if(nodeVisible) {
                 /* This sets the current color for the segment rendering */
-                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                if((currentTree.treeID == state->skeletonState->activeTree->treeID)
                     && (state->viewerState->highlightActiveTree)) {
                         currentColor = {1.f, 0.f, 0.f, 1.f};
                 }
                 else {
-                    currentColor = currentTree->color;
+                    currentColor = currentTree.color;
                 }
 
                 cumDistToLastRenderedNode = 0.f;
@@ -2263,7 +2255,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             }
             lastNode = &*nodeIt;
         }
-        currentTree = currentTree->next.get();
     }
 
     if(state->viewerState->selectModeFlag)

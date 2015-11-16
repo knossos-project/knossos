@@ -14,20 +14,22 @@ class segmentListElement;
 
 class treeListElement {
 public:
-    std::unique_ptr<treeListElement> next;
-    treeListElement * previous = nullptr;
+    int treeID;
+    std::list<treeListElement>::iterator iterator;
+
     std::list<nodeListElement> nodes;
 
-    bool render = true;
+    bool render{true};
 
-    int treeID;
     color4F color;
-    bool selected;
-    bool colorSetManually;
+    bool selected{false};
+    bool colorSetManually{false};
 
     char comment[8192];
 
     QHash<uint64_t, int> subobjectCount;
+
+    treeListElement(int id);
 
     QList<nodeListElement *> *getNodes();
     QList<segmentListElement *> getSegments();

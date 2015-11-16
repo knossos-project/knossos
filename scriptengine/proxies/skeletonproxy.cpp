@@ -22,12 +22,12 @@ SkeletonProxy::SkeletonProxy(QObject *parent) :
 
 treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
-    return Skeletonizer::getTreeWithPrevID(tree);
+    return Skeletonizer::singleton().getTreeWithPrevID(tree);
 }
 
 treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
-    return Skeletonizer::getTreeWithNextID(tree);
+    return Skeletonizer::singleton().getTreeWithNextID(tree);
 }
 
 bool SkeletonProxy::move_to_next_tree() {
@@ -43,11 +43,11 @@ treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
 }
 
 QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
-    return Skeletonizer::findTrees(comment);
+    return Skeletonizer::singleton().findTreesContainingComment(comment);
 }
 
 treeListElement *SkeletonProxy::first_tree() {
-    return state->skeletonState->firstTree.get();
+    return &state->skeletonState->trees.front();
 }
 
 bool SkeletonProxy::delete_tree(int tree_id) {
@@ -87,22 +87,17 @@ bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
 nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     Coordinate coord(x, y, z);
-    return Skeletonizer::findNearbyNode(tree, coord);
-}
-
-nodeListElement *SkeletonProxy::find_node_in_radius(int x, int y, int z) {
-    Coordinate coord(x, y, z);
-    return Skeletonizer::findNodeInRadius(coord);
+    return Skeletonizer::singleton().findNearbyNode(tree, coord);
 }
 
 nodeListElement *SkeletonProxy::node_with_prev_id(int node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
-    return Skeletonizer::getNodeWithPrevID(node, same_tree);
+    return Skeletonizer::singleton().getNodeWithPrevID(node, same_tree);
 }
 
 nodeListElement *SkeletonProxy::node_with_next_id(int node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
-    return Skeletonizer::getNodeWithNextID(node, same_tree);
+    return Skeletonizer::singleton().getNodeWithNextID(node, same_tree);
 }
 
 bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, int in_mag) {
@@ -238,10 +233,8 @@ bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
 
 QList<treeListElement *> *SkeletonProxy::trees() {
     QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree.get();
-    while (currentTree) {
-        trees->append(currentTree);
-        currentTree = currentTree->next.get();
+    for (auto & tree : state->skeletonState->trees) {
+        trees->append(&tree);
     }
     return trees;
 }

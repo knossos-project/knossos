@@ -212,16 +212,7 @@ void Dataset::applyToState() const {
     state->compressionRatio = compressionRatio;
     state->overlay = overlay;
 
-    // update the volume boundary
-    if ((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
-        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.x * 2;
-    }
-    if ((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.z)) {
-        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.y * 2;
-    }
-    if ((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y)) {
-        Skeletonizer::singleton().skeletonState.volBoundary = state->boundary.z * 2;
-    }
+    Skeletonizer::singleton().skeletonState.volBoundary = SkeletonState{}.volBoundary;
 }
 
 QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Dataset::CubeType type) {

@@ -4,6 +4,10 @@
 
 #include <QString>
 
+treeListElement::treeListElement(const int id) : treeID{id} {
+    memset(comment, '\0', sizeof(comment));
+}
+
 QList<nodeListElement *> *treeListElement::getNodes() {
     QList<nodeListElement *> * nodes = new QList<nodeListElement *>();
 

@@ -798,7 +798,7 @@ void MainWindow::saveAsSlot() {
 }
 
 void MainWindow::exportToNml() {
-    if(!state->skeletonState->firstTree) {
+    if (!state->skeletonState->trees.empty()) {
         QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
         return;
     }
@@ -1175,9 +1175,7 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
-    color4F treeCol;
-    treeCol.r = -1.;
-    Skeletonizer::singleton().addTreeListElement(0, treeCol);
+    Skeletonizer::singleton().addTreeListElement();
 }
 
 void MainWindow::nextCommentNodeSlot() {
