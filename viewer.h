@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
+#include "mesh.h"
 #include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
@@ -164,6 +165,10 @@ struct ViewerState {
     int showXYplane{true};
     int showXZplane{true};
     int showYZplane{true};
+    // temporary vertex buffers that are available for rendering, get cleared
+    // every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
 };
 
 /**

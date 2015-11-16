@@ -53,8 +53,8 @@ Viewer::Viewer() {
 
     initViewer();
 
-    ViewportBase::initMesh(state->skeletonState->lineVertBuffer, 1024);
-    ViewportBase::initMesh(state->skeletonState->pointVertBuffer, 1024);
+    ViewportBase::initMesh(viewerState.lineVertBuffer, 1024);
+    ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
 
     QDesktopWidget *desktop = QApplication::desktop();
 

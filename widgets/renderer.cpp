@@ -174,16 +174,16 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     if (options.enableSkeletonDownsampling &&
         (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
-        if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
-            doubleMeshCapacity(state->skeletonState->lineVertBuffer);
+        if(state->viewerState->lineVertBuffer.vertsBuffSize < state->viewerState->lineVertBuffer.vertsIndex + 2)
+            doubleMeshCapacity(state->viewerState->lineVertBuffer);
 
-        state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
-        state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
+        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
+        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
 
-        state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex] = color;
-        state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex + 1] = color;
+        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex] = color;
+        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex + 1] = color;
 
-        state->skeletonState->lineVertBuffer.vertsIndex += 2;
+        state->viewerState->lineVertBuffer.vertsIndex += 2;
 
     } else {
         GLfloat a[] = {color.r, color.g, color.b, color.a};
@@ -245,12 +245,12 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
             glPointSize(1.);
         }
         else {
-            if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
-                doubleMeshCapacity(state->skeletonState->pointVertBuffer);
+            if(state->viewerState->pointVertBuffer.vertsBuffSize < state->viewerState->pointVertBuffer.vertsIndex + 2)
+                doubleMeshCapacity(state->viewerState->pointVertBuffer);
 
-            state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex] = Coordinate{pos.x, pos.y, pos.z};
-            state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
-            state->skeletonState->pointVertBuffer.vertsIndex++;
+            state->viewerState->pointVertBuffer.vertices[state->viewerState->pointVertBuffer.vertsIndex] = Coordinate{pos.x, pos.y, pos.z};
+            state->viewerState->pointVertBuffer.colors[state->viewerState->pointVertBuffer.vertsIndex] = color;
+            state->viewerState->pointVertBuffer.vertsIndex++;
         }
     }
     else {
@@ -2133,13 +2133,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     treeListElement *currentTree;
     float cumDistToLastRenderedNode;
 
-    state->skeletonState->lineVertBuffer.vertsIndex = 0;
-    state->skeletonState->lineVertBuffer.normsIndex = 0;
-    state->skeletonState->lineVertBuffer.colsIndex = 0;
+    state->viewerState->lineVertBuffer.vertsIndex = 0;
+    state->viewerState->lineVertBuffer.normsIndex = 0;
+    state->viewerState->lineVertBuffer.colsIndex = 0;
 
-    state->skeletonState->pointVertBuffer.vertsIndex = 0;
-    state->skeletonState->pointVertBuffer.normsIndex = 0;
-    state->skeletonState->pointVertBuffer.colsIndex = 0;
+    state->viewerState->pointVertBuffer.vertsIndex = 0;
+    state->viewerState->pointVertBuffer.normsIndex = 0;
+    state->viewerState->pointVertBuffer.colsIndex = 0;
     color4F currentColor = {1.f, 0.f, 0.f, 1.f};
 
     //tdItem: test culling under different conditions!
@@ -2270,15 +2270,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glLoadName(3);
 
     /* Render line geometry batch if it contains data */
-    if(state->skeletonState->lineVertBuffer.vertsIndex > 0) {
+    if(state->viewerState->lineVertBuffer.vertsIndex > 0) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->lineVertBuffer.colors);
 
-        glDrawArrays(GL_LINES, 0, state->skeletonState->lineVertBuffer.vertsIndex);
+        glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertsIndex);
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -2290,15 +2290,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glPointSize(3.f);
 
     /* Render point geometry batch if it contains data */
-    if(state->skeletonState->pointVertBuffer.vertsIndex > 0) {
+    if(state->viewerState->pointVertBuffer.vertsIndex > 0) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors);
 
-        glDrawArrays(GL_POINTS, 0, state->skeletonState->pointVertBuffer.vertsIndex);
+        glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertsIndex);
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);

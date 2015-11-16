@@ -25,7 +25,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "mesh.h"
 #include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
@@ -109,11 +108,6 @@ struct SkeletonState {
 
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     double zoomLevel;
-
-    // temporary vertex buffers that are available for rendering, get cleared
-    // every frame */
-    mesh lineVertBuffer; /* ONLY for lines */
-    mesh pointVertBuffer; /* ONLY for points */
 
     bool branchpointUnresolved{false};
 
