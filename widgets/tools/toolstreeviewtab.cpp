@@ -1274,7 +1274,7 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
     if (table == nodeTable) {
         for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
             if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->nodes.front().nodeID) {
-                position = i+1;//we want to add one row after this
+                position = i + node->correspondingTree->nodes.size() - 1;//tree size already includes new node
                 break;
             }
         }
