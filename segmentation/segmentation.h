@@ -214,7 +214,6 @@ signals:
     void resetTouchedObjects();
     void renderAllObjsChanged(bool all);
     void backgroundIdChanged(uint64_t backgroundId);
-    void setRecenteringPositionSignal(const floatCoordinate &);
     void categoriesChanged();
     void todosLeftChanged();
     void hoveredSubObjectChanged(const uint64_t subobject_id);

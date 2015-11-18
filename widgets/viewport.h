@@ -261,8 +261,6 @@ signals:
     void pasteCoordinateSignal();
 
     void compressionRatioToggled();
-    void setRecenteringPositionSignal(const floatCoordinate & newPos);
-    void setRecenteringPositionWithRotationSignal(const floatCoordinate & newPos, const uint vp);
 
     void recalcTextureOffsetsSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
@@ -307,6 +305,7 @@ class ViewportOrtho : public ViewportBase {
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
 
+    floatCoordinate handleMovement(const QPoint & pos);
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override { return 0.75; }
 
@@ -322,9 +321,6 @@ class ViewportOrtho : public ViewportBase {
     void renderBrush(uint viewportType, Coordinate coord);
     virtual void renderViewportFrontFace() override;
 
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
-
-    QPointF userMouseSlide = {};
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
     bool mouseEventAtValidDatasetPosition(const QMouseEvent *event);

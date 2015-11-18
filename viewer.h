@@ -26,6 +26,7 @@
  */
 #include "functions.h"
 #include "mesh.h"
+#include "remote.h"
 #include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
@@ -84,10 +85,6 @@ struct ViewerState {
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
     Coordinate currentPosition;
-
-    uint recenteringTime{250};
-    uint recenteringTimeOrth{250};
-    bool walkOrth{false};
 
     //Keyboard repeat rate
     uint stepsPerSec{40};
@@ -203,6 +200,7 @@ private:
 
     bool calcLeftUpperTexAbsPx();
 
+    Remote remote;
 public:
     Viewer();
     Skeletonizer *skeletonizer;
@@ -235,8 +233,13 @@ signals:
 public slots:
     void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    void userMove(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
-    void userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
+    void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void setPositionWithRecentering(const Coordinate &pos);
+    void setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid);
+    void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal);
+    void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMoveClear();
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);

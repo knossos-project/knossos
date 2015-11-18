@@ -25,37 +25,28 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <stateInfo.h>
-#include <widgets/viewport.h>
+#include "coordinate.h"
 
-#include <QObject>
-#include <QThread>
+#include <QElapsedTimer>
+#include <QTimer>
 
 #include <deque>
 
-class Remote : public QThread {
-    Q_OBJECT
-private:
-    bool rotate;
-    uint activeVP;
-
+class Remote {
 public:
-    explicit Remote(QObject *parent = 0);
+    floatCoordinate recenteringOffset;
+    bool rotate{false};
+    uint activeVP{0};
+    QTimer timer;
+    QElapsedTimer elapsed;
+    static const qint64 ms;
+    static const float goodEnough;
 
-    void remoteWalk(int x, int y, int z);
-    void run();
+    Remote();
 
-    floatCoordinate recenteringPosition;
+    void process(const Coordinate & pos);
     std::deque<floatCoordinate> getLastNodes();
-
-signals:
-    void finished();
-    void userMoveSignal(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
-    void rotationSignal(const floatCoordinate & axis, const float angle);
-public slots:
-    void setRecenteringPosition(const floatCoordinate &newPos);
-    void setRecenteringPositionWithRotation(const floatCoordinate & newPos, const uint vp);
-    bool remoteJump(const Coordinate & jumpVec);
+    void remoteWalk();
 };
 
 #endif // REMOTE_H

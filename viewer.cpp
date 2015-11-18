@@ -910,11 +910,7 @@ void Viewer::run() {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
-            if (vpUpperLeft->viewportType != VIEWPORT_ARBITRARY) {
-                userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_DRILL);
-            } else {
-                userMove_arb({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
-            }
+            userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
         }
     }
     // Event and rendering loop.
@@ -1004,7 +1000,23 @@ void Viewer::updateCurrentPosition() {
     }
 }
 
-void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::setPosition(const floatCoordinate & pos, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    const auto deltaPos = pos - state->viewerState->currentPosition;
+    userMove(deltaPos, userMoveType, viewportNormal);
+}
+
+void Viewer::setPositionWithRecentering(const Coordinate &pos) {
+    remote.rotate = false;
+    remote.process(pos);
+}
+
+void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid) {
+    remote.rotate = true;
+    remote.activeVP = vpid;
+    remote.process(pos);
+}
+
+void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     auto & viewerState = *state->viewerState;
 
     if (ViewportOrtho::arbitraryOrientation && (step.z != 0 || step.x != 0 || step.y != 0)) {//slices are arbitrary…
@@ -1070,11 +1082,21 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
     emit coordinateChangedSignal(viewerState.currentPosition);
 }
 
-void Viewer::userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     moveCache += floatStep;
-    Coordinate step = {static_cast<int>(moveCache.x), static_cast<int>(moveCache.y), static_cast<int>(moveCache.z)};
+    const Coordinate step{moveCache};
     moveCache -= step;
-    userMove(step, userMoveType, viewportNormal);
+    userMoveVoxels(step, userMoveType, viewportNormal);
+}
+
+void Viewer::userMoveRound(UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    const Coordinate rounded(std::lround(moveCache.x), std::lround(moveCache.y), std::lround(moveCache.z));
+    Viewer::userMoveClear();
+    userMoveVoxels(rounded, userMoveType, viewportNormal);
+}
+
+void Viewer::userMoveClear() {
+    moveCache = {};
 }
 
 void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {

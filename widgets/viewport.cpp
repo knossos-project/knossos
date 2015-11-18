@@ -496,13 +496,6 @@ void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-void ViewportOrtho::mouseReleaseEvent(QMouseEvent *event) {
-    ViewportBase::mouseReleaseEvent(event);
-    userMouseSlide = {};
-    arbNodeDragCache = {};
-    draggedNode = nullptr;
-}
-
 void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
     Qt::KeyboardModifiers modifiers = event->modifiers();
     const auto ctrl = modifiers.testFlag(Qt::ControlModifier);

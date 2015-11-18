@@ -46,15 +46,6 @@
 #include <cstdlib>
 #include <unordered_set>
 
-void userMove(const floatCoordinate & step, const UserMoveType moveType, const floatCoordinate & vpNormal) {
-    if(ViewportOrtho::arbitraryOrientation) {
-        state->viewer->userMove_arb(step, moveType, vpNormal);
-    }
-    else {
-        state->viewer->userMove({static_cast<int>(step.x), static_cast<int>(step.y), static_cast<int>(step.z)}, moveType, vpNormal);
-    }
-}
-
 void merging(const QMouseEvent *event, ViewportOrtho & vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
@@ -263,33 +254,26 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, oldNode);
         }
         // Move to the new node position
-        if (viewportType == VIEWPORT_ARBITRARY) {
-            emit setRecenteringPositionWithRotationSignal(clickedCoordinate, id);
-        } else {
-            emit setRecenteringPositionSignal(clickedCoordinate);
+        if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
+            if (viewportType == VIEWPORT_ARBITRARY) {
+                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, id);
+            } else {
+                state->viewer->setPositionWithRecentering(clickedCoordinate);
+            }
         }
         auto & mainWin = *state->viewer->window;
         if (mainWin.segmentState == SegmentState::Off_Once) {
             mainWin.setSegmentState(SegmentState::On);
         }
     }
-    if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
-        Knossos::sendRemoteSignal();
-    }
     ViewportBase::handleMouseButtonRight(event);
 }
 
-boost::optional<Coordinate> handleMovement(const ViewportOrtho & vp, const QPointF & posDelta, QPointF & userMouseSlide) {
-    userMouseSlide -= {posDelta.x() / vp.screenPxXPerDataPx, posDelta.y() / vp.screenPxYPerDataPx};
-
-    const QPoint deviationTrunc(std::trunc(userMouseSlide.x()), std::trunc(userMouseSlide.y()));
-
-    if (!deviationTrunc.isNull()) {
-        userMouseSlide -= deviationTrunc;
-        floatCoordinate deviation = vp.v1 * deviationTrunc.x() + vp.v2 * deviationTrunc.y();
-        return Coordinate(deviation.x, deviation.y, deviation.z);
-    }
-    return boost::none;
+floatCoordinate ViewportOrtho::handleMovement(const QPoint & pos) {
+    const QPointF posDelta(xrel(pos.x()), yrel(pos.y()));
+    const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
+    const auto move = v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();
+    return move;
 }
 
 void ViewportBase::handleMouseMotionLeftHold(const QMouseEvent *event) {
@@ -321,14 +305,7 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
 
 void ViewportOrtho::handleMouseMotionLeftHold(const QMouseEvent *event) {
     if (event->modifiers() == Qt::NoModifier && state->viewerState->clickReaction == ON_CLICK_DRAG) {
-        const QPointF posDelta(xrel(event->x()), yrel(event->y()));
-        if (viewportType == VIEWPORT_ARBITRARY) {
-            const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
-            const auto move = v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();
-            state->viewer->userMove_arb(move, USERMOVE_HORIZONTAL, n);
-        } else if (auto moveIt = handleMovement(*this, posDelta, userMouseSlide)) {
-            state->viewer->userMove(*moveIt, USERMOVE_HORIZONTAL, n);
-        }
+        state->viewer->userMove(handleMovement(event->pos()), USERMOVE_HORIZONTAL, n);
     }
     ViewportBase::handleMouseMotionLeftHold(event);
 }
@@ -354,20 +331,12 @@ void ViewportOrtho::handleMouseMotionRightHold(const QMouseEvent *event) {
 
 void ViewportOrtho::handleMouseMotionMiddleHold(const QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && draggedNode != nullptr) {
-        const QPointF posDelta(xrel(event->x()), yrel(event->y()));
-        boost::optional<Coordinate> moveIt;
-        if (viewportType == VIEWPORT_ARBITRARY) {
-            const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
-            arbNodeDragCache += v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();//accumulate subpixel movements
-            moveIt = arbNodeDragCache;//truncate
-            arbNodeDragCache -= *moveIt;//only keep remaining fraction
-        } else {
-            moveIt = handleMovement(*this, posDelta, userMouseSlide);
-        }
-        if (moveIt) {
-            const auto newPos = draggedNode->position - *moveIt;
-            Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, state->magnification);
-        }
+        const auto moveAccurate = handleMovement(event->pos());
+        arbNodeDragCache += moveAccurate;//accumulate subpixel movements
+        Coordinate moveTrunc = arbNodeDragCache;//truncate
+        arbNodeDragCache -= moveTrunc;//only keep remaining fraction
+        const auto newPos = draggedNode->position - moveTrunc;
+        Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, state->magnification);
     }
     ViewportBase::handleMouseMotionMiddleHold(event);
 }
@@ -422,6 +391,8 @@ void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
             }
         }
     }
+    state->viewer->userMoveClear();//finish dataset drag
+
     ViewportBase::handleMouseReleaseLeft(event);
 }
 
@@ -447,6 +418,10 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
         }
     }
+    //finish node drag
+    arbNodeDragCache = {};
+    draggedNode = nullptr;
+
     ViewportBase::handleMouseReleaseMiddle(event);
 }
 
@@ -496,7 +471,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
     } else if (event->modifiers() == Qt::NoModifier) {
         const float directionSign = event->delta() > 0 ? -1 : 1;
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
-        userMove(n * multiplier, USERMOVE_DRILL, n);
+        state->viewer->userMove(n * multiplier, USERMOVE_DRILL, n);
     }
     ViewportBase::handleWheelEvent(event);
 }
@@ -706,36 +681,31 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
 
     if(event->key() == Qt::Key_Left) {
         if(shift) {
-            userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
         } else {
-            userMove(v1 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v1 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
         }
     } else if(event->key() == Qt::Key_Right) {
         if(shift) {
-            userMove(v1 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v1 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
         } else {
-            userMove(v1 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v1 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
         }
     } else if(event->key() == Qt::Key_Down) {
         if(shift) {
-            userMove(v2 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v2 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
         } else {
-            userMove(v2 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v2 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
         }
     } else if(event->key() == Qt::Key_Up) {
         if(shift) {
-            userMove(v2 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v2 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
         } else {
-            userMove(v2 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove(v2 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
         }
-    } else if(event->key() == Qt::Key_R) {
-        state->viewerState->walkOrth = true;
-        emit setRecenteringPositionSignal(state->viewerState->currentPosition + n * state->viewerState->walkFrames * state->magnification);
-        Knossos::sendRemoteSignal();
-    } else if(event->key() == Qt::Key_E) {
-        state->viewerState->walkOrth = true;
-        emit setRecenteringPositionSignal(state->viewerState->currentPosition - n * state->viewerState->walkFrames * state->magnification);
-        Knossos::sendRemoteSignal();
+    } else if(event->key() == Qt::Key_R || event->key() == Qt::Key_E) {
+        const int directionSign = event->key() == Qt::Key_E ? -1 : 1;
+        state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * state->viewerState->walkFrames * state->magnification);
     } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
         state->keyD = event->key() == Qt::Key_D;
         state->keyF = event->key() == Qt::Key_F;
@@ -744,7 +714,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
             const float shiftMultiplier = shift? 10 : 1;
             const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
             state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
-            userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_HORIZONTAL, n);
+            state->viewer->userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_HORIZONTAL, n);
         }
     }
     ViewportBase::handleKeyPress(event);

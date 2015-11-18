@@ -80,8 +80,6 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     movementSpeedLabel = new QLabel("Movement Speed [Frames/s]:");
     jumpFramesLabel = new QLabel("Jump Frames (D, F)");
     walkFramesLabel = new QLabel("Walk Frames (E, R)");
-    recenterTimeParallelLabel = new QLabel("Recenter Time parallel [ms]:");
-    recenterTimeOrthoLabel = new QLabel("Recenter Time Orthogonal [ms]:");
 
     movementSpeedSpinBox = new QSpinBox();
     movementSpeedSpinBox->setRange(1, 1000);
@@ -89,16 +87,10 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     jumpFramesSpinBox->setMaximum(1000);
     walkFramesSpinBox = new QSpinBox;
     walkFramesSpinBox->setMaximum(1000);
-    recenterTimeParallelSpinBox = new QSpinBox();
-    recenterTimeParallelSpinBox->setMaximum(10000);
-    recenterTimeOrthoSpinBox = new QSpinBox();
-    recenterTimeOrthoSpinBox->setMaximum(10000);
 
     formLayout->addRow(movementSpeedLabel, movementSpeedSpinBox);
     formLayout->addRow(jumpFramesLabel, jumpFramesSpinBox);
     formLayout->addRow(walkFramesLabel, walkFramesSpinBox);
-    formLayout->addRow(recenterTimeParallelLabel, recenterTimeParallelSpinBox);
-    formLayout->addRow(recenterTimeOrthoLabel, recenterTimeOrthoSpinBox);
 
     generalGroup->setLayout(formLayout);
     mainLayout->addWidget(generalGroup);
@@ -158,8 +150,6 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     connect(movementSpeedSpinBox, SIGNAL(valueChanged(int)), this, SLOT(movementSpeedChanged(int)));
     connect(jumpFramesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(jumpFramesChanged(int)));
     connect(this->walkFramesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(walkFramesChanged(int)));
-    connect(recenterTimeParallelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(recenterTimeParallelChanged(int)));
-    connect(recenterTimeOrthoSpinBox, SIGNAL(valueChanged(int)), this, SLOT(recenterTimeOrthoChanged(int)));
 
     connect(normalModeButton, SIGNAL(clicked(bool)), this, SLOT(normalModeSelected(bool)));
     QObject::connect(&noRecenteringButton, &QRadioButton::clicked, [](const bool checked){
@@ -193,14 +183,6 @@ void NavigationWidget::jumpFramesChanged(int value) {
 
 void NavigationWidget::walkFramesChanged(int value) {
     state->viewerState->walkFrames = value;
-}
-
-void NavigationWidget::recenterTimeOrthoChanged(int value) {
-    state->viewerState->recenteringTimeOrth = value;
-}
-
-void NavigationWidget::recenterTimeParallelChanged(int value) {
-    state->viewerState->recenteringTime = value;
 }
 
 void NavigationWidget::normalModeSelected(bool on) {
@@ -283,18 +265,6 @@ void NavigationWidget::loadSettings() {
         this->walkFramesSpinBox->setValue(10);
     }
 
-    if(!settings.value(RECENTERING_TIME_PARALLEL).isNull()) {
-        this->recenterTimeParallelSpinBox->setValue(settings.value(RECENTERING_TIME_PARALLEL).toInt());
-    } else {
-
-    }
-
-    if(!settings.value(RECENTERING_TIME_ORTHO).isNull()) {
-        this->recenterTimeOrthoSpinBox->setValue(settings.value(RECENTERING_TIME_ORTHO).toInt());
-    } else {
-        this->recenterTimeOrthoSpinBox->setValue(500);
-    }
-
     if(!settings.value(NORMAL_MODE).isNull()) {
         this->normalModeButton->setChecked(settings.value(NORMAL_MODE).toBool());
     } else {
@@ -349,8 +319,6 @@ void NavigationWidget::saveSettings() {
     settings.setValue(MOVEMENT_SPEED, this->movementSpeedSpinBox->value());
     settings.setValue(JUMP_FRAMES, this->jumpFramesSpinBox->value());
     settings.setValue(WALK_FRAMES, this->walkFramesSpinBox->value());
-    settings.setValue(RECENTERING_TIME_PARALLEL, this->recenterTimeParallelSpinBox->value());
-    settings.setValue(RECENTERING_TIME_ORTHO, this->recenterTimeOrthoSpinBox->value());
     settings.setValue(NORMAL_MODE, this->normalModeButton->isChecked());
     settings.setValue(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, this->additionalViewportDirectionMoveButton->isChecked());
     settings.setValue(ADDITIONAL_TRACING_DIRECTION_MOVE, this->additionalTracingDirectionMoveButton->isChecked());

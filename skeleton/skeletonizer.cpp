@@ -1765,8 +1765,7 @@ bool Skeletonizer::moveToPrevTree() {
         } else {
             auto & node = state->skeletonState->activeTree->nodes.front();
             setActiveNode(&node);
-            emit setRecenteringPositionSignal(node.position);
-            Knossos::sendRemoteSignal();
+            state->viewer->setPositionWithRecentering(node.position);
         }
         return true;
     }
@@ -1795,8 +1794,7 @@ bool Skeletonizer::moveToNextTree() {
         } else {
             auto & node = state->skeletonState->activeTree->nodes.front();
             setActiveNode(&node);
-            emit setRecenteringPositionSignal(node.position);
-            Knossos::sendRemoteSignal();
+            state->viewer->setPositionWithRecentering(node.position);
         }
         return true;
     }
@@ -1814,8 +1812,7 @@ bool Skeletonizer::moveToPrevNode() {
     nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(prevNode);
-        emit setRecenteringPositionSignal(prevNode->position);
-        Knossos::sendRemoteSignal();
+        state->viewer->setPositionWithRecentering(prevNode->position);
         return true;
     }
     return false;
@@ -1825,8 +1822,7 @@ bool Skeletonizer::moveToNextNode() {
     nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(nextNode);
-        emit setRecenteringPositionSignal(nextNode->position);
-        Knossos::sendRemoteSignal();
+        state->viewer->setPositionWithRecentering(nextNode->position);
         return true;
     }
     return false;

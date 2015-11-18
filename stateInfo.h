@@ -60,9 +60,6 @@ public:
 
     bool quitSignal{false};
 
-    // These signals are used to communicate with the remote.
-    bool remoteSignal{false};
-
     // Current dataset identifier string
     QString name;
 
@@ -112,12 +109,6 @@ public:
     // simultaneously loaded datacubes) in datacubes:
 
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
-
-    // Tell the remote to wake up.
-    QWaitCondition conditionRemoteSignal;
-
-    // This should be accessed through sendRemoteSignal() only.
-    QMutex protectRemoteSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.

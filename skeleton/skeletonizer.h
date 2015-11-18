@@ -150,7 +150,6 @@ signals:
     void nodeSelectionChangedSignal();
     void treeSelectionChangedSignal();
     void resetData();
-    void setRecenteringPositionSignal(const floatCoordinate & pos);
 public slots:
     uint64_t findAvailableNodeID();
     boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
