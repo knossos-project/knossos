@@ -30,6 +30,8 @@ class gpu_raw_cube {
 public:
     QOpenGLTexture cube{QOpenGLTexture::Target3D};
     gpu_raw_cube(const int gpucubeedge, const bool index = false);
+    std::vector<char> prepare(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);
+    void upload(const std::vector<char> & data);
     void generate(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);
 };
 
@@ -43,6 +45,8 @@ private:
 public:
     QOpenGLTexture lut{QOpenGLTexture::Target1D};
     gpu_lut_cube(const int gpucubeedge);
+    std::vector<gpu_index> prepare(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view);
+    void upload(const std::vector<gpu_index> & data);
     void generate(boost::multi_array_ref<std::uint64_t, 3>::const_array_view<3>::type view);
 };
 
