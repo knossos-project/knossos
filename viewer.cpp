@@ -799,8 +799,8 @@ void Viewer::zoom(const float factor) {
             || vpUpperLeft->screenPxXPerDataPxForZoomFactor(vpUpperLeft->texture.zoomLevel * factor) < VPZOOMMIN) {
         return;
     }
-    bool magUp = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 == 1 && factor > 1;
-    bool magDown = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 == 0.5 && factor < 1;
+    bool magUp = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 >= 1 && factor > 1;
+    bool magDown = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 <= 0.5 && factor < 1;
     state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
             orthoVP.texture.zoomLevel *= factor;
