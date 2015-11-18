@@ -814,3 +814,17 @@ void ViewportOrtho::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
     emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
 }
+
+float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
+    float FOVinDCs = ((float)state->M) - 1.f;
+    float result = (viewportType == VIEWPORT_ARBITRARY) ? s_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
+    // display only entire pixels
+    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+}
+
+float ViewportOrtho::displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const {
+    float FOVinDCs = ((float)state->M) - 1.f;
+    float result = (viewportType == VIEWPORT_ARBITRARY) ? t_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
+    // display only entire pixels
+    return (std::floor(result * zoomFactor / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+}

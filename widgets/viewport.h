@@ -361,6 +361,9 @@ public:
 
     char * viewPortData;
     viewportTexture texture;
+    float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
+    float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
+    float displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const;
 };
 
 #endif // VIEWPORT_H
