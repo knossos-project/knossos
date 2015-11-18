@@ -14,7 +14,6 @@ const QString APPEARANCE_WIDGET = "appearance_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
 const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString TOOLS_WIDGET = "tools_widget";
-const QString TRACING_TIME_WIDGET = "tracing_time_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 
@@ -110,26 +109,11 @@ const QString DELAY_TIME_PER_STEP = "delay_time_per_step";
 const QString NUMBER_OF_STEPS = "number_of_steps";
 
 // Tools Widget QuickTab
-const QString ACTIVE_TREE_ID = "active_tree_id";
-const QString ACTIVE_NODE_ID = "active_node_id";
-const QString COMMENT = "comment";
-const QString SEARCH_FOR = "search_for";
 const QString SEARCH_FOR_TREE = "search_for_tree";
 const QString SEARCH_FOR_NODE = "search_for_node";
-const QString TOOLS_TAB_INDEX = "tools_tab_index";
-
-// Tools Widget TreeTab
-const QString ID1 = "id1";
-const QString ID2 = "id2";
-const QString TREE_COMMENT = "tree_comment";
-const QString R = "r";
-const QString G = "g";
-const QString B = "b";
-const QString A = "a";
 
 // Tools Widget NodeTab
 const QString USE_LAST_RADIUS_AS_DEFAULT = "use_last_radius_as_default";
-const QString ACTIVE_NODE_RADIUS = "active_node_radius";
 const QString DEFAULT_NODE_RADIUS = "default_node_radius";
 const QString LOCKING_RADIUS = "locking_radius";
 const QString ENABLE_COMMENT_LOCKING = "enable_comment_locking";
@@ -140,28 +124,12 @@ const QString CUSTOM_COMMENT_NODECOLOR = "use_custom_comment_node_color";
 const QString CUSTOM_COMMENT_NODERADIUS = "use_custom_comment_node_radius";
 const QString CUSTOM_COMMENT_APPEND = "append_comment";
 
-// Tracing Time Widget
-const QString RUNNING_TIME = "running_time";
-
-// MainWindow recent files
-const QString LOADED_FILE1 = "loaded_file1";
-const QString LOADED_FILE2 = "loaded_file2";
-const QString LOADED_FILE3 = "loaded_file3";
-const QString LOADED_FILE4 = "loaded_file4";
-const QString LOADED_FILE5 = "loaded_file5";
-const QString LOADED_FILE6 = "loaded_file6";
-const QString LOADED_FILE7 = "loaded_file7";
-const QString LOADED_FILE8 = "loaded_file8";
-const QString LOADED_FILE9 = "loaded_file9";
-const QString LOADED_FILE10 = "loaded_file10";
-
 const QString OPEN_FILE_DIALOG_DIRECTORY = "open_file_dialog_directory";
 const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
 const QString ANNOTATION_MODE = "annotation_mode";
 const QString SEGMENT_STATE = "segment_state";
 
 /* Python Property Widget */
-const QString PYTHON_INTERPRETER = "python_interpreter";
 const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
 const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
