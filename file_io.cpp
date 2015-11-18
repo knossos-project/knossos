@@ -75,6 +75,8 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
 }
 
 void annotationFileSave(const QString & filename, bool *isSuccess) {
+    QTime time;
+    time.start();
     bool allSuccess = true;
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
@@ -112,8 +114,8 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 allSuccess = false;
             }
         }
-        QTime time;
-        time.start();
+        QTime cubeTime;
+        cubeTime.start();
         const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
         for (std::size_t i = 0; i < cubes.size(); ++i) {
             const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(state->name).arg(QString::number(std::pow(2, i)));
@@ -130,7 +132,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 }
             }
         }
-        qDebug() << "save" << time.restart();
+        qDebug() << "save cubes" << cubeTime.restart();
     } else {
         qDebug() << "opening" << filename << " for writing failed";
         allSuccess = false;
@@ -143,6 +145,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     if (NULL != isSuccess) {
         *isSuccess = allSuccess;
     }
+    qDebug() << "save" << time.restart();
 }
 
 void nmlExport(const QString & filename) {
