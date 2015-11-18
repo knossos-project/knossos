@@ -568,11 +568,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 break;
             }
         }
-    } else if (event->key() == Qt::Key_0) {
-        if (ctrl) {
-            emit zoomReset();
-        }
-    } else if(event->key() == Qt::Key_3) {
+    } else if (ctrl && event->key() == Qt::Key_0) {
+        state->viewer->zoomReset();
+    } else if (event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
            state->viewerState->drawVPCrosshairs = false;
         }

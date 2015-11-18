@@ -820,11 +820,19 @@ void Viewer::zoom(const float factor) {
         }
     });
 
-   if(triggerMagChange) {
+    if (triggerMagChange) {
         changeDatasetMag(triggerMagChange);
-   }
-   recalcTextureOffsets();
-   window->widgetContainer.datasetOptionsWidget.update();
+    }
+    recalcTextureOffsets();
+    emit zoomChanged();
+}
+
+void Viewer::zoomReset() {
+    state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
+        orthoVP.texture.zoomLevel = 1;
+    });
+    recalcTextureOffsets();
+    emit zoomChanged();
 }
 
 /**
@@ -869,7 +877,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
     loader_notify();//start loading
 
-    emit updateDatasetOptionsWidgetSignal();
+    emit zoomChanged();
 
     return true;
 }
@@ -1311,7 +1319,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
         if (window->viewport3D->hasCursor) {
@@ -1327,7 +1335,6 @@ void Viewer::rewire() {
     // end viewer signals
     //viewport signals
     window->forEachVPDo([this](ViewportBase & vp) {
-        QObject::connect(&vp, &ViewportBase::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
         QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::rotationSignal, this, &Viewer::setRotation);

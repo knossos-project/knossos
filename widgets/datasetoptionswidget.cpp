@@ -186,8 +186,7 @@ void DatasetOptionsWidget::lockDatasetMagChecked(bool on) {
  * @brief DatasetOptionsWidget::zoomDefaultsClicked restores lowest zoom level on all viewports
  */
 void DatasetOptionsWidget::zoomDefaultsClicked() {
-    orthogonalDataViewportSpinBox->setValue(0);
-
+    state->viewer->zoomReset();
     userZoomSkel = false;
     skeletonViewportSpinBox->setValue(100*SKELZOOMMIN/SKELZOOMMAX);
     state->skeletonState->zoomLevel = SKELZOOMMIN;

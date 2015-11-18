@@ -216,6 +216,7 @@ public:
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
     void zoom(const float factor);
+    void zoomReset();
     QTimer timer;
 
     std::atomic_bool dc_xy_changed{true};
@@ -229,7 +230,7 @@ public:
     color4F getNodeColor(const nodeListElement & node) const;
 signals:
     void coordinateChangedSignal(const Coordinate & pos);
-    void updateDatasetOptionsWidgetSignal();
+    void zoomChanged();
     void movementAreaFactorChangedSignal();
 public slots:
     void updateCurrentPosition();

@@ -259,7 +259,6 @@ signals:
 
     void rotationSignal(const floatCoordinate & axis, const float angle);
     void pasteCoordinateSignal();
-    void zoomReset();
 
     void compressionRatioToggled();
     void setRecenteringPositionSignal(const floatCoordinate & newPos);
