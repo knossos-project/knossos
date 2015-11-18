@@ -191,6 +191,18 @@ private:
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;
+    void initViewer();
+    void rewire();
+
+    void vpGenerateTexture_arb(ViewportOrtho & vp);
+
+    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
+    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+
+    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
+
+    bool calcLeftUpperTexAbsPx();
+
 public:
     explicit Viewer();
     Skeletonizer *skeletonizer;
@@ -218,15 +230,6 @@ signals:
     void coordinateChangedSignal(const Coordinate & pos);
     void updateDatasetOptionsWidgetSignal();
     void movementAreaFactorChangedSignal();
-protected:
-    void vpGenerateTexture_arb(ViewportOrtho & vp);
-
-    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
-
-    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
-
-    void rewire();
 public slots:
     void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
@@ -250,9 +253,6 @@ public slots:
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
     void setMovementAreaFactor(float alpha);
-protected:
-    bool calcLeftUpperTexAbsPx();
-    void initViewer();
 };
 
 #endif // VIEWER_H
