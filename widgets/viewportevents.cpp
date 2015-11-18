@@ -471,12 +471,11 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
 
 void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::NoModifier) {
-        const int directionSign = event->delta() > 0 ? -1 : 1;
         if(Segmentation::singleton().volume_render_toggle) {
             auto& seg = Segmentation::singleton();
-            seg.volume_mouse_zoom *= (directionSign == -1) ? 1.1f : 0.9f;
+            seg.volume_mouse_zoom *= (event->delta() > 0) ? 1.1f : 0.9f;
         } else {
-            if (directionSign == -1) {
+            if (event->delta() > 0) {
                 zoomIn();
             } else {
                 zoomOut();
@@ -487,10 +486,15 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
 }
 
 void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
-    const int directionSign = event->delta() > 0 ? -1 : 1;
     if (event->modifiers() == Qt::CTRL) { // Orthogonal VP or outside VP
-        zoom(directionSign * zoomStep());
+        if(event->delta() > 0) {
+            zoomIn();
+        }
+        else {
+            zoomOut();
+        }
     } else if (event->modifiers() == Qt::NoModifier) {
+        const float directionSign = event->delta() > 0 ? -1 : 1;
         const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
         userMove(n * multiplier, USERMOVE_DRILL, n);
     }
@@ -579,9 +583,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_I) {
-        zoom(-zoomStep());
+        zoomIn();
     } else if(event->key() == Qt::Key_O) {
-        zoom(zoomStep());
+        zoomOut();
     } else if(event->key() == Qt::Key_V) {
         if(ctrl) {
             emit pasteCoordinateSignal();

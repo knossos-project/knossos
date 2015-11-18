@@ -64,8 +64,8 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     orthogonalDataViewportLabel = new QLabel(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
     skeletonViewportLabel = new QLabel("Skeleton Viewport");
     orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    orthogonalDataViewportSpinBox->setMaximum(100);
-    orthogonalDataViewportSpinBox->setMinimum(0);
+    orthogonalDataViewportSpinBox->setMaximum(std::numeric_limits<float>::max());
+    orthogonalDataViewportSpinBox->setMinimum(VPZOOMMIN*100.);
     orthogonalDataViewportSpinBox->setSuffix(" %");
     skeletonViewportSpinBox = new QDoubleSpinBox();
     skeletonViewportSpinBox->setMaximum(100);
@@ -137,13 +137,7 @@ void DatasetOptionsWidget::updateCompressionRatioDisplay() {
  */
 void DatasetOptionsWidget::orthogonalSpinBoxChanged(double value) {
     state->viewer->window->forEachOrthoVPDo([&value](ViewportOrtho & orthoVP) {
-        // conversion from percent to zoom level is inverted, because VPZOOMMAX < VPZOOMMIN,
-        // because zoom level directly translates to displayed edge length
-        float zoomLevel = 1 - value/100*VPZOOMMIN;
-        if(zoomLevel < VPZOOMMAX) {
-            zoomLevel = VPZOOMMAX;
-        }
-        orthoVP.texture.zoomLevel = zoomLevel;
+        orthoVP.texture.zoomLevel = state->viewer->vpUpperLeft->screenPxXPerDataPxForZoomFactor(1.) / (value/100.);
     });
 }
 /**
@@ -202,16 +196,8 @@ void DatasetOptionsWidget::zoomDefaultsClicked() {
 
 void DatasetOptionsWidget::update() {
     orthogonalDataViewportLabel->setText(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
-    float vpZoomPercent;
-    if(state->viewer->vpUpperLeft->texture.zoomLevel == (float)VPZOOMMAX) {
-        vpZoomPercent = 100;
-    }
-    else {
-        vpZoomPercent = (1 - state->viewer->vpUpperLeft->texture.zoomLevel)*100;
-    }
-    orthogonalDataViewportSpinBox->setValue(vpZoomPercent);
+    orthogonalDataViewportSpinBox->setValue(state->viewer->vpUpperLeft->screenPxXPerDataPx * 100.);
     skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
-
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
     QString highestActiveMag = QString("Highest available mag dataset: %1").arg(state->highestAvailableMag);
     QString lowestActiveMag = QString("Lowest available mag dataset: %1").arg(state->lowestAvailableMag);

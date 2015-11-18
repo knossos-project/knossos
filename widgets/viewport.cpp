@@ -249,7 +249,6 @@ void ViewportBase::initializeGL() {
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-
     /* performance tricks from mesa3d  */
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
@@ -265,8 +264,8 @@ void ViewportOrtho::initializeGL() {
 
     glBindTexture(GL_TEXTURE_2D, texture.texHandle);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -355,8 +354,8 @@ void ViewportOrtho::createOverlayTextures() {
     glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
 
     //Set the parameters for the texture.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -533,48 +532,7 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void ViewportOrtho::zoom(const float step) {
-    int triggerMagChange = false;
-    state->viewer->window->forEachOrthoVPDo([&step, &triggerMagChange](ViewportOrtho & orthoVP) {
-        if(state->viewerState->datasetMagLock) {
-            if(!(orthoVP.texture.zoomLevel + step < VPZOOMMAX) &&
-               !(orthoVP.texture.zoomLevel + step > VPZOOMMIN)) {
-                orthoVP.texture.zoomLevel += step;
-            }
-        }
-        else {
-            /* trigger a mag change when possible */
-            if((orthoVP.texture.zoomLevel + step < 0.5)
-                && (orthoVP.texture.zoomLevel >= 0.5)
-                && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
-                orthoVP.texture.zoomLevel += step;
-                triggerMagChange = MAG_DOWN;
-            }
-            if((orthoVP.texture.zoomLevel + step > 1.0)
-                && (orthoVP.texture.zoomLevel <= 1.0)
-                && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
-                orthoVP.texture.zoomLevel += step;
-                triggerMagChange = MAG_UP;
-            }
-            /* performe normal zooming otherwise. This case also covers
-            * the special case of zooming in further than 0.5 on mag1 */
-            if(!triggerMagChange) {
-                float zoomLevel = orthoVP.texture.zoomLevel += step;
-                if(zoomLevel < VPZOOMMAX) {
-                    orthoVP.texture.zoomLevel = VPZOOMMAX;
-                }
-                else if (zoomLevel > VPZOOMMIN) {
-                    orthoVP.texture.zoomLevel = VPZOOMMIN;
-                }
-            }
-        }
-    });
-
-   if(triggerMagChange) {
-        emit changeDatasetMagSignal(triggerMagChange);
-   }
-   emit recalcTextureOffsetsSignal();
-   emit updateDatasetOptionsWidget();
-
+    state->viewer->zoom(step);
 }
 
 float Viewport3D::zoomStep() const {

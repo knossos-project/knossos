@@ -148,9 +148,7 @@ void MainWindow::resetTextureProperties() {
         orthoVP.texture.usedTexLengthDc = state->M;
         orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
         orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-        //This variable indicates the current zoom value for a viewport.
-        //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        orthoVP.texture.zoomLevel = VPZOOMMIN;
+        orthoVP.texture.zoomLevel = 1;
     });
 }
 

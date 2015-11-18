@@ -215,6 +215,7 @@ public:
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
+    void zoom(const float factor);
     QTimer timer;
 
     std::atomic_bool dc_xy_changed{true};

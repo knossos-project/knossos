@@ -52,10 +52,8 @@ This is used for LOD rendering, since all ortho VPs have the (about) the same sc
 values. The XY vp always used. */
 const auto VIEWPORT_ORTHO = VIEWPORT_XY;
 
-// vp zoom max < vp zoom min, because vp zoom level translates to displayed edgeLength.
 // close zoom -> smaller displayed edge length
-constexpr const double VPZOOMMAX = 0.02000;
-constexpr const double VPZOOMMIN = 1.0;
+constexpr const double VPZOOMMIN = 0.0001;
 constexpr const double SKELZOOMMAX = 0.4999;
 constexpr const double SKELZOOMMIN = 0.0;
 
@@ -249,6 +247,9 @@ public:
     float displayedlengthInNmX;
     float displayedlengthInNmY;
 
+    virtual void zoomIn() {}
+    virtual void zoomOut() {}
+
     Coordinate upperLeftCorner; //upper left corner of viewport in screen pixel coords (max: window borders)
     uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
 
@@ -296,8 +297,8 @@ public:
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 
-    void zoomIn() { zoom(zoomStep()); }
-    void zoomOut() { zoom(-zoomStep()); }
+    void zoomIn() override { zoom(zoomStep()); }
+    void zoomOut() override { zoom(-zoomStep()); }
 signals:
     void rotationSignal(const floatCoordinate & axis, const float angle);
 };
@@ -308,7 +309,7 @@ class ViewportOrtho : public ViewportBase {
     QOpenGLShaderProgram overlay_data_shader;
 
     virtual void zoom(const float zoomStep) override;
-    virtual float zoomStep() const override { return 0.1; }
+    virtual float zoomStep() const override { return 0.75; }
 
     virtual void initializeGL() override;
     virtual void paintGL() override;
@@ -359,6 +360,8 @@ public:
     int s_max;
     int t_max;
 
+    void zoomIn() override { zoom(zoomStep()); }
+    void zoomOut() override { zoom(1./zoomStep()); }
     char * viewPortData;
     viewportTexture texture;
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
