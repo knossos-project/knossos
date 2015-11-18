@@ -204,7 +204,7 @@ private:
     bool calcLeftUpperTexAbsPx();
 
 public:
-    explicit Viewer();
+    Viewer();
     Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
