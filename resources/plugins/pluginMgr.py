@@ -159,7 +159,9 @@ class pluginMgr(QtGui.QWidget):
         self.setTableHeaders(self.logTable, ["Date/Time", "Title", "Text"])
         self.finalizeTable(self.logTable)
         # Show
+        self.setWindowFlags(Qt.Qt.Window)
         self.show()
+        Qt.QApplication.processEvents()
         return
 
     def __init__(self, parent=KnossosModule.knossos_global_mainwindow):

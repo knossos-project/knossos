@@ -286,7 +286,7 @@ void MainWindow::createToolbars() {
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
     pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Manager", this, SLOT(pythonPluginMgrSlot()));
+    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
     defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
