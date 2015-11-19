@@ -1,5 +1,6 @@
 #include "toolstreeviewtab.h"
 
+#include "gui_wrapper.h"
 #include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
@@ -67,7 +68,7 @@ enum {
 
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
-    QWidget(parent), selectedNodes("selected nodes")
+    QWidget(parent), selectedNodesRadio("selected nodes")
     , radiusBuffer(Skeletonizer::singleton().skeletonState.defaultNodeRadius), draggedNodeID(0), displayedNodes(1000)
 {
     treeSearchField = new QLineEdit();
@@ -88,7 +89,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     branchNodesChckBx = new QCheckBox("... with branch mark");
     commentNodesChckBx = new QCheckBox("... with comments");
 
-    displayedNodesTable = new QLabel("Displayed Nodes:");
+    displayedNodesLabel = new QLabel("Displayed Nodes:");
     displayedNodesCombo = new QComboBox();
     displayedNodesCombo->addItem("1000");
     displayedNodesCombo->addItem("2000");
@@ -179,45 +180,44 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     bottomHLayout.addWidget(&nodeCountLabel, 0, Qt::AlignRight);
 
     mainLayout = new QVBoxLayout();
-    QVBoxLayout *vLayout = new QVBoxLayout();
-    QHBoxLayout *hLayout = new QHBoxLayout();
 
     treeSide = new QWidget();
-    vLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(treeSearchField);
-    hLayout->addWidget(treeRegExCheck);
-    vLayout->addLayout(hLayout);
-    vLayout->addWidget(activeTreeTable);
-    vLayout->addWidget(treeTable);
-    treeSide->setLayout(vLayout);
+    QVBoxLayout * treeLayout = new QVBoxLayout();
+    QHBoxLayout * treeFilterOptionsLayout = new QHBoxLayout();
+    treeFilterOptionsLayout->addWidget(treeSearchField);
+    treeFilterOptionsLayout->addWidget(treeRegExCheck);
+    treeLayout->addLayout(treeFilterOptionsLayout);
+    treeLayout->addWidget(activeTreeTable);
+    treeLayout->addWidget(treeTable);
+    treeSide->setLayout(treeLayout);
 
     nodeSide = new QWidget();
-    vLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodeSearchField);
-    hLayout->addWidget(nodeRegExCheck);
-    vLayout->addLayout(hLayout);
-    QLabel *showLabel = new QLabel("Show...");
-    vLayout->addWidget(showLabel);
-    vLayout->addWidget(allNodesRadio);
+    QVBoxLayout * const nodeLayout = new QVBoxLayout();
+    QHBoxLayout * const nodeFilterOptionsLayout = new QHBoxLayout();
+    QHBoxLayout * const nodeFilterOptions2Layout = new QHBoxLayout();
+    QHBoxLayout * const nodeFilterOptions3Layout = new QHBoxLayout();
+    QHBoxLayout * const nodeDisplayLayout = new QHBoxLayout();
+    QLabel * showLabel = new QLabel("Show...");
 
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodesOfSelectedTreesRadio);
-    hLayout->addWidget(&selectedNodes);
+    nodeFilterOptionsLayout->addWidget(nodeSearchField);
+    nodeFilterOptionsLayout->addWidget(nodeRegExCheck);
+    nodeFilterOptions2Layout->addWidget(nodesOfSelectedTreesRadio);
+    nodeFilterOptions2Layout->addWidget(&selectedNodesRadio);
+    nodeFilterOptions3Layout->addWidget(branchNodesChckBx);
+    nodeFilterOptions3Layout->addWidget(commentNodesChckBx);
+    nodeDisplayLayout->addWidget(displayedNodesLabel);
+    nodeDisplayLayout->addWidget(displayedNodesCombo);
 
-    vLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(branchNodesChckBx);
-    hLayout->addWidget(commentNodesChckBx);
-    vLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(displayedNodesTable);
-    hLayout->addWidget(displayedNodesCombo);
-    vLayout->addLayout(hLayout);
-    vLayout->addWidget(activeNodeTable);
-    vLayout->addWidget(nodeTable);
-    nodeSide->setLayout(vLayout);
+    nodeLayout->addLayout(nodeFilterOptionsLayout);
+    nodeLayout->addWidget(showLabel);
+    nodeLayout->addWidget(allNodesRadio);
+    nodeLayout->addLayout(nodeFilterOptions2Layout);
+    nodeLayout->addLayout(nodeFilterOptions3Layout);
+    nodeLayout->addLayout(nodeDisplayLayout);
+    nodeLayout->addWidget(activeNodeTable);
+    nodeLayout->addWidget(nodeTable);
+
+    nodeSide->setLayout(nodeLayout);
 
     splitter = new QSplitter();
     splitter->addWidget(treeSide);
@@ -237,7 +237,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // display events
     QObject::connect(allNodesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
     QObject::connect(nodesOfSelectedTreesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
-    QObject::connect(&selectedNodes, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);//special :D
+    QObject::connect(&selectedNodesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);//special :D
 
     QObject::connect(branchNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
     QObject::connect(commentNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
@@ -295,7 +295,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, this, &ToolsTreeviewTab::branchPopped);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, this, &ToolsTreeviewTab::branchPushed);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        if (selectedNodes.isChecked()) {
+        if (selectedNodesRadio.isChecked()) {
             recreateNodesTable();
         } else {
             applyNodeSelection();
@@ -408,7 +408,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
     } else if (activeTreeTable->hasFocus()) {
         QMenu treeContextMenu;
         QObject::connect(treeContextMenu.addAction("Set comment for tree"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
-        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, [this](){return checkedMoveNodes(this, state->skeletonState->selectedTrees.front()->treeID);});
         QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
         QObject::connect(treeContextMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "(DEL)ete tree"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
@@ -420,7 +420,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         treeContextMenu.exec(activeTreeTable->viewport()->mapToGlobal(pos));
     } else if (treeTable->hasFocus()) {
         QMenu treeContextMenu;
-        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, [this](){return checkedMoveNodes(this, state->skeletonState->selectedTrees.front()->treeID);});
         QObject::connect(treeContextMenu.addAction("Merge trees"), &QAction::triggered, this, &ToolsTreeviewTab::mergeTreesAction);
         QObject::connect(treeContextMenu.addAction("Set comment for tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
         QObject::connect(treeContextMenu.addAction("Show selected tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::showSelectedTrees);
@@ -523,18 +523,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
 void ToolsTreeviewTab::linkNodesAction() {
     const auto node0 = state->skeletonState->selectedNodes[0];
     const auto node1 = state->skeletonState->selectedNodes[1];
-    auto & skel = Skeletonizer::singleton();
-    //segments are only stored and searched in one direction so we have to search for both
-    auto * segment = Skeletonizer::findSegmentBetween(*node0, *node1);
-    if (segment) {
-        skel.delSegment(segment);
-    } else if ((segment = Skeletonizer::findSegmentBetween(*node1, *node0))) {
-        skel.delSegment(segment);
-    } else if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(*node0, *node1)) {
-        QMessageBox::information(this, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
-    } else {//nodes are not already linked
-        skel.addSegment(*node0, *node1);
-    }
+    checkedToggleNodeLink(this, *node0, *node1);
 }
 
 void ToolsTreeviewTab::extractConnectedComponentAction() {
@@ -544,7 +533,7 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
     if(askExtractConnectedComponent) {
         const QString msg("Do you really want to extract all nodes in this component into a new tree?");
 
-        QMessageBox msgBox;
+        QMessageBox msgBox(this);
         msgBox.setText(msg);
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.addButton(QMessageBox::Ok);
@@ -566,31 +555,19 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
 
         const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
         if (!extracted) {
-            QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
+            QMessageBox msgBox(this);
+            msgBox.setText("Nothing to extract");
+            msgBox.setInformativeText("The component spans an entire tree.");
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.exec();
         } else {
             auto msg = QString("Extracted from %1").arg(treeID);
 
             if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
                 msg = QString("Extracted from deleted %1").arg(treeID);
             }
-            Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
-
+            Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.front().treeID, msg);
         }
-    }
-}
-
-void ToolsTreeviewTab::moveNodesAction() {
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Confirmation Requested");
-    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
-                            arg(state->skeletonState->selectedTrees.front()->treeID));
-    QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        Skeletonizer::singleton().moveSelectedNodesToTree(state->skeletonState->selectedTrees.front()->treeID);
     }
 }
 
@@ -1002,20 +979,20 @@ void ToolsTreeviewTab::recreateTreesTable() {
     treeTable->selectionProtection = false;
 
     size_t treeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
+    for (auto & currentTree : state->skeletonState->trees) {
         // filter comment for search string match
         if(treeSearchField->text().length() > 0) {
-            if(strlen(currentTree->comment) == 0) {
+            if(strlen(currentTree.comment) == 0) {
                 continue;
             }
-            if(matchesSearchString(treeSearchField->text(), currentTree->comment, treeRegExCheck->isChecked()) == false) {
+            if(matchesSearchString(treeSearchField->text(), currentTree.comment, treeRegExCheck->isChecked()) == false) {
                 continue;
             }
         }
 
-        treeTable->setRow(treeIndex, QString::number(currentTree->treeID)
-                , QColor(currentTree->color.r*255, currentTree->color.g*255, currentTree->color.b*255, 0.6*255)
-                , currentTree->comment);
+        treeTable->setRow(treeIndex, QString::number(currentTree.treeID)
+                , QColor(currentTree.color.r*255, currentTree.color.g*255, currentTree.color.b*255, 0.6*255)
+                , currentTree.comment);
 
         treeIndex++;//this is here so it doesn’t get incremented on continue
     }
@@ -1051,33 +1028,33 @@ void ToolsTreeviewTab::recreateNodesTable() {
     nodeTable->selectionProtection = false;
 
     int nodeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
-        for (nodeListElement * node = currentTree->firstNode.get(); node != nullptr; node = node->next.get()) {
+    for (auto & currentTree : state->skeletonState->trees) {
+        for (const auto & node : currentTree.nodes) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
                 break;
             }
             // filter for comment search string
             if (nodeSearchField->text().length() > 0) {
-                if(node->comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node->comment->content), nodeRegExCheck->isChecked())) {
+                if (node.comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node.comment->content), nodeRegExCheck->isChecked())) {
                     continue;
                 }
             }
             // filter for nodes of selected trees
             if (nodesOfSelectedTreesRadio->isChecked()) {
-                if (node->correspondingTree->selected == false) {// node not in one of the selected trees
+                if (!node.correspondingTree->selected) {// node not in one of the selected trees
                     continue;
                 }
             }
-            if ((selectedNodes.isChecked() && !node->selected)
-                    || (branchNodesChckBx->isChecked() && !node->isBranchNode)
-                    || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
+            if ((selectedNodesRadio.isChecked() && !node.selected)
+                    || (branchNodesChckBx->isChecked() && !node.isBranchNode)
+                    || (commentNodesChckBx->isChecked() && node.comment == nullptr)) {
                 continue;
             }
 
-            nodeTable->setRow(nodeIndex, QString::number(node->nodeID), node->comment == nullptr ? "" : node->comment->content
-                    , QString::number(node->position.x + 1), QString::number(node->position.y + 1), QString::number(node->position.z + 1)
-                    , QString::number(node->radius));
+            nodeTable->setRow(nodeIndex, QString::number(node.nodeID), node.comment == nullptr ? "" : node.comment->content
+                    , QString::number(node.position.x + 1), QString::number(node.position.y + 1), QString::number(node.position.z + 1)
+                    , QString::number(node.radius));
 
             ++nodeIndex;
         }
@@ -1280,7 +1257,7 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
                 return;
             }
         }
-        if ((selectedNodes.isChecked() && !node->selected)
+        if ((selectedNodesRadio.isChecked() && !node->selected)
                 || (branchNodesChckBx->isChecked() && !node->isBranchNode)
                 || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
             return;
@@ -1292,11 +1269,12 @@ void ToolsTreeviewTab::insertNode(const nodeListElement *node, NodeTable *table)
         table->removeRow(nodeTable->rowCount() - 1);
     }
 
-    int position = 0;//insert on first position if node is firstnode or on activeNodeTable
+    int position = 0;//insert on first position in activeNodeTable
     if (table == nodeTable) {
+        position = nodeTable->rowCount();//add first nodes at the end
         for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
-            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->firstNode->nodeID) {
-                position = i+1;//we want to add one row after this
+            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->nodes.front().nodeID) {
+                position = i + node->correspondingTree->nodes.size() - 1;//tree size already includes new node
                 break;
             }
         }

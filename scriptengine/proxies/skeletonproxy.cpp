@@ -22,12 +22,12 @@ SkeletonProxy::SkeletonProxy(QObject *parent) :
 
 treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
-    return Skeletonizer::getTreeWithPrevID(tree);
+    return Skeletonizer::singleton().getTreeWithPrevID(tree);
 }
 
 treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
-    return Skeletonizer::getTreeWithNextID(tree);
+    return Skeletonizer::singleton().getTreeWithNextID(tree);
 }
 
 bool SkeletonProxy::move_to_next_tree() {
@@ -43,11 +43,11 @@ treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
 }
 
 QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
-    return Skeletonizer::findTrees(comment);
+    return Skeletonizer::singleton().findTreesContainingComment(comment);
 }
 
 treeListElement *SkeletonProxy::first_tree() {
-    return state->skeletonState->firstTree.get();
+    return &state->skeletonState->trees.front();
 }
 
 bool SkeletonProxy::delete_tree(int tree_id) {
@@ -70,7 +70,7 @@ nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }
 
-QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(const treeListElement & tree, const QString & comment) {
+QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tree, const QString & comment) {
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 
@@ -87,22 +87,17 @@ bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
 nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     Coordinate coord(x, y, z);
-    return Skeletonizer::findNearbyNode(tree, coord);
-}
-
-nodeListElement *SkeletonProxy::find_node_in_radius(int x, int y, int z) {
-    Coordinate coord(x, y, z);
-    return Skeletonizer::findNodeInRadius(coord);
+    return Skeletonizer::singleton().findNearbyNode(tree, coord);
 }
 
 nodeListElement *SkeletonProxy::node_with_prev_id(int node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
-    return Skeletonizer::getNodeWithPrevID(node, same_tree);
+    return Skeletonizer::singleton().getNodeWithPrevID(node, same_tree);
 }
 
 nodeListElement *SkeletonProxy::node_with_next_id(int node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
-    return Skeletonizer::getNodeWithNextID(node, same_tree);
+    return Skeletonizer::singleton().getNodeWithNextID(node, same_tree);
 }
 
 bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, int in_mag) {
@@ -176,15 +171,6 @@ void SkeletonProxy::export_converter(const QString &path) {
 
 }
 
-segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
-    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
-    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
-    if(sourceNode && targetNode) {
-        return Skeletonizer::findSegmentBetween(*sourceNode, *targetNode);
-    }
-    return nullptr;
-}
-
 void SkeletonProxy::jump_to_node(nodeListElement *node) {
     if(node) {
         Skeletonizer::singleton().jumpToNode(*node);
@@ -200,9 +186,14 @@ void SkeletonProxy::delete_skeleton() {
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {
-    if(auto *segment = find_segment(source_id, target_id)) {
-        Skeletonizer::delSegment(segment);
-        return true;
+    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
+    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
+    if (sourceNode && targetNode) {
+        auto segmentIt = Skeletonizer::findSegmentBetween(*sourceNode, *targetNode);
+        if (segmentIt != std::end(sourceNode->segments)) {
+            Skeletonizer::singleton().delSegment(segmentIt);
+            return true;
+        }
     }
     return false;
 }
@@ -242,10 +233,8 @@ bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
 
 QList<treeListElement *> *SkeletonProxy::trees() {
     QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree.get();
-    while (currentTree) {
-        trees->append(currentTree);
-        currentTree = currentTree->next.get();
+    for (auto & tree : state->skeletonState->trees) {
+        trees->append(&tree);
     }
     return trees;
 }
@@ -292,7 +281,7 @@ bool SkeletonProxy::add_segment(int source_id, int target_id) {
     auto * sourceNode = Skeletonizer::findNodeByNodeID(source_id);
     auto * targetNode = Skeletonizer::findNodeByNodeID(target_id);
     if(sourceNode != nullptr && targetNode != nullptr) {
-        if (!Skeletonizer::addSegment(*sourceNode, *targetNode)) {
+        if (!Skeletonizer::singleton().addSegment(*sourceNode, *targetNode)) {
             emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
             return false;
         }

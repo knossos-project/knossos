@@ -15,14 +15,22 @@ gpu_raw_cube::gpu_raw_cube(const int gpucubeedge, const bool index) {
     cube.allocateStorage();
 }
 
-void gpu_raw_cube::generate(boost::multi_array_ref<uint8_t, 3>::const_array_view<3>::type view) {
+std::vector<char> gpu_raw_cube::prepare(boost::multi_array_ref<uint8_t, 3>::const_array_view<3>::type view) {
     std::vector<char> data;
     for (const auto & d2 : view)
     for (const auto & d1 : d2)
     for (const auto & elem : d1) {
         data.emplace_back(elem);
     }
+    return data;
+}
+
+void gpu_raw_cube::upload(const std::vector<char> & data) {
     cube.setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, data.data());
+}
+
+void gpu_raw_cube::generate(boost::multi_array_ref<uint8_t, 3>::const_array_view<3>::type view) {
+    upload(prepare(view));
 }
 
 gpu_lut_cube::gpu_lut_cube(const int gpucubeedge) : gpu_raw_cube(gpucubeedge, true) {
@@ -33,7 +41,7 @@ gpu_lut_cube::gpu_lut_cube(const int gpucubeedge) : gpu_raw_cube(gpucubeedge, tr
     lut.setFormat(QOpenGLTexture::RGBA8_UNorm);
 }
 
-void gpu_lut_cube::generate(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view) {
+std::vector<gpu_lut_cube::gpu_index> gpu_lut_cube::prepare(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view) {
     std::vector<gpu_index> data;
     for (const auto & d2 : view)
     for (const auto & d1 : d2)
@@ -49,11 +57,19 @@ void gpu_lut_cube::generate(boost::multi_array_ref<uint64_t, 3>::const_array_vie
     }
     const auto lutSize = std::pow(2, std::ceil(std::log2(colors.size())));
     colors.resize(lutSize);
-    lut.setSize(lutSize);
+    return data;
+}
+
+void gpu_lut_cube::upload(const std::vector<gpu_index> & data) {
+    lut.setSize(colors.size());
     lut.allocateStorage();
 
     cube.setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, data.data());
     lut.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt32_RGBA8_Rev, colors.data());
+}
+
+void gpu_lut_cube::generate(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view) {
+    upload(prepare(view));
 }
 
 TextureLayer::TextureLayer(QOpenGLContext & sharectx) {

@@ -54,41 +54,29 @@ auto treeCompare = [](const treeListElement * const lhs, const int & rhs){
     return lhs->treeID < rhs;
 };
 
-segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
-    nodeListElement *sourceNode,
-    nodeListElement *targetNode) {
-    segmentListElement *newElement = NULL;
+template<typename T, typename Func>
+bool connectedComponent(T & node, Func func) {
+    std::queue<T*> queue;
+    std::unordered_set<const T*> visitedNodes;
+    visitedNodes.emplace(&node);
+    queue.push(&node);
+    while (!queue.empty()) {
+        auto * nextNode = queue.front();
+        queue.pop();
 
-    /*
-    * This skeleton modifying function does not lock the skeleton and therefore
-    * has to be called from functions that do lock and NEVER directly.
-    */
+        if (func(*nextNode)) {
+            return true;
+        }
 
-    newElement = (segmentListElement*) malloc(sizeof(segmentListElement));
-    if(newElement == NULL) {
-        qDebug() << "Out of memory while trying to allocate memory for a new segmentListElement.";
-        return NULL;
+        for (auto & segment : nextNode->segments) {
+            auto & neighbor = segment.forward ? segment.target : segment.source;
+            if (visitedNodes.find(&neighbor) == visitedNodes.end()) {
+                visitedNodes.emplace(&neighbor);
+                queue.push(&neighbor);
+            }
+        }
     }
-    memset(newElement, '\0', sizeof(segmentListElement));
-    if(*currentSegment == NULL) {
-        // Requested to start a new list
-        *currentSegment = newElement;
-        newElement->previous = NULL;
-        newElement->next = NULL;
-    }
-    else {
-        newElement->previous = *currentSegment;
-        newElement->next = (*currentSegment)->next;
-        (*currentSegment)->next = newElement;
-        if(newElement->next)
-            newElement->next->previous = newElement;
-    }
-
-    //Valid segment
-    newElement->flag = SEGMENT_FORWARD;
-    newElement->source = sourceNode;
-    newElement->target = targetNode;
-    return newElement;
+    return false;
 }
 
 treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
@@ -96,28 +84,19 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
 
-QList<treeListElement *> Skeletonizer::findTrees(const QString & comment) {
-    auto tree = state->skeletonState->firstTree.get();
+QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString &comment) {
     QList<treeListElement *> hits;
-    while(tree) {
-        if(QString(tree->comment).contains(comment)) {
-            hits.append(tree);
+    for (auto & tree : skeletonState.trees) {
+        if (QString(tree.comment).contains(comment)) {
+            hits.append(&tree);
         }
-        tree = tree->next.get();
     }
     return hits;
 }
 
 boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
-    color4F treeCol;
-    /* -1 causes new color assignment */
-    treeCol.r = -1.;
-    treeCol.g = -1.;
-    treeCol.b = -1.;
-    treeCol.a = 1.;
-
     if(!state->skeletonState->activeTree) {
-        addTreeListElement(0, treeCol);
+        addTreeListElement();
     }
 
     auto addedNode = addNode(
@@ -136,8 +115,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
 
     setActiveNode(&addedNode.get());
 
-    if(state->skeletonState->activeTree->size == 1) {
-        /* First node in this tree */
+    if (state->skeletonState->activeTree->nodes.size() == 1) {//First node tree is branch node
         pushBranchNode(addedNode.get());
         addComment("First Node", addedNode.get());
     }
@@ -170,7 +148,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     if(makeNodeActive) {
         setActiveNode(&targetNode.get());
     }
-    if (state->skeletonState->activeTree->size == 1) {
+    if (state->skeletonState->activeTree->nodes.size() == 1) {
         /* First node in this tree */
         pushBranchNode(targetNode.get());
         addComment("First Node", targetNode.get());
@@ -270,38 +248,38 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeEndElement(); // end parameters
 
-    for (auto currentTree = state->skeletonState->firstTree.get(); currentTree != nullptr; currentTree = currentTree->next.get()) {
+    for (auto & currentTree : skeletonState.trees) {
         //Every "thing" (tree) has associated nodes and edges.
         xml.writeStartElement("thing");
-        xml.writeAttribute("id", QString::number(currentTree->treeID));
+        xml.writeAttribute("id", QString::number(currentTree.treeID));
 
-        if (currentTree->colorSetManually) {
-            xml.writeAttribute("color.r", QString::number(currentTree->color.r));
-            xml.writeAttribute("color.g", QString::number(currentTree->color.g));
-            xml.writeAttribute("color.b", QString::number(currentTree->color.b));
-            xml.writeAttribute("color.a", QString::number(currentTree->color.a));
+        if (currentTree.colorSetManually) {
+            xml.writeAttribute("color.r", QString::number(currentTree.color.r));
+            xml.writeAttribute("color.g", QString::number(currentTree.color.g));
+            xml.writeAttribute("color.b", QString::number(currentTree.color.b));
+            xml.writeAttribute("color.a", QString::number(currentTree.color.a));
         } else {
             xml.writeAttribute("color.r", QString("-1."));
             xml.writeAttribute("color.g", QString("-1."));
             xml.writeAttribute("color.b", QString("-1."));
             xml.writeAttribute("color.a", QString("1."));
         }
-        if (currentTree->comment[0] != '\0') {
-            xml.writeAttribute("comment", QString(currentTree->comment));
+        if (currentTree.comment[0] != '\0') {
+            xml.writeAttribute("comment", QString(currentTree.comment));
         }
 
         xml.writeStartElement("nodes");
-        for (auto currentNode = currentTree->firstNode.get(); currentNode != nullptr; currentNode = currentNode->next.get()) {
+        for (const auto & node : currentTree.nodes) {
             xml.writeStartElement("node");
-            xml.writeAttribute("id", QString::number(currentNode->nodeID));
-            xml.writeAttribute("radius", QString::number(currentNode->radius));
-            xml.writeAttribute("x", QString::number(currentNode->position.x + 1));
-            xml.writeAttribute("y", QString::number(currentNode->position.y + 1));
-            xml.writeAttribute("z", QString::number(currentNode->position.z + 1));
-            xml.writeAttribute("inVp", QString::number(currentNode->createdInVp));
-            xml.writeAttribute("inMag", QString::number(currentNode->createdInMag));
-            xml.writeAttribute("time", QString::number(currentNode->timestamp));
-            for (auto propertyIt = currentNode->properties.constBegin(); propertyIt != currentNode->properties.constEnd(); ++propertyIt) {
+            xml.writeAttribute("id", QString::number(node.nodeID));
+            xml.writeAttribute("radius", QString::number(node.radius));
+            xml.writeAttribute("x", QString::number(node.position.x + 1));
+            xml.writeAttribute("y", QString::number(node.position.y + 1));
+            xml.writeAttribute("z", QString::number(node.position.z + 1));
+            xml.writeAttribute("inVp", QString::number(node.createdInVp));
+            xml.writeAttribute("inMag", QString::number(node.createdInMag));
+            xml.writeAttribute("time", QString::number(node.timestamp));
+            for (auto propertyIt = node.properties.constBegin(); propertyIt != node.properties.constEnd(); ++propertyIt) {
                 xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
             }
             xml.writeEndElement(); // end node
@@ -309,12 +287,12 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
         xml.writeEndElement(); // end nodes
 
         xml.writeStartElement("edges");
-        for (auto currentNode = currentTree->firstNode.get(); currentNode != nullptr; currentNode = currentNode->next.get()) {
-            for (auto currentSegment = currentNode->firstSegment; currentSegment != nullptr; currentSegment = currentSegment->next) {
-                if (currentSegment->flag == SEGMENT_FORWARD) {
+        for (const auto & node : currentTree.nodes) {
+            for (const auto & currentSegment : node.segments) {
+                if (currentSegment.forward) {
                     xml.writeStartElement("edge");
-                    xml.writeAttribute("source", QString::number(currentSegment->source->nodeID));
-                    xml.writeAttribute("target", QString::number(currentSegment->target->nodeID));
+                    xml.writeAttribute("source", QString::number(currentSegment.source.nodeID));
+                    xml.writeAttribute("target", QString::number(currentSegment.target.nodeID));
                     xml.writeEndElement();
                 }
             }
@@ -375,7 +353,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     uint64_t activeNodeID = 0;
     const uint64_t greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
     const int greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
-    treeListElement *currentTree;
     Coordinate loadedPosition;
     std::vector<uint64_t> branchVector;
     std::vector<std::pair<uint64_t, QString>> commentsVector;
@@ -604,6 +581,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 neuronColor.a = -1;
             }
 
+            treeListElement * currentTree;
             if(merge) {
                 treeID += greatestTreeIDbeforeLoading;
                 currentTree = addTreeListElement(treeID, neuronColor);
@@ -751,51 +729,22 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             state->viewer->userMove(jump, USERMOVE_NEUTRAL);
         }
     }
-    if (state->skeletonState->activeNode == nullptr && state->skeletonState->firstTree != nullptr) {
-        setActiveNode(state->skeletonState->firstTree->firstNode.get());
+    if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
+        setActiveNode(&skeletonState.trees.front().nodes.front());
     }
     return true;
 }
 
-bool Skeletonizer::delSegment(segmentListElement *segToDel) {
+bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
     // Delete the segment out of the segment list and out of the visualization structure!
-    if(!segToDel) {
-        qDebug() << "Cannot delete segment, no segment with corresponding node IDs available!";
-        return false;
-    }
-
-    /* numSegs counts forward AND backward segments!!! */
-    segToDel->source->numSegs--;
-    segToDel->target->numSegs--;
-
-    if(segToDel == segToDel->source->firstSegment)
-        segToDel->source->firstSegment = segToDel->next;
-    else {
-        //if(segToDel->previous) //Why??? Previous EXISTS if its not the first seg...
-            segToDel->previous->next = segToDel->next;
-        if(segToDel->next)
-            segToDel->next->previous = segToDel->previous;
-    }
-
-    //Delete reverse segment in target node
-    if(segToDel->reverseSegment == segToDel->target->firstSegment)
-        segToDel->target->firstSegment = segToDel->reverseSegment->next;
-    else {
-        //if(segToDel->reverseSegment->previous)
-            segToDel->reverseSegment->previous->next = segToDel->reverseSegment->next;
-        if(segToDel->reverseSegment->next)
-            segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
-    }
-
     /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
-    segToDel->length = 0.f;
-    updateCircRadius(segToDel->source);
+    segToDelIt->length = 0.f;
+    updateCircRadius(&segToDelIt->source);
 
-    free(segToDel);
-    state->skeletonState->totalSegmentElements--;
+    segToDelIt->target.segments.erase(segToDelIt->sisterSegment);
+    segToDelIt->source.segments.erase(segToDelIt);
 
     Session::singleton().unsavedChanges = true;
-
     return true;
 }
 
@@ -820,16 +769,9 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         state->skeletonState->branchStack.erase(foundIt);
     }
 
-    for (auto * currentSegment = nodeToDel->firstSegment; currentSegment != nullptr;) {
-        auto * const nextSegment = currentSegment->next;
-        if (currentSegment->flag == SEGMENT_FORWARD) {
-            delSegment(currentSegment);
-        } else if (currentSegment->flag == SEGMENT_BACKWARD) {
-            delSegment(currentSegment->reverseSegment);
-        }
-        currentSegment = nextSegment;
+    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); segmentIt = std::begin(nodeToDel->segments)) {
+        delSegment(segmentIt);
     }
-    nodeToDel->firstSegment = nullptr;
 
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
     nodesOrdered.erase(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeToDel->nodeID, nodeCompare));//binfind pointer
@@ -842,22 +784,12 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         }
     }
 
-    --nodeToDel->correspondingTree->size;
-
     bool resetActiveNode = state->skeletonState->activeNode == nodeToDel;
     auto tree = nodeToDel->correspondingTree;
     const auto pos = nodeToDel->position;
 
     unsetSubobjectOfHybridNode(*nodeToDel);
-
-    if (nodeToDel->next != nullptr) {
-        nodeToDel->next->previous = nodeToDel->previous;
-    }
-    if (nodeToDel->previous != nullptr) {
-        nodeToDel->previous->next = std::move(nodeToDel->next);
-    } else if (nodeToDel == nodeToDel->correspondingTree->firstNode.get()) {
-        nodeToDel->correspondingTree->firstNode = std::move(nodeToDel->next);
-    }
+    nodeToDel->correspondingTree->nodes.erase(nodeToDel->iterator);
 
     emit nodeRemovedSignal(nodeID);
 
@@ -880,18 +812,12 @@ bool Skeletonizer::delTree(int treeID) {
         return false;
     }
 
-    const auto blockState = this->signalsBlocked();
-    blockSignals(true);//chunk operation
-    for (auto * currentNode = treeToDel->firstNode.get(); currentNode != nullptr;) {
-        auto * const nextNode = currentNode->next.get();
-        delNode(0, currentNode);
-        currentNode = nextNode;//currentNode got invalidated
+    const auto blockState = blockSignals(true);//chunk operation
+    for (auto nodeIt = std::begin(treeToDel->nodes); nodeIt != std::end(treeToDel->nodes); nodeIt = std::begin(treeToDel->nodes)) {
+        delNode(0, &*nodeIt);
     }
-    treeToDel->firstNode = nullptr;
     blockSignals(blockState);
 
-    state->skeletonState->treesByID.erase(treeToDel->treeID);
-    treesOrdered.erase(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), treeToDel->treeID, treeCompare));//binfind pointer
 
     if (treeToDel->selected) {
         auto & selectedTrees = state->skeletonState->selectedTrees;
@@ -902,122 +828,58 @@ bool Skeletonizer::delTree(int treeID) {
     }
 
     //remove if active tree
-    if (treeToDel == state->skeletonState->activeTree) {
-        state->skeletonState->activeTree = nullptr;
+    if (treeToDel == skeletonState.activeTree) {
+        skeletonState.activeTree = nullptr;
     }
 
-    if (treeToDel->next != nullptr) {
-        treeToDel->next->previous = treeToDel->previous;
-    }
-    if (treeToDel->previous != nullptr) {
-        treeToDel->previous->next = std::move(treeToDel->next);
-    } else if (treeToDel == state->skeletonState->firstTree.get()) {
-        state->skeletonState->firstTree = std::move(treeToDel->next);
-    }
-
-    --state->skeletonState->treeElements;
+    treesOrdered.erase(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), treeToDel->treeID, treeCompare));//binfind pointer
+    skeletonState.trees.erase(treeToDel->iterator);
+    skeletonState.treesByID.erase(treeID);
+    --skeletonState.treeElements;
 
     //no references to tree left
     emit treeRemovedSignal(treeID);//updates tools
 
     //if the active tree was not set through the active node but another tree exists
-    if (state->skeletonState->activeTree == nullptr && state->skeletonState->firstTree != nullptr) {
-        setActiveTreeByID(state->skeletonState->firstTree->treeID);//updates tools too
+    if (skeletonState.activeTree == nullptr && !skeletonState.trees.empty()) {
+        setActiveTreeByID(skeletonState.trees.front().treeID);
     }
 
     Session::singleton().unsavedChanges = true;
     return true;
 }
 
-nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition) {
-    nodeListElement *currentNode = NULL;
-    nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
-    treeListElement *currentTree = NULL;
-    float smallestDistance = 0;
+nodeListElement * Skeletonizer::findNearbyNode(treeListElement * nearbyTree, Coordinate searchPosition) {
+    nodeListElement * nodeWithCurrentlySmallestDistance = nullptr;
+    float smallestDistance = skeletonState.volBoundary;//maximum distance
 
+    auto searchTree = [&smallestDistance, &nodeWithCurrentlySmallestDistance, searchPosition](treeListElement & tree){
+        for (auto & currentNode : tree.nodes) {
+            // We make the nearest node the next active node
+            const floatCoordinate distanceVector = searchPosition - currentNode.position;
+            const auto distance = euclidicNorm(distanceVector);
+            //set nearest distance to distance to first node found, then to distance of any nearer node found.
+            if (distance  < smallestDistance) {
+                smallestDistance = distance;
+                nodeWithCurrentlySmallestDistance = &currentNode;
+            }
+        }
+    };
 
     //  If available, search for a node within nearbyTree first.
+    if (nearbyTree != nullptr) {
+        searchTree(*nearbyTree);
+    }
 
-
-    if(nearbyTree) {
-        currentNode = nearbyTree->firstNode.get();
-
-        while(currentNode) {
-            // We make the nearest node the next active node
-            const floatCoordinate distanceVector = {(float)(searchPosition.x - currentNode->position.x),
-                                                    (float)(searchPosition.y - currentNode->position.y),
-                                                    (float)(searchPosition.z - currentNode->position.z)};
-            //set nearest distance to distance to first node found, then to distance of any nearer node found.
-            if(smallestDistance == 0 || euclidicNorm(distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(distanceVector);
-                nodeWithCurrentlySmallestDistance = currentNode;
-            }
-            currentNode = currentNode->next.get();
-        }
-
-        if(nodeWithCurrentlySmallestDistance) {
-            return nodeWithCurrentlySmallestDistance;
+    if (nodeWithCurrentlySmallestDistance == nullptr) {
+        // Ok, we didn't find any node in nearbyTree.
+        // Now we take the nearest node, independent of the tree it belongs to.
+        for (auto & currentTree : skeletonState.trees) {
+            searchTree(currentTree);
         }
     }
 
-     // Ok, we didn't find any node in nearbyTree.
-     // Now we take the nearest node, independent of the tree it belongs to.
-
-
-    currentTree = state->skeletonState->firstTree.get();
-    smallestDistance = 0;
-    while(currentTree) {
-        currentNode = currentTree->firstNode.get();
-
-        while(currentNode) {
-            //We make the nearest node the next active node
-            const floatCoordinate distanceVector = {(float)(searchPosition.x - currentNode->position.x),
-                                                    (float)(searchPosition.y - currentNode->position.y), (float)(searchPosition.z - currentNode->position.z)};
-            if(smallestDistance == 0 || euclidicNorm(distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(distanceVector);
-                nodeWithCurrentlySmallestDistance = currentNode;
-            }
-            currentNode = currentNode->next.get();
-        }
-       currentTree = currentTree->next.get();
-    }
-
-    if(nodeWithCurrentlySmallestDistance) {
-        return nodeWithCurrentlySmallestDistance;
-    }
-
-    return NULL;
-}
-
-nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
-    nodeListElement *currentNode = NULL;
-    nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
-    treeListElement *currentTree = NULL;
-    float smallestDistance = CATCH_RADIUS;
-
-    currentTree = state->skeletonState->firstTree.get();
-    while(currentTree) {
-        currentNode = currentTree->firstNode.get();
-
-        while(currentNode) {
-            //We make the nearest node the next active node
-            const floatCoordinate distanceVector = {(float)searchPosition.x - (float)currentNode->position.x,
-                                                    (float)searchPosition.y - (float)currentNode->position.y,
-                                                    (float)searchPosition.z - (float)currentNode->position.z};
-            if(euclidicNorm(distanceVector) < smallestDistance) {
-                smallestDistance = euclidicNorm(distanceVector);
-                nodeWithCurrentlySmallestDistance = currentNode;
-            }
-            currentNode = currentNode->next.get();
-        }
-       currentTree = currentTree->next.get();
-    }
-
-    if(nodeWithCurrentlySmallestDistance) {
-        return nodeWithCurrentlySmallestDistance;
-    }
-
-    return NULL;
+    return nodeWithCurrentlySmallestDistance;
 }
 
 bool Skeletonizer::setActiveTreeByID(int treeID) {
@@ -1040,11 +902,11 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         auto * node = findNearbyNode(currentTree, state->skeletonState->activeNode->position);
         if (node->correspondingTree == currentTree) {
             setActiveNode(node);
-        } else {
-            setActiveNode(currentTree->firstNode.get());
+        } else if (!currentTree->nodes.empty()) {
+            setActiveNode(&currentTree->nodes.front());
         }
-    } else if (state->skeletonState->activeNode == nullptr) {
-        setActiveNode(currentTree->firstNode.get());
+    } else if (state->skeletonState->activeNode == nullptr && !currentTree->nodes.empty()) {
+        setActiveNode(&currentTree->nodes.front());
     }
 
     Session::singleton().unsavedChanges = true;
@@ -1100,9 +962,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
                 return boost::none;
             }
 
-            const floatCoordinate lockVector = {(float)(position.x - state->skeletonState->lockedPosition.x),
-                                                (float)(position.y - state->skeletonState->lockedPosition.y),
-                                                (float)(position.z - state->skeletonState->lockedPosition.z)};
+            const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
             float lockDistance = euclidicNorm(lockVector);
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
@@ -1123,10 +983,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
     }
 
     // One node more in all trees
-    state->skeletonState->totalNodeElements++;
-
-    // One more node in this tree.
-    ++tempTree->size;
+    ++state->skeletonState->totalNodeElements;
 
     if (nodeID == 0) {
         nodeID = findAvailableNodeID();
@@ -1136,75 +993,47 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
         time = Session::singleton().getAnnotationTime() + Session::singleton().currentTimeSliceMs();
     }
 
-    auto * const tempNode = new nodeListElement{nodeID, radius, position, inMag, VPtype, time.get(), properties, *tempTree};
-    auto & currentNode = tempTree->firstNode;
-    if (currentNode == nullptr) {
-        // Requested to add a node to a list that hasn't yet been started.
-        currentNode.reset(tempNode);
-        tempNode->previous = nullptr;
-        tempNode->next = nullptr;
-    } else {
-        tempNode->previous = currentNode.get();
-        tempNode->next = std::move(currentNode->next);
-        currentNode->next.reset(tempNode);
-        if (tempNode->next) {
-            tempNode->next->previous = tempNode;
-        }
-    }
+    tempTree->nodes.emplace_back(nodeID, radius, position, inMag, VPtype, time.get(), properties, *tempTree);
+    auto & tempNode = tempTree->nodes.back();
+    tempNode.iterator = std::prev(std::end(tempTree->nodes));
+    updateCircRadius(&tempNode);
+    updateSubobjectCountFromProperty(tempNode);
 
-    updateCircRadius(tempNode);
-
-    updateSubobjectCountFromProperty(*tempNode);
-
-    state->skeletonState->nodesByNodeID.emplace(nodeID, tempNode);
+    state->skeletonState->nodesByNodeID.emplace(nodeID, &tempNode);
 
     if (nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
-        nodesOrdered.emplace_back(tempNode);
+        nodesOrdered.emplace_back(&tempNode);
     } else {
-        nodesOrdered.emplace(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeID, nodeCompare), tempNode);
+        nodesOrdered.emplace(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeID, nodeCompare), &tempNode);
     }
     Session::singleton().unsavedChanges = true;
 
-    emit nodeAddedSignal(*tempNode);
+    emit nodeAddedSignal(tempNode);
 
-    return *tempNode;
+    return tempNode;
 }
 
 bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & targetNode) {
-    segmentListElement *sourceSeg;
-
-    if(findSegmentBetween(sourceNode, targetNode)) {
+    if (findSegmentBetween(sourceNode, targetNode) != std::end(sourceNode.segments)) {
         qDebug() << "Segment between nodes" << sourceNode.nodeID << "and" << targetNode.nodeID << "exists already.";
         return false;
     }
-
-    if(sourceNode == targetNode) {
+    if (sourceNode == targetNode) {
         qDebug() << "Cannot link node with itself!";
         return false;
     }
 
-    //One segment more in all trees
-    state->skeletonState->totalSegmentElements++;
-
      // Add the segment to the tree structure
-
-    sourceSeg = addSegmentListElement(&(sourceNode.firstSegment), &sourceNode, &targetNode);
-    sourceSeg->reverseSegment = addSegmentListElement(&(targetNode.firstSegment), &sourceNode, &targetNode);
-
-    sourceSeg->reverseSegment->flag = SEGMENT_BACKWARD;
-
-    sourceSeg->reverseSegment->reverseSegment = sourceSeg;
-
-    /* numSegs counts forward AND backward segments!!! */
-    sourceNode.numSegs++;
-    targetNode.numSegs++;
+    sourceNode.segments.emplace_back(sourceNode, targetNode);
+    targetNode.segments.emplace_back(sourceNode, targetNode, false);//although it’s the ›reverse‹ segment, its direction doesn’t change
+    auto sourceSegIt = std::prev(std::end(sourceNode.segments));
+    auto targetSegIt = std::prev(std::end(targetNode.segments));
+    sourceSegIt->sisterSegment = targetSegIt;
+    sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    const floatCoordinate node1 = {(float)sourceNode.position.x, (float)sourceNode.position.y, (float)sourceNode.position.z};
-    const floatCoordinate node2 = {(float)targetNode.position.x - node1.x, (float)targetNode.position.y - node1.y, (float)targetNode.position.z - node1.z};
-
-    sourceSeg->length = sourceSeg->reverseSegment->length = sqrtf(scalarProduct(node2, node2));
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = euclidicNorm(targetNode.position - sourceNode.position);
 
     updateCircRadius(&sourceNode);
 
@@ -1213,43 +1042,27 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     return true;
 }
 
-void Skeletonizer::clearSkeleton() {
-    treeListElement *currentTree, *treeToDel;
-    auto skeletonState = state->skeletonState;
-
-    const auto blockState = this->signalsBlocked();
-    blockSignals(true);
-    currentTree = skeletonState->firstTree.get();
-    while(currentTree) {
-        treeToDel = currentTree;
-        currentTree = treeToDel->next.get();
-        delTree(treeToDel->treeID);
+void Skeletonizer::toggleLink(nodeListElement & lhs, nodeListElement & rhs) {
+    auto segmentIt = findSegmentBetween(lhs, rhs);
+    if (segmentIt != std::end(lhs.segments)) {
+        delSegment(segmentIt);
+    } else if ((segmentIt = findSegmentBetween(rhs, lhs)) != std::end(rhs.segments)) {
+        delSegment(segmentIt);
+    } else {
+        addSegment(lhs, rhs);
     }
-    skeletonState->firstTree = nullptr;
+}
+
+void Skeletonizer::clearSkeleton() {
+    const auto blockState = blockSignals(true);
+    while (skeletonState.currentComment) {
+        delComment(skeletonState.currentComment, 0);
+    }
     blockSignals(blockState);
-    emit resetData();
-
-    skeletonState->activeNode = NULL;
-    skeletonState->activeTree = NULL;
-
-    skeletonState->nodesByNodeID.clear();
-    skeletonState->treesByID.clear();
-    skeletonState->branchStack.clear();
-
-    //Generate empty tree structures
-    skeletonState->firstTree = NULL;
-    skeletonState->totalNodeElements = 0;
-    skeletonState->totalSegmentElements = 0;
-    skeletonState->treeElements = 0;
-    skeletonState->activeTree = NULL;
-    skeletonState->activeNode = NULL;
-    skeletonState->greatestNodeID = 0;
-    skeletonState->greatestTreeID = 0;
-
+    skeletonState = SkeletonState{};
     Session::singleton().resetMovementArea();
     Session::singleton().setAnnotationTime(0);
-    state->skeletonState->skeletonCreatedInVersion = KVERSION;
-    state->skeletonState->skeletonLastSavedInVersion.clear();
+    emit resetData();
 }
 
 bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
@@ -1266,167 +1079,67 @@ bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
         return false;
     }
 
-    nodeListElement * currentNode = tree2->firstNode.get();
-
-    while(currentNode) {
-        //Change the corresponding tree
-        currentNode->correspondingTree = tree1;
-
-        currentNode = currentNode->next.get();
+    for (auto & node : tree2->nodes) {
+        node.correspondingTree = tree1;
     }
-
-    //Now we insert the node list of tree2 before the node list of tree1
-    if (tree2->firstNode) {
-        //First, we have to find the last node of tree2 (this node has to be connected
-        //to the first node inside of tree1)
-        nodeListElement * lastNodeTree2;
-        for (lastNodeTree2 = tree2->firstNode.get(); lastNodeTree2->next != nullptr; lastNodeTree2 = lastNodeTree2->next.get()) {}
-
-        lastNodeTree2->next = std::move(tree1->firstNode);
-        if (lastNodeTree2->next != nullptr) {
-            lastNodeTree2->next->previous = lastNodeTree2;
-        }
-        tree1->firstNode = std::move(tree2->firstNode);
-    }
-
-    // The new node count for tree1 is the old node count of tree1 plus the node
-    // count of tree2
-    tree1->size += tree2->size;
-
-    tree2->size = 0;
+    tree1->nodes.splice(std::end(tree1->nodes), tree2->nodes);
     delTree(tree2->treeID);
-
     setActiveTreeByID(tree1->treeID);
-
     emit treesMerged(treeID1, treeID2);//update nodes
-
     return true;
 }
 
-nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, bool sameTree) {
-    nodeListElement *prevNode = NULL;
-    nodeListElement *highestNode = NULL;
-    unsigned int minDistance = UINT_MAX;
-    unsigned int tempMinDistance = minDistance;
-    unsigned int maxID = 0;
-
-    if(currentNode == NULL) {
+template<typename Func>
+nodeListElement * Skeletonizer::getNodeWithRelationalID(nodeListElement * currentNode, bool sameTree, Func func) {
+    if (currentNode == nullptr) {
         // no current node, return active node
-        if(state->skeletonState->activeNode) {
+        if (state->skeletonState->activeNode != nullptr) {
             return state->skeletonState->activeNode;
         }
         // no active node, simply return first node found
-        treeListElement *tree = state->skeletonState->firstTree.get();
-        while(tree) {
-            if(tree->firstNode) {
-                return tree->firstNode.get();
+        for (auto & tree : skeletonState.trees) {
+            if (!tree.nodes.empty()) {
+                return &tree.nodes.front();
             }
-            tree = tree->next.get();
         }
         qDebug() << "no nodes to move to";
-        return NULL;
-    }
-    treeListElement *tree;
-    if(sameTree) {
-         tree = currentNode->correspondingTree;
-    }
-    else {
-        tree = state->skeletonState->firstTree.get();
-    }
-    nodeListElement *node;
-    while(tree) {
-        node = tree->firstNode.get();
-        while(node) {
-            if(node->nodeID > maxID) {
-                highestNode = node;
-                maxID = node->nodeID;
-            }
-            if(node->nodeID < currentNode->nodeID) {
-                tempMinDistance = currentNode->nodeID - node->nodeID;
-
-                if(tempMinDistance == 1) { //smallest distance possible
-                    return node;
-                }
-                if(tempMinDistance < minDistance) {
-                    minDistance = tempMinDistance;
-                    prevNode = node;
-                }
-            }
-            node = node->next.get();
-        }
-        if(sameTree) {
-            break;
-        }
-        tree = tree->next.get();
+        return nullptr;
     }
 
-    if(!prevNode && sameTree) {
-        prevNode = highestNode;
+    nodeListElement * extremalNode = nullptr;
+    auto globalExtremalIdDistance = skeletonState.greatestNodeID;
+    auto searchTree = [&](treeListElement & tree){
+        for (auto & node : tree.nodes) {
+            if (func(node.nodeID, currentNode->nodeID)) {
+                const auto localExtremalIdDistance = std::max(currentNode->nodeID, node.nodeID) - std::min(currentNode->nodeID, node.nodeID);
+                if (localExtremalIdDistance == 1) {//smallest distance possible
+                    globalExtremalIdDistance = localExtremalIdDistance;
+                    extremalNode = &node;
+                    return;
+                }
+                if (localExtremalIdDistance < globalExtremalIdDistance) {
+                    globalExtremalIdDistance = localExtremalIdDistance;
+                    extremalNode = &node;
+                }
+            }
+        }
+    };
+    if (sameTree) {
+        searchTree(*currentNode->correspondingTree);
     }
-    return prevNode;
+    for (auto & tree : skeletonState.trees) {
+        searchTree(tree);
+    }
+    return extremalNode;
+
 }
 
-nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, bool sameTree) {
-    nodeListElement *nextNode = NULL;
-    nodeListElement *lowestNode = NULL;
-    unsigned int minDistance = UINT_MAX;
-    unsigned int tempMinDistance = minDistance;
-    unsigned int minID = UINT_MAX;
+nodeListElement * Skeletonizer::getNodeWithPrevID(nodeListElement * currentNode, bool sameTree) {
+    return getNodeWithRelationalID(currentNode, sameTree, std::less<decltype(nodeListElement::nodeID)>{});
+}
 
-    if(currentNode == NULL) {
-        // no current node, return active node
-        if(state->skeletonState->activeNode) {
-            return state->skeletonState->activeNode;
-        }
-        // no active node, simply return first node found
-        treeListElement *tree = state->skeletonState->firstTree.get();
-        while(tree) {
-            if(tree->firstNode) {
-                return tree->firstNode.get();
-            }
-            tree = tree->next.get();
-        }
-        qDebug() << "no nodes to move to";
-        return NULL;
-    }
-    treeListElement *tree;
-    if(sameTree) {
-         tree = currentNode->correspondingTree;
-    }
-    else {
-        tree = state->skeletonState->firstTree.get();
-    }
-    nodeListElement *node;
-    while(tree) {
-        node = tree->firstNode.get();
-        while(node) {
-            if(node->nodeID < minID) {
-                lowestNode = node;
-                minID = node->nodeID;
-            }
-            if(node->nodeID > currentNode->nodeID) {
-                tempMinDistance = node->nodeID - currentNode->nodeID;
-
-                if(tempMinDistance == 1) { //smallest distance possible
-                    return node;
-                }
-                if(tempMinDistance < minDistance) {
-                    minDistance = tempMinDistance;
-                    nextNode = node;
-                }
-            }
-            node = node->next.get();
-        }
-        if(sameTree) {
-            break;
-        }
-        tree = tree->next.get();
-    }
-
-    if(!nextNode && sameTree) {
-        nextNode = lowestNode;
-    }
-    return nextNode;
+nodeListElement * Skeletonizer::getNodeWithNextID(nodeListElement * currentNode, bool sameTree) {
+    return getNodeWithRelationalID(currentNode, sameTree, std::greater<decltype(nodeListElement::nodeID)>{});
 }
 
 nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
@@ -1434,11 +1147,11 @@ nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
     return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
 }
 
-QList<nodeListElement*> Skeletonizer::findNodesInTree(const treeListElement & tree, const QString & comment) {
+QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, const QString & comment) {
     QList<nodeListElement *> hits;
-    for (auto * node = tree.firstNode.get(); node != nullptr; node = node->next.get()) {
-        if (node->comment && QString(node->comment->content).contains(comment)) {
-            hits.append(node);
+    for (auto & node : tree.nodes) {
+        if (node.comment != nullptr && QString(node.comment->content).contains(comment)) {
+            hits.append(&node);
         }
     }
     return hits;
@@ -1448,138 +1161,87 @@ int Skeletonizer::findAvailableTreeID() {
     return state->skeletonState->greatestTreeID + 1;
 }
 
-treeListElement* Skeletonizer::addTreeListElement(int treeID, color4F color) {
-     // The variable sync is a workaround for the problem that this function
-     // will sometimes be called by other syncable functions that themselves hold
-     // the lock and handle synchronization. If set to false, all synchro
-     // routines will be skipped.
+treeListElement * Skeletonizer::addTreeListElement() {
+    return addTreeListElement(skeletonState.greatestTreeID + 1);
+}
 
-    treeListElement *newElement = NULL;
-
-    newElement = findTreeByTreeID(treeID);
-    if(newElement) {
-        qDebug("Tree with ID %d already exists!", treeID);
-        return newElement;
+treeListElement * Skeletonizer::addTreeListElement(int treeID, color4F color) {
+    if (findTreeByTreeID(treeID) != nullptr) {
+        const auto newID = skeletonState.greatestTreeID + 1;
+        qDebug() << tr("Tree with ID %1 already exists. Used ID %2 instead").arg(treeID).arg(newID);
+        treeID = newID;
     }
 
-    newElement = new treeListElement();
+    skeletonState.trees.emplace_back(treeID);
+    treeListElement & newTree = skeletonState.trees.back();
+    newTree.iterator = std::prev(std::end(skeletonState.trees));
+    state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
+    ++state->skeletonState->treeElements;
 
-    state->skeletonState->treeElements++;
-
-    //Tree ID is unique in tree list
-    //Take the provided tree ID if there is one.
-    newElement->treeID = treeID != 0 ? treeID : findAvailableTreeID();
-    newElement->render = true;
-    newElement->selected = false;
 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
-        const auto blockState = this->signalsBlocked();
-        blockSignals(true);
-        restoreDefaultTreeColor(*newElement);
+        const auto blockState = blockSignals(true);
+        restoreDefaultTreeColor(newTree);
         blockSignals(blockState);
     } else {
-        newElement->color = color;
+        newTree.color = color;
+        newTree.colorSetManually = true;
     }
-    newElement->colorSetManually = false;
 
-    memset(newElement->comment, '\0', 8192);
-
-    //Insert the new tree at the beginning of the tree list
-    newElement->next = std::move(state->skeletonState->firstTree);
-    newElement->previous = NULL;
-    //The old first element should have the new first element as previous element
-    if (newElement->next) {
-        newElement->next->previous = newElement;
-    }
-    //We change the old and new first elements
-    state->skeletonState->firstTree.reset(newElement);
-
-    state->skeletonState->treesByID.emplace(newElement->treeID, newElement);
-
-    if(newElement->treeID > state->skeletonState->greatestTreeID) {
-        state->skeletonState->greatestTreeID = newElement->treeID;
-        treesOrdered.emplace_back(newElement);
+    if (newTree.treeID > state->skeletonState->greatestTreeID) {
+        state->skeletonState->greatestTreeID = newTree.treeID;
+        treesOrdered.emplace_back(&newTree);
     } else {
-        treesOrdered.emplace(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), newElement->treeID, treeCompare), newElement);
+        treesOrdered.emplace(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), newTree.treeID, treeCompare), &newTree);
     }
 
     Session::singleton().unsavedChanges = true;
 
-    emit treeAddedSignal(*newElement);
+    emit treeAddedSignal(newTree);
 
-    setActiveTreeByID(newElement->treeID);
+    setActiveTreeByID(newTree.treeID);
 
-    return newElement;
+    return &newTree;
 }
 
-treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
-    treeListElement *tree = state->skeletonState->firstTree.get();
-    treeListElement *prevTree = NULL;
-    uint idDistance = state->skeletonState->treeElements;
-    uint tempDistance = idDistance;
-
-    if(currentTree == NULL) {
-        // no current tree, return active tree
-        if(state->skeletonState->activeTree) {
-            return state->skeletonState->activeTree;
+template<typename Func>
+treeListElement * Skeletonizer::getTreeWithRelationalID(treeListElement * currentTree, Func func) {
+    if (currentTree == nullptr) {
+        if (skeletonState.activeTree != nullptr) {// no current tree, return active tree
+            return skeletonState.activeTree;
         }
         // no active tree, simply return first tree found
-        if(tree) {
-            return tree;
+        if (!skeletonState.trees.empty()) {
+            return &skeletonState.trees.front();
         }
         qDebug() << "no tree to move to";
-        return NULL;
+        return nullptr;
     }
-    while(tree) {
-        if(tree->treeID < currentTree->treeID) {
-            tempDistance = currentTree->treeID - tree->treeID;
-            if(tempDistance == 1) {//smallest distance possible
-                return tree;
+
+    treeListElement * treeFound = nullptr;
+    int extremalIdDistance = skeletonState.treeElements;
+    for (auto & tree : skeletonState.trees) {
+        if (func(tree.treeID, currentTree->treeID)) {
+            const auto distance = std::max(currentTree->treeID, tree.treeID) - std::min(currentTree->treeID, tree.treeID);
+            if (distance == 1) {//smallest distance possible
+                return &tree;
             }
-            if(tempDistance < idDistance) {
-                idDistance = tempDistance;
-                prevTree = tree;
+            if (distance < extremalIdDistance) {
+                extremalIdDistance = distance;
+                treeFound = &tree;
             }
         }
-        tree = tree->next.get();
     }
-    return prevTree;
+    return treeFound;
 }
 
-treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
-    treeListElement *tree = state->skeletonState->firstTree.get();
-    treeListElement *nextTree = NULL;
-    uint idDistance = state->skeletonState->treeElements;
-    uint tempDistance = idDistance;
+treeListElement * Skeletonizer::getTreeWithPrevID(treeListElement * currentTree) {
+    return getTreeWithRelationalID(currentTree, std::less<decltype(treeListElement::treeID)>{});
+}
 
-    if(currentTree == NULL) {
-        // no current tree, return active tree
-        if(state->skeletonState->activeTree) {
-            return state->skeletonState->activeTree;
-        }
-        // no active tree, simply return first tree found
-        if(tree) {
-            return tree;
-        }
-        qDebug() << "no tree to move to";
-        return NULL;
-    }
-    while(tree) {
-        if(tree->treeID > currentTree->treeID) {
-            tempDistance = tree->treeID - currentTree->treeID;
-
-            if(tempDistance == 1) { //smallest distance possible
-                return tree;
-            }
-            if(tempDistance < idDistance) {
-                idDistance = tempDistance;
-                nextTree = tree;
-            }
-        }
-        tree = tree->next.get();
-    }
-    return nextTree;
+treeListElement * Skeletonizer::getTreeWithNextID(treeListElement * currentTree) {
+    return getTreeWithRelationalID(currentTree, std::greater<decltype(treeListElement::treeID)>{});
 }
 
 bool Skeletonizer::addTreeCommentToSelectedTrees(QString comment) {
@@ -1612,21 +1274,16 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     return true;
 }
 
-segmentListElement* Skeletonizer::findSegmentBetween(const nodeListElement & sourceNode, const nodeListElement & targetNode) {
-    segmentListElement *currentSegment;
-
-    currentSegment = sourceNode.firstSegment;
-    while(currentSegment) {
-        if(currentSegment->flag == SEGMENT_BACKWARD) {
-            currentSegment = currentSegment->next;
+std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode) {
+    for (auto segmentIt = std::begin(sourceNode.segments); segmentIt != std::end(sourceNode.segments); ++segmentIt) {
+        if (!segmentIt->forward) {
             continue;
         }
-        if(*currentSegment->target == targetNode) {
-            return currentSegment;
+        if (segmentIt->target == targetNode) {
+            return segmentIt;
         }
-        currentSegment = currentSegment->next;
     }
-    return NULL;
+    return std::end(sourceNode.segments);
 }
 
 bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
@@ -1668,31 +1325,19 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
 
-    auto node = findNodeByNodeID(nodeID);
+    auto * node = findNodeByNodeID(nodeID);
     if (!node) {
         return false;
     }
 
     std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
-    std::queue<nodeListElement*> queue;
     std::unordered_set<nodeListElement*> visitedNodes;
     visitedNodes.insert(node);
-    queue.push(node);
-    while(queue.size() > 0) {
-        auto nextNode = queue.front();
-        queue.pop();
-        treesSeen.insert(nextNode->correspondingTree);
-
-        auto segment = nextNode->firstSegment;
-        while(segment) {
-            auto *neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
-            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
-                visitedNodes.insert(neighbor);
-                queue.push(neighbor);
-            }
-            segment = segment->next;
-        }
-    }
+    connectedComponent(*node, [&treesSeen, &visitedNodes](nodeListElement & node){
+        visitedNodes.emplace(&node);
+        treesSeen.emplace(node.correspondingTree);
+        return false;
+    });
 
     //  If the total number of nodes visited is smaller than the sum of the
     //  number of nodes in all trees we've seen, the connected component is a
@@ -1704,48 +1349,24 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     // tree when the connected component spans several trees. This is a useful
     // feature when performing skeleton consolidation and allows one to merge
     // many trees at once.
-    uint nodeCountSeenTrees = 0;
-    for(auto tree : treesSeen) {
-        nodeCountSeenTrees += tree->size;
+    std::size_t nodeCountSeenTrees = 0;
+    for(auto * tree : treesSeen) {
+        nodeCountSeenTrees += tree->nodes.size();
     }
-    if(visitedNodes.size() == nodeCountSeenTrees && treesSeen.size() == 1) {
+    if (visitedNodes.size() == nodeCountSeenTrees && treesSeen.size() == 1) {
         return false;
     }
 
-    color4F treeCol;
-    treeCol.r = -1.;
-    auto newTree = addTreeListElement(0, treeCol);
+    auto * newTree = addTreeListElement();
     // Splitting the connected component.
-    std::vector<int> deletedTrees;
-    nodeListElement * last = nullptr;
-    for (auto * node : visitedNodes) {
+    for (auto * nodeIt : visitedNodes) {
+        if (nodeIt->correspondingTree->nodes.empty()) {//remove empty trees
+            delTree(nodeIt->correspondingTree->treeID);
+        }
         // Removing node list element from its old position
-        --node->correspondingTree->size;
-        if (node->next != nullptr) {
-            node->next->previous = node->previous;
-        }
-        if (node->previous != nullptr) {
-            node->previous->next.release();//we don’t want to erase the node
-            node->previous->next = std::move(node->next);
-        } else {
-            node->correspondingTree->firstNode.release();//we don’t want to erase the node
-            node->correspondingTree->firstNode = std::move(node->next);
-        }
-        if (node->correspondingTree->size == 0) {//remove empty trees
-            deletedTrees.emplace_back(node->correspondingTree->treeID);
-            delTree(node->correspondingTree->treeID);
-        }
         // Inserting node list element into new list.
-        ++newTree->size;
-        node->previous = last;
-        if (last != nullptr) {
-            last->next.reset(node);
-        } else {
-            newTree->firstNode.reset(node);
-        }
-        node->correspondingTree = newTree;
-
-        last = node;
+        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
+        nodeIt->correspondingTree = newTree;
     }
     Session::singleton().unsavedChanges = true;
     setActiveTreeByID(newTree->treeID);//the empty tree had no active node
@@ -2109,8 +1730,8 @@ void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
 }
 
 void Skeletonizer::updateTreeColors() {
-    for (auto * tree = state->skeletonState->firstTree.get(); tree != nullptr; tree = tree->next.get()) {
-        restoreDefaultTreeColor(*tree);
+    for (auto & tree : skeletonState.trees) {
+        restoreDefaultTreeColor(tree);
     }
 }
 
@@ -2122,14 +1743,12 @@ void Skeletonizer::updateTreeColors() {
  * @return
  */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
-    segmentListElement *currentSegment = NULL;
     node->circRadius = singleton().radius(*node);
     /* Any segment longer than the current circ radius?*/
-    currentSegment = node->firstSegment;
-    while(currentSegment) {
-        if(currentSegment->length > node->circRadius)
-            node->circRadius = currentSegment->length;
-        currentSegment = currentSegment->next;
+    for (const auto & currentSegment : node->segments) {
+        if (currentSegment.length > node->circRadius) {
+            node->circRadius = currentSegment.length;
+        }
     }
     return true;
 }
@@ -2161,20 +1780,18 @@ float Skeletonizer::segmentSizeAt(const nodeListElement & node) const {
 
 bool Skeletonizer::moveToPrevTree() {
     treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
-    nodeListElement *node;
     if(state->skeletonState->activeTree == nullptr) {
         return false;
     }
     if(prevTree) {
         setActiveTreeByID(prevTree->treeID);
         //set tree's first node to active node if existent
-        node = state->skeletonState->activeTree->firstNode.get();
-        if(node == nullptr) {
+        if (state->skeletonState->activeTree->nodes.empty()) {
             return true;
         } else {
-            setActiveNode(node);
-            emit setRecenteringPositionSignal(node->position);
-            Knossos::sendRemoteSignal();
+            auto & node = state->skeletonState->activeTree->nodes.front();
+            setActiveNode(&node);
+            state->viewer->setPositionWithRecentering(node.position);
         }
         return true;
     }
@@ -2191,22 +1808,19 @@ bool Skeletonizer::moveToPrevTree() {
 
 bool Skeletonizer::moveToNextTree() {
     treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
-    nodeListElement *node;
-
     if(state->skeletonState->activeTree == nullptr) {
         return false;
     }
     if(nextTree) {
         setActiveTreeByID(nextTree->treeID);
         //set tree's first node to active node if existent
-        node = state->skeletonState->activeTree->firstNode.get();
 
-        if(node == nullptr) {
+        if (state->skeletonState->activeTree->nodes.empty()) {
             return true;
         } else {
-            setActiveNode(node);
-            emit setRecenteringPositionSignal(node->position);
-            Knossos::sendRemoteSignal();
+            auto & node = state->skeletonState->activeTree->nodes.front();
+            setActiveNode(&node);
+            state->viewer->setPositionWithRecentering(node.position);
         }
         return true;
     }
@@ -2224,8 +1838,7 @@ bool Skeletonizer::moveToPrevNode() {
     nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(prevNode);
-        emit setRecenteringPositionSignal(prevNode->position);
-        Knossos::sendRemoteSignal();
+        state->viewer->setPositionWithRecentering(prevNode->position);
         return true;
     }
     return false;
@@ -2235,8 +1848,7 @@ bool Skeletonizer::moveToNextNode() {
     nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(nextNode);
-        emit setRecenteringPositionSignal(nextNode->position);
-        Knossos::sendRemoteSignal();
+        state->viewer->setPositionWithRecentering(nextNode->position);
         return true;
     }
     return false;
@@ -2248,34 +1860,8 @@ bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
         if (node == nullptr || newTree == nullptr || node->correspondingTree->treeID == newTree->treeID) {
             return false;
         }
-
-        // remove node from old tree
-        if (node->next != nullptr) {
-            node->next->previous = node->previous;
-        }
-        if (node->previous != nullptr) {
-            node->previous->next.release();
-            node->previous->next = std::move(node->next);
-        } else {
-            node->correspondingTree->firstNode.release();
-            node->correspondingTree->firstNode = std::move(node->next);
-        }
-        // decrement node counter for the old tree
-        --node->correspondingTree->size;
-
-        // add node to new tree
-        if (newTree->firstNode) {
-            node->previous = newTree->firstNode->previous;
-        }
-        node->next = std::move(newTree->firstNode);
-        if (node->next != nullptr) {
-            node->next->previous = node;
-        }
-        newTree->firstNode.reset(node);
-
+        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
         node->correspondingTree = newTree;
-        // increment node counter for the new tree
-        ++node->correspondingTree->size;
     }
 
     emit resetData();
@@ -2417,11 +2003,11 @@ void Skeletonizer::toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const pa
     auto & node0 = *state->skeletonState->selectedNodes[0];
     auto & node1 = *state->skeletonState->selectedNodes[1];
     //segments are only stored and searched in one direction so we have to search for both
-    segmentListElement * segment{nullptr};
-    if ((segment = findSegmentBetween(node0, node1)) != nullptr) {
-        delSegment(segment);
-    } else if ((segment = findSegmentBetween(node1, node0)) != nullptr) {
-        delSegment(segment);
+    decltype(nodeListElement::segments)::iterator segIt;
+    if ((segIt = findSegmentBetween(node0, node1)) != std::end(node0.segments)) {
+        delSegment(segIt);
+    } else if ((segIt = findSegmentBetween(node1, node0)) != std::end(node1.segments)) {
+        delSegment(segIt);
     } else if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && areConnected(node0, node1)) {
         QMessageBox::information(parent, "Cycle detected!", "If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar.");
     } else {//nodes are not already linked
@@ -2429,26 +2015,8 @@ void Skeletonizer::toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const pa
     }
 }
 
-bool Skeletonizer::areConnected(const nodeListElement & v,const nodeListElement & w) const {
-    std::queue<const nodeListElement*> queue;
-    std::unordered_set<const nodeListElement*> visitedNodes;
-    visitedNodes.insert(&v);
-    queue.push(&v);
-    while(queue.size() > 0) {
-        auto nextNode = queue.front();
-        queue.pop();
-        if(nextNode == &w) {
-            return true;
-        }
-        auto segment = nextNode->firstSegment;
-        while(segment) {
-            auto neighbor = (segment->flag == SEGMENT_FORWARD)? segment->target : segment->source;
-            if(neighbor != nullptr && visitedNodes.find(neighbor) == visitedNodes.end()) {
-                visitedNodes.insert(neighbor);
-                queue.push(neighbor);
-            }
-            segment = segment->next;
-        }
-    }
-    return false;
+bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElement & rhs) const {
+    return connectedComponent(lhs, [&rhs](const nodeListElement & node){
+        return node == rhs;
+    });
 }

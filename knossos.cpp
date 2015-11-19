@@ -43,11 +43,9 @@
 #include <QSplashScreen>
 #include <QStandardPaths>
 
-#include <cmath>
+
 #include <iostream>
 #include <fstream>
-
-#define NUMTHREADS 4
 
 #if defined(Q_OS_WIN) && defined(QT_STATIC)
 #include <QtPlugin>
@@ -120,28 +118,17 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<CoordOfCube>();
     qRegisterMetaType<floatCoordinate>();
 
-    QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-    viewer.window->forEachVPDo( [&remote](ViewportBase & vp) {
-        QObject::connect(&vp, &ViewportBase::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-        QObject::connect(&vp, &ViewportBase::setRecenteringPositionWithRotationSignal, &remote, &Remote::setRecenteringPositionWithRotation);
-    });
-
-    QObject::connect(&Segmentation::singleton(), &Segmentation::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
-    QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
-    QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
     Scripting scripts;
     viewer.run();
-    remote.start();
 
     viewer.window->widgetContainer.datasetLoadWidget.loadDataset();
 
     viewer.window->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
 
-    QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &remote, &Remote::remoteJump);
+    QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
@@ -149,17 +136,8 @@ int main(int argc, char *argv[]) {
     return a.exec();
 }
 
-void Knossos::sendRemoteSignal() {
-    state->protectRemoteSignal.lock();
-    state->remoteSignal = true;
-    state->protectRemoteSignal.unlock();
-
-    state->conditionRemoteSignal.wakeOne();
-}
-
 void Knossos::sendQuitSignal() {
     state->quitSignal = true;
     QApplication::processEvents(); //ensure everything’s done
     Loader::Controller::singleton().suspendLoader();
-    Knossos::sendRemoteSignal();
 }

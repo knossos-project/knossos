@@ -1,5 +1,6 @@
 #include "treetable.h"
 
+#include "gui_wrapper.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 
@@ -70,18 +71,7 @@ void TreeTable::dropEvent(QDropEvent * event) {
         return;
     }
     droppedOnTreeID = item(droppedOnItem->row(), 0)->text().toInt();
-
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Cofirmation required");
-    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID));
-    QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);
-    }
+    checkedMoveNodes(this, droppedOnTreeID);
     event->accept();
     //this prevents the items in the table from being draggable after the drop
     //setState(DraggingState) is set in the default dragEnterEvent

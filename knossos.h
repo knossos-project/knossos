@@ -25,7 +25,6 @@
  */
 
 namespace Knossos {
-    void sendRemoteSignal();
     void sendQuitSignal();
 }
 

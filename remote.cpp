@@ -26,122 +26,81 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
-#include "widgets/navigationwidget.h"
-#include "widgets/viewport.h"
 
-#include <QDebug>
-
+#include <algorithm>
 #include <cmath>
 
-Remote::Remote(QObject *parent) : QThread(parent) {}
+const qint64 Remote::ms{10};
+const float Remote::goodEnough{0.01};
 
-void Remote::run() {
-    // remoteSignal is != false as long as the remote is active.
-    // Checking for remoteSignal is therefore a way of seeing if the remote
-    // is available for doing something.
-    //
-    // Depending on the contents of remoteState, this thread will either go
-    // on to listen to a socket and get its instructions from there or it
-    // will follow the trajectory given in a file.
-    rotate = false;
-    activeVP = 0;
-    while(true) {
-        state->protectRemoteSignal.lock();
-        while(!state->remoteSignal) {
-            state->conditionRemoteSignal.wait(&state->protectRemoteSignal);
-        }
-
-        state->remoteSignal = false;
-        state->protectRemoteSignal.unlock();
-
-        if(state->quitSignal) {
-            break;
-        }
-        //distance vector
-        floatCoordinate currToNext = recenteringPosition - state->viewerState->currentPosition;
-        int jumpThreshold = 0.5 * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
-        if (euclidicNorm(currToNext) > jumpThreshold) {
-            remoteJump(recenteringPosition);
-        } else {
-            remoteWalk(round(currToNext.x), round(currToNext.y), round(currToNext.z));
-        }
-
-        if(state->quitSignal == true) {
-            break;
-        }
-    }
+Remote::Remote() {
+    timer.setTimerType(Qt::PreciseTimer);
+    QObject::connect(&timer, &QTimer::timeout, [this](){remoteWalk();});
 }
 
-bool Remote::remoteJump(const Coordinate & jumpVec) {
-    // is not threadsafe
-    emit userMoveSignal(jumpVec - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
-    return true;
+void Remote::process(const Coordinate & pos) {
+    //distance vector
+    floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
+    int jumpThreshold = 0.5 * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
+    if (euclidicNorm(deltaPos) > jumpThreshold) {
+        state->viewer->setPosition(pos);
+    } else if (pos != state->viewerState->currentPosition) {
+        recenteringOffset = pos - state->viewerState->currentPosition;
+        elapsed.restart();
+        timer.start(ms);
+        state->viewer->userMoveClear();
+        remoteWalk();
+    }
 }
 
 std::deque<floatCoordinate> Remote::getLastNodes() {
-
     std::deque<floatCoordinate> nodelist;
-    nodelist.clear();
-    floatCoordinate pos;
+    nodeListElement const * node = state->skeletonState->activeNode;
 
-    nodeListElement *node = state->skeletonState->activeNode;
-    nodeListElement *lastnode=NULL;
-
-    if(node == NULL) {
-        return nodelist;
-    }
-    if(node->firstSegment == NULL || node->getSegments()->size() > 1) { //we are in the middle of our skeleton or we don't have a skeleton
+    //we are in the middle of our skeleton or we don't have a skeleton
+    if (node == nullptr || node->segments.size() != 1) {
         return nodelist;
     }
 
-    for(int i = 0; i < 10; ++i) {
-        qDebug() << node->nodeID;
-
-        if(node->getSegments()->size() == 1) {
-            if(node->firstSegment->source == lastnode || node->firstSegment->target == lastnode) break;
-            if(node->firstSegment->source == node) {
-                lastnode = node;
-                node = node->firstSegment->target;
-            } else {
-                lastnode = node;
-                node= node->firstSegment->source;
+    nodeListElement const * previousNode = nullptr;
+    for (int i = 0; i < 10; ++i) {
+        if (node->segments.size() == 1) {
+            if (previousNode != nullptr && (node->segments.front().source == *previousNode || node->segments.front().target == *previousNode)) {
+                break;
             }
-        } else if(node->getSegments()->size() == 0) {
+            previousNode = node;
+            if (node->segments.front().source == *node) {
+                node = &node->segments.front().target;
+            } else {
+                node = &node->segments.front().source;
+            }
+        } else if (node->segments.empty()) {
             break;
         } else {
-            if(node->firstSegment->next->source == lastnode || node->firstSegment->next->target == lastnode) {
-                //user firstSegment
-                if(node->firstSegment->source == node) {
-                    lastnode = node;
-                    node = node->firstSegment->target;
+            auto nextIt = std::next(std::begin(node->segments));//check next segment
+            if (previousNode != nullptr && (nextIt->source == *previousNode || nextIt->target == *previousNode)) {
+                previousNode = node;
+                if (node->segments.front().source == *node) {
+                    node = &node->segments.front().target;
                 } else {
-                    lastnode = node;
-                    node = node->firstSegment->source;
+                    node = &node->segments.front().source;
                 }
-            } else {
-                if(node->firstSegment->next->source == node) {
-                    lastnode = node;
-                    node = node->firstSegment->next->target;
+            } else {//use first segment if second segment was reverse segment to previous node
+                previousNode = node;
+                if (nextIt->source == *node) {
+                    node = &nextIt->target;
                 } else {
-                    lastnode = node;
-                    node = node->firstSegment->next->source;
+                    node = &nextIt->source;
                 }
             }
         }
-
-        pos.x = node->position.x;
-        pos.y = node->position.y;
-        pos.z = node->position.z;
-
-        nodelist.push_back(pos);
+        nodelist.push_back(node->position);
     }
-
-    qDebug() << nodelist.size();
 
     return nodelist;
 }
 
-void Remote::remoteWalk(int x, int y, int z) {
+void Remote::remoteWalk() {
     /*
     * This function breaks the big walk distance into many small movements
     * where the maximum length of the movement along any single axis is
@@ -156,112 +115,42 @@ void Remote::remoteWalk(int x, int y, int z) {
     * singleMove to match mag, not the length of the movement on one axis.
     *
     */
-    auto rotation = Rotation(); // initially no rotation
-    if(ViewportOrtho::arbitraryOrientation) {
-        std::deque<floatCoordinate> lastRecenterings;
-        lastRecenterings = getLastNodes();
-        if(rotate && lastRecenterings.empty() == false) {
-            // calculate avg of last x recentering positions
+    Rotation rotation; // initially no rotation
+    if (rotate) {
+        std::deque<floatCoordinate> lastRecenterings = getLastNodes();
+        if (!lastRecenterings.empty()) {
             floatCoordinate avg;
             for(const auto coord : lastRecenterings) {
                 avg += coord;
             }
             avg /= lastRecenterings.size();
 
-            floatCoordinate delta = {recenteringPosition.x - avg.x, recenteringPosition.y - avg.y, recenteringPosition.z - avg.z};
+            const auto target = state->viewerState->currentPosition + recenteringOffset;
+            floatCoordinate delta = target - avg;
             normalizeVector(delta);
             float scalar = scalarProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
-            rotation.alpha = acosf(std::min(1.f, std::max(-1.f, scalar)));
+            rotation.alpha = std::acos(std::min(1.f, std::max(-1.f, scalar)));
             rotation.axis = crossProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
             normalizeVector(rotation.axis);
         }
     }
 
-    floatCoordinate walkVector = Coordinate{x, y, z};
+    const auto length = euclidicNorm(recenteringOffset);
+    const auto seconds = length / (state->viewerState->stepsPerSec * state->magnification);
+    const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
+    const floatCoordinate singleMove = recenteringOffset / totalMoves;
 
-    float recenteringTime = 0;
-    if (state->viewerState->recenteringTime > 5000){
-        state->viewerState->recenteringTime = 5000;
-    }
-    if (state->viewerState->recenteringTimeOrth < 10){
-        state->viewerState->recenteringTimeOrth = 10;
-    }
-    if (state->viewerState->recenteringTimeOrth > 5000){
-        state->viewerState->recenteringTimeOrth = 5000;
-    }
-    if (state->viewerState->walkOrth == false){
-        recenteringTime = state->viewerState->recenteringTime;
-    }
-    else {
-        recenteringTime = state->viewerState->recenteringTimeOrth;
-        state->viewerState->walkOrth = false;
-    }
-    if ((state->viewerState->autoTracingMode != navigationMode::recenter) && (state->viewerState->walkOrth == false)){
-        recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
+    if (rotate) {
+        auto anglesPerStep = rotation.alpha / totalMoves;
+        state->viewer->setRotation(rotation.axis, anglesPerStep);
     }
 
-    float walkLength = std::max(1.0f, euclidicNorm(walkVector));
-    float usPerStep = 1000.0f * recenteringTime / walkLength;
-    float totalMoves = std::max(std::max(std::abs(x), std::abs(y)), std::abs(z));
-    floatCoordinate singleMove = walkVector / totalMoves;
-    floatCoordinate residuals;
-    float anglesPerStep = 0;
-    if(ViewportOrtho::arbitraryOrientation) {
-        anglesPerStep = rotation.alpha/totalMoves;
+    state->viewer->userMove(singleMove);
+    recenteringOffset -= singleMove;
+    if (std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough && rotation.alpha < goodEnough) {
+        state->viewer->userMoveRound();
+        timer.stop();
+    } else {
+        elapsed.restart();
     }
-    for(int i = 0; i < totalMoves; i++) {
-        if(ViewportOrtho::arbitraryOrientation) {
-            emit rotationSignal(rotation.axis, anglesPerStep);
-        }
-        Coordinate doMove;
-        residuals += singleMove;
-
-        if(residuals.x >= state->magnification) {
-            doMove.x = state->magnification;
-            residuals.x -= state->magnification;
-        }
-        else if(residuals.x <= -state->magnification) {
-            doMove.x = -state->magnification;
-            residuals.x += state->magnification;
-        }
-
-        if(residuals.y >= state->magnification) {
-            doMove.y = state->magnification;
-            residuals.y -= state->magnification;
-        }
-        else if(residuals.y <= -state->magnification) {
-            doMove.y = -state->magnification;
-            residuals.y += state->magnification;
-        }
-
-        if(residuals.z >= state->magnification) {
-            doMove.z = state->magnification;
-            residuals.z -= state->magnification;
-        }
-        else if(residuals.z <= -state->magnification) {
-            doMove.z = -state->magnification;
-            residuals.z += state->magnification;
-        }
-
-        if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
-            emit userMoveSignal(doMove, USERMOVE_NEUTRAL);
-        }
-        // This is, of course, not really correct as the time of running
-        // the loop body would need to be accounted for. But SDL_Delay()
-        // granularity isn't fine enough and it doesn't matter anyway.
-        QThread::usleep(usPerStep);
-    }
-    emit userMoveSignal(residuals, USERMOVE_NEUTRAL);
 }
-
-void Remote::setRecenteringPosition(const floatCoordinate & newPos) {
-    recenteringPosition = newPos;
-    rotate = false;
-}
-
-void Remote::setRecenteringPositionWithRotation(const floatCoordinate & newPos, const uint vp) {
-    recenteringPosition = newPos;
-    rotate = true;
-    activeVP = vp;
-}
-

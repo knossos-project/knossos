@@ -27,7 +27,7 @@ QList<nodeListElement *> *TreeListDecorator::nodes(treeListElement *self) {
 }
 
 nodeListElement *TreeListDecorator::first_node(treeListElement *self) {
-    return self->firstNode.get();
+    return self->nodes.empty() ? nullptr : &self->nodes.front();
 }
 
 QString TreeListDecorator::static_Tree_help() {

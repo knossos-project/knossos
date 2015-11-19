@@ -4,13 +4,15 @@
 
 #include <QString>
 
-QList<nodeListElement *> *treeListElement::getNodes() {
-    QList<nodeListElement *> *nodes = new QList<nodeListElement *>();
+treeListElement::treeListElement(const int id) : treeID{id} {
+    memset(comment, '\0', sizeof(comment));
+}
 
-    nodeListElement *currentNode = firstNode.get();
-    while(currentNode) {
-        nodes->append(currentNode);
-        currentNode = currentNode->next.get();
+QList<nodeListElement *> *treeListElement::getNodes() {
+    QList<nodeListElement *> * nodes = new QList<nodeListElement *>();
+
+    for (auto & node : this->nodes) {
+        nodes->append(&node);
     }
 
     return nodes;
@@ -32,5 +34,3 @@ QList<segmentListElement *> treeListElement::getSegments() {
 
     return complete_segments->toList();
 }
-
-

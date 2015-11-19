@@ -42,7 +42,7 @@
 
 #include <cmath>
 
-Viewer::Viewer(QObject *parent) : QThread(parent) {
+Viewer::Viewer() {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
@@ -50,19 +50,11 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
     vpUpperLeft = window->viewportXY.get();
     vpLowerLeft = window->viewportXZ.get();
     vpUpperRight = window->viewportYZ.get();
-    vpLowerRight = window->viewport3D.get();
-
-    /* order of the initialization of the rendering system is
-     * 1. initViewer
-     * 2. new Skeletonizer
-     * 3. init mesh
-     * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
-    */
 
     initViewer();
 
-    ViewportBase::initMesh(state->skeletonState->lineVertBuffer, 1024);
-    ViewportBase::initMesh(state->skeletonState->pointVertBuffer, 1024);
+    ViewportBase::initMesh(viewerState.lineVertBuffer, 1024);
+    ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
 
     QDesktopWidget *desktop = QApplication::desktop();
 
@@ -75,7 +67,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                             1024, 800);
     }
 
-    frames = 0;
     state->viewerState->renderInterval = FAST;
 
     // for arbitrary viewport orientation
@@ -90,7 +81,6 @@ Viewer::Viewer(QObject *parent) : QThread(parent) {
                     / 2)
                 *2;
     });
-    moveCache = {};
     resetRotation();
 
     state->viewerState->movementAreaFactor = 80;
@@ -803,6 +793,48 @@ bool Viewer::calcDisplayedEdgeLength() {
     return true;
 }
 
+void Viewer::zoom(const float factor) {
+    int triggerMagChange = false;
+    if (vpUpperLeft->displayedEdgeLenghtXForZoomFactor(vpUpperLeft->texture.zoomLevel * factor) == 0
+            || vpUpperLeft->screenPxXPerDataPxForZoomFactor(vpUpperLeft->texture.zoomLevel * factor) < VPZOOMMIN) {
+        return;
+    }
+    bool magUp = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 >= 1 && factor > 1;
+    bool magDown = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 <= 0.5 && factor < 1;
+    state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
+        if(state->viewerState->datasetMagLock) {
+            orthoVP.texture.zoomLevel *= factor;
+        }
+        else {
+            if (magDown && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
+                orthoVP.texture.zoomLevel = 1;
+                triggerMagChange = MAG_DOWN;
+            }
+            else if (magUp && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
+                orthoVP.texture.zoomLevel = 0.5;
+                triggerMagChange = MAG_UP;
+            }
+            else {
+                orthoVP.texture.zoomLevel *= factor;
+            }
+        }
+    });
+
+    if (triggerMagChange) {
+        changeDatasetMag(triggerMagChange);
+    }
+    recalcTextureOffsets();
+    emit zoomChanged();
+}
+
+void Viewer::zoomReset() {
+    state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
+        orthoVP.texture.zoomLevel = 1;
+    });
+    recalcTextureOffsets();
+    emit zoomChanged();
+}
+
 /**
 * takes care of all necessary changes inside the viewer and signals
 * the loader to change the dataset
@@ -820,7 +852,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
                 state->magnification /= 2;
                 window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                    orthoVP.texture.zoomLevel *= 2.0;
                     orthoVP.texture.texUnitsPerDataPx *= 2.;
                 });
             }
@@ -831,7 +862,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
                 state->magnification *= 2;
                 window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                    orthoVP.texture.zoomLevel *= 0.5;
                     orthoVP.texture.texUnitsPerDataPx /= 2.;
                 });
             }
@@ -847,7 +877,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
     loader_notify();//start loading
 
-    emit updateDatasetOptionsWidgetSignal();
+    emit zoomChanged();
 
     return true;
 }
@@ -880,11 +910,7 @@ void Viewer::run() {
         qint64 interval = 1000 / state->viewerState->stepsPerSec;
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
-            if (vpUpperLeft->viewportType != VIEWPORT_ARBITRARY) {
-                userMove(Coordinate(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]), USERMOVE_DRILL);
-            } else {
-                userMove_arb({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
-            }
+            userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
         }
     }
     // Event and rendering loop.
@@ -974,7 +1000,23 @@ void Viewer::updateCurrentPosition() {
     }
 }
 
-void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::setPosition(const floatCoordinate & pos, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    const auto deltaPos = pos - state->viewerState->currentPosition;
+    userMove(deltaPos, userMoveType, viewportNormal);
+}
+
+void Viewer::setPositionWithRecentering(const Coordinate &pos) {
+    remote.rotate = false;
+    remote.process(pos);
+}
+
+void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid) {
+    remote.rotate = true;
+    remote.activeVP = vpid;
+    remote.process(pos);
+}
+
+void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     auto & viewerState = *state->viewerState;
 
     if (ViewportOrtho::arbitraryOrientation && (step.z != 0 || step.x != 0 || step.y != 0)) {//slices are arbitrary…
@@ -1040,11 +1082,21 @@ void Viewer::userMove(const Coordinate & step, UserMoveType userMoveType, const 
     emit coordinateChangedSignal(viewerState.currentPosition);
 }
 
-void Viewer::userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     moveCache += floatStep;
-    Coordinate step = {static_cast<int>(moveCache.x), static_cast<int>(moveCache.y), static_cast<int>(moveCache.z)};
+    const Coordinate step{moveCache};
     moveCache -= step;
-    userMove(step, userMoveType, viewportNormal);
+    userMoveVoxels(step, userMoveType, viewportNormal);
+}
+
+void Viewer::userMoveRound(UserMoveType userMoveType, const Coordinate & viewportNormal) {
+    const Coordinate rounded(std::lround(moveCache.x), std::lround(moveCache.y), std::lround(moveCache.z));
+    Viewer::userMoveClear();
+    userMoveVoxels(rounded, userMoveType, viewportNormal);
+}
+
+void Viewer::userMoveClear() {
+    moveCache = {};
 }
 
 void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {
@@ -1101,10 +1153,8 @@ bool Viewer::recalcTextureOffsets() {
     calcDisplayedEdgeLength();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        //Multiply the zoom factor. (only truncation possible! 1 stands for minimal zoom)
         orthoVP.texture.displayedEdgeLengthX *= orthoVP.texture.zoomLevel;
         orthoVP.texture.displayedEdgeLengthY *= orthoVP.texture.zoomLevel;
-
         switch(orthoVP.viewportType) {
         case VIEWPORT_XY:
             //Aspect ratio correction..
@@ -1116,25 +1166,14 @@ bool Viewer::recalcTextureOffsets() {
             }
             //Display only entire pixels (only truncation possible!) WHY??
             orthoVP.texture.displayedEdgeLengthX =
-                (float)(((int)(orthoVP.texture.displayedEdgeLengthX
-                              / 2.
-                              / orthoVP.texture.texUnitsPerDataPx))
-                        * orthoVP.texture.texUnitsPerDataPx)
-                * 2.;
-
+                (std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
             orthoVP.texture.displayedEdgeLengthY =
-                (float)(((int)(orthoVP.texture.displayedEdgeLengthY
-                               / 2.
-                               / orthoVP.texture.texUnitsPerDataPx))
-                        * orthoVP.texture.texUnitsPerDataPx)
-                * 2.;
-
+                ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
             // Update screen pixel to data pixel mapping values
             orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX /  orthoVP.texture.texUnitsPerDataPx);
             orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
             orthoVP.displayedlengthInNmX = state->viewerState->voxelDimX * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
             orthoVP.displayedlengthInNmY = state->viewerState->voxelDimY * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-
             //Update orthoVP.leftUpperDataPxOnScreen with this call
             calcLeftUpperTexAbsPx();
 
@@ -1157,18 +1196,8 @@ bool Viewer::recalcTextureOffsets() {
                 orthoVP.texture.displayedEdgeLengthX /= state->viewerState->voxelXYtoZRatio;
             }
             //Display only entire pixels (only truncation possible!)
-            orthoVP.texture.displayedEdgeLengthX =
-                    (float)(((int)(orthoVP.texture.displayedEdgeLengthX
-                                   / 2.
-                                   / orthoVP.texture.texUnitsPerDataPx))
-                            * orthoVP.texture.texUnitsPerDataPx)
-                    * 2.;
-            orthoVP.texture.displayedEdgeLengthY =
-                    (float)(((int)(orthoVP.texture.displayedEdgeLengthY
-                                   / 2.
-                                   / orthoVP.texture.texUnitsPerDataPx))
-                            * orthoVP.texture.texUnitsPerDataPx)
-                    * 2.;
+            orthoVP.texture.displayedEdgeLengthX = ((std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
+            orthoVP.texture.displayedEdgeLengthY = ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
 
             //Update screen pixel to data pixel mapping values
             orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
@@ -1196,18 +1225,8 @@ bool Viewer::recalcTextureOffsets() {
             }
 
             //Display only entire pixels (only truncation possible!)
-            orthoVP.texture.displayedEdgeLengthX =
-                    (float)(((int)(orthoVP.texture.displayedEdgeLengthX
-                                   / 2.
-                                   / orthoVP.texture.texUnitsPerDataPx))
-                            * orthoVP.texture.texUnitsPerDataPx)
-                    * 2.;
-            orthoVP.texture.displayedEdgeLengthY =
-                    (float)(((int)(orthoVP.texture.displayedEdgeLengthY
-                                   / 2.
-                                   / orthoVP.texture.texUnitsPerDataPx))
-                            * orthoVP.texture.texUnitsPerDataPx)
-                    * 2.;
+            orthoVP.texture.displayedEdgeLengthX = ((std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
+            orthoVP.texture.displayedEdgeLengthY = ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
 
             // Update screen pixel to data pixel mapping values
             // WARNING: YZ IS ROTATED AND MIRRORED! So screenPxXPerDataPx
@@ -1238,27 +1257,8 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.texture.displayedEdgeLengthY /= voxelV2X;
 
             //Display only entire pixels (only truncation possible!) WHY??
-            orthoVP.texture.displayedEdgeLengthX =
-                (float)(
-                    (int)(
-                        orthoVP.texture.displayedEdgeLengthX
-                        / 2.
-                        / orthoVP.texture.texUnitsPerDataPx
-                    )
-                    * orthoVP.texture.texUnitsPerDataPx
-                )
-                * 2.;
-
-            orthoVP.texture.displayedEdgeLengthY =
-                (float)(
-                    (int)(
-                         orthoVP.texture.displayedEdgeLengthY
-                         / 2.
-                         / orthoVP.texture.texUnitsPerDataPx
-                    )
-                    * orthoVP.texture.texUnitsPerDataPx
-                )
-                * 2.;
+            orthoVP.texture.displayedEdgeLengthX = (std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
+            orthoVP.texture.displayedEdgeLengthY = (std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
 
             // Update screen pixel to data pixel mapping values
             orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
@@ -1341,7 +1341,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    QObject::connect(this, &Viewer::updateDatasetOptionsWidgetSignal, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
         if (window->viewport3D->hasCursor) {
@@ -1357,10 +1357,7 @@ void Viewer::rewire() {
     // end viewer signals
     //viewport signals
     window->forEachVPDo([this](ViewportBase & vp) {
-        QObject::connect(&vp, &ViewportBase::zoomReset, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(&vp, &ViewportBase::delSegmentSignal, &Skeletonizer::delSegment);
-        QObject::connect(&vp, &ViewportBase::addSegmentSignal, &Skeletonizer::addSegment);
         QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::rotationSignal, this, &Viewer::setRotation);
         QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);

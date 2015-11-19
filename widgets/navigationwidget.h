@@ -53,8 +53,6 @@ public slots:
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
     void walkFramesChanged(int value);
-    void recenterTimeParallelChanged(int value);
-    void recenterTimeOrthoChanged(int value);
     void normalModeSelected(bool on);
     void additionalViewportDirectionMoveSelected(bool on);
     void additionalTracingDirectionMoveSelected(bool on);
@@ -71,8 +69,6 @@ protected:
     QLabel *movementSpeedLabel;
     QLabel *jumpFramesLabel;
     QLabel *walkFramesLabel;
-    QLabel *recenterTimeParallelLabel;
-    QLabel *recenterTimeOrthoLabel;
     QLabel *advanceTracingModesLabel;
     QLabel *delayTimePerStepLabel;
     QLabel *numberOfStepsLabel;
@@ -81,8 +77,6 @@ protected:
     QSpinBox *movementSpeedSpinBox;
     QSpinBox *jumpFramesSpinBox;
     QSpinBox *walkFramesSpinBox;
-    QSpinBox *recenterTimeParallelSpinBox;
-    QSpinBox *recenterTimeOrthoSpinBox;
 
     QRadioButton *normalModeButton;
     QRadioButton noRecenteringButton{"No Recentering"};

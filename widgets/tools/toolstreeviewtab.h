@@ -25,7 +25,6 @@ class QMenu;
 
 class treeListElement;
 class nodeListElement;
-class segmentListElement;
 
 class ToolsTreeviewTab : public QWidget
 {
@@ -44,11 +43,11 @@ public:
     QCheckBox *nodeRegExCheck;
     QRadioButton *nodesOfSelectedTreesRadio;
     QRadioButton *allNodesRadio;
-    QRadioButton selectedNodes;//i wanna be special
+    QRadioButton selectedNodesRadio;//i wanna be special
 
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
-    QLabel *displayedNodesTable;
+    QLabel *displayedNodesLabel;
     QComboBox *displayedNodesCombo;
     QMenu *treeContextMenu;
     QMenu *nodeContextMenu;
@@ -117,7 +116,6 @@ public slots:
     // node context menu
     void setNodeRadiusAction();
     void linkNodesAction();
-    void moveNodesAction();
     void extractConnectedComponentAction();
     void setNodeCommentAction();
     void deleteNodesAction();

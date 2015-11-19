@@ -388,8 +388,7 @@ void Segmentation::unselectObject(Object & object) {
 }
 
 void Segmentation::jumpToObject(Object & object) {
-    emit setRecenteringPositionSignal(object.location);
-    Knossos::sendRemoteSignal();
+    state->viewer->setPositionWithRecentering(object.location);
 }
 
 void Segmentation::jumpToObject(const uint64_t & objectIndex) {

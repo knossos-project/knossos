@@ -4,26 +4,20 @@
 
 SegmentListDecorator::SegmentListDecorator(QObject *parent) : QObject(parent) {}
 
-nodeListElement *SegmentListDecorator::source(segmentListElement *self) {
+nodeListElement & SegmentListDecorator::source(segmentListElement *self) {
     return self->source;
 }
 
-nodeListElement *SegmentListDecorator::target(segmentListElement *self) {
+nodeListElement & SegmentListDecorator::target(segmentListElement *self) {
     return self->target;
 }
 
 int SegmentListDecorator::source_id(segmentListElement *self) {
-    if(self->source)
-        return self->source->nodeID;
-
-    return 0;
+    return self->source.nodeID;
 }
 
 int SegmentListDecorator::target_id(segmentListElement *self) {
-    if(self->target)
-        return self->target->nodeID;
-
-    return 0;
+    return self->target.nodeID;
 }
 
 QString SegmentListDecorator::static_Segment_help() {

@@ -21,8 +21,8 @@ QString annotationFileDefaultName() {
     auto currentTime = time(nullptr);
     auto localTime = localtime(&currentTime);
     return QString("annotation-%1%2%3T%4%5.000.k.zip")
+            .arg(1900 + localTime->tm_year)
             //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_year % 100, 2, 10, QLatin1Char('0'))//years from 1900 % 100 = years from 2000
             .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
             .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
             .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
@@ -75,6 +75,8 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
 }
 
 void annotationFileSave(const QString & filename, bool *isSuccess) {
+    QTime time;
+    time.start();
     bool allSuccess = true;
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
@@ -112,8 +114,8 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 allSuccess = false;
             }
         }
-        QTime time;
-        time.start();
+        QTime cubeTime;
+        cubeTime.start();
         const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
         for (std::size_t i = 0; i < cubes.size(); ++i) {
             const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(state->name).arg(QString::number(std::pow(2, i)));
@@ -130,7 +132,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 }
             }
         }
-        qDebug() << "save" << time.restart();
+        qDebug() << "save cubes" << cubeTime.restart();
     } else {
         qDebug() << "opening" << filename << " for writing failed";
         allSuccess = false;
@@ -143,6 +145,7 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
     if (NULL != isSuccess) {
         *isSuccess = allSuccess;
     }
+    qDebug() << "save" << time.restart();
 }
 
 void nmlExport(const QString & filename) {
@@ -177,7 +180,7 @@ std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString
         throw std::runtime_error(msg.toUtf8());
     };
 
-    const int expectedBinaryLutSize = RGB_LUTSIZE;
+    const std::size_t expectedBinaryLutSize = 256 * 3;//RGB
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> table;
     QFile overlayLutFile(path);
     if (overlayLutFile.open(QIODevice::ReadOnly)) {

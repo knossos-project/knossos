@@ -25,13 +25,14 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
+#include "mesh.h"
+#include "remote.h"
 #include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 
 #include <QObject>
-#include <QThread>
 #include <QDebug>
 #include <QCursor>
 #include <QTimer>
@@ -42,7 +43,6 @@
 
 #define SLOW 1000
 #define FAST 10
-#define RGB_LUTSIZE 768
 
 // MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
 // a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
@@ -85,10 +85,6 @@ struct ViewerState {
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
     Coordinate currentPosition;
-
-    uint recenteringTime{250};
-    uint recenteringTimeOrth{250};
-    bool walkOrth{false};
 
     //Keyboard repeat rate
     uint stepsPerSec{40};
@@ -166,6 +162,10 @@ struct ViewerState {
     int showXYplane{true};
     int showXZplane{true};
     int showYZplane{true};
+    // temporary vertex buffers that are available for rendering, get cleared
+    // every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
 };
 
 /**
@@ -179,7 +179,7 @@ struct ViewerState {
  */
 class Skeletonizer;
 class ViewportBase;
-class Viewer : public QThread {
+class Viewer : public QObject {
     Q_OBJECT
 private:
     QElapsedTimer baseTime;
@@ -188,8 +188,21 @@ private:
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;
+    void initViewer();
+    void rewire();
+
+    void vpGenerateTexture_arb(ViewportOrtho & vp);
+
+    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
+    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+
+    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
+
+    bool calcLeftUpperTexAbsPx();
+
+    Remote remote;
 public:
-    explicit Viewer(QObject *parent = 0);
+    Viewer();
     Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
@@ -200,12 +213,10 @@ public:
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
-    Viewport3D *vpLowerRight;
+    void zoom(const float factor);
+    void zoomReset();
     QTimer timer;
-    int frames;
 
-    bool initialized;
-    bool moveVPonTop(uint currentVP);
     std::atomic_bool dc_xy_changed{true};
     std::atomic_bool dc_xz_changed{true};
     std::atomic_bool dc_zy_changed{true};
@@ -216,24 +227,19 @@ public:
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     color4F getNodeColor(const nodeListElement & node) const;
 signals:
-    void loadSignal();
     void coordinateChangedSignal(const Coordinate & pos);
-    void updateDatasetOptionsWidgetSignal();
+    void zoomChanged();
     void movementAreaFactorChangedSignal();
-protected:
-    void vpGenerateTexture_arb(ViewportOrtho & vp);
-
-    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
-
-    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
-
-    void rewire();
 public slots:
     void updateCurrentPosition();
     bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    void userMove(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
-    void userMove_arb(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal = {0, 0, 0});
+    void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void setPositionWithRecentering(const Coordinate &pos);
+    void setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid);
+    void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal);
+    void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMoveClear();
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);
@@ -252,9 +258,6 @@ public slots:
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
     void setMovementAreaFactor(float alpha);
-protected:
-    bool calcLeftUpperTexAbsPx();
-    void initViewer();
 };
 
 #endif // VIEWER_H

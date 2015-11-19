@@ -58,7 +58,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         switch (index.column()) {
         case 0: return tree->treeID;
         case 1: return tree->comment;
-        case 3: return static_cast<quint64>(tree->size);
+        case 3: return static_cast<quint64>(tree->nodes.size());
         }
     }
     return QVariant();//return invalid QVariant
@@ -89,7 +89,7 @@ int NodeModel::rowCount(const QModelIndex &) const {
 }
 
 QVariant NodeModel::data(const QModelIndex &index, int role) const {
-    if (state->skeletonState->firstTree == nullptr) {
+    if (state->skeletonState->trees.empty()) {
         return QVariant();//return invalid QVariant
     }
     auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
@@ -108,7 +108,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
 }
 
 bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int role) {
-    if (state->skeletonState->firstTree == nullptr || !index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
+    if (state->skeletonState->trees.empty() || !index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
         return false;
     }
     auto * const node = Skeletonizer::singleton().nodesOrdered[index.row()];
@@ -299,9 +299,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
 
 
     QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [this](){
-        const auto * node = state->skeletonState->selectedTrees.front()->firstNode.get();
-        if (node != nullptr) {
-            Skeletonizer::singleton().jumpToNode(*node);
+        const auto * tree = state->skeletonState->selectedTrees.front();
+        if (!tree->nodes.empty()) {
+            Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
     });
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
@@ -379,7 +379,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
                 if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
                     msg = tr("Extracted from deleted %1").arg(treeID);
                 }
-                Skeletonizer::singleton().addTreeComment(state->skeletonState->firstTree->treeID, msg);
+                Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.front().treeID, msg);
             }
         }
     });

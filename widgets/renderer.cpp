@@ -174,16 +174,16 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     if (options.enableSkeletonDownsampling &&
         (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
-        if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
-            doubleMeshCapacity(state->skeletonState->lineVertBuffer);
+        if(state->viewerState->lineVertBuffer.vertsBuffSize < state->viewerState->lineVertBuffer.vertsIndex + 2)
+            doubleMeshCapacity(state->viewerState->lineVertBuffer);
 
-        state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
-        state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
+        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
+        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
 
-        state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex] = color;
-        state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex + 1] = color;
+        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex] = color;
+        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex + 1] = color;
 
-        state->skeletonState->lineVertBuffer.vertsIndex += 2;
+        state->viewerState->lineVertBuffer.vertsIndex += 2;
 
     } else {
         GLfloat a[] = {color.r, color.g, color.b, color.a};
@@ -245,12 +245,12 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
             glPointSize(1.);
         }
         else {
-            if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
-                doubleMeshCapacity(state->skeletonState->pointVertBuffer);
+            if(state->viewerState->pointVertBuffer.vertsBuffSize < state->viewerState->pointVertBuffer.vertsIndex + 2)
+                doubleMeshCapacity(state->viewerState->pointVertBuffer);
 
-            state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex] = Coordinate{pos.x, pos.y, pos.z};
-            state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
-            state->skeletonState->pointVertBuffer.vertsIndex++;
+            state->viewerState->pointVertBuffer.vertices[state->viewerState->pointVertBuffer.vertsIndex] = Coordinate{pos.x, pos.y, pos.z};
+            state->viewerState->pointVertBuffer.colors[state->viewerState->pointVertBuffer.vertsIndex] = color;
+            state->viewerState->pointVertBuffer.vertsIndex++;
         }
     }
     else {
@@ -281,8 +281,8 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
 }
 
 void ViewportBase::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
-    renderCylinder(&(segment.source->position), Skeletonizer::singleton().segmentSizeAt(*segment.source) * state->viewerState->segRadiusToNodeRadius,
-        &(segment.target->position), Skeletonizer::singleton().segmentSizeAt(*segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
+    renderCylinder(&(segment.source.position), Skeletonizer::singleton().segmentSizeAt(segment.source) * state->viewerState->segRadiusToNodeRadius,
+        &(segment.target.position), Skeletonizer::singleton().segmentSizeAt(segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
 }
 
 void ViewportOrtho::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
@@ -382,16 +382,16 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
     floatCoordinate tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
     GLUquadricObj *gluCylObj = NULL;
 
-    sSp_local.x = (float)segment.source->position.x;
-    sSp_local.y = (float)segment.source->position.y;
-    sSp_local.z = (float)segment.source->position.z;
+    sSp_local.x = (float)segment.source.position.x;
+    sSp_local.y = (float)segment.source.position.y;
+    sSp_local.z = (float)segment.source.position.z;
 
-    sTp_local.x = (float)segment.target->position.x;
-    sTp_local.y = (float)segment.target->position.y;
-    sTp_local.z = (float)segment.target->position.z;
+    sTp_local.x = (float)segment.target.position.x;
+    sTp_local.y = (float)segment.target.position.y;
+    sTp_local.z = (float)segment.target.position.z;
 
-    sSr_local = (float)segment.source->radius;
-    sTr_local = (float)segment.target->radius;
+    sSr_local = (float)segment.source.radius;
+    sTr_local = (float)segment.target.radius;
 
     //n contains the normal vectors of the 3 orthogonal planes
     float n[3][3] = {{1.,0.,0.},
@@ -2130,20 +2130,15 @@ bool Viewport3D::rotateViewport() {
  */
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    treeListElement *currentTree;
-    nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
-    segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
-    floatCoordinate currNodePos;
-    uint virtualSegRendered, allowHeuristic;
 
-    state->skeletonState->lineVertBuffer.vertsIndex = 0;
-    state->skeletonState->lineVertBuffer.normsIndex = 0;
-    state->skeletonState->lineVertBuffer.colsIndex = 0;
+    state->viewerState->lineVertBuffer.vertsIndex = 0;
+    state->viewerState->lineVertBuffer.normsIndex = 0;
+    state->viewerState->lineVertBuffer.colsIndex = 0;
 
-    state->skeletonState->pointVertBuffer.vertsIndex = 0;
-    state->skeletonState->pointVertBuffer.normsIndex = 0;
-    state->skeletonState->pointVertBuffer.colsIndex = 0;
+    state->viewerState->pointVertBuffer.vertsIndex = 0;
+    state->viewerState->pointVertBuffer.normsIndex = 0;
+    state->viewerState->pointVertBuffer.colsIndex = 0;
     color4F currentColor = {1.f, 0.f, 0.f, 1.f};
 
     //tdItem: test culling under different conditions!
@@ -2154,14 +2149,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPushMatrix();
 
-    /* We iterate over the whole tree structure. */
-    currentTree = state->skeletonState->firstTree.get();
-
-    while(currentTree) {
-
+    nodeListElement * lastNode = NULL, *lastRenderedNode = NULL;
+    for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         /* Render only trees we want to be rendered*/
-        if(!currentTree->render) {
-            currentTree = currentTree->next.get();
+        if (!currentTree.render) {
+            continue;
+        }
+        if (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree.selected) {
             continue;
         }
 
@@ -2169,90 +2163,64 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         lastRenderedNode = NULL;
         cumDistToLastRenderedNode = 0.f;
 
-        if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree->selected) {
-            currentTree = currentTree->next.get();
-            continue;
-        }
-
-        currentNode = currentTree->firstNode.get();
-        while(currentNode) {
-
+        for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
             /* We start with frustum culling:
              * all nodes that are not in the current viewing frustum for the
              * currently rendered viewports are discarded. This is very fast. */
 
             /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
-            currNodePos.x = (float)currentNode->position.x;
-            currNodePos.y = (float)currentNode->position.y;
-            currNodePos.z = (float)currentNode->position.z;
+            floatCoordinate currNodePos = nodeIt->position;
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
 
-            if(!sphereInFrustum(currNodePos, currentNode->circRadius)) {
-                currentNode = currentNode->next.get();
-                lastNode = lastRenderedNode = NULL;
+            if (!sphereInFrustum(currNodePos, nodeIt->circRadius)) {
+                lastNode = lastRenderedNode = nullptr;
                 continue;
             }
 
-            virtualSegRendered = false;
+            bool virtualSegRendered = false;
             bool nodeVisible = true;
 
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
-            allowHeuristic = false;
-            if(currentNode->next && (!(currentNode->numSegs > 2))) {
-                currentSegment = currentNode->next->firstSegment;
-                while(currentSegment) {
-
-                    if((currentSegment->target == currentNode) ||
-                       (currentSegment->source == currentNode)) {
+            bool allowHeuristic = false;
+            if (std::next(nodeIt) != std::end(currentTree.nodes) && nodeIt->segments.size() <= 2) {
+                for (const auto & currentSegment : std::next(nodeIt)->segments) {
+                    if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
                         /* Connected, heuristic is allowed */
                         allowHeuristic = true;
                         break;
                     }
-                    currentSegment = currentSegment->next;
                 }
             }
 
-
-            currentSegment = currentNode->firstSegment;
-            while(currentSegment && allowHeuristic && !state->viewerState->selectModeFlag) {
-                /* isBranchNode tells you only whether the node is on the branch point stack,
-                 * not whether it is actually a node connected to more than two other nodes! */
-                if((currentSegment->target == lastNode)
-                    || ((currentSegment->source == lastNode)
-                    &&
-                    (!(
-                       (currentNode->comment)
-                       || (currentNode->isBranchNode)
-                       || (currentNode->numSegs > 2)
-                       || (currentNode->radius * screenPxXPerDataPx > 5.f))))) {
-
-                    /* Node is a candidate for LOD culling */
-
-                    /* Do we really skip this node? Test cum dist. to last rendered node! */
-                    cumDistToLastRenderedNode += currentSegment->length * screenPxXPerDataPx;
-
-                    if(cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
-                        break;
-                    }
-                    else {
-                        nodeVisible = false;
+            if (lastNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
+                for (auto & currentSegment : nodeIt->segments) {
+                    /* isBranchNode tells you only whether the node is on the branch point stack,
+                     * not whether it is actually a node connected to more than two other nodes! */
+                    const bool shouldRender = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
+                    const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
+                    if (cullingCandidate) {
+                        /* Node is a candidate for LOD culling */
+                        /* Do we really skip this node? Test cum dist. to last rendered node! */
+                        cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
+                        if (cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) {
+                            nodeVisible = false;
+                        }
                         break;
                     }
                 }
-                currentSegment = currentSegment->next;
             }
 
             if(nodeVisible) {
                 /* This sets the current color for the segment rendering */
-                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                if((currentTree.treeID == state->skeletonState->activeTree->treeID)
                     && (state->viewerState->highlightActiveTree)) {
                         currentColor = {1.f, 0.f, 0.f, 1.f};
                 }
                 else {
-                    currentColor = currentTree->color;
+                    currentColor = currentTree.color;
                 }
 
                 cumDistToLastRenderedNode = 0.f;
@@ -2263,61 +2231,45 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    segmentListElement virtualSegment;
-                    virtualSegment.source = lastRenderedNode;
-                    virtualSegment.target = currentNode;
+                    segmentListElement virtualSegment(*lastRenderedNode, *nodeIt);
                     renderSegment(virtualSegment, currentColor, options);
                 }
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
-                currentSegment = currentNode->firstSegment;
-                while(currentSegment) {
-                    if(currentSegment->flag == SEGMENT_BACKWARD){
-                        currentSegment = currentSegment->next;
+                for (const auto & currentSegment : nodeIt->segments) {
+                    if (!currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
                         continue;
                     }
-
-                    if(virtualSegRendered && (currentSegment->source == lastNode || currentSegment->target == lastNode)) {
-                        currentSegment = currentSegment->next;
-                        continue;
-                    }
-
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    renderSegment(*currentSegment, currentColor, options);
-                    currentSegment = currentSegment->next;
+                    renderSegment(currentSegment, currentColor, options);
                 }
 
                 if(state->viewerState->selectModeFlag) {
-                    glLoadName(GLNAME_NODEID_OFFSET + currentNode->nodeID);
+                    glLoadName(GLNAME_NODEID_OFFSET + nodeIt->nodeID);
                 }
-                renderNode(*currentNode, options);
+                renderNode(*nodeIt, options);
 
-                lastRenderedNode = currentNode;
+                lastRenderedNode = &*nodeIt;
             }
-
-            lastNode = currentNode;
-
-            currentNode = currentNode->next.get();
+            lastNode = &*nodeIt;
         }
-
-        currentTree = currentTree->next.get();
     }
 
     if(state->viewerState->selectModeFlag)
         glLoadName(3);
 
     /* Render line geometry batch if it contains data */
-    if(state->skeletonState->lineVertBuffer.vertsIndex > 0) {
+    if(state->viewerState->lineVertBuffer.vertsIndex > 0) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->lineVertBuffer.colors);
 
-        glDrawArrays(GL_LINES, 0, state->skeletonState->lineVertBuffer.vertsIndex);
+        glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertsIndex);
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -2329,15 +2281,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glPointSize(3.f);
 
     /* Render point geometry batch if it contains data */
-    if(state->skeletonState->pointVertBuffer.vertsIndex > 0) {
+    if(state->viewerState->pointVertBuffer.vertsIndex > 0) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors);
 
-        glDrawArrays(GL_POINTS, 0, state->skeletonState->pointVertBuffer.vertsIndex);
+        glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertsIndex);
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);

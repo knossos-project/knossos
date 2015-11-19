@@ -7,27 +7,29 @@
 #include <QHash>
 #include <QList>
 
+#include <list>
 #include <memory>
 
 class segmentListElement;
 
 class treeListElement {
 public:
-    std::unique_ptr<treeListElement> next;
-    treeListElement * previous = nullptr;
-    std::unique_ptr<nodeListElement> firstNode;
-
-    bool render = true;
-
     int treeID;
+    std::list<treeListElement>::iterator iterator;
+
+    std::list<nodeListElement> nodes;
+
+    bool render{true};
+
     color4F color;
-    bool selected;
-    bool colorSetManually;
-    std::size_t size;
+    bool selected{false};
+    bool colorSetManually{false};
 
     char comment[8192];
 
     QHash<uint64_t, int> subobjectCount;
+
+    treeListElement(int id);
 
     QList<nodeListElement *> *getNodes();
     QList<segmentListElement *> getSegments();
