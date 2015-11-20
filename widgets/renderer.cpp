@@ -2237,7 +2237,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
                 for (const auto & currentSegment : nodeIt->segments) {
-                    if (!currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
+                    if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
                         continue;
                     }
                     if(state->viewerState->selectModeFlag) {
