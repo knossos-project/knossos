@@ -2130,8 +2130,6 @@ bool Viewport3D::rotateViewport() {
  */
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    float cumDistToLastRenderedNode;
-
     state->viewerState->lineVertBuffer.vertsIndex = 0;
     state->viewerState->lineVertBuffer.normsIndex = 0;
     state->viewerState->lineVertBuffer.colsIndex = 0;
@@ -2149,7 +2147,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPushMatrix();
 
-    nodeListElement * lastNode = NULL, *lastRenderedNode = NULL;
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         /* Render only trees we want to be rendered*/
         if (!currentTree.render) {
@@ -2159,9 +2156,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             continue;
         }
 
-        lastNode = NULL;
-        lastRenderedNode = NULL;
-        cumDistToLastRenderedNode = 0.f;
+        nodeListElement * previousNode = nullptr;
+        nodeListElement * lastRenderedNode = nullptr;
+        bool lastCulled = false;
+        float cumDistToLastRenderedNode = 0.f;
 
         for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
             /* We start with frustum culling:
@@ -2175,7 +2173,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             that includes its segments. */
 
             if (!sphereInFrustum(currNodePos, nodeIt->circRadius)) {
-                lastNode = lastRenderedNode = nullptr;
+                previousNode = lastRenderedNode = nullptr;
                 continue;
             }
 
@@ -2195,14 +2193,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 }
             }
 
-            if (lastNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
+            if (previousNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
                 for (auto & currentSegment : nodeIt->segments) {
-                    /* isBranchNode tells you only whether the node is on the branch point stack,
-                     * not whether it is actually a node connected to more than two other nodes! */
+                    //isBranchNode tells you only whether the node is on the branch point stack,
+                    //not whether it is actually a node connected to more than two other nodes!
                     const bool mustBeRendered = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
-                    if (!mustBeRendered) {
-                        /* Node is a candidate for LOD culling */
-                        /* Do we really skip this node? Test cum dist. to last rendered node! */
+                    const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
+                    if (cullingCandidate) {
+                        //Node is a candidate for LOD culling
+                        //Do we really skip this node? Test cum dist. to last rendered node!
                         cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
                         if (cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) {
                             nodeVisible = false;
@@ -2212,8 +2211,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 }
             }
 
-            if(nodeVisible) {
-                /* This sets the current color for the segment rendering */
+            if (nodeVisible) {
+                //This sets the current color for the segment rendering
                 if((currentTree.treeID == state->skeletonState->activeTree->treeID)
                     && (state->viewerState->highlightActiveTree)) {
                         currentColor = {1.f, 0.f, 0.f, 1.f};
@@ -2224,19 +2223,19 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
                 cumDistToLastRenderedNode = 0.f;
 
-                if(lastNode != lastRenderedNode) {
+                if (previousNode != lastRenderedNode) {
                     virtualSegRendered = true;
                     // We need a "virtual" segment now
                     if(state->viewerState->selectModeFlag) {
                         glLoadName(3);
                     }
-                    segmentListElement virtualSegment(*lastRenderedNode, *nodeIt);
+                    segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
                     renderSegment(virtualSegment, currentColor, options);
                 }
 
                 /* Second pass over segments needed... But only if node is actually rendered! */
                 for (const auto & currentSegment : nodeIt->segments) {
-                    if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *lastNode || currentSegment.target == *lastNode))) {
+                    if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
                         continue;
                     }
                     if(state->viewerState->selectModeFlag) {
@@ -2252,7 +2251,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
                 lastRenderedNode = &*nodeIt;
             }
-            lastNode = &*nodeIt;
+            previousNode = &*nodeIt;
         }
     }
 
