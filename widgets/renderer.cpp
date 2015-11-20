@@ -2199,9 +2199,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 for (auto & currentSegment : nodeIt->segments) {
                     /* isBranchNode tells you only whether the node is on the branch point stack,
                      * not whether it is actually a node connected to more than two other nodes! */
-                    const bool shouldRender = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
-                    const bool cullingCandidate = currentSegment.target == *lastNode || (currentSegment.source == *lastNode && !shouldRender);
-                    if (cullingCandidate) {
+                    const bool mustBeRendered = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
+                    if (!mustBeRendered) {
                         /* Node is a candidate for LOD culling */
                         /* Do we really skip this node? Test cum dist. to last rendered node! */
                         cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
