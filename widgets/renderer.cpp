@@ -172,7 +172,7 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     GLUquadricObj *gluCylObj = NULL;
 
     if (options.enableSkeletonDownsampling &&
-        (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
+        (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f) && (state->viewerState->cumDistRenderThres > 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
         if(state->viewerState->lineVertBuffer.vertsBuffSize < state->viewerState->lineVertBuffer.vertsIndex + 2)
             doubleMeshCapacity(state->viewerState->lineVertBuffer);

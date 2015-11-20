@@ -9,6 +9,7 @@
 #include <QRadioButton>
 #include <QSettings>
 #include <QSpinBox>
+#include <QComboBox>
 #include <QGridLayout>
 #include <QWidget>
 
@@ -27,8 +28,8 @@ class TreesTab : public QWidget
     QPushButton loadTreeLUTButton{"Load …"};
     QLabel depthCutOffLabel{"Depth cutoff:"};
     QDoubleSpinBox depthCutoffSpin;
-    QLabel renderQualityLabel{"Rendering quality (1 best, 20 fastest):"};
-    QSpinBox renderQualitySpin;
+    QLabel renderQualityLabel{"Rendering quality:"};
+    QComboBox renderQualityCombo;
     // tree visibility
     QCheckBox skeletonInOrthoVPsCheck{"Show skeleton in Ortho VPs"};
     QCheckBox skeletonIn3DVPCheck{"Show skeleton in 3D VP"};
