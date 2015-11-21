@@ -198,9 +198,12 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
         const floatCoordinate scale{1.0f, 1.0f, 1.0f / state->viewerState->voxelXYtoZRatio};
         const floatCoordinate segDirection{scale * floatCoordinate{*top - *base}};
 
-        const floatCoordinate rotationAxis{crossProduct(cylinderDirection, segDirection)};
+        floatCoordinate rotationAxis{crossProduct(cylinderDirection, segDirection)};
         const float currentAngle{radToDeg(vectorAngle(cylinderDirection, segDirection))};
-
+        //we need another reference vector for 180° rotations
+        if (rotationAxis == floatCoordinate{0, 0, 0}) {
+            rotationAxis = {crossProduct({0.0f, 1.0f, 0.0f}, segDirection)};
+        }
         //some gl implementations have problems with the params occuring for
         //segs in straight directions. we need a fix here.
         glRotatef(currentAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
