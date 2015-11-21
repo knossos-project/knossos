@@ -1314,15 +1314,15 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
 
-    auto * node = findNodeByNodeID(nodeID);
-    if (!node) {
+    auto * firstNode = findNodeByNodeID(nodeID);
+    if (!firstNode) {
         return false;
     }
 
     std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
     std::unordered_set<nodeListElement*> visitedNodes;
-    visitedNodes.insert(node);
-    connectedComponent(*node, [&treesSeen, &visitedNodes](nodeListElement & node){
+    visitedNodes.insert(firstNode);
+    connectedComponent(*firstNode, [&treesSeen, &visitedNodes](nodeListElement & node){
         visitedNodes.emplace(&node);
         treesSeen.emplace(node.correspondingTree);
         return false;
@@ -1354,7 +1354,7 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
         }
         // Removing node list element from its old position
         // Inserting node list element into new list.
-        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
+        newTree->nodes.splice(std::end(newTree->nodes), nodeIt->correspondingTree->nodes, nodeIt->iterator);
         nodeIt->correspondingTree = newTree;
     }
     Session::singleton().unsavedChanges = true;
