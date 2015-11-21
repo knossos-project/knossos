@@ -37,21 +37,10 @@ class QCheckBox;
 
 #define LOCK_DATASET_ORIENTATION_DEFAULT (false)
 
+
 class DatasetOptionsWidget : public QDialog {
     friend class MainWindow;
     Q_OBJECT
-public:
-    explicit DatasetOptionsWidget(QWidget *parent = 0);
-public slots:
-    void zoomDefaultsClicked();
-    void lockDatasetMagChecked(bool on);
-    void orthogonalSpinBoxChanged(double value);
-    void skeletonSpinBoxChanged(double value);
-    void update();
-    void loadSettings();
-    void saveSettings();
-    void updateCompressionRatioDisplay();
-protected:
     /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
      * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
      * See the spinBoxChanged slots for more details. */
@@ -64,8 +53,8 @@ protected:
     QLabel zoomSectionLabel{"Zoom Settings"};
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewportLabel;
-    QDoubleSpinBox *orthogonalDataViewportSpinBox;
     QDoubleSpinBox *skeletonViewportSpinBox;
+    QSlider orthogonalZoomSlider;
     QPushButton *zoomDefaultsButton;
     // multires section
     QLabel multiresSectionLabel{"Magnification Settings"};
@@ -74,15 +63,29 @@ protected:
     QLabel *currentActiveMagDatasetLabel;
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
-signals:
-    void visibilityChanged(bool);
-private:
+    float lowestScreenPxXPerDataPx();
+    float zoomStep{1};
+    void updateOrthogonalZoomSlider();
+
     void showEvent(QShowEvent *) override {
         emit visibilityChanged(true);
     }
     void hideEvent(QHideEvent *) override {
         emit visibilityChanged(false);
     }
+public:
+    explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
+public slots:
+    void zoomDefaultsClicked();
+    void lockDatasetMagChecked(bool on);
+    void skeletonSpinBoxChanged(double value);
+    void update();
+    void loadSettings();
+    void saveSettings();
+    void updateCompressionRatioDisplay();
+
+signals:
+    void visibilityChanged(bool);
 };
 
 #endif // DATASETOPTIONSWIDGET_H

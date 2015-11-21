@@ -155,6 +155,8 @@ struct ViewerState {
     double nodePropertyColorMapMin{0};
     double nodePropertyColorMapMax{0};
     // viewport rendering options
+    float FOVmin{0.5};
+    float FOVmax{1};
     bool drawVPCrosshairs{true};
     int rotateAroundActiveNode;
     int showIntersections{false};

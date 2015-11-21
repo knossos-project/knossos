@@ -17,7 +17,7 @@
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), appearanceWidget(parent), datasetLoadWidget(parent)
-        , datasetOptionsWidget(parent), dataSavingWidget(parent), docWidget(parent)
+        , datasetOptionsWidget(parent, &datasetLoadWidget), dataSavingWidget(parent), docWidget(parent)
         , navigationWidget(parent), pythonPropertyWidget(parent), snapshotWidget(parent), splashWidget(parent)
         , taskManagementWidget(parent)
     {

@@ -795,27 +795,27 @@ bool Viewer::calcDisplayedEdgeLength() {
 
 void Viewer::zoom(const float factor) {
     int triggerMagChange = false;
-    if (vpUpperLeft->displayedEdgeLenghtXForZoomFactor(vpUpperLeft->texture.zoomLevel * factor) == 0
-            || vpUpperLeft->screenPxXPerDataPxForZoomFactor(vpUpperLeft->texture.zoomLevel * factor) < VPZOOMMIN) {
+    if ((std::round(vpUpperLeft->texture.FOV * factor) > 1 && (static_cast<uint>(state->magnification) == state->highestAvailableMag)) // min zoom
+            || (std::floor(vpUpperLeft->texture.FOV * factor * 2 + 0.5)/2 < 0.5 && (static_cast<uint>(state->magnification) == state->lowestAvailableMag)) /* max zoom */) {
         return;
     }
-    bool magUp = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 >= 1 && factor > 1;
-    bool magDown = std::floor((vpUpperLeft->texture.zoomLevel*2)+0.5)/2 <= 0.5 && factor < 1;
+    bool magUp = std::floor(vpUpperLeft->texture.FOV * 2  + 0.5) / 2 >= 1 && factor > 1;
+    bool magDown = std::floor(vpUpperLeft->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
     state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
-            orthoVP.texture.zoomLevel *= factor;
+            orthoVP.texture.FOV *= factor;
         }
         else {
             if (magDown && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
-                orthoVP.texture.zoomLevel = 1;
+                orthoVP.texture.FOV = 1;
                 triggerMagChange = MAG_DOWN;
             }
             else if (magUp && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
-                orthoVP.texture.zoomLevel = 0.5;
+                orthoVP.texture.FOV = 0.5;
                 triggerMagChange = MAG_UP;
             }
             else {
-                orthoVP.texture.zoomLevel *= factor;
+                orthoVP.texture.FOV *= factor;
             }
         }
     });
@@ -829,7 +829,7 @@ void Viewer::zoom(const float factor) {
 
 void Viewer::zoomReset() {
     state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
-        orthoVP.texture.zoomLevel = 1;
+        orthoVP.texture.FOV = 1;
     });
     recalcTextureOffsets();
     emit zoomChanged();
@@ -1153,8 +1153,8 @@ bool Viewer::recalcTextureOffsets() {
     calcDisplayedEdgeLength();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        orthoVP.texture.displayedEdgeLengthX *= orthoVP.texture.zoomLevel;
-        orthoVP.texture.displayedEdgeLengthY *= orthoVP.texture.zoomLevel;
+        orthoVP.texture.displayedEdgeLengthX *= orthoVP.texture.FOV;
+        orthoVP.texture.displayedEdgeLengthY *= orthoVP.texture.FOV;
         switch(orthoVP.viewportType) {
         case VIEWPORT_XY:
             //Aspect ratio correction..

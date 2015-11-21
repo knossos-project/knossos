@@ -148,7 +148,7 @@ void MainWindow::resetTextureProperties() {
         orthoVP.texture.usedTexLengthDc = state->M;
         orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
         orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-        orthoVP.texture.zoomLevel = 1;
+        orthoVP.texture.FOV = 1;
     });
 }
 

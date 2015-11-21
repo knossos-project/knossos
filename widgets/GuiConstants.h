@@ -40,7 +40,6 @@ const QString DATASET_OVERLAY = "overlay";
 const QString DATASET_LAST_USED = "dataset_last_used";
 
 // Zoom and Multires
-const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";
 const QString SKELETON_VIEW = "skeleton_view";
 const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 

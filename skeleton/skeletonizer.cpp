@@ -232,9 +232,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
-    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.zoomLevel));
-    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.zoomLevel));
-    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportYZ.get()->texture.zoomLevel));
+    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.FOV));
+    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.FOV));
+    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportYZ.get()->texture.FOV));
     xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
     xml.writeEndElement();
 
@@ -440,15 +440,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXY.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXY.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("XZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXZ.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXZ.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("YZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportYZ.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportYZ.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("SkelVP");
                     if(attribute.isNull() == false) {

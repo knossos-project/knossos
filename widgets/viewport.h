@@ -85,7 +85,7 @@ struct viewportTexture {
     float xOffset, yOffset;
 
     // Current zoom level. 1: no zoom; near 0: maximum zoom.
-    float zoomLevel;
+    float FOV;
 };
 
 struct RenderOptions {
