@@ -30,6 +30,7 @@
 #include <QDialog>
 #include <QLabel>
 #include <QPushButton>
+#include <QSlider>
 
 class QDoubleSpinBox;
 class QCheckBox;
