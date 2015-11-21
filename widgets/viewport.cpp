@@ -49,15 +49,15 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
 
-QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
+QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportType vpType) : QWidget(parent) {
     setWindowFlags(Qt::Window);
-    const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "3D"}};
-    setWindowTitle(VP_TITLES[id]);
+    const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "Arbitrary", "3D"}};
+    setWindowTitle(VP_TITLES[vpType]);
     new QVBoxLayout(this);
 }
 
-ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uint id) :
-    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), id(id) {
+ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
+    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType) {
     dockParent = parent;
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
@@ -108,7 +108,7 @@ void ViewportBase::setDock(bool isDock) {
     } else {
         dockPos = pos();
         dockSize = size();
-        floatParent = new QViewportFloatWidget(dockParent, id);
+        floatParent = new QViewportFloatWidget(dockParent, viewportType);
         floatParent->layout()->addWidget(this);
         floatParent->resize(size());
         if (wasVisible) {
@@ -135,7 +135,7 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
     state->viewerState->defaultVPSizeAndPos = false;
 }
 
-ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     switch(viewportType) {
     case VIEWPORT_XY:
         v1 = {1, 0, 0};
@@ -158,7 +158,7 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType, const u
     timeFBase.start();
 }
 
-Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     const auto svpLayout = new QHBoxLayout();
     svpLayout->setSpacing(0);
     svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
@@ -552,10 +552,10 @@ void ViewportOrtho::updateOverlayTexture() {
     if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
         return;
     }
-    switch(id) {
-    case VP_UPPERLEFT: state->viewer->oc_xy_changed = false; break;
-    case VP_LOWERLEFT: state->viewer->oc_xz_changed = false; break;
-    case VP_UPPERRIGHT: state->viewer->oc_zy_changed = false; break;
+    switch(viewportType) {
+    case VIEWPORT_XY: state->viewer->oc_xy_changed = false; break;
+    case VIEWPORT_XZ: state->viewer->oc_xz_changed = false; break;
+    case VIEWPORT_YZ: state->viewer->oc_zy_changed = false; break;
     }
 
     const int width = state->M * state->cubeEdgeLength;
@@ -763,7 +763,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
 
 void ViewportOrtho::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), viewportType);
 }
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {

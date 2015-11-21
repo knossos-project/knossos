@@ -43,9 +43,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 
-enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
-
-enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED, VIEWPORT_ARBITRARY};
+enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
 Q_DECLARE_METATYPE(ViewportType)
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
@@ -118,7 +116,7 @@ signals:
 
 class QViewportFloatWidget : public QWidget {
 public:
-    explicit QViewportFloatWidget(QWidget *parent, int id);
+    explicit QViewportFloatWidget(QWidget *parent, ViewportType vpType);
 };
 
 constexpr int defaultFonsSize = 10;
@@ -203,9 +201,8 @@ protected:
     virtual void handleWheelEvent(const QWheelEvent *event);
 
 public:
-    const static int numberViewports = 4;
-    ViewportType viewportType; // XY_VIEWPORT, ...
-    uint id; // VP_UPPERLEFT,
+    const static int numberViewports = 5;
+    ViewportType viewportType;
 
     bool hasCursor{false};
     virtual void showHideButtons(bool isShow) { resizeButton.setVisible(isShow); }
@@ -230,7 +227,7 @@ public:
     void setDock(bool isDock);
     static bool oglDebug;
 
-    explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
+    explicit ViewportBase(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportBase();
 
     static bool initMesh(mesh & toInit, uint initialSize);
@@ -255,7 +252,7 @@ public:
 
     float frustum[6][4]; // Stores the current view frustum planes
 signals:
-    void cursorPositionChanged(const Coordinate & position, const uint id);
+    void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
 
     void rotationSignal(const floatCoordinate & axis, const float angle);
     void pasteCoordinateSignal();
@@ -289,7 +286,7 @@ class Viewport3D : public ViewportBase {
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
-    explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
+    explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
@@ -318,7 +315,7 @@ class ViewportOrtho : public ViewportBase {
     virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
-    void renderBrush(uint viewportType, Coordinate coord);
+    void renderBrush(const Coordinate coord);
     virtual void renderViewportFrontFace() override;
 
     floatCoordinate arbNodeDragCache = {};
@@ -336,7 +333,7 @@ class ViewportOrtho : public ViewportBase {
     virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
-    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id);
+    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     static bool arbitraryOrientation;
     void setOrientation(ViewportType orientation);
     static bool showNodeComments;

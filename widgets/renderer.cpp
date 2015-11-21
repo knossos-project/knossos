@@ -510,7 +510,7 @@ void ViewportBase::renderViewportFrontFace() {
     glLineWidth(1.);
 
     // render node selection box
-    if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(id)) {
+    if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(viewportType)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 
@@ -962,7 +962,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glLoadIdentity();
             view();
 
-            renderBrush(id, getMouseCoordinate());
+            renderBrush(getMouseCoordinate());
 
             glPopMatrix();
         }
@@ -996,19 +996,19 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         floatCoordinate normal;
         floatCoordinate vec1;
-        if (id == 0) {
+        if (viewportType == VIEWPORT_XY) {
             glRotatef(180., 1.,0.,0.);
             normal = {0, 0, 1};
             vec1 = {1, 0, 0};
         }
 
-        else if (id == 1) {
+        else if (viewportType == VIEWPORT_XZ) {
             glRotatef(90., 1., 0., 0.);
             normal = {0, 1, 0};
             vec1 = {1, 0, 0};
         }
 
-        else if (id == 2){
+        else if (viewportType == VIEWPORT_YZ){
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
             normal = {1, 0, 0};
@@ -1068,7 +1068,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glBindTexture(GL_TEXTURE_2D, texture.texHandle);
         glBegin(GL_QUADS);
             glNormal3i(n.x, n.y, n.z);
-            const auto offset = id == 1 ? n * -1 : n;
+            const auto offset = viewportType == VIEWPORT_XZ ? n * -1 : n;
             glTexCoord2f(texture.texLUx, texture.texLUy);
             glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x, -dataPxX * v1.y - dataPxY * v2.y + offset.y, -dataPxX * v1.z - dataPxY * v2.z + offset.z);
             glTexCoord2f(texture.texRUx, texture.texRUy);
@@ -1086,7 +1086,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
             glBegin(GL_QUADS);
                 glNormal3i(n.x, n.y, n.z);
-                const auto offset = id == 1 ? n * 0.1 : n * -0.1;
+                const auto offset = viewportType == VIEWPORT_XZ ? n * 0.1 : n * -0.1;
                 glTexCoord2f(texture.texLUx, texture.texLUy);
                 glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x,
                            -dataPxX * v1.y - dataPxY * v2.y + offset.y,
@@ -1571,9 +1571,9 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         });
         if (ViewportOrtho::arbitraryOrientation) {
             state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-                if ( (orthoVP.id == VP_UPPERLEFT && state->viewerState->showXYplane)
-                    || (orthoVP.id == VP_LOWERLEFT && state->viewerState->showXZplane)
-                    || (orthoVP.id == VP_UPPERRIGHT && state->viewerState->showYZplane) )
+                if ( (orthoVP.viewportType == VIEWPORT_XY && state->viewerState->showXYplane)
+                    || (orthoVP.viewportType == VIEWPORT_XZ && state->viewerState->showXZplane)
+                    || (orthoVP.viewportType == VIEWPORT_YZ && state->viewerState->showYZplane) )
                 {
                     renderArbitrarySlicePane(orthoVP);
                 }
@@ -1817,11 +1817,11 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     return true;
 }
 
-void ViewportOrtho::renderBrush(uint viewportType, Coordinate coord) {
+void ViewportOrtho::renderBrush(const Coordinate coord) {
     glLineWidth(2.0f);
 
     auto & seg = Segmentation::singleton();
-    auto drawCursor = [this, &seg, viewportType, coord]() {
+    auto drawCursor = [this, &seg, coord]() {
         const auto bradius = seg.brush.getRadius();
         const auto bview = seg.brush.getView();
         const auto xsize = bradius / state->scale.x;
@@ -1927,7 +1927,7 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     const auto dataPxX = vp.texture.displayedEdgeLengthX / vp.texture.texUnitsPerDataPx * 0.5;
     const auto dataPxY = vp.texture.displayedEdgeLengthY / vp.texture.texUnitsPerDataPx * 0.5;
 
-    glLoadName(vp.id);//for select mode
+    glLoadName(vp.viewportType);//for select mode
 
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
@@ -1972,7 +1972,7 @@ QSet<nodeListElement *> ViewportBase::retrieveAllObjectsBeneathSquare(uint cente
 
     GLdouble vp_height = height();
 
-    if(id != VIEWPORT_SKELETON) {
+    if(viewportType != VIEWPORT_SKELETON) {
         vp_height = height() * devicePixelRatio();
     }
     centerX *= devicePixelRatio();

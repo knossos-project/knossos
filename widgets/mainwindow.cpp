@@ -94,8 +94,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
-        [this](const QString & path, const uint id, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
-            viewport(id)->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
+        [this](const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
+            viewport(vpType)->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
         });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -130,8 +130,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     }
 }
 
-void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
-    cursorPositionLabel.setHidden(vpID == VIEWPORT_SKELETON || vpID == VIEWPORT_UNDEFINED);
+void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
+    cursorPositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
     cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
 }
 
@@ -166,29 +166,31 @@ void MainWindow::createViewports() {
     }
     QSurfaceFormat::setDefaultFormat(format);
 
-    viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
-    viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY));
+    viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ));
+    viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ));
+    viewportArb = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ARBITRARY));
+    viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON));
     viewportXY->upperLeftCorner = {5, 30, 0};
     viewportXZ->upperLeftCorner = {5, 385, 0};
     viewportYZ->upperLeftCorner = {360, 30, 0};
+    viewportArb->upperLeftCorner = {715, 30, 0};
     viewport3D->upperLeftCorner = {360, 385, 0};
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) { QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
 
 }
 
-ViewportBase * MainWindow::viewport(const uint id) {
-    return (viewportXY->id == id)? static_cast<ViewportBase *>(viewportXY.get()) :
-           (viewportXZ->id == id)? static_cast<ViewportBase *>(viewportXZ.get()) :
-           (viewportYZ->id == id)? static_cast<ViewportBase *>(viewportYZ.get()) :
+ViewportBase * MainWindow::viewport(const ViewportType vpType) {
+    return (viewportXY->viewportType == vpType)? static_cast<ViewportBase *>(viewportXY.get()) :
+           (viewportXZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportXZ.get()) :
+           (viewportYZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportYZ.get()) :
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
-ViewportOrtho * MainWindow::viewportOrtho(const uint id) {
-    return (viewportXY->id == id)? viewportXY.get() :
-           (viewportXZ->id == id)? viewportXZ.get() :
+ViewportOrtho * MainWindow::viewportOrtho(const ViewportType vpType) {
+    return (viewportXY->viewportType == vpType)? viewportXY.get() :
+           (viewportXZ->viewportType == vpType)? viewportXZ.get() :
            viewportYZ.get();
 }
 
@@ -1010,16 +1012,16 @@ void MainWindow::saveSettings() {
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
 
     forEachVPDo([&settings] (ViewportBase & vp) {
-        settings.setValue(VP_I_POS.arg(vp.id), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
-        settings.setValue(VP_I_SIZE.arg(vp.id), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(vp.id), vp.isVisible());
+        settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisible());
 
     });
     QList<QVariant> order;
     for (const auto & w : centralWidget()->children()) {
         forEachVPDo([&w, &order](ViewportBase & vp) {
             if (w == &vp) {
-                order.append(vp.id);
+                order.append(vp.viewportType);
             }
         });
     }
@@ -1064,13 +1066,13 @@ void MainWindow::loadSettings() {
         resetViewports();
     } else {
         forEachVPDo([&settings](ViewportBase & vp) {
-            vp.move(settings.value(VP_I_POS.arg(vp.id)).toPoint());
-            vp.resize(settings.value(VP_I_SIZE.arg(vp.id)).toSize());
-            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.id), true).toBool());
+            vp.move(settings.value(VP_I_POS.arg(vp.viewportType)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(vp.viewportType)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
         });
     }
     for (const auto & i : settings.value(VP_ORDER).toList()) {
-        viewport(i.toInt())->raise();
+        viewport(static_cast<ViewportType>(i.toInt()))->raise();
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();

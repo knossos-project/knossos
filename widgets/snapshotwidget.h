@@ -28,7 +28,7 @@ public:
 public slots:
     void updateOptionVisibility();
 signals:
-    void snapshotRequest(const QString & path, const uint id, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 #endif // SNAPSHOTWIDGET_H

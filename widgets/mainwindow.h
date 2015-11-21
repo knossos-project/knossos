@@ -138,6 +138,7 @@ public:
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
     std::unique_ptr<ViewportOrtho> viewportYZ;
+    std::unique_ptr<ViewportOrtho> viewportArb;
     std::unique_ptr<Viewport3D> viewport3D;
 
     // contains all widgets
@@ -189,8 +190,8 @@ public:
         }
     }
     void resetTextureProperties();
-    ViewportBase *viewport(const uint id);
-    ViewportOrtho *viewportOrtho(const uint id);
+    ViewportBase *viewport(const ViewportType vpType);
+    ViewportOrtho *viewportOrtho(const ViewportType vpType);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();
@@ -200,7 +201,7 @@ public:
 public slots:
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
-    void updateCursorLabel(const Coordinate & position, const uint vpID);
+    void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);
     void updateRecentFile(const QString &fileName);

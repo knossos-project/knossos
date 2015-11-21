@@ -546,10 +546,10 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
     if (!dc_xy_changed && !dc_xz_changed && !dc_zy_changed) {
         return;
     }
-    switch(vp.id) {
-    case VP_UPPERLEFT: dc_xy_changed = false; break;
-    case VP_LOWERLEFT: dc_xz_changed = false; break;
-    case VP_UPPERRIGHT: dc_zy_changed = false; break;
+    switch(vp.viewportType) {
+    case VIEWPORT_XY: dc_xy_changed = false; break;
+    case VIEWPORT_XZ: dc_xz_changed = false; break;
+    case VIEWPORT_YZ: dc_zy_changed = false; break;
     }
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
@@ -1012,9 +1012,9 @@ void Viewer::setPositionWithRecentering(const Coordinate &pos) {
     remote.process(pos);
 }
 
-void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid) {
+void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const ViewportType vpType) {
     remote.rotate = true;
-    remote.activeVP = vpid;
+    remote.activeVP = vpType;
     remote.process(pos);
 }
 

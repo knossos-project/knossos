@@ -107,23 +107,23 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
 
 void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
-    emit cursorPositionChanged(coord, id);
+    emit cursorPositionChanged(coord, viewportType);
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, id, event);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, viewportType, event);
     if(Segmentation::singleton().hoverVersion && state->overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
     }
     ViewportBase::handleMouseHover(event);
 }
 
-void startNodeSelection(const int x, const int y, const int viewportID, const Qt::KeyboardModifiers modifiers) {
+void startNodeSelection(const int x, const int y, const ViewportType vpType, const Qt::KeyboardModifiers modifiers) {
     state->viewerState->nodeSelectionSquare.first.x = x;
     state->viewerState->nodeSelectionSquare.first.y = y;
 
     // reset second point from a possible previous selection square.
     state->viewerState->nodeSelectionSquare.second = state->viewerState->nodeSelectionSquare.first;
-    state->viewerState->nodeSelectSquareData = std::make_pair(viewportID, modifiers);
+    state->viewerState->nodeSelectSquareData = std::make_pair(vpType, modifiers);
 }
 
 void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
@@ -138,7 +138,7 @@ void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
-            startNodeSelection(event->pos().x(), event->pos().y(), id, event->modifiers());
+            startNodeSelection(event->pos().x(), event->pos().y(), viewportType, event->modifiers());
             return;
         }
         //Set Connection between Active Node and Clicked Node
@@ -256,7 +256,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         // Move to the new node position
         if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
             if (viewportType == VIEWPORT_ARBITRARY) {
-                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, id);
+                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, viewportType);
             } else {
                 state->viewer->setPositionWithRecentering(clickedCoordinate);
             }
@@ -408,7 +408,7 @@ void ViewportOrtho::handleMouseReleaseRight(const QMouseEvent *event) {
 void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
     if (mouseEventAtValidDatasetPosition(event)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
-        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, id, event);
+        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, viewportType, event);
         auto & seg = Segmentation::singleton();
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
             auto brush_copy = seg.brush.value();

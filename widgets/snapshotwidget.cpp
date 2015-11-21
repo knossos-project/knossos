@@ -65,10 +65,10 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
         if(path.isEmpty() == false) {
             QFileInfo info(path);
             saveDir = info.absolutePath() + "/";
-            const auto vp = vpXYRadio.isChecked() ? VP_UPPERLEFT :
-                            vpXZRadio.isChecked() ? VP_LOWERLEFT :
-                            vpYZRadio.isChecked() ? VP_UPPERRIGHT :
-                                                    VP_LOWERRIGHT;
+            const auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
+                            vpXZRadio.isChecked() ? VIEWPORT_XZ :
+                            vpYZRadio.isChecked() ? VIEWPORT_YZ :
+                                                    VIEWPORT_SKELETON;
 
             emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
@@ -77,10 +77,10 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
 }
 
 uint SnapshotWidget::getCheckedViewport() const {
-    return vpXYRadio.isChecked() ? VP_UPPERLEFT :
-           vpXZRadio.isChecked() ? VP_LOWERLEFT :
-           vpYZRadio.isChecked() ? VP_UPPERRIGHT :
-                                   VP_LOWERRIGHT;
+    return vpXYRadio.isChecked() ? VIEWPORT_XY :
+           vpXZRadio.isChecked() ? VIEWPORT_XZ :
+           vpYZRadio.isChecked() ? VIEWPORT_YZ :
+                                   VIEWPORT_SKELETON;
 }
 
 void SnapshotWidget::updateOptionVisibility() {
@@ -126,11 +126,11 @@ void SnapshotWidget::loadSettings() {
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     setVisible(settings.value(VISIBLE, false).toBool());
 
-    const auto vp = settings.value(VIEWPORT, VP_UPPERLEFT).toInt();
+    const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     switch(vp) {
-        case VP_UPPERLEFT: vpXYRadio.setChecked(true); break;
-        case VP_LOWERLEFT: vpXZRadio.setChecked(true); break;
-        case VP_UPPERRIGHT: vpYZRadio.setChecked(true); break;
+        case VIEWPORT_XY: vpXYRadio.setChecked(true); break;
+        case VIEWPORT_XZ: vpXZRadio.setChecked(true); break;
+        case VIEWPORT_YZ: vpYZRadio.setChecked(true); break;
         default: vp3dRadio.setChecked(true); break;
     }
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
