@@ -1569,16 +1569,16 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 break;
             }
         });
-        state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-            if (viewportType == VIEWPORT_ARBITRARY) {
+        if (ViewportOrtho::arbitraryOrientation) {
+            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
                 if ( (orthoVP.id == VP_UPPERLEFT && state->viewerState->showXYplane)
                     || (orthoVP.id == VP_LOWERLEFT && state->viewerState->showXZplane)
                     || (orthoVP.id == VP_UPPERRIGHT && state->viewerState->showYZplane) )
                 {
                     renderArbitrarySlicePane(orthoVP);
                 }
-            }
-        });
+            });
+        }
 
         glDisable(GL_TEXTURE_2D);
 
