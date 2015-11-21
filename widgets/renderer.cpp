@@ -1361,25 +1361,26 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
     if(state->skeletonState->rotdx || state->skeletonState->rotdy) {
-        if((state->viewerState->rotateAroundActiveNode) && (state->skeletonState->activeNode)) {
-            glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2),-((float)state->boundary.z / 2.));
-            glTranslatef((float)state->skeletonState->activeNode->position.x,
-                         (float)state->skeletonState->activeNode->position.y,
-                         (float)state->skeletonState->activeNode->position.z);
-            glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
-            rotateViewport();
-            glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-            glTranslatef(-(float)state->skeletonState->activeNode->position.x,
-                         -(float)state->skeletonState->activeNode->position.y,
-                         -(float)state->skeletonState->activeNode->position.z);
-            glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
+        floatCoordinate rotationCenter;
+        floatCoordinate datasetCenter = floatCoordinate(state->boundary) / 2.f;
+        switch(state->viewerState->rotationCenter) {
+        case RotationCenter::ActiveNode:
+            rotationCenter = state->skeletonState->activeNode ? static_cast<floatCoordinate>(state->skeletonState->activeNode->position) : datasetCenter;
+            break;
+        case RotationCenter::CurrentPosition:
+            rotationCenter = state->viewerState->currentPosition;
+            break;
+        default:
+            rotationCenter = {state->boundary.x / 2.f, state->boundary.y / 2.f, state->boundary.z / 2.f};
         }
-        // rotate around dataset center if no active node is selected
-        else {
-            glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
-            rotateViewport();
-            glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-        }
+
+        glTranslatef(-datasetCenter.x, -datasetCenter.y, -datasetCenter.z);
+        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+        glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
+        rotateViewport();
+        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+        glTranslatef(datasetCenter.x, datasetCenter.y, datasetCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
     }

@@ -34,7 +34,10 @@ class ViewportTab : public QWidget
     QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
-    QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
+    QButtonGroup rotationCenterGroup;
+    QRadioButton rotateAroundDatasetCenterRadioBtn{"Rotate around dataset center"};
+    QRadioButton rotateAroundActiveNodeRadioBtn{"Rotate around active Node"};
+    QRadioButton rotateAroundCurrentPositionRadioBtn{"Rotate around current position"};
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
 
     void saveSettings(QSettings & settings) const;

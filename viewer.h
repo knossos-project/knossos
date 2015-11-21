@@ -67,6 +67,12 @@ enum class IdDisplay {
     AllNodes = 0x2 | ActiveNode
 };
 
+enum class RotationCenter {
+    DatasetCenter,
+    ActiveNode,
+    CurrentPosition
+};
+
 struct ViewerState {
     ViewerState() {
         state->viewerState = this;
@@ -158,7 +164,7 @@ struct ViewerState {
     float FOVmin{0.5};
     float FOVmax{1};
     bool drawVPCrosshairs{true};
-    int rotateAroundActiveNode;
+    RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     bool showScalebar{false};
     int showXYplane{true};

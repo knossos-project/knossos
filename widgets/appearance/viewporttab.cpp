@@ -8,6 +8,13 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     boundaryGroup.addButton(&boundariesPixelRadioBtn);
     boundaryGroup.addButton(&boundariesPhysicalRadioBtn);
 
+    rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn);
+    rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn);
+    rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn);
+    rotationCenterGroup.setId(&rotateAroundDatasetCenterRadioBtn, 0);
+    rotationCenterGroup.setId(&rotateAroundActiveNodeRadioBtn, 1);
+    rotationCenterGroup.setId(&rotateAroundCurrentPositionRadioBtn, 2);
+
     resetVPsButton.setFocusPolicy(Qt::NoFocus);
 
     separator.setFrameShape(QFrame::HLine);
@@ -23,7 +30,9 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     viewport3DLayout.addWidget(&showYZPlaneCheckBox);
     viewport3DLayout.addWidget(&boundariesPixelRadioBtn);
     viewport3DLayout.addWidget(&boundariesPhysicalRadioBtn);
-    viewport3DLayout.addWidget(&rotateAroundActiveNodeCheckBox);
+    viewport3DLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
+    viewport3DLayout.addWidget(&rotateAroundActiveNodeRadioBtn);
+    viewport3DLayout.addWidget(&rotateAroundCurrentPositionRadioBtn);
     int row = 0;
     mainLayout.setAlignment(Qt::AlignTop);
     mainLayout.addWidget(&generalHeader, row, 0); mainLayout.addWidget(&viewport3DHeader, row++, 1);
@@ -46,7 +55,11 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
         Viewport3D::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
-    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked) {state->viewerState->rotateAroundActiveNode = checked; });
+    QObject::connect(&rotationCenterGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
+        state->viewerState->rotationCenter = (rotateAroundDatasetCenterRadioBtn.isChecked()) ? RotationCenter::DatasetCenter :
+                                             (rotateAroundActiveNodeRadioBtn.isChecked()) ? RotationCenter::ActiveNode :
+                                             RotationCenter::CurrentPosition;
+    });
 
     QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportTab::resetViewportPositions);
 }
@@ -59,7 +72,7 @@ void ViewportTab::saveSettings(QSettings & settings) const {
     settings.setValue(SHOW_XZ_PLANE, showXZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_YZ_PLANE, showYZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_PHYSICAL_BOUNDARIES, boundariesPhysicalRadioBtn.isChecked());
-    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, rotateAroundActiveNodeCheckBox.isChecked());
+    settings.setValue(ROTATION_CENTER, rotationCenterGroup.checkedId());
 }
 
 void ViewportTab::loadSettings(const QSettings & settings) {
@@ -79,6 +92,8 @@ void ViewportTab::loadSettings(const QSettings & settings) {
     boundariesPixelRadioBtn.setChecked(!showPhysicalBoundaries);
     boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);
     boundaryGroup.buttonToggled(&boundariesPhysicalRadioBtn, boundariesPhysicalRadioBtn.isChecked());
-    rotateAroundActiveNodeCheckBox.setChecked(settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool());
-    rotateAroundActiveNodeCheckBox.clicked(rotateAroundActiveNodeCheckBox.isChecked());
+
+    auto * rotationButton = rotationCenterGroup.button(settings.value(ROTATION_CENTER, rotationCenterGroup.id(&rotateAroundDatasetCenterRadioBtn)).toInt());
+    rotationButton->setChecked(true);
+    rotationCenterGroup.buttonToggled(rotationButton, true);
 }
