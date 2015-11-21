@@ -2158,7 +2158,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         nodeListElement * previousNode = nullptr;
         nodeListElement * lastRenderedNode = nullptr;
-        bool lastCulled = false;
         float cumDistToLastRenderedNode = 0.f;
 
         for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {

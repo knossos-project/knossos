@@ -734,12 +734,13 @@ bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt
     }
     // Delete the segment out of the segment list and out of the visualization structure!
     /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
-    segToDelIt->length = 0.f;
-    updateCircRadius(&segToDelIt->source);
+    auto & source = segToDelIt->source;
+    auto & target = segToDelIt->target;
+    target.segments.erase(segToDelIt->sisterSegment);
+    source.segments.erase(segToDelIt);
 
-    segToDelIt->target.segments.erase(segToDelIt->sisterSegment);
-    segToDelIt->source.segments.erase(segToDelIt);
-
+    updateCircRadius(&source);
+    updateCircRadius(&target);
     Session::singleton().unsavedChanges = true;
     return true;
 }
@@ -1026,6 +1027,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->length = sourceSegIt->sisterSegment->length = euclidicNorm(targetNode.position - sourceNode.position);
 
     updateCircRadius(&sourceNode);
+    updateCircRadius(&targetNode);
 
     Session::singleton().unsavedChanges = true;
 
@@ -1289,10 +1291,10 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     if(newRadius != 0.) {
         node->radius = newRadius;
+    	updateCircRadius(node);
     }
     node->createdInMag = inMag;
 
-    updateCircRadius(node);
     Session::singleton().unsavedChanges = true;
 
     const quint64 newSubobjectId = readVoxel(newPos);
