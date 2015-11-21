@@ -728,6 +728,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 }
 
 bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
+    if (!segToDelIt->forward) {
+        delSegment(segToDelIt->sisterSegment);
+        return false;
+    }
     // Delete the segment out of the segment list and out of the visualization structure!
     /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
     segToDelIt->length = 0.f;
