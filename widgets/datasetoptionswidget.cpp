@@ -107,9 +107,9 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     setLayout(mainLayout);
 
     connect(&orthogonalZoomSlider, &QSlider::valueChanged, [this](const int value) {
-        float newScreenPxXPerDataPx = lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
+        const float newScreenPxXPerDataPx = lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
+        const float prevFOV = state->viewer->vpUpperLeft->texture.FOV;
         float newFOV = state->viewer->vpUpperLeft->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
-        float prevFOV = state->viewer->vpUpperLeft->texture.FOV;
         if (newFOV >= 1 && static_cast<uint>(state->magnification) < state->highestAvailableMag && prevFOV < std::round(newFOV)) {
            state->viewer->changeDatasetMag(MAG_UP);
            newFOV = 0.5;
@@ -126,6 +126,20 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
 
     connect(&orthogonalZoomSlider, &QSlider::actionTriggered, [this](const int) {
         const int currSliderPos = orthogonalZoomSlider.sliderPosition();
+
+        if (lockDatasetCheckBox->isChecked()) {
+            const int magNo = int_log(state->highestAvailableMag) - int_log(state->magnification);
+            const int tickMin = magNo * orthogonalZoomSlider.tickInterval();
+            const int tickMax = magNo * orthogonalZoomSlider.tickInterval() + orthogonalZoomSlider.tickInterval() - 1;
+            if (currSliderPos > tickMax) {
+                orthogonalZoomSlider.setSliderPosition(tickMax);
+            }
+            else if (currSliderPos < tickMin) {
+                orthogonalZoomSlider.setSliderPosition(tickMin);
+            }
+            return;
+        }
+
         int tickDistance = currSliderPos % orthogonalZoomSlider.tickInterval();
         const int snapDistance = 10;
         if (0 < tickDistance && tickDistance <= snapDistance) { // possibly close over the next tick
