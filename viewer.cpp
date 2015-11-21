@@ -803,7 +803,9 @@ void Viewer::zoom(const float factor) {
     bool magDown = std::floor(vpUpperLeft->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
     state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
-            orthoVP.texture.FOV *= factor;
+            if (0.5 <= orthoVP.texture.FOV * factor && orthoVP.texture.FOV * factor <= 1) {
+                orthoVP.texture.FOV *= factor;
+            }
         }
         else {
             if (magDown && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
