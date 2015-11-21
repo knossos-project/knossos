@@ -167,10 +167,6 @@ bool setRotationState(uint setTo) {
 }
 
 uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options) {
-    float currentAngle = 0.;
-    floatCoordinate segDirection, tempVec, tempVec2;
-    GLUquadricObj *gluCylObj = NULL;
-
     if (options.enableSkeletonDownsampling &&
         (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f) && (state->viewerState->cumDistRenderThres > 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
@@ -187,40 +183,32 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
 
     } else {
         GLfloat a[] = {color.r, color.g, color.b, color.a};
-
         glColor4fv(a);
-        //glColor4fv(&color);
 
         glPushMatrix();
-        gluCylObj = gluNewQuadric();
+        GLUquadricObj * gluCylObj = gluNewQuadric();
         gluQuadricNormals(gluCylObj, GLU_SMOOTH);
         gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-        glTranslatef((float)base->x, (float)base->y, (float)base->z);
+        glTranslatef(base->x, base->y, base->z);
+        glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
 
         //Some calculations for the correct direction of the cylinder.
-        tempVec = {0., 0., 1.};
-        segDirection = {(float)(top->x - base->x), (float)(top->y - base->y), (float)(top->z - base->z)};
+        const floatCoordinate cylinderDirection{0.0f, 0.0f, 1.0f};
+        const floatCoordinate scale{1.0f, 1.0f, 1.0f / state->viewerState->voxelXYtoZRatio};
+        const floatCoordinate segDirection{scale * floatCoordinate{*top - *base}};
 
-        //temVec2 defines the rotation axis
-        tempVec2 = crossProduct(tempVec, segDirection);
-        currentAngle = radToDeg(vectorAngle(tempVec, segDirection));
+        const floatCoordinate rotationAxis{crossProduct(cylinderDirection, segDirection)};
+        const float currentAngle{radToDeg(vectorAngle(cylinderDirection, segDirection))};
 
         //some gl implementations have problems with the params occuring for
         //segs in straight directions. we need a fix here.
-        glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
+        glRotatef(currentAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
 
         //tdItem use screenPxXPerDataPx for proper LOD
         //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
-        if((baseRadius > 100.f) || topRadius > 100.f) {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 10, 1);
-        }
-        else if((baseRadius > 15.f) || topRadius > 15.f) {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 6, 1);
-        }
-        else {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), 3, 1);
-        }
+        const auto edges = std::max(baseRadius, topRadius) > 100.f ? 10 : std::max(baseRadius, topRadius) > 15.f ? 6 : 3;
+        gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), edges, 1);
 
         gluDeleteQuadric(gluCylObj);
         glPopMatrix();
