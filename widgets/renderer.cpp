@@ -446,16 +446,20 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                 else
                     radius = sSr_local - (sSr_local - sTr_local) * distSourceInter / length;
 
-                segDir = {segDir.x / length, segDir.y / length, segDir.z / length};
+                segDir = {segDir.x / length, segDir.y / length, segDir.z / length / state->viewerState->voxelXYtoZRatio};
 
-                glTranslatef(intPoint.x - 0.75 * segDir.x, intPoint.y - 0.75 * segDir.y, intPoint.z - 0.75 * segDir.z);
-                //glTranslatef(intPoint.x, intPoint.y, intPoint.z);
+                glTranslatef(intPoint.x, intPoint.y, intPoint.z);
+                glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
 
                 //Some calculations for the correct direction of the cylinder.
                 tempVec = {0., 0., 1.};
                 //temVec2 defines the rotation axis
                 tempVec2 = crossProduct(tempVec, segDir);
                 currentAngle = radToDeg(vectorAngle(tempVec, segDir));
+                //we need another reference vector for 180° rotations
+                if (tempVec2 == floatCoordinate{0, 0, 0}) {
+                    tempVec2 = {crossProduct({0.0f, 1.0f, 0.0f}, segDir)};
+                }
                 glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
                 glColor4f(0.,0.,0.,1.);
