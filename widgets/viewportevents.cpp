@@ -519,29 +519,19 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L || event->key() == Qt::Key_M || event->key() == Qt::Key_Comma) {
-        if(ViewportOrtho::arbitraryOrientation == false) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Check 'Arbitrary Viewport Orientation' under 'Appearance Settings → Viewports' first.");
-            prompt.exec();
-        }
-        else {
-            switch(event->key()) {
-            case Qt::Key_K:
-                emit rotationSignal({0., 0., 1.}, boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_L:
-                emit rotationSignal({0., 1., 0.}, boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_M:
-                emit rotationSignal({0., 0., 1.}, -boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_Comma:
-                emit rotationSignal({0., 1., 0.}, -boost::math::constants::pi<float>()/180);
-                break;
-            }
+        switch(event->key()) {
+        case Qt::Key_K:
+            emit rotationSignal({0., 0., 1.}, boost::math::constants::pi<float>()/180);
+            break;
+        case Qt::Key_L:
+            emit rotationSignal({0., 1., 0.}, boost::math::constants::pi<float>()/180);
+            break;
+        case Qt::Key_M:
+            emit rotationSignal({0., 0., 1.}, -boost::math::constants::pi<float>()/180);
+            break;
+        case Qt::Key_Comma:
+            emit rotationSignal({0., 1., 0.}, -boost::math::constants::pi<float>()/180);
+            break;
         }
     } else if (ctrl && event->key() == Qt::Key_0) {
         state->viewer->zoomReset();

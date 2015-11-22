@@ -11,9 +11,6 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn);
     rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn);
     rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn);
-    rotationCenterGroup.setId(&rotateAroundDatasetCenterRadioBtn, 0);
-    rotationCenterGroup.setId(&rotateAroundActiveNodeRadioBtn, 1);
-    rotationCenterGroup.setId(&rotateAroundCurrentPositionRadioBtn, 2);
 
     resetVPsButton.setFocusPolicy(Qt::NoFocus);
 
@@ -23,7 +20,6 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     generalLayout.addWidget(&showScalebarCheckBox);
     generalLayout.addWidget(&showVPDecorationCheckBox);
     generalLayout.addWidget(&drawIntersectionsCrossHairCheckBox);
-    generalLayout.addWidget(&arbitraryModeCheckBox);
 
     viewport3DLayout.addWidget(&showXYPlaneCheckBox);
     viewport3DLayout.addWidget(&showXZPlaneCheckBox);
@@ -44,10 +40,6 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
     QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, &ViewportTab::setViewportDecorations);
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
-    QObject::connect(&arbitraryModeCheckBox, &QCheckBox::clicked, [&](bool checked) {
-        ViewportOrtho::arbitraryOrientation = checked;
-        emit setVPOrientationSignal(checked);
-    });
     // 3D viewport
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXYplane = checked; });
     QObject::connect(&showZYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showZYplane = checked; });

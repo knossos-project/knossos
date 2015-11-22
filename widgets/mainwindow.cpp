@@ -185,13 +185,15 @@ ViewportBase * MainWindow::viewport(const ViewportType vpType) {
     return (viewportXY->viewportType == vpType)? static_cast<ViewportBase *>(viewportXY.get()) :
            (viewportXZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportXZ.get()) :
            (viewportZY->viewportType == vpType)? static_cast<ViewportBase *>(viewportZY.get()) :
+           (viewportArb->viewportType == vpType)? static_cast<ViewportBase *>(viewportArb.get()) :
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
 ViewportOrtho * MainWindow::viewportOrtho(const ViewportType vpType) {
     return (viewportXY->viewportType == vpType)? viewportXY.get() :
            (viewportXZ->viewportType == vpType)? viewportXZ.get() :
-           viewportZY.get();
+           (viewportZY->viewportType == vpType)? viewportZY.get() :
+           viewportArb.get();
 }
 
 void MainWindow::createToolbars() {
@@ -1221,6 +1223,7 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
     viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
     viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+    viewportArb->move(DEFAULT_VP_MARGIN + mindim + DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
     viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
     forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
 }

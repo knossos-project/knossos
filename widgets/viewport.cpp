@@ -42,7 +42,6 @@
 
 bool ViewportBase::oglDebug = false;
 bool Viewport3D::showBoundariesInUm = false;
-bool ViewportOrtho::arbitraryOrientation = false;
 bool ViewportOrtho::showNodeComments = false;
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
@@ -137,11 +136,6 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
 
 ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     switch(viewportType) {
-    case VIEWPORT_XY:
-        v1 = {1, 0, 0};
-        v2 = {0, 1, 0};
-        n = {0, 0, 1};
-        break;
     case VIEWPORT_XZ:
         v1 = {1, 0, 0};
         v2 = {0, 0, 1};
@@ -152,7 +146,12 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
         v2 = {0, 1, 0};
         n = {1, 0, 0};
         break;
-    default: break;
+    case VIEWPORT_XY:
+    case VIEWPORT_ARBITRARY:
+        v1 = {1, 0, 0};
+        v2 = {0, 1, 0};
+        n = {0, 0, 1};
+        break;
     }
     timeDBase.start();
     timeFBase.start();
@@ -363,10 +362,6 @@ void ViewportOrtho::createOverlayTextures() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
-void ViewportOrtho::setOrientation(ViewportType orientation) {
-    viewportType = orientation;
-}
-
 void ViewportBase::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -549,15 +544,10 @@ void Viewport3D::showHideButtons(bool isShow) {
 }
 
 void ViewportOrtho::updateOverlayTexture() {
-    if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
+    if (!ocResliceNecessary) {
         return;
     }
-    switch(viewportType) {
-    case VIEWPORT_XY: state->viewer->oc_xy_changed = false; break;
-    case VIEWPORT_XZ: state->viewer->oc_xz_changed = false; break;
-    case VIEWPORT_ZY: state->viewer->oc_zy_changed = false; break;
-    }
-
+    ocResliceNecessary = false;
     const int width = state->M * state->cubeEdgeLength;
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;

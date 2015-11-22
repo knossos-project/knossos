@@ -50,6 +50,7 @@ Viewer::Viewer() {
     viewportXY = window->viewportXY.get();
     viewportXZ = window->viewportXZ.get();
     viewportZY = window->viewportZY.get();
+    viewportArb = window->viewportArb.get();
 
     initViewer();
 
@@ -382,44 +383,25 @@ static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportText
 bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
-
+    if (vp.viewportType == VIEWPORT_ARBITRARY) {
+        vpGenerateTexture_arb(vp);
+        return true;
+    }
+    const bool dc_reslice = vp.dcResliceNecessary;
+    const bool oc_reslice = vp.ocResliceNecessary;
+    vp.dcResliceNecessary = vp.ocResliceNecessary = false;
     const CoordInCube currentPosition_dc = state->viewerState->currentPosition.insideCube(state->cubeEdgeLength, state->magnification);
 
-    bool dc_reslice, oc_reslice;
     int slicePositionWithinCube;
     switch(vp.viewportType) {
     case VIEWPORT_XY:
         slicePositionWithinCube = state->cubeSliceArea * currentPosition_dc.z;
-        if(!dc_xy_changed && !oc_xy_changed) {
-            return true;
-        }
-        dc_reslice = dc_xy_changed;
-        oc_reslice = oc_xy_changed;
-
-        dc_xy_changed = false;
-        oc_xy_changed = false;
         break;
     case VIEWPORT_XZ:
         slicePositionWithinCube = state->cubeEdgeLength * currentPosition_dc.y;
-        if(!dc_xz_changed && !oc_xz_changed) {
-            return true;
-        }
-        dc_reslice = dc_xz_changed;
-        oc_reslice = oc_xz_changed;
-
-        dc_xz_changed = false;
-        oc_xz_changed = false;
         break;
     case VIEWPORT_ZY:
         slicePositionWithinCube = currentPosition_dc.x;
-        if(!dc_zy_changed && !oc_zy_changed) {
-            return true;
-        }
-        dc_reslice = dc_zy_changed;
-        oc_reslice = oc_zy_changed;
-
-        dc_zy_changed = false;
-        oc_zy_changed = false;
         break;
     default:
         qDebug("No such slice view: %d.", vp.viewportType);
@@ -543,10 +525,10 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
 }
 
 void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
-    if (!dc_xy_changed && !dc_xz_changed && !dc_zy_changed) {
+    if (!vp.dcResliceNecessary) {
         return;
     }
-    dc_xy_changed = dc_xz_changed = dc_zy_changed = false;
+    vp.dcResliceNecessary = false;
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
@@ -797,9 +779,10 @@ void Viewer::zoom(const float factor) {
     }
     bool magUp = std::floor(viewportXY->texture.FOV * 2  + 0.5) / 2 >= 1 && factor > 1;
     bool magDown = std::floor(viewportXY->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
-    state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
+
+    state->viewer->window->forEachOrthoVPDo([&, this](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
-            if (0.5 <= orthoVP.texture.FOV * factor && orthoVP.texture.FOV * factor <= 1) {
+            if (0.5 <= viewportXY->texture.FOV * factor && viewportXY->texture.FOV * factor <= 1) {
                 orthoVP.texture.FOV *= factor;
             }
         }
@@ -923,15 +906,9 @@ void Viewer::run() {
         rotateAndNormalize(v1, rotation.axis, rotation.alpha);
         rotateAndNormalize(v2, rotation.axis, rotation.alpha);
         rotateAndNormalize(v3, rotation.axis, rotation.alpha);
-        viewportXY->v1 = v1;
-        viewportXY->v2 = v2;
-        viewportXY->n = v3;
-        viewportXZ->v1 = v1;
-        viewportXZ->v2 = v3;
-        viewportXZ->n = v2;
-        viewportZY->v1 = v3;
-        viewportZY->v2 = v2;
-        viewportZY->n = v1;
+        viewportArb->v1 = v1;
+        viewportArb->v2 = v2;
+        viewportArb->n = v3;
         rotation = Rotation();
         alphaCache = 0;
     }
@@ -962,11 +939,7 @@ void Viewer::run() {
             vp.makeCurrent();
         }
         if (!gpuRendering) {
-            if (!ViewportOrtho::arbitraryOrientation) {
-                vpGenerateTexture(vp);
-            } else {
-                vpGenerateTexture_arb(vp);
-            }
+            vpGenerateTexture(vp);
         }
         vp.update();
     });
@@ -1016,19 +989,14 @@ void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const 
 
 void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     auto & viewerState = *state->viewerState;
-
-    if (ViewportOrtho::arbitraryOrientation && (step.z != 0 || step.x != 0 || step.y != 0)) {//slices are arbitrary…
-        dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
-    } else {
-        if (step.z != 0) {
-            dc_xy_changed = oc_xy_changed = true;
-        }
-        if (step.x != 0) {
-            dc_zy_changed = oc_zy_changed = true;
-        }
-        if (step.y != 0) {
-            dc_xz_changed = oc_xz_changed = true;
-        }
+    if (step.z != 0) {
+        viewportXY->dcResliceNecessary = viewportXY->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
+    }
+    if (step.x != 0) {
+        viewportZY->dcResliceNecessary = viewportZY->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
+    }
+    if (step.y != 0) {
+        viewportXZ->dcResliceNecessary = viewportXZ->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
     }
 
     // This determines whether the server will broadcast the coordinate change
@@ -1124,9 +1092,9 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
 }
 
 void Viewer::dc_reslice_notify_visible() {
-    dc_xy_changed = true;
-    dc_xz_changed = true;
-    dc_zy_changed = true;
+    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
+        vpOrtho.dcResliceNecessary = true;
+    });
 }
 
 void Viewer::oc_reslice_notify_all(const Coordinate coord) {
@@ -1138,9 +1106,9 @@ void Viewer::oc_reslice_notify_all(const Coordinate coord) {
 }
 
 void Viewer::oc_reslice_notify_visible() {
-    oc_xy_changed = true;
-    oc_xz_changed = true;
-    oc_zy_changed = true;
+    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
+        vpOrtho.ocResliceNecessary = true;
+    });
     // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;
 }
@@ -1369,9 +1337,6 @@ void Viewer::rewire() {
     // end viewport signals
 
     // --- widget signals ---
-    //  appearance widget signals --
-    QObject::connect(&window->widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setVPOrientationSignal, this, &Viewer::setVPOrientation);
-    //  -- end appearance widget signals
     // dataset load signals --
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);
     QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
@@ -1383,19 +1348,9 @@ void Viewer::rewire() {
 void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
     alphaCache += angle; // angles are added up here until they are processed in the thread loop
     rotation = Rotation(axis, alphaCache);
-    dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
-}
-
-void Viewer::setVPOrientation(const bool arbitrary) {
-    if (arbitrary) {
-         window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) { orthoVP.setOrientation(VIEWPORT_ARBITRARY); });
-    } else {
-        window->viewportXY->setOrientation(VIEWPORT_XY);
-        window->viewportXZ->setOrientation(VIEWPORT_XZ);
-        window->viewportZY->setOrientation(VIEWPORT_ZY);
-        resetRotation();
-    }
-    dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
+    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
+       vpOrtho.dcResliceNecessary = vpOrtho.ocResliceNecessary = true;
+    });
 }
 
 void Viewer::resetRotation() {
@@ -1404,15 +1359,9 @@ void Viewer::resetRotation() {
     v1 = {1, 0, 0};
     v2 = {0, 1, 0};
     v3 = {0, 0, 1};
-    viewportXY->v1 = v1;
-    viewportXY->v2 = v2;
-    viewportXY->n = v3;
-    viewportXZ->v1 = v1;
-    viewportXZ->v2 = v3;
-    viewportXZ->n = v2;
-    viewportZY->v1 = v3;
-    viewportZY->v2 = v2;
-    viewportZY->n = v1;
+    viewportArb->v1 = v1;
+    viewportArb->v2 = v2;
+    viewportArb->n = v3;
 }
 
 void Viewer::loadTreeLUT(const QString & path) {

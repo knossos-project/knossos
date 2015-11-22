@@ -180,12 +180,12 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     template<typename Function> void forEachVPDo(Function func) {
-        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportZY.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
+        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportZY.get()), static_cast<ViewportBase *>(viewportArb.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
             func(*vp);
         }
     }
     template<typename Function> void forEachOrthoVPDo(Function func) {
-        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get()}) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get(), viewportArb.get() }) {
             func(*vp);
         }
     }

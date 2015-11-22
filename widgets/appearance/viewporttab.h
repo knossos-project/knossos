@@ -24,7 +24,6 @@ class ViewportTab : public QWidget
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
     QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersections crosshairs"};
-    QCheckBox arbitraryModeCheckBox{"Arbitrary viewport orientation"};
     // 3D viewport
     QVBoxLayout viewport3DLayout;
     QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};
@@ -46,7 +45,6 @@ public:
     explicit ViewportTab(QWidget *parent = 0);
 
 signals:
-    void setVPOrientationSignal(const bool arbitrary);
     void setViewportDecorations(const bool);
     void resetViewportPositions();
 

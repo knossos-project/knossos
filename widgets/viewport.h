@@ -40,6 +40,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <atomic>
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 
@@ -334,8 +335,6 @@ class ViewportOrtho : public ViewportBase {
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
-    static bool arbitraryOrientation;
-    void setOrientation(ViewportType orientation);
     static bool showNodeComments;
 
     void sendCursorPosition();
@@ -351,6 +350,8 @@ public:
     floatCoordinate leftUpperDataPxOnScreen_float;
     int s_max;
     int t_max;
+    std::atomic_bool dcResliceNecessary{true};
+    std::atomic_bool ocResliceNecessary{true};
 
     void zoomIn() override { zoom(zoomStep()); }
     void zoomOut() override { zoom(1./zoomStep()); }

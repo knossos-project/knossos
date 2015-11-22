@@ -994,39 +994,24 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     (float)state->viewerState->currentPosition.y,
                     (float)state->viewerState->currentPosition.z);
 
-        floatCoordinate normal;
-        floatCoordinate vec1;
-        if (viewportType == VIEWPORT_XY) {
+        if (viewportType == VIEWPORT_ARBITRARY) {
             glRotatef(180., 1.,0.,0.);
-            normal = {0, 0, 1};
-            vec1 = {1, 0, 0};
-        }
-
-        else if (viewportType == VIEWPORT_XZ) {
-            glRotatef(90., 1., 0., 0.);
-            normal = {0, 1, 0};
-            vec1 = {1, 0, 0};
-        }
-
-        else if (viewportType == VIEWPORT_ZY){
-            glRotatef(90., 0., 1., 0.);
-            glScalef(1., -1., 1.);
-            normal = {1, 0, 0};
-            vec1 = {0, 0, 1};
-        }
-        // first rotation makes the viewport face the camera
-        float scalar = scalarProduct(normal, n);
-        float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
-        floatCoordinate axis = crossProduct(normal, n);
-        if(normalizeVector(axis)) {
-            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
-        } // second rotation also aligns the plane vectors with the camera
-        rotateAndNormalize(vec1, axis, angle);
-        scalar = scalarProduct(vec1, v1);
-        angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
-        axis = crossProduct(vec1, v1);
-        if(normalizeVector(axis)) {
-            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+            const floatCoordinate normal = {0, 0, 1};
+            floatCoordinate vec1 = {1, 0, 0};
+            // first rotation makes the viewport face the camera
+            float scalar = scalarProduct(normal, n);
+            float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
+            floatCoordinate axis = crossProduct(normal, n);
+            if(normalizeVector(axis)) {
+                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+            } // second rotation also aligns the plane vectors with the camera
+            rotateAndNormalize(vec1, axis, angle);
+            scalar = scalarProduct(vec1, v1);
+            angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
+            axis = crossProduct(vec1, v1);
+            if(normalizeVector(axis)) {
+                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+            }
         }
 
         glLoadName(3);
@@ -1567,18 +1552,10 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glEnd();
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
+            case VIEWPORT_ARBITRARY:
+                renderArbitrarySlicePane(orthoVP);
             }
         });
-        if (ViewportOrtho::arbitraryOrientation) {
-            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-                if ( (orthoVP.viewportType == VIEWPORT_XY && state->viewerState->showXYplane)
-                    || (orthoVP.viewportType == VIEWPORT_XZ && state->viewerState->showXZplane)
-                    || (orthoVP.viewportType == VIEWPORT_ZY && state->viewerState->showZYplane) )
-                {
-                    renderArbitrarySlicePane(orthoVP);
-                }
-            });
-        }
 
         glDisable(GL_TEXTURE_2D);
 

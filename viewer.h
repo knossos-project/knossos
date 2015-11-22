@@ -39,8 +39,6 @@
 #include <QElapsedTimer>
 #include <QLineEdit>
 
-#include <atomic>
-
 #define SLOW 1000
 #define FAST 10
 
@@ -221,16 +219,11 @@ public:
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
+    ViewportOrtho *viewportArb;
     void zoom(const float factor);
     void zoomReset();
     QTimer timer;
 
-    std::atomic_bool dc_xy_changed{true};
-    std::atomic_bool dc_xz_changed{true};
-    std::atomic_bool dc_zy_changed{true};
-    std::atomic_bool oc_xy_changed{true};
-    std::atomic_bool oc_xz_changed{true};
-    std::atomic_bool oc_zy_changed{true};
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     color4F getNodeColor(const nodeListElement & node) const;
@@ -259,7 +252,6 @@ public slots:
     bool vpGenerateTexture(ViewportOrtho & vp);
     void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
-    void setVPOrientation(const bool arbitrary);
     void calculateMissingGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
