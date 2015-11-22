@@ -147,7 +147,7 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
         v2 = {0, 0, 1};
         n = {0, 1, 0};
         break;
-    case VIEWPORT_YZ:
+    case VIEWPORT_ZY:
         v1 = {0, 0, 1};
         v2 = {0, 1, 0};
         n = {1, 0, 0};
@@ -163,14 +163,14 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     svpLayout->setSpacing(0);
     svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
 
-    for (auto * button : {&xyButton, &xzButton, &yzButton}) {
+    for (auto * button : {&xyButton, &xzButton, &zyButton}) {
         button->setMinimumSize(30, 20);
     }
     r90Button.setMinimumSize(35, 20);
     r180Button.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&xyButton, &xzButton, &yzButton, &r90Button, &r180Button, &resetButton}) {
+    for (auto * button : {&xyButton, &xzButton, &zyButton, &r90Button, &r180Button, &resetButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
         svpLayout->addWidget(button);
@@ -187,9 +187,9 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
             state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
         }
     });
-    connect(&yzButton, &QPushButton::clicked, []() {
+    connect(&zyButton, &QPushButton::clicked, []() {
         if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_YZ_VIEW;
+            state->skeletonState->definedSkeletonVpView = SKELVP_ZY_VIEW;
         }
     });
     connect(&r90Button, &QPushButton::clicked, []() {
@@ -542,7 +542,7 @@ void Viewport3D::showHideButtons(bool isShow) {
     ViewportBase::showHideButtons(isShow);
     xyButton.setVisible(isShow);
     xzButton.setVisible(isShow);
-    yzButton.setVisible(isShow);
+    zyButton.setVisible(isShow);
     r90Button.setVisible(isShow);
     r180Button.setVisible(isShow);
     resetButton.setVisible(isShow);
@@ -555,7 +555,7 @@ void ViewportOrtho::updateOverlayTexture() {
     switch(viewportType) {
     case VIEWPORT_XY: state->viewer->oc_xy_changed = false; break;
     case VIEWPORT_XZ: state->viewer->oc_xz_changed = false; break;
-    case VIEWPORT_YZ: state->viewer->oc_zy_changed = false; break;
+    case VIEWPORT_ZY: state->viewer->oc_zy_changed = false; break;
     }
 
     const int width = state->M * state->cubeEdgeLength;

@@ -137,7 +137,7 @@ class MainWindow : public QMainWindow {
 public:
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
-    std::unique_ptr<ViewportOrtho> viewportYZ;
+    std::unique_ptr<ViewportOrtho> viewportZY;
     std::unique_ptr<ViewportOrtho> viewportArb;
     std::unique_ptr<Viewport3D> viewport3D;
 
@@ -180,12 +180,12 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     template<typename Function> void forEachVPDo(Function func) {
-        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportYZ.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
+        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportZY.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
             func(*vp);
         }
     }
     template<typename Function> void forEachOrthoVPDo(Function func) {
-        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportYZ.get() }) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get()}) {
             func(*vp);
         }
     }

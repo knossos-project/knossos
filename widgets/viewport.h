@@ -43,7 +43,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 
-enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
+enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_ZY, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
 Q_DECLARE_METATYPE(ViewportType)
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
@@ -268,7 +268,7 @@ public slots:
 
 class Viewport3D : public ViewportBase {
     Q_OBJECT
-    QPushButton xyButton{"xy"}, xzButton{"xz"}, yzButton{"yz"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+    QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;

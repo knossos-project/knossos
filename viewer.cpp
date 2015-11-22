@@ -47,9 +47,9 @@ Viewer::Viewer() {
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    vpUpperLeft = window->viewportXY.get();
-    vpLowerLeft = window->viewportXZ.get();
-    vpUpperRight = window->viewportYZ.get();
+    viewportXY = window->viewportXY.get();
+    viewportXZ = window->viewportXZ.get();
+    viewportZY = window->viewportZY.get();
 
     initViewer();
 
@@ -139,7 +139,7 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
 
     const std::size_t innerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
     const std::size_t outerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
-    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_YZ ? state->cubeEdgeLength : 1;
+    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? state->cubeEdgeLength : state->cubeSliceArea;
     const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength;
 
@@ -160,12 +160,12 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             if(partlyInMovementArea) {
                 bool factor = false;
                 if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
-                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
                     factor = true;
                 }
                 else if(((vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
-                        (vp.viewportType == VIEWPORT_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                        (vp.viewportType == VIEWPORT_ZY && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
                     factor = true;
                 }
@@ -279,7 +279,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
 
     const std::size_t innerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
     const std::size_t outerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
-    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
+    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
     const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
 
@@ -299,13 +299,13 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             bool hide = false;
             if(partlyInMovementArea) {
                 if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
-                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_YZ) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
                     reinterpret_cast<uint8_t*>(slice)[3] = 0;
                     hide = true;
                 }
                 else if(((vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
-                        (vp.viewportType == VIEWPORT_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                        (vp.viewportType == VIEWPORT_ZY && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
                     reinterpret_cast<uint8_t*>(slice)[3] = 0;
                     hide = true;
@@ -410,7 +410,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
         dc_xz_changed = false;
         oc_xz_changed = false;
         break;
-    case VIEWPORT_YZ:
+    case VIEWPORT_ZY:
         slicePositionWithinCube = currentPosition_dc.x;
         if(!dc_zy_changed && !oc_zy_changed) {
             return true;
@@ -443,14 +443,14 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
             // coordinates:
             // XY-slice: x local is x global, y local is y global
             // XZ-slice: x local is x global, y local is z global
-            // YZ-slice: x local is y global, y local is z global.
+            // ZY-slice: x local is y global, y local is z global.
             case VIEWPORT_XY:
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
                 break;
             case VIEWPORT_XZ:
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
                 break;
-            case VIEWPORT_YZ:
+            case VIEWPORT_ZY:
                 currentDc = {upperLeftDc.x, upperLeftDc.y + x_dc, upperLeftDc.z + y_dc};
                 break;
             default:
@@ -546,11 +546,7 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
     if (!dc_xy_changed && !dc_xz_changed && !dc_zy_changed) {
         return;
     }
-    switch(vp.viewportType) {
-    case VIEWPORT_XY: dc_xy_changed = false; break;
-    case VIEWPORT_XZ: dc_xz_changed = false; break;
-    case VIEWPORT_YZ: dc_zy_changed = false; break;
-    }
+    dc_xy_changed = dc_xz_changed = dc_zy_changed = false;
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
@@ -658,7 +654,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                 , viewerState.currentPosition.z - static_cast<int>((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
             };
             break;
-        case VIEWPORT_YZ:
+        case VIEWPORT_ZY:
             //Set the coordinate of left upper data pixel currently stored in the texture
             orthoVP.texture.leftUpperPxInAbsPx = {
                 currentPosition_dc.x
@@ -795,12 +791,12 @@ bool Viewer::calcDisplayedEdgeLength() {
 
 void Viewer::zoom(const float factor) {
     int triggerMagChange = false;
-    if ((std::round(vpUpperLeft->texture.FOV * factor) > 1 && (static_cast<uint>(state->magnification) == state->highestAvailableMag)) // min zoom
-            || (std::floor(vpUpperLeft->texture.FOV * factor * 2 + 0.5)/2 < 0.5 && (static_cast<uint>(state->magnification) == state->lowestAvailableMag)) /* max zoom */) {
+    if ((std::round(viewportXY->texture.FOV * factor) > 1 && (static_cast<uint>(state->magnification) == state->highestAvailableMag)) // min zoom
+            || (std::floor(viewportXY->texture.FOV * factor * 2 + 0.5)/2 < 0.5 && (static_cast<uint>(state->magnification) == state->lowestAvailableMag)) /* max zoom */) {
         return;
     }
-    bool magUp = std::floor(vpUpperLeft->texture.FOV * 2  + 0.5) / 2 >= 1 && factor > 1;
-    bool magDown = std::floor(vpUpperLeft->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
+    bool magUp = std::floor(viewportXY->texture.FOV * 2  + 0.5) / 2 >= 1 && factor > 1;
+    bool magDown = std::floor(viewportXY->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
     state->viewer->window->forEachOrthoVPDo([&factor, &triggerMagChange, &magUp, &magDown](ViewportOrtho & orthoVP) {
         if(state->viewerState->datasetMagLock) {
             if (0.5 <= orthoVP.texture.FOV * factor && orthoVP.texture.FOV * factor <= 1) {
@@ -927,15 +923,15 @@ void Viewer::run() {
         rotateAndNormalize(v1, rotation.axis, rotation.alpha);
         rotateAndNormalize(v2, rotation.axis, rotation.alpha);
         rotateAndNormalize(v3, rotation.axis, rotation.alpha);
-        vpUpperLeft->v1 = v1;
-        vpUpperLeft->v2 = v2;
-        vpUpperLeft->n = v3;
-        vpLowerLeft->v1 = v1;
-        vpLowerLeft->v2 = v3;
-        vpLowerLeft->n = v2;
-        vpUpperRight->v1 = v3;
-        vpUpperRight->v2 = v2;
-        vpUpperRight->n = v1;
+        viewportXY->v1 = v1;
+        viewportXY->v2 = v2;
+        viewportXY->n = v3;
+        viewportXZ->v1 = v1;
+        viewportXZ->v2 = v3;
+        viewportXZ->n = v2;
+        viewportZY->v1 = v3;
+        viewportZY->v2 = v2;
+        viewportZY->n = v1;
         rotation = Rotation();
         alphaCache = 0;
     }
@@ -1217,7 +1213,7 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.texture.xOffset = ((float)(state->viewerState->currentPosition.x - orthoVP.leftUpperDataPxOnScreen.x)) * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
             orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.z - orthoVP.leftUpperDataPxOnScreen.z)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
             break;
-        case VIEWPORT_YZ:
+        case VIEWPORT_ZY:
             //Aspect ratio correction..
             if(state->viewerState->voxelXYtoZRatio < 1) {
                 orthoVP.texture.displayedEdgeLengthY *= state->viewerState->voxelXYtoZRatio;
@@ -1231,7 +1227,7 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.texture.displayedEdgeLengthY = ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
 
             // Update screen pixel to data pixel mapping values
-            // WARNING: YZ IS ROTATED AND MIRRORED! So screenPxXPerDataPx
+            // WARNING: ZY IS ROTATED AND MIRRORED! So screenPxXPerDataPx
             // corresponds to displayedEdgeLengthY and so on.
             orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
             orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
@@ -1396,7 +1392,7 @@ void Viewer::setVPOrientation(const bool arbitrary) {
     } else {
         window->viewportXY->setOrientation(VIEWPORT_XY);
         window->viewportXZ->setOrientation(VIEWPORT_XZ);
-        window->viewportYZ->setOrientation(VIEWPORT_YZ);
+        window->viewportZY->setOrientation(VIEWPORT_ZY);
         resetRotation();
     }
     dc_xy_changed = oc_xy_changed = dc_zy_changed = oc_zy_changed = dc_xz_changed = oc_xz_changed = true;
@@ -1408,15 +1404,15 @@ void Viewer::resetRotation() {
     v1 = {1, 0, 0};
     v2 = {0, 1, 0};
     v3 = {0, 0, 1};
-    vpUpperLeft->v1 = v1;
-    vpUpperLeft->v2 = v2;
-    vpUpperLeft->n = v3;
-    vpLowerLeft->v1 = v1;
-    vpLowerLeft->v2 = v3;
-    vpLowerLeft->n = v2;
-    vpUpperRight->v1 = v3;
-    vpUpperRight->v2 = v2;
-    vpUpperRight->n = v1;
+    viewportXY->v1 = v1;
+    viewportXY->v2 = v2;
+    viewportXY->n = v3;
+    viewportXZ->v1 = v1;
+    viewportXZ->v2 = v3;
+    viewportXZ->n = v2;
+    viewportZY->v1 = v3;
+    viewportZY->v2 = v2;
+    viewportZY->n = v1;
 }
 
 void Viewer::loadTreeLUT(const QString & path) {

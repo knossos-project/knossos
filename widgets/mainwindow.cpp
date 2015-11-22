@@ -168,12 +168,12 @@ void MainWindow::createViewports() {
 
     viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY));
     viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ));
-    viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ));
+    viewportZY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ZY));
     viewportArb = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ARBITRARY));
     viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON));
     viewportXY->upperLeftCorner = {5, 30, 0};
     viewportXZ->upperLeftCorner = {5, 385, 0};
-    viewportYZ->upperLeftCorner = {360, 30, 0};
+    viewportZY->upperLeftCorner = {360, 30, 0};
     viewportArb->upperLeftCorner = {715, 30, 0};
     viewport3D->upperLeftCorner = {360, 385, 0};
     resetTextureProperties();
@@ -184,14 +184,14 @@ void MainWindow::createViewports() {
 ViewportBase * MainWindow::viewport(const ViewportType vpType) {
     return (viewportXY->viewportType == vpType)? static_cast<ViewportBase *>(viewportXY.get()) :
            (viewportXZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportXZ.get()) :
-           (viewportYZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportYZ.get()) :
+           (viewportZY->viewportType == vpType)? static_cast<ViewportBase *>(viewportZY.get()) :
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
 ViewportOrtho * MainWindow::viewportOrtho(const ViewportType vpType) {
     return (viewportXY->viewportType == vpType)? viewportXY.get() :
            (viewportXZ->viewportType == vpType)? viewportXZ.get() :
-           viewportYZ.get();
+           viewportZY.get();
 }
 
 void MainWindow::createToolbars() {
@@ -1220,7 +1220,7 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     int mindim = std::min(width, height);
     viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
     viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
-    viewportYZ->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+    viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
     viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
     forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
 }

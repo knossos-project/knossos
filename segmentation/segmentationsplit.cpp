@@ -27,7 +27,7 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 }
             };
 
-            if (brush.view != brush_t::view_t::yz || brush.mode == brush_t::mode_t::three_dim) {
+            if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
                 walk({pos.x + 1, pos.y, pos.z});
                 walk({pos.x - 1, pos.y, pos.z});
             }

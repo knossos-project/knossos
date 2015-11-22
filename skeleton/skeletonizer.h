@@ -45,7 +45,7 @@ class commentListElement;
 // skeleton vp orientation
 #define SKELVP_XY_VIEW 0
 #define SKELVP_XZ_VIEW 1
-#define SKELVP_YZ_VIEW 2
+#define SKELVP_ZY_VIEW 2
 #define SKELVP_R90 3
 #define SKELVP_R180 4
 #define SKELVP_RESET 5

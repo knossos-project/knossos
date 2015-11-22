@@ -66,7 +66,7 @@ std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const 
             globalFirst.z = globalLast.z = centerPos.z;
         } else if(brush.view == brush_t::view_t::xz) {
             globalFirst.y = globalLast.y = centerPos.y;
-        } else if(brush.view == brush_t::view_t::yz) {
+        } else if(brush.view == brush_t::view_t::zy) {
             globalFirst.x = globalLast.x = centerPos.x;
         }
     }

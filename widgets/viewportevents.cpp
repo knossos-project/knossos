@@ -212,7 +212,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             const auto movement = clickedCoordinate - lastPos;
             //Highlight the viewport with the biggest movement component
             if ((std::abs(movement.x) >= std::abs(movement.y)) && (std::abs(movement.x) >= std::abs(movement.z))) {
-                state->viewerState->highlightVp = VIEWPORT_YZ;
+                state->viewerState->highlightVp = VIEWPORT_ZY;
             } else if ((std::abs(movement.y) >= std::abs(movement.x)) && (std::abs(movement.y) >= std::abs(movement.z))) {
                 state->viewerState->highlightVp = VIEWPORT_XZ;
             } else {
@@ -221,7 +221,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             //Determine the directions for the f and d keys based on the signs of the movement components along the three dimensions
             state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0) ? 1 : -1;
             state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0) ? 1 : -1;
-            state->viewerState->vpKeyDirection[VIEWPORT_YZ] = (movement.x >= 0) ? 1 : -1;
+            state->viewerState->vpKeyDirection[VIEWPORT_ZY] = (movement.x >= 0) ? 1 : -1;
 
             //Auto tracing adjustments – this is out of place here
             state->viewerState->autoTracingDelay = std::min(500, std::max(10, state->viewerState->autoTracingDelay));

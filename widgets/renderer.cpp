@@ -56,7 +56,7 @@
 
 #define ROTATIONSTATEXY    0
 #define ROTATIONSTATEXZ    1
-#define ROTATIONSTATEYZ    2
+#define ROTATIONSTATEZY    2
 #define ROTATIONSTATERESET 3
 
 bool ViewportBase::initMesh(mesh & toInit, uint initialSize) {
@@ -145,7 +145,7 @@ bool setRotationState(uint setTo) {
         state->skeletonState->rotationState[14] = 0.0;
         state->skeletonState->rotationState[15] = 1.0;//1
     }
-    if (setTo == ROTATIONSTATEYZ){//y @ -90°
+    if (setTo == ROTATIONSTATEZY){//y @ -90°
         state->skeletonState->rotationState[0] = 0.0;//cos
         state->skeletonState->rotationState[1] = 0.0;
         state->skeletonState->rotationState[2] = -1.0;//sin
@@ -544,7 +544,7 @@ void ViewportOrtho::renderViewportFrontFace() {
     case VIEWPORT_XZ:
         glColor4f(0., 0.7, 0., 1.);
         break;
-    case VIEWPORT_YZ:
+    case VIEWPORT_ZY:
         glColor4f(0., 0., 0.7, 1.);
         break;
     default:
@@ -625,7 +625,7 @@ void ViewportOrtho::renderViewportFast() {
     glClearColor(1, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_YZ;
+    const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_ZY;
     const auto gpucubeedge = state->viewer->gpucubeedge;
     const auto fov = (state->M - 1) * state->cubeEdgeLength;//remove cpu overlap
     const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
@@ -829,7 +829,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     const bool xy = viewportType == VIEWPORT_XY;
     const bool xz = viewportType == VIEWPORT_XZ;
-    const bool zy = viewportType == VIEWPORT_YZ;
+    const bool zy = viewportType == VIEWPORT_ZY;
     const bool arb = viewportType == VIEWPORT_ARBITRARY;
     if (!arb) {
         if (!state->viewerState->selectModeFlag) {
@@ -863,12 +863,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glRotatef(90, 0, 1, 0);
         }
 
-        auto swapYZ = [&]() {//TODO fix offsets everywhere
+        auto swapZY = [&]() {//TODO fix offsets everywhere
             if (zy) {
                 std::swap(dataPxX, dataPxY);
             }
-            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texRUx, state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texLLx);
-            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texRUy, state->viewer->window->viewportOrtho(VIEWPORT_YZ)->texture.texLLy);
+            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texRUx, state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texLLx);
+            std::swap(state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texRUy, state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texLLy);
         };
 
         if(state->viewerState->selectModeFlag) {
@@ -883,7 +883,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, texture.texHandle);
 
-        swapYZ();
+        swapZY();
 
         auto slice = [&](){
             glBegin(GL_QUADS);
@@ -907,7 +907,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
 
-        swapYZ();
+        swapZY();
 
         if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs)) {
             glPushMatrix();
@@ -920,7 +920,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glPopMatrix();
         }
 
-        swapYZ();
+        swapZY();
 
         if(state->viewerState->selectModeFlag) {
             glLoadName(3);//tell the picking function that we render slices again
@@ -955,7 +955,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glEnd();
         }
 
-        swapYZ();
+        swapZY();
 
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
             glPushMatrix();
@@ -1008,7 +1008,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             vec1 = {1, 0, 0};
         }
 
-        else if (viewportType == VIEWPORT_YZ){
+        else if (viewportType == VIEWPORT_ZY){
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
             normal = {1, 0, 0};
@@ -1435,7 +1435,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 10 * state->skeletonState->volBoundary);
         setRotationState(ROTATIONSTATEXZ);
         break;
-    case SKELVP_YZ_VIEW:
+    case SKELVP_ZY_VIEW:
         state->skeletonState->definedSkeletonVpView = -1;
         glLoadIdentity();
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
@@ -1457,7 +1457,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                 -500,
                 10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEYZ);
+        setRotationState(ROTATIONSTATEZY);
         break;
     case SKELVP_R90:
         state->skeletonState->rotdx = 10;
@@ -1550,10 +1550,10 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glEnd();
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
-            case VIEWPORT_YZ:
-                if(!state->viewerState->showYZplane) break;
+            case VIEWPORT_ZY:
+                if(!state->viewerState->showZYplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glLoadName(VIEWPORT_YZ);
+                glLoadName(VIEWPORT_ZY);
                 glBegin(GL_QUADS);
                     glNormal3i(1,0,0);
                     glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
@@ -1573,7 +1573,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
                 if ( (orthoVP.viewportType == VIEWPORT_XY && state->viewerState->showXYplane)
                     || (orthoVP.viewportType == VIEWPORT_XZ && state->viewerState->showXZplane)
-                    || (orthoVP.viewportType == VIEWPORT_YZ && state->viewerState->showYZplane) )
+                    || (orthoVP.viewportType == VIEWPORT_ZY && state->viewerState->showZYplane) )
                 {
                     renderArbitrarySlicePane(orthoVP);
                 }
@@ -1638,7 +1638,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glPopMatrix();
 
                 break;
-            case VIEWPORT_YZ:
+            case VIEWPORT_ZY:
                 glColor4f(0., 0., 0.7, 1.);
                 glBegin(GL_LINE_LOOP);
                     glVertex3f(0., -dataPxX, -dataPxY);
@@ -1833,7 +1833,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
             glTranslatef(0, 0, 1);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef(-90, 1, 0, 0);
-        } else if(viewportType == VIEWPORT_YZ && bview == brush_t::view_t::yz) {
+        } else if(viewportType == VIEWPORT_ZY && bview == brush_t::view_t::zy) {
             glTranslatef(0, 0, 1);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef(90, 0, 1, 0);
         } else if (viewportType != VIEWPORT_XY || bview != brush_t::view_t::xy) {

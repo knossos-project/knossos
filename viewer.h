@@ -111,7 +111,7 @@ struct ViewerState {
     float voxelDimY;
     float voxelXYRatio;
     float voxelDimZ;
-    //YZ can't be different to XZ because of the intrinsic properties of the SBF-SEM.
+    //ZY can't be different to XZ because of the intrinsic properties of the SBF-SEM.
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
@@ -169,7 +169,7 @@ struct ViewerState {
     bool showScalebar{false};
     int showXYplane{true};
     int showXZplane{true};
-    int showYZplane{true};
+    int showZYplane{true};
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
     mesh lineVertBuffer; /* ONLY for lines */
@@ -220,7 +220,7 @@ public:
     bool gpuRendering = false;
 
     floatCoordinate v1, v2, v3;
-    ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
+    ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     void zoom(const float factor);
     void zoomReset();
     QTimer timer;

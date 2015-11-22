@@ -108,8 +108,8 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
 
     connect(&orthogonalZoomSlider, &QSlider::valueChanged, [this](const int value) {
         const float newScreenPxXPerDataPx = lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
-        const float prevFOV = state->viewer->vpUpperLeft->texture.FOV;
-        float newFOV = state->viewer->vpUpperLeft->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
+        const float prevFOV = state->viewer->viewportXY->texture.FOV;
+        float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
         if (newFOV >= 1 && static_cast<uint>(state->magnification) < state->highestAvailableMag && prevFOV < std::round(newFOV)) {
            state->viewer->changeDatasetMag(MAG_UP);
            newFOV = 0.5;
@@ -180,7 +180,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
 
 float DatasetOptionsWidget::lowestScreenPxXPerDataPx() {
     const float texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN / state->highestAvailableMag;
-    auto * vp = state->viewer->vpUpperLeft;
+    auto * vp = state->viewer->viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
@@ -204,7 +204,7 @@ void DatasetOptionsWidget::updateCompressionRatioDisplay() {
 
 void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
     orthogonalZoomSlider.blockSignals(true);
-    int newValue = std::log(state->viewer->vpUpperLeft->screenPxXPerDataPx / lowestScreenPxXPerDataPx()) / std::log(zoomStep);
+    int newValue = std::log(state->viewer->viewportXY->screenPxXPerDataPx / lowestScreenPxXPerDataPx()) / std::log(zoomStep);
     orthogonalZoomSlider.setValue(newValue);
     orthogonalZoomSlider.blockSignals(false);
 }

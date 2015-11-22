@@ -30,7 +30,7 @@ class ViewportTab : public QWidget
     QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
-    QCheckBox showYZPlaneCheckBox{"Show YZ Plane"};
+    QCheckBox showZYPlaneCheckBox{"Show ZY Plane"};
     QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};

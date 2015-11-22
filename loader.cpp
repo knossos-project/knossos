@@ -141,7 +141,7 @@ void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMe
         }
         break;
     case USERMOVE_NEUTRAL:
-        // Priorities are XY->YZ->XZ
+        // Priorities are XY->ZY->XZ
         metrics[i++] = (0 == currentMetricPos.z ? -1.0 : 1.0);
         metrics[i++] = (0 == currentMetricPos.x ? -1.0 : 1.0);
         metrics[i++] = (0 == currentMetricPos.y ? -1.0 : 1.0);
