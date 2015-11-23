@@ -25,7 +25,7 @@ QList<segmentListElement *> treeListElement::getSegments() {
     for(int i = 0; i < nodes->size(); i++) {
         QList<segmentListElement *> *segments = nodes->at(i)->getSegments();
         for(int j = 0; j < segments->size(); j++) {
-            segmentListElement *segment = segments->at(i);
+            segmentListElement *segment = segments->at(j);
             if(!complete_segments->contains(segment)) {
                 complete_segments->insert(segment);
             }
