@@ -21,7 +21,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     sizeCombo.addItem("4096 x 4096");
     sizeCombo.addItem("2048 x 2048");
     sizeCombo.addItem("1024 x 1024");
-    sizeCombo.setCurrentIndex(0); // 1000 elements default
+    sizeCombo.setCurrentIndex(2); // 2048x2048 default
 
     auto viewportChoiceLayout = new QVBoxLayout();
     auto vpGroup = new QButtonGroup(this);
