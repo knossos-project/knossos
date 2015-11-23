@@ -566,7 +566,7 @@ void ToolsTreeviewTab::extractConnectedComponentAction() {
             if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
                 msg = QString("Extracted from deleted %1").arg(treeID);
             }
-            Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.front().treeID, msg);
+            Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.back().treeID, msg);
         }
     }
 }
