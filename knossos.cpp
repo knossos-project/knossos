@@ -111,7 +111,6 @@ int main(int argc, char *argv[]) {
 
     SignalRelay signalRelay;
     Viewer viewer;
-    Remote remote;
 
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();

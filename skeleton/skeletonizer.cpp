@@ -1291,7 +1291,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     if(newRadius != 0.) {
         node->radius = newRadius;
-    	updateCircRadius(node);
+        updateCircRadius(node);
     }
     node->createdInMag = inMag;
 
