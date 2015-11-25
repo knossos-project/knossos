@@ -10,11 +10,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
 
-    renderQualityCombo.addItems({"Best", "Auto", "Fast"});
+    renderQualityCombo.addItems({"Render in 3D", "Switch dynamically", "Render in 2D"});
     renderQualityCombo.setToolTip("<b>Render quality:</b><br/>"
-                                  "<b>Best:</b> 3D Effect<br/>"
-                                  "<b>Auto:</b> Dynamic mode<br/>"
-                                  "<b>Fast:</b> 2D Effect<br/>");
+                                  "<b>Render in 3D:</b> renders segments and nodes as cylinders and spheres<br/>"
+                                  "<b>Auto:</b> Switches dynamically between 3D and 2D rendering depending on zoom<br/>"
+                                  "<b>Fast:</b> renders segments and nodes as lines and points<br/>");
 
     auto treeDisplayLayout = new QVBoxLayout();
     treeDisplayLayout->addWidget(&wholeSkeletonRadio);
@@ -50,11 +50,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&loadTreeLUTButton, &QPushButton::clicked, [this]() { loadTreeLUTButtonClicked(); });
     QObject::connect(&depthCutoffSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->depthCutOff = value; });
     QObject::connect(&renderQualityCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int value){
-        if(value == 0) { //Best
+        if(value == 0) { // 3D
             state->viewerState->cumDistRenderThres = 1.f;
-        } else if(value == 1) { //Auto
+        } else if(value == 1) { // Auto
             state->viewerState->cumDistRenderThres = 7.f;
-        } else { //fast
+        } else { // 2D
             state->viewerState->cumDistRenderThres = 20.f;
         }
     });
@@ -122,8 +122,6 @@ void TreesTab::loadSettings(const QSettings & settings) {
     highlightIntersectionsCheck.clicked(highlightIntersectionsCheck.isChecked());
     depthCutoffSpin.setValue(settings.value(DEPTH_CUTOFF, 5.).toDouble());
     depthCutoffSpin.valueChanged(depthCutoffSpin.value());
-    //renderQualitySpin.setValue(settings.value(RENDERING_QUALITY, 7).toInt());
-    //renderQualitySpin.valueChanged(renderQualitySpin.value());
     renderQualityCombo.setCurrentIndex(settings.value(RENDERING_QUALITY, 1).toInt());
     lutFilePath = settings.value(TREE_LUT_FILE, "").toString();
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
