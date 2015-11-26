@@ -343,9 +343,11 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
         objectSelectionProtection = true;
         objectModel.changeRow(id);
         const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
-        if (Segmentation::singleton().objects[id].selected) {
+        //selection lookup is way cheaper than reselection (sadly)
+        const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
+        if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
             objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        } else {
+        } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
             objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
@@ -427,7 +429,6 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     if (touchedObjectSelectionProtection) {
         return;
     }
-    Segmentation::singleton().blockSignals(true);//prevent ping pong
     if (!QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
         //unselect all previously selected objects
         commitSelection(QItemSelection{}, objectsTable.selectionModel()->selection());
@@ -435,7 +436,6 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
     commitSelection(selected, deselected, [this](const int & i){
         return touchedObjectModel.objectCache[i].get().index;
     });
-    Segmentation::singleton().blockSignals(false);
     updateSelection();
 }
 
@@ -445,9 +445,7 @@ void SegmentationTab::selectionChanged(const QItemSelection & selected, const QI
     }
     const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
     const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
-    Segmentation::singleton().blockSignals(true);//prevent ping pong
     commitSelection(proxySelected, proxyDeselected);
-    Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
 }
 
