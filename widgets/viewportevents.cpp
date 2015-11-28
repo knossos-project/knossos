@@ -128,7 +128,7 @@ void startNodeSelection(const int x, const int y, const ViewportType vpType, con
 
 void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
     auto * activeNode = state->skeletonState->activeNode;
-    auto clickedNode = retrieveVisibleObjectBeneathSquare(event.x(), event.y(), 10);
+    auto clickedNode = pickNode(event.x(), event.y(), 10);
     if (clickedNode && activeNode != nullptr) {
         checkedToggleNodeLink(this, *activeNode, clickedNode.get());
     }
@@ -156,7 +156,7 @@ void ViewportBase::handleMouseButtonMiddle(const QMouseEvent *event) {
 
 void ViewportOrtho::handleMouseButtonMiddle(const QMouseEvent *event) {
     if (event->modifiers().testFlag(Qt::NoModifier) && Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        if (auto clickedNode = retrieveVisibleObjectBeneathSquare(event->x(), event->y(), 10)) {
+        if (auto clickedNode = pickNode(event->x(), event->y(), 10)) {
             draggedNode = &clickedNode.get();
         }
     }
@@ -348,7 +348,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
         if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
             // mouse released on same spot on which it was pressed down: single node selection
-            auto selectedNode = retrieveVisibleObjectBeneathSquare(event->pos().x(), event->pos().y(), 10);
+            auto selectedNode = pickNode(event->pos().x(), event->pos().y(), 10);
             if (selectedNode) {
                 selectedNodes = {&selectedNode.get()};
             }
@@ -769,7 +769,7 @@ QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    return retrieveAllObjectsBeneathSquare(centerX, centerY, width, height);
+    return pickNodes(centerX, centerY, width, height);
 }
 
 Coordinate ViewportOrtho::getMouseCoordinate() {

@@ -59,6 +59,18 @@
 #define ROTATIONSTATEZY    2
 #define ROTATIONSTATERESET 3
 
+enum GLNames {
+    None,
+    Scalebar,
+    NodeOffset
+};
+
+void loadName(GLuint name) {
+    if (state->viewerState->selectModeFlag) {
+        glLoadName(name);
+    }
+}
+
 bool ViewportBase::initMesh(mesh & toInit, uint initialSize) {
     toInit.vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
     toInit.normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
@@ -485,8 +497,10 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 }
 
 void ViewportBase::setFrontFacePerspective() {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    if(state->viewerState->selectModeFlag == false) { // messes up pick matrix
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+    }
     /* define coordinate system for our viewport: left right bottom top near far */
     glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
 
@@ -496,7 +510,6 @@ void ViewportBase::setFrontFacePerspective() {
 
 void ViewportBase::renderViewportFrontFace() {
     setFrontFacePerspective();
-
     if(viewportType == state->viewerState->highlightVp) {
         // Draw an orange border to highlight the viewport.
         glColor4f(1., 0.3, 0., 1.);
@@ -563,7 +576,7 @@ void ViewportOrtho::renderViewportFrontFace() {
         glVertex3d(1, 1, -1);
     glEnd();
 
-    if(state->viewerState->showScalebar) {
+    if (state->viewerState->showScalebar) {
         renderScaleBar();
     }
 }
@@ -588,6 +601,7 @@ void Viewport3D::renderViewportFrontFace() {
 }
 
 void ViewportBase::renderScaleBar(const int fontSize) {
+    loadName(GLNames::Scalebar);
     const auto vp_edgelen_um = 0.001 * displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
     auto sizeLabel = QString("%1 µm").arg(rounded_scalebar_len_um);
@@ -608,6 +622,7 @@ void ViewportBase::renderScaleBar(const int fontSize) {
     glEnd();
 
     renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
+    loadName(GLNames::None);
 }
 
 void ViewportOrtho::renderViewportFast() {
@@ -871,10 +886,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             std::swap(state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texRUy, state->viewer->window->viewportOrtho(VIEWPORT_ZY)->texture.texLLy);
         };
 
-        if(state->viewerState->selectModeFlag) {
-            glLoadName(3);//tell the picking function that we render the slice here
-        }
-
         glDisable(GL_DEPTH_TEST);//render first raw slice below everything
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -921,10 +932,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         }
 
         swapZY();
-
-        if(state->viewerState->selectModeFlag) {
-            glLoadName(3);//tell the picking function that we render slices again
-        }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1, 1, 1, 0.6);//second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
@@ -1014,8 +1021,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             }
         }
 
-        glLoadName(3);
-
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1044,7 +1049,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             renderSkeleton(options);
             glPopMatrix();
         }
-        glLoadName(3);
 
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1328,8 +1332,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_TEXTURE_2D);
 
-    glLoadName(1);
-
     glColor4f(1., 1., 1., 1.); // HERE
     // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
     glBegin(GL_QUADS);
@@ -1504,7 +1506,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             case VIEWPORT_XY:
                 if(!state->viewerState->showXYplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glLoadName(VIEWPORT_XY);
                 glBegin(GL_QUADS);
                     glNormal3i(0,0,1);
                     glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
@@ -1521,7 +1522,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             case VIEWPORT_XZ:
                 if(!state->viewerState->showXZplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glLoadName(VIEWPORT_XZ);
                 glBegin(GL_QUADS);
                     glNormal3i(0,1,0);
                     glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
@@ -1538,7 +1538,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             case VIEWPORT_ZY:
                 if(!state->viewerState->showZYplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glLoadName(VIEWPORT_ZY);
                 glBegin(GL_QUADS);
                     glNormal3i(1,0,0);
                     glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
@@ -1655,7 +1654,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         if(options.drawBoundaryBox) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glLoadName(3);
+
             glColor4f(0.8, 0.8, 0.8, 1.0);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
@@ -1904,8 +1903,6 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     const auto dataPxX = vp.texture.displayedEdgeLengthX / vp.texture.texUnitsPerDataPx * 0.5;
     const auto dataPxY = vp.texture.displayedEdgeLengthY / vp.texture.texUnitsPerDataPx * 0.5;
 
-    glLoadName(vp.viewportType);//for select mode
-
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
     glBegin(GL_QUADS);
@@ -1922,15 +1919,36 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-boost::optional<nodeListElement &> ViewportBase::retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width) {
-    const auto & nodes = retrieveAllObjectsBeneathSquare(x, y, width, width);
+boost::optional<nodeListElement &> ViewportBase::pickNode(uint x, uint y, uint width) {
+    const auto & nodes = pickNodes(x, y, width, width);
     if (nodes.size() != 0) {
         return *(*std::begin(nodes));
     }
     return boost::none;
 }
 
-QSet<nodeListElement *> ViewportBase::retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
+QSet<nodeListElement *> ViewportBase::pickNodes(uint centerX, uint centerY, uint width, uint height) {
+    RenderOptions options;
+    options.selectionBuffer = true;
+    const auto selection = pickingBox([&]() { renderViewport(options); }, centerX, centerY, width, height);
+    QSet<nodeListElement *> foundNodes;
+    for (const auto name : selection) {
+        nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
+        if (foundNode != nullptr) {
+            qDebug() << foundNode->nodeID;
+            foundNodes.insert(foundNode);
+        }
+    }
+    return foundNodes;
+}
+
+bool ViewportBase::pickedScalebar(uint centerX, uint centerY, uint width) {
+    const auto selection = pickingBox([this]() { renderViewportFrontFace(); }, centerX, centerY, width, width);
+    return std::find(std::begin(selection), std::end(selection), GLNames::Scalebar) != std::end(selection);
+}
+
+template<typename F>
+std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     makeCurrent();
 
     //4 elems per node: hit_count(always 1), min, max and 1 name
@@ -1942,7 +1960,7 @@ QSet<nodeListElement *> ViewportBase::retrieveAllObjectsBeneathSquare(uint cente
     glRenderMode(GL_SELECT);
 
     glInitNames();
-    glPushName(0);
+    glPushName(GLNames::None);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -1962,37 +1980,27 @@ QSet<nodeListElement *> ViewportBase::retrieveAllObjectsBeneathSquare(uint cente
 
     gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
-    RenderOptions options;
-    options.selectionBuffer = true;
-    renderViewport(options);
+    renderFunc();
 
     GLint hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
     qDebug() << "selection hits: " << hits;
-    QSet<nodeListElement *> foundNodes;
+    state->viewerState->selectModeFlag = false;
+    std::vector<GLuint> result;
     for (std::size_t i = 0; i < selectionBuffer.size();) {
-        if (hits == 0) {//if hits was positive and reaches 0
+        if (hits == 0) { //if hits was positive and reaches 0
             //if overflow bit was set hits is negative and we only use the buffer-end-condition
             break;
         }
         --hits;
-
         const GLuint hit_count = selectionBuffer[i];
         if (hit_count > 0) {
-            const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
-            if (name >= GLNAME_NODEID_OFFSET) {
-                nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
-                if (foundNode != nullptr) {
-                    foundNodes.insert(foundNode);
-                }
-            }
+            result.push_back(selectionBuffer[i+3]); //the first name on the stack is the 4th element of the hit record
         }
         i = i + 3 + hit_count;
     }
-    state->viewerState->selectModeFlag = false;
-
-    return foundNodes;
+    return result;
 }
 
 bool Viewport3D::updateRotationStateMatrix(float M1[16], float M2[16]){
@@ -2198,9 +2206,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 if (previousNode != lastRenderedNode) {
                     virtualSegRendered = true;
                     // We need a "virtual" segment now
-                    if(state->viewerState->selectModeFlag) {
-                        glLoadName(3);
-                    }
                     segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
                     renderSegment(virtualSegment, currentColor, options);
                 }
@@ -2210,25 +2215,16 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
                         continue;
                     }
-                    if(state->viewerState->selectModeFlag) {
-                        glLoadName(3);
-                    }
                     renderSegment(currentSegment, currentColor, options);
                 }
-
-                if(state->viewerState->selectModeFlag) {
-                    glLoadName(GLNAME_NODEID_OFFSET + nodeIt->nodeID);
-                }
+                loadName(GLNames::NodeOffset + nodeIt->nodeID);
                 renderNode(*nodeIt, options);
-
+                loadName(GLNames::None);
                 lastRenderedNode = &*nodeIt;
             }
             previousNode = &*nodeIt;
         }
     }
-
-    if(state->viewerState->selectModeFlag)
-        glLoadName(3);
 
     /* Render line geometry batch if it contains data */
     if(state->viewerState->lineVertBuffer.vertsIndex > 0) {

@@ -142,7 +142,6 @@ private:
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
     virtual void resizeGL(int w, int h) override;
-    const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
@@ -164,8 +163,11 @@ protected:
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
-    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
-    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
+    bool pickedScalebar(uint centerX, uint centerY, uint width);
+    QSet<nodeListElement *> pickNodes(uint centerX, uint centerY, uint width, uint height);
+    boost::optional<nodeListElement &> pickNode(uint x, uint y, uint width);
+    template<typename F>
+    std::vector<GLuint> pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight);
     void handleLinkToggle(const QMouseEvent & event);
 
     // event-handling
