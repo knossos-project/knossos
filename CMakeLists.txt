@@ -11,19 +11,16 @@ option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
+option(AUTO_MOC "use CMAKE_AUTOMOC instead of manual qt_wrap_cpp (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-file(GLOB root *.cpp *.h *.qrc *.h.in)
+file(GLOB_RECURSE sources *.cpp resources.qrc version.h.in)
+file(GLOB_RECURSE headers *.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
-file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
-file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
-file(GLOB_RECURSE slicer ./slicer/*.cpp ./slicer/*.h)
-file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
-file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
-set(SRC_LIST ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
+set(SRC_LIST ${sources} ${headers})
 
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC ${AUTO_MOC})
 set(CMAKE_AUTORCC ON)#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(NOT BUILD_SHARED_LIBS)
@@ -36,6 +33,10 @@ find_package(Qt5Python27 REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
+
+if(NOT AUTO_MOC)
+    qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers})
+endif()
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
