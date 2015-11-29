@@ -24,6 +24,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     viewport3DLayout.addWidget(&showXYPlaneCheckBox);
     viewport3DLayout.addWidget(&showXZPlaneCheckBox);
     viewport3DLayout.addWidget(&showZYPlaneCheckBox);
+    viewport3DLayout.addWidget(&showArbPlaneCheckBox);
     viewport3DLayout.addWidget(&boundariesPixelRadioBtn);
     viewport3DLayout.addWidget(&boundariesPhysicalRadioBtn);
     viewport3DLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
@@ -42,8 +43,9 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
     // 3D viewport
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXYplane = checked; });
-    QObject::connect(&showZYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showZYplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXZplane = checked; });
+    QObject::connect(&showZYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showZYplane = checked; });
+    QObject::connect(&showArbPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showArbplane = checked; });
     QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
         Viewport3D::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
@@ -63,6 +65,7 @@ void ViewportTab::saveSettings(QSettings & settings) const {
     settings.setValue(SHOW_XY_PLANE, showXYPlaneCheckBox.isChecked());
     settings.setValue(SHOW_XZ_PLANE, showXZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_ZY_PLANE, showZYPlaneCheckBox.isChecked());
+    settings.setValue(SHOW_ARB_PLANE, showArbPlaneCheckBox.isChecked());
     settings.setValue(SHOW_PHYSICAL_BOUNDARIES, boundariesPhysicalRadioBtn.isChecked());
     settings.setValue(ROTATION_CENTER, rotationCenterGroup.checkedId());
 }
@@ -80,6 +83,8 @@ void ViewportTab::loadSettings(const QSettings & settings) {
     showXZPlaneCheckBox.clicked(showXZPlaneCheckBox.isChecked());
     showZYPlaneCheckBox.setChecked(settings.value(SHOW_ZY_PLANE, true).toBool());
     showZYPlaneCheckBox.clicked(showZYPlaneCheckBox.isChecked());
+    showArbPlaneCheckBox.setChecked(settings.value(SHOW_ARB_PLANE, true).toBool());
+    showArbPlaneCheckBox.clicked(showArbPlaneCheckBox.isChecked());
     const auto showPhysicalBoundaries = settings.value(SHOW_PHYSICAL_BOUNDARIES, false).toBool();
     boundariesPixelRadioBtn.setChecked(!showPhysicalBoundaries);
     boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);

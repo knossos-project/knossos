@@ -30,6 +30,7 @@ class ViewportTab : public QWidget
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
     QCheckBox showZYPlaneCheckBox{"Show ZY Plane"};
+    QCheckBox showArbPlaneCheckBox{"Show arbitrary Plane"};
     QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};

@@ -82,6 +82,7 @@ const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
 const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
 const QString SHOW_ZY_PLANE = "show_zy_plane";
+const QString SHOW_ARB_PLANE = "show_arb_plane";
 const QString SHOW_PHYSICAL_BOUNDARIES = "show_physical_boundaries";
 const QString ROTATION_CENTER = "rotation_center";
 const QString RENDER_VOLUME = "render_volume";

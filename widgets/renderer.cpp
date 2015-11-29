@@ -1504,7 +1504,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
             switch(orthoVP.viewportType) {
             case VIEWPORT_XY:
-                if(!state->viewerState->showXYplane) break;
+                if (!state->viewerState->showXYplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(0,0,1);
@@ -1520,7 +1520,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_XZ:
-                if(!state->viewerState->showXZplane) break;
+                if (!state->viewerState->showXZplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(0,1,0);
@@ -1536,7 +1536,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_ZY:
-                if(!state->viewerState->showZYplane) break;
+                if (!state->viewerState->showZYplane) break;
                 glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(1,0,0);
@@ -1552,6 +1552,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_ARBITRARY:
+                if (!state->viewerState->showArbplane) break;
                 renderArbitrarySlicePane(orthoVP);
             }
         });

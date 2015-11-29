@@ -165,9 +165,10 @@ struct ViewerState {
     RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     bool showScalebar{false};
-    int showXYplane{true};
-    int showXZplane{true};
-    int showZYplane{true};
+    bool showXYplane{true};
+    bool showXZplane{true};
+    bool showZYplane{true};
+    bool showArbplane{true};
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
     mesh lineVertBuffer; /* ONLY for lines */
