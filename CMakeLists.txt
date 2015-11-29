@@ -111,6 +111,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5Python27
     QuaZip::QuaZip
     Snappy::Snappy
+    $<$<PLATFORM_ID:Linux>:-fuse-ld=gold>
 )
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
