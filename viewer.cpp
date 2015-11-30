@@ -52,7 +52,7 @@ Viewer::Viewer() {
     viewportZY = window->viewportZY.get();
     viewportArb = window->viewportArb.get();
 
-    initViewer();
+    recalcTextureOffsets();
 
     ViewportBase::initMesh(viewerState.lineVertBuffer, 1024);
     ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
@@ -190,8 +190,7 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     return true;
 }
 
-bool Viewer::dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
-    char *slice = vp.viewPortData;
+bool Viewer::dcSliceExtract_arb(char *datacube, char *slice, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(vp.v2);
@@ -201,9 +200,7 @@ bool Viewer::dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordin
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= state->cubeEdgeLength) || (currentPxInDc.y >= state->cubeEdgeLength) || (currentPxInDc.z >= state->cubeEdgeLength)) {
         sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
-        slice[sliceIndex] = slice[sliceIndex + 1]
-                          = slice[sliceIndex + 2]
-                          = state->viewerState->defaultTexData[0];
+        slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         (*t)++;
         if(*t < vp.t_max) {
             // Actually, although currentPxInDc_float is passed by reference and updated here,
@@ -222,9 +219,8 @@ bool Viewer::dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordin
         sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == NULL) {
-            slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = state->viewerState->defaultTexData[dcIndex];
-        }
-        else {
+            slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
+        } else {
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
                 const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[dcIndex];
@@ -410,6 +406,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
 
     const CoordOfCube upperLeftDc = vp.texture.leftUpperPxInAbsPx.cube(state->cubeEdgeLength, state->magnification);
 
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2), 128);
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
     for(int x_dc = 0; x_dc < vp.texture.usedTexLengthDc; x_dc++) {
@@ -455,33 +452,25 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 const int index = texIndex(x_dc, y_dc, 3, &(vp.texture));
 
-                if(datacube == nullptr) {
-                    glTexSubImage2D(GL_TEXTURE_2D,
-                                    0,
-                                    x_px,
-                                    y_px,
-                                    state->cubeEdgeLength,
-                                    state->cubeEdgeLength,
-                                    GL_RGB,
-                                    GL_UNSIGNED_BYTE,
-                                    state->viewerState->defaultTexData);
-                } else {
+                if (datacube != nullptr) {
                     dcSliceExtract(datacube,
                                    cubePosInAbsPx,
-                                   state->viewerState->texData + index,
+                                   texData.data() + index,
                                    slicePositionWithinCube,
                                    vp,
                                    state->viewerState->datasetAdjustmentOn);
-                    glTexSubImage2D(GL_TEXTURE_2D,
-                                    0,
-                                    x_px,
-                                    y_px,
-                                    state->cubeEdgeLength,
-                                    state->cubeEdgeLength,
-                                    GL_RGB,
-                                    GL_UNSIGNED_BYTE,
-                                    state->viewerState->texData + index);
+                } else {
+                    std::fill(std::begin(texData), std::end(texData), 0);
                 }
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                x_px,
+                                y_px,
+                                state->cubeEdgeLength,
+                                state->cubeEdgeLength,
+                                GL_RGB,
+                                GL_UNSIGNED_BYTE,
+                                texData.data() + index);
             }
             //Take care of the overlay textures.
             if (state->overlay && oc_reslice && state->viewerState->showOverlay) {
@@ -490,33 +479,24 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
 
-                if (overlayCube == nullptr) {
-                    glTexSubImage2D(GL_TEXTURE_2D,
-                                    0,
-                                    x_px,
-                                    y_px,
-                                    state->cubeEdgeLength,
-                                    state->cubeEdgeLength,
-                                    GL_RGBA,
-                                    GL_UNSIGNED_BYTE,
-                                    state->viewerState->defaultOverlayData);
-                } else {
+                if (overlayCube != nullptr) {
                     ocSliceExtract(overlayCube,
                                    cubePosInAbsPx,
-                                   state->viewerState->overlayData + index,
+                                   texData.data() + index,
                                    slicePositionWithinCube * OBJID_BYTES,
                                    vp);
-
-                    glTexSubImage2D(GL_TEXTURE_2D,
-                                    0,
-                                    x_px,
-                                    y_px,
-                                    state->cubeEdgeLength,
-                                    state->cubeEdgeLength,
-                                    GL_RGBA,
-                                    GL_UNSIGNED_BYTE,
-                                    state->viewerState->overlayData + index);
+                } else {
+                    std::fill(std::begin(texData), std::end(texData), 195);
                 }
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                x_px,
+                                y_px,
+                                state->cubeEdgeLength,
+                                state->cubeEdgeLength,
+                                GL_RGBA,
+                                GL_UNSIGNED_BYTE,
+                                texData.data() + index);
             }
         }
     }
@@ -539,6 +519,8 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
     rowPx_float = vp.texture.leftUpperPxInAbsPx / state->magnification;
     currentPx_float = rowPx_float;
 
+    std::vector<char> texData(3 * std::pow(state->viewerState->texEdgeLength, 2));
+
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
     int s = 0, t = 0, t_old = 0;
@@ -559,6 +541,7 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
             currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
             t_old = t;
             dcSliceExtract_arb(datacube,
+                               texData.data(),
                                vp,
                                &currentPxInDc_float,
                                s, &t,
@@ -578,7 +561,7 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
                     state->M*state->cubeEdgeLength,
                     GL_RGB,
                     GL_UNSIGNED_BYTE,
-                    vp.viewPortData);
+                    texData.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -678,80 +661,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
         }
     });
     return false;
-}
-
-void Viewer::initViewer() {
-    // This is the buffer that holds the actual texture data (for _all_ textures)
-
-    state->viewerState->texData =
-            (char *) malloc(TEXTURE_EDGE_LEN
-               * TEXTURE_EDGE_LEN
-               * sizeof(char)
-               * 3);
-    if(state->viewerState->texData == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(state->viewerState->texData, '\0',
-           TEXTURE_EDGE_LEN
-           * TEXTURE_EDGE_LEN
-           * sizeof(char)
-           * 3);
-
-    // This is the buffer that holds the actual overlay texture data (for _all_ textures)
-
-    state->viewerState->overlayData =
-            (char *) malloc(TEXTURE_EDGE_LEN *
-               TEXTURE_EDGE_LEN *
-               sizeof(char) *
-               4);
-    if(state->viewerState->overlayData == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(state->viewerState->overlayData, '\0',
-           TEXTURE_EDGE_LEN
-           * TEXTURE_EDGE_LEN
-           * sizeof(char)
-           * 4);
-
-    // This is the data we use when the data for the
-    //   slices is not yet available (hasn't yet been loaded).
-
-    state->viewerState->defaultTexData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                         * sizeof(char)
-                                                         * 3);
-    if(state->viewerState->defaultTexData == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                     * sizeof(char)
-                                                     * 3);
-
-    /* @arb */
-    window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-        orthoVP.viewPortData = (char *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
-        if(orthoVP.viewPortData == NULL) {
-            qDebug() << "Out of memory.";
-            exit(0);
-        }
-        memset(orthoVP.viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(char) * 3);
-    });
-
-    // Default data for the overlays
-    state->viewerState->defaultOverlayData = (char *) malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                             * sizeof(char)
-                                                             * 4);
-    if(state->viewerState->defaultOverlayData == NULL) {
-        qDebug() << "Out of memory.";
-        _Exit(false);
-    }
-    memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
-                                                         * sizeof(char)
-                                                         * 4);
-
-    recalcTextureOffsets();
 }
 
 bool Viewer::calcDisplayedEdgeLength() {
@@ -1364,13 +1273,27 @@ void Viewer::resetRotation() {
     viewportArb->n = v3;
 }
 
-void Viewer::loadTreeLUT(const QString & path) {
-    state->viewerState->treeColors = loadLookupTable(path);
-    skeletonizer->updateTreeColors();
+void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge) {
+    int newTexEdgeLength = 512;
+    while(newTexEdgeLength < cubeEdge * superCubeEdge) {
+        newTexEdgeLength *= 2;
+    }
+    qDebug() << "cubeEdge: " << cubeEdge << ", sCubeEdge: " << superCubeEdge << ", newTex: " << newTexEdgeLength << "(" << state->viewerState->texEdgeLength << ")";
+    viewerState.texEdgeLength = newTexEdgeLength;
+    window->resetTextureProperties();
+    window->forEachOrthoVPDo([](ViewportOrtho & vp) {
+        vp.resetTexture();
+    });
+    recalcTextureOffsets();
 }
 
 void Viewer::loadNodeLUT(const QString & path) {
     state->viewerState->nodeColors = loadLookupTable(path);
+}
+
+void Viewer::loadTreeLUT(const QString & path) {
+    state->viewerState->treeColors = loadLookupTable(path);
+    skeletonizer->updateTreeColors();
 }
 
 color4F Viewer::getNodeColor(const nodeListElement & node) const {

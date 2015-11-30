@@ -197,14 +197,11 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
 void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto cubeEdge = cubeEdgeSpin.value();
     const auto superCubeEdge = superCubeEdgeSpin.value();
-    auto mibibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
-    mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
+    auto mebibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
+    mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
     const auto fov = cubeEdge * (superCubeEdge - 1);
-    auto text = QString("Data cache cube edge length (%1 MiB RAM)\nFOV %2 pixel per dimension").arg(mibibytes).arg(fov);
+    auto text = QString("Data cache cube edge length (%1 MiB RAM)\nFOV %2 pixel per dimension").arg(mebibytes).arg(fov);
     superCubeSizeLabel.setText(text);
-    const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
-    //make sure it’s an odd number
-    superCubeEdgeSpin.setMaximum(maxsupercubeedge - !maxsupercubeedge);
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
@@ -260,6 +257,8 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     state->M = superCubeEdgeSpin.value();
     state->overlay = segmentationOverlayCheckbox.isChecked();
 
+    state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
+
     applyGeometrySettings();
 
     emit datasetSwitchZoomDefaults();
@@ -300,11 +299,6 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
-    if (state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        const auto msg = "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        qDebug() << msg;
-        throw std::runtime_error(msg);
-    }
     //settings depending on supercube and cube size
     state->cubeSliceArea = std::pow(state->cubeEdgeLength, 2);
     state->cubeBytes = std::pow(state->cubeEdgeLength, 3);

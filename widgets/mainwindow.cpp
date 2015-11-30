@@ -143,11 +143,11 @@ void MainWindow::resetTextureProperties() {
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-        orthoVP.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        orthoVP.texture.texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength;
         orthoVP.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
         orthoVP.texture.usedTexLengthDc = state->M;
-        orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+        orthoVP.texture.edgeLengthPx = state->viewerState->texEdgeLength;
+        orthoVP.texture.edgeLengthDc = state->viewerState->texEdgeLength / state->cubeEdgeLength;
         orthoVP.texture.FOV = 1;
     });
 }

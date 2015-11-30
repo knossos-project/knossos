@@ -75,14 +75,11 @@ struct ViewerState {
     ViewerState() {
         state->viewerState = this;
     }
-    char *texData;
-    char *overlayData;
-    char *defaultTexData;
-    char *defaultOverlayData;
 
     int highlightVp{VIEWPORT_UNDEFINED};
     int vpKeyDirection[3]{1,1,1};
 
+    int texEdgeLength = 512;
     // don't jump between mags on zooming
     bool datasetMagLock;
     // Current position of the user crosshair.
@@ -201,7 +198,7 @@ private:
     void vpGenerateTexture_arb(ViewportOrtho & vp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+    bool dcSliceExtract_arb(char *datacube, char *slice, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
 
     void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
 
@@ -225,6 +222,7 @@ public:
     void zoomReset();
     QTimer timer;
 
+    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     color4F getNodeColor(const nodeListElement & node) const;

@@ -157,6 +157,14 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
     timeFBase.start();
 }
 
+void ViewportOrtho::resetTexture() {
+    const auto size = texture.edgeLengthPx;
+    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+}
+
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     const auto svpLayout = new QHBoxLayout();
     svpLayout->setSpacing(0);
@@ -226,7 +234,6 @@ void ViewportBase::initializeGL() {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
 
-
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed viewport.
     glViewport(upperLeftCorner.x, upperLeftCorner.y, edgeLength, edgeLength);
@@ -272,15 +279,16 @@ void ViewportOrtho::initializeGL() {
     // texture is updated via glTexSubImage2D in vpGenerateTexture
     // We need GL_RGB as texture internal format to color the textures
 
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2), 128);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB,
-                 texture.edgeLengthPx,
-                 texture.edgeLengthPx,
-                 0,
-                 GL_RGB,
-                 GL_UNSIGNED_BYTE,
-                 state->viewerState->defaultTexData);
+                0,
+                GL_RGB,
+                texture.edgeLengthPx,
+                texture.edgeLengthPx,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                texData.data());
 
     createOverlayTextures();
 
@@ -359,7 +367,8 @@ void ViewportOrtho::createOverlayTextures() {
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
     const auto size = texture.edgeLengthPx;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
 }
 
 void ViewportBase::resizeGL(int w, int h) {
@@ -551,7 +560,8 @@ void ViewportOrtho::updateOverlayTexture() {
     const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
-    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
         const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
@@ -567,7 +577,7 @@ void ViewportOrtho::updateOverlayTexture() {
         }
     }
     glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->overlayData);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

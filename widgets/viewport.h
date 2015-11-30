@@ -337,6 +337,7 @@ class ViewportOrtho : public ViewportBase {
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
+    void resetTexture();
     static bool showNodeComments;
 
     void sendCursorPosition();

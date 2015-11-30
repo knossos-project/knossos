@@ -179,7 +179,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
 }
 
 float DatasetOptionsWidget::lowestScreenPxXPerDataPx() {
-    const float texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN / state->highestAvailableMag;
+    const float texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength / state->highestAvailableMag;
     auto * vp = state->viewer->viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
