@@ -406,7 +406,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
 
     const CoordOfCube upperLeftDc = vp.texture.leftUpperPxInAbsPx.cube(state->cubeEdgeLength, state->magnification);
 
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2), 128);
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
     for(int x_dc = 0; x_dc < vp.texture.usedTexLengthDc; x_dc++) {
@@ -486,7 +486,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                                    slicePositionWithinCube * OBJID_BYTES,
                                    vp);
                 } else {
-                    std::fill(std::begin(texData), std::end(texData), 195);
+                    std::fill(std::begin(texData), std::end(texData), 0);
                 }
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
