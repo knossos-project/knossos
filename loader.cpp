@@ -622,7 +622,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         state->protectCube2Pointer.lock();
                         cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer.unlock();
-                        state->viewer->oc_reslice_notify_all(globalCoord);
+                        if (Dataset::isOverlay(type)) {
+                            state->viewer->oc_reslice_notify_all(globalCoord);
+                        } else {
+                            state->viewer->dc_reslice_notify_all(globalCoord);
+                        }
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
