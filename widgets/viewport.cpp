@@ -548,7 +548,7 @@ void ViewportOrtho::updateOverlayTexture() {
         return;
     }
     ocResliceNecessary = false;
-    const int width = state->M * state->cubeEdgeLength;
+    const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
