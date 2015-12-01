@@ -361,6 +361,7 @@ void DatasetLoadWidget::loadSettings() {
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
         state->overlay = settings.value(DATASET_OVERLAY, false).toBool();
     }
+    state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);
     superCubeEdgeSpin.setValue(state->M);
