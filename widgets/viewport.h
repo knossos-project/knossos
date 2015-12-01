@@ -365,4 +365,11 @@ public:
     float displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const;
 };
 
+class ViewportArb : public ViewportOrtho {
+    Q_OBJECT
+    QPushButton resetButton{"reset"};
+public:
+    ViewportArb(QWidget *parent, ViewportType viewportType);
+    virtual void showHideButtons(bool isShow) override;
+};
 #endif // VIEWPORT_H

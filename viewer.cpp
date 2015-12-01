@@ -1271,6 +1271,7 @@ void Viewer::resetRotation() {
     viewportArb->v1 = v1;
     viewportArb->v2 = v2;
     viewportArb->n = v3;
+    viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
 }
 
 void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge) {

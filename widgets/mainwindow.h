@@ -138,7 +138,7 @@ public:
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
     std::unique_ptr<ViewportOrtho> viewportZY;
-    std::unique_ptr<ViewportOrtho> viewportArb;
+    std::unique_ptr<ViewportArb> viewportArb;
     std::unique_ptr<Viewport3D> viewport3D;
 
     // contains all widgets
@@ -185,7 +185,7 @@ public:
         }
     }
     template<typename Function> void forEachOrthoVPDo(Function func) {
-        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get(), viewportArb.get() }) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get(), static_cast<ViewportOrtho *>(viewportArb.get()) }) {
             func(*vp);
         }
     }

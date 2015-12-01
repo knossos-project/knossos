@@ -217,7 +217,7 @@ public:
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
-    ViewportOrtho *viewportArb;
+    ViewportArb *viewportArb;
     void zoom(const float factor);
     void zoomReset();
     QTimer timer;

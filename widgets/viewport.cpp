@@ -779,3 +779,22 @@ float ViewportOrtho::displayedEdgeLenghtYForZoomFactor(const float zoomFactor) c
     // display only entire pixels
     return (std::floor(result * zoomFactor / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
+
+
+ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
+    const auto svpLayout = new QHBoxLayout();
+    svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
+    resetButton.setMinimumSize(45, 20);
+    resetButton.setMaximumSize(resetButton.minimumSize());
+    resetButton.setCursor(Qt::ArrowCursor);
+    svpLayout->addWidget(&resetButton);
+    vpLayout.insertLayout(0, svpLayout);
+    connect(&resetButton, &QPushButton::clicked, [this]() {
+        state->viewer->resetRotation();
+    });
+}
+
+void ViewportArb::showHideButtons(bool isShow) {
+    resetButton.setVisible(isShow);
+    ViewportBase::showHideButtons(isShow);
+}
