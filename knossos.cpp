@@ -121,10 +121,8 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<ViewportType>();
 
     Scripting scripts;
-    viewer.run();
 
     viewer.window->widgetContainer.datasetLoadWidget.loadDataset();
-
     viewer.window->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &viewer, &Viewer::userMove);
@@ -132,6 +130,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
+    viewer.run();
     return a.exec();
 }
 
