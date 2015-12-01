@@ -10,11 +10,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
 
-    renderQualityCombo.addItems({"Render in 3D", "Switch dynamically", "Render in 2D"});
-    renderQualityCombo.setToolTip("<b>Render quality:</b><br/>"
-                                  "<b>Render in 3D:</b> renders segments and nodes as cylinders and spheres<br/>"
-                                  "<b>Auto:</b> Switches dynamically between 3D and 2D rendering depending on zoom<br/>"
-                                  "<b>Fast:</b> renders segments and nodes as lines and points<br/>");
+    renderQualityCombo.addItems({tr("Tubes & spheres"), tr("Switch dynamically"), tr("Lines & points")});
+    renderQualityCombo.setToolTip(tr("<b>Skeleton rendering quality:</b><br/>"
+                                  "<b>Tubes & spheres:</b> renders segments as tubes and nodes as spheres<br/>"
+                                  "<b>Switch dynamically:</b> Switches dynamically between \"Tubes & spheres\" and \"Lines & points\" depending on zoom<br/>"
+                                  "<b>Lines & points:</b> renders segments as lines and nodes as points<br/>"));
 
     auto treeDisplayLayout = new QVBoxLayout();
     treeDisplayLayout->addWidget(&wholeSkeletonRadio);
@@ -50,11 +50,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&loadTreeLUTButton, &QPushButton::clicked, [this]() { loadTreeLUTButtonClicked(); });
     QObject::connect(&depthCutoffSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->depthCutOff = value; });
     QObject::connect(&renderQualityCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int value){
-        if(value == 0) { // 3D
+        if(value == 0) { // tubes and spheres
             state->viewerState->cumDistRenderThres = 1.f;
-        } else if(value == 1) { // Auto
+        } else if(value == 1) { // switch dynamically
             state->viewerState->cumDistRenderThres = 7.f;
-        } else { // 2D
+        } else { // lines and points
             state->viewerState->cumDistRenderThres = 20.f;
         }
     });
@@ -81,7 +81,7 @@ void TreesTab::updateTreeDisplay() {
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
-        path = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        path = QFileDialog::getOpenFileName(this, tr("Load Tree Color Lookup Table"), QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {
@@ -89,7 +89,7 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
             lutFilePath = path;
             ownTreeColorsCheck.setChecked(true);
         }  catch (...) {
-            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
+            QMessageBox lutErrorBox(QMessageBox::Warning, tr("LUT loading failed"), tr("LUTs are restricted to 256 RGB tuples"), QMessageBox::Ok, this);
             lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
             lutErrorBox.exec();
             ownTreeColorsCheck.setChecked(false);
