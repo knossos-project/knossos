@@ -38,6 +38,16 @@ class QCheckBox;
 
 #define LOCK_DATASET_ORIENTATION_DEFAULT (false)
 
+// a horizontal slider with ticks and mag labels at each mag switch position
+class ZoomSlider : public QSlider {
+    Q_OBJECT
+    using QSlider::setTickPosition; // prevent default tick painting in parent.
+protected:
+    virtual QSize sizeHint() const override;
+    virtual void paintEvent(QPaintEvent *ev) override;
+public:
+    int numTicks = 0;
+};
 
 class DatasetOptionsWidget : public QDialog {
     friend class MainWindow;
@@ -55,7 +65,7 @@ class DatasetOptionsWidget : public QDialog {
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewportLabel;
     QDoubleSpinBox *skeletonViewportSpinBox;
-    QSlider orthogonalZoomSlider;
+    ZoomSlider orthogonalZoomSlider;
     QPushButton *zoomDefaultsButton;
     // multires section
     QLabel multiresSectionLabel{"Magnification Settings"};

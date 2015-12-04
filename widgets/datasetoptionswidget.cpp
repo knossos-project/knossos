@@ -36,10 +36,73 @@
 #include <QFrame>
 #include <QCheckBox>
 #include <QDebug>
+#include <QPainter>
 #include <QSettings>
+#include <QStyle>
 #include <QSpacerItem>
 #include <QApplication>
 #include <QDesktopWidget>
+
+QSize ZoomSlider::sizeHint() const {
+    ensurePolished();
+    const int SliderLength = 84, TickSpace = 30;
+    QStyleOptionSlider opt;
+    initStyleOption(&opt);
+    int thick = style()->pixelMetric(QStyle::PM_SliderThickness, &opt, this);
+    thick += TickSpace;
+    int w = SliderLength;
+    int h = thick;
+    return style()->sizeFromContents(QStyle::CT_Slider, &opt, QSize(w, h), this).expandedTo(QApplication::globalStrut());
+}
+
+void ZoomSlider::paintEvent(QPaintEvent *ev) {
+    // adapted from QCommonStyle::drawComplexControl case CC_Slider
+    QStyleOptionSlider opt;
+    initStyleOption(&opt);
+    int tickOffset = style()->pixelMetric(QStyle::PM_SliderTickmarkOffset, &opt, this);
+    int thickness = style()->pixelMetric(QStyle::PM_SliderControlThickness, &opt, this);
+    int len = style()->pixelMetric(QStyle::PM_SliderLength, &opt, this);
+    int available = style()->pixelMetric(QStyle::PM_SliderSpaceAvailable, &opt, this);
+    int interval = opt.tickInterval;
+    if (interval <= 0) {
+        interval = singleStep();
+        if (QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, interval, available)
+            - QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, 0, available) < 3)
+            interval = opt.pageStep;
+    }
+    if (!interval) {
+        interval = 1;
+    }
+    int fudge = len / 2;
+    int pos;
+    // Since there is no subrect for tickmarks do a translation here.
+    QPainter painter(this);
+    painter.save();
+    painter.translate(opt.rect.x(), opt.rect.y());
+    painter.setFont(QFont(painter.font().family(), 9 * devicePixelRatio()));
+    painter.setPen(opt.palette.foreground().color());
+    int v = opt.minimum;
+    int drawnTicks = 0;
+    while (v <= opt.maximum + 1 && drawnTicks < numTicks) {
+        if (v == opt.maximum + 1 && interval == 1) {
+            break;
+        }
+        QString label = QString::number(state->highestAvailableMag / std::pow(2, drawnTicks));
+        drawnTicks++;
+        const int v_ = qMin(v, opt.maximum);
+        pos = QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, v_, available) + fudge;
+        painter.drawLine(pos, tickOffset + 12, pos,  thickness);
+        painter.drawText(pos - QFontMetrics(painter.font()).width(label) / 2. + 1, tickOffset + 10, label);
+        // in the case where maximum is max int
+        int nextInterval = v + interval;
+        if (nextInterval < v) {
+            break;
+        }
+        v = nextInterval;
+    }
+    painter.restore();
+    QSlider::paintEvent(ev);
+}
 
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true) {
@@ -141,7 +204,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         }
 
         int tickDistance = currSliderPos % orthogonalZoomSlider.tickInterval();
-        const int snapDistance = 10;
+        const int snapDistance = 5;
         if (0 < tickDistance && tickDistance <= snapDistance) { // possibly close over the next tick
             orthogonalZoomSlider.setSliderPosition(currSliderPos - tickDistance);
         }
@@ -166,11 +229,10 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         const auto interval = 50;
 
         zoomStep = std::pow(2, 1./interval);
-
+        orthogonalZoomSlider.numTicks = mags;
         orthogonalZoomSlider.setMinimum(0);
         orthogonalZoomSlider.setMaximum(mags*interval);
         orthogonalZoomSlider.setTickInterval(interval);
-        orthogonalZoomSlider.setTickPosition(QSlider::TicksAbove);
         updateOrthogonalZoomSlider();
     });
 
