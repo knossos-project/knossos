@@ -43,10 +43,9 @@ class ZoomSlider : public QSlider {
     Q_OBJECT
     using QSlider::setTickPosition; // prevent default tick painting in parent.
 protected:
-    virtual QSize sizeHint() const override;
     virtual void paintEvent(QPaintEvent *ev) override;
 public:
-    int numTicks = 0;
+    int numTicks{0};
 };
 
 class DatasetOptionsWidget : public QDialog {

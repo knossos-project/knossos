@@ -43,18 +43,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-QSize ZoomSlider::sizeHint() const {
-    ensurePolished();
-    const int SliderLength = 84, TickSpace = 30;
-    QStyleOptionSlider opt;
-    initStyleOption(&opt);
-    int thick = style()->pixelMetric(QStyle::PM_SliderThickness, &opt, this);
-    thick += TickSpace;
-    int w = SliderLength;
-    int h = thick;
-    return style()->sizeFromContents(QStyle::CT_Slider, &opt, QSize(w, h), this).expandedTo(QApplication::globalStrut());
-}
-
 void ZoomSlider::paintEvent(QPaintEvent *ev) {
     // adapted from QCommonStyle::drawComplexControl case CC_Slider
     QStyleOptionSlider opt;
@@ -79,7 +67,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
     QPainter painter(this);
     painter.save();
     painter.translate(opt.rect.x(), opt.rect.y());
-    painter.setFont(QFont(painter.font().family(), 9 * devicePixelRatio()));
+    painter.setFont(QFont(painter.font().family(), 8 * devicePixelRatio()));
     painter.setPen(opt.palette.foreground().color());
     int v = opt.minimum;
     int drawnTicks = 0;
@@ -91,8 +79,8 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
         drawnTicks++;
         const int v_ = qMin(v, opt.maximum);
         pos = QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, v_, available) + fudge;
-        painter.drawLine(pos, tickOffset + 12, pos,  thickness);
-        painter.drawText(pos - QFontMetrics(painter.font()).width(label) / 2. + 1, tickOffset + 10, label);
+        painter.drawLine(pos, 0, pos,  thickness / 2);
+        painter.drawText(pos - QFontMetrics(painter.font()).width(label) / 2. + 1, thickness, label);
         // in the case where maximum is max int
         int nextInterval = v + interval;
         if (nextInterval < v) {
