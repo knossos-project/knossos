@@ -681,37 +681,37 @@ bool Viewer::calcDisplayedEdgeLength() {
 }
 
 void Viewer::zoom(const float factor) {
-    int triggerMagChange = false;
-    if ((std::round(viewportXY->texture.FOV * factor) > 1 && (static_cast<uint>(state->magnification) == state->highestAvailableMag)) // min zoom
-            || (std::floor(viewportXY->texture.FOV * factor * 2 + 0.5)/2 < 0.5 && (static_cast<uint>(state->magnification) == state->lowestAvailableMag)) /* max zoom */) {
-        return;
+    const bool reachedHighestMag = static_cast<uint>(state->magnification) == state->highestAvailableMag;
+    const bool reachedLowestMag = static_cast<uint>(state->magnification) == state->lowestAvailableMag;
+    const bool reachedMinZoom = viewportXY->texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
+    const bool reachedMaxZoom = viewportXY->texture.FOV * factor  < VPZOOMMAX && reachedLowestMag;
+    const bool magUp = std::floor(viewportXY->texture.FOV * 2  + 0.5) / 2 >= VPZOOMMIN && factor > 1 && !reachedHighestMag;
+    const bool magDown = std::floor(viewportXY->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1 && !reachedLowestMag;
+
+    const auto updateFOV = [this](const float newFOV) {
+        window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) { orthoVP.texture.FOV = newFOV; });
+    };
+    uint newMag = state->magnification;
+    if (reachedMinZoom) {
+        updateFOV(VPZOOMMIN);
+    } else if (reachedMaxZoom) {
+        updateFOV(VPZOOMMAX);
+    } else if (state->viewerState->datasetMagLock) {
+        updateFOV(viewportXY->texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
+                  viewportXY->texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
+                  viewportXY->texture.FOV * factor);
+    } else if (magUp) {
+        newMag *= 2;
+        updateFOV(0.5);
+    } else if (magDown) {
+        newMag /= 2;
+        updateFOV(VPZOOMMIN);
+    } else {
+        updateFOV(viewportXY->texture.FOV * factor);
     }
-    bool magUp = std::floor(viewportXY->texture.FOV * 2  + 0.5) / 2 >= 1 && factor > 1;
-    bool magDown = std::floor(viewportXY->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1;
 
-    state->viewer->window->forEachOrthoVPDo([&, this](ViewportOrtho & orthoVP) {
-        if(state->viewerState->datasetMagLock) {
-            if (0.5 <= viewportXY->texture.FOV * factor && viewportXY->texture.FOV * factor <= 1) {
-                orthoVP.texture.FOV *= factor;
-            }
-        }
-        else {
-            if (magDown && (static_cast<uint>(state->magnification) != state->lowestAvailableMag)) {
-                orthoVP.texture.FOV = 1;
-                triggerMagChange = MAG_DOWN;
-            }
-            else if (magUp && (static_cast<uint>(state->magnification) != state->highestAvailableMag)) {
-                orthoVP.texture.FOV = 0.5;
-                triggerMagChange = MAG_UP;
-            }
-            else {
-                orthoVP.texture.FOV *= factor;
-            }
-        }
-    });
-
-    if (triggerMagChange) {
-        changeDatasetMag(triggerMagChange);
+    if (newMag != static_cast<uint>(state->magnification)) {
+        updateDatasetMag(newMag);
     }
     recalcTextureOffsets();
     emit zoomChanged();
@@ -725,42 +725,19 @@ void Viewer::zoomReset() {
     emit zoomChanged();
 }
 
-/**
-* takes care of all necessary changes inside the viewer and signals
-* the loader to change the dataset
-*/
-/* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-bool Viewer::changeDatasetMag(uint upOrDownFlag) {
-    if (DATA_SET != upOrDownFlag) {
-
-        if(state->viewerState->datasetMagLock) {
+bool Viewer::updateDatasetMag(const uint mag) {
+    if ((0 < mag) && ((mag & (mag - 1)) == 0)) { // mag is power of 2
+        if (state->lowestAvailableMag <= mag && mag <= state->highestAvailableMag) {
+            state->magnification = mag;
+            window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
+                orthoVP.texture.texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength / mag;
+            });
+        }
+        else {
             return false;
         }
-
-        switch(upOrDownFlag) {
-        case MAG_DOWN:
-            if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
-                state->magnification /= 2;
-                window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                    orthoVP.texture.texUnitsPerDataPx *= 2.;
-                });
-            }
-            else return false;
-            break;
-
-        case MAG_UP:
-            if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
-                state->magnification *= 2;
-                window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                    orthoVP.texture.texUnitsPerDataPx /= 2.;
-                });
-            }
-            else return false;
-            break;
-        }
     }
-
-    Loader::Controller::singleton().unloadCurrentMagnification();//unload all the cubes
+    Loader::Controller::singleton().unloadCurrentMagnification(); //unload all the cubes
     //clear the viewports
     dc_reslice_notify_visible();
     oc_reslice_notify_visible();
@@ -768,7 +745,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     loader_notify();//start loading
 
     emit zoomChanged();
-
     return true;
 }
 
@@ -782,7 +758,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   *   - TODO: The Eventhandling in QT works asnyc, new concept are currently in progress
   * - the loadSignal occurs in three different locations:
   *   - initViewer
-  *   - changeDatasetMag
   *   - userMove
   *
   */
@@ -1236,11 +1211,6 @@ void Viewer::rewire() {
         QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::rotationSignal, this, &Viewer::setRotation);
         QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
-    });
-
-    window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-        QObject::connect(&orthoVP, &ViewportOrtho::changeDatasetMagSignal, this, &Viewer::changeDatasetMag);
-        QObject::connect(&orthoVP, &ViewportOrtho::recalcTextureOffsetsSignal, this, &Viewer::recalcTextureOffsets);
     });
 
     // end viewport signals

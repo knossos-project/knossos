@@ -17,9 +17,6 @@ extern stateInfo * state;
 
 #define NUM_MAG_DATASETS 65536
 
-#define DATA_SET 3
-#define NO_MAG_CHANGE 0
-
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
 

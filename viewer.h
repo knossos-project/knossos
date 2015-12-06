@@ -42,12 +42,6 @@
 #define SLOW 1000
 #define FAST 10
 
-// MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
-// a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
-// pixel size instead of 20 nm
-#define MAG_DOWN 1
-#define MAG_UP 2
-
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_RECENTER 1
 
@@ -232,7 +226,7 @@ signals:
     void movementAreaFactorChangedSignal();
 public slots:
     void updateCurrentPosition();
-    bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool updateDatasetMag(const uint mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos, const ViewportType vpType);

@@ -275,7 +275,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     Session::singleton().updateMovementArea({0, 0, 0}, state->boundary);
     // ...beginning with loading the middle of dataset
     state->viewerState->currentPosition = {state->boundary / 2};
-    state->viewer->changeDatasetMag(DATA_SET);
+    state->viewer->updateDatasetMag();
     state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     emit datasetChanged(segmentationOverlayCheckbox.isChecked());
 

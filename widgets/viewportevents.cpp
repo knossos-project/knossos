@@ -722,7 +722,7 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
         } else {
             state->compressionRatio = originalCompressionRatio;
         }
-        state->viewer->changeDatasetMag(DATA_SET);
+        state->viewer->updateDatasetMag();
         emit compressionRatioToggled();
     }
 }

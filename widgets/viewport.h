@@ -51,8 +51,8 @@ This is used for LOD rendering, since all ortho VPs have the (about) the same sc
 values. The XY vp always used. */
 const auto VIEWPORT_ORTHO = VIEWPORT_XY;
 
-// close zoom -> smaller displayed edge length
-constexpr const double VPZOOMMIN = 0.0001;
+constexpr const double VPZOOMMAX = 0.02;
+constexpr const double VPZOOMMIN = 1.;
 constexpr const double SKELZOOMMAX = 0.4999;
 constexpr const double SKELZOOMMIN = 0.0;
 
@@ -262,8 +262,6 @@ signals:
 
     void compressionRatioToggled();
 
-    void recalcTextureOffsetsSignal();
-    void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetOptionsWidget();
 public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);

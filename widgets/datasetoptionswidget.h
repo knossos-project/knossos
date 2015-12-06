@@ -45,6 +45,7 @@ class ZoomSlider : public QSlider {
 protected:
     virtual void paintEvent(QPaintEvent *ev) override;
 public:
+    int highestMag{0};
     int numTicks{0};
 };
 
@@ -61,10 +62,10 @@ class DatasetOptionsWidget : public QDialog {
     QLabel compressionLabel;
     // zoom section
     QLabel zoomSectionLabel{"Zoom Settings"};
-    QLabel *orthogonalDataViewportLabel;
+    QLabel orthogonalDataViewportLabel{"Orthogonal Viewports"};
     QLabel *skeletonViewportLabel;
     QDoubleSpinBox *skeletonViewportSpinBox;
-    ZoomSlider orthogonalZoomSlider;
+    ZoomSlider orthoZoomSlider;
     QPushButton *zoomDefaultsButton;
     // multires section
     QLabel multiresSectionLabel{"Magnification Settings"};
@@ -73,6 +74,10 @@ class DatasetOptionsWidget : public QDialog {
     QLabel *currentActiveMagDatasetLabel;
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
+    void reinitializeSlider();
+    uint highestMag();
+    uint lowestMag();
+    float highestScreenPxXPerDataPx();
     float lowestScreenPxXPerDataPx();
     float zoomStep{1};
     void updateOrthogonalZoomSlider();
@@ -87,7 +92,6 @@ public:
     explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
 public slots:
     void zoomDefaultsClicked();
-    void lockDatasetMagChecked(bool on);
     void skeletonSpinBoxChanged(double value);
     void update();
     void loadSettings();
