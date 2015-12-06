@@ -31,8 +31,8 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
+#include <QDoubleSpinBox>
 
-class QDoubleSpinBox;
 class QCheckBox;
 
 
@@ -65,6 +65,7 @@ class DatasetOptionsWidget : public QDialog {
     QLabel orthogonalDataViewportLabel{"Orthogonal Viewports"};
     QLabel *skeletonViewportLabel;
     QDoubleSpinBox *skeletonViewportSpinBox;
+    QDoubleSpinBox orthoZoomSpinBox;
     ZoomSlider orthoZoomSlider;
     QPushButton *zoomDefaultsButton;
     // multires section
@@ -74,12 +75,15 @@ class DatasetOptionsWidget : public QDialog {
     QLabel *currentActiveMagDatasetLabel;
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
-    void reinitializeSlider();
+    void applyZoom(const float newScreenPxXPerDataPx);
+    void reinitializeOrthoZoomWidgets();
     uint highestMag();
     uint lowestMag();
-    float highestScreenPxXPerDataPx();
-    float lowestScreenPxXPerDataPx();
+    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    uint calcMag(const float screenPxXPerDataPx);
     float zoomStep{1};
+    void updateOrthogonalZoomSpinBox();
     void updateOrthogonalZoomSlider();
 
     void showEvent(QShowEvent *) override {
