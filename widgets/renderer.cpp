@@ -1936,7 +1936,6 @@ QSet<nodeListElement *> ViewportBase::pickNodes(uint centerX, uint centerY, uint
     for (const auto name : selection) {
         nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
         if (foundNode != nullptr) {
-            qDebug() << foundNode->nodeID;
             foundNodes.insert(foundNode);
         }
     }
