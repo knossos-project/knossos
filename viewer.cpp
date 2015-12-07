@@ -954,8 +954,9 @@ void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {
 
     const auto gpusupercube = (state->M - 1) * state->cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
     const int halfSupercube = gpusupercube * 0.5;
-    const auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
+    auto edge = state->viewerState->currentPosition.cube(gpucubeedge, state->magnification) - halfSupercube;
     const auto end = edge + gpusupercube;
+    edge = {std::max(0, edge.x), std::max(0, edge.y), std::max(0, edge.z)};//negative coords are calculated incorrectly and there are no cubes anyway
     for (int x = edge.x; x < end.x; ++x)
     for (int y = edge.y; y < end.y; ++y)
     for (int z = edge.z; z < end.z; ++z) {
