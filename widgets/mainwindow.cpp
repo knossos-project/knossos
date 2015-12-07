@@ -284,13 +284,17 @@ void MainWindow::createToolbars() {
     defaultToolbar.addSeparator();
 
     auto * const pythonButton = new QToolButton();
-    pythonButton->setMenu(new QMenu(pythonButton));
-    pythonButton->setIcon(QIcon(":/resources/icons/python.png"));
+    auto pythonMenu = new QMenu(pythonButton);
+    pythonButton->setMenu(pythonMenu);
+    QIcon pythonIcon(":/resources/icons/python.png");
+    pythonButton->setIcon(pythonIcon);
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    pythonMenu->addAction(pythonIcon, "Python Properties", this, SLOT(pythonPropertiesSlot()));
+    pythonMenu->addAction(pythonIcon, "Python File", this, SLOT(pythonFileSlot()));
+    pythonMenu->addAction(pythonIcon, "Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    pluginMenu = pythonMenu->addMenu(pythonIcon, "Plugins");
+    updatePluginMenu();
     defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
@@ -1240,30 +1244,56 @@ void MainWindow::pythonFileSlot() {
     state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     state->viewerState->renderInterval = FAST;
-    QMessageBox msgBox;
-    msgBox.setText(tr("Execute or Import?"));
-    QAbstractButton* pButtonExecute = msgBox.addButton(tr("Execute"), QMessageBox::ActionRole);
-    QAbstractButton* pButtonImport = msgBox.addButton(tr("Import"), QMessageBox::ActionRole);
-    msgBox.exec();
-    if (msgBox.clickedButton()==pButtonExecute) {
-        state->scripting->runFile(pyFileName);
+    state->scripting->runFile(pyFileName);
+}
+
+void MainWindow::updatePluginMenu() {
+    for (auto action : pluginActions) {
+        pluginMenu->removeAction(action);
+        delete action;
     }
-    else if (msgBox.clickedButton()==pButtonImport) {
-        state->scripting->importModule(pyFileName);
+    pluginActions.clear();
+    QStringList pluginNames = state->scripting->getPluginNames().split(";");
+    for (auto pluginName : pluginNames) {
+        if (pluginName.isEmpty()) {
+            continue;
+        }
+        auto action = new QAction(QIcon(":/resources/icons/python.png"),pluginName,this);
+        QObject::connect(action, &QAction::triggered, this, &MainWindow::pluginOpenSlot);
+        pluginActions.append(action);
     }
+    pluginMenu->addActions(pluginActions);
+}
+
+void MainWindow::pluginOpenSlot() {
+    QAction *action = (QAction *)sender();
+    QString pluginName = action->text();
+    state->scripting->openPlugin(pluginName);
 }
 
 void MainWindow::pythonPluginMgrSlot() {
-    auto pluginDir = QString("%1/plugins").arg(QCoreApplication::applicationDirPath());
-    QString pluginMgrFn("pluginMgr.py");
-    QString pluginMgrPath(QString("%1/%2").arg(pluginDir).arg(pluginMgrFn));
-    if (!QFile::exists(pluginMgrPath)) {
-        if (!QDir().mkpath(pluginDir)) {
-            return;
-        }
-        if (!QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
-            return;
-        }
+    auto showError = [this](const QString &errorStr) {
+        QMessageBox errorBox(QMessageBox::Warning, "Python Plugin Manager: Error", errorStr, QMessageBox::Ok, this);
+        errorBox.exec();
+        return;
+    };
+    auto pluginDir = state->scripting->getPluginDir();
+    auto pluginMgrFn = PLUGIN_MGR_NAME + ".py";
+    auto pluginMgrPath = QString("%1/%2").arg(pluginDir).arg(pluginMgrFn);
+    auto existed = QFile(pluginMgrPath).exists();
+    if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
+        return showError(QString("Cannot temporarily place default plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
     }
-    state->scripting->importModule(pluginMgrPath);
+    state->scripting->importPlugin(PLUGIN_MGR_NAME);
+    if (!existed) {
+        QFile pluginMgrFile(pluginMgrPath);
+        if (!pluginMgrFile.setPermissions(QFile::WriteOther)) {
+            return showError(QString("Cannot set write permissions for temporarily placed plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
+        }
+        if (!pluginMgrFile.remove()) {
+            return showError(QString("Cannot remove temporarily placed plugin manager from plugin directory:\n%1").arg(pluginMgrPath));
+        }
+        QFile::remove(pluginMgrPath + "c");
+    }
+    state->scripting->openPlugin(PLUGIN_MGR_NAME);
 }

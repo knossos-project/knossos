@@ -88,6 +88,11 @@ signals:
     void Signal_MainWindow_closeEvent(EmitOnCtorDtor*,QCloseEvent*);
 };
 
+const QString PLUGIN_MGR_NAME = "pluginMgr";
+const QString PLUGIN_SETTINGS_PREFIX = "Plugin_";
+const QString PLUGIN_DIR_VAL_NAME = "PluginDir";
+const QString PLUGIN_NAMES_VAL_NAME = "PluginNames";
+
 /** This class intializes the python qt engine */
 class Scripting : public QObject
 {
@@ -97,7 +102,6 @@ public:
     void runFile(const QString &filename);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
-    void importModule(const QString &moduleFullPath);
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
@@ -117,14 +121,37 @@ protected:
 private:
     PythonQtObjectPtr _ctx;
     QStringList _customPathDirs;
+    QVariant evalScript(const QString& script, int start = Py_file_input);
     void moveSymbolIntoKnossosModule(const QString& name);
     void executeFromUserDirectory();
     void executeResourceStartup();
     void changeWorkingDirectory();
+    void createDefaultPluginDir();
     void addPresetCustomPythonPaths();
-    void addCustomPythonPath(const QString &customPath);
+    void addPythonPath(const QString &customPath);
     void addWidgets();
     void autoStartTerminal();
+public slots:
+    QString getPluginInContainerStr(const QString &pluginName);
+    QString getImportInContainerStr(const QString &pluginName);
+    QString getInstanceInContainerStr(const QString &pluginName);
+    QString getContainerStr();
+    bool isPluginImported(const QString &pluginName);
+    bool importPlugin(const QString &pluginName);
+    bool isPluginOpen(const QString &pluginName);
+    bool instantiatePlugin(const QString &pluginName);
+    bool closePlugin(const QString &pluginName);
+    bool removePluginInstance(const QString &pluginName);
+    bool reloadPlugin(const QString &pluginName, bool isQuiet = false);
+    bool isPluginVisible(const QString &pluginName);
+    bool isPluginActive(const QString &pluginName);
+    bool showPlugin(const QString &pluginName);
+    bool openPlugin(const QString &pluginName, bool isQuiet = false);
+    QString getPluginNames();
+    void setPluginNames(const QString &pluginNamesStr);
+    QString getPluginDir();
+    void setPluginDir(const QString &pluginDir);
+    QString getDefaultPluginDir();
 };
 
 #endif // SCRIPTING_H

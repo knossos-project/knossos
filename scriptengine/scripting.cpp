@@ -24,6 +24,8 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QMessageBox>
+
 void PythonQtInit() {
     PythonQt::init(PythonQt::RedirectStdOut);
 #ifdef QtAll
@@ -31,7 +33,14 @@ void PythonQtInit() {
 #endif
 }
 
+QVariant Scripting::evalScript(const QString& script, int start) {
+    return _ctx.evalScript(script, start);
+}
+
 const QString SCRIPTING_KNOSSOS_MODULE = "KnossosModule";
+const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
+const QString SCRIPTING_IMPORT_KEY = "import";
+const QString SCRIPTING_INSTANCE_KEY = "instance";
 
 Scripting::Scripting() : _ctx(NULL) {
     state->scripting = this;
@@ -53,19 +62,20 @@ Scripting::Scripting() : _ctx(NULL) {
     segmentListDecorator = new SegmentListDecorator();
     treeListDecorator = new TreeListDecorator();
 
-    _ctx.evalScript("import sys");
-    _ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
+    evalScript("import sys");
+    evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
 #ifdef Q_OS_OSX
     // as ipython does not export it's sys paths after the installation we refer to that site-package
-    _ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
+    evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
     PythonQt::self()->createModuleFromScript(SCRIPTING_KNOSSOS_MODULE);
-    _ctx.evalScript("import " + SCRIPTING_KNOSSOS_MODULE);
+    evalScript(QString("import %1").arg(SCRIPTING_KNOSSOS_MODULE));
 
-    _ctx.evalScript(SCRIPTING_KNOSSOS_MODULE + ".plugin_container = {}");
+    evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signalRelay", state->signalRelay);
     addObject("knossos", pythonProxy);
+    addObject("scripting", this);
     addObject("segmentation", segmentationProxy);
     addObject("skeleton", skeletonProxy);
     addObject("knossos_global_viewer", state->viewer);
@@ -111,6 +121,8 @@ Scripting::Scripting() : _ctx(NULL) {
     PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
 
+    createDefaultPluginDir();
+    addPythonPath(getPluginDir());
     addPresetCustomPythonPaths();
 
 #ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
@@ -143,22 +155,72 @@ void Scripting::autoStartTerminal() {
     }
 }
 
+void Scripting::setPluginDir(const QString &pluginDir) {
+    QSettings settings;
+    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
+    settings.setValue(PLUGIN_DIR_VAL_NAME,pluginDir);
+    settings.endGroup();
+    addPythonPath(pluginDir);
+}
+
+QString Scripting::getPluginDir() {
+    QSettings settings;
+    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
+    auto pluginDirVal = settings.value(PLUGIN_DIR_VAL_NAME);
+    return pluginDirVal.isNull() ? QString() : pluginDirVal.toString();
+}
+
+QString Scripting::getPluginNames() {
+    QSettings settings;
+    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
+    auto pluginNamesVal = settings.value(PLUGIN_NAMES_VAL_NAME);
+    return pluginNamesVal.isNull() ? "" : pluginNamesVal.toString();
+}
+
+void Scripting::setPluginNames(const QString &pluginNamesStr) {
+    QSettings settings;
+    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
+    settings.setValue(PLUGIN_NAMES_VAL_NAME, pluginNamesStr);
+    settings.endGroup();
+    state->viewer->window->updatePluginMenu();
+}
+
+QString Scripting::getDefaultPluginDir() {
+    return QString("%1/%2").arg(QDir::homePath()).arg("knossos_plugins");
+}
+
+void Scripting::createDefaultPluginDir() {
+    auto pluginDir = getPluginDir();
+    if (!pluginDir.isEmpty() && QDir(pluginDir).exists()) {
+        return;
+    }
+    pluginDir = getDefaultPluginDir();
+    if (!QDir().mkpath(pluginDir)) {
+        QMessageBox errorBox(QMessageBox::Warning, "Python Plugin Manager: Error",
+                             QString("Cannot create plugin directory:\n%1").arg(pluginDir),
+                             QMessageBox::Ok, NULL);
+        errorBox.exec();
+        return;
+    }
+    setPluginDir(pluginDir);
+}
+
 void Scripting::changeWorkingDirectory() {
     auto value = getSettingsValue(PYTHON_WORKING_DIRECTORY);
     if (value.isNull()) { return; }
     auto workingDir = value.toString();
     if (workingDir.isEmpty()) { return; }
 
-    _ctx.evalScript("import os");
-    _ctx.evalScript(QString("os.chdir('%1')").arg(workingDir));
+    evalScript("import os");
+    evalScript(QString("os.chdir('%1')").arg(workingDir));
 }
 
-void Scripting::addCustomPythonPath(const QString &customPath) {
-    if (_customPathDirs.contains(customPath)) {
+void Scripting::addPythonPath(const QString &path) {
+    if (_customPathDirs.contains(path)) {
         return;
     }
-    _customPathDirs.append(customPath);
-    _ctx.evalScript(QString("sys.path.append('%1')").arg(customPath));
+    _customPathDirs.append(path);
+    evalScript(QString("sys.path.append('%1')").arg(path));
 }
 
 void Scripting::addPresetCustomPythonPaths() {
@@ -166,7 +228,7 @@ void Scripting::addPresetCustomPythonPaths() {
     if (value.isNull()) { return; }
     auto customPaths = value.toStringList();
     for (const auto & customPath : customPaths) {
-        addCustomPythonPath(customPath);
+        addPythonPath(customPath);
     }
 }
 
@@ -178,19 +240,146 @@ void Scripting::runFile(const QString &filename) {
     s.append(textStream.readAll());
     pyFile.close();
 
-    _ctx.evalScript(s, Py_file_input);
+    evalScript(s, Py_file_input);
 }
 
 void Scripting::moveSymbolIntoKnossosModule(const QString& name) {
-    _ctx.evalScript(QString("%1.%2 = %2; del %2").arg(SCRIPTING_KNOSSOS_MODULE).arg(name));
+    evalScript(QString("%1.%2 = %2; del %2").arg(SCRIPTING_KNOSSOS_MODULE).arg(name));
 }
 
-void Scripting::importModule(const QString &moduleFullPath) {
-    auto fileInfo = QFileInfo(moduleFullPath);
-    auto dirName = fileInfo.absolutePath();
-    auto baseName = fileInfo.baseName();
-    addCustomPythonPath(dirName);
-    _ctx.evalScript(QString("import %1").arg(baseName));
+QString Scripting::getContainerStr() {
+    return QString("%1.%2").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER);
+}
+
+QString Scripting::getPluginInContainerStr(const QString &pluginName) {
+    return QString("%1['%2']").arg(getContainerStr()).arg(pluginName);
+}
+
+QString Scripting::getImportInContainerStr(const QString &pluginName) {
+    return QString("%1['%2']").arg(getPluginInContainerStr(pluginName)).arg(SCRIPTING_IMPORT_KEY);
+}
+
+QString Scripting::getInstanceInContainerStr(const QString &pluginName) {
+    return QString("%1['%2']").arg(getPluginInContainerStr(pluginName)).arg(SCRIPTING_INSTANCE_KEY);
+}
+
+bool Scripting::isPluginImported(const QString &pluginName) {
+    return      (
+                evalScript(QString("'%1' in %2").arg(pluginName).arg(getContainerStr()), Py_eval_input).toBool()
+                &&
+                evalScript(QString("'%1' in %2").arg(SCRIPTING_IMPORT_KEY).arg(getPluginInContainerStr(pluginName)), Py_eval_input).toBool()
+                &&
+                evalScript(QString("%1 <> None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()
+                );
+}
+
+bool Scripting::importPlugin(const QString &pluginName) {
+    if (isPluginImported(pluginName)) {
+        return true;
+    }
+    evalScript(QString("%1 = {}").arg(getPluginInContainerStr(pluginName)));
+    evalScript(QString("import %1").arg(pluginName));
+    if (!evalScript(QString("'%1' in sys.modules").arg(pluginName), Py_eval_input).toBool()) {
+        return false;
+    }
+    evalScript(QString("%1 = %2; del %2").arg(getImportInContainerStr(pluginName)).arg(pluginName));
+    return true;
+}
+
+bool Scripting::isPluginOpen(const QString &pluginName) {
+    return      (
+                isPluginImported(pluginName)
+                &&
+                evalScript(QString("'%1' in %2").arg(SCRIPTING_INSTANCE_KEY).arg(getPluginInContainerStr(pluginName)), Py_eval_input).toBool()
+                &&
+                evalScript(QString("%1 <> None").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool()
+                );
+}
+
+bool Scripting::instantiatePlugin(const QString &pluginName) {
+    if (!isPluginImported(pluginName)) {
+        return false;
+    }
+    if (isPluginOpen(pluginName)) {
+        return true;
+    }
+    evalScript(QString("%1.main_class()").arg(getImportInContainerStr(pluginName)));
+    return isPluginOpen(pluginName);
+}
+
+bool Scripting::removePluginInstance(const QString &pluginName) {
+    if (!isPluginOpen(pluginName)) {
+        return true;
+    }
+    evalScript(QString("%1 = None").arg(getInstanceInContainerStr(pluginName)));
+    return !isPluginOpen(pluginName);
+}
+
+bool Scripting::closePlugin(const QString &pluginName) {
+    if (!isPluginOpen(pluginName)) {
+        return true;
+    }
+    if (!evalScript(QString("%1.close()").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool()) {
+        return false;
+    }
+    return removePluginInstance(pluginName);
+}
+
+bool Scripting::reloadPlugin(const QString &pluginName, bool isQuiet) {
+    if (!closePlugin(pluginName)) {
+        QMessageBox errorBox(QMessageBox::Warning, "Scripting: error",
+                             QString("cannot reload plugin '%1':\n%2").arg(pluginName).arg("close failed"),
+                             QMessageBox::Ok, NULL);
+        errorBox.exec();
+        return false;
+    }
+    evalScript(QString("reload(%1)").arg(getImportInContainerStr(pluginName)));
+    return openPlugin(pluginName, isQuiet);
+}
+
+bool Scripting::isPluginVisible(const QString &pluginName) {
+    if (!isPluginOpen(pluginName)) {
+        return false;
+    }
+    return evalScript(QString("%1.isVisible()").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool();
+}
+
+bool Scripting::isPluginActive(const QString &pluginName) {
+    return evalScript(QString("%1.isActiveWindow").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool();
+}
+
+bool Scripting::showPlugin(const QString &pluginName) {
+    auto instanceInContainer = getInstanceInContainerStr(pluginName);
+    if (!isPluginVisible(pluginName)) {
+        evalScript(QString("%1.show()").arg(instanceInContainer));
+    }
+    if (!isPluginActive(pluginName)) {
+        evalScript(QString("%1.activateWindow()").arg(instanceInContainer));
+    }
+    return (isPluginVisible(pluginName) && isPluginActive(pluginName));
+}
+
+bool Scripting::openPlugin(const QString &pluginName, bool isQuiet) {
+    auto showError = [pluginName,isQuiet](const QString &errorStr) {
+        if (isQuiet) {
+            return false;
+        }
+        QMessageBox errorBox(QMessageBox::Warning, "Scripting: error",
+                             QString("cannot open plugin '%1':\n%2").arg(pluginName).arg(errorStr),
+                             QMessageBox::Ok, NULL);
+        errorBox.exec();
+        return false;
+    };
+    if (!importPlugin(pluginName)) {
+        return showError("import failed");
+    }
+    if (!instantiatePlugin(pluginName)) {
+        return showError("instantiation failed");
+    }
+    if (!showPlugin(pluginName)) {
+        return showError("show failed");
+    }
+    return true;
 }
 
 void Scripting::addObject(const QString& name, QObject* object) {

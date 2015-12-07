@@ -95,10 +95,8 @@ void PythonPropertyWidget::saveSettings() {
     settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
 
-    if(!this->workingDirectoryEdit->text().isEmpty())
-        settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
-    if(!this->autoStartFolderEdit->text().isEmpty())
-        settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
+    settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
+    settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
     settings.setValue(PYTHON_AUTOSTART_TERMINAL, autoStartTerminalCheckbox->isChecked());
     settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit->toPlainText().split("\n"));
 

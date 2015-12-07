@@ -119,10 +119,12 @@ class MainWindow : public QMainWindow {
     QMenu *segEditMenu;
     QMenu *skelEditMenu;
     QMenu actionMenu{"Action"};
+    QMenu *pluginMenu;
     QString openFileDirectory;
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
+    QList<QAction*> pluginActions;
 
     int loaderLastProgress;
     QLabel *loaderProgress;
@@ -199,6 +201,7 @@ public:
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
 public slots:
+    void updatePluginMenu();
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
     void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
@@ -249,6 +252,7 @@ public slots:
     void pythonPropertiesSlot();
     void pythonFileSlot();
     void pythonPluginMgrSlot();
+    void pluginOpenSlot();
 };
 
 #endif // MAINWINDOW_H
