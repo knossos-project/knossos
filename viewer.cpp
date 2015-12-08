@@ -685,8 +685,8 @@ void Viewer::zoom(const float factor) {
     const bool reachedLowestMag = static_cast<uint>(state->magnification) == state->lowestAvailableMag;
     const bool reachedMinZoom = viewportXY->texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
     const bool reachedMaxZoom = viewportXY->texture.FOV * factor  < VPZOOMMAX && reachedLowestMag;
-    const bool magUp = std::floor(viewportXY->texture.FOV * 2  + 0.5) / 2 >= VPZOOMMIN && factor > 1 && !reachedHighestMag;
-    const bool magDown = std::floor(viewportXY->texture.FOV * 2 + 0.5) / 2  <= 0.5 && factor < 1 && !reachedLowestMag;
+    const bool magUp = viewportXY->texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
+    const bool magDown = viewportXY->texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
 
     const auto updateFOV = [this](const float newFOV) {
         window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) { orthoVP.texture.FOV = newFOV; });
@@ -707,7 +707,8 @@ void Viewer::zoom(const float factor) {
         newMag /= 2;
         updateFOV(VPZOOMMIN);
     } else {
-        updateFOV(viewportXY->texture.FOV * factor);
+        const float zoomMax = static_cast<float>(state->magnification) == state->lowestAvailableMag ? VPZOOMMAX : 0.5;
+        updateFOV(std::max(std::min(viewportXY->texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
     }
 
     if (newMag != static_cast<uint>(state->magnification)) {
