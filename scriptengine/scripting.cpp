@@ -147,11 +147,12 @@ QVariant getSettingsValue(const QString &key) {
 }
 
 void Scripting::autoStartTerminal() {
+    state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
     auto value = getSettingsValue(PYTHON_AUTOSTART_TERMINAL);
     if (value.isNull()) { return; }
     auto autoStartTerminal = value.toBool();
     if (autoStartTerminal) {
-        state->viewer->window->widgetContainer.pythonPropertyWidget.openTerminal();
+        state->viewer->window->widgetContainer.pythonInterpreterWidget.show();
     }
 }
 

@@ -248,9 +248,9 @@ public slots:
     void previousCommentNodeSlot();
     void pushBranchNodeSlot();
     void popBranchNodeSlot();
-    void pythonSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
+    void pythonInterpreterSlot();
     void pythonPluginMgrSlot();
     void pluginOpenSlot();
 };

@@ -263,6 +263,7 @@ void MainWindow::createToolbars() {
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
     auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
+    auto pythonInterpreterButton = createToolToogleButton(":/resources/icons/python.png", "Python Interpreter");
 
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
@@ -272,30 +273,16 @@ void MainWindow::createToolbars() {
             widgetContainer.taskManagementWidget.hide();
         }
     });
+    QObject::connect(pythonInterpreterButton, &QToolButton::clicked, &widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     //visibility → button
     QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::visibilityChanged, pythonInterpreterButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
-
-    defaultToolbar.addSeparator();
-
-    auto * const pythonButton = new QToolButton();
-    auto pythonMenu = new QMenu(pythonButton);
-    pythonButton->setMenu(pythonMenu);
-    QIcon pythonIcon(":/resources/icons/python.png");
-    pythonButton->setIcon(pythonIcon);
-    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
-    QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
-    pythonMenu->addAction(pythonIcon, "Python Properties", this, SLOT(pythonPropertiesSlot()));
-    pythonMenu->addAction(pythonIcon, "Python File", this, SLOT(pythonFileSlot()));
-    pythonMenu->addAction(pythonIcon, "Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
-    pluginMenu = pythonMenu->addMenu(pythonIcon, "Plugins");
-    updatePluginMenu();
-    defaultToolbar.addWidget(pythonButton);
 
     defaultToolbar.addSeparator();
 
@@ -582,6 +569,14 @@ void MainWindow::createMenus() {
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", &widgetContainer.annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", &widgetContainer.datasetOptionsWidget, SLOT(show()));
     windowMenu->addAction(tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+
+    auto scriptingMenu = menuBar()->addMenu("Scripting");
+    scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
+    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
+    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    scriptingMenu->addAction("Interpreter", this, SLOT(pythonInterpreterSlot()));
+    pluginMenu = scriptingMenu->addMenu("Plugins");
+    updatePluginMenu();
 
     auto helpMenu = menuBar()->addMenu("Help");
     addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
@@ -1053,6 +1048,7 @@ void MainWindow::saveSettings() {
     widgetContainer.navigationWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
+    widgetContainer.pythonInterpreterWidget.saveSettings();
     widgetContainer.snapshotWidget.saveSettings();
     widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
     //widgetContainer.toolsWidget->saveSettings();
@@ -1105,6 +1101,7 @@ void MainWindow::loadSettings() {
     widgetContainer.navigationWidget.loadSettings();
     widgetContainer.annotationWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
+    widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();
 }
 
@@ -1232,10 +1229,6 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
 }
 
-void MainWindow::pythonSlot() {
-    widgetContainer.pythonPropertyWidget.openTerminal();
-}
-
 void MainWindow::pythonPropertiesSlot() {
     widgetContainer.pythonPropertyWidget.show();
 }
@@ -1269,6 +1262,11 @@ void MainWindow::pluginOpenSlot() {
     QAction *action = (QAction *)sender();
     QString pluginName = action->text();
     state->scripting->openPlugin(pluginName);
+}
+
+void MainWindow::pythonInterpreterSlot() {
+    widgetContainer.pythonInterpreterWidget.show();
+    widgetContainer.pythonInterpreterWidget.activateWindow();
 }
 
 void MainWindow::pythonPluginMgrSlot() {

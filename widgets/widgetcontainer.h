@@ -12,14 +12,15 @@
 #include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
+#include "pythoninterpreterwidget.h"
 #include "pythonpropertywidget.h"
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), appearanceWidget(parent), datasetLoadWidget(parent)
         , datasetOptionsWidget(parent, &datasetLoadWidget), dataSavingWidget(parent), docWidget(parent)
-        , navigationWidget(parent), pythonPropertyWidget(parent), snapshotWidget(parent), splashWidget(parent)
-        , taskManagementWidget(parent)
+        , navigationWidget(parent), pythonPropertyWidget(parent), pythonInterpreterWidget(parent)
+        , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&appearanceWidget.datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, &snapshotWidget, &SnapshotWidget::updateOptionVisibility);
@@ -33,6 +34,7 @@ struct WidgetContainer {
     DocumentationWidget docWidget;
     NavigationWidget navigationWidget;
     PythonPropertyWidget pythonPropertyWidget;
+    PythonInterpreterWidget pythonInterpreterWidget;
     SnapshotWidget snapshotWidget;
     SplashScreenWidget splashWidget;
     TaskManagementWidget taskManagementWidget;
@@ -46,7 +48,7 @@ struct WidgetContainer {
         docWidget.hide();
         navigationWidget.hide();
         pythonPropertyWidget.hide();
-        pythonPropertyWidget.closeTerminal();
+        pythonInterpreterWidget.hide();
         snapshotWidget.hide();
         splashWidget.hide();
         taskManagementWidget.hide();

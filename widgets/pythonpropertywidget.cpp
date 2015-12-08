@@ -17,20 +17,8 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
-PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) :
-    QWidget(parent), console(NULL)
-{
-    setWindowFlags(Qt::Window);
-    console = new PythonQtScriptingConsole(parent, PythonQt::self()->getMainModule());
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(console);
-    setLayout(layout);
-    this->resize(QSize(500,300));
-    show();
-}
-
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
-    QDialog(parent), interpreter(NULL)
+    QDialog(parent)
 {
 
     setWindowTitle("Python Properties");
@@ -72,18 +60,6 @@ void PythonPropertyWidget::autoStartFolderButtonClicked() {
      if(!selection.isEmpty()) {
          autoStartFolderEdit->setText(selection);
      }
-}
-
-void PythonPropertyWidget::openTerminal() {
-    if (NULL == interpreter) {
-        interpreter = new PythonInterpreterWidget((QWidget*)this->parent());
-        state->scripting->addObject("knossos_global_interpreter", interpreter);
-    }
-    interpreter->show();
-}
-
-void PythonPropertyWidget::closeTerminal() {
-    interpreter->hide();
 }
 
 void PythonPropertyWidget::saveSettings() {
