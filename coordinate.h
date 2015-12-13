@@ -25,6 +25,7 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include <QDebug>
 #include <QList>
 #include <QVector>
 #include <QMetaType>
@@ -116,6 +117,11 @@ public:
         };
     }
 };
+
+template<typename ComponentType, typename CoordinateDerived>
+QDebug operator<<(QDebug stream, const CoordinateBase<ComponentType, CoordinateDerived> & coord) {
+    return stream << coord.x << coord.y << coord.z;
+}
 
 template<typename ComponentType = int, std::size_t tag = 0>
 class Coord : public CoordinateBase<ComponentType, Coord<ComponentType, tag>> {
