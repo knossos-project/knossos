@@ -1250,15 +1250,26 @@ void MainWindow::refreshPluginMenu() {
         if (pluginName.isEmpty()) {
             continue;
         }
-        auto action = pluginMenu->addAction(pluginName);
-        QObject::connect(action, &QAction::triggered, this, &MainWindow::pluginOpenSlot);
+        auto pluginSubMenu = pluginMenu->addMenu(pluginName);
+        QObject::connect(pluginSubMenu->addAction("Open"), &QAction::triggered,
+                         [pluginName](){state->scripting->openPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Close"), &QAction::triggered,
+                         [pluginName](){state->scripting->closePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Show"), &QAction::triggered,
+                         [pluginName](){state->scripting->showPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Hide"), &QAction::triggered,
+                         [pluginName](){state->scripting->hidePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Reload"), &QAction::triggered,
+                         [pluginName](){state->scripting->reloadPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Instantiate"), &QAction::triggered,
+                         [pluginName](){state->scripting->instantiatePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Remove Instance"), &QAction::triggered,
+                         [pluginName](){state->scripting->removePluginInstance(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Import"), &QAction::triggered,
+                         [pluginName](){state->scripting->importPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Remove Import"), &QAction::triggered,
+                         [pluginName](){state->scripting->removePluginImport(pluginName,false);});
     }
-}
-
-void MainWindow::pluginOpenSlot() {
-    QAction *action = (QAction *)sender();
-    QString pluginName = action->text();
-    state->scripting->openPlugin(pluginName, false);
 }
 
 void MainWindow::pythonInterpreterSlot() {
