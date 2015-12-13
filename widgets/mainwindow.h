@@ -124,7 +124,6 @@ class MainWindow : public QMainWindow {
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
-    QList<QAction*> pluginActions;
 
     int loaderLastProgress;
     QLabel *loaderProgress;
@@ -201,7 +200,7 @@ public:
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
 public slots:
-    void updatePluginMenu();
+    void refreshPluginMenu();
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
     void updateCursorLabel(const Coordinate & position, const ViewportType vpType);

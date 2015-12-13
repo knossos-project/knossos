@@ -183,7 +183,7 @@ void Scripting::setPluginNames(const QString &pluginNamesStr) {
     settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
     settings.setValue(PLUGIN_NAMES_VAL_NAME, pluginNamesStr);
     settings.endGroup();
-    state->viewer->window->updatePluginMenu();
+    state->viewer->window->refreshPluginMenu();
 }
 
 QString Scripting::getDefaultPluginDir() {

@@ -576,7 +576,7 @@ void MainWindow::createMenus() {
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
     scriptingMenu->addAction("Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
-    updatePluginMenu();
+    refreshPluginMenu();
 
     auto helpMenu = menuBar()->addMenu("Help");
     addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
@@ -1240,22 +1240,19 @@ void MainWindow::pythonFileSlot() {
     state->scripting->runFile(pyFileName);
 }
 
-void MainWindow::updatePluginMenu() {
-    for (auto action : pluginActions) {
+void MainWindow::refreshPluginMenu() {
+    auto actions = pluginMenu->actions();
+    for (auto action : actions) {
         pluginMenu->removeAction(action);
-        delete action;
     }
-    pluginActions.clear();
     QStringList pluginNames = state->scripting->getPluginNames().split(";");
     for (auto pluginName : pluginNames) {
         if (pluginName.isEmpty()) {
             continue;
         }
-        auto action = new QAction(QIcon(":/resources/icons/python.png"),pluginName,this);
+        auto action = pluginMenu->addAction(pluginName);
         QObject::connect(action, &QAction::triggered, this, &MainWindow::pluginOpenSlot);
-        pluginActions.append(action);
     }
-    pluginMenu->addActions(pluginActions);
 }
 
 void MainWindow::pluginOpenSlot() {
