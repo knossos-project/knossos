@@ -1261,7 +1261,7 @@ void MainWindow::updatePluginMenu() {
 void MainWindow::pluginOpenSlot() {
     QAction *action = (QAction *)sender();
     QString pluginName = action->text();
-    state->scripting->openPlugin(pluginName);
+    state->scripting->openPlugin(pluginName, false);
 }
 
 void MainWindow::pythonInterpreterSlot() {
@@ -1282,7 +1282,7 @@ void MainWindow::pythonPluginMgrSlot() {
     if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
         return showError(QString("Cannot temporarily place default plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
     }
-    state->scripting->importPlugin(PLUGIN_MGR_NAME);
+    state->scripting->importPlugin(PLUGIN_MGR_NAME, false);
     if (!existed) {
         QFile pluginMgrFile(pluginMgrPath);
         if (!pluginMgrFile.setPermissions(QFile::WriteOther)) {
@@ -1291,7 +1291,6 @@ void MainWindow::pythonPluginMgrSlot() {
         if (!pluginMgrFile.remove()) {
             return showError(QString("Cannot remove temporarily placed plugin manager from plugin directory:\n%1").arg(pluginMgrPath));
         }
-        QFile::remove(pluginMgrPath + "c");
     }
-    state->scripting->openPlugin(PLUGIN_MGR_NAME);
+    state->scripting->openPlugin(PLUGIN_MGR_NAME, false);
 }

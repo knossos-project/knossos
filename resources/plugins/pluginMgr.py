@@ -10,7 +10,8 @@ class main_class(QtGui.QWidget):
     PLUGIN_COLUMN_NAMES = ["Name","Repo","Local","Remote","Description","URL"]
     PLUGIN_NAME_COLUMN_INDEX = PLUGIN_COLUMN_NAMES.index("Name")
     DEFAULT_REPO_LIST_URL = "http://knossos-project.github.io/knossos-plugins/repo_list.txt"
-    SETTING_GROUP_NAME = "Plugin_pluginMgr"
+    PLUGIN_MGR_NAME = __name__
+    SETTING_GROUP_NAME = "Plugin_" + PLUGIN_MGR_NAME
     SETTING_NAMES = {"SETTING_OVERWRITE_SAME_NAME":"OverwriteSame",
     "SETTING_QUIET_MODE_NAME":"QuietMode",
     "SETTING_OFFLINE_MODE_NAME":"OfflineMode",
@@ -144,9 +145,7 @@ class main_class(QtGui.QWidget):
         instructionsTextEdit.setReadOnly(True)
         instructionsLayout.addWidget(instructionsTextEdit)
         instructionsWidget.resize(750,500)
-        instructionsTextEdit.setPlainText(
-        #QtGui.QMessageBox.information(0, "Help", \
-                    """
+        instructionsTextEdit.setPlainText("""
 Welcome to Plugin Manager!
 
 Introduction:
@@ -645,7 +644,7 @@ Each version component has to be the pythonic string representation of a number.
         if not self.isLocal(name):
             self.showError("open", "no local version of plugin " + name)
             return
-        KnossosModule.scripting.openPlugin(name)
+        KnossosModule.scripting.openPlugin(name, True)
         return
 
     def closeEvent(self, event):
