@@ -26,7 +26,6 @@
 
 #include "functions.h"
 #include "gui_wrapper.h"
-#include "knossos.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"

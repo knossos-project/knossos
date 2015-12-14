@@ -1,7 +1,6 @@
 #include "segmentation.h"
 
 #include "file_io.h"
-#include "knossos.h"
 #include "loader.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"

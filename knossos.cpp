@@ -21,8 +21,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "knossos.h"
-
 #include "dataset.h"
 #include "file_io.h"
 #include "loader.h"
@@ -132,10 +130,4 @@ int main(int argc, char *argv[]) {
 
     viewer.run();
     return a.exec();
-}
-
-void Knossos::sendQuitSignal() {
-    state->quitSignal = true;
-    QApplication::processEvents(); //ensure everything’s done
-    Loader::Controller::singleton().suspendLoader();
 }

@@ -2,7 +2,6 @@
 
 #include "dataset.h"
 #include "GuiConstants.h"
-#include "knossos.h"
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"

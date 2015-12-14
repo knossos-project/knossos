@@ -24,7 +24,6 @@
 
 #include "file_io.h"
 #include "GuiConstants.h"
-#include "knossos.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "skeleton/node.h"
@@ -602,7 +601,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          }
     }
 
-    Knossos::sendQuitSignal();
+    state->quitSignal = true;
+    QApplication::processEvents();//ensure everything’s done
+    Loader::Controller::singleton().suspendLoader();
+
     event->accept();//mainwindow takes the qapp with it
 }
 

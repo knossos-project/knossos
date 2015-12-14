@@ -25,7 +25,6 @@
 
 #include "file_io.h"
 #include "functions.h"
-#include "knossos.h"
 #include "segmentation/cubeloader.h"
 #include "session.h"
 #include "skeleton/node.h"
