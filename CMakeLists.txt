@@ -11,7 +11,7 @@ option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
-option(AUTO_MOC "use CMAKE_AUTOMOC instead of manual qt_wrap_cpp (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
+option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
@@ -20,8 +20,8 @@ file(GLOB_RECURSE headers *.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
 set(SRC_LIST ${sources} ${headers})
 
-set(CMAKE_AUTOMOC ${AUTO_MOC})
-set(CMAKE_AUTORCC ON)#resources.qrc
+set(CMAKE_AUTOMOC ${AUTOGEN})
+set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_AUTOSTATICPLUGINS ON)#https://github.com/Alexpux/MINGW-packages/issues/577
@@ -34,8 +34,9 @@ find_package(Snappy REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
 
-if(NOT AUTO_MOC)
+if(NOT AUTOGEN)
     qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers})
+    qt5_add_resources(SRC_LIST resources.qrc)
 endif()
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
