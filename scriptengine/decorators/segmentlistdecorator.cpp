@@ -4,12 +4,12 @@
 
 SegmentListDecorator::SegmentListDecorator(QObject *parent) : QObject(parent) {}
 
-nodeListElement & SegmentListDecorator::source(segmentListElement *self) {
-    return self->source;
+nodeListElement * SegmentListDecorator::source(segmentListElement *self) {
+    return &self->source;
 }
 
-nodeListElement & SegmentListDecorator::target(segmentListElement *self) {
-    return self->target;
+nodeListElement * SegmentListDecorator::target(segmentListElement *self) {
+    return &self->target;
 }
 
 int SegmentListDecorator::source_id(segmentListElement *self) {
