@@ -87,7 +87,7 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
-    constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
+    constexpr CoordinateDerived componentMul(const CoordinateDerived & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
     constexpr CoordinateDerived operator*(const ComponentType scalar) const {

@@ -207,8 +207,8 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
 
         //Some calculations for the correct direction of the cylinder.
         const floatCoordinate cylinderDirection{0.0f, 0.0f, 1.0f};
-        const floatCoordinate scale{1.0f, 1.0f, 1.0f / state->viewerState->voxelXYtoZRatio};
-        const floatCoordinate segDirection{scale * floatCoordinate{*top - *base}};
+        floatCoordinate segDirection{*top - *base};
+        segDirection.z /= state->viewerState->voxelXYtoZRatio;
 
         floatCoordinate rotationAxis{crossProduct(cylinderDirection, segDirection)};
         const float currentAngle{radToDeg(vectorAngle(cylinderDirection, segDirection))};
