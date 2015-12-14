@@ -385,11 +385,13 @@ void ViewportBase::resizeGL(int w, int h) {
 }
 
 void Viewport3D::paintGL() {
+    glClear(GL_DEPTH_BUFFER_BIT);
     renderViewport();
     renderViewportFrontFace();
 }
 
 void ViewportOrtho::paintGL() {
+    glClear(GL_DEPTH_BUFFER_BIT);
     if (state->overlay && state->viewerState->showOverlay && viewportType == VIEWPORT_ARBITRARY) {
         updateOverlayTexture();
     }

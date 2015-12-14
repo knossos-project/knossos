@@ -809,7 +809,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
     if(!state->viewerState->selectModeFlag) {
         if(state->viewerState->multisamplingOnOff) {
