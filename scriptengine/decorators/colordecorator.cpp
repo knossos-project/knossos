@@ -2,13 +2,7 @@
 
 #include "color4F.h"
 
-Q_DECLARE_METATYPE(color4F)
-
-ColorDecorator::ColorDecorator(QObject *parent) :
-    QObject(parent)
-{
-    qRegisterMetaType<color4F>();
-}
+ColorDecorator::ColorDecorator(QObject *parent) : QObject(parent) {}
 
 
 color4F *ColorDecorator::new_color4F() {

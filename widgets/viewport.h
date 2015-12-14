@@ -25,10 +25,11 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "color4F.h"
 #include "coordinate.h"
-#include "scriptengine/decorators/meshdecorator.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
+
 #include <QDebug>
 #include <QDockWidget>
 #include <QFont>
@@ -124,6 +125,7 @@ constexpr int defaultFonsSize = 10;
 class commentListElement;
 class nodeListElement;
 class segmentListElement;
+class mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp);
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {

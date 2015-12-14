@@ -1,18 +1,14 @@
-#ifndef Color4FDECORATOR_H
-#define Color4FDECORATOR_H
+#ifndef COLOR_DECORATOR_H
+#define COLOR_DECORATOR_H
 
 #include <QObject>
 
 class color4F;
-class ColorDecorator : public QObject
-{
+class ColorDecorator : public QObject {
     Q_OBJECT
 public:
     explicit ColorDecorator(QObject *parent = 0);
 
-    
-signals:
-    
 public slots:
     color4F *new_color4F();
     color4F *new_color4F(float r, float g, float b, float a = 1.0);
@@ -30,4 +26,4 @@ public slots:
     QString static_color4F_help();
 };
 
-#endif // Color4FDECORATOR_H
+#endif//COLOR_DECORATOR_H

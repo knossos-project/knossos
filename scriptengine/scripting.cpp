@@ -14,7 +14,6 @@
 #include "decorators/nodelistdecorator.h"
 #include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
-#include "decorators/meshdecorator.h"
 #include "proxies/pythonproxy.h"
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
@@ -56,7 +55,6 @@ Scripting::Scripting() : _ctx(NULL) {
     colorDecorator = new ColorDecorator();
     coordinateDecorator = new CoordinateDecorator();
     floatCoordinateDecorator = new FloatCoordinateDecorator();
-    meshDecorator = new MeshDecorator();
     nodeListDecorator = new NodeListDecorator();
     nodeCommentDecorator = new NodeCommentDecorator();
     segmentListDecorator = new SegmentListDecorator();
@@ -105,9 +103,6 @@ Scripting::Scripting() : _ctx(NULL) {
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
     PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
