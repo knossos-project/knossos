@@ -361,8 +361,10 @@ bool Scripting::reloadPlugin(const QString &pluginName, bool isQuiet) {
     if (!closePlugin(pluginName, isQuiet)) {
         return pluginActionError(actionStr, pluginName, "close failed", isQuiet);
     }
-    if (!evalScript(QString("reload(%1) <> None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()) {
-        return pluginActionError(actionStr, pluginName, "reload failed", isQuiet);
+    if (isPluginImported(pluginName))  {
+        if (!evalScript(QString("reload(%1) <> None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()) {
+            return pluginActionError(actionStr, pluginName, "reload failed", isQuiet);
+        }
     }
     if (!openPlugin(pluginName, isQuiet)) {
         return pluginActionError(actionStr, pluginName, "open failed", isQuiet);
