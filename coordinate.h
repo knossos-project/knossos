@@ -90,6 +90,15 @@ public:
     constexpr CoordinateDerived componentMul(const CoordinateDerived & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
+
+    constexpr ComponentType dot(const CoordinateDerived & rhs) const {
+        return x * rhs.x + y * rhs.y + z * rhs.z;
+    }
+
+    constexpr CoordinateDerived cross(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x);
+    }
+
     constexpr CoordinateDerived operator*(const ComponentType scalar) const {
         return CoordinateDerived(x * scalar, y * scalar, z * scalar);
     }
@@ -107,6 +116,23 @@ public:
     template<typename T>
     CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
+    }
+
+    constexpr float length() const {
+        return std::sqrt(x*x + y*y + z*z);
+    }
+
+    constexpr float angleRad(CoordinateDerived & other) const {
+        return std::acos(static_cast<float>(this->dot(other)) / (this->length() * other.length()));
+    }
+
+    bool normalize() {
+        const ComponentType norm = length();
+        if (norm != 0) {
+            *this /= norm;
+            return true;
+        }
+        return false;
     }
 
     constexpr CoordinateDerived capped(const CoordinateDerived & min, const CoordinateDerived & max) const {

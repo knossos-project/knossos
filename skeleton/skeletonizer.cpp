@@ -850,7 +850,7 @@ nodeListElement * Skeletonizer::findNearbyNode(treeListElement * nearbyTree, Coo
         for (auto & currentNode : tree.nodes) {
             // We make the nearest node the next active node
             const floatCoordinate distanceVector = searchPosition - currentNode.position;
-            const auto distance = euclidicNorm(distanceVector);
+            const auto distance = distanceVector.length();
             //set nearest distance to distance to first node found, then to distance of any nearer node found.
             if (distance  < smallestDistance) {
                 smallestDistance = distance;
@@ -956,7 +956,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
             }
 
             const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
-            float lockDistance = euclidicNorm(lockVector);
+            float lockDistance = lockVector.length();
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
                 return boost::none;
@@ -1023,7 +1023,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = euclidicNorm(targetNode.position - sourceNode.position);
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = (targetNode.position - sourceNode.position).length();
 
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);

@@ -235,7 +235,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             //Additional move of specified steps along tracing direction
             if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
                 floatCoordinate walking{movement};
-                const auto factor = state->viewerState->autoTracingSteps / euclidicNorm(walking);
+                const auto factor = state->viewerState->autoTracingSteps / walking.length();
                 clickedCoordinate += Coordinate(std::lround(movement.x * factor), std::lround(movement.y * factor), std::lround(movement.z * factor));
             }
             //Additional move of steps equal to distance between last and new node along tracing direction.

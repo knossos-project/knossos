@@ -210,11 +210,11 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
         floatCoordinate segDirection{*top - *base};
         segDirection.z /= state->viewerState->voxelXYtoZRatio;
 
-        floatCoordinate rotationAxis{crossProduct(cylinderDirection, segDirection)};
-        const float currentAngle{radToDeg(vectorAngle(cylinderDirection, segDirection))};
+        floatCoordinate rotationAxis{cylinderDirection.cross(segDirection)};
+        const float currentAngle{radToDeg(cylinderDirection.angleRad(segDirection))};
         //we need another reference vector for 180° rotations
         if (rotationAxis == floatCoordinate{0, 0, 0}) {
-            rotationAxis = {crossProduct({0.0f, 1.0f, 0.0f}, segDirection)};
+            rotationAxis = {floatCoordinate(0.0f, 1.0f, 0.0f).cross(segDirection)};
         }
         //some gl implementations have problems with the params occuring for
         //segs in straight directions. we need a fix here.
@@ -223,7 +223,7 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
         //tdItem use screenPxXPerDataPx for proper LOD
         //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
         const auto edges = std::max(baseRadius, topRadius) > 100.f ? 10 : std::max(baseRadius, topRadius) > 15.f ? 6 : 3;
-        gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(segDirection), edges, 1);
+        gluCylinder(gluCylObj, baseRadius, topRadius, segDirection.length(), edges, 1);
 
         gluDeleteQuadric(gluCylObj);
         glPopMatrix();
@@ -448,8 +448,8 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                 gluQuadricNormals(gluCylObj, GLU_SMOOTH);
                 gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-                length = euclidicNorm(segDir);
-                distSourceInter = euclidicNorm(tempVec3);
+                length = segDir.length();
+                distSourceInter = tempVec3.length();
 
                 if(sSr_local < sTr_local)
                     radius = sTr_local + sSr_local * (1. - distSourceInter / length);
@@ -466,11 +466,11 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                 //Some calculations for the correct direction of the cylinder.
                 tempVec = {0., 0., 1.};
                 //temVec2 defines the rotation axis
-                tempVec2 = crossProduct(tempVec, segDir);
-                currentAngle = radToDeg(vectorAngle(tempVec, segDir));
+                tempVec2 = tempVec.cross(segDir);
+                currentAngle = radToDeg(tempVec.angleRad(segDir));
                 //we need another reference vector for 180° rotations
                 if (tempVec2 == floatCoordinate{0, 0, 0}) {
-                    tempVec2 = {crossProduct({0.0f, 1.0f, 0.0f}, segDir)};
+                    tempVec2 = {floatCoordinate(0.0f, 1.0f, 0.0f).cross(segDir)};
                 }
                 glRotatef(currentAngle, tempVec2.x, tempVec2.y, tempVec2.z);
 
@@ -1005,17 +1005,17 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             const floatCoordinate normal = {0, 0, 1};
             floatCoordinate vec1 = {1, 0, 0};
             // first rotation makes the viewport face the camera
-            float scalar = scalarProduct(normal, n);
+            float scalar = normal.dot(n);
             float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
-            floatCoordinate axis = crossProduct(normal, n);
-            if(normalizeVector(axis)) {
+            floatCoordinate axis = normal.cross(n);
+            if(axis.normalize()) {
                 glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
             } // second rotation also aligns the plane vectors with the camera
             rotateAndNormalize(vec1, axis, angle);
-            scalar = scalarProduct(vec1, v1);
+            scalar = vec1.dot(v1);
             angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
-            axis = crossProduct(vec1, v1);
-            if(normalizeVector(axis)) {
+            axis = vec1.cross(v1);
+            if(axis.normalize()) {
                 glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
             }
         }
@@ -1719,9 +1719,9 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         auto renderAxis = [this, gl_viewport](floatCoordinate & targetView, const QString label) {
             glPushMatrix();
             floatCoordinate currentView = {0, 0, -1};
-            const auto angle = acosf(scalarProduct(currentView, targetView));
-            auto axis = crossProduct(currentView, targetView);
-            if (normalizeVector(axis)) {
+            const auto angle = acosf(currentView.dot(targetView));
+            auto axis = currentView.cross(targetView);
+            if (axis.normalize()) {
                 glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
             }
             // axis
@@ -1729,10 +1729,10 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             GLUquadricObj * gluCylObj = gluNewQuadric();
             gluQuadricNormals(gluCylObj, GLU_SMOOTH);
             gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, diameter, diameter , euclidicNorm(targetView), 10, 1);
+            gluCylinder(gluCylObj, diameter, diameter , targetView.length(), 10, 1);
             gluDeleteQuadric(gluCylObj);
             // cone z
-            glTranslatef(0, 0, euclidicNorm(targetView));
+            glTranslatef(0, 0, targetView.length());
             gluCylObj = gluNewQuadric();
             gluQuadricNormals(gluCylObj, GLU_SMOOTH);
             gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
@@ -1750,7 +1750,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         // switch to viewport coordinate system
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        const auto lenLongestAxis = std::max(euclidicNorm(axis_x), std::max(euclidicNorm(axis_y), euclidicNorm(axis_z)));
+        const auto lenLongestAxis = std::max(axis_x.length(), std::max(axis_y.length(), axis_z.length()));
         glOrtho(0, gl_viewport[2], gl_viewport[3], 0, lenLongestAxis, -lenLongestAxis);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
