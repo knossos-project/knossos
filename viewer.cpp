@@ -795,6 +795,9 @@ void Viewer::run() {
         viewportArb->v2 = v2;
         viewportArb->n = v3;
         rotation = Rotation();
+        if (viewportArb->hasCursor) {
+            viewportArb->sendCursorPosition();
+        }
         alphaCache = 0;
     }
 
