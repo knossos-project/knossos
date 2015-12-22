@@ -84,6 +84,7 @@ public:
 };
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
+    state->mainWindow = this;
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 

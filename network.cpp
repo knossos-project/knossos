@@ -1,8 +1,9 @@
 ﻿#include "network.h"
 
-#include "widgets/GuiConstants.h"
 #include "loader.h"
 #include "stateInfo.h"
+#include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 
 #include <QDir>
 #include <QEventLoop>
@@ -41,7 +42,7 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
         pause.exit();
     });
 
-    QProgressDialog progress("Network Operation…", "Abort", 0, 100);
+    QProgressDialog progress("Network Operation…", "Abort", 0, 100, state->mainWindow);
     progress.setModal(true);
     QObject::connect(&progress, &QProgressDialog::canceled, &reply, &QNetworkReply::abort);
     auto processProgress = [&progress](qint64 bytesReceived, qint64 bytesTotal){
@@ -50,7 +51,6 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     };
     QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
-
     QTimer::singleShot(400, &progress, &QProgressDialog::show);
 
     pause.exec();
