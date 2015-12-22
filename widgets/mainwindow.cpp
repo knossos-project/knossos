@@ -70,6 +70,19 @@
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
 
+class CoordinateSpin : public QSpinBox {
+public:
+    CoordinateSpin(const QString & prefix, MainWindow & mainWindow) : QSpinBox(&mainWindow) {
+        setPrefix(prefix);
+        setRange(0, 1000000);//allow min 0 as bogus value, we don’t adjust the max anyway
+        setValue(0 + 1);//inintialize for {0, 0, 0}
+        QObject::connect(this, &QSpinBox::editingFinished, &mainWindow, &MainWindow::coordinateEditingFinished);
+    }
+    virtual void fixup(QString & input) const override {
+        input = QString::number(0);//let viewer reset the value
+    }
+};
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
@@ -221,27 +234,9 @@ void MainWindow::createToolbars() {
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
-    xField = new QSpinBox();
-    xField->setPrefix("x: ");
-    xField->setRange(1, 1000000);
-    xField->setMinimumWidth(75);
-    xField->setValue(state->viewerState->currentPosition.x + 1);
-
-    yField = new QSpinBox();
-    yField->setPrefix("y: ");
-    yField->setRange(1, 1000000);
-    yField->setMinimumWidth(75);
-    yField->setValue(state->viewerState->currentPosition.y + 1);
-
-    zField = new QSpinBox();
-    zField->setPrefix("z: ");
-    zField->setRange(1, 1000000);
-    zField->setMinimumWidth(75);
-    zField->setValue(state->viewerState->currentPosition.z + 1);
-
-    QObject::connect(xField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
-    QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
-    QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
+    xField = new CoordinateSpin("x: ", *this);
+    yField = new CoordinateSpin("y: ", *this);
+    zField = new CoordinateSpin("z: ", *this);
 
     basicToolbar.addWidget(xField);
     basicToolbar.addWidget(yField);
