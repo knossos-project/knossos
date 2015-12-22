@@ -182,21 +182,8 @@ Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
 }
 
 void Dataset::checkMagnifications() {
-    //iterate over all possible mags and test their availability (if directory exists)
-    for (int currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
-        bool currMagExists = false;
-        QUrl magUrl = url;
-        magUrl.setPath(QString("%1/mag%2/").arg(url.path()).arg(currMag));
-        if (remote) {
-            currMagExists = Network::singleton().refresh(magUrl).first;
-        } else {
-            currMagExists = QDir(magUrl.toLocalFile()).exists();
-        }
-        if (currMagExists) {
-            lowestAvailableMag = std::min(lowestAvailableMag, currMag);
-            highestAvailableMag = std::max(highestAvailableMag, currMag);
-        }
-    }
+    //iterate over all possible mags and test their availability
+    std::tie(lowestAvailableMag, highestAvailableMag) = Network::singleton().checkOnlineMags(url);
     qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag);
 }
 

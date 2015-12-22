@@ -223,7 +223,7 @@ void DatasetLoadWidget::processButtonClicked() {
  */
 bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
-        show();
+        open();
         return false;
     } else if (!path.isEmpty()) {//if empty reload previous
         datasetUrl = {path};//remember config url
@@ -238,15 +238,25 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
 
-    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     Dataset info;
     Dataset::CubeType raw_compression;
     if (datasetUrl.toString().contains("/ocp/ca/")) {
         info = Dataset::parseOpenConnectomeJson(datasetUrl, download.second);
     } else {
         info = Dataset::fromLegacyConf(datasetUrl, download.second);
-        info.checkMagnifications();
+        try {
+            info.checkMagnifications();
+        } catch (std::exception &) {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Information);
+            box.setText("Dataset will not be loaded.");
+            box.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");
+            box.exec();
+            open();
+            return false;
+        }
     }
+    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     info.applyToState();
     raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
             : info.compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6 : Dataset::CubeType::RAW_J2K;
