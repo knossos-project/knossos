@@ -129,7 +129,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pedantic-errors")
+target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14" "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
