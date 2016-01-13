@@ -1000,24 +1000,22 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     (float)state->viewerState->currentPosition.y,
                     (float)state->viewerState->currentPosition.z);
 
-        if (viewportType == VIEWPORT_ARBITRARY) {
-            glRotatef(180., 1.,0.,0.);
-            const floatCoordinate normal = {0, 0, 1};
-            floatCoordinate vec1 = {1, 0, 0};
-            // first rotation makes the viewport face the camera
-            float scalar = normal.dot(n);
-            float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
-            floatCoordinate axis = normal.cross(n);
-            if(axis.normalize()) {
-                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
-            } // second rotation also aligns the plane vectors with the camera
-            rotateAndNormalize(vec1, axis, angle);
-            scalar = vec1.dot(v1);
-            angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
-            axis = vec1.cross(v1);
-            if(axis.normalize()) {
-                glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
-            }
+        glRotatef(180., 1.,0.,0.);
+        const floatCoordinate normal = {0, 0, 1};
+        floatCoordinate vec1 = {1, 0, 0};
+        // first rotation makes the viewport face the camera
+        float scalar = normal.dot(n);
+        float angle = acosf(std::min(1.f, std::max(-1.f, scalar))); // deals with float imprecision at interval boundaries
+        floatCoordinate axis = normal.cross(n);
+        if(axis.normalize()) {
+            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
+        } // second rotation also aligns the plane vectors with the camera
+        rotateAndNormalize(vec1, axis, angle);
+        scalar = vec1.dot(v1);
+        angle = acosf(std::min(1.f, std::max(-1.f, scalar)));
+        axis = vec1.cross(v1);
+        if(axis.normalize()) {
+            glRotatef(-(angle*180/boost::math::constants::pi<float>()), axis.x, axis.y, axis.z);
         }
 
         glEnable(GL_TEXTURE_2D);

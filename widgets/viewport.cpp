@@ -392,9 +392,6 @@ void Viewport3D::paintGL() {
 
 void ViewportOrtho::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
-    if (state->overlay && state->viewerState->showOverlay && viewportType == VIEWPORT_ARBITRARY) {
-        updateOverlayTexture();
-    }
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
@@ -552,35 +549,6 @@ void Viewport3D::showHideButtons(bool isShow) {
     r90Button.setVisible(isShow);
     r180Button.setVisible(isShow);
     resetButton.setVisible(isShow);
-}
-
-void ViewportOrtho::updateOverlayTexture() {
-    if (!ocResliceNecessary) {
-        return;
-    }
-    ocResliceNecessary = false;
-    const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
-    const int height = width;
-    const auto begin = leftUpperPxInAbsPx_float;
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
-    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
-    for (int y = 0; y < height; ++y)
-    for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
-        if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
-            viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
-        } else {
-            const auto soid = readVoxel(dataPos);
-            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(soid);
-            viewportView[y][x][0] = std::get<0>(color);
-            viewportView[y][x][1] = std::get<1>(color);
-            viewportView[y][x][2] = std::get<2>(color);
-            viewportView[y][x][3] = std::get<3>(color);
-        }
-    }
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Viewport3D::updateVolumeTexture() {
@@ -770,20 +738,17 @@ void ViewportOrtho::sendCursorPosition() {
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = (viewportType == VIEWPORT_ARBITRARY) ? s_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
-    // display only entire pixels
+    float result = FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
-float ViewportOrtho::displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const {
-    float FOVinDCs = ((float)state->M) - 1.f;
-    float result = (viewportType == VIEWPORT_ARBITRARY) ? t_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
-    // display only entire pixels
-    return (std::floor(result * zoomFactor / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
+    float result = vpLenghtInDataPx / static_cast<float>(texture.edgeLengthPx);
+    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
 
-ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
+ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType), vpLenghtInDataPx((static_cast<int>((state->M / 2 + 1) * state->cubeEdgeLength / std::sqrt(2))  / 2) * 2), vpHeightInDataPx(vpLenghtInDataPx) {
     const auto svpLayout = new QHBoxLayout();
     svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
     resetButton.setMinimumSize(45, 20);
@@ -796,7 +761,44 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
     });
 }
 
+void ViewportArb::paintGL() {
+    glClear(GL_DEPTH_BUFFER_BIT);
+    if (state->overlay && state->viewerState->showOverlay) {
+        updateOverlayTexture();
+    }
+    ViewportOrtho::paintGL();
+}
+
 void ViewportArb::showHideButtons(bool isShow) {
     resetButton.setVisible(isShow);
     ViewportBase::showHideButtons(isShow);
+}
+
+void ViewportArb::updateOverlayTexture() {
+    if (!ocResliceNecessary) {
+        return;
+    }
+    ocResliceNecessary = false;
+    const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
+    const int height = width;
+    const auto begin = leftUpperPxInAbsPx_float;
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
+    for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x) {
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
+        if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
+            viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
+        } else {
+            const auto soid = readVoxel(dataPos);
+            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(soid);
+            viewportView[y][x][0] = std::get<0>(color);
+            viewportView[y][x][1] = std::get<1>(color);
+            viewportView[y][x][2] = std::get<2>(color);
+            viewportView[y][x][3] = std::get<3>(color);
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -70,18 +70,6 @@ Viewer::Viewer() {
 
     state->viewerState->renderInterval = FAST;
 
-    // for arbitrary viewport orientation
-    window->forEachOrthoVPDo([&](ViewportOrtho & vp) {
-        vp.s_max =  vp.t_max =
-                (
-                    (
-                        (int)((state->M/2 + 1)
-                              * state->cubeEdgeLength
-                              / sqrt(2))
-                        )
-                    / 2)
-                *2;
-    });
     resetRotation();
 
     state->viewerState->movementAreaFactor = 80;
@@ -190,7 +178,7 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     return true;
 }
 
-bool Viewer::dcSliceExtract_arb(char *datacube, char *slice, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT) {
+bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(vp.v2);
@@ -202,7 +190,7 @@ bool Viewer::dcSliceExtract_arb(char *datacube, char *slice, ViewportOrtho & vp,
         sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         (*t)++;
-        if(*t < vp.t_max) {
+        if(*t < vp.vpHeightInDataPx) {
             // Actually, although currentPxInDc_float is passed by reference and updated here,
             // it is totally ignored (i.e. not read, then overwritten) by the calling function.
             // But to keep the functionality here compatible after this bugfix, we also replicate
@@ -233,7 +221,7 @@ bool Viewer::dcSliceExtract_arb(char *datacube, char *slice, ViewportOrtho & vp,
             }
         }
         (*t)++;
-        if(*t >= vp.t_max) {
+        if(*t >= vp.vpHeightInDataPx) {
             break;
         }
         *currentPxInDc_float += *v2;
@@ -380,7 +368,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     if (vp.viewportType == VIEWPORT_ARBITRARY) {
-        vpGenerateTexture_arb(vp);
+        vpGenerateTexture(static_cast<ViewportArb&>(vp));
         return true;
     }
     const bool dc_reslice = vp.dcResliceNecessary;
@@ -504,7 +492,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
     return true;
 }
 
-void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
+void Viewer::vpGenerateTexture(ViewportArb &vp) {
     if (!vp.dcResliceNecessary) {
         return;
     }
@@ -524,9 +512,9 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < vp.s_max) {
+    while(s < vp.vpLenghtInDataPx) {
         t = 0;
-        while(t < vp.t_max) {
+        while(t < vp.vpHeightInDataPx) {
             Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
             Coordinate currentDc = currentPx / state->cubeEdgeLength;
 
@@ -540,12 +528,13 @@ void Viewer::vpGenerateTexture_arb(ViewportOrtho & vp) {
 
             currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
             t_old = t;
-            dcSliceExtract_arb(datacube,
-                               texData.data(),
-                               vp,
-                               &currentPxInDc_float,
-                               s, &t,
-                               state->viewerState->datasetAdjustmentOn);
+
+            dcSliceExtract(datacube,
+                           &currentPxInDc_float,
+                           texData.data(),
+                           s, &t,
+                           vp,
+                           state->viewerState->datasetAdjustmentOn);
             currentPx_float = currentPx_float + vp.v2 * (t - t_old);
         }
         s++;
@@ -637,23 +626,19 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                 , viewerState.currentPosition.z - static_cast<int>((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
             };
             break;
-        case VIEWPORT_ARBITRARY:
-            orthoVP.leftUpperPxInAbsPx_float = viewerState.currentPosition - (orthoVP.v1 * orthoVP.s_max/2 + orthoVP.v2 * orthoVP.t_max/2) * state->magnification;
+        case VIEWPORT_ARBITRARY: {
+            auto & arbVP = static_cast<ViewportArb&>(orthoVP);
+            arbVP.leftUpperPxInAbsPx_float = viewerState.currentPosition - (arbVP.v1 * arbVP.vpLenghtInDataPx/2 + arbVP.v2 * arbVP.vpHeightInDataPx/2) * state->magnification;
 
-            orthoVP.texture.leftUpperPxInAbsPx = orthoVP.leftUpperPxInAbsPx_float;
+            arbVP.texture.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
 
-            orthoVP.leftUpperDataPxOnScreen_float =
-                viewerState.currentPosition
-                - orthoVP.v1 * ((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                - orthoVP.v2 * ((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
-            ;
-
-            orthoVP.leftUpperDataPxOnScreen = {
-                roundFloat(orthoVP.leftUpperDataPxOnScreen.x)
-                , roundFloat(orthoVP.leftUpperDataPxOnScreen.y)
-                , roundFloat(orthoVP.leftUpperDataPxOnScreen.z)
+            arbVP.leftUpperDataPxOnScreen = {
+                roundFloat(arbVP.leftUpperDataPxOnScreen.x)
+                , roundFloat(arbVP.leftUpperDataPxOnScreen.y)
+                , roundFloat(arbVP.leftUpperDataPxOnScreen.z)
             };
             break;
+        }
         default:
             orthoVP.texture.leftUpperPxInAbsPx.x = 0;
             orthoVP.texture.leftUpperPxInAbsPx.y = 0;
@@ -670,8 +655,9 @@ bool Viewer::calcDisplayedEdgeLength() {
 
     window->forEachOrthoVPDo([&](ViewportOrtho & vpOrtho) {
         if (vpOrtho.viewportType==VIEWPORT_ARBITRARY) {
-            vpOrtho.texture.displayedEdgeLengthX = vpOrtho.s_max / (float) vpOrtho.texture.edgeLengthPx;
-            vpOrtho.texture.displayedEdgeLengthY = vpOrtho.t_max / (float) vpOrtho.texture.edgeLengthPx;
+            auto & vpArb = static_cast<ViewportArb&>(vpOrtho);
+            vpArb.texture.displayedEdgeLengthX = vpArb.vpLenghtInDataPx / (float) vpArb.texture.edgeLengthPx;
+            vpArb.texture.displayedEdgeLengthY = vpArb.vpHeightInDataPx / (float) vpArb.texture.edgeLengthPx;
         }
         else {
             vpOrtho.texture.displayedEdgeLengthX = vpOrtho.texture.displayedEdgeLengthY = FOVinDCs * (float)state->cubeEdgeLength / (float) vpOrtho.texture.edgeLengthPx;
@@ -1104,41 +1090,42 @@ bool Viewer::recalcTextureOffsets() {
         case VIEWPORT_ARBITRARY:
             //v1: vector in Viewport x-direction, parameter s corresponds to v1
             //v2: vector in Viewport y-direction, parameter t corresponds to v2
-            orthoVP.s_max = orthoVP.t_max = (((int)((state->M / 2 + 1) * state->cubeEdgeLength / sqrt(2.))) / 2) * 2;
-            float voxelV1X = sqrtf(powf(orthoVP.v1.x, 2.0) + powf(orthoVP.v1.y / state->viewerState->voxelXYRatio, 2.0) + powf(orthoVP.v1.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
-            float voxelV2X = sqrtf((powf(orthoVP.v2.x, 2.0) + powf(orthoVP.v2.y / state->viewerState->voxelXYRatio, 2.0) + powf(orthoVP.v2.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0)));
+            auto & arbVP = static_cast<ViewportArb&>(orthoVP);
+            arbVP.vpLenghtInDataPx = arbVP.vpHeightInDataPx = (((int)((state->M / 2 + 1) * state->cubeEdgeLength / sqrt(2.))) / 2) * 2;
+            float voxelV1X = sqrtf(powf(arbVP.v1.x, 2.0) + powf(arbVP.v1.y / state->viewerState->voxelXYRatio, 2.0) + powf(arbVP.v1.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
+            float voxelV2X = sqrtf((powf(arbVP.v2.x, 2.0) + powf(arbVP.v2.y / state->viewerState->voxelXYRatio, 2.0) + powf(arbVP.v2.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0)));
 
-            orthoVP.texture.displayedEdgeLengthX /= voxelV1X;
-            orthoVP.texture.displayedEdgeLengthY /= voxelV2X;
+            arbVP.texture.displayedEdgeLengthX /= voxelV1X;
+            arbVP.texture.displayedEdgeLengthY /= voxelV2X;
 
             //Display only entire pixels (only truncation possible!) WHY??
-            orthoVP.texture.displayedEdgeLengthX = (std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-            orthoVP.texture.displayedEdgeLengthY = (std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
+            arbVP.texture.displayedEdgeLengthX = (std::ceil(arbVP.texture.displayedEdgeLengthX / 2. / arbVP.texture.texUnitsPerDataPx) * arbVP.texture.texUnitsPerDataPx) * 2.;
+            arbVP.texture.displayedEdgeLengthY = (std::ceil(arbVP.texture.displayedEdgeLengthY / 2. / arbVP.texture.texUnitsPerDataPx) * arbVP.texture.texUnitsPerDataPx) * 2.;
 
             // Update screen pixel to data pixel mapping values
-            orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmX =
-                sqrtf(powf(state->viewerState->voxelDimX * orthoVP.v1.x,2.)
-                      + powf(state->viewerState->voxelDimY * orthoVP.v1.y,2.)
-                      + powf(state->viewerState->voxelDimZ * orthoVP.v1.z,2.)
-                ) * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
+            arbVP.screenPxXPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
+            arbVP.screenPxYPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
+            arbVP.displayedlengthInNmX =
+                sqrtf(powf(state->viewerState->voxelDimX * arbVP.v1.x,2.)
+                      + powf(state->viewerState->voxelDimY * arbVP.v1.y,2.)
+                      + powf(state->viewerState->voxelDimZ * arbVP.v1.z,2.)
+                ) * (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
 
-            orthoVP.displayedlengthInNmY =
-                sqrtf(powf(state->viewerState->voxelDimX * orthoVP.v2.x,2.)
-                      + powf(state->viewerState->voxelDimY * orthoVP.v2.y,2.)
-                      + powf(state->viewerState->voxelDimZ * orthoVP.v2.z,2.)
-                ) * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
+            arbVP.displayedlengthInNmY =
+                sqrtf(powf(state->viewerState->voxelDimX * arbVP.v2.x,2.)
+                      + powf(state->viewerState->voxelDimY * arbVP.v2.y,2.)
+                      + powf(state->viewerState->voxelDimZ * arbVP.v2.z,2.)
+                ) * (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
 
-            //Update orthoVP.leftUpperDataPxOnScreen with this call
+            //Update arbVP.leftUpperDataPxOnScreen with this call
             calcLeftUpperTexAbsPx();
 
-            midX = orthoVP.s_max / 2. * orthoVP.texture.texUnitsPerDataPx * (float)state->magnification;
-            midY = orthoVP.t_max / 2. * orthoVP.texture.texUnitsPerDataPx * (float)state->magnification;
+            midX = arbVP.vpLenghtInDataPx / 2. * arbVP.texture.texUnitsPerDataPx * (float)state->magnification;
+            midY = arbVP.vpHeightInDataPx / 2. * arbVP.texture.texUnitsPerDataPx * (float)state->magnification;
 
             //Offsets for crosshair
-            orthoVP.texture.xOffset = midX / orthoVP.texture.texUnitsPerDataPx * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
-            orthoVP.texture.yOffset = midY / orthoVP.texture.texUnitsPerDataPx * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
+            arbVP.texture.xOffset = midX / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxXPerDataPx + 0.5 * arbVP.screenPxXPerDataPx;
+            arbVP.texture.yOffset = midY / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxYPerDataPx + 0.5 * arbVP.screenPxYPerDataPx;
             break;
         }
         //Calculate the vertices in texture coordinates

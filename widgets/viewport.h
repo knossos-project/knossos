@@ -309,10 +309,7 @@ class ViewportOrtho : public ViewportBase {
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override { return 0.75; }
 
-    virtual void initializeGL() override;
-    virtual void paintGL() override;
     void createOverlayTextures();
-    void updateOverlayTexture();
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
@@ -335,6 +332,10 @@ class ViewportOrtho : public ViewportBase {
     virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
     virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
+
+protected:
+    virtual void initializeGL() override;
+    virtual void paintGL() override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     void resetTexture();
@@ -345,14 +346,9 @@ public:
 
     //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
     Coordinate leftUpperDataPxOnScreen;
-    // plane vectors. s*v1 + t*v2 = px
     floatCoordinate n;
     floatCoordinate v1; // vector in x direction
     floatCoordinate v2; // vector in y direction
-    floatCoordinate leftUpperPxInAbsPx_float;
-    floatCoordinate leftUpperDataPxOnScreen_float;
-    int s_max;
-    int t_max;
     std::atomic_bool dcResliceNecessary{true};
     std::atomic_bool ocResliceNecessary{true};
 
@@ -361,15 +357,24 @@ public:
     char * viewPortData;
     viewportTexture texture;
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
-    float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
-    float displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const;
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 };
 
 class ViewportArb : public ViewportOrtho {
     Q_OBJECT
     QPushButton resetButton{"reset"};
+    void updateOverlayTexture();
+
+protected:
+    virtual void paintGL() override;
+
 public:
+    int vpLenghtInDataPx;
+    int vpHeightInDataPx;
+    floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
+
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
 };
 #endif // VIEWPORT_H
