@@ -28,10 +28,12 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     vpGroup->addButton(&vpXYRadio);
     vpGroup->addButton(&vpXZRadio);
     vpGroup->addButton(&vpZYRadio);
+    vpGroup->addButton(&vpArbRadio);
     vpGroup->addButton(&vp3dRadio);
     viewportChoiceLayout->addWidget(&vpXYRadio);
     viewportChoiceLayout->addWidget(&vpXZRadio);
     viewportChoiceLayout->addWidget(&vpZYRadio);
+    viewportChoiceLayout->addWidget(&vpArbRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
     QObject::connect(vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
 
@@ -68,6 +70,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
             const auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
                             vpXZRadio.isChecked() ? VIEWPORT_XZ :
                             vpZYRadio.isChecked() ? VIEWPORT_ZY :
+                            vpArbRadio.isChecked() ? VIEWPORT_ARBITRARY :
                                                     VIEWPORT_SKELETON;
 
             emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
@@ -80,6 +83,7 @@ uint SnapshotWidget::getCheckedViewport() const {
     return vpXYRadio.isChecked() ? VIEWPORT_XY :
            vpXZRadio.isChecked() ? VIEWPORT_XZ :
            vpZYRadio.isChecked() ? VIEWPORT_ZY :
+           vpArbRadio.isChecked() ? VIEWPORT_ARBITRARY :
                                    VIEWPORT_SKELETON;
 }
 
@@ -95,6 +99,7 @@ QString SnapshotWidget::defaultFilename() const {
     const QString vp = vpXYRadio.isChecked() ? "XY" :
                    vpXZRadio.isChecked() ? "XZ" :
                    vpZYRadio.isChecked() ? "ZY" :
+                   vpArbRadio.isChecked() ? "Arb" :
                                            "3D";
     auto pos = &state->viewerState->currentPosition;
     auto annotationName = Session::singleton().annotationFilename;
@@ -131,6 +136,7 @@ void SnapshotWidget::loadSettings() {
         case VIEWPORT_XY: vpXYRadio.setChecked(true); break;
         case VIEWPORT_XZ: vpXZRadio.setChecked(true); break;
         case VIEWPORT_ZY: vpZYRadio.setChecked(true); break;
+        case VIEWPORT_ARBITRARY: vpArbRadio.setChecked(true); break;
         default: vp3dRadio.setChecked(true); break;
     }
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
