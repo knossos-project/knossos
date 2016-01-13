@@ -259,7 +259,7 @@ void MainWindow::createToolbars() {
     auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
     auto pythonInterpreterButton = createToolToogleButton(":/resources/icons/python.png", "Python Interpreter");
-
+    auto snapshotButton = createToolToogleButton(":/resources/icons/camera.png", "Snapshot");
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
         if (down) {
@@ -272,12 +272,14 @@ void MainWindow::createToolbars() {
     QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
+    QObject::connect(snapshotButton, &QToolButton::clicked, &widgetContainer.snapshotWidget, &SnapshotWidget::setVisible);
     //visibility → button
     QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::visibilityChanged, pythonInterpreterButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::visibilityChanged, snapshotButton, &QToolButton::setChecked);
 
     defaultToolbar.addSeparator();
 
@@ -560,10 +562,10 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", &widgetContainer.datasetOptionsWidget, SLOT(show()));
-    windowMenu->addAction(tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation Window"), &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/camera.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto scriptingMenu = menuBar()->addMenu("Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));

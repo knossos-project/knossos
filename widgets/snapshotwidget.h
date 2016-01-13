@@ -28,7 +28,18 @@ public:
 public slots:
     void updateOptionVisibility();
 signals:
+    void visibilityChanged(bool);
     void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+
+private:
+    void showEvent(QShowEvent *event) override {
+        QDialog::showEvent(event);
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *event) override {
+        QDialog::hideEvent(event);
+        emit visibilityChanged(false);
+    }
 };
 
 #endif // SNAPSHOTWIDGET_H
