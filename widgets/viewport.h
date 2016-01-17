@@ -89,10 +89,11 @@ struct viewportTexture {
 };
 
 struct RenderOptions {
-    RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
-                  const bool drawViewportPlanes = true, const bool enableSkeletonDownsampling = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
-        : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
-          drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(enableSkeletonDownsampling), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
+    // default
+    RenderOptions();
+    // snapshot render options
+    RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
+
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
@@ -100,6 +101,7 @@ struct RenderOptions {
     bool drawSkeleton;
     bool drawViewportPlanes;
     bool enableSkeletonDownsampling;
+    bool enableTextScaling;
     bool highlightActiveNode;
     bool highlightSelection;
     bool selectionBuffer;

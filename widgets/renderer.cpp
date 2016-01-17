@@ -1714,7 +1714,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         floatCoordinate axis_y{static_cast<float>(conePos_y[0] - origin[0]), static_cast<float>(origin[1] - conePos_y[1]), static_cast<float>(conePos_y[2] - origin[2])};
         floatCoordinate axis_z{static_cast<float>(conePos_z[0] - origin[0]), static_cast<float>(origin[1] - conePos_z[1]), static_cast<float>(conePos_z[2] - origin[2])};
         glDisable(GL_DEPTH_TEST);
-        auto renderAxis = [this, gl_viewport](floatCoordinate & targetView, const QString label) {
+        auto renderAxis = [this, gl_viewport, options](floatCoordinate & targetView, const QString label) {
             glPushMatrix();
             floatCoordinate currentView = {0, 0, -1};
             const auto angle = acosf(currentView.dot(targetView));
@@ -1737,7 +1737,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             gluCylinder(gluCylObj, std::ceil(0.014*gl_viewport[2]), 0., std::ceil(0.028*gl_viewport[2]), 10, 5);
             gluDeleteQuadric(gluCylObj);
             const int offset = std::ceil(0.043*gl_viewport[2]);
-            renderText({offset, offset, offset}, label, std::ceil(0.02*gl_viewport[2]));
+            renderText({offset, offset, offset}, label, options.enableTextScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFonsSize);
             glPopMatrix();
         };
         // remember world coordinate system

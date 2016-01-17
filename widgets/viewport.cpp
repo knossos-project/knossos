@@ -44,6 +44,13 @@ bool ViewportBase::oglDebug = false;
 bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
+RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(state->overlay && state->viewerState->showOverlay),
+drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionBuffer(false) {}
+
+RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
+    : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(false), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
+      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionBuffer(false) {}
+
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
@@ -395,7 +402,7 @@ void ViewportOrtho::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
-        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+        renderViewport();
     }
     renderViewportFrontFace();
 }
@@ -716,7 +723,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false, false);
+    const RenderOptions options(withAxes, withOverlay, withSkeleton, withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);
