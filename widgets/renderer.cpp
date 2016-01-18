@@ -676,24 +676,18 @@ void ViewportOrtho::renderViewportFast() {
         }
     }
 
-    QMatrix4x4 modelMatrix; //identity
-    QMatrix4x4 viewMatrix; //identity
+    QMatrix4x4 viewMatrix;
     QMatrix4x4 projectionMatrix;
-    const float width = 1.0f * this->width();
-    const float height = 1.0f * this->height();
-    projectionMatrix.ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);//origin top left
+    projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), 0, gpucubeedge);
 
-//    viewMatrix.scale(zy ? state->scale.z / state->scale.y : 1, xz ? state->scale.z / state->scale.x : 1, 1);
-
-    viewMatrix.scale(width / fov, height / fov);
-    if (xz) {
-        viewMatrix.rotate(-90.0f, QVector3D(1.0f, 0.0f, 0.0f));
-    } else if (zy) {
-        viewMatrix.rotate(-90.0f, QVector3D(0.0f, -1.0f, 0.0f));
-    }
-    viewMatrix.translate(deviation / QVector3D{-1.0f, 1.0f, 1.0f});
-
-//    viewMatrix.translate(0, 0, -zy * gpucubeedge * supercubeedge * 0.5 / state->scale.z / state->scale.y -xz * gpucubeedge * supercubeedge * 0.5 / state->scale.z / state->scale.x);
+    auto qvec = [](auto coord){
+        return QVector3D(coord.x, coord.y, coord.z);
+    };
+    viewMatrix.scale(width() / fov, height() / fov);
+    viewMatrix.scale(1, -1);//invert y because whe want our origin in the top right corner
+    viewMatrix.scale(xz || zy ? -1 : 1, 1);//HACK idk
+    const auto cameraPos = floatCoordinate{cpos} + n;
+    viewMatrix.lookAt(qvec(cameraPos), qvec(cpos), qvec(v2));
 
     // raw data shader
     raw_data_shader.bind();
@@ -703,7 +697,6 @@ void ViewportOrtho::renderViewportFast() {
     raw_data_shader.enableAttributeArray(texLocation);
     raw_data_shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), 3);
     raw_data_shader.setAttributeArray(texLocation, textureVertices.data()->data(), 3);
-    raw_data_shader.setUniformValue("model_matrix", modelMatrix);
     raw_data_shader.setUniformValue("view_matrix", viewMatrix);
     raw_data_shader.setUniformValue("projection_matrix", projectionMatrix);
     raw_data_shader.setUniformValue("texture", 0);
@@ -716,7 +709,6 @@ void ViewportOrtho::renderViewportFast() {
     overlay_data_shader.enableAttributeArray(otexLocation);
     overlay_data_shader.setAttributeArray(overtexLocation, triangleVertices.data()->data(), 3);
     overlay_data_shader.setAttributeArray(otexLocation, textureVertices.data()->data(), 3);
-    overlay_data_shader.setUniformValue("model_matrix", modelMatrix);
     overlay_data_shader.setUniformValue("view_matrix", viewMatrix);
     overlay_data_shader.setUniformValue("projection_matrix", projectionMatrix);
     overlay_data_shader.setUniformValue("indexTexture", 0);
@@ -753,13 +745,10 @@ void ViewportOrtho::renderViewportFast() {
                 const auto pos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
                 auto it = layer.textures.find(pos);
                 auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
-                modelMatrix.setToIdentity();
-                modelMatrix.translate(x * gpucubeedge, y * gpucubeedge, z * gpucubeedge);
-                if (xz) {
-                    modelMatrix.rotate(90.0f, QVector3D(1.0f, 0.0f, 0.0f));
-                } else if (zy) {
-                    modelMatrix.rotate(90.0f, QVector3D(0.0f, -1.0f, 0.0f));
-                }
+
+                QMatrix4x4 modelMatrix;
+                modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
+                modelMatrix.rotate(QQuaternion::fromAxes(qvec(v1), qvec(v2), -qvec(n)));//HACK idk why the normal has to be negative
 
                 if (layer.isOverlayData) {
                     auto & punned = static_cast<gpu_lut_cube&>(ptr);
