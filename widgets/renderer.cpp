@@ -1497,6 +1497,28 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glTranslatef(-((float)state->boundary.x / 2.), -((float)state->boundary.y / 2.), -((float)state->boundary.z / 2.));
         glTranslatef(0.5, 0.5, 0.5);
 
+//        state->mainWindow->viewportArb->renderViewportArbFast();
+        if (!state->viewer->layers.empty()) {
+            for (auto & cube : state->viewer->layers.front().textures) {
+                GLfloat tmp[]{0,1,0,0.5};
+                glColor4fv(tmp);
+                glBegin(GL_TRIANGLE_FAN);
+                for (auto & pos : cube.second->vertices) {
+                    glVertex3f(pos.x, pos.y, pos.z);
+                }
+                glEnd();
+            }
+            for (auto & cube : state->viewer->layers.front().textures) {
+                GLfloat tmp[]{0,0,1,0.5};
+                glColor4fv(tmp);
+                glBegin(GL_LINE_LOOP);
+                for (auto & pos : cube.second->vertices) {
+                    glVertex3f(pos.x, pos.y, pos.z);
+                }
+                glEnd();
+            }
+        }
+
         updateFrustumClippingPlanes();
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
@@ -2229,6 +2251,27 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 lastRenderedNode = &*nodeIt;
             }
             previousNode = &*nodeIt;
+        }
+    }
+
+    if (false && !state->viewer->layers.empty()) {
+        for (auto & cube : state->viewer->layers.front().textures) {
+            GLfloat tmp[]{0,1,0,0.5};
+            glColor4fv(tmp);
+            glBegin(GL_TRIANGLE_FAN);
+            for (auto & pos : cube.second->vertices) {
+                glVertex3f(pos.x, pos.y, pos.z);
+            }
+            glEnd();
+        }
+        for (auto & cube : state->viewer->layers.front().textures) {
+            GLfloat tmp[]{0,0,1,0.5};
+            glColor4fv(tmp);
+            glBegin(GL_LINE_LOOP);
+            for (auto & pos : cube.second->vertices) {
+                glVertex3f(pos.x, pos.y, pos.z);
+            }
+            glEnd();
         }
     }
 

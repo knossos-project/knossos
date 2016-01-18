@@ -45,7 +45,7 @@ public:
     //  Info about the data
     // Use overlay cubes to color the data.
     bool overlay;
-    bool gpuSlicer = false;
+    bool gpuSlicer{true};
     // How user movement was generated
     UserMoveType loaderUserMoveType{USERMOVE_NEUTRAL};
     // Direction of user movement in case of drilling,

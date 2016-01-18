@@ -192,7 +192,7 @@ private:
     void vpGenerateTexture(ViewportArb & vp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
+    bool dcSliceExtract(char *datacube, floatCoordinate currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
 
     void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
 
@@ -206,8 +206,8 @@ public:
     MainWindow *window = &mainWindow;
 
     std::list<TextureLayer> layers;
-    int gpucubeedge = 64;
-    bool gpuRendering = false;
+    int gpucubeedge{64};
+    bool gpuRendering{true};
 
     floatCoordinate v1, v2, v3;
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;

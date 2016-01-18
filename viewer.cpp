@@ -178,16 +178,12 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     return true;
 }
 
-bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
-    Coordinate currentPxInDc;
-    int sliceIndex = 0, dcIndex = 0;
-    floatCoordinate *v2 = &(vp.v2);
-
-    currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
-
+bool Viewer::dcSliceExtract(char *datacube, floatCoordinate currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
+    const floatCoordinate & v2 = vp.v2;
+    Coordinate currentPxInDc = {roundFloat(currentPxInDc_float.x), roundFloat(currentPxInDc_float.y), roundFloat(currentPxInDc_float.z)};
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= state->cubeEdgeLength) || (currentPxInDc.y >= state->cubeEdgeLength) || (currentPxInDc.z >= state->cubeEdgeLength)) {
-        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        const auto sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         (*t)++;
         if(*t < vp.vpHeightInDataPx) {
@@ -195,7 +191,7 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
             // it is totally ignored (i.e. not read, then overwritten) by the calling function.
             // But to keep the functionality here compatible after this bugfix, we also replicate
             // this update here - from the originial below
-            *currentPxInDc_float += *v2;
+            currentPxInDc_float += v2;
         }
         return true;
     }
@@ -204,8 +200,8 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
           && (0 <= currentPxInDc.y && currentPxInDc.y < state->cubeEdgeLength)
           && (0 <= currentPxInDc.z && currentPxInDc.z < state->cubeEdgeLength)) {
 
-        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
-        dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
+        const auto sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        const auto dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == NULL) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
@@ -224,8 +220,8 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
         if(*t >= vp.vpHeightInDataPx) {
             break;
         }
-        *currentPxInDc_float += *v2;
-        currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
+        currentPxInDc_float += v2;
+        currentPxInDc = {roundFloat(currentPxInDc_float.x), roundFloat(currentPxInDc_float.y), roundFloat(currentPxInDc_float.z)};
     }
     return true;
 }
@@ -593,24 +589,18 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
     }
     vp.dcResliceNecessary = false;
 
-    // Load the texture for a viewport by going through all relevant datacubes and copying slices
-    // from those cubes into the texture.
-    floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
-
-    char *datacube = NULL;
-
-    rowPx_float = vp.texture.leftUpperPxInAbsPx / state->magnification;
-    currentPx_float = rowPx_float;
+    // Load the texture for a viewport by going through all relevant datacubes and copying slices (1px stripes) from those cubes into the texture.
 
     std::vector<char> texData(3 * std::pow(state->viewerState->texEdgeLength, 2));
-
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
-    int s = 0, t = 0, t_old = 0;
-    while(s < vp.vpLenghtInDataPx) {
-        t = 0;
-        while(t < vp.vpHeightInDataPx) {
-            Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
+    floatCoordinate rowPx_float = vp.texture.leftUpperPxInAbsPx / state->magnification;
+    int t_old = 0;
+    for (int s = 0; s < vp.vpLenghtInDataPx; ++s) {//col count
+        floatCoordinate currentPx_float = rowPx_float;//first elem in row
+        floatCoordinate prevPx_float = currentPx_float;
+        for (int t = 0; t < vp.vpHeightInDataPx;) {
+            Coordinate currentPx = currentPx_float;
             Coordinate currentDc = currentPx / state->cubeEdgeLength;
 
             if(currentPx.x < 0) { currentDc.x -= 1; }
@@ -618,23 +608,117 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer.lock();
-            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], {currentDc.x, currentDc.y, currentDc.z});
+            auto * datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(state->magnification)], {currentDc.x, currentDc.y, currentDc.z});
             state->protectCube2Pointer.unlock();
 
-            currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
             t_old = t;
+//            floatCoordinate currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
+//            dcSliceExtract(datacube,
+//                               currentPxInDc_float,
+//                               texData.data(),
+//                               s, &t,
+//                               vp,
+//                               state->viewerState->datasetAdjustmentOn);
 
-            dcSliceExtract(datacube,
-                           &currentPxInDc_float,
-                           texData.data(),
-                           s, &t,
-                           vp,
-                           state->viewerState->datasetAdjustmentOn);
-            currentPx_float = currentPx_float + vp.v2 * (t - t_old);
+            floatCoordinate position = currentPx_float;
+            floatCoordinate nextCubeBoundary;
+            nextCubeBoundary.x = std::fmod(position.x, state->cubeEdgeLength);
+            nextCubeBoundary.y = std::fmod(position.y, state->cubeEdgeLength);
+            nextCubeBoundary.z = std::fmod(position.z, state->cubeEdgeLength);
+            if (nextCubeBoundary.x < 0) { nextCubeBoundary.x += state->cubeEdgeLength; }
+            if (nextCubeBoundary.y < 0) { nextCubeBoundary.y += state->cubeEdgeLength; }
+            if (nextCubeBoundary.z < 0) { nextCubeBoundary.z += state->cubeEdgeLength; }
+            if (v2.x >= 0) {
+                nextCubeBoundary.x = state->cubeEdgeLength - nextCubeBoundary.x;
+            }
+            if (v2.y >= 0) {
+                nextCubeBoundary.y = state->cubeEdgeLength - nextCubeBoundary.y;
+            }
+            if (v2.z >= 0) {
+                nextCubeBoundary.z = state->cubeEdgeLength - nextCubeBoundary.z;
+            }
+            std::vector<float> candidates;
+//            nextCubeBoundary.x += (nextCubeBoundary.x == 0) * 128;
+//            nextCubeBoundary.y += (nextCubeBoundary.y == 0) * 128;
+//            nextCubeBoundary.z += (nextCubeBoundary.z == 0) * 128;
+            if (nextCubeBoundary.x != 0 && std::abs(v2.x) > 0.000001) {
+                candidates.emplace_back(nextCubeBoundary.x / v2.x);
+            }
+            if (nextCubeBoundary.y != 0 && std::abs(v2.y) > 0.000001) {
+                candidates.emplace_back(nextCubeBoundary.y / v2.y);
+            }
+            if (nextCubeBoundary.z != 0 && std::abs(v2.z) > 0.000001) {
+                candidates.emplace_back(nextCubeBoundary.z / v2.z);
+            }
+            auto min = 1.0f;
+            if (!candidates.empty()) {//idk
+                min = std::max(1.0f, *std::min_element(std::begin(candidates), std::end(candidates), [](float lhs, float rhs){return std::abs(lhs) < std::abs(rhs);}));//values should all be positive
+            }
+            min = std::round(min);
+            auto intersection = position + v2 * min;
+            auto otherintersection = currentPx_float + v2 * (t - t_old);
+//            if (intersection != otherintersection && t < vp.t_max) {
+//                qDebug() << prevPx_float.x << prevPx_float.y << " → " << position.x << position.y << " v2" << v2.x << v2.y
+//                         << " nb" << nextCubeBoundary.x << nextCubeBoundary.y
+//                         << " ·" << min << (t - t_old)
+//                         << " ×" << intersection.x << intersection.y
+//                         << " ÷" << otherintersection.x << otherintersection.y;
+
+//                t = t_old;
+////                dcSliceExtract(datacube,
+////                                   currentPxInDc_float,
+////                                   texData.data(),
+////                                   s, &t,
+////                                   vp,
+////                                   state->viewerState->datasetAdjustmentOn);
+//            }
+
+
+            if (int(position.x) == 5375) {
+//                qDebug();
+            }
+
+
+            {
+                floatCoordinate currentPxInDc_float = currentPx_float - currentDc * state->cubeEdgeLength;
+                int counter = 0;
+                Coordinate currentPxInDc{currentPxInDc_float};
+                if (!((currentPxInDc.x >= 0 && currentPxInDc.x < state->cubeEdgeLength) && (currentPxInDc.y >= 0 && currentPxInDc.y < state->cubeEdgeLength) && (currentPxInDc.z >= 0 && currentPxInDc.z < state->cubeEdgeLength))) {
+//                    qDebug() << "auweiaweh";
+                }
+                for (Coordinate currentPxInDc{currentPxInDc_float};
+                        counter < min && t < vp.vpHeightInDataPx && (currentPxInDc.x >= 0 && currentPxInDc.x < state->cubeEdgeLength) && (currentPxInDc.y >= 0 && currentPxInDc.y < state->cubeEdgeLength) && (currentPxInDc.z >= 0 && currentPxInDc.z < state->cubeEdgeLength);
+                        ++t, ++counter)
+                {
+                    int sliceIndex = 3 * (s + t * state->cubeEdgeLength * state->M);
+                    int dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
+                    texData[sliceIndex] = texData[sliceIndex + 1] = texData[sliceIndex + 2] = datacube == nullptr ? 0 : datacube[dcIndex];
+                    if (datacube != nullptr && datacube[dcIndex] == 0) {
+//                        qDebug() << position.x << position.y << position.z;
+                    }
+
+                    currentPxInDc_float += v2;
+                    currentPxInDc = currentPxInDc_float;
+
+                    if (!((currentPxInDc.x >= 0 && currentPxInDc.x < state->cubeEdgeLength) && (currentPxInDc.y >= 0 && currentPxInDc.y < state->cubeEdgeLength) && (currentPxInDc.z >= 0 && currentPxInDc.z < state->cubeEdgeLength))) {
+//                        qDebug() << "auweiaweh2" << min << " " << position << " " << currentPxInDc;
+                    }
+                }
+                if (counter > min + 1) {
+                    qDebug() << min << counter;
+                }
+                min = std::max(1.0f, counter < min ? counter : min);
+            }
+
+
+
+
+            prevPx_float = currentPx_float;
+            currentPx_float = currentPx_float + vp.v2 * min;
+            t = t_old + min;
+//            currentPx_float = currentPx_float + vp.v2 * (t - t_old);
         }
-        s++;
-        rowPx_float += vp.v1;
-        currentPx_float = rowPx_float;
+        rowPx_float += vp.v1;//v1 is exactly as long as one pixel
     }
 
     glTexSubImage2D(GL_TEXTURE_2D,
@@ -773,13 +857,13 @@ void Viewer::zoom(const float factor) {
         window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) { orthoVP.texture.FOV = newFOV; });
     };
     uint newMag = state->magnification;
-    if (reachedMinZoom) {
+    if (false && reachedMinZoom) {
         updateFOV(VPZOOMMIN);
-    } else if (reachedMaxZoom) {
+    } else if (false && reachedMaxZoom) {
         updateFOV(VPZOOMMAX);
     } else if (state->viewerState->datasetMagLock) {
-        updateFOV(viewportXY->texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
-                  viewportXY->texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
+        updateFOV(/*viewportXY->texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
+                  viewportXY->texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :*/
                   viewportXY->texture.FOV * factor);
     } else if (magUp) {
         newMag *= 2;

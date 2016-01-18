@@ -40,7 +40,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-bool ViewportBase::oglDebug = false;
+bool ViewportBase::oglDebug = true;
 bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
