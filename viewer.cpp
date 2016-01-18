@@ -964,6 +964,7 @@ void Viewer::dc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         dc_reslice_notify_visible();
     }
+    window->viewportArb->dcResliceNecessary = true;//arb visibility is not tested
 }
 
 void Viewer::dc_reslice_notify_visible() {
@@ -976,6 +977,7 @@ void Viewer::oc_reslice_notify_all(const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
         oc_reslice_notify_visible();
     }
+    window->viewportArb->ocResliceNecessary = true;//arb visibility is not tested
     // if anything has changed, update the volume texture data
     Segmentation::singleton().volume_update_required = true;
 }
