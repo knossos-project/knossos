@@ -64,6 +64,7 @@ Q_OBJECT
         friend class SegmentationObjectModel;
         friend class TouchedObjectModel;
         friend class SegmentationTab;
+        friend class SegmentationProxy;
         friend class Segmentation;
 
         static uint64_t highestId;

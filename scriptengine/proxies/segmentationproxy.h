@@ -17,6 +17,8 @@ public slots:
     void removeObject(quint64 objIndex);
     void setRenderAllObjs(bool b);
     bool isRenderAllObjs();
+    QList<quint64> objectIndices();
+    QList<quint64> subobjectIdsOfObject(quint64 objIndex);
 };
 
 #endif // SEGMENTATIONPROXY_H

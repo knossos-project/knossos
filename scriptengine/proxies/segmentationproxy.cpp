@@ -31,3 +31,20 @@ void SegmentationProxy::setRenderAllObjs(bool b) {
 bool SegmentationProxy::isRenderAllObjs() {
     return Segmentation::singleton().renderAllObjs;
 }
+
+QList<quint64> SegmentationProxy::objectIndices() {
+    QList<quint64> objectIndices;
+    for (const auto & elem : Segmentation::singleton().objects) {
+        objectIndices.append(elem.index);
+    }
+    return objectIndices;
+}
+
+QList<quint64> SegmentationProxy::subobjectIdsOfObject(quint64 objIndex) {
+    QList<quint64> subobjectIds;
+    const auto & obj = Segmentation::singleton().objects[objIndex];
+    for (const auto & elem : obj.subobjects) {
+        subobjectIds.append(elem.get().id);
+    }
+    return subobjectIds;
+}
