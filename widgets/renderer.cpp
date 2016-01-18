@@ -648,9 +648,9 @@ void ViewportOrtho::renderViewportFast() {
 
     std::vector<std::array<GLfloat, 3>> triangleVertices;
     triangleVertices.push_back({{0.0f, 0.0f, 0.0f}});
-    triangleVertices.push_back({{1.0f, 0.0f, 0.0f}});
-    triangleVertices.push_back({{1.0f, 1.0f, 0.0f}});
-    triangleVertices.push_back({{0.0f, 1.0f, 0.0f}});
+    triangleVertices.push_back({{gpucubeedge, 0.0f, 0.0f}});
+    triangleVertices.push_back({{gpucubeedge, gpucubeedge, 0.0f}});
+    triangleVertices.push_back({{0.0f, gpucubeedge, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
     for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
     for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
@@ -760,8 +760,6 @@ void ViewportOrtho::renderViewportFast() {
                 } else if (zy) {
                     modelMatrix.rotate(90.0f, QVector3D(0.0f, -1.0f, 0.0f));
                 }
-                modelMatrix.scale(gpucubeedge);
-                modelMatrix.scale(1, 1, 1);
 
                 if (layer.isOverlayData) {
                     auto & punned = static_cast<gpu_lut_cube&>(ptr);
