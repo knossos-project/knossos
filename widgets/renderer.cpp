@@ -683,7 +683,11 @@ void ViewportOrtho::renderViewportFast() {
     auto qvec = [](auto coord){
         return QVector3D(coord.x, coord.y, coord.z);
     };
-    viewMatrix.scale(width() / fov, height() / fov);
+    //z component of vp vectors specifies portion of scale to apply
+    const auto zScaleIncrement = state->scale.z / state->scale.x - 1;
+    const float hfov = fov / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = fov / (1 + zScaleIncrement * std::abs(v2.z));
+    viewMatrix.scale(width() / hfov, height() / vfov);
     viewMatrix.scale(1, -1);//invert y because whe want our origin in the top right corner
     viewMatrix.scale(xz || zy ? -1 : 1, 1);//HACK idk
     const auto cameraPos = floatCoordinate{cpos} + n;
