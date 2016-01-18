@@ -640,18 +640,23 @@ void ViewportOrtho::renderViewportFast() {
     glClearColor(1, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_ZY;
+    const bool xy = viewportType == VIEWPORT_XY;
+    const bool xz = viewportType == VIEWPORT_XZ;
+    const bool zy = viewportType == VIEWPORT_ZY;
+    const bool arb = viewportType == VIEWPORT_ARBITRARY;
     const float gpucubeedge = state->viewer->gpucubeedge;
-    const auto fov = (state->M - 1) * state->cubeEdgeLength;//remove cpu overlap
+    const auto fov = (state->M - 1) * state->cubeEdgeLength / (arb ? std::sqrt(2) : 1);//remove cpu overlap
     const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
     const auto cpos = state->viewerState->currentPosition;
 
     std::vector<std::array<GLfloat, 3>> triangleVertices;
+    triangleVertices.reserve(6);
     triangleVertices.push_back({{0.0f, 0.0f, 0.0f}});
     triangleVertices.push_back({{gpucubeedge, 0.0f, 0.0f}});
     triangleVertices.push_back({{gpucubeedge, gpucubeedge, 0.0f}});
     triangleVertices.push_back({{0.0f, gpucubeedge, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
+    textureVertices.reserve(6);
     for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
     for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
     for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
@@ -733,38 +738,61 @@ void ViewportOrtho::renderViewportFast() {
                 raw_data_shader.setUniformValue("textureOpacity", layer.opacity);
             }
 
-            const float halfsc = fov * 0.5f / gpucubeedge;
-            const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
-            const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
-            const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
-            const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
-            const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
-            const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
-            const float endx = startx + (zy ? 1 : gpusupercube);
-            const float endy = starty + (xz ? 1 : gpusupercube);
-            const float endz = startz + (xy ? 1 : gpusupercube);
-            for (float z = startz; z < endz; ++z)
-            for (float y = starty; y < endy; ++y)
-            for (float x = startx; x < endx; ++x) {
-                const auto pos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
-                auto it = layer.textures.find(pos);
-                auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
-
-                QMatrix4x4 modelMatrix;
-                modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
-                modelMatrix.rotate(QQuaternion::fromAxes(qvec(v1), qvec(v2), -qvec(n)));//HACK idk why the normal has to be negative
-
+            auto render = [&](auto & cube, const QMatrix4x4 modelMatrix = {}){
                 if (layer.isOverlayData) {
-                    auto & punned = static_cast<gpu_lut_cube&>(ptr);
+                    auto & punned = static_cast<gpu_lut_cube&>(cube);
                     punned.cube.bind(0);
                     punned.lut.bind(1);
-                    overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
                     overlay_data_shader.setUniformValue("model_matrix", modelMatrix);
+                    overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
                 } else {
-                    ptr.cube.bind(0);
                     raw_data_shader.setUniformValue("model_matrix", modelMatrix);
+                    cube.cube.bind(0);
                 }
-                glDrawArrays(GL_QUADS, 0, 4);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(triangleVertices.size()));
+            };
+            if (!arb) {
+                const float halfsc = fov * 0.5f / gpucubeedge;
+                const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
+                const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
+                const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
+                const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
+                const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
+                const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
+                const float endx = startx + (zy ? 1 : gpusupercube);
+                const float endy = starty + (xz ? 1 : gpusupercube);
+                const float endz = startz + (xy ? 1 : gpusupercube);
+                for (float z = startz; z < endz; ++z)
+                for (float y = starty; y < endy; ++y)
+                for (float x = startx; x < endx; ++x) {
+                    const auto pos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
+                    auto it = layer.textures.find(pos);
+                    auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
+
+                    QMatrix4x4 modelMatrix;
+                    modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
+                    modelMatrix.rotate(QQuaternion::fromAxes(qvec(v1), qvec(v2), -qvec(n)));//HACK idk why the normal has to be negative
+
+                    render(ptr, modelMatrix);
+                }
+            } else {
+                for (auto & pair : layer.textures) {
+                    auto & pos = pair.first;
+                    auto & cube = *pair.second;
+                    if (!cube.vertices.empty()) {
+                        triangleVertices.clear();
+                        textureVertices.clear();
+                        for (const auto & vertex : cube.vertices) {
+                            triangleVertices.push_back({{vertex.x, vertex.y, vertex.z}});
+                            const auto depthOffset = static_cast<float>(vertex.z - pos.z * gpucubeedge);
+                            const auto texR = (0.5f + depthOffset) / gpucubeedge;
+                            textureVertices.push_back({{static_cast<float>(vertex.x - pos.x * gpucubeedge) / gpucubeedge
+                                                        , static_cast<float>(vertex.y - pos.y * gpucubeedge) / gpucubeedge
+                                                        , texR}});
+                        }
+                        render(cube);
+                    }
+                }
             }
         }
     }
