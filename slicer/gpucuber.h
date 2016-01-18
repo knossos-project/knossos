@@ -29,6 +29,7 @@ struct hash<QVector3D> {
 class gpu_raw_cube {
 public:
     QOpenGLTexture cube{QOpenGLTexture::Target3D};
+    std::vector<floatCoordinate> vertices;
     gpu_raw_cube(const int gpucubeedge, const bool index = false);
     std::vector<char> prepare(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);
     void upload(const std::vector<char> & data);
@@ -59,7 +60,8 @@ public:
     float opacity = 1.0f;
     bool enabled = true;
     bool isOverlayData = false;
-    std::vector<std::pair<CoordOfGPUCube, Coordinate>> pendingCubes;
+    std::vector<std::pair<CoordOfGPUCube, Coordinate>> pendingOrthoCubes;
+    std::vector<std::pair<CoordOfGPUCube, Coordinate>> pendingArbCubes;
     TextureLayer(QOpenGLContext & sharectx);
     ~TextureLayer();
     template<typename cube_type, typename elem_type>

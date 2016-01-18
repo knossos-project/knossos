@@ -26,6 +26,11 @@ float radToDeg(float rad);
 float degToRad(float deg);
 
 void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle);
+
+bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
+                           const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
+                           floatCoordinate & intersectionPoint);
+
 bool checkTreeParameter(int id, float r, float g, float b, float a);
 bool checkNodeParameter(int id, int x, int y, int z);
 bool chedNodeID(int id);

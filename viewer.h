@@ -216,6 +216,7 @@ public:
     void zoomReset();
     QTimer timer;
 
+    void arbCubes(ViewportArb & vp);
     void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
@@ -245,7 +246,7 @@ public slots:
     bool vpGenerateTexture(ViewportOrtho & vp);
     void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
-    void calculateMissingGPUCubes(TextureLayer & layer);
+    void calculateMissingOrthoGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();

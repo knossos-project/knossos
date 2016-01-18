@@ -78,6 +78,17 @@ void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
     v.normalize();
 }
 
+bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
+                           const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
+                           floatCoordinate & intersectionPoint) {
+    if (std::abs(lineDirectionVec.dot(planeNormal)) > 0.0001) {
+        const float lambda = (planeNormal.dot(planeUpVec) - planeNormal.dot(lineUpVec)) / lineDirectionVec.dot(planeNormal);
+        intersectionPoint = lineUpVec + lineDirectionVec * lambda;
+        return true;
+    }
+    return false;
+}
+
 bool checkTreeParameter(int id, float r, float g, float b, float a) {
     if(id < 0 || r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1) {
         return false;

@@ -492,6 +492,101 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
     return true;
 }
 
+void Viewer::arbCubes(ViewportArb & vp) {
+    const auto pointInCube = [this](const Coordinate currentDC, const floatCoordinate point) {
+       return currentDC.x * gpucubeedge <= point.x && point.x <= currentDC.x * gpucubeedge + gpucubeedge &&
+              currentDC.y * gpucubeedge <= point.y && point.y <= currentDC.y * gpucubeedge + gpucubeedge &&
+              currentDC.z * gpucubeedge <= point.z && point.z <= currentDC.z * gpucubeedge + gpucubeedge;
+    };
+
+    const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
+
+    for (auto & layer : layers) {
+        layer.pendingArbCubes.clear();
+        for (auto & pair : layer.textures) {
+            pair.second->vertices.clear();
+        }
+    }
+
+    const auto gpusupercube = (state->M - 1) * state->cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
+    const auto scroot = (state->viewerState->currentPosition / gpucubeedge) - gpusupercube / 2;
+    floatCoordinate root = vp.texture.leftUpperPxInAbsPx / state->magnification;
+    for (int z = 0; z < gpusupercube; ++z)
+    for (int y = 0; y < gpusupercube; ++y)
+    for (int x = 0; x < gpusupercube; ++x) {
+        Coordinate currentGPUDc = scroot + Coordinate{x, y, z};
+
+        if (currentGPUDc.x < 0 || currentGPUDc.y < 0 || currentGPUDc.z < 0) {
+            continue;
+        }
+
+        floatCoordinate topPlaneUpVec = currentGPUDc * gpucubeedge;
+        floatCoordinate bottomPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, gpucubeedge, 0);
+        floatCoordinate leftPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(0, gpucubeedge, gpucubeedge);
+        floatCoordinate rightPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, 0, gpucubeedge);
+
+        std::vector<floatCoordinate> points;
+        auto addPoints = [&](const floatCoordinate & plane, const floatCoordinate & axis){
+            floatCoordinate point;
+            if (intersectLineAndPlane(vp.n, root, plane, axis, point)) {
+                if (pointInCube(currentGPUDc, point)) {
+                    points.emplace_back(point);
+                }
+            }
+        };
+        addPoints(topPlaneUpVec, xAxis);
+        addPoints(topPlaneUpVec, yAxis);
+        addPoints(topPlaneUpVec, zAxis);
+        addPoints(bottomPlaneUpVec, xAxis * -1);
+        addPoints(bottomPlaneUpVec, yAxis * -1);
+        addPoints(bottomPlaneUpVec, zAxis);
+        addPoints(leftPlaneUpVec, xAxis);
+        addPoints(leftPlaneUpVec, yAxis * -1);
+        addPoints(leftPlaneUpVec, zAxis * -1);
+        addPoints(rightPlaneUpVec, xAxis * -1);
+        addPoints(rightPlaneUpVec, yAxis);
+        addPoints(rightPlaneUpVec, zAxis * -1);
+
+        if (!points.empty()) {
+            const auto center = std::accumulate(std::begin(points), std::end(points), floatCoordinate{}) / points.size();
+            const auto first = points.front() - center;
+            const auto normal = vp.n;
+            std::sort(std::begin(points), std::end(points), [=](const floatCoordinate & lhs, const floatCoordinate & rhs){
+                // http://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors#16544330
+                const auto line0 = lhs - center;
+                const auto line1 = rhs - center;
+                // move radiant angle range from [-ⲡ, ⲡ] into positive (4 > ⲡ) for < to work correctly
+                const auto radiant0 = std::atan2(normal.dot(first.cross(line0)), first.dot(line0)) + 4;
+                const auto radiant1 = std::atan2(normal.dot(first.cross(line1)), first.dot(line1)) + 4;
+                return radiant0 < radiant1;
+            });
+            const auto prevSize = points.size();
+            points.erase(std::unique(std::begin(points), std::end(points)), std::end(points));
+            if (prevSize != points.size()) {
+                qDebug() << prevSize << points.size();
+            }
+
+            const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
+            const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
+            for (auto & layer : layers) {
+                auto cubeIt = layer.textures.find(gpuCoord);
+                if (cubeIt != std::end(layer.textures)) {
+//                    qDebug() << "foo" << gpuCoord;
+//                    for (auto & point : points) {
+//                        qDebug() << point;
+//                    }
+                    cubeIt->second->vertices = /*std::move*/(points);
+                } else {
+                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                    const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+                    layer.pendingArbCubes.emplace_back(gpuCoord, offset);
+                }
+            }
+        }
+    }
+//    qDebug() << "bar";
+}
+
 void Viewer::vpGenerateTexture(ViewportArb &vp) {
     if (!vp.dcResliceNecessary) {
         return;
@@ -788,22 +883,29 @@ void Viewer::run() {
     }
 
     if (state->gpuSlicer && gpuRendering) {
+        const auto & loadPendingCubes = [&](TextureLayer & layer, std::vector<std::pair<CoordOfGPUCube, Coordinate>> & pendingCubes, QElapsedTimer & timer) {
+            while (!pendingCubes.empty() && !timer.hasExpired(3)) {
+                const auto pair = pendingCubes.back();
+                pendingCubes.pop_back();
+                if (layer.textures.find(pair.first) == std::end(layer.textures)) {
+                    const auto globalCoord = pair.first.cube2Global(gpucubeedge, state->magnification);
+                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                    state->protectCube2Pointer.lock();
+                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
+                    state->protectCube2Pointer.unlock();
+                    if (ptr != nullptr) {
+                        layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, pair.first, pair.second);
+                    }
+                }
+            }
+        };
+
         QElapsedTimer timer;
         timer.start();
         for (auto & layer : layers) {
-            calculateMissingGPUCubes(layer);
-            while (!layer.pendingCubes.empty() && !timer.hasExpired(3)) {
-                const auto pair = layer.pendingCubes.back();
-                layer.pendingCubes.pop_back();
-                const auto globalCoord = pair.first.cube2Global(gpucubeedge, state->magnification);
-                const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
-                state->protectCube2Pointer.lock();
-                const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(state->magnification)], cubeCoord);
-                state->protectCube2Pointer.unlock();
-                if (ptr != nullptr) {
-                    layer.cubeSubArray(ptr, state->cubeEdgeLength, gpucubeedge, pair.first, pair.second);
-                }
-            }
+            calculateMissingOrthoGPUCubes(layer);
+            loadPendingCubes(layer, layer.pendingOrthoCubes, timer);
+            loadPendingCubes(layer, layer.pendingArbCubes, timer);
         }
     }
 
@@ -814,6 +916,8 @@ void Viewer::run() {
         }
         if (!gpuRendering) {
             vpGenerateTexture(vp);
+        } else if (vp.viewportType == VIEWPORT_ARBITRARY) {
+            arbCubes(static_cast<ViewportArb&>(vp));
         }
         vp.update();
     });
@@ -915,7 +1019,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
             for (const auto & pos : obsoleteCubes) {
                 layer.textures.erase(pos);
             }
-            calculateMissingGPUCubes(layer);
+            calculateMissingOrthoGPUCubes(layer);
         }
     }
 
@@ -939,8 +1043,8 @@ void Viewer::userMoveClear() {
     moveCache = {};
 }
 
-void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {
-    layer.pendingCubes.clear();
+void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
+    layer.pendingOrthoCubes.clear();
 
     const auto gpusupercube = (state->M - 1) * state->cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
     const int halfSupercube = gpusupercube * 0.5;
@@ -955,7 +1059,7 @@ void Viewer::calculateMissingGPUCubes(TextureLayer & layer) {
         if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
             const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
             const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
-            layer.pendingCubes.emplace_back(gpuCoord, offset);
+            layer.pendingOrthoCubes.emplace_back(gpuCoord, offset);
         }
     }
 }
