@@ -641,48 +641,39 @@ void ViewportOrtho::renderViewportFast() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const bool xy = viewportType == VIEWPORT_XY, xz = viewportType == VIEWPORT_XZ, zy = viewportType == VIEWPORT_ZY;
-    const auto gpucubeedge = state->viewer->gpucubeedge;
+    const float gpucubeedge = state->viewer->gpucubeedge;
     const auto fov = (state->M - 1) * state->cubeEdgeLength;//remove cpu overlap
     const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
-//    QVector3D offset;
     const auto cpos = state->viewerState->currentPosition;
-    const int xxx = cpos.x % gpucubeedge;
-    const int yyy = cpos.y % gpucubeedge;
-    const int zzz = cpos.z % gpucubeedge;
-    const float frame = xy ? zzz : xz ? yyy : xxx;
-//    QVector3D deviation(zy ? 0 : xxx, xz ? 0 : -yyy - zy * gpucubeedge * state->scale.z / state->scale.y, xy ? 0 : -zzz - xz * gpucubeedge * state->scale.z / state->scale.x);
-    QVector3D deviation(zy ? 0 : xxx, xz ? 0 : -yyy, xy ? 0 : -zzz);
-//    qDebug() << deviation;
 
-    std::vector<std::array<GLfloat, 3>> triangleVertices;//flipped y
-    triangleVertices.push_back({{0.0f, 1.0f, 0.0f}});
+    std::vector<std::array<GLfloat, 3>> triangleVertices;
     triangleVertices.push_back({{0.0f, 0.0f, 0.0f}});
     triangleVertices.push_back({{1.0f, 0.0f, 0.0f}});
     triangleVertices.push_back({{1.0f, 1.0f, 0.0f}});
+    triangleVertices.push_back({{0.0f, 1.0f, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
     for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
     for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
     for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
-        const float cubeedgef = gpucubeedge;
-        const auto depthOffset = frame;//xy ? deviation.z() : xz ? deviation.y() : deviation.x();
-        const auto starttexR = (0.5f + depthOffset) / cubeedgef;
-        const auto endtexR = (0.5f + depthOffset) / cubeedgef;
+        const float frame = (xy ? cpos.z : xz ? cpos.y : cpos.x) % state->viewer->gpucubeedge;
+        const auto starttexR = (0.5f + frame) / gpucubeedge;
+        const auto endtexR = (0.5f + frame) / gpucubeedge;
 
         if (xy) {
-            textureVertices.push_back({{0.0f, 1.0f, starttexR}});
             textureVertices.push_back({{0.0f, 0.0f, starttexR}});
             textureVertices.push_back({{1.0f, 0.0f, endtexR}});
             textureVertices.push_back({{1.0f, 1.0f, endtexR}});
+            textureVertices.push_back({{0.0f, 1.0f, starttexR}});
         } else if (xz) {
-            textureVertices.push_back({{0.0f, starttexR, 1.0f}});
             textureVertices.push_back({{0.0f, starttexR, 0.0f}});
             textureVertices.push_back({{1.0f, endtexR, 0.0f}});
             textureVertices.push_back({{1.0f, endtexR, 1.0f}});
+            textureVertices.push_back({{0.0f, starttexR, 1.0f}});
         } else if (zy) {
-            textureVertices.push_back({{starttexR, 1.0f, 0.0f}});
             textureVertices.push_back({{starttexR, 0.0f, 0.0f}});
             textureVertices.push_back({{endtexR, 0.0f, 1.0f}});
             textureVertices.push_back({{endtexR, 1.0f, 1.0f}});
+            textureVertices.push_back({{starttexR, 1.0f, 0.0f}});
         }
     }
 
