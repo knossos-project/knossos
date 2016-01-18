@@ -656,24 +656,23 @@ void ViewportOrtho::renderViewportFast() {
     for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
     for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
         const float frame = (xy ? cpos.z : xz ? cpos.y : cpos.x) % state->viewer->gpucubeedge;
-        const auto starttexR = (0.5f + frame) / gpucubeedge;
-        const auto endtexR = (0.5f + frame) / gpucubeedge;
+        const auto texR = (0.5f + frame) / gpucubeedge;
 
         if (xy) {
-            textureVertices.push_back({{0.0f, 0.0f, starttexR}});
-            textureVertices.push_back({{1.0f, 0.0f, endtexR}});
-            textureVertices.push_back({{1.0f, 1.0f, endtexR}});
-            textureVertices.push_back({{0.0f, 1.0f, starttexR}});
+            textureVertices.push_back({{0.0f, 0.0f, texR}});
+            textureVertices.push_back({{1.0f, 0.0f, texR}});
+            textureVertices.push_back({{1.0f, 1.0f, texR}});
+            textureVertices.push_back({{0.0f, 1.0f, texR}});
         } else if (xz) {
-            textureVertices.push_back({{0.0f, starttexR, 0.0f}});
-            textureVertices.push_back({{1.0f, endtexR, 0.0f}});
-            textureVertices.push_back({{1.0f, endtexR, 1.0f}});
-            textureVertices.push_back({{0.0f, starttexR, 1.0f}});
+            textureVertices.push_back({{0.0f, texR, 0.0f}});
+            textureVertices.push_back({{1.0f, texR, 0.0f}});
+            textureVertices.push_back({{1.0f, texR, 1.0f}});
+            textureVertices.push_back({{0.0f, texR, 1.0f}});
         } else if (zy) {
-            textureVertices.push_back({{starttexR, 0.0f, 0.0f}});
-            textureVertices.push_back({{endtexR, 0.0f, 1.0f}});
-            textureVertices.push_back({{endtexR, 1.0f, 1.0f}});
-            textureVertices.push_back({{starttexR, 1.0f, 0.0f}});
+            textureVertices.push_back({{texR, 0.0f, 0.0f}});
+            textureVertices.push_back({{texR, 0.0f, 1.0f}});
+            textureVertices.push_back({{texR, 1.0f, 1.0f}});
+            textureVertices.push_back({{texR, 1.0f, 0.0f}});
         }
     }
 
