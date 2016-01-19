@@ -83,6 +83,7 @@ void Segmentation::clear() {
 
     selectedObjectIndices.clear();
     objects.clear();
+    objectIdToIndex.clear();
     Object::highestId = 0;
     Object::highestIndex = -1;
     SubObject::highestId = 0;
@@ -130,6 +131,7 @@ template<typename... Args>
 Segmentation::Object & Segmentation::createObject(Args &&... args) {
     emit beforeAppendRow();
     objects.emplace_back(std::forward<Args>(args)...);
+    objectIdToIndex[objects.back().id] = objects.size() - 1;
     emit appendedRow();
     return objects.back();
 }
@@ -154,6 +156,7 @@ void Segmentation::removeObject(Object & object) {
         selectedObjectIndices.replace(objects.back().index, object.index);
         std::swap(objects.back().index, object.index);
         std::swap(objects.back(), object);
+        std::swap(objectIdToIndex[objects.back().id], objectIdToIndex[object.id]);
         emit changedRow(object.index);//object now references the former end
     }
     emit beforeRemoveRow();
@@ -161,6 +164,7 @@ void Segmentation::removeObject(Object & object) {
     if (objects.back().id == Object::highestId) {
         --Object::highestId;//reassign highest object id if it was removed before
     }
+    objectIdToIndex.erase(objects.back().id);
     objects.pop_back();
     emit removedRow();
     --Object::highestIndex;
