@@ -60,12 +60,12 @@ void Segmentation::Object::addExistingSubObject(Segmentation::SubObject & sub) {
 
 Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other) {
     for (auto & elem : other.subobjects) {//add parent
-        auto & objects = elem.get().objects;
+        auto & parentObjs = elem.get().objects;
         elem.get().selectedObjectsCount = 1;
         //don’t insert twice
-        auto posIt = std::lower_bound(std::begin(objects), std::end(objects), this->index);
-        if (posIt == std::end(objects) || *posIt != this->index) {
-            objects.emplace(posIt, this->index);
+        auto posIt = std::lower_bound(std::begin(parentObjs), std::end(parentObjs), this->index);
+        if (posIt == std::end(parentObjs) || *posIt != this->index) {
+            parentObjs.emplace(posIt, this->index);
         }
     }
     decltype(subobjects) tmp;
@@ -459,8 +459,8 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
         } else {
             unselectObject(object);
             for (auto & elem : other.subobjects) {
-                auto & objects = elem.get().objects;
-                objects.erase(std::remove(std::begin(objects), std::end(objects), object.index), std::end(objects));//remove parent
+                auto & parentObjs = elem.get().objects;
+                parentObjs.erase(std::remove(std::begin(parentObjs), std::end(parentObjs), object.index), std::end(parentObjs));//remove parent
             }
             std::swap(object.subobjects, tmp);
             selectObject(object);
