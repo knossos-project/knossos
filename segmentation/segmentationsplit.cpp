@@ -89,7 +89,7 @@ void connectedComponent(const Coordinate & seed) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectIndex = Segmentation::singleton().createObject(newSubObjId, seed).index;
+        auto newObjectIndex = Segmentation::singleton().createObjectFromSubobjectId(newSubObjId, seed).index;
 
         std::unordered_set<uint64_t> subObjectsToFill = {subobjectId};
 
@@ -148,7 +148,7 @@ void verticalSplittingPlane(const Coordinate & seed) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectIndex = Segmentation::singleton().createObject(newSubObjId, seed).index;
+        auto newObjectIndex = Segmentation::singleton().createObjectFromSubobjectId(newSubObjId, seed).index;
 
         std::unordered_set<uint64_t> subObjectsToFill = verticalSplittingPlane({seed.x, seed.y, seed.z}, splitId, newSubObjId);
 

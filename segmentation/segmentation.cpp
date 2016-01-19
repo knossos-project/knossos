@@ -17,22 +17,10 @@ uint64_t Segmentation::SubObject::highestId = 0;
 uint64_t Segmentation::Object::highestId = 0;
 uint64_t Segmentation::Object::highestIndex = -1;
 
-Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
-    : id(++highestId), todo(false), immutable(false), location(Coordinate(0, 0, 0))
-{
-    addExistingSubObject(initialVolume);
-}
-
-Segmentation::Object::Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, Segmentation::SubObject & initialVolume)
+Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id, const bool & todo, const bool & immutable)
     : id(id), todo(todo), immutable(immutable), location(location)
 {
     highestId = std::max(id, highestId);
-    addExistingSubObject(initialVolume);
-}
-
-Segmentation::Object::Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes)
-    : id(++highestId), todo(todo), immutable(immutable), location(location)
-{
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
     }
@@ -117,13 +105,6 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(cons
     return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
-Segmentation::Object & Segmentation::const_merge(Segmentation::Object & one, Segmentation::Object & other) {
-    emit beforeAppendRow();
-    objects.emplace_back(one, other);//invoke merge ctor
-    emit appendedRow();
-    return objects.back();
-}
-
 void Segmentation::loadOverlayLutFromFile(const QString & path) {
     overlayColorMap = loadLookupTable(path);
     emit resetData();
@@ -135,20 +116,20 @@ bool Segmentation::hasObjects() const {
 
 void Segmentation::createAndSelectObject(const Coordinate & position) {
     clearObjectSelection();
-    auto & newObject = createObject(SubObject::highestId+1, position);
+    auto & newObject = createObjectFromSubobjectId(SubObject::highestId + 1, position);
     selectObject(newObject);
 }
 
-Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const Coordinate & location) {
-    return createObject(initialSubobjectId, location, ++Object::highestId);
-}
-
-Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo, const bool & immutable) {
+Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t id, const bool todo, const bool immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
-    auto & subobject = subobjectIt->second;
+    return createObject(std::vector<std::reference_wrapper<SubObject>>{subobjectIt->second}, location, id, todo, immutable);
+}
+
+template<typename... Args>
+Segmentation::Object & Segmentation::createObject(Args &&... args) {
     emit beforeAppendRow();
-    objects.emplace_back(id, todo, immutable, location, subobject); //create object from supervoxel
+    objects.emplace_back(std::forward<Args>(args)...);
     emit appendedRow();
     return objects.back();
 }
@@ -270,7 +251,7 @@ uint64_t Segmentation::subobjectIdOfFirstSelectedObject(const Coordinate & newLo
 Segmentation::SubObject & Segmentation::subobjectFromId(const uint64_t & subobjectId, const Coordinate & location) {
     auto it = subobjects.find(subobjectId);//check if subobject exists
     if (it == std::end(subobjects)) {
-        createObject(subobjectId, location);//create an object for the selected subobject
+        createObjectFromSubobjectId(subobjectId, location);//create an object for the selected subobject
         it = subobjects.find(subobjectId);
     }
     return it->second;
@@ -452,9 +433,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
     if (!tmp.empty()) {//only unmerge if subobjects remain
         if (object.immutable) {
             unselectObject(object);
-            emit beforeAppendRow();
-            objects.emplace_back(false, false, position, tmp);
-            emit appendedRow();
+            createObject(tmp, position);
             selectObject(objects.back());
         } else {
             unselectObject(object);
@@ -476,10 +455,7 @@ Segmentation::Object & Segmentation::objectFromSubobject(Segmentation::SubObject
         return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobject.id;
     });
     if (other == std::end(subobject.objects)) {
-        emit beforeAppendRow();
-        objects.emplace_back(++Object::highestId, false, false, position, subobject);
-        emit appendedRow();
-        return objects.back();
+        return createObject(std::vector<std::reference_wrapper<SubObject>>{subobject}, position);
     } else {
         return objects[*other];
     }
@@ -543,7 +519,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         bool valid3 = !(comment = stream.readLine()).isNull();
 
         if (valid0 && valid1 && valid2 && valid3) {
-            auto & obj = createObject(initialVolume, location, objId, todo, immutable);
+            auto & obj = createObjectFromSubobjectId(initialVolume, location, objId, todo, immutable);
             while (lineStream >> objId) {
                 newSubObject(obj, objId);
             }
@@ -613,7 +589,7 @@ void Segmentation::mergeSelectedObjects() {
             flat_deselect(secondObj);
 
             secondObj.todo = false;//secondObj will get invalidated
-            uint64_t newIndex = const_merge(secondObj, firstObj).index;//create new object from merge result
+            uint64_t newIndex = createObject(secondObj, firstObj).index;//create new object from merge result
 
             selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
             flat_deselect(objects[selectedObjectIndices.back()]);//firstObj got invalidated

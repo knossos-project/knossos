@@ -82,10 +82,8 @@ Q_OBJECT
         QString comment;
         bool selected = false;
 
-        explicit Object(SubObject & initialVolume);
-        explicit Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
-        explicit Object(Object &first, Object &second);
+        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
+        explicit Object(Object & first, Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
         Object & merge(Object & other);
@@ -107,8 +105,9 @@ Q_OBJECT
     // The colors should be "maximally different".
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
 
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
+    Object & createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t id = ++Object::highestId, const bool todo = false, const bool immutable = false);
+    template<typename... Args>
+    Object & createObject(Args && ... args);
     void removeObject(Object &);
     void changeCategory(Object & obj, const QString & category);
     void changeComment(Object & obj, const QString & comment);
@@ -116,7 +115,6 @@ Q_OBJECT
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
 
-    Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
 
     Object & objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position);
