@@ -211,7 +211,7 @@ void DatasetLoadWidget::processButtonClicked() {
     const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
-    } else if (loadDataset(dataset)) {
+    } else if (loadDataset(boost::none, dataset)) {
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
@@ -221,7 +221,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
+bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QString path,  const bool keepAnnotation) {
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         open();
         return false;
@@ -264,7 +264,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = superCubeEdgeSpin.value();
-    state->overlay = segmentationOverlayCheckbox.isChecked();
+    state->overlay = !loadOverlay ? segmentationOverlayCheckbox.isChecked() : loadOverlay.get();
 
     state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 

@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 
     Scripting scripts;
 
-    viewer.window->widgetContainer.datasetLoadWidget.loadDataset();
+    viewer.window->widgetContainer.datasetLoadWidget.loadDataset(boost::none);
     viewer.window->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &viewer, &Viewer::userMove);

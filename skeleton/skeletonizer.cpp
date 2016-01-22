@@ -170,6 +170,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+    xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
     xml.writeEndElement();
 
     xml.writeStartElement("task");
@@ -368,10 +369,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "lastsavedin") {
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "dataset") {
-                    QStringRef attribute = attributes.value("path");
-                    QString path = attribute.isNull() ? "" : attribute.toString();
-                    if (experimentName != state->name) {
-                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(path, true);
+                    const auto path = attributes.value("path").toString();
+                    const bool overlay = attributes.value("overlay").isEmpty() ? state->overlay : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (experimentName != state->name || overlay != state->overlay) {
+                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     Coordinate movementAreaMin;//0
