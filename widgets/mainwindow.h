@@ -136,6 +136,7 @@ class MainWindow : public QMainWindow {
     void placeComment(const int index);
     void toggleSegments();
 public:
+    GUIMode guiMode{GUIMode::None};
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
     std::unique_ptr<ViewportOrtho> viewportZY;
@@ -163,6 +164,7 @@ public:
 
     SkeletonProxy *skeletonProxy;
 
+    QLabel GUIModeLabel{""};
     QLabel cursorPositionLabel;
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
@@ -201,6 +203,7 @@ public:
     void setSegmentState(const SegmentState newState);
 public slots:
     void refreshPluginMenu();
+    void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
     void updateCursorLabel(const Coordinate & position, const ViewportType vpType);

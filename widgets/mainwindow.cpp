@@ -90,20 +90,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(guiMode == GUIMode::ProofReading); });
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+        std::map<AnnotationMode, QString> rawModes = workModes;
+        AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
         if (!showOverlays) {
-            const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
-                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-            workModeModel.recreate(rawModes);
-            setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : AnnotationMode::Mode_Tracing);
+             rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
         }
-        else {
-            workModeModel.recreate(workModes);
-            setWorkMode(currentMode);
+        else if (guiMode == GUIMode::ProofReading) {
+            rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
+            defaultMode = AnnotationMode::Mode_Merge;
         }
+        workModeModel.recreate(rawModes);
+        setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
+
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
@@ -126,6 +129,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     setAcceptDrops(true);
 
     statusBar()->setSizeGripEnabled(false);
+    GUIModeLabel.setVisible(false);
+    statusBar()->addWidget(&GUIModeLabel);
     statusBar()->addWidget(&cursorPositionLabel);
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
@@ -325,6 +330,29 @@ void MainWindow::updateLoaderProgress(int refCount) {
     loaderProgress->setAutoFillBackground(true);
     loaderProgress->setPalette(pal);
     loaderProgress->setText(QString::number(refCount));
+}
+
+void MainWindow::setProofReadingUI(const bool on) {
+    const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+    if (on) {
+        workModeModel.recreate({{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}});
+        if (currentMode == AnnotationMode::Mode_Merge || currentMode == AnnotationMode::Mode_Paint) {
+            setWorkMode(currentMode);
+        } else {
+            setWorkMode(AnnotationMode::Mode_Merge);
+        }
+    }
+    else {
+        workModeModel.recreate(workModes);
+        setWorkMode(currentMode);
+    }
+    menuBar()->setHidden(on);
+    viewportXZ->setHidden(on);
+    viewportZY->setHidden(on);
+    viewportArb->setHidden(on);
+    resetViewports();
+    GUIModeLabel.setText(on ? "Proof Reading Mode" : "");
+    GUIModeLabel.setVisible(on);
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
@@ -648,7 +676,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     bool multipleFiles = fileNames.size() > 1;
     bool success = true;
-
+    guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
     });
@@ -685,7 +713,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
-
+    setProofReadingUI(guiMode == GUIMode::ProofReading);
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
@@ -1039,6 +1067,8 @@ void MainWindow::saveSettings() {
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
     settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
+    settings.setValue(GUI_MODE, static_cast<int>(guiMode));
+
     settings.endGroup();
 
     widgetContainer.datasetLoadWidget.saveSettings();
@@ -1091,6 +1121,11 @@ void MainWindow::loadSettings() {
     }
 
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
+
+    guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
+    if (guiMode == GUIMode::ProofReading) {
+        setProofReadingUI(true);
+    }
 
     settings.endGroup();
 
@@ -1164,10 +1199,17 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    forEachVPDo([](ViewportBase & vp) {
-        vp.setDock(true);
-        vp.setVisible(true);
-    });
+    if (guiMode == GUIMode::ProofReading) {
+        viewportXY.get()->setDock(true);
+        viewportXY.get()->show();
+        viewport3D.get()->setDock(true);
+        viewport3D.get()->show();
+    } else {
+        forEachVPDo([](ViewportBase & vp) {
+            vp.setDock(true);
+            vp.show();
+        });
+    }
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
@@ -1218,15 +1260,22 @@ void MainWindow::placeComment(const int index) {
 }
 
 void MainWindow::resizeToFitViewports(int width, int height) {
-    width = (width - DEFAULT_VP_MARGIN) / 2;
-    height = (height - DEFAULT_VP_MARGIN) / 2;
+    width = (width - DEFAULT_VP_MARGIN);
+    height = (height - DEFAULT_VP_MARGIN);
     int mindim = std::min(width, height);
-    viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-    viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
-    viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
-    viewportArb->move(DEFAULT_VP_MARGIN + mindim + DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
-    viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
-    forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
+    if (guiMode == GUIMode::ProofReading) {
+        viewportXY->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN);
+        const int sizeVP3d = std::min(mindim, width - mindim) - DEFAULT_VP_MARGIN;
+        viewport3D->setGeometry(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN, sizeVP3d, sizeVP3d);
+    } else {
+        mindim /= 2;
+        viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
+        viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+        viewportArb->move(DEFAULT_VP_MARGIN + 2 * mindim, DEFAULT_VP_MARGIN);
+        viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+        forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
+    }
 }
 
 void MainWindow::pythonPropertiesSlot() {

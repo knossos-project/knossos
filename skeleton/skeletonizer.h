@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "session.h"
 #include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
@@ -137,6 +138,7 @@ public:
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
 signals:
+    void guiModeLoaded();
     void branchPoppedSignal();
     void branchPushedSignal();
     void nodeAddedSignal(const nodeListElement & node);

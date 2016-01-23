@@ -26,7 +26,6 @@
 #include "file_io.h"
 #include "functions.h"
 #include "segmentation/cubeloader.h"
-#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
 #include "version.h"
@@ -168,6 +167,8 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
     xml.writeEndElement();
 
+    xml.writeStartElement("guiMode");
+    xml.writeAttribute("mode", (state->viewer->window->guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
     xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
@@ -338,6 +339,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
     state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
+    state->viewer->window->guiMode = GUIMode::None;
+
     QTime bench;
     QXmlStreamReader xml(&file);
 
@@ -368,6 +371,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
+                } else if (xml.name() == "guiMode") {
+                    if (attributes.value("mode").toString() == "proof reading") {
+                        state->viewer->window->guiMode = GUIMode::ProofReading;
+                    }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
                     const bool overlay = attributes.value("overlay").isEmpty() ? state->overlay : static_cast<bool>(attributes.value("overlay").toInt());
@@ -708,6 +715,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     blockSignals(blockState);
     emit resetData();
     emit propertiesChanged(numberProperties);
+    emit guiModeLoaded();
+
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if (!merge) {

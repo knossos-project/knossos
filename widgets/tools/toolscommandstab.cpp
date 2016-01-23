@@ -22,7 +22,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     activeTreeIDSpin = new QSpinBox();
     activeNodeIDLabel = new QLabel("Active Node ID:");
     activeNodeIDSpin = new QSpinBox();
-    newTreeButton = new QPushButton("New Tree (C)"); // TODO MODES
+    newTreeButton = new QPushButton("New Tree (C)");
 
     newTreeButton->setToolTip("Create a new tree");
     jumpToActiveButton = new QPushButton("Jump To Active Node (S)");

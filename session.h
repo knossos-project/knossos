@@ -33,6 +33,11 @@
 #include <QString>
 #include <QTimer>
 
+enum class GUIMode {
+    None,
+    ProofReading
+};
+
 enum class AnnotationMode {
     NodeEditing = 0x40,
     LinkedNodes = 0x80,

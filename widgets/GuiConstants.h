@@ -88,11 +88,14 @@ const QString ROTATION_CENTER = "rotation_center";
 const QString RENDER_VOLUME = "render_volume";
 const QString VOLUME_ALPHA = "volume_alpha";
 const QString VOLUME_BACKGROUND_COLOR = "volume_background_color";
+const QString VP_TAB_INDEX = "vp_tab_index";
+
+// Mainwindow
+const QString GUI_MODE = "gui_mode";
 const QString VP_ORDER = "vp_order";
 const QString VP_I_POS = "vp%1_pos";
 const QString VP_I_SIZE = "vp%1_size";
 const QString VP_I_VISIBLE = "vp%1_visible";
-const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 
 // Navigation Widget
