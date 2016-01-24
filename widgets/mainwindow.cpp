@@ -229,7 +229,8 @@ void MainWindow::createToolbars() {
     modeCombo.setModel(&workModeModel);
     modeCombo.setCurrentIndex(static_cast<int>(AnnotationMode::Mode_Tracing));
     basicToolbar.addWidget(&modeCombo);
-    QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
+    QObject::connect(&modeCombo, static_cast<void (ModeComboBox::*)(int)>(&ModeComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
+    QObject::connect(&modeCombo, &ModeComboBox::workModeSelected, [this](int index) { setWorkMode(workModeModel.at(index).first); });
     modeCombo.setToolTip("<b>Select a work mode:</b><br/>"
                          "<b>" + workModes[AnnotationMode::Mode_MergeTracing] + ":</b> Merge segmentation objects by tracing<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
@@ -504,6 +505,8 @@ void MainWindow::createMenus() {
     fileMenu.addAction(tr("Export to NML..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
+
+    switchModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch work mode"), this, &MainWindow::openModeCombo, Qt::Key_M);
 
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
@@ -847,11 +850,20 @@ void MainWindow::exportToNml() {
     }
 }
 
+void MainWindow::openModeCombo() {
+    if (modeCombo.isCollapsed) {
+        modeCombo.showPopup();
+    }
+    else {
+        modeCombo.hidePopup();
+    }
+}
+
 void MainWindow::setWorkMode(AnnotationMode workMode) {
     if (workModes.find(workMode) == std::end(workModes)) {
         workMode = AnnotationMode::Mode_Tracing;
     }
-    modeCombo.setCurrentText(workModes[workMode]);
+    modeCombo.setCurrentIndex(workModeModel.indexOf(workMode));
     auto & mode = Session::singleton().annotationMode;
     mode = workMode;
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);

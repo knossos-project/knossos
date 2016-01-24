@@ -78,11 +78,73 @@ public:
         std::sort(std::begin(workModes), std::end(workModes), [](const std::pair<AnnotationMode, QString> elemA, const std::pair<AnnotationMode, QString> elemB) {
             return elemA.second < elemB.second;
         });
+        for (uint i = 1; i <= modes.size(); ++i) {
+            workModes[i - 1].second = tr("%0. ").arg(i) + workModes[i -1].second;
+        }
         endResetModel();
     }
+
     std::pair<AnnotationMode, QString> at(const int index) const {
         return workModes[index];
     }
+
+    int indexOf(const AnnotationMode & mode) const {
+        for (uint i = 0; i < workModes.size(); ++i) {
+            if (workModes[i].first == mode) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};
+
+class ModeListView : public QListView { // view that
+    Q_OBJECT
+public:
+    explicit ModeListView(QWidget *parent = nullptr) : QListView(parent) {}
+    virtual void keyPressEvent(QKeyEvent *event) override {
+        switch (event->key()) {
+        case Qt::Key_1:
+        case Qt::Key_2:
+        case Qt::Key_3:
+        case Qt::Key_4:
+        case Qt::Key_5:
+            emit modeSelected(event->key() - Qt::Key_1); // emit without needing return key pressed
+            break;
+        default:
+            QListView::keyPressEvent(event);
+        }
+    }
+signals:
+    void modeSelected(const int index);
+};
+
+class ModeComboBox : public QComboBox {
+    Q_OBJECT
+    ModeListView customView;
+public:
+    explicit ModeComboBox(QWidget *parent = nullptr) : QComboBox(parent) {
+        setView(&customView);
+        connect(&customView, &ModeListView::modeSelected, [this](const int index) {
+            setCurrentIndex(index);
+            if (currentIndex() == index) { // index exists
+                emit workModeSelected(index);
+                hidePopup();
+            }
+        });
+    }
+
+    bool isCollapsed{true};
+    virtual void showPopup() override {
+        QComboBox::showPopup();
+        isCollapsed = false;
+    }
+    virtual void hidePopup() override {
+        QComboBox::hidePopup();
+        isCollapsed = true;
+    }
+signals:
+    void workModeSelected(const int index);
 };
 
 
@@ -101,7 +163,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                };
     WorkModeModel workModeModel;
-    QComboBox modeCombo;
+    ModeComboBox modeCombo;
     QAction *toggleSegmentsAction;
     QAction *newTreeAction;
     QAction *pushBranchAction;
@@ -148,6 +210,7 @@ public:
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
+    QAction *switchModeAction;
     QAction *segEditSegModeAction;
     QAction *segEditSkelModeAction;
     QAction *skelEditSegModeAction;
@@ -202,6 +265,7 @@ public:
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
 public slots:
+    void openModeCombo();
     void refreshPluginMenu();
     void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
