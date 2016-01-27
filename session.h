@@ -75,6 +75,7 @@ public:
 
     QPair<QString, QString> task;
     QFlags<AnnotationMode> annotationMode;
+    GUIMode guiMode{GUIMode::None};
 
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension

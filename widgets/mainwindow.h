@@ -98,56 +98,6 @@ public:
     }
 };
 
-class ModeListView : public QListView { // view that
-    Q_OBJECT
-public:
-    explicit ModeListView(QWidget *parent = nullptr) : QListView(parent) {}
-    virtual void keyPressEvent(QKeyEvent *event) override {
-        switch (event->key()) {
-        case Qt::Key_1:
-        case Qt::Key_2:
-        case Qt::Key_3:
-        case Qt::Key_4:
-        case Qt::Key_5:
-            emit modeSelected(event->key() - Qt::Key_1); // emit without needing return key pressed
-            break;
-        default:
-            QListView::keyPressEvent(event);
-        }
-    }
-signals:
-    void modeSelected(const int index);
-};
-
-class ModeComboBox : public QComboBox {
-    Q_OBJECT
-    ModeListView customView;
-public:
-    explicit ModeComboBox(QWidget *parent = nullptr) : QComboBox(parent) {
-        setView(&customView);
-        connect(&customView, &ModeListView::modeSelected, [this](const int index) {
-            setCurrentIndex(index);
-            if (currentIndex() == index) { // index exists
-                emit workModeSelected(index);
-                hidePopup();
-            }
-        });
-    }
-
-    bool isCollapsed{true};
-    virtual void showPopup() override {
-        QComboBox::showPopup();
-        isCollapsed = false;
-    }
-    virtual void hidePopup() override {
-        QComboBox::hidePopup();
-        isCollapsed = true;
-    }
-signals:
-    void workModeSelected(const int index);
-};
-
-
 class MainWindow : public QMainWindow {
     Q_OBJECT
     friend class TaskManagementWidget;
@@ -163,7 +113,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                };
     WorkModeModel workModeModel;
-    ModeComboBox modeCombo;
+    QComboBox modeCombo;
     QAction *toggleSegmentsAction;
     QAction *newTreeAction;
     QAction *pushBranchAction;
@@ -198,7 +148,6 @@ class MainWindow : public QMainWindow {
     void placeComment(const int index);
     void toggleSegments();
 public:
-    GUIMode guiMode{GUIMode::None};
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
     std::unique_ptr<ViewportOrtho> viewportZY;
@@ -210,7 +159,11 @@ public:
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
 
-    QAction *switchModeAction;
+    // convenience mode switch actions for proof reading mode
+    QAction *modeSwitchSeparator{nullptr};
+    QAction *setMergeModeAction{nullptr};
+    QAction *setPaintModeAction{nullptr};
+
     QAction *segEditSegModeAction;
     QAction *segEditSkelModeAction;
     QAction *skelEditSegModeAction;
@@ -265,7 +218,6 @@ public:
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
 public slots:
-    void openModeCombo();
     void refreshPluginMenu();
     void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);

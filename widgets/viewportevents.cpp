@@ -478,7 +478,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
 void ViewportBase::handleKeyPress(const QKeyEvent *event) {
     const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
     const auto alt = event->modifiers().testFlag(Qt::AltModifier);
-    if (event->key() == Qt::Key_H) {
+    if (event->key() == Qt::Key_H && Session::singleton().guiMode != GUIMode::ProofReading) {
         if (isDocked) {
             hide();
         }

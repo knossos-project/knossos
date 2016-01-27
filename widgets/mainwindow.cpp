@@ -83,6 +83,15 @@ public:
     }
 };
 
+template<typename Menu, typename Receiver, typename Slot>
+QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
+    auto & action = *menu.addAction(icon, caption);
+    action.setShortcut(keySequence);
+    action.setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(&action, &QAction::triggered, receiver, slot);
+    return action;
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
     state->mainWindow = this;
     updateTitlebar();
@@ -90,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(guiMode == GUIMode::ProofReading); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
@@ -100,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         if (!showOverlays) {
              rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
         }
-        else if (guiMode == GUIMode::ProofReading) {
+        else if (Session::singleton().guiMode == GUIMode::ProofReading) {
             rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
             defaultMode = AnnotationMode::Mode_Merge;
         }
@@ -229,8 +238,7 @@ void MainWindow::createToolbars() {
     modeCombo.setModel(&workModeModel);
     modeCombo.setCurrentIndex(static_cast<int>(AnnotationMode::Mode_Tracing));
     basicToolbar.addWidget(&modeCombo);
-    QObject::connect(&modeCombo, static_cast<void (ModeComboBox::*)(int)>(&ModeComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
-    QObject::connect(&modeCombo, &ModeComboBox::workModeSelected, [this](int index) { setWorkMode(workModeModel.at(index).first); });
+    QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
     modeCombo.setToolTip("<b>Select a work mode:</b><br/>"
                          "<b>" + workModes[AnnotationMode::Mode_MergeTracing] + ":</b> Merge segmentation objects by tracing<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
@@ -342,15 +350,25 @@ void MainWindow::setProofReadingUI(const bool on) {
         } else {
             setWorkMode(AnnotationMode::Mode_Merge);
         }
+        if (modeSwitchSeparator == nullptr) {
+            modeSwitchSeparator = actionMenu.addSeparator();
+            setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
+            setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
+        }
     }
     else {
         workModeModel.recreate(workModes);
         setWorkMode(currentMode);
     }
-    menuBar()->setHidden(on);
+
+    modeSwitchSeparator->setVisible(on);
+    setMergeModeAction->setVisible(on);
+    setPaintModeAction->setVisible(on);
+
     viewportXZ->setHidden(on);
     viewportZY->setHidden(on);
     viewportArb->setHidden(on);
+    viewport3D->setHidden(on);
     resetViewports();
     GUIModeLabel.setText(on ? "Proof Reading Mode" : "");
     GUIModeLabel.setVisible(on);
@@ -478,15 +496,6 @@ void MainWindow::recentFileSelected() {
     }
 }
 
-template<typename Menu, typename Receiver, typename Slot>
-QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
-    auto & action = *menu.addAction(icon, caption);
-    action.setShortcut(keySequence);
-    action.setShortcutContext(Qt::ApplicationShortcut);
-    QObject::connect(&action, &QAction::triggered, receiver, slot);
-    return action;
-}
-
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
@@ -505,8 +514,6 @@ void MainWindow::createMenus() {
     fileMenu.addAction(tr("Export to NML..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
-
-    switchModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch work mode"), this, &MainWindow::openModeCombo, Qt::Key_M);
 
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
@@ -679,7 +686,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     bool multipleFiles = fileNames.size() > 1;
     bool success = true;
-    guiMode = GUIMode::None; // always reset to default gui
+    Session::singleton().guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
     });
@@ -716,7 +723,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
-    setProofReadingUI(guiMode == GUIMode::ProofReading);
+    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
@@ -847,15 +854,6 @@ void MainWindow::exportToNml() {
             filename += ".nml";
         }
         nmlExport(filename);
-    }
-}
-
-void MainWindow::openModeCombo() {
-    if (modeCombo.isCollapsed) {
-        modeCombo.showPopup();
-    }
-    else {
-        modeCombo.hidePopup();
     }
 }
 
@@ -1079,7 +1077,7 @@ void MainWindow::saveSettings() {
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
     settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
-    settings.setValue(GUI_MODE, static_cast<int>(guiMode));
+    settings.setValue(GUI_MODE, static_cast<int>(Session::singleton().guiMode));
 
     settings.endGroup();
 
@@ -1134,8 +1132,8 @@ void MainWindow::loadSettings() {
 
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
-    guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
-    if (guiMode == GUIMode::ProofReading) {
+    Session::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
+    if (Session::singleton().guiMode == GUIMode::ProofReading) {
         setProofReadingUI(true);
     }
 
@@ -1211,11 +1209,9 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    if (guiMode == GUIMode::ProofReading) {
+    if (Session::singleton().guiMode == GUIMode::ProofReading) {
         viewportXY.get()->setDock(true);
         viewportXY.get()->show();
-        viewport3D.get()->setDock(true);
-        viewport3D.get()->show();
     } else {
         forEachVPDo([](ViewportBase & vp) {
             vp.setDock(true);
@@ -1275,10 +1271,8 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN);
     height = (height - DEFAULT_VP_MARGIN);
     int mindim = std::min(width, height);
-    if (guiMode == GUIMode::ProofReading) {
+    if (Session::singleton().guiMode == GUIMode::ProofReading) {
         viewportXY->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN);
-        const int sizeVP3d = std::min(mindim, width - mindim) - DEFAULT_VP_MARGIN;
-        viewport3D->setGeometry(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN, sizeVP3d, sizeVP3d);
     } else {
         mindim /= 2;
         viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);

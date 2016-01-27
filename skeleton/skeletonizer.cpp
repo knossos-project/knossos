@@ -168,7 +168,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("guiMode");
-    xml.writeAttribute("mode", (state->viewer->window->guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
+    xml.writeAttribute("mode", (Session::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
     xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
@@ -339,7 +339,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
     state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
-    state->viewer->window->guiMode = GUIMode::None;
+    Session::singleton().guiMode = GUIMode::None;
 
     QTime bench;
     QXmlStreamReader xml(&file);
@@ -373,7 +373,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
                 } else if (xml.name() == "guiMode") {
                     if (attributes.value("mode").toString() == "proof reading") {
-                        state->viewer->window->guiMode = GUIMode::ProofReading;
+                        Session::singleton().guiMode = GUIMode::ProofReading;
                     }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
