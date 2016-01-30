@@ -98,8 +98,10 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
-        uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
-        writeVoxels(coord, soid, seg.brush.value());
+        if (seg.selectedObjectsCount() > 0) {
+            uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
+            writeVoxels(coord, soid, seg.brush.value());
+        }
     }
 }
 
