@@ -206,6 +206,13 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromInde
     return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
 
+std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject() const {
+    if (selectedObjectsCount() != 0) {
+        return colorObjectFromIndex(selectedObjectIndices.front());
+    }
+    return std::make_tuple(0, 0, 0, 0);
+}
+
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red

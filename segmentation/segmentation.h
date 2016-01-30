@@ -152,6 +152,7 @@ public:
     decltype(backgroundId) getBackgroundId() const;
     void setBackgroundId(decltype(backgroundId));
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromIndex(const uint64_t objectIndex) const;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>  colorOfSelectedObject() const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromSubobjectId(const uint64_t subObjectID) const;
     //volume rendering

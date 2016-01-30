@@ -1804,7 +1804,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     glLineWidth(2.0f);
 
     auto & seg = Segmentation::singleton();
-    auto drawCursor = [this, &seg, coord]() {
+    auto drawCursor = [this, &seg, coord](const float r, const float g, const float b) {
         const auto bradius = seg.brush.getRadius();
         const auto bview = seg.brush.getView();
         const auto xsize = bradius / state->scale.x;
@@ -1826,9 +1826,9 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         const bool xy = viewportType == VIEWPORT_XY;
         const bool xz = viewportType == VIEWPORT_XZ;
         const int z = 0;
-
         if(seg.brush.getShape() == brush_t::shape_t::angular) {
             glBegin(GL_LINE_LOOP);
+            glColor4f(r, g, b, 1.);
             const auto x = xy || xz ? xsize : zsize;
             const auto y = xz ? zsize : ysize;
             //integer coordinates to round to voxel boundaries
@@ -1837,33 +1837,42 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             glVertex3i( x + 1,  y + 1, z);
             glVertex3i(-x    ,  y + 1, z);
             glEnd();
+            if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) { // fill brush with object color
+                glColor4f(r, g, b, .25);
+                glBegin(GL_QUADS);
+                //integer coordinates to round to voxel boundaries
+                glVertex3i(-x    , -y    , z);
+                glVertex3i( x + 1, -y    , z);
+                glVertex3i( x + 1,  y + 1, z);
+                glVertex3i(-x    ,  y + 1, z);
+                glEnd();
+            }
         } else if(seg.brush.getShape() == brush_t::shape_t::round) {
             const int xmax = xy ? xsize : xz ? xsize : zsize;
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            auto verticalPixelBorder = [this](float x, float y, float z){
-                glVertex3f(x, y    , z);
-                glVertex3f(x, y + 1, z);
+            std::vector<floatCoordinate> vertices;
+            auto addVerticalPixelBorder = [&vertices, this](float x, float y, float z) {
+                vertices.push_back({x, y    , z});
+                vertices.push_back({x, y + 1, z});
             };
-            auto horizontalPixelBorder = [this](float x, float y, float z){
-                glVertex3f(x    , y, z);
-                glVertex3f(x + 1, y, z);
+            auto addHorizontalPixelBorder = [&vertices, this](float x, float y, float z) {
+                vertices.push_back({x    , y, z});
+                vertices.push_back({x + 1, y, z});
             };
-
-            glBegin(GL_LINES);
-            while (x >= y) {//first part of the ellipse (circle with anisotropic pixels), y dominant movement
+            while (x >= y) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
                 auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    verticalPixelBorder( x + 1,  y, z);
-                    verticalPixelBorder(-x    ,  y, z);
-                    verticalPixelBorder(-x    , -y, z);
-                    verticalPixelBorder( x + 1, -y, z);
+                    addVerticalPixelBorder( x + 1,  y, z);
+                    addVerticalPixelBorder(-x    ,  y, z);
+                    addVerticalPixelBorder(-x    , -y, z);
+                    addVerticalPixelBorder( x + 1, -y, z);
                 } else if (x != xmax || y != 0) {
-                    horizontalPixelBorder( x,  y    , z);
-                    horizontalPixelBorder(-x,  y    , z);
-                    horizontalPixelBorder(-x, -y + 1, z);
-                    horizontalPixelBorder( x, -y + 1, z);
+                    addHorizontalPixelBorder( x,  y    , z);
+                    addHorizontalPixelBorder(-x,  y    , z);
+                    addHorizontalPixelBorder(-x, -y + 1, z);
+                    addHorizontalPixelBorder( x, -y + 1, z);
                 }
                 if (val) {
                     ++y;
@@ -1874,18 +1883,18 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
 
             x = 0;
             y = ymax;
-            while (y >= x) {//second part of the ellipse, x dominant movement
+            while (y >= x) { //second part of the ellipse, x dominant movement
                 auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    horizontalPixelBorder( x,  y + 1, z);
-                    horizontalPixelBorder(-x,  y + 1, z);
-                    horizontalPixelBorder(-x, -y    , z);
-                    horizontalPixelBorder( x, -y    , z);
+                    addHorizontalPixelBorder( x,  y + 1, z);
+                    addHorizontalPixelBorder(-x,  y + 1, z);
+                    addHorizontalPixelBorder(-x, -y    , z);
+                    addHorizontalPixelBorder( x, -y    , z);
                 } else if (y != ymax || x != 0) {
-                    verticalPixelBorder( x    ,  y, z);
-                    verticalPixelBorder(-x + 1,  y, z);
-                    verticalPixelBorder(-x + 1, -y, z);
-                    verticalPixelBorder( x    , -y, z);
+                    addVerticalPixelBorder( x    ,  y, z);
+                    addVerticalPixelBorder(-x + 1,  y, z);
+                    addVerticalPixelBorder(-x + 1, -y, z);
+                    addVerticalPixelBorder( x    , -y, z);
                 }
                 if (val) {
                     ++x;
@@ -1893,16 +1902,39 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
                     --y;
                 }
             }
+            // sort by angle to form a circle
+            const auto center = std::accumulate(std::begin(vertices), std::end(vertices), floatCoordinate(0, 0, 0)) / vertices.size();
+            const auto start = vertices.front() - center;
+            std::sort(std::begin(vertices), std::end(vertices), [&center, &start](const floatCoordinate & lhs, const floatCoordinate & rhs) {
+                const auto lineLhs = lhs - center;
+                const auto lineRhs = rhs - center;
+                return std::atan2(start.x * lineLhs.y - start.y * lineLhs.x, start.dot(lineLhs)) < std::atan2(start.x * lineRhs.y - start.y * lineRhs.x, start.dot(lineRhs));
+            });
+            glBegin(GL_LINE_LOOP);
+            glColor4f(r, g, b, 1.);
+            for (const auto & point : vertices) {
+                glVertex3f(point.x, point.y, point.z);
+            }
             glEnd();
+            if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) { // fill brush with object color
+                glBegin(GL_TRIANGLE_FAN);
+                glColor4f(r, g, b, .25);
+                glVertex3f(center.x, center.y, center.z);
+                for (const auto & point : vertices) {
+                    glVertex3f(point.x, point.y, point.z);
+                }
+                glVertex3f(vertices.front().x, vertices.front().y, vertices.front().z); // close triangle fan
+                glEnd();
+            }
         }
     };
-
+    const auto objColor = seg.colorOfSelectedObject();
     if (seg.brush.isInverse()) {
-        glColor3f(1.0f, 0.1f, 0.1f);
-    } else {
-        glColor3f(0.2f, 0.2f, 0.2f);
+        drawCursor(1.f, 0.f, 0.f);
     }
-    drawCursor();
+    else {
+        drawCursor(std::get<0>(objColor)/255., std::get<1>(objColor)/255., std::get<2>(objColor)/255.);
+    }
 }
 
 void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
