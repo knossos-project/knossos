@@ -15,10 +15,12 @@ option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cp
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-file(GLOB_RECURSE sources *.cpp resources.qrc version.h.in)
-file(GLOB_RECURSE headers *.h)
+file(GLOB sources *.cpp resources.qrc version.h.in)
+file(GLOB headers *.h)
+file(GLOB_RECURSE sources2 ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./widgets/*.cpp)
+file(GLOB_RECURSE headers2 ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./widgets/*.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
-set(SRC_LIST ${sources} ${headers})
+set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
@@ -35,7 +37,7 @@ find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widget
 find_package(QuaZip 0.6.2 REQUIRED)
 
 if(NOT AUTOGEN)
-    qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers})
+    qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
     qt5_add_resources(SRC_LIST resources.qrc)
 endif()
 
