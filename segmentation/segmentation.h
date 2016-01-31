@@ -69,10 +69,9 @@ Q_OBJECT
 
         static uint64_t highestId;
         static uint64_t highestIndex;
-
+    public:
         //see http://coliru.stacked-crooked.com/a/aba85777991b4425
         std::vector<std::reference_wrapper<SubObject>> subobjects;
-    public:
         uint64_t id;
         uint64_t index = ++highestIndex;
         bool todo;

@@ -10,6 +10,7 @@
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
+#include "file_io.h"
 
 #include <Python.h>
 #include <QApplication>
@@ -197,6 +198,14 @@ void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
 
 int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
+}
+
+void PythonProxy::saveAnnotationFile(const QString & fname) {
+    annotationFileSave(fname);
+}
+
+void PythonProxy::setDatasetLocking(const bool locked) {
+    state->viewerState->datasetMagLock = locked;
 }
 
 // UNTESTED

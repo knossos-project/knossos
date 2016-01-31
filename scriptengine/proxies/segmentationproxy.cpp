@@ -48,3 +48,59 @@ QList<quint64> SegmentationProxy::subobjectIdsOfObject(quint64 objId) {
     }
     return subobjectIds;
 }
+
+void SegmentationProxy::jumpToObject(quint64 objIdx) {
+    Segmentation::singleton().jumpToObject(objIdx);
+}
+
+void SegmentationProxy::selectObject(quint64 objIdx) {
+    Segmentation::singleton().selectObject(objIdx);
+}
+
+QList<quint64> SegmentationProxy::subobjectsContainedInObject(quint64 objIdx) {
+    auto obj = Segmentation::singleton().objects[objIdx];
+
+    QList<quint64> subObjList;
+    for (auto & elem : obj.subobjects) {
+        subObjList.append(elem.get().id);
+    }
+
+    return subObjList;
+}
+
+QList<quint64> SegmentationProxy::getAllObjectIdx() {
+    QList<quint64> allObjIdx;
+
+    for(auto & elem : Segmentation::singleton().objects) {
+        allObjIdx.append(elem.index);
+    }
+
+    return allObjIdx;
+}
+
+QList<quint64> SegmentationProxy::getSelectedObjectIndices() {
+    QList<quint64> selected;
+
+    for(auto elem : Segmentation::singleton().selectedObjectIndices) {
+        selected.append(elem);
+    }
+
+    return selected;
+}
+
+void SegmentationProxy::unselectObject(const quint64 objectIndex) {
+    Segmentation::singleton().unselectObject(objectIndex);
+}
+
+QList<quint64> * SegmentationProxy::getObjectLocation(const quint64 objectIndex) {
+    if(objectIndex < Segmentation::singleton().objects.size()) {
+        auto & obj = Segmentation::singleton().objects[objectIndex];
+        QList<quint64> * location = new QList<quint64>();
+        location->append(obj.location.x);
+        location->append(obj.location.y);
+        location->append(obj.location.z);
+        return location;
+    }
+
+    return nullptr;
+}
