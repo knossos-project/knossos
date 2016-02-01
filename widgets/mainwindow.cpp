@@ -350,13 +350,7 @@ void MainWindow::setProofReadingUI(const bool on) {
         } else {
             setWorkMode(AnnotationMode::Mode_Merge);
         }
-        if (modeSwitchSeparator == nullptr) {
-            modeSwitchSeparator = actionMenu.addSeparator();
-            setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
-            setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
-        }
-    }
-    else {
+    } else {
         workModeModel.recreate(workModes);
         setWorkMode(currentMode);
     }
@@ -516,12 +510,19 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
+    //advanced skeleton
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    //skeleton
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
+    //segmentation
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
+    //proof reading mode
+    modeSwitchSeparator = actionMenu.addSeparator();
+    setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
+    setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
 
     menuBar()->addMenu(&actionMenu);
 
@@ -1133,9 +1134,7 @@ void MainWindow::loadSettings() {
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
     Session::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
-    if (Session::singleton().guiMode == GUIMode::ProofReading) {
-        setProofReadingUI(true);
-    }
+    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
 
     settings.endGroup();
 
