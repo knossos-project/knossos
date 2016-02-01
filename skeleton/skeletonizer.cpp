@@ -169,6 +169,7 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeStartElement("guiMode");
     xml.writeAttribute("mode", (Session::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
+    xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
     xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
