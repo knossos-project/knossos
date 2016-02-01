@@ -264,7 +264,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QSt
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = superCubeEdgeSpin.value();
-    state->overlay = !loadOverlay ? segmentationOverlayCheckbox.isChecked() : loadOverlay.get();
+    if (loadOverlay != boost::none) {
+        segmentationOverlayCheckbox.setChecked(loadOverlay.get());
+    }
+    state->overlay = segmentationOverlayCheckbox.isChecked();
 
     state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
