@@ -441,7 +441,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *
                                                   // brush radius delta factor (float), as a function of current radius
                                                   std::pow(curRadius + 1, 0.5)
-                                                  ), 0));
+                                                  ), 1));
     }
 }
 
