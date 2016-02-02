@@ -210,6 +210,7 @@ signals:
     void appendedRow();
     void removedRow();
     void changedRow(int index);
+    void changedRowSelection(int index);
     void resetData();
     void resetSelection();
     void resetTouchedObjects();

@@ -158,6 +158,8 @@ void Segmentation::removeObject(Object & object) {
         std::swap(objects.back(), object);
         std::swap(objectIdToIndex[objects.back().id], objectIdToIndex[object.id]);
         emit changedRow(object.index);//object now references the former end
+        emit changedRowSelection(object.index);//object now references the former end
+        emit changedRowSelection(objects.back().index);//object now references the former end
     }
     emit beforeRemoveRow();
     //the last element is the one which gets removed
@@ -357,7 +359,7 @@ void Segmentation::selectObject(Object & object) {
         ++subobj.get().selectedObjectsCount;
     }
     selectedObjectIndices.emplace_back(object.index);
-    emit changedRow(object.index);
+    emit changedRowSelection(object.index);
 }
 
 void Segmentation::unselectObject(const uint64_t & objectIndex) {
@@ -375,7 +377,7 @@ void Segmentation::unselectObject(Object & object) {
         --subobj.get().selectedObjectsCount;
     }
     selectedObjectIndices.erase(object.index);
-    emit changedRow(object.index);
+    emit changedRowSelection(object.index);
 }
 
 void Segmentation::jumpToObject(Object & object) {
@@ -593,7 +595,7 @@ void Segmentation::mergeSelectedObjects() {
         auto flat_deselect = [this](Object & object){
             object.selected = false;
             selectedObjectIndices.erase(object.index);
-            emit changedRow(object.index);//deselect
+            emit changedRowSelection(object.index);//deselect
         };
         //4 (im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
@@ -604,15 +606,19 @@ void Segmentation::mergeSelectedObjects() {
 
             selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
             flat_deselect(objects[selectedObjectIndices.back()]);//firstObj got invalidated
+            emit changedRowSelection(firstObj.index);
+            emit changedRowSelection(secondObj.index);
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
             secondObj.todo = false;
+            emit changedRowSelection(secondObj.index);
             emit changedRow(firstObj.index);
         } else if (firstObj.immutable) {
             flat_deselect(firstObj);
             secondObj.merge(firstObj);
             firstObj.todo = false;
+            emit changedRowSelection(firstObj.index);
             emit changedRow(secondObj.index);
         } else {//if both are mutable the second object is merged into the first
             flat_deselect(secondObj);

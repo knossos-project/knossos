@@ -340,8 +340,11 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
         updateLabels();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, [this](int id){
-        objectSelectionProtection = true;
         objectModel.changeRow(id);
+        updateLabels();//maybe subobject count changed
+    });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int id){
+        objectSelectionProtection = true;
         const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
         //selection lookup is way cheaper than reselection (sadly)
         const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
@@ -353,7 +356,6 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
         objectSelectionProtection = false;
         touchedObjectModel.recreate();
         updateTouchedObjSelection();
-        updateLabels();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
         touchedObjsTable.clearSelection();
