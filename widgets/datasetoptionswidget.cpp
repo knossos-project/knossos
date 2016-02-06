@@ -288,14 +288,17 @@ void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
     int max_value = std::log(highestScreenPxXPerDataPx() / lowestScreenPxXPerDataPx()) / std::log(zoomStep);
     orthoZoomSlider.numTicks = mags > 1 ? mags : 0;
     orthoZoomSlider.highestMag = highestMag();
-    orthoZoomSlider.setMinimum(0);
-    orthoZoomSlider.setMaximum(max_value);
+    const auto orthoZoomSliderBlock = orthoZoomSlider.blockSignals(true);
+    orthoZoomSlider.setRange(0, max_value);
     orthoZoomSlider.setTickInterval(interval);
     updateOrthogonalZoomSlider();
+    orthoZoomSlider.blockSignals(orthoZoomSliderBlock);
 
+    const auto orthoZoomSpinBoxBlock = orthoZoomSpinBox.blockSignals(true);
     orthoZoomSpinBox.setMinimum(100 * (lowestScreenPxXPerDataPx(false) / lowestScreenPxXPerDataPx(false)));
     orthoZoomSpinBox.setMaximum(100 * (highestScreenPxXPerDataPx(false) / lowestScreenPxXPerDataPx(false)));
     updateOrthogonalZoomSpinBox();
+    orthoZoomSlider.blockSignals(orthoZoomSpinBoxBlock);
 }
 
 uint DatasetOptionsWidget::highestMag() {
