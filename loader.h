@@ -120,8 +120,9 @@ public://matsch
     void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
-    void snappyCacheFlush();
+    void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
+    void allocateOverlayCubes();
     Worker(const QUrl & baseUrl, const Dataset::API api, const Dataset::CubeType typeDc, const Dataset::CubeType typeOc, const QString & experimentName);
     ~Worker();
 signals:
@@ -145,10 +146,23 @@ public:
     void suspendLoader();
     ~Controller();
     void unloadCurrentMagnification();
+    void enableOverlay() {
+        suspendLoader();
+        worker->allocateOverlayCubes();
+        workerThread.start();
+    }
+
     template<typename... Args>
     void restart(Args&&... args) {
         suspendLoader();
-        worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+        if (worker != nullptr) {
+            worker->flushIntoSnappyCache();
+            auto snappyCache = worker->snappyCache;
+            worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+            worker->snappyCache = snappyCache;
+        } else {
+            worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+        }
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
         QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});

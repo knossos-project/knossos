@@ -91,7 +91,7 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
     if (worker != nullptr) {
         worker->snappyMutex.lock();
         //signal to run in loader thread
-        QTimer::singleShot(0, worker.get(), &Loader::Worker::snappyCacheFlush);
+        QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
         worker->snappyFlushCondition.wait(&worker->snappyMutex);
         worker->snappyMutex.unlock();
         return worker->snappyCache;
@@ -223,11 +223,15 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Datas
     }
 
     if(state->overlay) {
-        qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
-        for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
-            OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
-            freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
-        }
+        allocateOverlayCubes();
+    }
+}
+
+void Loader::Worker::allocateOverlayCubes() {
+    qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
+    for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
+        OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
+        freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
     }
 }
 
@@ -335,7 +339,7 @@ void Loader::Worker::snappyCacheClear() {
     state->viewer->loader_notify();//a bit of a detour…
 }
 
-void Loader::Worker::snappyCacheFlush() {
+void Loader::Worker::flushIntoSnappyCache() {
     snappyMutex.lock();
 
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
