@@ -159,6 +159,8 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
         v2 = {0, 1, 0};
         n = {0, 0, 1};
         break;
+    default:
+        throw std::runtime_error("ViewportOrtho::ViewportOrtho unknown vp");
     }
     timeDBase.start();
     timeFBase.start();

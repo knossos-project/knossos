@@ -1560,6 +1560,9 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             case VIEWPORT_ARBITRARY:
                 if (!state->viewerState->showArbplane) break;
                 renderArbitrarySlicePane(orthoVP);
+                break;
+            default:
+                throw std::runtime_error("Viewport3D::renderSkeletonVP unknown vp");
             }
         });
 
@@ -1648,6 +1651,8 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                                -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
                 glEnd();
                 break;
+            default:
+                throw std::runtime_error("Viewport3D::renderSkeletonVP unknown vp");
             }
         });
 

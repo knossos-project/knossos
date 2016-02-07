@@ -1194,7 +1194,7 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.texture.xOffset = ((float)(state->viewerState->currentPosition.z - orthoVP.leftUpperDataPxOnScreen.z)) * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
             orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.y - orthoVP.leftUpperDataPxOnScreen.y)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
             break;
-        case VIEWPORT_ARBITRARY:
+        case VIEWPORT_ARBITRARY: {
             //v1: vector in Viewport x-direction, parameter s corresponds to v1
             //v2: vector in Viewport y-direction, parameter t corresponds to v2
             auto & arbVP = static_cast<ViewportArb&>(orthoVP);
@@ -1234,6 +1234,9 @@ bool Viewer::recalcTextureOffsets() {
             arbVP.texture.xOffset = midX / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxXPerDataPx + 0.5 * arbVP.screenPxXPerDataPx;
             arbVP.texture.yOffset = midY / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxYPerDataPx + 0.5 * arbVP.screenPxYPerDataPx;
             break;
+        }
+        default:
+            throw std::runtime_error("Viewer::recalcTextureOffsets unknown vp");
         }
         //Calculate the vertices in texture coordinates
         // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
