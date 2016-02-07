@@ -772,7 +772,7 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
 
 void ViewportArb::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
-    if (state->overlay && state->viewerState->showOverlay) {
+    if (!state->viewer->gpuRendering && state->overlay && state->viewerState->showOverlay) {
         updateOverlayTexture();
     }
     ViewportOrtho::paintGL();
