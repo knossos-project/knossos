@@ -286,7 +286,7 @@ void ViewportOrtho::initializeGL() {
     // texture is updated via glTexSubImage2D in vpGenerateTexture
     // We need GL_RGB as texture internal format to color the textures
 
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2), 128);
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     glTexImage2D(GL_TEXTURE_2D,
                 0,
                 GL_RGB,
