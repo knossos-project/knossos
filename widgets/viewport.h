@@ -59,8 +59,9 @@ constexpr const double SKELZOOMMIN = 0.0;
 
 struct viewportTexture {
     //Handles for OpenGl
-    uint texHandle;
-    uint overlayHandle;
+    uint texHandle{0};
+    GLint textureFilter{GL_LINEAR};
+    uint overlayHandle{0};
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     Coordinate leftUpperPxInAbsPx;

@@ -928,11 +928,14 @@ void Viewer::run() {
 
 void Viewer::applyTextureFilterSetting(const GLint texFiltering) {
     window->forEachOrthoVPDo([&texFiltering](ViewportOrtho & orthoVP) {
-        orthoVP.makeCurrent();
-        glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-        // Set the parameters for the texture.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
+        orthoVP.texture.textureFilter = texFiltering;
+        if (orthoVP.texture.texHandle != 0) {// 0 is an invalid tex id
+            orthoVP.makeCurrent();
+            glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
+            // Set the parameters for the texture.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
+        }
     });
     glBindTexture(GL_TEXTURE_2D, 0);
 }
