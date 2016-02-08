@@ -46,7 +46,6 @@ Viewer::Viewer() {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
-    window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     viewportXY = window->viewportXY.get();
     viewportXZ = window->viewportXZ.get();
     viewportZY = window->viewportZY.get();
@@ -57,16 +56,9 @@ Viewer::Viewer() {
     ViewportBase::initMesh(viewerState.lineVertBuffer, 1024);
     ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
 
-    QDesktopWidget *desktop = QApplication::desktop();
-
     rewire();
     window->show();
     window->loadSettings();
-    if(window->pos().x() <= 0 || window->pos().y() <= 0) {
-        window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
-                            desktop->availableGeometry().topLeft().y() + 50,
-                            1024, 800);
-    }
 
     state->viewerState->renderInterval = FAST;
 
