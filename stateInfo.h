@@ -122,7 +122,7 @@ public:
     coord2bytep_map_t Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct ViewerState * viewerState;
-    class MainWindow * mainWindow;
+    class MainWindow * mainWindow{nullptr};
     class Viewer * viewer;
     class Scripting * scripting;
     class SignalRelay * signalRelay;

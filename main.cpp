@@ -56,7 +56,12 @@ public:
     Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
         screen.show();
         //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-        QTimer::singleShot(timeout_msec, &screen, &QSplashScreen::close);
+        QTimer::singleShot(timeout_msec, [this](){
+            screen.close();
+            if (state->mainWindow != nullptr) {
+                state->mainWindow->activateWindow();
+            }
+        });
     }
 };
 
