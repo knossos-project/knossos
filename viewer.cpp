@@ -933,10 +933,6 @@ void Viewer::applyTextureFilterSetting(const GLint texFiltering) {
         // Set the parameters for the texture.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
-        glBindTexture(GL_TEXTURE_2D, orthoVP.texture.overlayHandle);
-        // Set the parameters for the texture.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFiltering);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFiltering);
     });
     glBindTexture(GL_TEXTURE_2D, 0);
 }
