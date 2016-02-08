@@ -308,12 +308,6 @@ void ViewportOrtho::initializeGL() {
     createOverlayTextures();
 
     if (state->gpuSlicer) {
-        GLint iUnits, texture_units, max_tu;
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iUnits);
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
-        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_tu);
-        std::cout << "MultiTexture: " << iUnits << ' ' << texture_units << ' ' << max_tu << std::endl;
-
         glEnable(GL_TEXTURE_3D);
         // glEnable(GL_DEPTH_TEST);
         // glDepthFunc(GL_LEQUAL);
