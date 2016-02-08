@@ -871,6 +871,7 @@ void Viewer::run() {
             viewportArb->sendCursorPosition();
         }
         alphaCache = 0;
+        recalcTextureOffsets();
     }
 
     if (state->gpuSlicer && gpuRendering) {
@@ -900,16 +901,7 @@ void Viewer::run() {
         }
     }
 
-    recalcTextureOffsets();//should be in userMove and setVPOrientation but that’s infeasable because vp update is async
     window->forEachOrthoVPDo([this](ViewportOrtho & vp) {
-        if (vp.isVisible()) {
-            vp.makeCurrent();
-        }
-        if (!gpuRendering) {
-            vpGenerateTexture(vp);
-        } else if (vp.viewportType == VIEWPORT_ARBITRARY) {
-            arbCubes(static_cast<ViewportArb&>(vp));
-        }
         vp.update();
     });
     window->viewport3D.get()->update();
@@ -976,7 +968,8 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
     if (!Session::singleton().outsideMovementArea(newPos)) {
-            viewerState.currentPosition = newPos;
+        viewerState.currentPosition = newPos;
+        recalcTextureOffsets();
     } else {
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + 1).arg(newPos.y + 1).arg(newPos.z + 1);
     }
@@ -1319,7 +1312,7 @@ void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
     alphaCache += angle; // angles are added up here until they are processed in the thread loop
     rotation = Rotation(axis, alphaCache);
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
-       vpOrtho.dcResliceNecessary = vpOrtho.ocResliceNecessary = true;
+        vpOrtho.dcResliceNecessary = vpOrtho.ocResliceNecessary = true;
     });
 }
 
@@ -1333,6 +1326,7 @@ void Viewer::resetRotation() {
     viewportArb->v2 = v2;
     viewportArb->n = v3;
     viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
+    recalcTextureOffsets();
 }
 
 void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge) {

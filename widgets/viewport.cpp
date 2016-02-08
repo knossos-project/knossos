@@ -397,6 +397,7 @@ void ViewportBase::resizeGL(int w, int h) {
 
     upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
     edgeLength = width();
+    state->viewer->recalcTextureOffsets();
 }
 
 void Viewport3D::paintGL() {
@@ -410,6 +411,7 @@ void ViewportOrtho::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
+        state->viewer->vpGenerateTexture(*this);
         renderViewport();
     }
     renderViewportFrontFace();
@@ -778,7 +780,9 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
 
 void ViewportArb::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
-    if (!state->viewer->gpuRendering && state->overlay && state->viewerState->showOverlay) {
+    if (state->gpuSlicer && state->viewer->gpuRendering) {
+        state->viewer->arbCubes(*this);
+    } else if (state->overlay && state->viewerState->showOverlay) {
         updateOverlayTexture();
     }
     ViewportOrtho::paintGL();
