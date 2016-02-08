@@ -168,10 +168,14 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
 
 void ViewportOrtho::resetTexture() {
     const auto size = texture.edgeLengthPx;
-    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    if (texture.texHandle != 0) {
+        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    }
+    if (texture.overlayHandle != 0) {
+        glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    }
 }
 
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
