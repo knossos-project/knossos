@@ -57,8 +57,6 @@ Viewer::Viewer() {
     ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
 
     rewire();
-    window->show();
-    window->loadSettings();
 
     state->viewerState->renderInterval = FAST;
 
