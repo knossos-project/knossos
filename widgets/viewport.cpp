@@ -237,7 +237,11 @@ void ViewportBase::initializeGL() {
         qDebug() << "initializeOpenGLFunctions failed";
     }
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
-        qDebug() << msg;
+        if (msg.type() == QOpenGLDebugMessage::ErrorType) {
+            qWarning() << msg;
+        } else {
+            qDebug() << msg;
+        }
     });
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
