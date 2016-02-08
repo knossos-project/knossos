@@ -63,7 +63,7 @@ QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportType vpType)
 }
 
 ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
-    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType) {
+    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), edgeLength(width()) {
     dockParent = parent;
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
