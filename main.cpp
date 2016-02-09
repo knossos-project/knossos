@@ -52,14 +52,21 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 class Splash {
     QSplashScreen screen;
+    QTimer timer;
 public:
     Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
         screen.show();
         //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-        QTimer::singleShot(timeout_msec, [this](){
-            screen.close();
-            if (state->mainWindow != nullptr) {
-                state->mainWindow->activateWindow();
+        timer.start(timeout_msec);
+        QObject::connect(&timer, &QTimer::timeout, [this](){
+            if (state->mainWindow != nullptr && state->mainWindow->isVisible()) {
+                screen.close();
+                timer.stop();
+                if (state->mainWindow != nullptr) {
+                    state->mainWindow->activateWindow();
+                }
+            } else {
+                timer.start(10);
             }
         });
     }
