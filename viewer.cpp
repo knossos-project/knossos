@@ -84,16 +84,6 @@ Viewer::Viewer() {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
-    if (state->gpuSlicer) {
-//        gpucubeedge = 128;
-        layers.emplace_back(*window->viewportXY->context());
-        layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
-        layers.emplace_back(*window->viewportXY->context());
-//        layers.back().enabled = false;
-        layers.back().isOverlayData = true;
-        layers.back().createBogusCube(state->cubeEdgeLength, gpucubeedge);
-    }
-
     baseTime.start();//keyRepeat timer
 }
 

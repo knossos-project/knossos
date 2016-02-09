@@ -312,6 +312,16 @@ void ViewportOrtho::initializeGL() {
     createOverlayTextures();
 
     if (state->gpuSlicer) {
+        if (viewportType == ViewportType::VIEWPORT_XY) {
+//            state->viewer->gpucubeedge = 128;
+            state->viewer->layers.emplace_back(*context());
+            state->viewer->layers.back().createBogusCube(state->cubeEdgeLength, state->viewer->gpucubeedge);
+            state->viewer->layers.emplace_back(*context());
+//            state->viewer->layers.back().enabled = false;
+            state->viewer->layers.back().isOverlayData = true;
+            state->viewer->layers.back().createBogusCube(state->cubeEdgeLength, state->viewer->gpucubeedge);
+        }
+
         glEnable(GL_TEXTURE_3D);
         // glEnable(GL_DEPTH_TEST);
         // glDepthFunc(GL_LEQUAL);
