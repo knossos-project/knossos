@@ -480,16 +480,6 @@ void MainWindow::updateRecentFile(const QString & fileName) {
     }
 }
 
-/** This slot is called if one of the entries is clicked in the recent file menue */
-void MainWindow::recentFileSelected() {
-    QAction *action = (QAction *)sender();
-
-    QString fileName = action->text();
-    if(fileName.isNull() == false) {
-        openFileDispatch(QStringList(fileName));
-    }
-}
-
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
@@ -497,10 +487,14 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent Annotation File(s)"));
+    int i = 0;
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
         elem->setVisible(false);
-        QObject::connect(elem, &QAction::triggered, this, &MainWindow::recentFileSelected);
+        QObject::connect(elem, &QAction::triggered, [this, i](){
+            openFileDispatch({skeletonFileHistory.at(i)});
+        });
+        ++i;
     }
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save Annotation As…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);

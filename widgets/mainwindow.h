@@ -255,7 +255,6 @@ public slots:
     void coordinateEditingFinished();
 
     void updateCoordinateBar(int x, int y, int z);
-    void recentFileSelected();
     // viewports
     void resetViewports();
     void showVPDecorationClicked();
