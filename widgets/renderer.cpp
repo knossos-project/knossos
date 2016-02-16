@@ -1005,6 +1005,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     -((float)state->boundary.y / 2.),
                     -((float)state->boundary.z / 2.));
 
+        updateFrustumClippingPlanes();
+
         glTranslatef((float)state->viewerState->currentPosition.x,
                     (float)state->viewerState->currentPosition.y,
                     (float)state->viewerState->currentPosition.z);
