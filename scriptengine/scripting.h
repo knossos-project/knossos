@@ -4,30 +4,16 @@
 #include "proxies/pythonproxy.h"
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
-
-#include <functional>
-#include <QMouseEvent>
-#include <QObject>
-#include <QThread>
-#include <PythonQt/PythonQt.h>
-#ifdef QtAll
-#include <PythonQt/PythonQt_QtAll.h>
-#endif
-#include <PythonQt/PythonQtClassInfo.h>
-#include <PythonQt/PythonQtPythonInclude.h>
-#include <PythonQt/PythonQtStdIn.h>
-
 #include "stateInfo.h"
 #include "widgets/viewport.h"
 
-class MeshDecorator;
-class TransformDecorator;
-class PointDecorator;
-class Highlighter;
-class QSettings;
-class PythonQtObjectPtr;
+#include <PythonQt/PythonQtObjectPtr.h>
 
-void PythonQtInit();
+#include <QMouseEvent>
+#include <QObject>
+#include <QThread>
+
+#include <functional>
 
 /*
  * This class emits on ctor a signal of arbitrary parameters that is passed to the ctor,
@@ -96,15 +82,9 @@ public:
     void runFile(const QString &filename);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
-    MeshDecorator *meshDecorator;
     SkeletonProxy skeletonProxy;
     SegmentationProxy segmentationProxy;
     PythonProxy pythonProxy;
-    TransformDecorator *transformDecorator;
-    PointDecorator *pointDecorator;
-    Highlighter *highlighter;
-protected:
-    QSettings *settings;
 private:
     PythonQtObjectPtr _ctx;
     QStringList _customPathDirs;

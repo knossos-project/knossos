@@ -1,26 +1,27 @@
-#include <QSettings>
+#include "scripting.h"
+
+#include "decorators/colordecorator.h"
+#include "decorators/coordinatedecorator.h"
+#include "decorators/floatcoordinatedecorator.h"
+#include "decorators/nodecommentdecorator.h"
+#include "decorators/nodelistdecorator.h"
+#include "decorators/treelistdecorator.h"
+#include "decorators/segmentlistdecorator.h"
+#include "skeleton/skeletonizer.h"
+#include "viewer.h"
+#include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
+
+#include <PythonQt/PythonQt.h>
+#ifdef QtAll
+#include <PythonQt/PythonQt_QtAll.h>
+#endif
+
 #include <QApplication>
 #include <QDir>
 #include <QFileInfoList>
-#include <QToolBar>
-#include <QMenu>
-
-#include "scripting.h"
-#include "widgets/GuiConstants.h"
-#include "decorators/floatcoordinatedecorator.h"
-#include "decorators/coordinatedecorator.h"
-#include "decorators/colordecorator.h"
-#include "decorators/treelistdecorator.h"
-#include "decorators/nodelistdecorator.h"
-#include "decorators/nodecommentdecorator.h"
-#include "decorators/segmentlistdecorator.h"
-
-#include "highlighter.h"
-#include "skeleton/skeletonizer.h"
-#include "viewer.h"
-#include "widgets/mainwindow.h"
-
 #include <QMessageBox>
+#include <QSettings>
 
 void PythonQtInit() {
     PythonQt::init(PythonQt::RedirectStdOut);
@@ -38,11 +39,12 @@ const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
 const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
 
-Scripting::Scripting() : _ctx(NULL) {
+Scripting::Scripting() : _ctx{[](){
+        PythonQtInit();
+        return PythonQt::self()->getMainModule();
+    }()} {
     state->scripting = this;
 
-    PythonQtInit();
-    _ctx = PythonQt::self()->getMainModule();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
