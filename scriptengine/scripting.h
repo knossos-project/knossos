@@ -1,6 +1,10 @@
 #ifndef SCRIPTING_H
 #define SCRIPTING_H
 
+#include "proxies/pythonproxy.h"
+#include "proxies/segmentationproxy.h"
+#include "proxies/skeletonproxy.h"
+
 #include <functional>
 #include <QMouseEvent>
 #include <QObject>
@@ -24,9 +28,6 @@ class NodeListDecorator;
 class NodeCommentDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
-class SegmentationProxy;
-class SkeletonProxy;
-class PythonProxy;
 class TransformDecorator;
 class PointDecorator;
 class Highlighter;
@@ -110,9 +111,9 @@ public:
     NodeCommentDecorator *nodeCommentDecorator;
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
-    SkeletonProxy *skeletonProxy;
-    SegmentationProxy *segmentationProxy;
-    PythonProxy *pythonProxy;
+    SkeletonProxy skeletonProxy;
+    SegmentationProxy segmentationProxy;
+    PythonProxy pythonProxy;
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
     Highlighter *highlighter;

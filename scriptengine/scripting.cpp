@@ -14,9 +14,6 @@
 #include "decorators/nodelistdecorator.h"
 #include "decorators/nodecommentdecorator.h"
 #include "decorators/segmentlistdecorator.h"
-#include "proxies/pythonproxy.h"
-#include "proxies/segmentationproxy.h"
-#include "proxies/skeletonproxy.h"
 
 #include "highlighter.h"
 #include "skeleton/skeletonizer.h"
@@ -46,10 +43,6 @@ Scripting::Scripting() : _ctx(NULL) {
 
     PythonQtInit();
     _ctx = PythonQt::self()->getMainModule();
-
-    skeletonProxy = new SkeletonProxy();
-    segmentationProxy = new SegmentationProxy();
-    pythonProxy = new PythonProxy();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     colorDecorator = new ColorDecorator();
@@ -72,10 +65,10 @@ Scripting::Scripting() : _ctx(NULL) {
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signalRelay", state->signalRelay);
-    addObject("knossos", pythonProxy);
+    addObject("knossos", &pythonProxy);
     addObject("scripting", this);
-    addObject("segmentation", segmentationProxy);
-    addObject("skeleton", skeletonProxy);
+    addObject("segmentation", &segmentationProxy);
+    addObject("skeleton", &skeletonProxy);
     addObject("knossos_global_viewer", state->viewer);
     addObject("knossos_global_mainwindow", state->viewer->window);
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
