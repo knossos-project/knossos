@@ -1,17 +1,14 @@
 #ifndef PYTHONINTERPRETERWIDGET_H
 #define PYTHONINTERPRETERWIDGET_H
 
-#include <QVBoxLayout>
 #include <QDialog>
+#include <QVBoxLayout>
 
-#include <PythonQt/gui/PythonQtScriptingConsole.h>
-
-class PythonInterpreterWidget : public QDialog
-{
+class PythonInterpreterWidget : public QDialog {
     Q_OBJECT
-public:
     QVBoxLayout mainLayout;
-    explicit PythonInterpreterWidget(QWidget *parent = 0);
+public:
+    explicit PythonInterpreterWidget(QWidget * parent = nullptr);
     void loadSettings() {}
     void saveSettings() {}
     void startConsole();
@@ -20,15 +17,14 @@ signals:
     void visibilityChanged(bool);
 
 private:
-    void showEvent(QShowEvent *event) override {
+    void showEvent(QShowEvent * event) override {
         QDialog::showEvent(event);
         emit visibilityChanged(true);
     }
-    void hideEvent(QHideEvent *event) override {
+    void hideEvent(QHideEvent * event) override {
         QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }
-    PythonQtScriptingConsole *console;
 };
 
 #endif // PYTHONINTERPRETERWIDGET_H

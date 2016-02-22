@@ -3,21 +3,19 @@
 #include "scriptengine/scripting.h"
 #include "viewer.h"
 
-#include <PythonQt/PythonQt.h>
-#include <QVBoxLayout>
+#include <PythonQt/gui/PythonQtScriptingConsole.h>
 
-PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) : QDialog(parent), console(NULL)
-{
+PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : QDialog(parent) {
     setWindowIcon(QIcon(":/resources/icons/python.png"));
     setWindowTitle("Python Interpreter");
 
     setLayout(&mainLayout);
-    resize(QSize(500,300));
+    resize({500, 300});
 }
 
 void PythonInterpreterWidget::startConsole() {
 #if defined(WIN32) && defined(NDEBUG)// PythonQt bug: QWidget: Must construct a QApplication before a QWidget
-    console = new PythonQtScriptingConsole(this, PythonQt::self()->getMainModule());
+    auto * console = new PythonQtScriptingConsole(this, PythonQt::self()->getMainModule());
     state->scripting->addObject("knossos_global_interpreter_console", console);
     mainLayout.addWidget(console);
 #endif
