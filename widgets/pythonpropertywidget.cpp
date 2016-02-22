@@ -1,7 +1,6 @@
 #include "pythonpropertywidget.h"
 
 #include "GuiConstants.h"
-#include "scriptengine/scripting.h"
 #include "viewer.h"
 
 #include <Python.h>

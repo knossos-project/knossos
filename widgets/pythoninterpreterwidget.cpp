@@ -1,4 +1,6 @@
 #include "pythoninterpreterwidget.h"
+
+#include "scriptengine/scripting.h"
 #include "viewer.h"
 
 #include <PythonQt/PythonQt.h>

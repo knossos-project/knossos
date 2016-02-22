@@ -27,12 +27,12 @@
 
 #include "color4F.h"
 #include "coordinate.h"
-#include "scriptengine/scripting.h"
 #include "stateInfo.h"
 
 #include <QDebug>
 #include <QDockWidget>
 #include <QFont>
+#include <QMouseEvent>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_2_0>
 #include <QOpenGLShaderProgram>
