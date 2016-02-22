@@ -16,6 +16,9 @@ signals:
 
 extern PythonProxySignalDelegate *pythonProxySignalDelegate;
 
+struct _object;
+using PyObject = _object;
+
 class PythonProxy : public QObject {
     Q_OBJECT
 public:
