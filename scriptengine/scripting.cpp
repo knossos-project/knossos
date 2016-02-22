@@ -81,6 +81,9 @@ Scripting::Scripting() : _ctx{[](){
     addWidgets();
 
     auto makeDecorator = [](QObject * decorator, const char * typeName){
+        // PythonQt tries to reparent the decorators, we do their missing work of pushing it into their thread first
+        // due to the QObject handling they also get deleted by PythonQt then
+        decorator->moveToThread(PythonQt::self()->thread());
         PythonQt::self()->addDecorators(decorator);
         PythonQt::self()->registerCPPClass(typeName, "", "internal");
     };
