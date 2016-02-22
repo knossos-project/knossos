@@ -20,13 +20,6 @@
 #include "stateInfo.h"
 #include "widgets/viewport.h"
 
-class ColorDecorator;
-class FloatCoordinateDecorator;
-class CoordinateDecorator;
-class TreeListDecorator;
-class NodeListDecorator;
-class NodeCommentDecorator;
-class SegmentListDecorator;
 class MeshDecorator;
 class TransformDecorator;
 class PointDecorator;
@@ -103,13 +96,6 @@ public:
     void runFile(const QString &filename);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
-    CoordinateDecorator *coordinateDecorator;
-    FloatCoordinateDecorator *floatCoordinateDecorator;
-    ColorDecorator *colorDecorator;
-    TreeListDecorator *treeListDecorator;
-    NodeListDecorator *nodeListDecorator;
-    NodeCommentDecorator *nodeCommentDecorator;
-    SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
     SkeletonProxy skeletonProxy;
     SegmentationProxy segmentationProxy;

@@ -45,14 +45,6 @@ Scripting::Scripting() : _ctx(NULL) {
     _ctx = PythonQt::self()->getMainModule();
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
-    colorDecorator = new ColorDecorator();
-    coordinateDecorator = new CoordinateDecorator();
-    floatCoordinateDecorator = new FloatCoordinateDecorator();
-    nodeListDecorator = new NodeListDecorator();
-    nodeCommentDecorator = new NodeCommentDecorator();
-    segmentListDecorator = new SegmentListDecorator();
-    treeListDecorator = new TreeListDecorator();
-
     evalScript("import sys");
     evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
 #ifdef Q_OS_OSX
@@ -86,28 +78,17 @@ Scripting::Scripting() : _ctx(NULL) {
     addVariable("GL_POLYGON", GL_POLYGON);
     addWidgets();
 
-    QString module("internal");
-
-    PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(coordinateDecorator);
-    PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(nodeCommentDecorator);
-    PythonQt::self()->registerCPPClass("NodeComment", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(segmentListDecorator);
-    PythonQt::self()->registerCPPClass("Segment", "", module.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
+    auto makeDecorator = [](QObject * decorator, const char * typeName){
+        PythonQt::self()->addDecorators(decorator);
+        PythonQt::self()->registerCPPClass(typeName, "", "internal");
+    };
+    makeDecorator(new ColorDecorator, "color4F");
+    makeDecorator(new CoordinateDecorator, "Coordinate");
+    makeDecorator(new FloatCoordinateDecorator, "floatCoordinate");
+    makeDecorator(new NodeListDecorator, "Node");
+    makeDecorator(new NodeCommentDecorator, "NodeComment");
+    makeDecorator(new SegmentListDecorator, "Segment");
+    makeDecorator(new TreeListDecorator, "Tree");
 
     createDefaultPluginDir();
     addPythonPath(getPluginDir());
