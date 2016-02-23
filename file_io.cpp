@@ -33,9 +33,7 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad, bool *isSuccess) {
-    bool annotationSuccess = false;
-    bool mergelistSuccess = false;
+void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad) {
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
@@ -44,7 +42,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             const auto & fileInside = archive.getCurrentFileName();
             const auto match = cubeRegEx.match(fileInside);
             if (match.hasMatch()) {
-                if (state->overlay == false) {
+                if (!state->overlay) {
                     state->overlay = true;
                     Loader::Controller::singleton().enableOverlay();
                 }
@@ -56,7 +54,6 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
         if (archive.setCurrentFile("mergelist.txt")) {
             QuaZipFile file(&archive);
             Segmentation::singleton().mergelistLoad(file);
-            mergelistSuccess = true;
         }
         if (archive.setCurrentFile("microworker.txt")) {
             QuaZipFile file(&archive);
@@ -66,22 +63,16 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
         if (archive.setCurrentFile("annotation.xml")) {
             QuaZipFile file(&archive);
             state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
-            annotationSuccess = true;
         }
         state->viewer->loader_notify();
     } else {
-        qDebug() << "opening" << filename << "for reading failed";
-    }
-
-    if (NULL != isSuccess) {
-        *isSuccess = mergelistSuccess || annotationSuccess;
+        throw std::runtime_error(QObject::tr("opening %1 for reading failed").arg(filename).toStdString());
     }
 }
 
-void annotationFileSave(const QString & filename, bool *isSuccess) {
+void annotationFileSave(const QString & filename) {
     QTime time;
     time.start();
-    bool allSuccess = true;
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
         auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level){
@@ -91,31 +82,25 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
             return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, level);
         };
         QuaZipFile file_write(&archive_write);
-        const bool open = zipCreateFile(file_write, "annotation.xml", 1);
-        if (open) {
+        if (zipCreateFile(file_write, "annotation.xml", 1)) {
             state->viewer->skeletonizer->saveXmlSkeleton(file_write);
         } else {
-            qDebug() << filename << "saving nml failed";
-            allSuccess = false;
+            throw std::runtime_error((filename + ": saving skeleton failed").toStdString());
         }
         if (Segmentation::singleton().hasObjects()) {
             QuaZipFile file_write(&archive_write);
-            const bool open = zipCreateFile(file_write, "mergelist.txt", 1);
-            if (open) {
+            if (zipCreateFile(file_write, "mergelist.txt", 1)) {
                 Segmentation::singleton().mergelistSave(file_write);
             } else {
-                qDebug() << filename << "saving mergelist failed";
-                allSuccess = false;
+                throw std::runtime_error((filename + ": saving mergelist failed").toStdString());
             }
         }
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
             QuaZipFile file_write(&archive_write);
-            const bool open = zipCreateFile(file_write, "microworker.txt", 1);
-            if (open) {
+            if (zipCreateFile(file_write, "microworker.txt", 1)) {
                 Segmentation::singleton().jobSave(file_write);
             } else {
-                qDebug() << filename << "saving segmentation job failed";
-                allSuccess = false;
+                throw std::runtime_error((filename + ": saving segmentation job failed").toStdString());
             }
         }
         QTime cubeTime;
@@ -127,28 +112,19 @@ void annotationFileSave(const QString & filename, bool *isSuccess) {
                 QuaZipFile file_write(&archive_write);
                 const auto cubeCoord = pair.first;
                 const auto name = magName.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
-                const bool open = zipCreateFile(file_write, name, 1);
-                if (open) {
+                if (zipCreateFile(file_write, name, 1)) {
                     file_write.write(pair.second.c_str(), pair.second.length());
                 } else {
-                    qDebug() << filename << "saving snappy cube failed";
-                    allSuccess = false;
+                    throw std::runtime_error((filename + ": saving snappy cube failed").toStdString());
                 }
             }
         }
         qDebug() << "save cubes" << cubeTime.restart();
     } else {
-        qDebug() << "opening" << filename << " for writing failed";
-        allSuccess = false;
+        throw std::runtime_error(QObject::tr("opening %1 for writing failed").arg(filename).toStdString());
     }
 
-    if (allSuccess) {
-        Session::singleton().unsavedChanges = false;
-    }
-
-    if (NULL != isSuccess) {
-        *isSuccess = allSuccess;
-    }
+    Session::singleton().unsavedChanges = false;
     qDebug() << "save" << time.restart();
 }
 

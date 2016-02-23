@@ -147,7 +147,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
-bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
+void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     QXmlStreamWriter xml(&file);
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
@@ -318,13 +318,11 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
-    return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
+void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qErrnoWarning("Document not parsed successfully.");
-        return false;
+        throw std::runtime_error("loadXmlSkeleton open failed");
     }
 
     const bool merge = state->skeletonState->mergeOnLoadFlag;
@@ -358,8 +356,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     const auto blockState = this->signalsBlocked();
     blockSignals(true);
     if (!xml.readNextStartElement() || xml.name() != "things") {
-        qDebug() << "invalid xml token: " << xml.name();
-        return false;
+        throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
     }
     while(xml.readNextStartElement()) {
         if(xml.name() == "parameters") {
@@ -660,12 +657,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
     xml.readNext();//</things>
     if (!xml.isEndDocument()) {
-        qDebug() << "unknown content following after line" << xml.lineNumber();
-        return false;
+        throw std::runtime_error(tr("unknown content following after line %1").arg(xml.lineNumber()).toStdString());
     }
     if(xml.hasError()) {
-        qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
-        return false;
+        throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
     }
 
     auto msg = tr("");
@@ -734,7 +729,6 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
         setActiveNode(&skeletonState.trees.front().nodes.front());
     }
-    return true;
 }
 
 bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {

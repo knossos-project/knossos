@@ -13,8 +13,6 @@
 class SkeletonProxySignalDelegate : public QObject  {
     Q_OBJECT
 signals:
-    void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
-    void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
     void clearSkeletonSignal();
 };
 
@@ -32,8 +30,6 @@ signals:
 public slots:
     int annotation_time();
     QString skeleton_file();
-    bool annotation_save(const QString &filename);
-    bool annotation_load(const QString &filename, bool isMerge = false);
     bool has_unsaved_changes();
 
     void delete_skeleton();

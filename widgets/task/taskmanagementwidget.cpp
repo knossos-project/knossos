@@ -204,7 +204,7 @@ void TaskManagementWidget::submitFinal() {
 }
 
 bool TaskManagementWidget::submit(const bool final) {
-    state->viewer->window->autoSaveSlot();//save file to submit
+    state->viewer->window->save();//save file to submit
 
     const auto url = taskLoginWidget.host + "/knossos/activeTask/";
     setCursor(Qt::BusyCursor);

@@ -187,8 +187,8 @@ public slots:
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 
-    bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
-    bool saveXmlSkeleton(QIODevice &file) const;
+    void loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    void saveXmlSkeleton(QIODevice &file) const;
 
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();

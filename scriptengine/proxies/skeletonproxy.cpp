@@ -1,7 +1,7 @@
 #include "skeletonproxy.h"
 
-#include "stateInfo.h"
 #include "functions.h"
+#include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -114,30 +114,6 @@ int SkeletonProxy::annotation_time() {
 
 QString SkeletonProxy::skeleton_file() {
     return Session::singleton().annotationFilename;
-}
-
-bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {
-    bool isSuccess = false;
-    bool isMergePrevValue = state->skeletonState->mergeOnLoadFlag;
-    QString tmpStr("");
-    state->skeletonState->mergeOnLoadFlag = isMerge;
-    emit skeletonProxySignalDelegate->loadSkeleton(filename, tmpStr, &isSuccess);
-    state->skeletonState->mergeOnLoadFlag = isMergePrevValue;
-    if (!isSuccess) {
-        emit echo(QString("could not load from %1").arg(filename));
-        return false;
-    }
-    return true;
-}
-
-bool SkeletonProxy::annotation_save(const QString &filename) {
-    bool isSuccess = false;
-    emit skeletonProxySignalDelegate->saveSkeleton(filename, &isSuccess);
-    if (!isSuccess) {
-        emit echo(QString("could not save to %1").arg(filename));
-        return false;
-    }
-    return true;
 }
 
 // TEST LATER

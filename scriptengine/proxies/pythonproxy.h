@@ -28,6 +28,9 @@ signals:
     void echo(QString message);
 
 public slots:
+    void annotationLoad(const QString & filename, const bool merge = false);
+    void annotationSave(const QString & filename);
+
     QString getKnossosVersion();
     QString getKnossosRevision();
     int getCubeEdgeLength();
@@ -57,7 +60,6 @@ public slots:
     void oc_reslice_notify_all(QList<int> coord);
     int loaderLoadingNr();
     bool loadStyleSheet(const QString &path);
-    void saveAnnotationFile(const QString & fname);
     void setDatasetLocking(const bool locked);
 };
 

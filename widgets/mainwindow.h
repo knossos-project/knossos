@@ -224,15 +224,15 @@ public slots:
     void updateLoaderProgress(int refCount);
     void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
     // for the recent file menu
-    bool openFileDispatch(QStringList fileNames);
+    bool openFileDispatch(QStringList fileNames, const bool mergeAll = false, const bool silent = false);
     void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
     void newAnnotationSlot();
     void openSlot();
-    void autoSaveSlot();
     void saveSlot();
     void saveAsSlot();
+    void save(QString filename = "", const bool silent = false);
     void exportToNml();
 
     /* edit skeleton menu*/

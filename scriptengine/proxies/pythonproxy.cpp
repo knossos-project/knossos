@@ -1,24 +1,33 @@
 #include "pythonproxy.h"
+
 #include "buildinfo.h"
 #include "functions.h"
 #include "loader.h"
 #include "segmentation/cubeloader.h"
-#include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
-#include "file_io.h"
 
 #include <Python.h>
+
 #include <QApplication>
 #include <QFile>
 
 PythonProxySignalDelegate *pythonProxySignalDelegate = new PythonProxySignalDelegate();
 
 PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
+
+void PythonProxy::annotationLoad(const QString & filename, const bool merge) {
+    state->mainWindow->openFileDispatch({filename}, merge, true);
+}
+
+void PythonProxy::annotationSave(const QString & filename) {
+    state->mainWindow->save(filename, true);
+}
 
 QString PythonProxy::getKnossosVersion() {
     return KVERSION;
@@ -198,10 +207,6 @@ void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
 
 int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
-}
-
-void PythonProxy::saveAnnotationFile(const QString & fname) {
-    annotationFileSave(fname);
 }
 
 void PythonProxy::setDatasetLocking(const bool locked) {
