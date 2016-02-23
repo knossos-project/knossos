@@ -178,6 +178,10 @@ struct ViewerState {
 class Skeletonizer;
 class ViewportBase;
 class Viewer : public QObject {
+    const bool evilHack = [this](){
+        state->viewer = this;// make state->viewer available to widgets
+        return true;
+    }();
     Q_OBJECT
 private:
     QElapsedTimer baseTime;
@@ -225,6 +229,7 @@ signals:
     void coordinateChangedSignal(const Coordinate & pos);
     void zoomChanged();
     void movementAreaFactorChangedSignal();
+    void magnificationLockChanged(bool);
 public slots:
     void updateCurrentPosition();
     bool updateDatasetMag(const uint mag = 0);
@@ -252,6 +257,12 @@ public slots:
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
     void setMovementAreaFactor(float alpha);
+    uint highestMag();
+    uint lowestMag();
+    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    uint calcMag(const float screenPxXPerDataPx);
+    void setMagnificationLock(const bool locked);
 };
 
 #endif // VIEWER_H

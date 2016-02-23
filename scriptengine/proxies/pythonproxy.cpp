@@ -205,7 +205,7 @@ void PythonProxy::saveAnnotationFile(const QString & fname) {
 }
 
 void PythonProxy::setDatasetLocking(const bool locked) {
-    state->viewerState->datasetMagLock = locked;
+    state->viewer->setMagnificationLock(locked);
 }
 
 // UNTESTED
