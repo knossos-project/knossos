@@ -57,17 +57,6 @@ void SegmentationProxy::selectObject(quint64 objIdx) {
     Segmentation::singleton().selectObject(objIdx);
 }
 
-QList<quint64> SegmentationProxy::subobjectsContainedInObject(quint64 objIdx) {
-    auto obj = Segmentation::singleton().objects[objIdx];
-
-    QList<quint64> subObjList;
-    for (auto & elem : obj.subobjects) {
-        subObjList.append(elem.get().id);
-    }
-
-    return subObjList;
-}
-
 QList<quint64> SegmentationProxy::getAllObjectIdx() {
     QList<quint64> allObjIdx;
 
