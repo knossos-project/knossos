@@ -1,8 +1,9 @@
 ﻿#include "network.h"
 
-#include "widgets/GuiConstants.h"
 #include "loader.h"
 #include "stateInfo.h"
+#include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 
 #include <QDir>
 #include <QEventLoop>
@@ -35,13 +36,63 @@ void Network::setCookies(const QVariantList & setting) {
     }
 }
 
+std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
+    int lowestAvailableMag = NUM_MAG_DATASETS;
+    int highestAvailableMag = 0;
+    int maxMagCount = int_log(NUM_MAG_DATASETS) + 1;
+
+    QProgressDialog progress("Network Operation…", "Abort", 0, 100, state->mainWindow);
+    progress.setModal(true);
+    std::vector<qint64> bytesReceivedAll(maxMagCount);
+    std::vector<qint64> bytesTotalAll(maxMagCount);
+    std::vector<std::unique_ptr<QNetworkReply>> replies(maxMagCount);
+    QTimer::singleShot(400, &progress, &QProgressDialog::show);
+
+    QEventLoop pause;
+    for (int currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+        QUrl magUrl = url;
+        magUrl.setPath(QString("%1/mag%2/knossos.conf").arg(url.path()).arg(currMag));
+        auto * replyPtr = manager.get(QNetworkRequest{magUrl});
+        replies[int_log(currMag)] = decltype(replies)::value_type{replyPtr};
+        QObject::connect(replyPtr, &QNetworkReply::finished, [magUrl, &pause, &maxMagCount, currMag, replyPtr, &lowestAvailableMag, &highestAvailableMag]() {
+            auto & reply = *replyPtr;
+            if (reply.error() == QNetworkReply::NoError) {
+                lowestAvailableMag = std::min(lowestAvailableMag, currMag);
+                highestAvailableMag = std::max(highestAvailableMag, currMag);
+            }
+            if (--maxMagCount == 0) {
+                pause.exit();
+            }
+        });
+        auto processProgress = [&progress, currMag, &bytesReceivedAll, &bytesTotalAll](qint64 bytesReceived, qint64 bytesTotal){
+            bytesReceivedAll[int_log(currMag)] = bytesReceived;
+            bytesTotalAll[int_log(currMag)] = bytesTotal;
+            const auto received = std::accumulate(std::begin(bytesReceivedAll), std::end(bytesReceivedAll), qint64{0});
+            const auto total = std::accumulate(std::begin(bytesTotalAll), std::end(bytesTotalAll), qint64{0});
+            progress.setRange(0, total);
+            progress.setValue(received);
+        };
+        QObject::connect(replyPtr, &QNetworkReply::downloadProgress, processProgress);
+        QObject::connect(replyPtr, &QNetworkReply::uploadProgress, processProgress);
+        QObject::connect(&progress, &QProgressDialog::canceled, replyPtr, &QNetworkReply::abort);
+    }
+
+    pause.exec();
+
+    if (lowestAvailableMag > highestAvailableMag) {
+        throw std::runtime_error{"no mags detected"};
+    }
+
+    return {lowestAvailableMag, highestAvailableMag};
+}
+
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QEventLoop pause;
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
         pause.exit();
     });
 
-    QProgressDialog progress("Network Operation…", "Abort", 0, 100);
+    QProgressDialog progress("Network Operation…", "Abort", 0, 100, state->mainWindow);
     progress.setModal(true);
     QObject::connect(&progress, &QProgressDialog::canceled, &reply, &QNetworkReply::abort);
     auto processProgress = [&progress](qint64 bytesReceived, qint64 bytesTotal){
@@ -50,7 +101,6 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     };
     QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
-
     QTimer::singleShot(400, &progress, &QProgressDialog::show);
 
     pause.exec();

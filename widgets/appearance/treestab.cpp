@@ -7,10 +7,14 @@
 #include <QMessageBox>
 
 TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
-    renderQualitySpin.setMinimum(1);
-    renderQualitySpin.setMaximum(20);
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
+
+    renderQualityCombo.addItems({tr("Tubes & spheres"), tr("Switch dynamically"), tr("Lines & points")});
+    renderQualityCombo.setToolTip(tr("<b>Skeleton rendering quality:</b><br/>"
+                                  "<b>Tubes & spheres:</b> renders segments as tubes and nodes as spheres<br/>"
+                                  "<b>Switch dynamically:</b> Switches dynamically between \"Tubes & spheres\" and \"Lines & points\" depending on zoom<br/>"
+                                  "<b>Lines & points:</b> renders segments as lines and nodes as points<br/>"));
 
     auto treeDisplayLayout = new QVBoxLayout();
     treeDisplayLayout->addWidget(&wholeSkeletonRadio);
@@ -26,7 +30,8 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&lightEffectsCheck, row++, 0);
     mainLayout.addWidget(&ownTreeColorsCheck, row, 0);  mainLayout.addWidget(&loadTreeLUTButton, row++, 1);
     mainLayout.addWidget(&depthCutOffLabel, row, 0);  mainLayout.addWidget(&depthCutoffSpin, row++, 1);
-    mainLayout.addWidget(&renderQualityLabel, row, 0);  mainLayout.addWidget(&renderQualitySpin, row++, 1);
+    mainLayout.addWidget(&renderQualityLabel, row, 0);  mainLayout.addWidget(&renderQualityCombo, row++, 1);
+
     setLayout(&mainLayout);
 
     // trees render options
@@ -44,7 +49,16 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&loadTreeLUTButton, &QPushButton::clicked, [this]() { loadTreeLUTButtonClicked(); });
     QObject::connect(&depthCutoffSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->depthCutOff = value; });
-    QObject::connect(&renderQualitySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int value) { state->viewerState->cumDistRenderThres = value; });
+    QObject::connect(&renderQualityCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int value){
+        if(value == 0) { // tubes and spheres
+            state->viewerState->cumDistRenderThres = 1.f;
+        } else if(value == 1) { // switch dynamically
+            state->viewerState->cumDistRenderThres = 7.f;
+        } else { // lines and points
+            state->viewerState->cumDistRenderThres = 20.f;
+        }
+    });
+
     // tree visibility
     QObject::connect(&wholeSkeletonRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
@@ -67,7 +81,7 @@ void TreesTab::updateTreeDisplay() {
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
-        path = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        path = QFileDialog::getOpenFileName(this, tr("Load Tree Color Lookup Table"), QDir::homePath(), tr("LUT file (*.lut *.json)"));
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {
@@ -75,7 +89,7 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
             lutFilePath = path;
             ownTreeColorsCheck.setChecked(true);
         }  catch (...) {
-            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
+            QMessageBox lutErrorBox(QMessageBox::Warning, tr("LUT loading failed"), tr("LUTs are restricted to 256 RGB tuples"), QMessageBox::Ok, this);
             lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
             lutErrorBox.exec();
             ownTreeColorsCheck.setChecked(false);
@@ -92,7 +106,7 @@ void TreesTab::saveSettings(QSettings & settings) const {
     settings.setValue(TREE_LUT_FILE_USED, ownTreeColorsCheck.isChecked());
     settings.setValue(TREE_LUT_FILE, lutFilePath);
     settings.setValue(DEPTH_CUTOFF, depthCutoffSpin.value());
-    settings.setValue(RENDERING_QUALITY, renderQualitySpin.value());
+    settings.setValue(RENDERING_QUALITY, renderQualityCombo.currentIndex());
     settings.setValue(WHOLE_SKELETON, wholeSkeletonRadio.isChecked());
     settings.setValue(ONLY_SELECTED_TREES, selectedTreesRadio.isChecked());
     settings.setValue(SHOW_SKELETON_ORTHOVPS, skeletonInOrthoVPsCheck.isChecked());
@@ -108,8 +122,7 @@ void TreesTab::loadSettings(const QSettings & settings) {
     highlightIntersectionsCheck.clicked(highlightIntersectionsCheck.isChecked());
     depthCutoffSpin.setValue(settings.value(DEPTH_CUTOFF, 5.).toDouble());
     depthCutoffSpin.valueChanged(depthCutoffSpin.value());
-    renderQualitySpin.setValue(settings.value(RENDERING_QUALITY, 7).toInt());
-    renderQualitySpin.valueChanged(renderQualitySpin.value());
+    renderQualityCombo.setCurrentIndex(settings.value(RENDERING_QUALITY, 1).toInt());
     lutFilePath = settings.value(TREE_LUT_FILE, "").toString();
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
     ownTreeColorsCheck.setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());

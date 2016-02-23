@@ -91,7 +91,7 @@ decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() 
     if (worker != nullptr) {
         worker->snappyMutex.lock();
         //signal to run in loader thread
-        QTimer::singleShot(0, worker.get(), &Loader::Worker::snappyCacheFlush);
+        QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
         worker->snappyFlushCondition.wait(&worker->snappyMutex);
         worker->snappyMutex.unlock();
         return worker->snappyCache;
@@ -141,7 +141,7 @@ void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMe
         }
         break;
     case USERMOVE_NEUTRAL:
-        // Priorities are XY->YZ->XZ
+        // Priorities are XY->ZY->XZ
         metrics[i++] = (0 == currentMetricPos.z ? -1.0 : 1.0);
         metrics[i++] = (0 == currentMetricPos.x ? -1.0 : 1.0);
         metrics[i++] = (0 == currentMetricPos.y ? -1.0 : 1.0);
@@ -223,11 +223,15 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Datas
     }
 
     if(state->overlay) {
-        qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
-        for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
-            OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
-            freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
-        }
+        allocateOverlayCubes();
+    }
+}
+
+void Loader::Worker::allocateOverlayCubes() {
+    qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
+    for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
+        OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
+        freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
     }
 }
 
@@ -335,7 +339,7 @@ void Loader::Worker::snappyCacheClear() {
     state->viewer->loader_notify();//a bit of a detour…
 }
 
-void Loader::Worker::snappyCacheFlush() {
+void Loader::Worker::flushIntoSnappyCache() {
     snappyMutex.lock();
 
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
@@ -622,7 +626,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         state->protectCube2Pointer.lock();
                         cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
                         state->protectCube2Pointer.unlock();
-                        state->viewer->oc_reslice_notify_all(globalCoord);
+                        if (Dataset::isOverlay(type)) {
+                            state->viewer->oc_reslice_notify_all(globalCoord);
+                        } else {
+                            state->viewer->dc_reslice_notify_all(globalCoord);
+                        }
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();

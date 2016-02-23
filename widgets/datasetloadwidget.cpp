@@ -2,7 +2,6 @@
 
 #include "dataset.h"
 #include "GuiConstants.h"
-#include "knossos.h"
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
@@ -79,7 +78,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
     QObject::connect(&cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
-
     resize(512, 512);//random default size, will be overriden by settings if present
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
@@ -198,14 +196,11 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
 void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto cubeEdge = cubeEdgeSpin.value();
     const auto superCubeEdge = superCubeEdgeSpin.value();
-    auto mibibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
-    mibibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mibibytes;
+    auto mebibytes = std::pow(cubeEdge, 3) * std::pow(superCubeEdge, 3) / std::pow(1024, 2);
+    mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
     const auto fov = cubeEdge * (superCubeEdge - 1);
-    auto text = QString("Data cache cube edge length (%1 MiB RAM)\nFOV %2 pixel per dimension").arg(mibibytes).arg(fov);
+    auto text = QString("Data cache cube edge length (%1 MiB RAM)\nFOV %2 pixel per dimension").arg(mebibytes).arg(fov);
     superCubeSizeLabel.setText(text);
-    const auto maxsupercubeedge = TEXTURE_EDGE_LEN / cubeEdge;
-    //make sure it’s an odd number
-    superCubeEdgeSpin.setMaximum(maxsupercubeedge - !maxsupercubeedge);
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
@@ -216,7 +211,7 @@ void DatasetLoadWidget::processButtonClicked() {
     const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
-    } else if (loadDataset(dataset)) {
+    } else if (loadDataset(boost::none, dataset)) {
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
@@ -226,9 +221,9 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
+bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QString path,  const bool keepAnnotation) {
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
-        show();
+        open();
         return false;
     } else if (!path.isEmpty()) {//if empty reload previous
         datasetUrl = {path};//remember config url
@@ -243,15 +238,25 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
 
-    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     Dataset info;
     Dataset::CubeType raw_compression;
     if (datasetUrl.toString().contains("/ocp/ca/")) {
         info = Dataset::parseOpenConnectomeJson(datasetUrl, download.second);
     } else {
         info = Dataset::fromLegacyConf(datasetUrl, download.second);
-        info.checkMagnifications();
+        try {
+            info.checkMagnifications();
+        } catch (std::exception &) {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Information);
+            box.setText("Dataset will not be loaded.");
+            box.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");
+            box.exec();
+            open();
+            return false;
+        }
     }
+    Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     info.applyToState();
     raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
             : info.compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6 : Dataset::CubeType::RAW_J2K;
@@ -259,7 +264,12 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     state->cubeEdgeLength = cubeEdgeSpin.text().toInt();
     state->M = superCubeEdgeSpin.value();
+    if (loadOverlay != boost::none) {
+        segmentationOverlayCheckbox.setChecked(loadOverlay.get());
+    }
     state->overlay = segmentationOverlayCheckbox.isChecked();
+
+    state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
     applyGeometrySettings();
 
@@ -277,7 +287,7 @@ bool DatasetLoadWidget::loadDataset(QString path,  const bool keepAnnotation) {
     Session::singleton().updateMovementArea({0, 0, 0}, state->boundary);
     // ...beginning with loading the middle of dataset
     state->viewerState->currentPosition = {state->boundary / 2};
-    state->viewer->changeDatasetMag(DATA_SET);
+    state->viewer->updateDatasetMag();
     state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     emit datasetChanged(segmentationOverlayCheckbox.isChecked());
 
@@ -301,11 +311,6 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
-    if (state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-        const auto msg = "Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!";
-        qDebug() << msg;
-        throw std::runtime_error(msg);
-    }
     //settings depending on supercube and cube size
     state->cubeSliceArea = std::pow(state->cubeEdgeLength, 2);
     state->cubeBytes = std::pow(state->cubeEdgeLength, 3);
@@ -368,6 +373,7 @@ void DatasetLoadWidget::loadSettings() {
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
         state->overlay = settings.value(DATASET_OVERLAY, false).toBool();
     }
+    state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);
     superCubeEdgeSpin.setValue(state->M);

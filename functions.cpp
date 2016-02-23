@@ -38,23 +38,6 @@ int roundFloat(float number) {
     else return (int)(number - 0.5);
 }
 
-float scalarProduct(const floatCoordinate & v1, const floatCoordinate  & v2) {
-    return ((v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z));
-}
-
-float euclidicNorm(const floatCoordinate & v) {
-    return sqrt(scalarProduct(v, v));
-}
-
-bool normalizeVector(floatCoordinate & v) {
-    const auto norm = euclidicNorm(v);
-    if(norm == 0) {
-        return false;
-    }
-    v = {v.x / norm, v.y / norm, v.z / norm};
-    return true;
-}
-
 int sgn(float number) {
     if(number > 0.) return 1;
     else if(number == 0.) return 0;
@@ -69,14 +52,6 @@ float radToDeg(float rad) {
 
 float degToRad(float deg) {
     return ((deg / 180.) * boost::math::constants::pi<float>());
-}
-
-floatCoordinate crossProduct(const floatCoordinate & v1, const floatCoordinate & v2) {
-    return {v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x};
-}
-
-float vectorAngle(const floatCoordinate & v1, const floatCoordinate & v2) {
-    return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
 
 void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
@@ -100,7 +75,18 @@ void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
     const auto y = matrix[1][0]*v.x + matrix[1][1]*v.y + matrix[1][2]*v.z;
     const auto z = matrix[2][0]*v.x + matrix[2][1]*v.y + matrix[2][2]*v.z;
     v = {x, y, z};
-    normalizeVector(v);
+    v.normalize();
+}
+
+bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
+                           const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
+                           floatCoordinate & intersectionPoint) {
+    if (std::abs(lineDirectionVec.dot(planeNormal)) > 0.0001) {
+        const float lambda = (planeNormal.dot(planeUpVec) - planeNormal.dot(lineUpVec)) / lineDirectionVec.dot(planeNormal);
+        intersectionPoint = lineUpVec + lineDirectionVec * lambda;
+        return true;
+    }
+    return false;
 }
 
 bool checkTreeParameter(int id, float r, float g, float b, float a) {

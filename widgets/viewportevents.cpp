@@ -26,13 +26,13 @@
 
 #include "functions.h"
 #include "gui_wrapper.h"
-#include "knossos.h"
-#include "session.h"
-#include "skeleton/skeletonizer.h"
-#include "skeleton/tree.h"
+#include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "segmentation/segmentationsplit.h"
+#include "session.h"
+#include "skeleton/skeletonizer.h"
+#include "skeleton/tree.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
@@ -99,36 +99,38 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
-        uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
-        writeVoxels(coord, soid, seg.brush.value());
+        if (seg.selectedObjectsCount() > 0) {
+            uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
+            writeVoxels(coord, soid, seg.brush.value());
+        }
     }
 }
 
 
 void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
-    emit cursorPositionChanged(coord, id);
+    emit cursorPositionChanged(coord, viewportType);
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, id, event);
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, viewportType, event);
     if(Segmentation::singleton().hoverVersion && state->overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
     }
     ViewportBase::handleMouseHover(event);
 }
 
-void startNodeSelection(const int x, const int y, const int viewportID, const Qt::KeyboardModifiers modifiers) {
+void startNodeSelection(const int x, const int y, const ViewportType vpType, const Qt::KeyboardModifiers modifiers) {
     state->viewerState->nodeSelectionSquare.first.x = x;
     state->viewerState->nodeSelectionSquare.first.y = y;
 
     // reset second point from a possible previous selection square.
     state->viewerState->nodeSelectionSquare.second = state->viewerState->nodeSelectionSquare.first;
-    state->viewerState->nodeSelectSquareData = std::make_pair(viewportID, modifiers);
+    state->viewerState->nodeSelectSquareData = std::make_pair(vpType, modifiers);
 }
 
 void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
     auto * activeNode = state->skeletonState->activeNode;
-    auto clickedNode = retrieveVisibleObjectBeneathSquare(event.x(), event.y(), 10);
+    auto clickedNode = pickNode(event.x(), event.y(), 10);
     if (clickedNode && activeNode != nullptr) {
         checkedToggleNodeLink(this, *activeNode, clickedNode.get());
     }
@@ -138,7 +140,7 @@ void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
-            startNodeSelection(event->pos().x(), event->pos().y(), id, event->modifiers());
+            startNodeSelection(event->pos().x(), event->pos().y(), viewportType, event->modifiers());
             return;
         }
         //Set Connection between Active Node and Clicked Node
@@ -156,7 +158,7 @@ void ViewportBase::handleMouseButtonMiddle(const QMouseEvent *event) {
 
 void ViewportOrtho::handleMouseButtonMiddle(const QMouseEvent *event) {
     if (event->modifiers().testFlag(Qt::NoModifier) && Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
-        if (auto clickedNode = retrieveVisibleObjectBeneathSquare(event->x(), event->y(), 10)) {
+        if (auto clickedNode = pickNode(event->x(), event->y(), 10)) {
             draggedNode = &clickedNode.get();
         }
     }
@@ -212,7 +214,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             const auto movement = clickedCoordinate - lastPos;
             //Highlight the viewport with the biggest movement component
             if ((std::abs(movement.x) >= std::abs(movement.y)) && (std::abs(movement.x) >= std::abs(movement.z))) {
-                state->viewerState->highlightVp = VIEWPORT_YZ;
+                state->viewerState->highlightVp = VIEWPORT_ZY;
             } else if ((std::abs(movement.y) >= std::abs(movement.x)) && (std::abs(movement.y) >= std::abs(movement.z))) {
                 state->viewerState->highlightVp = VIEWPORT_XZ;
             } else {
@@ -221,7 +223,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             //Determine the directions for the f and d keys based on the signs of the movement components along the three dimensions
             state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0) ? 1 : -1;
             state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0) ? 1 : -1;
-            state->viewerState->vpKeyDirection[VIEWPORT_YZ] = (movement.x >= 0) ? 1 : -1;
+            state->viewerState->vpKeyDirection[VIEWPORT_ZY] = (movement.x >= 0) ? 1 : -1;
 
             //Auto tracing adjustments – this is out of place here
             state->viewerState->autoTracingDelay = std::min(500, std::max(10, state->viewerState->autoTracingDelay));
@@ -236,7 +238,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             //Additional move of specified steps along tracing direction
             if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
                 floatCoordinate walking{movement};
-                const auto factor = state->viewerState->autoTracingSteps / euclidicNorm(walking);
+                const auto factor = state->viewerState->autoTracingSteps / walking.length();
                 clickedCoordinate += Coordinate(std::lround(movement.x * factor), std::lround(movement.y * factor), std::lround(movement.z * factor));
             }
             //Additional move of steps equal to distance between last and new node along tracing direction.
@@ -256,7 +258,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         // Move to the new node position
         if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
             if (viewportType == VIEWPORT_ARBITRARY) {
-                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, id);
+                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, viewportType);
             } else {
                 state->viewer->setPositionWithRecentering(clickedCoordinate);
             }
@@ -348,7 +350,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
         if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
             // mouse released on same spot on which it was pressed down: single node selection
-            auto selectedNode = retrieveVisibleObjectBeneathSquare(event->pos().x(), event->pos().y(), 10);
+            auto selectedNode = pickNode(event->pos().x(), event->pos().y(), 10);
             if (selectedNode) {
                 selectedNodes = {&selectedNode.get()};
             }
@@ -408,7 +410,7 @@ void ViewportOrtho::handleMouseReleaseRight(const QMouseEvent *event) {
 void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
     if (mouseEventAtValidDatasetPosition(event)) {
         Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
-        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, id, event);
+        EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, viewportType, event);
         auto & seg = Segmentation::singleton();
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
             auto brush_copy = seg.brush.value();
@@ -440,7 +442,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *
                                                   // brush radius delta factor (float), as a function of current radius
                                                   std::pow(curRadius + 1, 0.5)
-                                                  ), 0));
+                                                  ), 1));
     }
 }
 
@@ -479,7 +481,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
 void ViewportBase::handleKeyPress(const QKeyEvent *event) {
     const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
     const auto alt = event->modifiers().testFlag(Qt::AltModifier);
-    if (event->key() == Qt::Key_H) {
+    if (event->key() == Qt::Key_H && Session::singleton().guiMode != GUIMode::ProofReading) {
         if (isDocked) {
             hide();
         }
@@ -518,30 +520,15 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         state->repeatDirection[2] *= 10;
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
-    } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L || event->key() == Qt::Key_M || event->key() == Qt::Key_Comma) {
-        if(ViewportOrtho::arbitraryOrientation == false) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Viewport orientation is still locked. Check 'Arbitrary Viewport Orientation' under 'Appearance Settings → Viewports' first.");
-            prompt.exec();
-        }
-        else {
-            switch(event->key()) {
-            case Qt::Key_K:
-                emit rotationSignal({0., 0., 1.}, boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_L:
-                emit rotationSignal({0., 1., 0.}, boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_M:
-                emit rotationSignal({0., 0., 1.}, -boost::math::constants::pi<float>()/180);
-                break;
-            case Qt::Key_Comma:
-                emit rotationSignal({0., 1., 0.}, -boost::math::constants::pi<float>()/180);
-                break;
-            }
+    } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L) {
+        const float angle = ctrl ? -boost::math::constants::pi<float>()/180 : boost::math::constants::pi<float>()/180;
+        switch(event->key()) {
+        case Qt::Key_K:
+            emit rotationSignal({0., 0., 1.}, angle);
+            break;
+        case Qt::Key_L:
+            emit rotationSignal({0., 1., 0.}, angle);
+            break;
         }
     } else if (ctrl && event->key() == Qt::Key_0) {
         state->viewer->zoomReset();
@@ -732,7 +719,7 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
         } else {
             state->compressionRatio = originalCompressionRatio;
         }
-        state->viewer->changeDatasetMag(DATA_SET);
+        state->viewer->updateDatasetMag();
         emit compressionRatioToggled();
     }
 }
@@ -779,7 +766,7 @@ QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    return retrieveAllObjectsBeneathSquare(centerX, centerY, width, height);
+    return pickNodes(centerX, centerY, width, height);
 }
 
 Coordinate ViewportOrtho::getMouseCoordinate() {

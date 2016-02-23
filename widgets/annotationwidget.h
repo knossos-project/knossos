@@ -31,10 +31,12 @@ signals:
     void visibilityChanged(bool);
 
 private:
-    void showEvent(QShowEvent *) override {
+    void showEvent(QShowEvent *event) override {
+        QDialog::showEvent(event);
         emit visibilityChanged(true);
     }
-    void hideEvent(QHideEvent *) override {
+    void hideEvent(QHideEvent *event) override {
+        QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }
 };

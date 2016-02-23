@@ -25,13 +25,14 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "color4F.h"
 #include "coordinate.h"
-#include "scriptengine/decorators/meshdecorator.h"
-#include "scriptengine/scripting.h"
 #include "stateInfo.h"
+
 #include <QDebug>
 #include <QDockWidget>
 #include <QFont>
+#include <QMouseEvent>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_2_0>
 #include <QOpenGLShaderProgram>
@@ -40,27 +41,27 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <atomic>
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 
-enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
-
-enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED, VIEWPORT_ARBITRARY};
+enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_ZY, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
 Q_DECLARE_METATYPE(ViewportType)
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
 values. The XY vp always used. */
 const auto VIEWPORT_ORTHO = VIEWPORT_XY;
 
-// close zoom -> smaller displayed edge length
-constexpr const double VPZOOMMIN = 0.0001;
+constexpr const double VPZOOMMAX = 0.02;
+constexpr const double VPZOOMMIN = 1.;
 constexpr const double SKELZOOMMAX = 0.4999;
 constexpr const double SKELZOOMMIN = 0.0;
 
 struct viewportTexture {
     //Handles for OpenGl
-    uint texHandle;
-    uint overlayHandle;
+    uint texHandle{0};
+    GLint textureFilter{GL_LINEAR};
+    uint overlayHandle{0};
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     Coordinate leftUpperPxInAbsPx;
@@ -85,14 +86,15 @@ struct viewportTexture {
     float xOffset, yOffset;
 
     // Current zoom level. 1: no zoom; near 0: maximum zoom.
-    float zoomLevel;
+    float FOV;
 };
 
 struct RenderOptions {
-    RenderOptions(const bool drawBoundaryAxes = true, const bool drawBoundaryBox = true, const bool drawCrosshairs = true, const bool drawOverlay = true, const bool drawSkeleton = true,
-                  const bool drawViewportPlanes = true, const bool enableSkeletonDownsampling = true, const bool highlightActiveNode = true, const bool highlightSelection = true, const bool selectionBuffer = false)
-        : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(drawCrosshairs), drawOverlay(drawOverlay),drawSkeleton(drawSkeleton),
-          drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(enableSkeletonDownsampling), highlightActiveNode(highlightActiveNode), highlightSelection(highlightSelection), selectionBuffer(selectionBuffer) {}
+    // default
+    RenderOptions();
+    // snapshot render options
+    RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
+
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
     bool drawCrosshairs;
@@ -100,6 +102,7 @@ struct RenderOptions {
     bool drawSkeleton;
     bool drawViewportPlanes;
     bool enableSkeletonDownsampling;
+    bool enableTextScaling;
     bool highlightActiveNode;
     bool highlightSelection;
     bool selectionBuffer;
@@ -118,13 +121,14 @@ signals:
 
 class QViewportFloatWidget : public QWidget {
 public:
-    explicit QViewportFloatWidget(QWidget *parent, int id);
+    explicit QViewportFloatWidget(QWidget *parent, ViewportType vpType);
 };
 
 constexpr int defaultFonsSize = 10;
 class commentListElement;
 class nodeListElement;
 class segmentListElement;
+class mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp);
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
@@ -143,7 +147,6 @@ private:
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
     virtual void resizeGL(int w, int h) override;
-    const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
@@ -165,8 +168,11 @@ protected:
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
-    boost::optional<nodeListElement &> retrieveVisibleObjectBeneathSquare(uint x, uint y, uint width);
-    QSet<nodeListElement *> retrieveAllObjectsBeneathSquare(uint centerX, uint centerY, uint width, uint height);
+    bool pickedScalebar(uint centerX, uint centerY, uint width);
+    QSet<nodeListElement *> pickNodes(uint centerX, uint centerY, uint width, uint height);
+    boost::optional<nodeListElement &> pickNode(uint x, uint y, uint width);
+    template<typename F>
+    std::vector<GLuint> pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight);
     void handleLinkToggle(const QMouseEvent & event);
 
     // event-handling
@@ -203,9 +209,8 @@ protected:
     virtual void handleWheelEvent(const QWheelEvent *event);
 
 public:
-    const static int numberViewports = 4;
-    ViewportType viewportType; // XY_VIEWPORT, ...
-    uint id; // VP_UPPERLEFT,
+    const static int numberViewports = 5;
+    ViewportType viewportType;
 
     bool hasCursor{false};
     virtual void showHideButtons(bool isShow) { resizeButton.setVisible(isShow); }
@@ -230,7 +235,7 @@ public:
     void setDock(bool isDock);
     static bool oglDebug;
 
-    explicit ViewportBase(QWidget *parent, ViewportType viewportType, const uint id);
+    explicit ViewportBase(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportBase();
 
     static bool initMesh(mesh & toInit, uint initialSize);
@@ -255,15 +260,13 @@ public:
 
     float frustum[6][4]; // Stores the current view frustum planes
 signals:
-    void cursorPositionChanged(const Coordinate & position, const uint id);
+    void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
 
     void rotationSignal(const floatCoordinate & axis, const float angle);
     void pasteCoordinateSignal();
 
     void compressionRatioToggled();
 
-    void recalcTextureOffsetsSignal();
-    void changeDatasetMagSignal(uint upOrDownFlag);
     void updateDatasetOptionsWidget();
 public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
@@ -271,7 +274,7 @@ public slots:
 
 class Viewport3D : public ViewportBase {
     Q_OBJECT
-    QPushButton xyButton{"xy"}, xzButton{"xz"}, yzButton{"yz"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+    QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -289,7 +292,7 @@ class Viewport3D : public ViewportBase {
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
-    explicit Viewport3D(QWidget *parent, ViewportType viewportType, const uint id);
+    explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
@@ -309,16 +312,13 @@ class ViewportOrtho : public ViewportBase {
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override { return 0.75; }
 
-    virtual void initializeGL() override;
-    virtual void paintGL() override;
     void createOverlayTextures();
-    void updateOverlayTexture();
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
-    void renderBrush(uint viewportType, Coordinate coord);
+    void renderBrush(const Coordinate coord);
     virtual void renderViewportFrontFace() override;
 
     floatCoordinate arbNodeDragCache = {};
@@ -335,10 +335,13 @@ class ViewportOrtho : public ViewportBase {
     virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
     virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
+
+protected:
+    virtual void initializeGL() override;
+    virtual void paintGL() override;
 public:
-    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id);
-    static bool arbitraryOrientation;
-    void setOrientation(ViewportType orientation);
+    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
+    void resetTexture();
     static bool showNodeComments;
 
     void sendCursorPosition();
@@ -346,22 +349,35 @@ public:
 
     //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
     Coordinate leftUpperDataPxOnScreen;
-    // plane vectors. s*v1 + t*v2 = px
     floatCoordinate n;
     floatCoordinate v1; // vector in x direction
     floatCoordinate v2; // vector in y direction
-    floatCoordinate leftUpperPxInAbsPx_float;
-    floatCoordinate leftUpperDataPxOnScreen_float;
-    int s_max;
-    int t_max;
+    std::atomic_bool dcResliceNecessary{true};
+    std::atomic_bool ocResliceNecessary{true};
 
     void zoomIn() override { zoom(zoomStep()); }
     void zoomOut() override { zoom(1./zoomStep()); }
     char * viewPortData;
     viewportTexture texture;
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
-    float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
-    float displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const;
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 };
 
+class ViewportArb : public ViewportOrtho {
+    Q_OBJECT
+    QPushButton resetButton{"reset"};
+    void updateOverlayTexture();
+
+protected:
+    virtual void paintGL() override;
+
+public:
+    int vpLenghtInDataPx;
+    int vpHeightInDataPx;
+    floatCoordinate leftUpperPxInAbsPx_float;
+    ViewportArb(QWidget *parent, ViewportType viewportType);
+    virtual void showHideButtons(bool isShow) override;
+
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
+};
 #endif // VIEWPORT_H

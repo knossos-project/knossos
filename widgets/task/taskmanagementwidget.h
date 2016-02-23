@@ -65,12 +65,12 @@ signals:
 private:
     bool handleError(const QPair<bool, QString> & res, const QString & successText = "");
 
-    void showEvent(QShowEvent * showEvent) override {
-        QDialog::showEvent(showEvent);
+    void showEvent(QShowEvent *event) override {
+        QDialog::showEvent(event);
         emit visibilityChanged(true);
     }
-    void hideEvent(QHideEvent * hideEvent) override {
-        QDialog::hideEvent(hideEvent);
+    void hideEvent(QHideEvent *event) override {
+        QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }
 };

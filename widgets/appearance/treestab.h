@@ -9,6 +9,7 @@
 #include <QRadioButton>
 #include <QSettings>
 #include <QSpinBox>
+#include <QComboBox>
 #include <QGridLayout>
 #include <QWidget>
 
@@ -19,21 +20,21 @@ class TreesTab : public QWidget
     Q_OBJECT
     QGridLayout mainLayout;
     // tree render options
-    QCheckBox highlightActiveTreeCheck{"Highlight active tree"};
-    QCheckBox highlightIntersectionsCheck{"Highlight intersections"};
-    QCheckBox lightEffectsCheck{"Enable light effects"};
-    QCheckBox ownTreeColorsCheck{"Use custom tree colors"};
+    QCheckBox highlightActiveTreeCheck{tr("Highlight active tree")};
+    QCheckBox highlightIntersectionsCheck{tr("Highlight intersections")};
+    QCheckBox lightEffectsCheck{tr("Enable light effects")};
+    QCheckBox ownTreeColorsCheck{tr("Use custom tree colors")};
     QString lutFilePath;
-    QPushButton loadTreeLUTButton{"Load …"};
-    QLabel depthCutOffLabel{"Depth cutoff:"};
+    QPushButton loadTreeLUTButton{tr("Load …")};
+    QLabel depthCutOffLabel{tr("Depth cutoff:")};
     QDoubleSpinBox depthCutoffSpin;
-    QLabel renderQualityLabel{"Rendering quality (1 best, 20 fastest):"};
-    QSpinBox renderQualitySpin;
+    QLabel renderQualityLabel{tr("Skeleton rendering quality:")};
+    QComboBox renderQualityCombo;
     // tree visibility
-    QCheckBox skeletonInOrthoVPsCheck{"Show skeleton in Ortho VPs"};
-    QCheckBox skeletonIn3DVPCheck{"Show skeleton in 3D VP"};
-    QRadioButton wholeSkeletonRadio{"Show whole skeleton"};
-    QRadioButton selectedTreesRadio{"Show only selected trees"};
+    QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in Ortho VPs")};
+    QCheckBox skeletonIn3DVPCheck{tr("Show skeleton in 3D VP")};
+    QRadioButton wholeSkeletonRadio{tr("Show whole skeleton")};
+    QRadioButton selectedTreesRadio{tr("Show only selected trees")};
 
     void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");

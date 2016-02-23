@@ -30,28 +30,28 @@
 #include <QDialog>
 #include <QLabel>
 #include <QPushButton>
+#include <QSlider>
+#include <QDoubleSpinBox>
 
-class QDoubleSpinBox;
 class QCheckBox;
 
 
 #define LOCK_DATASET_ORIENTATION_DEFAULT (false)
 
+// a horizontal slider with ticks and mag labels at each mag switch position
+class ZoomSlider : public QSlider {
+    Q_OBJECT
+    using QSlider::setTickPosition; // prevent default tick painting in parent.
+protected:
+    virtual void paintEvent(QPaintEvent *ev) override;
+public:
+    int highestMag{0};
+    int numTicks{0};
+};
+
 class DatasetOptionsWidget : public QDialog {
     friend class MainWindow;
     Q_OBJECT
-public:
-    explicit DatasetOptionsWidget(QWidget *parent = 0);
-public slots:
-    void zoomDefaultsClicked();
-    void lockDatasetMagChecked(bool on);
-    void orthogonalSpinBoxChanged(double value);
-    void skeletonSpinBoxChanged(double value);
-    void update();
-    void loadSettings();
-    void saveSettings();
-    void updateCompressionRatioDisplay();
-protected:
     /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
      * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
      * See the spinBoxChanged slots for more details. */
@@ -62,10 +62,11 @@ protected:
     QLabel compressionLabel;
     // zoom section
     QLabel zoomSectionLabel{"Zoom Settings"};
-    QLabel *orthogonalDataViewportLabel;
+    QLabel orthogonalDataViewportLabel{"Orthogonal Viewports"};
     QLabel *skeletonViewportLabel;
-    QDoubleSpinBox *orthogonalDataViewportSpinBox;
     QDoubleSpinBox *skeletonViewportSpinBox;
+    QDoubleSpinBox orthoZoomSpinBox;
+    ZoomSlider orthoZoomSlider;
     QPushButton *zoomDefaultsButton;
     // multires section
     QLabel multiresSectionLabel{"Magnification Settings"};
@@ -74,15 +75,37 @@ protected:
     QLabel *currentActiveMagDatasetLabel;
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
-signals:
-    void visibilityChanged(bool);
-private:
-    void showEvent(QShowEvent *) override {
+    void applyZoom(const float newScreenPxXPerDataPx);
+    void reinitializeOrthoZoomWidgets();
+    uint highestMag();
+    uint lowestMag();
+    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
+    uint calcMag(const float screenPxXPerDataPx);
+    float zoomStep{1};
+    void updateOrthogonalZoomSpinBox();
+    void updateOrthogonalZoomSlider();
+
+    void showEvent(QShowEvent *event) override {
+        QDialog::showEvent(event);
         emit visibilityChanged(true);
     }
-    void hideEvent(QHideEvent *) override {
+    void hideEvent(QHideEvent *event) override {
+        QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }
+public:
+    explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
+public slots:
+    void zoomDefaultsClicked();
+    void skeletonSpinBoxChanged(double value);
+    void update();
+    void loadSettings();
+    void saveSettings();
+    void updateCompressionRatioDisplay();
+
+signals:
+    void visibilityChanged(bool);
 };
 
 #endif // DATASETOPTIONSWIDGET_H

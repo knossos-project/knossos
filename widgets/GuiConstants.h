@@ -40,7 +40,6 @@ const QString DATASET_OVERLAY = "overlay";
 const QString DATASET_LAST_USED = "dataset_last_used";
 
 // Zoom and Multires
-const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";
 const QString SKELETON_VIEW = "skeleton_view";
 const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 
@@ -82,17 +81,21 @@ const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
 const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
-const QString SHOW_YZ_PLANE = "show_yz_plane";
+const QString SHOW_ZY_PLANE = "show_zy_plane";
+const QString SHOW_ARB_PLANE = "show_arb_plane";
 const QString SHOW_PHYSICAL_BOUNDARIES = "show_physical_boundaries";
-const QString ROTATE_AROUND_ACTIVE_NODE = "rotate_around_active_node";
+const QString ROTATION_CENTER = "rotation_center";
 const QString RENDER_VOLUME = "render_volume";
 const QString VOLUME_ALPHA = "volume_alpha";
 const QString VOLUME_BACKGROUND_COLOR = "volume_background_color";
+const QString VP_TAB_INDEX = "vp_tab_index";
+
+// Mainwindow
+const QString GUI_MODE = "gui_mode";
 const QString VP_ORDER = "vp_order";
 const QString VP_I_POS = "vp%1_pos";
 const QString VP_I_SIZE = "vp%1_size";
 const QString VP_I_VISIBLE = "vp%1_visible";
-const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 
 // Navigation Widget

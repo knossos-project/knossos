@@ -24,7 +24,6 @@
 
 #include "file_io.h"
 #include "GuiConstants.h"
-#include "knossos.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "skeleton/node.h"
@@ -71,31 +70,57 @@
 #define DEFAULT_VP_MARGIN 5
 #define DEFAULT_VP_SIZE 350
 
+class CoordinateSpin : public QSpinBox {
+public:
+    CoordinateSpin(const QString & prefix, MainWindow & mainWindow) : QSpinBox(&mainWindow) {
+        setPrefix(prefix);
+        setRange(0, 1000000);//allow min 0 as bogus value, we don’t adjust the max anyway
+        setValue(0 + 1);//inintialize for {0, 0, 0}
+        QObject::connect(this, &QSpinBox::editingFinished, &mainWindow, &MainWindow::coordinateEditingFinished);
+    }
+    virtual void fixup(QString & input) const override {
+        input = QString::number(0);//let viewer reset the value
+    }
+};
+
+template<typename Menu, typename Receiver, typename Slot>
+QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
+    auto & action = *menu.addAction(icon, caption);
+    action.setShortcut(keySequence);
+    action.setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(&action, &QAction::triggered, receiver, slot);
+    return action;
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
+    state->mainWindow = this;
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::resetViewportPositions, this, &MainWindow::resetViewports);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+        std::map<AnnotationMode, QString> rawModes = workModes;
+        AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
         if (!showOverlays) {
-            const std::map<AnnotationMode, QString> rawModes{{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]},
-                                                             {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-            workModeModel.recreate(rawModes);
-            setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : AnnotationMode::Mode_Tracing);
+             rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
         }
-        else {
-            workModeModel.recreate(workModes);
-            setWorkMode(currentMode);
+        else if (Session::singleton().guiMode == GUIMode::ProofReading) {
+            rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
+            defaultMode = AnnotationMode::Mode_Merge;
         }
+        workModeModel.recreate(rawModes);
+        setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
+
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
-        [this](const QString & path, const uint id, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
-            viewport(id)->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
+        [this](const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
+            viewport(vpType)->takeSnapshot(path, size, withAxes, withOverlay, withSkeleton, withScale, withVpPlanes);
         });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
@@ -113,6 +138,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     setAcceptDrops(true);
 
     statusBar()->setSizeGripEnabled(false);
+    GUIModeLabel.setVisible(false);
+    statusBar()->addWidget(&GUIModeLabel);
     statusBar()->addWidget(&cursorPositionLabel);
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
@@ -130,8 +157,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     }
 }
 
-void MainWindow::updateCursorLabel(const Coordinate & position, const uint vpID) {
-    cursorPositionLabel.setHidden(vpID == VIEWPORT_SKELETON || vpID == VIEWPORT_UNDEFINED);
+void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
+    cursorPositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
     cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
 }
 
@@ -143,12 +170,12 @@ void MainWindow::resetTextureProperties() {
     state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-        orthoVP.texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        orthoVP.texture.texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength;
         orthoVP.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
         orthoVP.texture.usedTexLengthDc = state->M;
-        orthoVP.texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        orthoVP.texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
-        orthoVP.texture.zoomLevel = 1;
+        orthoVP.texture.edgeLengthPx = state->viewerState->texEdgeLength;
+        orthoVP.texture.edgeLengthDc = state->viewerState->texEdgeLength / state->cubeEdgeLength;
+        orthoVP.texture.FOV = 1;
     });
 }
 
@@ -166,30 +193,34 @@ void MainWindow::createViewports() {
     }
     QSurfaceFormat::setDefaultFormat(format);
 
-    viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY, VP_UPPERLEFT));
-    viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewportYZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY));
+    viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ));
+    viewportZY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ZY));
+    viewportArb = std::unique_ptr<ViewportArb>(new ViewportArb(centralWidget(), VIEWPORT_ARBITRARY));
+    viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON));
     viewportXY->upperLeftCorner = {5, 30, 0};
     viewportXZ->upperLeftCorner = {5, 385, 0};
-    viewportYZ->upperLeftCorner = {360, 30, 0};
+    viewportZY->upperLeftCorner = {360, 30, 0};
+    viewportArb->upperLeftCorner = {715, 30, 0};
     viewport3D->upperLeftCorner = {360, 385, 0};
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) { QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
 
 }
 
-ViewportBase * MainWindow::viewport(const uint id) {
-    return (viewportXY->id == id)? static_cast<ViewportBase *>(viewportXY.get()) :
-           (viewportXZ->id == id)? static_cast<ViewportBase *>(viewportXZ.get()) :
-           (viewportYZ->id == id)? static_cast<ViewportBase *>(viewportYZ.get()) :
+ViewportBase * MainWindow::viewport(const ViewportType vpType) {
+    return (viewportXY->viewportType == vpType)? static_cast<ViewportBase *>(viewportXY.get()) :
+           (viewportXZ->viewportType == vpType)? static_cast<ViewportBase *>(viewportXZ.get()) :
+           (viewportZY->viewportType == vpType)? static_cast<ViewportBase *>(viewportZY.get()) :
+           (viewportArb->viewportType == vpType)? static_cast<ViewportBase *>(viewportArb.get()) :
            static_cast<ViewportBase *>(viewport3D.get());
 }
 
-ViewportOrtho * MainWindow::viewportOrtho(const uint id) {
-    return (viewportXY->id == id)? viewportXY.get() :
-           (viewportXZ->id == id)? viewportXZ.get() :
-           viewportYZ.get();
+ViewportOrtho * MainWindow::viewportOrtho(const ViewportType vpType) {
+    return (viewportXY->viewportType == vpType)? viewportXY.get() :
+           (viewportXZ->viewportType == vpType)? viewportXZ.get() :
+           (viewportZY->viewportType == vpType)? viewportZY.get() :
+           viewportArb.get();
 }
 
 void MainWindow::createToolbars() {
@@ -218,27 +249,9 @@ void MainWindow::createToolbars() {
     basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
     basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
 
-    xField = new QSpinBox();
-    xField->setPrefix("x: ");
-    xField->setRange(1, 1000000);
-    xField->setMinimumWidth(75);
-    xField->setValue(state->viewerState->currentPosition.x + 1);
-
-    yField = new QSpinBox();
-    yField->setPrefix("y: ");
-    yField->setRange(1, 1000000);
-    yField->setMinimumWidth(75);
-    yField->setValue(state->viewerState->currentPosition.y + 1);
-
-    zField = new QSpinBox();
-    zField->setPrefix("z: ");
-    zField->setRange(1, 1000000);
-    zField->setMinimumWidth(75);
-    zField->setValue(state->viewerState->currentPosition.z + 1);
-
-    QObject::connect(xField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
-    QObject::connect(yField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
-    QObject::connect(zField, &QSpinBox::editingFinished, this, &MainWindow::coordinateEditingFinished);
+    xField = new CoordinateSpin("x: ", *this);
+    yField = new CoordinateSpin("y: ", *this);
+    zField = new CoordinateSpin("z: ", *this);
 
     basicToolbar.addWidget(xField);
     basicToolbar.addWidget(yField);
@@ -259,7 +272,8 @@ void MainWindow::createToolbars() {
     auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
     auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
     auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
-
+    auto pythonInterpreterButton = createToolToogleButton(":/resources/icons/python.png", "Python Interpreter");
+    auto snapshotButton = createToolToogleButton(":/resources/icons/camera.png", "Snapshot");
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
         if (down) {
@@ -268,26 +282,18 @@ void MainWindow::createToolbars() {
             widgetContainer.taskManagementWidget.hide();
         }
     });
+    QObject::connect(pythonInterpreterButton, &QToolButton::clicked, &widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
+    QObject::connect(snapshotButton, &QToolButton::clicked, &widgetContainer.snapshotWidget, &SnapshotWidget::setVisible);
     //visibility → button
     QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::visibilityChanged, pythonInterpreterButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
-
-    defaultToolbar.addSeparator();
-
-    auto * const pythonButton = new QToolButton();
-    pythonButton->setMenu(new QMenu(pythonButton));
-    pythonButton->setIcon(QIcon(":/resources/icons/python.png"));
-    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
-    QObject::connect(pythonButton, &QToolButton::clicked, this, &MainWindow::pythonSlot);
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python File", this, SLOT(pythonFileSlot()));
-    pythonButton->menu()->addAction(QIcon(":/resources/icons/python.png"), "Python Manager", this, SLOT(pythonPluginMgrSlot()));
-    defaultToolbar.addWidget(pythonButton);
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::visibilityChanged, snapshotButton, &QToolButton::setChecked);
 
     defaultToolbar.addSeparator();
 
@@ -333,6 +339,33 @@ void MainWindow::updateLoaderProgress(int refCount) {
     loaderProgress->setAutoFillBackground(true);
     loaderProgress->setPalette(pal);
     loaderProgress->setText(QString::number(refCount));
+}
+
+void MainWindow::setProofReadingUI(const bool on) {
+    const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+    if (on) {
+        workModeModel.recreate({{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}});
+        if (currentMode == AnnotationMode::Mode_Merge || currentMode == AnnotationMode::Mode_Paint) {
+            setWorkMode(currentMode);
+        } else {
+            setWorkMode(AnnotationMode::Mode_Merge);
+        }
+    } else {
+        workModeModel.recreate(workModes);
+        setWorkMode(currentMode);
+    }
+
+    modeSwitchSeparator->setVisible(on);
+    setMergeModeAction->setVisible(on);
+    setPaintModeAction->setVisible(on);
+
+    viewportXZ->setHidden(on);
+    viewportZY->setHidden(on);
+    viewportArb->setHidden(on);
+    viewport3D->setHidden(on);
+    resetViewports();
+    GUIModeLabel.setText(on ? "Proof Reading Mode" : "");
+    GUIModeLabel.setVisible(on);
 }
 
 void MainWindow::setJobModeUI(bool enabled) {
@@ -447,25 +480,6 @@ void MainWindow::updateRecentFile(const QString & fileName) {
     }
 }
 
-/** This slot is called if one of the entries is clicked in the recent file menue */
-void MainWindow::recentFileSelected() {
-    QAction *action = (QAction *)sender();
-
-    QString fileName = action->text();
-    if(fileName.isNull() == false) {
-        openFileDispatch(QStringList(fileName));
-    }
-}
-
-template<typename Menu, typename Receiver, typename Slot>
-QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
-    auto & action = *menu.addAction(icon, caption);
-    action.setShortcut(keySequence);
-    action.setShortcutContext(Qt::ApplicationShortcut);
-    QObject::connect(&action, &QAction::triggered, receiver, slot);
-    return action;
-}
-
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
@@ -473,10 +487,14 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent Annotation File(s)"));
+    int i = 0;
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
         elem->setVisible(false);
-        QObject::connect(elem, &QAction::triggered, this, &MainWindow::recentFileSelected);
+        QObject::connect(elem, &QAction::triggered, [this, i](){
+            openFileDispatch({skeletonFileHistory.at(i)});
+        });
+        ++i;
     }
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save Annotation As…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
@@ -486,12 +504,19 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
+    //advanced skeleton
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    //skeleton
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
+    //segmentation
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
+    //proof reading mode
+    modeSwitchSeparator = actionMenu.addSeparator();
+    setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
+    setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
 
     menuBar()->addMenu(&actionMenu);
 
@@ -570,10 +595,18 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), "Task Management", &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), "Annotation Window", &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), "Dataset Options", &widgetContainer.datasetOptionsWidget, SLOT(show()));
-    windowMenu->addAction(tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation Window"), &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/camera.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+
+    auto scriptingMenu = menuBar()->addMenu("Scripting");
+    scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
+    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
+    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    scriptingMenu->addAction("Interpreter", this, SLOT(pythonInterpreterSlot()));
+    pluginMenu = scriptingMenu->addMenu("Plugins");
+    refreshPluginMenu();
 
     auto helpMenu = menuBar()->addMenu("Help");
     addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
@@ -599,7 +632,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          }
     }
 
-    Knossos::sendQuitSignal();
+    state->quitSignal = true;
+    QApplication::processEvents();//ensure everything’s done
+    Loader::Controller::singleton().suspendLoader();
+
     event->accept();//mainwindow takes the qapp with it
 }
 
@@ -645,7 +681,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     bool multipleFiles = fileNames.size() > 1;
     bool success = true;
-
+    Session::singleton().guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
     });
@@ -682,7 +718,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
     }
     updateTitlebar();
-
+    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
@@ -820,7 +856,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     if (workModes.find(workMode) == std::end(workModes)) {
         workMode = AnnotationMode::Mode_Tracing;
     }
-    modeCombo.setCurrentText(workModes[workMode]);
+    modeCombo.setCurrentIndex(workModeModel.indexOf(workMode));
     auto & mode = Session::singleton().annotationMode;
     mode = workMode;
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
@@ -1010,16 +1046,16 @@ void MainWindow::saveSettings() {
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
 
     forEachVPDo([&settings] (ViewportBase & vp) {
-        settings.setValue(VP_I_POS.arg(vp.id), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
-        settings.setValue(VP_I_SIZE.arg(vp.id), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(vp.id), vp.isVisible());
+        settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisible());
 
     });
     QList<QVariant> order;
     for (const auto & w : centralWidget()->children()) {
         forEachVPDo([&w, &order](ViewportBase & vp) {
             if (w == &vp) {
-                order.append(vp.id);
+                order.append(vp.viewportType);
             }
         });
     }
@@ -1036,6 +1072,8 @@ void MainWindow::saveSettings() {
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
     settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
+    settings.setValue(GUI_MODE, static_cast<int>(Session::singleton().guiMode));
+
     settings.endGroup();
 
     widgetContainer.datasetLoadWidget.saveSettings();
@@ -1045,6 +1083,7 @@ void MainWindow::saveSettings() {
     widgetContainer.navigationWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
+    widgetContainer.pythonInterpreterWidget.saveSettings();
     widgetContainer.snapshotWidget.saveSettings();
     widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
     //widgetContainer.toolsWidget->saveSettings();
@@ -1064,13 +1103,13 @@ void MainWindow::loadSettings() {
         resetViewports();
     } else {
         forEachVPDo([&settings](ViewportBase & vp) {
-            vp.move(settings.value(VP_I_POS.arg(vp.id)).toPoint());
-            vp.resize(settings.value(VP_I_SIZE.arg(vp.id)).toSize());
-            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.id), true).toBool());
+            vp.move(settings.value(VP_I_POS.arg(vp.viewportType)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(vp.viewportType)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
         });
     }
     for (const auto & i : settings.value(VP_ORDER).toList()) {
-        viewport(i.toInt())->raise();
+        viewport(static_cast<ViewportType>(i.toInt()))->raise();
     }
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
@@ -1088,6 +1127,9 @@ void MainWindow::loadSettings() {
 
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
+    Session::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
+    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
+
     settings.endGroup();
 
     widgetContainer.datasetLoadWidget.loadSettings();
@@ -1097,6 +1139,7 @@ void MainWindow::loadSettings() {
     widgetContainer.navigationWidget.loadSettings();
     widgetContainer.annotationWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
+    widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();
 }
 
@@ -1159,10 +1202,15 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    forEachVPDo([](ViewportBase & vp) {
-        vp.setDock(true);
-        vp.setVisible(true);
-    });
+    if (Session::singleton().guiMode == GUIMode::ProofReading) {
+        viewportXY.get()->setDock(true);
+        viewportXY.get()->show();
+    } else {
+        forEachVPDo([](ViewportBase & vp) {
+            vp.setDock(true);
+            vp.show();
+        });
+    }
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
@@ -1213,18 +1261,20 @@ void MainWindow::placeComment(const int index) {
 }
 
 void MainWindow::resizeToFitViewports(int width, int height) {
-    width = (width - DEFAULT_VP_MARGIN) / 2;
-    height = (height - DEFAULT_VP_MARGIN) / 2;
+    width = (width - DEFAULT_VP_MARGIN);
+    height = (height - DEFAULT_VP_MARGIN);
     int mindim = std::min(width, height);
-    viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
-    viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
-    viewportYZ->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
-    viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
-    forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
-}
-
-void MainWindow::pythonSlot() {
-    widgetContainer.pythonPropertyWidget.openTerminal();
+    if (Session::singleton().guiMode == GUIMode::ProofReading) {
+        viewportXY->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN);
+    } else {
+        mindim /= 2;
+        viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewportXZ->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + mindim);
+        viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
+        viewportArb->move(DEFAULT_VP_MARGIN + 2 * mindim, DEFAULT_VP_MARGIN);
+        viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+        forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
+    }
 }
 
 void MainWindow::pythonPropertiesSlot() {
@@ -1235,30 +1285,68 @@ void MainWindow::pythonFileSlot() {
     state->viewerState->renderInterval = SLOW;
     QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     state->viewerState->renderInterval = FAST;
-    QMessageBox msgBox;
-    msgBox.setText(tr("Execute or Import?"));
-    QAbstractButton* pButtonExecute = msgBox.addButton(tr("Execute"), QMessageBox::ActionRole);
-    QAbstractButton* pButtonImport = msgBox.addButton(tr("Import"), QMessageBox::ActionRole);
-    msgBox.exec();
-    if (msgBox.clickedButton()==pButtonExecute) {
-        state->scripting->runFile(pyFileName);
+    state->scripting->runFile(pyFileName);
+}
+
+void MainWindow::refreshPluginMenu() {
+    auto actions = pluginMenu->actions();
+    for (auto action : actions) {
+        pluginMenu->removeAction(action);
     }
-    else if (msgBox.clickedButton()==pButtonImport) {
-        state->scripting->importModule(pyFileName);
+    QStringList pluginNames = state->scripting->getPluginNames().split(";");
+    for (auto pluginName : pluginNames) {
+        if (pluginName.isEmpty()) {
+            continue;
+        }
+        auto pluginSubMenu = pluginMenu->addMenu(pluginName);
+        QObject::connect(pluginSubMenu->addAction("Open"), &QAction::triggered,
+                         [pluginName](){state->scripting->openPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Close"), &QAction::triggered,
+                         [pluginName](){state->scripting->closePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Show"), &QAction::triggered,
+                         [pluginName](){state->scripting->showPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Hide"), &QAction::triggered,
+                         [pluginName](){state->scripting->hidePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Reload"), &QAction::triggered,
+                         [pluginName](){state->scripting->reloadPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Instantiate"), &QAction::triggered,
+                         [pluginName](){state->scripting->instantiatePlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Remove Instance"), &QAction::triggered,
+                         [pluginName](){state->scripting->removePluginInstance(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Import"), &QAction::triggered,
+                         [pluginName](){state->scripting->importPlugin(pluginName,false);});
+        QObject::connect(pluginSubMenu->addAction("Remove Import"), &QAction::triggered,
+                         [pluginName](){state->scripting->removePluginImport(pluginName,false);});
     }
 }
 
+void MainWindow::pythonInterpreterSlot() {
+    widgetContainer.pythonInterpreterWidget.show();
+    widgetContainer.pythonInterpreterWidget.activateWindow();
+}
+
 void MainWindow::pythonPluginMgrSlot() {
-    auto pluginDir = QString("%1/plugins").arg(QCoreApplication::applicationDirPath());
-    QString pluginMgrFn("pluginMgr.py");
-    QString pluginMgrPath(QString("%1/%2").arg(pluginDir).arg(pluginMgrFn));
-    if (!QFile::exists(pluginMgrPath)) {
-        if (!QDir().mkpath(pluginDir)) {
-            return;
+    auto showError = [this](const QString &errorStr) {
+        QMessageBox errorBox(QMessageBox::Warning, "Python Plugin Manager: Error", errorStr, QMessageBox::Ok, this);
+        errorBox.exec();
+        return;
+    };
+    auto pluginDir = state->scripting->getPluginDir();
+    auto pluginMgrFn = PLUGIN_MGR_NAME + ".py";
+    auto pluginMgrPath = QString("%1/%2").arg(pluginDir).arg(pluginMgrFn);
+    auto existed = QFile(pluginMgrPath).exists();
+    if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
+        return showError(QString("Cannot temporarily place default plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
+    }
+    state->scripting->importPlugin(PLUGIN_MGR_NAME, false);
+    if (!existed) {
+        QFile pluginMgrFile(pluginMgrPath);
+        if (!pluginMgrFile.setPermissions(QFile::WriteOther)) {
+            return showError(QString("Cannot set write permissions for temporarily placed plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
         }
-        if (!QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
-            return;
+        if (!pluginMgrFile.remove()) {
+            return showError(QString("Cannot remove temporarily placed plugin manager from plugin directory:\n%1").arg(pluginMgrPath));
         }
     }
-    state->scripting->importModule(pluginMgrPath);
+    state->scripting->openPlugin(PLUGIN_MGR_NAME, false);
 }

@@ -28,6 +28,7 @@ public:
     QPair<bool, QPair<QString, QByteArray> > getPost(const QUrl & url);
     QPair<bool, QString> submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final);
     void submitSegmentationJob(const QString &filename);
+    std::pair<int, int> checkOnlineMags(const QUrl & url);
 };
 
 #endif // NETWORK_H

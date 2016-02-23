@@ -88,12 +88,12 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         rangeDeltaSlider.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });
-    QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [&](int value){
+    QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
     });
-    QObject::connect(&segmentationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+    QObject::connect(&segmentationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int value){
         segmentationOverlaySlider.setValue(value);
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
@@ -102,7 +102,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().volume_render_toggle = checked;
         emit volumeRenderToggled();
     });
-    QObject::connect(&volumeColorButton, &QPushButton::clicked, [&]() {
+    QObject::connect(&volumeColorButton, &QPushButton::clicked, [this]() {
         state->viewerState->renderInterval = SLOW;
         auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
         state->viewerState->renderInterval = FAST;
@@ -111,12 +111,12 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
             volumeColorButton.setStyleSheet("background-color: " + color.name() + ";");
         }
     });
-    QObject::connect(&volumeOpaquenessSlider, &QSlider::valueChanged, [&](int value){
+    QObject::connect(&volumeOpaquenessSlider, &QSlider::valueChanged, [this](int value){
         volumeOpaquenessSpinBox.setValue(value);
         Segmentation::singleton().volume_opacity = value;
         Segmentation::singleton().volume_update_required = true;
     });
-    QObject::connect(&volumeOpaquenessSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+    QObject::connect(&volumeOpaquenessSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int value){
         volumeOpaquenessSlider.setValue(value);
         Segmentation::singleton().volume_opacity = value;
         Segmentation::singleton().volume_update_required = true;

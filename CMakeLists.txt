@@ -11,20 +11,19 @@ option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
 endif()
+option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-file(GLOB root *.cpp *.h *.qrc *.h.in)
+file(GLOB sources *.cpp resources.qrc version.h.in)
+file(GLOB headers *.h)
+file(GLOB_RECURSE sources2 ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./widgets/*.cpp)
+file(GLOB_RECURSE headers2 ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./widgets/*.h)
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
-file(GLOB_RECURSE scriptengine ./scriptengine/*.cpp ./scriptengine/*.h)
-file(GLOB_RECURSE segmentation ./segmentation/*.cpp ./segmentation/*.h)
-file(GLOB_RECURSE slicer ./slicer/*.cpp ./slicer/*.h)
-file(GLOB_RECURSE skeleton ./skeleton/*.cpp ./skeleton/*.h)
-file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
-set(SRC_LIST ${root} ${scriptengine} ${segmentation} ${slicer} ${skeleton} ${widgets})
+set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)#resources.qrc
+set(CMAKE_AUTOMOC ${AUTOGEN})
+set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_AUTOSTATICPLUGINS ON)#https://github.com/Alexpux/MINGW-packages/issues/577
@@ -36,6 +35,11 @@ find_package(Qt5Python27 REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
+
+if(NOT AUTOGEN)
+    qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
+    qt5_add_resources(SRC_LIST resources.qrc)
+endif()
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
@@ -111,6 +115,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5Python27
     QuaZip::QuaZip
     Snappy::Snappy
+    $<$<PLATFORM_ID:Linux>:-fuse-ld=gold>
 )
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
@@ -126,7 +131,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pedantic-errors")
+target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14" "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -147,8 +152,7 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "R
     target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/CMake/cotire.cmake)
-    set(COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
-    include(CMake/cotire.cmake)#https://github.com/sakra/cotire/releases/latest
+include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
+if(COMMAND cotire)
     cotire(${PROJECT_NAME})
 endif()

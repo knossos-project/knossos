@@ -7,6 +7,7 @@
         <file>resources/datasets/ek0563.k.conf</file>
         <file>resources/icons/application-exit.png</file>
         <file>resources/icons/appointment.png</file>
+        <file>resources/icons/camera.png</file>
         <file>resources/icons/configure-toolbars.png</file>
         <file>resources/icons/dialog-ok.png</file>
         <file>resources/icons/document-open.png</file>

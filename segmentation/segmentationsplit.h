@@ -13,7 +13,7 @@ public:
         two_dim, three_dim
     };
     enum class view_t {
-        xy, xz, yz
+        xy, xz, zy
     };
     enum class shape_t {
         angular, round

@@ -222,7 +222,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     twodBtn.setToolTip("Only work on one 2D slice.");
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
-    brushRadiusEdit.setRange(0, 1000);
+    brushRadiusEdit.setRange(1, 1000);
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
@@ -341,18 +341,22 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         updateLabels();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, [this](int id){
-        objectSelectionProtection = true;
         objectModel.changeRow(id);
+        updateLabels();//maybe subobject count changed
+    });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int id){
+        objectSelectionProtection = true;
         const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
-        if (Segmentation::singleton().objects[id].selected) {
+        //selection lookup is way cheaper than reselection (sadly)
+        const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
+        if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
             objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        } else {
+        } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
             objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
         }
         objectSelectionProtection = false;
         touchedObjectModel.recreate();
         updateTouchedObjSelection();
-        updateLabels();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
         touchedObjsTable.clearSelection();
@@ -428,7 +432,6 @@ void SegmentationView::touchedObjSelectionChanged(const QItemSelection & selecte
     if (touchedObjectSelectionProtection) {
         return;
     }
-    Segmentation::singleton().blockSignals(true);//prevent ping pong
     if (!QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
         //unselect all previously selected objects
         commitSelection(QItemSelection{}, objectsTable.selectionModel()->selection());
@@ -436,7 +439,6 @@ void SegmentationView::touchedObjSelectionChanged(const QItemSelection & selecte
     commitSelection(selected, deselected, [this](const int & i){
         return touchedObjectModel.objectCache[i].get().index;
     });
-    Segmentation::singleton().blockSignals(false);
     updateSelection();
 }
 
@@ -446,9 +448,7 @@ void SegmentationView::selectionChanged(const QItemSelection & selected, const Q
     }
     const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
     const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
-    Segmentation::singleton().blockSignals(true);//prevent ping pong
     commitSelection(proxySelected, proxyDeselected);
-    Segmentation::singleton().blockSignals(false);
     updateTouchedObjSelection();
 }
 

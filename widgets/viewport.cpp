@@ -42,22 +42,28 @@
 
 bool ViewportBase::oglDebug = false;
 bool Viewport3D::showBoundariesInUm = false;
-bool ViewportOrtho::arbitraryOrientation = false;
 bool ViewportOrtho::showNodeComments = false;
+
+RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(state->overlay && state->viewerState->showOverlay),
+drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionBuffer(false) {}
+
+RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
+    : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(false), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
+      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionBuffer(false) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
 
-QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, int id) : QWidget(parent) {
+QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportType vpType) : QWidget(parent) {
     setWindowFlags(Qt::Window);
-    const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "3D"}};
-    setWindowTitle(VP_TITLES[id]);
+    const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "Arbitrary", "3D"}};
+    setWindowTitle(VP_TITLES[vpType]);
     new QVBoxLayout(this);
 }
 
-ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType, const uint id) :
-    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), id(id) {
+ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
+    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), edgeLength(width()) {
     dockParent = parent;
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
@@ -108,7 +114,7 @@ void ViewportBase::setDock(bool isDock) {
     } else {
         dockPos = pos();
         dockSize = size();
-        floatParent = new QViewportFloatWidget(dockParent, id);
+        floatParent = new QViewportFloatWidget(dockParent, viewportType);
         floatParent->layout()->addWidget(this);
         floatParent->resize(size());
         if (wasVisible) {
@@ -135,42 +141,56 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
     state->viewerState->defaultVPSizeAndPos = false;
 }
 
-ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     switch(viewportType) {
-    case VIEWPORT_XY:
-        v1 = {1, 0, 0};
-        v2 = {0, 1, 0};
-        n = {0, 0, 1};
-        break;
     case VIEWPORT_XZ:
         v1 = {1, 0, 0};
         v2 = {0, 0, 1};
         n = {0, 1, 0};
         break;
-    case VIEWPORT_YZ:
+    case VIEWPORT_ZY:
         v1 = {0, 0, 1};
         v2 = {0, 1, 0};
         n = {1, 0, 0};
         break;
-    default: break;
+    case VIEWPORT_XY:
+    case VIEWPORT_ARBITRARY:
+        v1 = {1, 0, 0};
+        v2 = {0, 1, 0};
+        n = {0, 0, 1};
+        break;
+    default:
+        throw std::runtime_error("ViewportOrtho::ViewportOrtho unknown vp");
     }
     timeDBase.start();
     timeFBase.start();
 }
 
-Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id) : ViewportBase(parent, viewportType, id) {
+void ViewportOrtho::resetTexture() {
+    const auto size = texture.edgeLengthPx;
+    if (texture.texHandle != 0) {
+        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    }
+    if (texture.overlayHandle != 0) {
+        glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    }
+}
+
+Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     const auto svpLayout = new QHBoxLayout();
     svpLayout->setSpacing(0);
     svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
 
-    for (auto * button : {&xyButton, &xzButton, &yzButton}) {
+    for (auto * button : {&xyButton, &xzButton, &zyButton}) {
         button->setMinimumSize(30, 20);
     }
     r90Button.setMinimumSize(35, 20);
     r180Button.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&xyButton, &xzButton, &yzButton, &r90Button, &r180Button, &resetButton}) {
+    for (auto * button : {&xyButton, &xzButton, &zyButton, &r90Button, &r180Button, &resetButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
         svpLayout->addWidget(button);
@@ -187,9 +207,9 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType, const uint id
             state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
         }
     });
-    connect(&yzButton, &QPushButton::clicked, []() {
+    connect(&zyButton, &QPushButton::clicked, []() {
         if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_YZ_VIEW;
+            state->skeletonState->definedSkeletonVpView = SKELVP_ZY_VIEW;
         }
     });
     connect(&r90Button, &QPushButton::clicked, []() {
@@ -221,12 +241,15 @@ void ViewportBase::initializeGL() {
         qDebug() << "initializeOpenGLFunctions failed";
     }
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
-        qDebug() << msg;
+        if (msg.type() == QOpenGLDebugMessage::ErrorType) {
+            qWarning() << msg;
+        } else {
+            qDebug() << msg;
+        }
     });
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
-
 
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed viewport.
@@ -264,6 +287,8 @@ void ViewportOrtho::initializeGL() {
 
     glBindTexture(GL_TEXTURE_2D, texture.texHandle);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture.textureFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture.textureFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -273,24 +298,29 @@ void ViewportOrtho::initializeGL() {
     // texture is updated via glTexSubImage2D in vpGenerateTexture
     // We need GL_RGB as texture internal format to color the textures
 
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB,
-                 texture.edgeLengthPx,
-                 texture.edgeLengthPx,
-                 0,
-                 GL_RGB,
-                 GL_UNSIGNED_BYTE,
-                 state->viewerState->defaultTexData);
+                0,
+                GL_RGB,
+                texture.edgeLengthPx,
+                texture.edgeLengthPx,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                texData.data());
 
     createOverlayTextures();
 
     if (state->gpuSlicer) {
-        GLint iUnits, texture_units, max_tu;
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iUnits);
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
-        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_tu);
-        std::cout << "MultiTexture: " << iUnits << ' ' << texture_units << ' ' << max_tu << std::endl;
+        if (viewportType == ViewportType::VIEWPORT_XY) {
+//            state->viewer->gpucubeedge = 128;
+            state->viewer->layers.emplace_back(*context());
+            state->viewer->layers.back().createBogusCube(state->cubeEdgeLength, state->viewer->gpucubeedge);
+            state->viewer->layers.emplace_back(*context());
+//            state->viewer->layers.back().enabled = false;
+            state->viewer->layers.back().isOverlayData = true;
+            state->viewer->layers.back().createBogusCube(state->cubeEdgeLength, state->viewer->gpucubeedge);
+        }
 
         glEnable(GL_TEXTURE_3D);
         // glEnable(GL_DEPTH_TEST);
@@ -354,17 +384,16 @@ void ViewportOrtho::createOverlayTextures() {
     glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
 
     //Set the parameters for the texture.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
     const auto size = texture.edgeLengthPx;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
-}
-
-void ViewportOrtho::setOrientation(ViewportType orientation) {
-    viewportType = orientation;
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
 }
 
 void ViewportBase::resizeGL(int w, int h) {
@@ -378,21 +407,22 @@ void ViewportBase::resizeGL(int w, int h) {
 
     upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
     edgeLength = width();
+    state->viewer->recalcTextureOffsets();
 }
 
 void Viewport3D::paintGL() {
+    glClear(GL_DEPTH_BUFFER_BIT);
     renderViewport();
     renderViewportFrontFace();
 }
 
 void ViewportOrtho::paintGL() {
-    if (state->overlay && state->viewerState->showOverlay && viewportType == VIEWPORT_ARBITRARY) {
-        updateOverlayTexture();
-    }
+    glClear(GL_DEPTH_BUFFER_BIT);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
-        renderViewport(RenderOptions(false, false, state->viewerState->drawVPCrosshairs, state->overlay && state->viewerState->showOverlay));
+        state->viewer->vpGenerateTexture(*this);
+        renderViewport();
     }
     renderViewportFrontFace();
 }
@@ -542,43 +572,10 @@ void Viewport3D::showHideButtons(bool isShow) {
     ViewportBase::showHideButtons(isShow);
     xyButton.setVisible(isShow);
     xzButton.setVisible(isShow);
-    yzButton.setVisible(isShow);
+    zyButton.setVisible(isShow);
     r90Button.setVisible(isShow);
     r180Button.setVisible(isShow);
     resetButton.setVisible(isShow);
-}
-
-void ViewportOrtho::updateOverlayTexture() {
-    if (!state->viewer->oc_xy_changed && !state->viewer->oc_xz_changed && !state->viewer->oc_zy_changed) {
-        return;
-    }
-    switch(id) {
-    case VP_UPPERLEFT: state->viewer->oc_xy_changed = false; break;
-    case VP_LOWERLEFT: state->viewer->oc_xz_changed = false; break;
-    case VP_UPPERRIGHT: state->viewer->oc_zy_changed = false; break;
-    }
-
-    const int width = state->M * state->cubeEdgeLength;
-    const int height = width;
-    const auto begin = leftUpperPxInAbsPx_float;
-    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(state->viewerState->overlayData), boost::extents[width][height][4]);
-    for (int y = 0; y < height; ++y)
-    for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
-        if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
-            viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
-        } else {
-            const auto soid = readVoxel(dataPos);
-            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(soid);
-            viewportView[y][x][0] = std::get<0>(color);
-            viewportView[y][x][1] = std::get<1>(color);
-            viewportView[y][x][2] = std::get<2>(color);
-            viewportView[y][x][3] = std::get<3>(color);
-        }
-    }
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->overlayData);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Viewport3D::updateVolumeTexture() {
@@ -746,7 +743,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, false, false, withOverlay, withSkeleton, withVpPlanes, false, false, false);
+    const RenderOptions options(withAxes, withOverlay, withSkeleton, withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);
@@ -763,19 +760,74 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
 
 void ViewportOrtho::sendCursorPosition() {
     const auto cursorPos = mapFromGlobal(QCursor::pos());
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), id);
+    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), viewportType);
 }
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = (viewportType == VIEWPORT_ARBITRARY) ? s_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
-    // display only entire pixels
+    float result = FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
-float ViewportOrtho::displayedEdgeLenghtYForZoomFactor(const float zoomFactor) const {
-    float FOVinDCs = ((float)state->M) - 1.f;
-    float result = (viewportType == VIEWPORT_ARBITRARY) ? t_max / static_cast<float>(texture.edgeLengthPx) : FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
-    // display only entire pixels
-    return (std::floor(result * zoomFactor / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
+    float result = vpLenghtInDataPx / static_cast<float>(texture.edgeLengthPx);
+    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+}
+
+
+ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType), vpLenghtInDataPx((static_cast<int>((state->M / 2 + 1) * state->cubeEdgeLength / std::sqrt(2))  / 2) * 2), vpHeightInDataPx(vpLenghtInDataPx) {
+    const auto svpLayout = new QHBoxLayout();
+    svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
+    resetButton.setMinimumSize(45, 20);
+    resetButton.setMaximumSize(resetButton.minimumSize());
+    resetButton.setCursor(Qt::ArrowCursor);
+    svpLayout->addWidget(&resetButton);
+    vpLayout.insertLayout(0, svpLayout);
+    connect(&resetButton, &QPushButton::clicked, [this]() {
+        state->viewer->resetRotation();
+    });
+}
+
+void ViewportArb::paintGL() {
+    glClear(GL_DEPTH_BUFFER_BIT);
+    if (state->gpuSlicer && state->viewer->gpuRendering) {
+        state->viewer->arbCubes(*this);
+    } else if (state->overlay && state->viewerState->showOverlay) {
+        updateOverlayTexture();
+    }
+    ViewportOrtho::paintGL();
+}
+
+void ViewportArb::showHideButtons(bool isShow) {
+    resetButton.setVisible(isShow);
+    ViewportBase::showHideButtons(isShow);
+}
+
+void ViewportArb::updateOverlayTexture() {
+    if (!ocResliceNecessary) {
+        return;
+    }
+    ocResliceNecessary = false;
+    const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
+    const int height = width;
+    const auto begin = leftUpperPxInAbsPx_float;
+    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
+    for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x) {
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
+        if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
+            viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
+        } else {
+            const auto soid = readVoxel(dataPos);
+            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(soid);
+            viewportView[y][x][0] = std::get<0>(color);
+            viewportView[y][x][1] = std::get<1>(color);
+            viewportView[y][x][2] = std::get<2>(color);
+            viewportView[y][x][3] = std::get<3>(color);
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

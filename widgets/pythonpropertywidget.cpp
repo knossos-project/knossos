@@ -1,7 +1,6 @@
 #include "pythonpropertywidget.h"
 
 #include "GuiConstants.h"
-#include "scriptengine/scripting.h"
 #include "viewer.h"
 
 #include <Python.h>
@@ -17,20 +16,8 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
-PythonInterpreterWidget::PythonInterpreterWidget(QWidget *parent) :
-    QWidget(parent), console(NULL)
-{
-    setWindowFlags(Qt::Window);
-    console = new PythonQtScriptingConsole(parent, PythonQt::self()->getMainModule());
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(console);
-    setLayout(layout);
-    this->resize(QSize(500,300));
-    show();
-}
-
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
-    QDialog(parent), interpreter(NULL)
+    QDialog(parent)
 {
 
     setWindowTitle("Python Properties");
@@ -74,18 +61,6 @@ void PythonPropertyWidget::autoStartFolderButtonClicked() {
      }
 }
 
-void PythonPropertyWidget::openTerminal() {
-    if (NULL == interpreter) {
-        interpreter = new PythonInterpreterWidget((QWidget*)this->parent());
-        state->scripting->addObject("knossos_global_interpreter", interpreter);
-    }
-    interpreter->show();
-}
-
-void PythonPropertyWidget::closeTerminal() {
-    interpreter->hide();
-}
-
 void PythonPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
@@ -95,10 +70,8 @@ void PythonPropertyWidget::saveSettings() {
     settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
 
-    if(!this->workingDirectoryEdit->text().isEmpty())
-        settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
-    if(!this->autoStartFolderEdit->text().isEmpty())
-        settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
+    settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
+    settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
     settings.setValue(PYTHON_AUTOSTART_TERMINAL, autoStartTerminalCheckbox->isChecked());
     settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit->toPlainText().split("\n"));
 

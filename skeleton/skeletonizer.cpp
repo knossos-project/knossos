@@ -25,9 +25,7 @@
 
 #include "file_io.h"
 #include "functions.h"
-#include "knossos.h"
 #include "segmentation/cubeloader.h"
-#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
 #include "version.h"
@@ -177,8 +175,12 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
     xml.writeEndElement();
 
+    xml.writeStartElement("guiMode");
+    xml.writeAttribute("mode", (Session::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
+    xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+    xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
     xml.writeEndElement();
 
     xml.writeStartElement("task");
@@ -240,9 +242,9 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
-    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.zoomLevel));
-    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.zoomLevel));
-    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportYZ.get()->texture.zoomLevel));
+    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.FOV));
+    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.FOV));
+    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportZY.get()->texture.FOV));
     xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
     xml.writeEndElement();
 
@@ -346,6 +348,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
     state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
+    Session::singleton().guiMode = GUIMode::None;
+
     QTime bench;
     QXmlStreamReader xml(&file);
 
@@ -376,11 +380,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
+                } else if (xml.name() == "guiMode") {
+                    if (attributes.value("mode").toString() == "proof reading") {
+                        Session::singleton().guiMode = GUIMode::ProofReading;
+                    }
                 } else if(xml.name() == "dataset") {
-                    QStringRef attribute = attributes.value("path");
-                    QString path = attribute.isNull() ? "" : attribute.toString();
-                    if (experimentName != state->name) {
-                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(path, true);
+                    const auto path = attributes.value("path").toString();
+                    const bool overlay = attributes.value("overlay").isEmpty() ? state->overlay : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (experimentName != state->name || overlay != state->overlay) {
+                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     Coordinate movementAreaMin;//0
@@ -448,15 +456,15 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXY.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXY.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("XZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXZ.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportXZ.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("YZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportYZ.get()->texture.zoomLevel = attribute.toString().toFloat();
+                        state->viewer->window->viewportZY.get()->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("SkelVP");
                     if(attribute.isNull() == false) {
@@ -716,6 +724,8 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     blockSignals(blockState);
     emit resetData();
     emit propertiesChanged(numberProperties);
+    emit guiModeLoaded();
+
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
     if (!merge) {
@@ -736,14 +746,19 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 }
 
 bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
+    if (!segToDelIt->forward) {
+        delSegment(segToDelIt->sisterSegment);
+        return false;
+    }
     // Delete the segment out of the segment list and out of the visualization structure!
     /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
-    segToDelIt->length = 0.f;
-    updateCircRadius(&segToDelIt->source);
+    auto & source = segToDelIt->source;
+    auto & target = segToDelIt->target;
+    target.segments.erase(segToDelIt->sisterSegment);
+    source.segments.erase(segToDelIt);
 
-    segToDelIt->target.segments.erase(segToDelIt->sisterSegment);
-    segToDelIt->source.segments.erase(segToDelIt);
-
+    updateCircRadius(&source);
+    updateCircRadius(&target);
     Session::singleton().unsavedChanges = true;
     return true;
 }
@@ -857,7 +872,7 @@ nodeListElement * Skeletonizer::findNearbyNode(treeListElement * nearbyTree, Coo
         for (auto & currentNode : tree.nodes) {
             // We make the nearest node the next active node
             const floatCoordinate distanceVector = searchPosition - currentNode.position;
-            const auto distance = euclidicNorm(distanceVector);
+            const auto distance = distanceVector.length();
             //set nearest distance to distance to first node found, then to distance of any nearer node found.
             if (distance  < smallestDistance) {
                 smallestDistance = distance;
@@ -963,7 +978,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
             }
 
             const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
-            float lockDistance = euclidicNorm(lockVector);
+            float lockDistance = lockVector.length();
             if (lockDistance > state->skeletonState->lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
                 return boost::none;
@@ -1033,9 +1048,10 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = euclidicNorm(targetNode.position - sourceNode.position);
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = (targetNode.position - sourceNode.position).length();
 
     updateCircRadius(&sourceNode);
+    updateCircRadius(&targetNode);
 
     Session::singleton().unsavedChanges = true;
 
@@ -1302,10 +1318,10 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
 
     if(newRadius != 0.) {
         node->radius = newRadius;
+        updateCircRadius(node);
     }
     node->createdInMag = inMag;
 
-    updateCircRadius(node);
     Session::singleton().unsavedChanges = true;
 
     const quint64 newSubobjectId = readVoxel(newPos);
@@ -1325,15 +1341,15 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     //  a stack instead of a queue for storing pending nodes. There is no
     //  practical difference between the two algorithms for this task.
 
-    auto * node = findNodeByNodeID(nodeID);
-    if (!node) {
+    auto * firstNode = findNodeByNodeID(nodeID);
+    if (!firstNode) {
         return false;
     }
 
     std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
     std::unordered_set<nodeListElement*> visitedNodes;
-    visitedNodes.insert(node);
-    connectedComponent(*node, [&treesSeen, &visitedNodes](nodeListElement & node){
+    visitedNodes.insert(firstNode);
+    connectedComponent(*firstNode, [&treesSeen, &visitedNodes](nodeListElement & node){
         visitedNodes.emplace(&node);
         treesSeen.emplace(node.correspondingTree);
         return false;
@@ -1365,7 +1381,7 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
         }
         // Removing node list element from its old position
         // Inserting node list element into new list.
-        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
+        newTree->nodes.splice(std::end(newTree->nodes), nodeIt->correspondingTree->nodes, nodeIt->iterator);
         nodeIt->correspondingTree = newTree;
     }
     Session::singleton().unsavedChanges = true;

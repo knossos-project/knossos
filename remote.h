@@ -26,7 +26,7 @@
  */
 
 #include "coordinate.h"
-
+#include "widgets/viewport.h"
 #include <QElapsedTimer>
 #include <QTimer>
 
@@ -36,7 +36,7 @@ class Remote {
 public:
     floatCoordinate recenteringOffset;
     bool rotate{false};
-    uint activeVP{0};
+    ViewportType activeVP{VIEWPORT_UNDEFINED};
     QTimer timer;
     QElapsedTimer elapsed;
     static const qint64 ms;

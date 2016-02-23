@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "session.h"
 #include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
@@ -45,7 +46,7 @@ class commentListElement;
 // skeleton vp orientation
 #define SKELVP_XY_VIEW 0
 #define SKELVP_XZ_VIEW 1
-#define SKELVP_YZ_VIEW 2
+#define SKELVP_ZY_VIEW 2
 #define SKELVP_R90 3
 #define SKELVP_R180 4
 #define SKELVP_RESET 5
@@ -148,6 +149,7 @@ public:
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
 signals:
+    void guiModeLoaded();
     void branchPoppedSignal();
     void branchPushedSignal();
     void nodeAddedSignal(const nodeListElement & node);

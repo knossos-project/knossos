@@ -21,8 +21,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "knossos.h"
-
 #include "dataset.h"
 #include "file_io.h"
 #include "loader.h"
@@ -54,11 +52,23 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 class Splash {
     QSplashScreen screen;
+    QTimer timer;
 public:
     Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
         screen.show();
         //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-        QTimer::singleShot(timeout_msec, &screen, &QSplashScreen::close);
+        timer.start(timeout_msec);
+        QObject::connect(&timer, &QTimer::timeout, [this](){
+            if (state->mainWindow != nullptr && state->mainWindow->isVisible()) {
+                screen.close();
+                timer.stop();
+                if (state->mainWindow != nullptr) {
+                    state->mainWindow->activateWindow();
+                }
+            } else {
+                timer.start(10);
+            }
+        });
     }
 };
 
@@ -111,7 +121,6 @@ int main(int argc, char *argv[]) {
 
     SignalRelay signalRelay;
     Viewer viewer;
-    Remote remote;
 
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
@@ -122,22 +131,16 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<ViewportType>();
 
     Scripting scripts;
-    viewer.run();
-
-    viewer.window->widgetContainer.datasetLoadWidget.loadDataset();
-
-    viewer.window->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
 
     QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
     QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
 
+    state.mainWindow->loadSettings();
+    state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset(boost::none);
+    state.mainWindow->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
+    state.mainWindow->show();
+    viewer.run();
     return a.exec();
-}
-
-void Knossos::sendQuitSignal() {
-    state->quitSignal = true;
-    QApplication::processEvents(); //ensure everything’s done
-    Loader::Controller::singleton().suspendLoader();
 }

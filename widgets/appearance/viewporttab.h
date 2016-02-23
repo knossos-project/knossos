@@ -24,17 +24,20 @@ class ViewportTab : public QWidget
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
     QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersections crosshairs"};
-    QCheckBox arbitraryModeCheckBox{"Arbitrary viewport orientation"};
     // 3D viewport
     QVBoxLayout viewport3DLayout;
     QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
-    QCheckBox showYZPlaneCheckBox{"Show YZ Plane"};
+    QCheckBox showZYPlaneCheckBox{"Show ZY Plane"};
+    QCheckBox showArbPlaneCheckBox{"Show arbitrary Plane"};
     QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
-    QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
+    QButtonGroup rotationCenterGroup;
+    QRadioButton rotateAroundDatasetCenterRadioBtn{"Rotate around dataset center"};
+    QRadioButton rotateAroundActiveNodeRadioBtn{"Rotate around active Node"};
+    QRadioButton rotateAroundCurrentPositionRadioBtn{"Rotate around current position"};
     QPushButton resetVPsButton{"Reset viewport positions and sizes"};
 
     void saveSettings(QSettings & settings) const;
@@ -43,7 +46,6 @@ public:
     explicit ViewportTab(QWidget *parent = 0);
 
 signals:
-    void setVPOrientationSignal(const bool arbitrary);
     void setViewportDecorations(const bool);
     void resetViewportPositions();
 

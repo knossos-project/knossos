@@ -25,6 +25,7 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include <QDebug>
 #include <QList>
 #include <QVector>
 #include <QMetaType>
@@ -86,9 +87,18 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
-    constexpr CoordinateDerived operator*(const CoordinateDerived & rhs) const {
+    constexpr CoordinateDerived componentMul(const CoordinateDerived & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
+
+    constexpr ComponentType dot(const CoordinateDerived & rhs) const {
+        return x * rhs.x + y * rhs.y + z * rhs.z;
+    }
+
+    constexpr CoordinateDerived cross(const CoordinateDerived & rhs) const {
+        return CoordinateDerived(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x);
+    }
+
     constexpr CoordinateDerived operator*(const ComponentType scalar) const {
         return CoordinateDerived(x * scalar, y * scalar, z * scalar);
     }
@@ -108,6 +118,23 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
+    constexpr float length() const {
+        return std::sqrt(x*x + y*y + z*z);
+    }
+
+    constexpr float angleRad(CoordinateDerived & other) const {
+        return std::acos(static_cast<float>(this->dot(other)) / (this->length() * other.length()));
+    }
+
+    bool normalize() {
+        const ComponentType norm = length();
+        if (norm != 0) {
+            *this /= norm;
+            return true;
+        }
+        return false;
+    }
+
     constexpr CoordinateDerived capped(const CoordinateDerived & min, const CoordinateDerived & max) const {
         return CoordinateDerived{
             std::max(min.x, std::min(x, max.x))
@@ -116,6 +143,11 @@ public:
         };
     }
 };
+
+template<typename ComponentType, typename CoordinateDerived>
+QDebug operator<<(QDebug stream, const CoordinateBase<ComponentType, CoordinateDerived> & coord) {
+    return stream << coord.x << coord.y << coord.z;
+}
 
 template<typename ComponentType = int, std::size_t tag = 0>
 class Coord : public CoordinateBase<ComponentType, Coord<ComponentType, tag>> {

@@ -66,7 +66,7 @@ std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const 
             globalFirst.z = globalLast.z = centerPos.z;
         } else if(brush.view == brush_t::view_t::xz) {
             globalFirst.y = globalLast.y = centerPos.y;
-        } else if(brush.view == brush_t::view_t::yz) {
+        } else if(brush.view == brush_t::view_t::zy) {
             globalFirst.x = globalLast.x = centerPos.x;
         }
     }
@@ -208,12 +208,12 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     }
 }
 
-CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, const char *data, const Coordinate & strides, bool isWrite, bool markChanged) {
+CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, char * data, const Coordinate & strides, bool isWrite, bool markChanged) {
     CubeCoordSet cubeChangeSet;
     if (isWrite) {
         cubeChangeSet = processRegion(globalFirst, globalLast,
                 [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
-                voxel = *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]);
+                voxel = reinterpret_cast<const uint64_t &>(data[(globalPos - globalFirst).componentMul(strides).sum()]);
             });
         if (markChanged) {
             coordCubesMarkChanged(cubeChangeSet);
@@ -222,7 +222,7 @@ CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coo
     else {
         cubeChangeSet = processRegion(globalFirst, globalLast,
                 [globalFirst,data,strides](uint64_t & voxel, Coordinate globalPos){
-                *(uint64_t*)(&data[((globalPos - globalFirst)*strides).sum()]) = voxel;
+                reinterpret_cast<uint64_t &>(data[(globalPos - globalFirst).componentMul(strides).sum()]) = voxel;
             });
     }
     return cubeChangeSet;

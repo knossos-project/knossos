@@ -78,13 +78,25 @@ public:
         std::sort(std::begin(workModes), std::end(workModes), [](const std::pair<AnnotationMode, QString> elemA, const std::pair<AnnotationMode, QString> elemB) {
             return elemA.second < elemB.second;
         });
+        for (uint i = 1; i <= modes.size(); ++i) {
+            workModes[i - 1].second = tr("%0. ").arg(i) + workModes[i -1].second;
+        }
         endResetModel();
     }
+
     std::pair<AnnotationMode, QString> at(const int index) const {
         return workModes[index];
     }
-};
 
+    int indexOf(const AnnotationMode & mode) const {
+        for (uint i = 0; i < workModes.size(); ++i) {
+            if (workModes[i].first == mode) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -119,6 +131,7 @@ class MainWindow : public QMainWindow {
     QMenu *segEditMenu;
     QMenu *skelEditMenu;
     QMenu actionMenu{"Action"};
+    QMenu *pluginMenu;
     QString openFileDirectory;
     QString saveFileDirectory;
 
@@ -137,13 +150,19 @@ class MainWindow : public QMainWindow {
 public:
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
-    std::unique_ptr<ViewportOrtho> viewportYZ;
+    std::unique_ptr<ViewportOrtho> viewportZY;
+    std::unique_ptr<ViewportArb> viewportArb;
     std::unique_ptr<Viewport3D> viewport3D;
 
     // contains all widgets
     WidgetContainer widgetContainer;
 
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
+
+    // convenience mode switch actions for proof reading mode
+    QAction *modeSwitchSeparator{nullptr};
+    QAction *setMergeModeAction{nullptr};
+    QAction *setPaintModeAction{nullptr};
 
     QAction *segEditSegModeAction;
     QAction *segEditSkelModeAction;
@@ -161,6 +180,7 @@ public:
 
     SkeletonProxy *skeletonProxy;
 
+    QLabel GUIModeLabel{""};
     QLabel cursorPositionLabel;
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
@@ -179,18 +199,18 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     template<typename Function> void forEachVPDo(Function func) {
-        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportYZ.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
+        for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportZY.get()), static_cast<ViewportBase *>(viewportArb.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
             func(*vp);
         }
     }
     template<typename Function> void forEachOrthoVPDo(Function func) {
-        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportYZ.get() }) {
+        for (auto * vp : { viewportXY.get(), viewportXZ.get(), viewportZY.get(), static_cast<ViewportOrtho *>(viewportArb.get()) }) {
             func(*vp);
         }
     }
     void resetTextureProperties();
-    ViewportBase *viewport(const uint id);
-    ViewportOrtho *viewportOrtho(const uint id);
+    ViewportBase *viewport(const ViewportType vpType);
+    ViewportOrtho *viewportOrtho(const ViewportType vpType);
     void closeEvent(QCloseEvent *event);
     void notifyUnsavedChanges();
     void updateTitlebar();
@@ -198,9 +218,11 @@ public:
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
 public slots:
+    void refreshPluginMenu();
+    void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
-    void updateCursorLabel(const Coordinate & position, const uint vpID);
+    void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames);
     void updateRecentFile(const QString &fileName);
@@ -233,7 +255,6 @@ public slots:
     void coordinateEditingFinished();
 
     void updateCoordinateBar(int x, int y, int z);
-    void recentFileSelected();
     // viewports
     void resetViewports();
     void showVPDecorationClicked();
@@ -244,9 +265,9 @@ public slots:
     void previousCommentNodeSlot();
     void pushBranchNodeSlot();
     void popBranchNodeSlot();
-    void pythonSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
+    void pythonInterpreterSlot();
     void pythonPluginMgrSlot();
 };
 

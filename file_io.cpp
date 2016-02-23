@@ -44,6 +44,10 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             const auto & fileInside = archive.getCurrentFileName();
             const auto match = cubeRegEx.match(fileInside);
             if (match.hasMatch()) {
+                if (state->overlay == false) {
+                    state->overlay = true;
+                    Loader::Controller::singleton().enableOverlay();
+                }
                 file.open(QIODevice::ReadOnly);
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
                 Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, match.captured("mag").toInt(), file.readAll().toStdString());

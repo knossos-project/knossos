@@ -39,16 +39,8 @@
 #include <QElapsedTimer>
 #include <QLineEdit>
 
-#include <atomic>
-
 #define SLOW 1000
 #define FAST 10
-
-// MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
-// a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
-// pixel size instead of 20 nm
-#define MAG_DOWN 1
-#define MAG_UP 2
 
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_RECENTER 1
@@ -67,18 +59,21 @@ enum class IdDisplay {
     AllNodes = 0x2 | ActiveNode
 };
 
+enum class RotationCenter {
+    DatasetCenter,
+    ActiveNode,
+    CurrentPosition
+};
+
 struct ViewerState {
     ViewerState() {
         state->viewerState = this;
     }
-    char *texData;
-    char *overlayData;
-    char *defaultTexData;
-    char *defaultOverlayData;
 
     int highlightVp{VIEWPORT_UNDEFINED};
     int vpKeyDirection[3]{1,1,1};
 
+    int texEdgeLength = 512;
     // don't jump between mags on zooming
     bool datasetMagLock;
     // Current position of the user crosshair.
@@ -105,7 +100,7 @@ struct ViewerState {
     float voxelDimY;
     float voxelXYRatio;
     float voxelDimZ;
-    //YZ can't be different to XZ because of the intrinsic properties of the SBF-SEM.
+    //ZY can't be different to XZ because of the intrinsic properties of the SBF-SEM.
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
@@ -155,13 +150,16 @@ struct ViewerState {
     double nodePropertyColorMapMin{0};
     double nodePropertyColorMapMax{0};
     // viewport rendering options
+    float FOVmin{0.5};
+    float FOVmax{1};
     bool drawVPCrosshairs{true};
-    int rotateAroundActiveNode;
+    RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     bool showScalebar{false};
-    int showXYplane{true};
-    int showXZplane{true};
-    int showYZplane{true};
+    bool showXYplane{true};
+    bool showXZplane{true};
+    bool showZYplane{true};
+    bool showArbplane{true};
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
     mesh lineVertBuffer; /* ONLY for lines */
@@ -191,10 +189,10 @@ private:
     void initViewer();
     void rewire();
 
-    void vpGenerateTexture_arb(ViewportOrtho & vp);
+    void vpGenerateTexture(ViewportArb & vp);
 
     bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract_arb(char *datacube, ViewportOrtho & vp, floatCoordinate *currentPxInDc_float, int s, int *t, bool useCustomLUT);
+    bool dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
 
     void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
 
@@ -212,17 +210,14 @@ public:
     bool gpuRendering = false;
 
     floatCoordinate v1, v2, v3;
-    ViewportOrtho *vpUpperLeft, *vpLowerLeft, *vpUpperRight;
+    ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
+    ViewportArb *viewportArb;
     void zoom(const float factor);
     void zoomReset();
     QTimer timer;
 
-    std::atomic_bool dc_xy_changed{true};
-    std::atomic_bool dc_xz_changed{true};
-    std::atomic_bool dc_zy_changed{true};
-    std::atomic_bool oc_xy_changed{true};
-    std::atomic_bool oc_xz_changed{true};
-    std::atomic_bool oc_zy_changed{true};
+    void arbCubes(ViewportArb & vp);
+    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     color4F getNodeColor(const nodeListElement & node) const;
@@ -232,10 +227,10 @@ signals:
     void movementAreaFactorChangedSignal();
 public slots:
     void updateCurrentPosition();
-    bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool updateDatasetMag(const uint mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
-    void setPositionWithRecenteringAndRotation(const Coordinate &pos, uint vpid);
+    void setPositionWithRecenteringAndRotation(const Coordinate &pos, const ViewportType vpType);
     void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal);
     void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
@@ -251,8 +246,7 @@ public slots:
     bool vpGenerateTexture(ViewportOrtho & vp);
     void setRotation(const floatCoordinate &axis, const float angle);
     void resetRotation();
-    void setVPOrientation(const bool arbitrary);
-    void calculateMissingGPUCubes(TextureLayer & layer);
+    void calculateMissingOrthoGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();
     void dc_reslice_notify_all(const Coordinate coord);
     void oc_reslice_notify_visible();

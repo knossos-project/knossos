@@ -33,6 +33,11 @@
 #include <QString>
 #include <QTimer>
 
+enum class GUIMode {
+    None,
+    ProofReading
+};
+
 enum class AnnotationMode {
     NodeEditing = 0x40,
     LinkedNodes = 0x80,
@@ -70,6 +75,7 @@ public:
 
     QPair<QString, QString> task;
     QFlags<AnnotationMode> annotationMode;
+    GUIMode guiMode{GUIMode::None};
 
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension

@@ -2,13 +2,12 @@
 #define SKELETONPROXY_H
 
 #include "skeleton/node.h"
+#include "skeleton/tree.h"
+#include "widgets/viewport.h"
 
 #include <QList>
 #include <QObject>
-#include <QVBoxLayout>
-
-class QMenuBar;
-class QToolBar;
+#include <QString>
 
 /** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
 class SkeletonProxySignalDelegate : public QObject  {
@@ -29,7 +28,6 @@ public:
 
 signals:
     void echo(QString message);
-
 
 public slots:
     int annotation_time();

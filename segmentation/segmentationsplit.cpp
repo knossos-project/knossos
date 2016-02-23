@@ -27,7 +27,7 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 }
             };
 
-            if (brush.view != brush_t::view_t::yz || brush.mode == brush_t::mode_t::three_dim) {
+            if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
                 walk({pos.x + 1, pos.y, pos.z});
                 walk({pos.x - 1, pos.y, pos.z});
             }
@@ -89,7 +89,7 @@ void connectedComponent(const Coordinate & seed) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectIndex = Segmentation::singleton().createObject(newSubObjId, seed).index;
+        auto newObjectIndex = Segmentation::singleton().createObjectFromSubobjectId(newSubObjId, seed).index;
 
         std::unordered_set<uint64_t> subObjectsToFill = {subobjectId};
 
@@ -148,7 +148,7 @@ void verticalSplittingPlane(const Coordinate & seed) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
         auto splitId = Segmentation::singleton().largestObjectContainingSubobject(subobject);
         auto newSubObjId = Segmentation::SubObject::highestId + 1;
-        auto newObjectIndex = Segmentation::singleton().createObject(newSubObjId, seed).index;
+        auto newObjectIndex = Segmentation::singleton().createObjectFromSubobjectId(newSubObjId, seed).index;
 
         std::unordered_set<uint64_t> subObjectsToFill = verticalSplittingPlane({seed.x, seed.y, seed.z}, splitId, newSubObjId);
 

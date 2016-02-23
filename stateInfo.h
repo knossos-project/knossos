@@ -17,13 +17,8 @@ extern stateInfo * state;
 
 #define NUM_MAG_DATASETS 65536
 
-#define DATA_SET 3
-#define NO_MAG_CHANGE 0
-
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
-
-#define TEXTURE_EDGE_LEN 1024
 
 // UserMove type
 enum UserMoveType {USERMOVE_DRILL, USERMOVE_HORIZONTAL, USERMOVE_NEUTRAL};
@@ -126,11 +121,12 @@ public:
     coord2bytep_map_t Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
     coord2bytep_map_t Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
-    struct ViewerState *viewerState;
-    class Viewer *viewer;
-    class Scripting *scripting;
-    class SignalRelay *signalRelay;
-    struct SkeletonState *skeletonState;
+    struct ViewerState * viewerState;
+    class MainWindow * mainWindow{nullptr};
+    class Viewer * viewer;
+    class Scripting * scripting;
+    class SignalRelay * signalRelay;
+    struct SkeletonState * skeletonState;
     bool keyD{false};
     bool keyF{false};
     std::array<float, 3> repeatDirection{{}};

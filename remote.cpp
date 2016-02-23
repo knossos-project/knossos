@@ -42,7 +42,7 @@ void Remote::process(const Coordinate & pos) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
     int jumpThreshold = 0.5 * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
-    if (euclidicNorm(deltaPos) > jumpThreshold) {
+    if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {
         recenteringOffset = pos - state->viewerState->currentPosition;
@@ -127,16 +127,15 @@ void Remote::remoteWalk() {
 
             const auto target = state->viewerState->currentPosition + recenteringOffset;
             floatCoordinate delta = target - avg;
-            normalizeVector(delta);
-            float scalar = scalarProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
+            delta.normalize();
+            float scalar = state->viewer->window->viewportOrtho(activeVP)->n.dot(delta);
             rotation.alpha = std::acos(std::min(1.f, std::max(-1.f, scalar)));
-            rotation.axis = crossProduct(state->viewer->window->viewportOrtho(activeVP)->n, delta);
-            normalizeVector(rotation.axis);
+            rotation.axis = state->viewer->window->viewportOrtho(activeVP)->n.cross(delta);
+            rotation.axis.normalize();
         }
     }
 
-    const auto length = euclidicNorm(recenteringOffset);
-    const auto seconds = length / (state->viewerState->stepsPerSec * state->magnification);
+    const auto seconds = recenteringOffset.length() / (state->viewerState->stepsPerSec * state->magnification);
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
     const floatCoordinate singleMove = recenteringOffset / totalMoves;
 

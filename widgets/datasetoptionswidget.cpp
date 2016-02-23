@@ -23,6 +23,7 @@
  */
 #include "datasetoptionswidget.h"
 
+#include "datasetloadwidget.h"
 #include "GuiConstants.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
@@ -35,12 +36,62 @@
 #include <QFrame>
 #include <QCheckBox>
 #include <QDebug>
+#include <QPainter>
 #include <QSettings>
+#include <QStyle>
 #include <QSpacerItem>
 #include <QApplication>
 #include <QDesktopWidget>
 
-DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
+void ZoomSlider::paintEvent(QPaintEvent *ev) {
+    // adapted from QCommonStyle::drawComplexControl case CC_Slider
+    QStyleOptionSlider opt;
+    initStyleOption(&opt);
+    int thickness = style()->pixelMetric(QStyle::PM_SliderControlThickness, &opt, this);
+    int len = style()->pixelMetric(QStyle::PM_SliderLength, &opt, this);
+    int available = style()->pixelMetric(QStyle::PM_SliderSpaceAvailable, &opt, this);
+    int interval = opt.tickInterval;
+    if (interval <= 0) {
+        interval = singleStep();
+        if (QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, interval, available)
+            - QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, 0, available) < 3)
+            interval = opt.pageStep;
+    }
+    if (!interval) {
+        interval = 1;
+    }
+    int fudge = len / 2;
+    int pos;
+    // Since there is no subrect for tickmarks do a translation here.
+    QPainter painter(this);
+    painter.save();
+    painter.translate(opt.rect.x(), opt.rect.y());
+    painter.setFont(QFont(painter.font().family(), 8 * devicePixelRatio()));
+    painter.setPen(opt.palette.foreground().color());
+    int v = opt.minimum;
+    int drawnTicks = 0;
+    while (v <= opt.maximum + 1 && drawnTicks < numTicks) {
+        if (v == opt.maximum + 1 && interval == 1) {
+            break;
+        }
+        QString label = QString::number(highestMag / std::pow(2, drawnTicks));
+        drawnTicks++;
+        const int v_ = qMin(v, opt.maximum);
+        pos = QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, v_, available) + fudge;
+        painter.drawLine(pos, thickness / 2, pos,  thickness);
+        painter.drawText(pos + interval/2 - QFontMetrics(painter.font()).width(label) / 2., thickness, label);
+        // in the case where maximum is max int
+        int nextInterval = v + interval;
+        if (nextInterval < v) {
+            break;
+        }
+        v = nextInterval;
+    }
+    painter.restore();
+    QSlider::paintEvent(ev);
+}
+
+DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true) {
     setWindowIcon(QIcon(":/resources/icons/zoom-in.png"));
     setWindowTitle("Dataset Options");
@@ -61,18 +112,20 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     }
 
     // zoom section
-    orthogonalDataViewportLabel = new QLabel(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
     skeletonViewportLabel = new QLabel("Skeleton Viewport");
-    orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    orthogonalDataViewportSpinBox->setMaximum(std::numeric_limits<float>::max());
-    orthogonalDataViewportSpinBox->setMinimum(VPZOOMMIN*100.);
-    orthogonalDataViewportSpinBox->setSuffix(" %");
     skeletonViewportSpinBox = new QDoubleSpinBox();
     skeletonViewportSpinBox->setMaximum(100);
     skeletonViewportSpinBox->setMinimum(0);
     skeletonViewportSpinBox->setSuffix(" %");
     zoomDefaultsButton = new QPushButton("All Zoom defaults");
     zoomDefaultsButton->setAutoDefault(false);
+
+    orthoZoomSpinBox.setSuffix("%");
+    orthoZoomSpinBox.setKeyboardTracking(false);
+    orthoZoomSpinBox.setMinimum(1.);
+    orthoZoomSpinBox.setSingleStep(100.);
+    orthoZoomSlider.setOrientation(Qt::Horizontal);
+    orthoZoomSlider.setSingleStep(1.);
 
     // multires section
     lockDatasetCheckBox = new QCheckBox("Lock dataset to current mag");
@@ -84,13 +137,15 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
-    zoomLayout->addWidget(&zoomSectionLabel, 0, 0);
-    zoomLayout->addWidget(line, 1, 0, 1, 2);
-    zoomLayout->addWidget(orthogonalDataViewportLabel, 2, 0);
-    zoomLayout->addWidget(orthogonalDataViewportSpinBox, 2, 1);
-    zoomLayout->addWidget(skeletonViewportLabel, 3, 0);
-    zoomLayout->addWidget(skeletonViewportSpinBox, 3, 1);
-    zoomLayout->addWidget(zoomDefaultsButton, 4, 0);
+    int row = 0;
+    zoomLayout->addWidget(&zoomSectionLabel, row++, 0);
+    zoomLayout->addWidget(line, row++, 0, 1, 2);
+    zoomLayout->addWidget(&orthogonalDataViewportLabel, row, 0);
+    zoomLayout->addWidget(&orthoZoomSpinBox, row++, 1);
+    zoomLayout->addWidget(&orthoZoomSlider, row++, 0, 1, 2);
+    zoomLayout->addWidget(skeletonViewportLabel, row, 0);
+    zoomLayout->addWidget(skeletonViewportSpinBox, row++, 1);
+    zoomLayout->addWidget(zoomDefaultsButton, row, 0);
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(&compressionLabel);
@@ -106,13 +161,176 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent) :
     mainLayout->addWidget(lowestActiveMagDatasetLabel);
     setLayout(mainLayout);
 
-    connect(orthogonalDataViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(orthogonalSpinBoxChanged(double)));
+    connect(&orthoZoomSlider, &QSlider::valueChanged, [this](const int value) {
+        const float newScreenPxXPerDataPx = lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
+        const float prevFOV = state->viewer->viewportXY->texture.FOV;
+        float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
+
+        if (prevFOV == VPZOOMMIN && static_cast<uint>(state->magnification) < highestMag() && prevFOV < newFOV) {
+           state->viewer->updateDatasetMag(state->magnification * 2);
+           newFOV = 0.5;
+        }
+        else if(prevFOV == 0.5 && static_cast<uint>(state->magnification) > lowestMag() && prevFOV > newFOV) {
+            state->viewer->updateDatasetMag(state->magnification / 2);
+            newFOV = VPZOOMMIN;
+        } else {
+            const float zoomMax = static_cast<float>(state->magnification) == state->lowestAvailableMag ? VPZOOMMAX : 0.5;
+            newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
+        }
+        state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+            orthoVP.texture.FOV = newFOV;
+        });
+
+        state->viewer->recalcTextureOffsets();
+        updateOrthogonalZoomSpinBox();
+        updateOrthogonalZoomSlider();
+    });
+
+    connect(&orthoZoomSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) {
+        const float newScreenPxXPerDataPx = (value / 100.) * lowestScreenPxXPerDataPx(false);
+        if (lockDatasetCheckBox->isChecked() == false) {
+            const uint newMag = calcMag(newScreenPxXPerDataPx);
+            if (newMag != static_cast<uint>(state->magnification)) {
+                state->viewer->updateDatasetMag(newMag);
+            }
+        }
+
+        float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
+
+        state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+            orthoVP.texture.FOV = newFOV;
+        });
+        state->viewer->recalcTextureOffsets();
+        orthoZoomSpinBox.blockSignals(true);
+        orthoZoomSpinBox.setValue(100 * (newScreenPxXPerDataPx / lowestScreenPxXPerDataPx(false)));
+        orthoZoomSpinBox.blockSignals(false);
+        updateOrthogonalZoomSlider();
+    });
+
+    connect(&orthoZoomSlider, &QSlider::actionTriggered, [this](const int) {
+        const int currSliderPos = orthoZoomSlider.sliderPosition();
+
+        if (lockDatasetCheckBox->isChecked()) {
+            return;
+        }
+
+        int tickDistance = currSliderPos % orthoZoomSlider.tickInterval();
+        const int snapDistance = 5;
+        if (0 < tickDistance && tickDistance <= snapDistance) { // close over the next tick
+            int newPos = currSliderPos - tickDistance;
+            if (newPos <= (orthoZoomSlider.numTicks - 1) * orthoZoomSlider.tickInterval()) {
+                orthoZoomSlider.setSliderPosition(newPos);
+            }
+        }
+        else { // possibly close below the next tick
+            int tickDistance = (orthoZoomSlider.sliderPosition() + snapDistance) % orthoZoomSlider.tickInterval();
+            int newPos = (0 < tickDistance && tickDistance <= snapDistance) ? currSliderPos + snapDistance - tickDistance : currSliderPos;
+            if (newPos <= (orthoZoomSlider.numTicks - 1) * orthoZoomSlider.tickInterval()) {
+                orthoZoomSlider.setSliderPosition(newPos);
+            }
+        }
+    });
+
     connect(skeletonViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(skeletonSpinBoxChanged(double)));
 
     connect(zoomDefaultsButton, SIGNAL(clicked()), this, SLOT(zoomDefaultsClicked()));
-    connect(lockDatasetCheckBox, SIGNAL(toggled(bool)), this, SLOT(lockDatasetMagChecked(bool)));
+
+    QObject::connect(lockDatasetCheckBox, &QCheckBox::toggled, [this] (const bool on) {
+        state->viewerState->datasetMagLock = on;
+        if (!on) {
+            const uint newMag = calcMag(state->viewer->viewportXY->screenPxXPerDataPx);
+            if (newMag != static_cast<uint>(state->magnification)) {
+                state->viewer->updateDatasetMag(newMag);
+                float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / state->viewer->viewportXY->screenPxXPerDataPx;
+                state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+                    orthoVP.texture.FOV = newFOV;
+                });
+            }
+        }
+        orthoZoomSlider.blockSignals(true);
+        orthoZoomSpinBox.blockSignals(true);
+        reinitializeOrthoZoomWidgets();
+        orthoZoomSpinBox.blockSignals(false);
+        orthoZoomSlider.blockSignals(false);
+    });
+
+    QObject::connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](const bool) {
+        reinitializeOrthoZoomWidgets();
+    });
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
+
+void DatasetOptionsWidget::applyZoom(const float newScreenPxXPerDataPx) {
+    const float prevFOV = state->viewer->viewportXY->texture.FOV;
+    float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
+
+    if (newFOV >= 1 && static_cast<uint>(state->magnification) < highestMag() && prevFOV < std::round(newFOV)) {
+       state->viewer->updateDatasetMag(state->magnification * 2);
+       newFOV = 0.5;
+    }
+    else if(newFOV <= 0.5 && static_cast<uint>(state->magnification) > lowestMag() && prevFOV > std::round(newFOV)) {
+        state->viewer->updateDatasetMag(state->magnification / 2);
+        newFOV = 1.;
+    }
+    state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+        orthoVP.texture.FOV = newFOV;
+    });
+
+    state->viewer->recalcTextureOffsets();
+}
+
+void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
+    const auto mags = int_log(highestMag()) - int_log(lowestMag()) + 1;
+    const auto interval = 50;
+
+    zoomStep = std::pow(2, 1./interval);
+    int max_value = std::log(highestScreenPxXPerDataPx() / lowestScreenPxXPerDataPx()) / std::log(zoomStep);
+    orthoZoomSlider.numTicks = mags > 1 ? mags : 0;
+    orthoZoomSlider.highestMag = highestMag();
+    const auto orthoZoomSliderBlock = orthoZoomSlider.blockSignals(true);
+    orthoZoomSlider.setRange(0, max_value);
+    orthoZoomSlider.setTickInterval(interval);
+    updateOrthogonalZoomSlider();
+    orthoZoomSlider.blockSignals(orthoZoomSliderBlock);
+
+    const auto orthoZoomSpinBoxBlock = orthoZoomSpinBox.blockSignals(true);
+    orthoZoomSpinBox.setMinimum(100 * (lowestScreenPxXPerDataPx(false) / lowestScreenPxXPerDataPx(false)));
+    orthoZoomSpinBox.setMaximum(100 * (highestScreenPxXPerDataPx(false) / lowestScreenPxXPerDataPx(false)));
+    updateOrthogonalZoomSpinBox();
+    orthoZoomSlider.blockSignals(orthoZoomSpinBoxBlock);
+}
+
+uint DatasetOptionsWidget::highestMag() {
+    return lockDatasetCheckBox->isChecked() ? state->magnification : state->highestAvailableMag;
+}
+
+uint DatasetOptionsWidget::lowestMag() {
+    return lockDatasetCheckBox->isChecked() ? state->magnification : state->lowestAvailableMag;
+}
+
+float DatasetOptionsWidget::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength / (ofCurrentMag ? lowestMag() : state->lowestAvailableMag);
+    auto * vp = state->viewer->viewportXY;
+    float FOVinDCs = static_cast<float>(state->M) - 1.f;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
+    return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
+}
+
+float DatasetOptionsWidget::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength / (ofCurrentMag ? highestMag() : state->highestAvailableMag);
+    auto * vp = state->viewer->viewportXY;
+    float FOVinDCs = static_cast<float>(state->M) - 1.f;
+    float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
+    return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
+}
+
+uint DatasetOptionsWidget::calcMag(const float screenPxXPerDataPx) {
+    const float exactMag = state->highestAvailableMag * lowestScreenPxXPerDataPx() / screenPxXPerDataPx;
+    const uint roundedPower = std::ceil(std::log(exactMag) / std::log(2));
+    return std::min(state->highestAvailableMag, std::max(static_cast<uint>(std::pow(2, roundedPower)), state->lowestAvailableMag));
 }
 
 void DatasetOptionsWidget::updateCompressionRatioDisplay() {
@@ -131,15 +349,20 @@ void DatasetOptionsWidget::updateCompressionRatioDisplay() {
     }
 }
 
-/**
- * @brief DatasetOptionsWidget::orthogonalSpinBoxChanged  zooms in and out of ortho viewports with constant step.
- * @param value increment/decrement zoom by value
- */
-void DatasetOptionsWidget::orthogonalSpinBoxChanged(double value) {
-    state->viewer->window->forEachOrthoVPDo([&value](ViewportOrtho & orthoVP) {
-        orthoVP.texture.zoomLevel = state->viewer->vpUpperLeft->screenPxXPerDataPxForZoomFactor(1.) / (value/100.);
-    });
+void DatasetOptionsWidget::updateOrthogonalZoomSpinBox() {
+    orthoZoomSpinBox.blockSignals(true);
+    const double newValue = state->viewer->viewportXY->screenPxXPerDataPx / lowestScreenPxXPerDataPx(false);
+    orthoZoomSpinBox.setValue(newValue * 100);
+    orthoZoomSpinBox.blockSignals(false);
 }
+
+void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
+    orthoZoomSlider.blockSignals(true);
+    const int newValue = std::log(state->viewer->viewportXY->screenPxXPerDataPx / lowestScreenPxXPerDataPx()) / std::log(zoomStep);
+    orthoZoomSlider.setValue(newValue);
+    orthoZoomSlider.blockSignals(false);
+}
+
 /**
  * @brief DatasetOptionsWidget::skeletonSpinBoxChanged increments or decrements the zoom. The step width is relative to
  *        the zoom value. A very high zoom level has smaller zoom steps and vice versa to give a smooth impression to the user.
@@ -178,10 +401,6 @@ void DatasetOptionsWidget::skeletonSpinBoxChanged(double value) {
     }
 }
 
-void DatasetOptionsWidget::lockDatasetMagChecked(bool on) {
-    state->viewerState->datasetMagLock = on;
-}
-
 /**
  * @brief DatasetOptionsWidget::zoomDefaultsClicked restores lowest zoom level on all viewports
  */
@@ -194,8 +413,8 @@ void DatasetOptionsWidget::zoomDefaultsClicked() {
 }
 
 void DatasetOptionsWidget::update() {
-    orthogonalDataViewportLabel->setText(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
-    orthogonalDataViewportSpinBox->setValue(state->viewer->vpUpperLeft->screenPxXPerDataPx * 100.);
+    updateOrthogonalZoomSlider();
+    updateOrthogonalZoomSpinBox();
     skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
     QString highestActiveMag = QString("Highest available mag dataset: %1").arg(state->highestAvailableMag);
@@ -223,13 +442,6 @@ void DatasetOptionsWidget::loadSettings() {
         y = settings.value(POS_Y).toInt();
     }
     visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
-
-
-    if(settings.value(ORTHO_DATA_VIEWPORTS).isNull() == false) {
-        this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
-    } else {
-        this->orthogonalDataViewportSpinBox->setValue(0);
-    }
 
     if(settings.value(SKELETON_VIEW).isNull() == false) {
         userZoomSkel = false;
@@ -265,7 +477,6 @@ void DatasetOptionsWidget::saveSettings() {
     settings.setValue(POS_X, this->geometry().x());
     settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
-    settings.setValue(ORTHO_DATA_VIEWPORTS, this->orthogonalDataViewportSpinBox->value());
     settings.setValue(SKELETON_VIEW, this->skeletonViewportSpinBox->value());
     settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, this->lockDatasetCheckBox->isChecked());
     settings.endGroup();

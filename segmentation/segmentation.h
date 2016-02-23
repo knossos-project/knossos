@@ -64,6 +64,7 @@ Q_OBJECT
         friend class SegmentationObjectModel;
         friend class TouchedObjectModel;
         friend class SegmentationView;
+        friend class SegmentationProxy;
         friend class Segmentation;
 
         static uint64_t highestId;
@@ -81,10 +82,8 @@ Q_OBJECT
         QString comment;
         bool selected = false;
 
-        explicit Object(SubObject & initialVolume);
-        explicit Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
-        explicit Object(const bool & todo, const bool & immutable, const Coordinate & location, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
-        explicit Object(Object &first, Object &second);
+        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
+        explicit Object(Object & first, Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
         Object & merge(Object & other);
@@ -92,6 +91,7 @@ Q_OBJECT
 
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::vector<Object> objects;
+    std::unordered_map<uint64_t, uint64_t> objectIdToIndex;
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
@@ -106,8 +106,9 @@ Q_OBJECT
     // The colors should be "maximally different".
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
 
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
-    Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
+    Object & createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t id = ++Object::highestId, const bool todo = false, const bool immutable = false);
+    template<typename... Args>
+    Object & createObject(Args && ... args);
     void removeObject(Object &);
     void changeCategory(Object & obj, const QString & category);
     void changeComment(Object & obj, const QString & comment);
@@ -115,7 +116,6 @@ Q_OBJECT
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
 
-    Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
 
     Object & objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position);
@@ -152,6 +152,7 @@ public:
     decltype(backgroundId) getBackgroundId() const;
     void setBackgroundId(decltype(backgroundId));
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromIndex(const uint64_t objectIndex) const;
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>  colorOfSelectedObject() const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromSubobjectId(const uint64_t subObjectID) const;
     //volume rendering
@@ -209,6 +210,7 @@ signals:
     void appendedRow();
     void removedRow();
     void changedRow(int index);
+    void changedRowSelection(int index);
     void resetData();
     void resetSelection();
     void resetTouchedObjects();
