@@ -60,7 +60,7 @@ public slots:
     void oc_reslice_notify_all(QList<int> coord);
     int loaderLoadingNr();
     bool loadStyleSheet(const QString &path);
-    void setDatasetLocking(const bool locked);
+    void setMagnificationLock(const bool locked);
 };
 
 #endif // PYTHONPROXY_H

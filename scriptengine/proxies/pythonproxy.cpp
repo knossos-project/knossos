@@ -209,7 +209,7 @@ int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
 }
 
-void PythonProxy::setDatasetLocking(const bool locked) {
+void PythonProxy::setMagnificationLock(const bool locked) {
     state->viewer->setMagnificationLock(locked);
 }
 
