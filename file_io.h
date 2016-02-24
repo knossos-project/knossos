@@ -11,7 +11,7 @@ QString annotationFileDefaultPath();
 void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad = "");
 void annotationFileSave(const QString & filename);
 void nmlExport(const QString & filename);
-void updateFileName(QString & fileName);
+QString updatedFileName(QString fileName);
 std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString & path);
 
 #endif//FILE_IO_H

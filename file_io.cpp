@@ -141,15 +141,15 @@ void nmlExport(const QString & filename) {
     if case2 an initial revision will be inserted.
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
-void updateFileName(QString & fileName) {
+QString updatedFileName(QString fileName) {
     QRegExp versionRegEx = QRegExp("(\\.)([0-9]{3})(\\.)");
     if (versionRegEx.indexIn(fileName) != -1) {
         const auto versionIndex = versionRegEx.pos(2);//get second regex aka version without file extension
         const auto incrementedVersion = fileName.midRef(versionIndex, 3).toInt() + 1;//3 chars following the dot
-        fileName.replace(versionIndex, 3, QString("%1").arg(incrementedVersion, 3, 10, QChar('0')));//pad with zeroes
+        return fileName.replace(versionIndex, 3, QString("%1").arg(incrementedVersion, 3, 10, QChar('0')));//pad with zeroes
     } else {
         QFileInfo info(fileName);
-        fileName = info.dir().absolutePath() + "/" + info.baseName() + ".001." + info.completeSuffix();
+        return info.dir().absolutePath() + "/" + info.baseName() + ".001." + info.completeSuffix();
     }
 }
 

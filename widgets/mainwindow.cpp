@@ -788,7 +788,7 @@ void MainWindow::saveSlot() {
         }
         if (Session::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(annotationFilename);
-            updateFileName(annotationFilename);
+            annotationFilename = updatedFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
                 skeletonFileHistory.replace(index, annotationFilename);
                 historyEntryActions[index]->setText(annotationFilename);
