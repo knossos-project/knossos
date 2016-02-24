@@ -754,6 +754,7 @@ void MainWindow::newAnnotationSlot() {
     Segmentation::singleton().clear();
     Session::singleton().unsavedChanges = false;
     Session::singleton().annotationFilename = "";
+    updateTitlebar();
 }
 
 /**
