@@ -95,6 +95,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
             const auto attributes = xml.attributes();
             const auto taskCategory = attributes.value("category").toString();
             const auto taskName = attributes.value("name").toString();
+            Session::singleton().task = {taskName, taskCategory};
             task = tr("%1 (%2)").arg(taskName).arg(taskCategory);
             taskLabel.setText(task);
         }
