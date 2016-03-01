@@ -175,10 +175,12 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
     xml.writeEndElement();
 
-    xml.writeStartElement("task");
-    xml.writeAttribute("category", Session::singleton().task.first);
-    xml.writeAttribute("name", Session::singleton().task.second);
-    xml.writeEndElement();
+    if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
+        xml.writeStartElement("task");
+        xml.writeAttribute("category", Session::singleton().task.first);
+        xml.writeAttribute("name", Session::singleton().task.second);
+        xml.writeEndElement();
+    }
 
     xml.writeStartElement("MovementArea");
     xml.writeAttribute("min.x", QString::number(Session::singleton().movementAreaMin.x));
