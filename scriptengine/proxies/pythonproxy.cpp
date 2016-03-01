@@ -17,8 +17,6 @@
 #include <QApplication>
 #include <QFile>
 
-PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
-
 void PythonProxy::annotationLoad(const QString & filename, const bool merge) {
     state->mainWindow->openFileDispatch({filename}, merge, true);
 }

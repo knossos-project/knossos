@@ -9,12 +9,8 @@
 #include <QObject>
 #include <QString>
 
-class SkeletonProxy : public QObject
-{
+class SkeletonProxy : public QObject {
     Q_OBJECT
-public:
-    explicit SkeletonProxy(QObject *parent = 0);
-
 signals:
     void echo(QString message);
 

@@ -12,12 +12,6 @@
 #include <QDir>
 #include <QFile>
 
-SkeletonProxy::SkeletonProxy(QObject *parent) :
-    QObject(parent)
-{
-
-}
-
 treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithPrevID(tree);

@@ -12,9 +12,6 @@ using PyObject = _object;
 
 class PythonProxy : public QObject {
     Q_OBJECT
-public:
-    explicit PythonProxy(QObject *parent = 0);
-
 signals:
     void echo(QString message);
 
