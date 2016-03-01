@@ -12,8 +12,6 @@
 #include <QDir>
 #include <QFile>
 
-SkeletonProxySignalDelegate *skeletonProxySignalDelegate = new SkeletonProxySignalDelegate();
-
 SkeletonProxy::SkeletonProxy(QObject *parent) :
     QObject(parent)
 {
@@ -158,7 +156,7 @@ bool SkeletonProxy::has_unsaved_changes() {
 }
 
 void SkeletonProxy::delete_skeleton() {
-    emit skeletonProxySignalDelegate->clearSkeletonSignal();
+    Skeletonizer::singleton().clearSkeleton();
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {

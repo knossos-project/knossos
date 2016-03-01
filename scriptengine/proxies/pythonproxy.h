@@ -7,15 +7,6 @@
 #include <QList>
 #include <QVector>
 
-/** Actually this class it not really needed. It only hides the SIGNALS from the PythonProxy */
-class PythonProxySignalDelegate : public QObject  {
-    Q_OBJECT
-signals:
-    void userMoveSignal(const floatCoordinate & floatStep, UserMoveType userMoveType, const floatCoordinate & viewportNormal = {0, 0, 0});
-};
-
-extern PythonProxySignalDelegate *pythonProxySignalDelegate;
-
 struct _object;
 using PyObject = _object;
 

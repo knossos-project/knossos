@@ -3,8 +3,6 @@
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "skeleton/tree.h"
 
-extern SkeletonProxySignalDelegate *signalDelegate;
-
 TreeListDecorator::TreeListDecorator(QObject *parent) :
     QObject(parent)
 {

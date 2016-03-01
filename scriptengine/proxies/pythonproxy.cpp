@@ -17,8 +17,6 @@
 #include <QApplication>
 #include <QFile>
 
-PythonProxySignalDelegate *pythonProxySignalDelegate = new PythonProxySignalDelegate();
-
 PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
 
 void PythonProxy::annotationLoad(const QString & filename, const bool merge) {

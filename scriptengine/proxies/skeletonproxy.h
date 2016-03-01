@@ -9,15 +9,6 @@
 #include <QObject>
 #include <QString>
 
-/** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
-class SkeletonProxySignalDelegate : public QObject  {
-    Q_OBJECT
-signals:
-    void clearSkeletonSignal();
-};
-
-extern SkeletonProxySignalDelegate *skeletonProxySignalDelegate;
-
 class SkeletonProxy : public QObject
 {
     Q_OBJECT
