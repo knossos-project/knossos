@@ -345,9 +345,12 @@ bool Segmentation::isSubObjectIdSelected(const uint64_t & subobjectId) const {
 }
 
 void Segmentation::clearObjectSelection() {
+    const auto blockState = blockSignals(true);
     while (!selectedObjectIndices.empty()) {
         unselectObject(selectedObjectIndices.back());
     }
+    blockSignals(blockState);
+    emit resetSelection();
 }
 
 void Segmentation::selectObject(Object & object) {
@@ -587,9 +590,12 @@ void Segmentation::startJobMode() {
 }
 
 void Segmentation::deleteSelectedObjects() {
+    const auto blockState = blockSignals(true);
     while (!selectedObjectIndices.empty()) {
         removeObject(objects[selectedObjectIndices.back()]);
     }
+    blockSignals(blockState);
+    emit resetData();
 }
 
 void Segmentation::mergeSelectedObjects() {
