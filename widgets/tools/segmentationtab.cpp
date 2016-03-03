@@ -242,29 +242,24 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     commentFilter.setPlaceholderText("Filter for comment...");
     showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
 
-    touchedObjsTable.setModel(&touchedObjectModel);
-    touchedObjsTable.setAllColumnsShowFocus(true);
-    touchedObjsTable.setContextMenuPolicy(Qt::CustomContextMenu);
-    touchedObjsTable.setRootIsDecorated(false);
-    touchedObjsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    touchedObjsTable.setUniformRowHeights(true);//perf hint from doc
-    touchedObjsTable.setItemDelegateForColumn(3, &categoryDelegate);
+    auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
+        table.setModel(&model);
+        table.setAllColumnsShowFocus(true);
+        table.setContextMenuPolicy(Qt::CustomContextMenu);
+        table.setRootIsDecorated(false);
+        table.setSelectionMode(QAbstractItemView::ExtendedSelection);
+        table.setUniformRowHeights(true);//perf hint from doc
+        table.setItemDelegateForColumn(3, &categoryDelegate);
+    };
+
+    setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
 
     //proxy model chaining, so we can filter twice
     objectProxyModelCategory.setSourceModel(&objectModel);
     objectProxyModelComment.setSourceModel(&objectProxyModelCategory);
     objectProxyModelCategory.setFilterKeyColumn(3);
     objectProxyModelComment.setFilterKeyColumn(4);
-    objectsTable.setModel(&objectProxyModelComment);
-    objectsTable.setAllColumnsShowFocus(true);
-    objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
-    objectsTable.setRootIsDecorated(false);
-    objectsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    objectsTable.setUniformRowHeights(true);//perf hint from doc
-    //sorting seems pretty slow concerning selection and scroll to
-//    objectsTable.setSortingEnabled(true);
-//    objectsTable.sortByColumn(1, Qt::DescendingOrder);
-    objectsTable.setItemDelegateForColumn(3, &categoryDelegate);
+    setupTable(objectsTable, objectProxyModelComment, objSortSectionIndex);
 
     filterLayout.addWidget(&categoryFilter);
     filterLayout.addWidget(&commentFilter);
