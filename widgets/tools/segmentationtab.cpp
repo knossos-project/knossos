@@ -266,6 +266,17 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
         table.setSelectionMode(QAbstractItemView::ExtendedSelection);
         table.setUniformRowHeights(true);//perf hint from doc
         table.setItemDelegateForColumn(3, &categoryDelegate);
+        table.setSortingEnabled(true);
+        table.sortByColumn(sortIndex = 1, Qt::SortOrder::AscendingOrder);
+    };
+    auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
+        return [&table, &sortIndex](const int index){
+            if (index == sortIndex && table.header()->sortIndicatorOrder() == Qt::SortOrder::AscendingOrder) {// asc (-1) → desc (==) → asc (==)
+                table.sortByColumn(sortIndex = -1);
+            } else {
+                sortIndex = index;
+            }
+        };
     };
 
     setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
@@ -392,6 +403,8 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
     deleteAction.setShortcut(Qt::Key_Delete);
     QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
 
+    QObject::connect(touchedObjsTable.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(touchedObjsTable, touchedObjSortSectionIndex));
+    QObject::connect(objectsTable.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(objectsTable, objSortSectionIndex));
     QObject::connect(&objectsTable, &QTreeView::doubleClicked, [this](const QModelIndex index){
         if (index.column() == 1) {//only on id cell
             Segmentation::singleton().jumpToObject(indexFromRow(objectModel, index));

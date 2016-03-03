@@ -99,6 +99,8 @@ Q_OBJECT
     QSplitter splitter;
     QTreeView touchedObjsTable;
     QTreeView objectsTable;
+    int objSortSectionIndex;
+    int touchedObjSortSectionIndex;
     QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
