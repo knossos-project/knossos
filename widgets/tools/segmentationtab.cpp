@@ -211,6 +211,22 @@ QVariant CategoryModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+class scope {
+    bool & protection;
+    bool prev;
+public:
+    operator bool() & {// be sure not to use a temporary scope object
+        return !prev;
+    }
+    scope(bool & protection) : protection(protection) {
+        prev = protection;
+        protection = true;
+    }
+    ~scope() {
+        protection = prev ? protection : false;
+    }
+};
+
 SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
     modeGroup.addButton(&twodBtn, 0);
     modeGroup.addButton(&threedBtn, 1);
@@ -339,18 +355,18 @@ SegmentationTab::SegmentationTab(QWidget * const parent) : QWidget(parent), cate
         updateLabels();//maybe subobject count changed
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int id){
-        objectSelectionProtection = true;
-        const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
-        //selection lookup is way cheaper than reselection (sadly)
-        const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
-        if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
-            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
-            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+        if (scope s{objectSelectionProtection}) {
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            //selection lookup is way cheaper than reselection (sadly)
+            const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
+            if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
+                objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+            } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
+                objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+            }
+            touchedObjectModel.recreate();
+            updateTouchedObjSelection();
         }
-        objectSelectionProtection = false;
-        touchedObjectModel.recreate();
-        updateTouchedObjSelection();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
         touchedObjsTable.clearSelection();
@@ -437,13 +453,12 @@ void SegmentationTab::touchedObjSelectionChanged(const QItemSelection & selected
 }
 
 void SegmentationTab::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
-    if (objectSelectionProtection) {
-        return;
+    if (scope s{objectSelectionProtection}) {
+        const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
+        const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
+        commitSelection(proxySelected, proxyDeselected);
+        updateTouchedObjSelection();
     }
-    const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
-    const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
-    commitSelection(proxySelected, proxyDeselected);
-    updateTouchedObjSelection();
 }
 
 template<typename Elem>
