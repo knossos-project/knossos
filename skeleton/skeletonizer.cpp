@@ -32,6 +32,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QElapsedTimer>
 #include <QMessageBox>
 #include <QXmlStreamAttributes>
 #include <QXmlStreamReader>
@@ -342,7 +343,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     Session::singleton().guiMode = GUIMode::None;
 
-    QTime bench;
+    QElapsedTimer bench;
     QXmlStreamReader xml(&file);
 
     QString experimentName, taskCategory, taskName;
@@ -665,28 +666,6 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
     }
 
-    auto msg = tr("");
-    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
-    if (mismatchedDataset) {
-        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(state->name);
-    }
-    const auto currentTaskCategory = Session::singleton().task.first;
-    const auto currentTaskName = Session::singleton().task.second;
-    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
-    if (mismatchedDataset && mismatchedTask) {
-        msg += "\n\n";
-    }
-    if (mismatchedTask) {
-        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
-    }
-    if (!msg.isEmpty()) {
-        QMessageBox msgBox(state->viewer->window);
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
-        msgBox.setInformativeText(msg);
-        msgBox.exec();
-    }
-
     for (const auto & elem : edgeVector) {
         auto * sourceNode = findNodeByNodeID(elem.first);
         auto * targetNode = findNodeByNodeID(elem.second);
@@ -715,7 +694,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     emit propertiesChanged(numberProperties);
     emit guiModeLoaded();
 
-    qDebug() << "loading skeleton took: "<< bench.elapsed();
+    qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";
 
     if (!merge) {
         auto * node = Skeletonizer::singleton().findNodeByNodeID(activeNodeID);
@@ -730,6 +709,28 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
         setActiveNode(&skeletonState.trees.front().nodes.front());
+    }
+
+    auto msg = tr("");
+    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
+    if (mismatchedDataset) {
+        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(state->name);
+    }
+    const auto currentTaskCategory = Session::singleton().task.first;
+    const auto currentTaskName = Session::singleton().task.second;
+    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
+    if (mismatchedDataset && mismatchedTask) {
+        msg += "\n\n";
+    }
+    if (mismatchedTask) {
+        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
+    }
+    if (!msg.isEmpty()) {
+        QMessageBox msgBox(state->viewer->window);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
+        msgBox.setInformativeText(msg);
+        msgBox.exec();
     }
 }
 
