@@ -292,11 +292,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         }
     });
 
-    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
-        nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
-        nodeRecreate();
-    });
-
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
@@ -311,6 +306,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, nodeRecreate);
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
+
+    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
+        nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
+        nodeRecreate();
+    });
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
         const auto index = parent.row();//already is a source model index
