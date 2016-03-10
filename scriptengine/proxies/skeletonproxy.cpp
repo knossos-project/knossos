@@ -66,14 +66,10 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 
-bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
+void SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     Skeletonizer::singleton().selectNodes({node});
-    if (!Skeletonizer::singleton().moveSelectedNodesToTree(tree_id)) {
-        emit echo (QString("Skeletonizer::moveSelectedNodesToTree failed!"));
-        return false;
-    }
-    return true;
+    Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
 }
 
 nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {

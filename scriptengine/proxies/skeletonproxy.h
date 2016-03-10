@@ -37,7 +37,7 @@ public slots:
 
     nodeListElement *find_node_by_id(int node_id);
     QList<nodeListElement *> find_nodes_in_tree(treeListElement & tree, const QString & comment);
-    bool move_node_to_tree(int node_id, int tree_id);
+    void move_node_to_tree(int node_id, int tree_id);
     nodeListElement *find_nearby_node_from_tree(int tree_id, int x, int y, int z);
     nodeListElement *node_with_prev_id(int node_id, bool same_tree);
     nodeListElement *node_with_next_id(int node_id, bool same_tree);

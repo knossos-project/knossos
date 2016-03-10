@@ -1841,20 +1841,15 @@ bool Skeletonizer::moveToNextNode() {
     return false;
 }
 
-bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
-    auto * newTree = findTreeByTreeID(treeID);
-    for (auto * const node : state->skeletonState->selectedNodes) {
-        if (node == nullptr || newTree == nullptr || node->correspondingTree->treeID == newTree->treeID) {
-            return false;
+void Skeletonizer::moveSelectedNodesToTree(int treeID) {
+    if (auto * newTree = findTreeByTreeID(treeID)) {
+        for (auto * const node : state->skeletonState->selectedNodes) {
+            newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
+            node->correspondingTree = newTree;
         }
-        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
-        node->correspondingTree = newTree;
+        emit resetData();
+        emit setActiveTreeByID(treeID);
     }
-
-    emit resetData();
-    emit setActiveTreeByID(treeID);
-
-    return true;
 }
 
 void Skeletonizer::selectNodes(QSet<nodeListElement*> nodes) {

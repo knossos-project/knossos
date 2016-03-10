@@ -197,7 +197,7 @@ public slots:
     bool moveToPrevTree();
     bool moveToPrevNode();
     bool moveToNextNode();
-    bool moveSelectedNodesToTree(int treeID);
+    void moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);
