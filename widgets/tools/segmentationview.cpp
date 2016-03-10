@@ -488,11 +488,7 @@ void SegmentationView::updateSelection() {
 }
 
 void SegmentationView::filter() {
-    if (!categoryFilter.currentText().isEmpty()) {
-        objectProxyModelCategory.setFilterFixedString(categoryFilter.currentText());
-    } else {
-        objectProxyModelCategory.setFilterFixedString("");
-    }
+    objectProxyModelCategory.setFilterFixedString(categoryFilter.currentText());
     if (regExCheckbox.isChecked()) {
         objectProxyModelComment.setFilterRegExp(commentFilter.text());
     } else {
