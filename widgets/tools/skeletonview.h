@@ -2,8 +2,10 @@
 #define SKELETONVIEW_H
 
 #include <QAbstractListModel>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QSortFilterProxyModel>
 #include <QSplitter>
@@ -63,6 +65,9 @@ class SkeletonView : public QWidget {
 
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
+    QHBoxLayout treeOptionsLayout;
+    QLineEdit treeCommentFilter;
+    QCheckBox treeRegex{"regex"};
     TreeModel treeModel;
     QSortFilterProxyModel treeSortAndCommentFilterProxy;
     int treeSortSectionIndex{-1};
@@ -70,7 +75,10 @@ class SkeletonView : public QWidget {
 
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
+    QHBoxLayout nodeOptionsLayout;
     QComboBox displayModeCombo;
+    QLineEdit nodeCommentFilter;
+    QCheckBox nodeRegex{"regex"};
     NodeModel nodeModel;
     QSortFilterProxyModel nodeSortAndCommentFilterProxy;
     int nodeSortSectionIndex{-1};

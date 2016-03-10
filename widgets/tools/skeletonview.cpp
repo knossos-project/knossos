@@ -241,6 +241,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         table.sortByColumn(sortIndex = 0, Qt::SortOrder::AscendingOrder);
     };
 
+    treeCommentFilter.setPlaceholderText("tree comment");
+
+    treeSortAndCommentFilterProxy.setFilterKeyColumn(1);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
@@ -248,17 +251,27 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
 
     displayModeCombo.addItems({"all", "from selected trees", "only selected", "branch", "comment"});
     displayModeCombo.setCurrentIndex(nodeModel.mode);
+    nodeCommentFilter.setPlaceholderText("node comment");
 
     nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
+    nodeSortAndCommentFilterProxy.setFilterKeyColumn(1);
     setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 
+    treeOptionsLayout.addWidget(&treeCommentFilter);
+    treeOptionsLayout.addWidget(&treeRegex);
+    treeLayout.addLayout(&treeOptionsLayout);
     treeLayout.addWidget(&treeView);
     treeDummyWidget.setLayout(&treeLayout);
     splitter.addWidget(&treeDummyWidget);
-    nodeLayout.addWidget(&displayModeCombo);
+
+    nodeOptionsLayout.addWidget(&displayModeCombo);
+    nodeOptionsLayout.addWidget(&nodeCommentFilter);
+    nodeOptionsLayout.addWidget(&nodeRegex);
+    nodeLayout.addLayout(&nodeOptionsLayout);
     nodeLayout.addWidget(&nodeView);
     nodeDummyWidget.setLayout(&nodeLayout);
     splitter.addWidget(&nodeDummyWidget);
+
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
     bottomHLayout.addWidget(&treeCountLabel);
     bottomHLayout.addWidget(&nodeCountLabel);
@@ -266,15 +279,21 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     mainLayout.addLayout(&bottomHLayout);
     setLayout(&mainLayout);
 
+    static auto updateTreeSelection = [this](){
+        updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
+    };
+    static auto updateNodeSelection = [this](){
+        updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
+    };
     static auto treeRecreate = [&, this](){
         treeView.selectionModel()->reset();
         treeModel.recreate();
-        updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
+        updateTreeSelection();
     };
     static auto nodeRecreate = [&, this](){
         nodeView.selectionModel()->reset();
         nodeModel.recreate();
-        updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
+        updateNodeSelection();
     };
     static auto allRecreate = [&](){
         treeRecreate();
@@ -286,7 +305,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
-        updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
+        updateTreeSelection();
         if (nodeModel.mode == NodeModel::PART_OF_SELECTED_TREE) {
             nodeRecreate();
         }
@@ -295,7 +314,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
+        updateNodeSelection();
         if (nodeModel.mode == NodeModel::SELECTED) {
             nodeRecreate();
         }
@@ -307,9 +326,25 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
 
+    static auto filter = [](auto & regex, auto & model, const QString & filterText){
+        if (regex.isChecked()) {
+            model.setFilterRegExp(filterText);
+        } else {
+            model.setFilterFixedString(filterText);
+        }
+    };
+    QObject::connect(&treeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText){
+        filter(treeRegex, treeSortAndCommentFilterProxy, filterText);
+        updateTreeSelection();
+    });
+
     QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
         nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
         nodeRecreate();
+    });
+    QObject::connect(&nodeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText){
+        filter(nodeRegex, nodeSortAndCommentFilterProxy, filterText);
+        updateNodeSelection();
     });
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
