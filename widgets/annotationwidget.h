@@ -3,7 +3,6 @@
 
 #include "tools/segmentationview.h"
 #include "tools/skeletonview.h"
-#include "tools/toolstreeviewtab.h"
 #include "tools/toolscommandstab.h"
 #include "tools/commentstab.h"
 
@@ -17,7 +16,6 @@ class AnnotationWidget : public QDialog
 public:
     QTabWidget tabs;
     QVBoxLayout mainLayout;
-    ToolsTreeviewTab treeviewTab;
     SkeletonView skeletonTab{this};
     SegmentationView segmentationTab{this};
     ToolsCommandsTab commandsTab;

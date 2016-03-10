@@ -60,6 +60,8 @@ public:
 };
 
 class SkeletonView : public QWidget {
+    friend class AnnotationWidget;
+
     QVBoxLayout mainLayout;
     QSplitter splitter;
 

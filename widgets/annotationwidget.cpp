@@ -20,7 +20,6 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
     setWindowIcon(QIcon(":/resources/icons/graph.png"));
     setWindowTitle("Annotation");
 
-    tabs.addTab(&treeviewTab, "Tree View");
     tabs.addTab(&skeletonTab, "Skeleton");
     tabs.addTab(&segmentationTab, "Segmentation");
     tabs.addTab(&commandsTab, "Commands");
@@ -58,18 +57,8 @@ void AnnotationWidget::loadSettings() {
     }
     visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-    if(settings.value(SEARCH_FOR_TREE).isNull() == false) {
-        treeviewTab.treeSearchField->setText(settings.value(SEARCH_FOR_TREE).toString());
-    }
-    else {
-        treeviewTab.treeSearchField->setPlaceholderText("search tree");
-    }
-    if(settings.value(SEARCH_FOR_NODE).isNull() == false) {
-        treeviewTab.nodeSearchField->setText(settings.value(SEARCH_FOR_NODE).toString());
-    }
-    else {
-        treeviewTab.nodeSearchField->setPlaceholderText("search node");
-    }
+    skeletonTab.treeCommentFilter.setText(settings.value(SEARCH_FOR_TREE, "").toString());
+    skeletonTab.nodeCommentFilter.setText(settings.value(SEARCH_FOR_NODE, "").toString());
 
     if(settings.value(USE_LAST_RADIUS_AS_DEFAULT).isNull() == false) {
         commandsTab.useLastRadiusAsDefaultCheck->setChecked(settings.value(USE_LAST_RADIUS_AS_DEFAULT).toBool());
@@ -118,10 +107,6 @@ void AnnotationWidget::loadSettings() {
         hide();
     }
     setGeometry(x, y, width, height);
-    QList<int> list;
-    list.append(310);
-    list.append(390);
-    treeviewTab.splitter->setSizes(list);
 
     commentsTab.loadSettings();
 }
@@ -136,8 +121,8 @@ void AnnotationWidget::saveSettings() {
     settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
 
-    settings.setValue(SEARCH_FOR_TREE, treeviewTab.treeSearchField->text());
-    settings.setValue(SEARCH_FOR_NODE, treeviewTab.nodeSearchField->text());
+    settings.setValue(SEARCH_FOR_TREE, skeletonTab.treeCommentFilter.text());
+    settings.setValue(SEARCH_FOR_NODE, skeletonTab.nodeCommentFilter.text());
     settings.setValue(USE_LAST_RADIUS_AS_DEFAULT, commandsTab.useLastRadiusAsDefaultCheck->isChecked());
     settings.setValue(DEFAULT_NODE_RADIUS, commandsTab.defaultRadiusSpin->value());
     settings.setValue(ENABLE_COMMENT_LOCKING, commandsTab.commentLockingCheck->isChecked());
