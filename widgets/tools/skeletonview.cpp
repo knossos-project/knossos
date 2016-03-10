@@ -30,22 +30,20 @@ template<typename ConcreteModel>
 int AbstractSkeletonModel<ConcreteModel>::columnCount(const QModelIndex &) const {
     return static_cast<ConcreteModel const * const>(this)->header.size();
 }
-
 template<typename ConcreteModel>
 QVariant AbstractSkeletonModel<ConcreteModel>::headerData(int section, Qt::Orientation orientation, int role) const {
     return (orientation == Qt::Horizontal && role == Qt::DisplayRole) ? static_cast<ConcreteModel const * const>(this)->header[section] : QVariant();
 }
-
 template<typename ConcreteModel>
 Qt::ItemFlags AbstractSkeletonModel<ConcreteModel>::flags(const QModelIndex &index) const {
     return QAbstractItemModel::flags(index) | Qt::ItemNeverHasChildren | static_cast<ConcreteModel const * const>(this)->flagModifier[index.column()];
 }
+template<typename ConcreteModel>
+int AbstractSkeletonModel<ConcreteModel>::rowCount(const QModelIndex &) const {
+    return static_cast<ConcreteModel const * const>(this)->cache.size();
+}
 
 template class AbstractSkeletonModel<TreeModel>;//please clang, should actually be implicitly instantiated in here anyway
-
-int TreeModel::rowCount(const QModelIndex &) const {
-    return state->skeletonState->treeElements;
-}
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
@@ -82,10 +80,6 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
         return false;
     }
     return true;
-}
-
-int NodeModel::rowCount(const QModelIndex &) const {
-    return state->skeletonState->totalNodeElements;
 }
 
 QVariant NodeModel::data(const QModelIndex &index, int role) const {
@@ -154,9 +148,23 @@ void TreeModel::recreate() {
 void NodeModel::recreate() {
     beginResetModel();
     cache.clear();
-    for (auto && tree : state->skeletonState->trees)
-    for (auto && node : tree.nodes) {
-        cache.emplace_back(node);
+    if (mode == ALL) {
+        for (auto && tree : state->skeletonState->trees)
+        for (auto && node : tree.nodes) {
+            cache.emplace_back(node);
+        }
+    } else if (mode == SELECTED_TREES) {
+        for (auto && tree : state->skeletonState->trees) {
+            if (tree.selected) {
+                for (auto && node : tree.nodes) {
+                    cache.emplace_back(node);
+                }
+            }
+        }
+    } else if (mode == SELECTED_NODES) {
+        for (auto && node : state->skeletonState->selectedNodes) {
+            cache.emplace_back(*node);
+        }
     }
     endResetModel();
 }
@@ -216,13 +224,21 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
 
+    displayModeCombo.addItems({"all", "from selected trees", "only selected"});
+    displayModeCombo.setCurrentIndex(nodeModel.mode);
+
     nodeView.setModel(&nodeModel);
     nodeView.setUniformRowHeights(true);//perf hint from doc
     nodeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
     nodeView.setRootIsDecorated(false);
 
-    splitter.addWidget(&treeView);
-    splitter.addWidget(&nodeView);
+    treeLayout.addWidget(&treeView);
+    treeDummyWidget.setLayout(&treeLayout);
+    splitter.addWidget(&treeDummyWidget);
+    nodeLayout.addWidget(&displayModeCombo);
+    nodeLayout.addWidget(&nodeView);
+    nodeDummyWidget.setLayout(&nodeLayout);
+    splitter.addWidget(&nodeDummyWidget);
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
     bottomHLayout.addWidget(&treeCountLabel);
     bottomHLayout.addWidget(&nodeCountLabel);
@@ -240,25 +256,41 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
         nodeModel.recreate();
         updateSelection<nodeListElement>(nodeView, nodeModel);
     };
+    static auto allRecreate = [&](){
+        treeRecreate();
+        nodeRecreate();
+    };
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, &treeModel, treeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, &treeModel, treeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, &treeModel, treeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, &treeModel, treeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){updateSelection<treeListElement>(treeView, treeModel);});
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, allRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, treeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
+        updateSelection<treeListElement>(treeView, treeModel);
+        if (nodeModel.mode == NodeModel::SELECTED_TREES) {
+            nodeRecreate();
+        }
+    });
+
+    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
+        nodeModel.mode = index == 0 ? NodeModel::ALL : index == 1 ? NodeModel::SELECTED_TREES : index == 2 ? NodeModel::SELECTED_NODES : throw std::runtime_error{"oh no"};
+        nodeRecreate();
+    });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){updateSelection<nodeListElement>(nodeView, nodeModel);});
-
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, &nodeModel, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, &nodeModel, nodeRecreate);
-
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [&, this](){
-        treeRecreate();
-        nodeRecreate();
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
+        updateSelection<nodeListElement>(nodeView, nodeModel);
+        if (nodeModel.mode == NodeModel::SELECTED_NODES) {
+            nodeRecreate();
+        }
     });
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, nodeRecreate);
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
         const auto index = parent.row();

@@ -2,6 +2,7 @@
 #define SKELETONVIEW_H
 
 #include <QAbstractListModel>
+#include <QComboBox>
 #include <QLabel>
 #include <QMenu>
 #include <QSplitter>
@@ -15,6 +16,7 @@ public:
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
+    int rowCount(const QModelIndex &) const override;
 };
 
 class TreeModel : public AbstractSkeletonModel<TreeModel> {
@@ -24,7 +26,6 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, 0, Qt::ItemIsUserCheckable};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
-    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
@@ -39,7 +40,9 @@ class NodeModel : public AbstractSkeletonModel<NodeModel> {
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;
-    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+    enum {
+        ALL, SELECTED_TREES, SELECTED_NODES
+    } mode = SELECTED_TREES;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     void recreate();
@@ -52,7 +55,12 @@ class NodeView : public QTreeView {
 class SkeletonView : public QWidget {
     QVBoxLayout mainLayout;
     QSplitter splitter;
+    QWidget treeDummyWidget;
+    QVBoxLayout treeLayout;
     TreeModel treeModel;
+    QWidget nodeDummyWidget;
+    QVBoxLayout nodeLayout;
+    QComboBox displayModeCombo;
     NodeModel nodeModel;
     QTreeView treeView;
     NodeView nodeView;
