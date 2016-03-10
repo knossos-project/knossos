@@ -115,6 +115,15 @@ class Skeletonizer : public QObject {
     QSet<QString> numberProperties;
 
 public:
+    template<typename T>
+    void select(QSet<T*>);
+    void setActive(nodeListElement & elem);
+    void setActive(treeListElement & elem);
+    template<typename T>
+    void toggleSelection(const QSet<T*> & nodes);
+    template<typename Elem>
+    void notifySelection();
+
     SkeletonState skeletonState;
     Skeletonizer() {
         state->skeletonState = &skeletonState;
@@ -161,6 +170,7 @@ public slots:
     void selectTrees(const std::vector<treeListElement*> & trees);
     void deleteSelectedTrees();
     void deleteSelectedNodes();
+    void toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent);
 
     bool delTree(int treeID);
     void clearSkeleton();
@@ -176,6 +186,7 @@ public slots:
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
     bool addComment(QString content, nodeListElement &node);
     bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
+    void setComment(nodeListElement & commentNode, const QString & newContent);
     bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
     bool delComment(commentListElement *currentComment, uint commentNodeID);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);

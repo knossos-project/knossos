@@ -1,5 +1,5 @@
-#ifndef SEGMENTATIONTAB_H
-#define SEGMENTATIONTAB_H
+#ifndef SEGMENTATIONVIEW_H
+#define SEGMENTATIONVIEW_H
 
 #include "segmentation/segmentation.h"
 
@@ -33,7 +33,7 @@ public:
 
 class SegmentationObjectModel : public QAbstractListModel {
 Q_OBJECT
-    friend class SegmentationTab;//selection
+    friend class SegmentationView;//selection
 protected:
     const std::vector<QString> header{""/*color*/, "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
@@ -73,7 +73,7 @@ public:
     void recreate();
 };
 
-class SegmentationTab : public QWidget {
+class SegmentationView : public QWidget {
 Q_OBJECT
     QVBoxLayout layout;
     QHBoxLayout toolsLayout;
@@ -111,7 +111,7 @@ Q_OBJECT
     bool touchedObjectSelectionProtection = false;
 
 public:
-    explicit SegmentationTab(QWidget * const parent = nullptr);
+    explicit SegmentationView(QWidget * const parent = nullptr);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void updateSelection();
@@ -125,4 +125,4 @@ public slots:
     void filter();
 };
 
-#endif // SEGMENTATIONTAB_H
+#endif//SEGMENTATIONVIEW_H

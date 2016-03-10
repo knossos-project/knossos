@@ -27,7 +27,7 @@ Q_OBJECT
     friend class TouchedObjectModel;
     friend class CategoryDelegate;
     friend class CategoryModel;
-    friend class SegmentationTab;
+    friend class SegmentationView;
     friend class SegmentationProxy;
 
     class Object;
@@ -63,7 +63,7 @@ Q_OBJECT
         friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class TouchedObjectModel;
-        friend class SegmentationTab;
+        friend class SegmentationView;
         friend class SegmentationProxy;
         friend class Segmentation;
 
