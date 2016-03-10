@@ -5,6 +5,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QMenu>
+#include <QSortFilterProxyModel>
 #include <QSplitter>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -49,20 +50,30 @@ public:
 };
 
 class NodeView : public QTreeView {
+    QSortFilterProxyModel & proxy;
+    NodeModel & source;
     virtual void mousePressEvent(QMouseEvent * event) override;
+public:
+    NodeView(QSortFilterProxyModel & proxy, NodeModel & source) : proxy{proxy}, source{source} {}
 };
 
 class SkeletonView : public QWidget {
     QVBoxLayout mainLayout;
     QSplitter splitter;
+
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
     TreeModel treeModel;
+    QSortFilterProxyModel treeSortAndCommentFilterProxy;
+    int treeSortSectionIndex{-1};
+    QTreeView treeView;
+
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
     QComboBox displayModeCombo;
     NodeModel nodeModel;
-    QTreeView treeView;
+    QSortFilterProxyModel nodeSortAndCommentFilterProxy;
+    int nodeSortSectionIndex{-1};
     NodeView nodeView;
 
     QHBoxLayout bottomHLayout;

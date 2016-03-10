@@ -184,20 +184,22 @@ void NodeModel::recreate() {
 }
 
 void NodeView::mousePressEvent(QMouseEvent * event) {
-    const auto index = indexAt(event->pos());
+    const auto index = proxy.mapToSource(indexAt(event->pos()));
     if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
-        const auto selected = static_cast<NodeModel&>(*model()).cache[index.row()].get().selected;
+        const auto selected = source.cache[index.row()].get().selected;
         setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
     }
     QTreeView::mousePressEvent(event);
 }
 
-template<typename T, typename Model>
-auto selectElems(Model & model) {
-    return [&model](const QItemSelection & selected, const QItemSelection & deselected){
+template<typename T, typename Model, typename Proxy>
+auto selectElems(Model & model, Proxy & proxy) {
+    return [&model, &proxy](const QItemSelection & selected, const QItemSelection & deselected){
         if (!model.selectionProtection) {
-            auto indices = selected.indexes();
-            indices.append(deselected.indexes());
+            const auto & proxySelected = proxy.mapSelectionToSource(selected);
+            const auto & proxyDeselected = proxy.mapSelectionToSource(deselected);
+            auto indices = proxySelected.indexes();
+            indices.append(proxyDeselected.indexes());
             QSet<T*> elems;
             for (const auto & modelIndex : indices) {
                 if (modelIndex.column() == 0) {
@@ -209,9 +211,9 @@ auto selectElems(Model & model) {
     };
 }
 
-template<typename T, typename U>
-auto updateSelection(QTreeView & view, U & model) {
-    const auto selectedIndices = blockSelection(model, model.cache);
+template<typename Model, typename Proxy>
+auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
+    const auto selectedIndices = proxy.mapSelectionFromSource(blockSelection(model, model.cache));
     model.selectionProtection = true;
     view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
     model.selectionProtection = false;
@@ -230,21 +232,25 @@ void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args)
     deleteAction->setShortcutContext(Qt::WidgetShortcut);
 }
 
-SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
-    treeView.setModel(&treeModel);
-    treeView.setUniformRowHeights(true);//perf hint from doc
-    treeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    treeView.setRootIsDecorated(false);
+SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
+    auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
+        table.setModel(&model);
+        table.setUniformRowHeights(true);//perf hint from doc
+        table.setSelectionMode(QAbstractItemView::ExtendedSelection);
+        table.setSortingEnabled(true);
+        table.sortByColumn(sortIndex = 0, Qt::SortOrder::AscendingOrder);
+    };
+
+    treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
+    setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
 
     displayModeCombo.addItems({"all", "from selected trees", "only selected", "branch", "comment"});
     displayModeCombo.setCurrentIndex(nodeModel.mode);
 
-    nodeView.setModel(&nodeModel);
-    nodeView.setUniformRowHeights(true);//perf hint from doc
-    nodeView.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    nodeView.setRootIsDecorated(false);
+    nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
+    setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 
     treeLayout.addWidget(&treeView);
     treeDummyWidget.setLayout(&treeLayout);
@@ -263,12 +269,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     static auto treeRecreate = [&, this](){
         treeView.selectionModel()->reset();
         treeModel.recreate();
-        updateSelection<treeListElement>(treeView, treeModel);
+        updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
     };
     static auto nodeRecreate = [&, this](){
         nodeView.selectionModel()->reset();
         nodeModel.recreate();
-        updateSelection<nodeListElement>(nodeView, nodeModel);
+        updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
     };
     static auto allRecreate = [&](){
         treeRecreate();
@@ -280,7 +286,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
-        updateSelection<treeListElement>(treeView, treeModel);
+        updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
         if (nodeModel.mode == NodeModel::PART_OF_SELECTED_TREE) {
             nodeRecreate();
         }
@@ -294,7 +300,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        updateSelection<nodeListElement>(nodeView, nodeModel);
+        updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
         if (nodeModel.mode == NodeModel::SELECTED) {
             nodeRecreate();
         }
@@ -307,14 +313,17 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
-        const auto index = parent.row();
+        const auto index = parent.row();//already is a source model index
         const auto droppedOnTreeID = treeModel.cache[index].get().treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID);
         question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text, tr(""));
     });
 
-    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel));
-    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel));
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel, treeSortAndCommentFilterProxy));
+    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel, nodeSortAndCommentFilterProxy));
+
+    QObject::connect(treeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(treeView, treeSortSectionIndex));
+    QObject::connect(nodeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(nodeView, nodeSortSectionIndex));
 
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){

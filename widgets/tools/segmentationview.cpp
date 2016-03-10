@@ -270,15 +270,6 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         table.setSortingEnabled(true);
         table.sortByColumn(sortIndex = 1, Qt::SortOrder::AscendingOrder);
     };
-    auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
-        return [&table, &sortIndex](const int index){
-            if (index == sortIndex && table.header()->sortIndicatorOrder() == Qt::SortOrder::AscendingOrder) {// asc (-1) → desc (==) → asc (==)
-                table.sortByColumn(sortIndex = -1);
-            } else {
-                sortIndex = index;
-            }
-        };
-    };
 
     setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
 
