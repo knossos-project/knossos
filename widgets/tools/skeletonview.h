@@ -41,8 +41,8 @@ class NodeModel : public AbstractSkeletonModel<NodeModel> {
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;
     enum {
-        ALL, SELECTED_TREES, SELECTED_NODES
-    } mode = SELECTED_TREES;
+        ALL, PART_OF_SELECTED_TREE, SELECTED, BRANCH, NON_EMPTY_COMMENT
+    } mode = PART_OF_SELECTED_TREE;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     void recreate();

@@ -153,7 +153,7 @@ void NodeModel::recreate() {
         for (auto && node : tree.nodes) {
             cache.emplace_back(node);
         }
-    } else if (mode == SELECTED_TREES) {
+    } else if (mode == PART_OF_SELECTED_TREE) {
         for (auto && tree : state->skeletonState->trees) {
             if (tree.selected) {
                 for (auto && node : tree.nodes) {
@@ -161,9 +161,23 @@ void NodeModel::recreate() {
                 }
             }
         }
-    } else if (mode == SELECTED_NODES) {
+    } else if (mode == SELECTED) {
         for (auto && node : state->skeletonState->selectedNodes) {
             cache.emplace_back(*node);
+        }
+    } else if (mode == BRANCH) {
+        for (auto && tree : state->skeletonState->trees)
+        for (auto && node : tree.nodes) {
+            if (node.isBranchNode) {
+                cache.emplace_back(node);
+            }
+        }
+    } else if (mode == NON_EMPTY_COMMENT) {
+        for (auto && tree : state->skeletonState->trees)
+        for (auto && node : tree.nodes) {
+            if (node.comment != nullptr) {
+                cache.emplace_back(node);
+            }
         }
     }
     endResetModel();
@@ -224,7 +238,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
 
-    displayModeCombo.addItems({"all", "from selected trees", "only selected"});
+    displayModeCombo.addItems({"all", "from selected trees", "only selected", "branch", "comment"});
     displayModeCombo.setCurrentIndex(nodeModel.mode);
 
     nodeView.setModel(&nodeModel);
@@ -267,13 +281,13 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
         updateSelection<treeListElement>(treeView, treeModel);
-        if (nodeModel.mode == NodeModel::SELECTED_TREES) {
+        if (nodeModel.mode == NodeModel::PART_OF_SELECTED_TREE) {
             nodeRecreate();
         }
     });
 
     QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
-        nodeModel.mode = index == 0 ? NodeModel::ALL : index == 1 ? NodeModel::SELECTED_TREES : index == 2 ? NodeModel::SELECTED_NODES : throw std::runtime_error{"oh no"};
+        nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
         nodeRecreate();
     });
 
@@ -281,7 +295,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
         updateSelection<nodeListElement>(nodeView, nodeModel);
-        if (nodeModel.mode == NodeModel::SELECTED_NODES) {
+        if (nodeModel.mode == NodeModel::SELECTED) {
             nodeRecreate();
         }
     });
