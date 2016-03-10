@@ -32,6 +32,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QElapsedTimer>
 #include <QMessageBox>
 #include <QXmlStreamAttributes>
 #include <QXmlStreamReader>
@@ -155,7 +156,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
-bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
+void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     QXmlStreamWriter xml(&file);
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
@@ -183,10 +184,12 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
     xml.writeEndElement();
 
-    xml.writeStartElement("task");
-    xml.writeAttribute("category", Session::singleton().task.first);
-    xml.writeAttribute("name", Session::singleton().task.second);
-    xml.writeEndElement();
+    if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
+        xml.writeStartElement("task");
+        xml.writeAttribute("category", Session::singleton().task.first);
+        xml.writeAttribute("name", Session::singleton().task.second);
+        xml.writeEndElement();
+    }
 
     xml.writeStartElement("MovementArea");
     xml.writeAttribute("min.x", QString::number(Session::singleton().movementAreaMin.x));
@@ -326,13 +329,11 @@ bool Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
-    return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
+void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qErrnoWarning("Document not parsed successfully.");
-        return false;
+        throw std::runtime_error("loadXmlSkeleton open failed");
     }
 
     const bool merge = state->skeletonState->mergeOnLoadFlag;
@@ -350,7 +351,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     Session::singleton().guiMode = GUIMode::None;
 
-    QTime bench;
+    QElapsedTimer bench;
     QXmlStreamReader xml(&file);
 
     QString experimentName, taskCategory, taskName;
@@ -366,8 +367,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     const auto blockState = this->signalsBlocked();
     blockSignals(true);
     if (!xml.readNextStartElement() || xml.name() != "things") {
-        qDebug() << "invalid xml token: " << xml.name();
-        return false;
+        throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
     }
     while(xml.readNextStartElement()) {
         if(xml.name() == "parameters") {
@@ -668,34 +668,10 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
     xml.readNext();//</things>
     if (!xml.isEndDocument()) {
-        qDebug() << "unknown content following after line" << xml.lineNumber();
-        return false;
+        throw std::runtime_error(tr("unknown content following after line %1").arg(xml.lineNumber()).toStdString());
     }
     if(xml.hasError()) {
-        qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
-        return false;
-    }
-
-    auto msg = tr("");
-    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
-    if (mismatchedDataset) {
-        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(state->name);
-    }
-    const auto currentTaskCategory = Session::singleton().task.first;
-    const auto currentTaskName = Session::singleton().task.second;
-    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
-    if (mismatchedDataset && mismatchedTask) {
-        msg += "\n\n";
-    }
-    if (mismatchedTask) {
-        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
-    }
-    if (!msg.isEmpty()) {
-        QMessageBox msgBox(state->viewer->window);
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
-        msgBox.setInformativeText(msg);
-        msgBox.exec();
+        throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
     }
 
     for (const auto & elem : edgeVector) {
@@ -726,7 +702,7 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     emit propertiesChanged(numberProperties);
     emit guiModeLoaded();
 
-    qDebug() << "loading skeleton took: "<< bench.elapsed();
+    qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";
 
     if (!merge) {
         auto * node = Skeletonizer::singleton().findNodeByNodeID(activeNodeID);
@@ -742,7 +718,28 @@ bool Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
         setActiveNode(&skeletonState.trees.front().nodes.front());
     }
-    return true;
+
+    auto msg = tr("");
+    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
+    if (mismatchedDataset) {
+        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(state->name);
+    }
+    const auto currentTaskCategory = Session::singleton().task.first;
+    const auto currentTaskName = Session::singleton().task.second;
+    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
+    if (mismatchedDataset && mismatchedTask) {
+        msg += "\n\n";
+    }
+    if (mismatchedTask) {
+        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
+    }
+    if (!msg.isEmpty()) {
+        QMessageBox msgBox(state->viewer->window);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
+        msgBox.setInformativeText(msg);
+        msgBox.exec();
+    }
 }
 
 bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
@@ -1870,20 +1867,15 @@ bool Skeletonizer::moveToNextNode() {
     return false;
 }
 
-bool Skeletonizer::moveSelectedNodesToTree(int treeID) {
-    auto * newTree = findTreeByTreeID(treeID);
-    for (auto * const node : state->skeletonState->selectedNodes) {
-        if (node == nullptr || newTree == nullptr || node->correspondingTree->treeID == newTree->treeID) {
-            return false;
+void Skeletonizer::moveSelectedNodesToTree(int treeID) {
+    if (auto * newTree = findTreeByTreeID(treeID)) {
+        for (auto * const node : state->skeletonState->selectedNodes) {
+            newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
+            node->correspondingTree = newTree;
         }
-        newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
-        node->correspondingTree = newTree;
+        emit resetData();
+        emit setActiveTreeByID(treeID);
     }
-
-    emit resetData();
-    emit setActiveTreeByID(treeID);
-
-    return true;
 }
 
 template<typename T>

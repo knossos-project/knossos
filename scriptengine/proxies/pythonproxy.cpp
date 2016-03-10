@@ -1,23 +1,29 @@
 #include "pythonproxy.h"
+
 #include "buildinfo.h"
 #include "functions.h"
 #include "loader.h"
 #include "segmentation/cubeloader.h"
-#include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <Python.h>
+
 #include <QApplication>
 #include <QFile>
 
-PythonProxySignalDelegate *pythonProxySignalDelegate = new PythonProxySignalDelegate();
+void PythonProxy::annotationLoad(const QString & filename, const bool merge) {
+    state->mainWindow->openFileDispatch({filename}, merge, true);
+}
 
-PythonProxy::PythonProxy(QObject *parent) : QObject(parent) {}
+void PythonProxy::annotationSave(const QString & filename) {
+    state->mainWindow->save(filename, true);
+}
 
 QString PythonProxy::getKnossosVersion() {
     return KVERSION;
@@ -172,7 +178,7 @@ bool PythonProxy::writeOverlayVoxel(QList<int> coord, quint64 val) {
 }
 
 void PythonProxy::setPosition(QList<int> coord) {
-    emit pythonProxySignalDelegate->userMoveSignal({1.f * coord[0], 1.f * coord[1], 1.f * coord[2]}, USERMOVE_NEUTRAL);
+    state->viewer->setPosition({static_cast<float>(coord[0]), static_cast<float>(coord[1]), static_cast<float>(coord[2])});
 }
 
 void PythonProxy::resetMovementArea() {
@@ -197,6 +203,10 @@ void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
 
 int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
+}
+
+void PythonProxy::setMagnificationLock(const bool locked) {
+    state->viewer->setMagnificationLock(locked);
 }
 
 // UNTESTED

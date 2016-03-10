@@ -9,31 +9,14 @@
 #include <QObject>
 #include <QString>
 
-/** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
-class SkeletonProxySignalDelegate : public QObject  {
+class SkeletonProxy : public QObject {
     Q_OBJECT
-signals:
-    void loadSkeleton(const QString &filename, const QString &treeCmtOnMultiLoad, bool *isSuccess = NULL);
-    void saveSkeleton(const QString & filename, bool *isSuccess = NULL);
-    void clearSkeletonSignal();
-};
-
-extern SkeletonProxySignalDelegate *skeletonProxySignalDelegate;
-
-class SkeletonProxy : public QObject
-{
-    Q_OBJECT
-public:
-    explicit SkeletonProxy(QObject *parent = 0);
-
 signals:
     void echo(QString message);
 
 public slots:
     int annotation_time();
     QString skeleton_file();
-    bool annotation_save(const QString &filename);
-    bool annotation_load(const QString &filename, bool isMerge = false);
     bool has_unsaved_changes();
 
     void delete_skeleton();
@@ -54,7 +37,7 @@ public slots:
 
     nodeListElement *find_node_by_id(int node_id);
     QList<nodeListElement *> find_nodes_in_tree(treeListElement & tree, const QString & comment);
-    bool move_node_to_tree(int node_id, int tree_id);
+    void move_node_to_tree(int node_id, int tree_id);
     nodeListElement *find_nearby_node_from_tree(int tree_id, int x, int y, int z);
     nodeListElement *node_with_prev_id(int node_id, bool same_tree);
     nodeListElement *node_with_next_id(int node_id, bool same_tree);

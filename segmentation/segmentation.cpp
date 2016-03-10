@@ -345,9 +345,12 @@ bool Segmentation::isSubObjectIdSelected(const uint64_t & subobjectId) const {
 }
 
 void Segmentation::clearObjectSelection() {
+    const auto blockState = blockSignals(true);
     while (!selectedObjectIndices.empty()) {
         unselectObject(selectedObjectIndices.back());
     }
+    blockSignals(blockState);
+    emit resetSelection();
 }
 
 void Segmentation::selectObject(Object & object) {
@@ -510,10 +513,12 @@ void Segmentation::mergelistSave(QIODevice & file) const {
 }
 
 void Segmentation::mergelistLoad(QIODevice & file) {
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("mergelistLoad open failed");
+    }
     QTextStream stream(&file);
     QString line;
-    blockSignals(true);
+    const auto blockState = blockSignals(true);
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
         std::istringstream coordLineStream(stream.readLine().toStdString());
@@ -540,22 +545,25 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             changeCategory(obj, category);
             obj.comment = comment;
         } else {
-            qDebug() << "mergelistLoad fail";
-            break;
+            blockSignals(blockState);
+            Segmentation::clear();
+            throw std::runtime_error("mergelistLoad parsing failed");
         }
     }
-    blockSignals(false);
+    blockSignals(blockState);
     emit resetData();
 }
 
 void Segmentation::jobLoad(QIODevice & file) {
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("jobLoad open failed");
+    }
     QTextStream stream(&file);
     QString job_line = stream.readLine();
     QString campaign_line = stream.readLine();
     QString worker_line = stream.readLine();
     QString submit_line = stream.readLine();
-    job.id = job_line.isNull()? 0 : job_line.toInt();
+    job.id = job_line.isNull() ? 0 : job_line.toInt();
     job.campaign = campaign_line.isNull() ? "" : campaign_line;
     job.worker = worker_line.isNull() ? "" : worker_line;
     job.submitPath = submit_line.isNull() ? "" : submit_line;
@@ -582,9 +590,12 @@ void Segmentation::startJobMode() {
 }
 
 void Segmentation::deleteSelectedObjects() {
+    const auto blockState = blockSignals(true);
     while (!selectedObjectIndices.empty()) {
         removeObject(objects[selectedObjectIndices.back()]);
     }
+    blockSignals(blockState);
+    emit resetData();
 }
 
 void Segmentation::mergeSelectedObjects() {

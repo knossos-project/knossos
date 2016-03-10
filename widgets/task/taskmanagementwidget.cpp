@@ -11,7 +11,7 @@
 
 #include <fstream>
 
-TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), taskLoginWidget(this) {
+TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), taskLoginWidget(parent) {//mainwindow as parent for login
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");
@@ -95,6 +95,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
             const auto attributes = xml.attributes();
             const auto taskCategory = attributes.value("category").toString();
             const auto taskName = attributes.value("name").toString();
+            Session::singleton().task = {taskName, taskCategory};
             task = tr("%1 (%2)").arg(taskName).arg(taskCategory);
             taskLabel.setText(task);
         }
@@ -204,7 +205,7 @@ void TaskManagementWidget::submitFinal() {
 }
 
 bool TaskManagementWidget::submit(const bool final) {
-    state->viewer->window->autoSaveSlot();//save file to submit
+    state->viewer->window->save();//save file to submit
 
     const auto url = taskLoginWidget.host + "/knossos/activeTask/";
     setCursor(Qt::BusyCursor);

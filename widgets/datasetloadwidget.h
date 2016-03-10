@@ -42,7 +42,7 @@ public:
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
     void changeDataset(bool isGUI);
-    bool loadDataset(const boost::optional<bool> loadOverlay, QString path = "", const bool keepAnnotation = false);
+    bool loadDataset(const boost::optional<bool> loadOverlay, QUrl path = {}, const bool silent = false);
     void saveSettings();
     void loadSettings();
     void applyGeometrySettings();

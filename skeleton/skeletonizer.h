@@ -200,8 +200,8 @@ public slots:
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(int treeID);
 
-    bool loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
-    bool saveXmlSkeleton(QIODevice &file) const;
+    void loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    void saveXmlSkeleton(QIODevice &file) const;
 
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
@@ -210,7 +210,7 @@ public slots:
     bool moveToPrevTree();
     bool moveToPrevNode();
     bool moveToNextNode();
-    bool moveSelectedNodesToTree(int treeID);
+    void moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(uint nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);

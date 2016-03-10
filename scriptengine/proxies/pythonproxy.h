@@ -7,27 +7,18 @@
 #include <QList>
 #include <QVector>
 
-/** Actually this class it not really needed. It only hides the SIGNALS from the PythonProxy */
-class PythonProxySignalDelegate : public QObject  {
-    Q_OBJECT
-signals:
-    void userMoveSignal(const floatCoordinate & floatStep, UserMoveType userMoveType, const floatCoordinate & viewportNormal = {0, 0, 0});
-};
-
-extern PythonProxySignalDelegate *pythonProxySignalDelegate;
-
 struct _object;
 using PyObject = _object;
 
 class PythonProxy : public QObject {
     Q_OBJECT
-public:
-    explicit PythonProxy(QObject *parent = 0);
-
 signals:
     void echo(QString message);
 
 public slots:
+    void annotationLoad(const QString & filename, const bool merge = false);
+    void annotationSave(const QString & filename);
+
     QString getKnossosVersion();
     QString getKnossosRevision();
     int getCubeEdgeLength();
@@ -57,6 +48,7 @@ public slots:
     void oc_reslice_notify_all(QList<int> coord);
     int loaderLoadingNr();
     bool loadStyleSheet(const QString &path);
+    void setMagnificationLock(const bool locked);
 };
 
 #endif // PYTHONPROXY_H

@@ -221,20 +221,28 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QString path,  const bool keepAnnotation) {
+bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUrl path,  const bool silent) {
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         open();
         return false;
-    } else if (!path.isEmpty()) {//if empty reload previous
-        datasetUrl = {path};//remember config url
+    } else if (path.isEmpty()) {//if empty reload previous
+        path = datasetUrl;
     }
-    const auto download = Network::singleton().refresh(datasetUrl);
+    const auto download = Network::singleton().refresh(path);
     if (!download.first) {
-        QMessageBox::information(this, "Unable to load", QString("Failed to read config from %1").arg(datasetUrl.toString()));
+        if (!silent) {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Warning);
+            box.setText("Unable to load Daataset.");
+            box.setInformativeText(QString("Failed to read config file from %1").arg(path.toString()));
+            box.exec();
+            open();
+        }
+        qDebug() << "no config";
         return false;
     }
 
-    if (!keepAnnotation) {
+    if (!silent) {
         state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
     }
 
@@ -247,15 +255,19 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QSt
         try {
             info.checkMagnifications();
         } catch (std::exception &) {
-            QMessageBox box(this);
-            box.setIcon(QMessageBox::Information);
-            box.setText("Dataset will not be loaded.");
-            box.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");
-            box.exec();
-            open();
+            if (!silent) {
+                QMessageBox box(this);
+                box.setIcon(QMessageBox::Warning);
+                box.setText("Dataset will not be loaded.");
+                box.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");
+                box.exec();
+                open();
+            }
+            qDebug() << "no mags";
             return false;
         }
     }
+    datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     info.applyToState();
     raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG

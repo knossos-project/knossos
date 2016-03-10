@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
-    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, this, &MainWindow::autoSaveSlot);
+    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, [this](){ save(); });
 
     createToolbars();
     createMenus();
@@ -412,7 +412,7 @@ void MainWindow::updateTodosLeft() {
         if(msgBox.exec() == QMessageBox::Yes) {
             auto jobFilename = "final_" + QFileInfo(Session::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
-            annotationFileSave(finishedJobPath, nullptr);
+            annotationFileSave(finishedJobPath);
             Network::singleton().submitSegmentationJob(finishedJobPath);
         }
     }
@@ -640,14 +640,14 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 //file menu functionality
-bool MainWindow::openFileDispatch(QStringList fileNames) {
+bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, const bool silent) {
     if (fileNames.empty()) {
         return false;
     }
 
-    bool mergeSkeleton = false;
-    bool mergeSegmentation = false;
-    if (state->skeletonState->treeElements > 0) {
+    bool mergeSkeleton = mergeAll;
+    bool mergeSegmentation = mergeAll;
+    if (!mergeAll && state->skeletonState->treeElements > 0) {
         const auto text = tr("Which Action do you like to choose?<ul>")
             + tr("<li>Merge the new Skeleton into the current one</li>")
             + tr("<li>Override the current Skeleton</li>")
@@ -662,7 +662,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
             return false;
         }
     }
-    if (Segmentation::singleton().hasObjects()) {
+    if (!mergeAll && Segmentation::singleton().hasObjects()) {
         const auto text = tr("Which Action do you like to choose?<ul>")
             + tr("<li>Merge the new Mergelist into the current one?</li>")
             + tr("<li>Override the current Segmentation</li>")
@@ -680,7 +680,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
     }
 
     bool multipleFiles = fileNames.size() > 1;
-    bool success = true;
     Session::singleton().guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
@@ -688,47 +687,59 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
 
     state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
 
-    const auto skeletonSignalBlockState = Skeletonizer::singleton().signalsBlocked();
-    Skeletonizer::singleton().blockSignals(true);
+    const auto skeletonSignalBlockState = Skeletonizer::singleton().blockSignals(true);
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
-    for (const auto & filename : nmls) {
-        const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
-        QFile file(filename);
-        if (success &= state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad)) {
-            updateRecentFile(filename);
-        }
-        state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
-    }
-
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
-    for (const auto & filename : zips) {
-        const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
-        annotationFileLoad(filename, treeCmtOnMultiLoad);
-        updateRecentFile(filename);
-        state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+    try {
+        for (const auto & filename : nmls) {
+            const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
+            QFile file(filename);
+            state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            updateRecentFile(filename);
+            state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+        }
+        for (const auto & filename : zips) {
+            const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
+            annotationFileLoad(filename, treeCmtOnMultiLoad);
+            updateRecentFile(filename);
+            state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+        }
+    } catch (std::runtime_error & error) {
+        if (!silent) {
+            QMessageBox fileErrorBox(this);
+            fileErrorBox.setIcon(QMessageBox::Warning);
+            fileErrorBox.setText(tr("Loading failed."));
+            fileErrorBox.setInformativeText(tr("One of the files could not be successfully loaded."));
+            fileErrorBox.setDetailedText(error.what());
+            fileErrorBox.exec();
+        }
+
+        Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
+        Session::singleton().unsavedChanges = false;// meh, don’t ask
+        newAnnotationSlot();
+        if (silent) {
+            throw;
+        }
+        return false;
     }
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
     widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
-    Session::singleton().unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
+    Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation;//merge implies changes
 
-    Session::singleton().annotationFilename = "";
-    if (success && !multipleFiles) { // either an .nml or a .k.zip was loaded
-        Session::singleton().annotationFilename = nmls.empty() ? zips.front() : nmls.front();
-    }
+    Session::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : zips.front();// either an .nml or a .k.zip was loaded
     updateTitlebar();
+
     setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
 
-    if(success) { //on success update zoomWidget
-        state->viewer->window->widgetContainer.datasetOptionsWidget.update();
-    }
+    state->viewer->window->widgetContainer.datasetOptionsWidget.update();
 
-    return success;
+    return true;
 }
 
 void MainWindow::newAnnotationSlot() {
@@ -743,6 +754,7 @@ void MainWindow::newAnnotationSlot() {
     Segmentation::singleton().clear();
     Session::singleton().unsavedChanges = false;
     Session::singleton().annotationFilename = "";
+    updateTitlebar();
 }
 
 /**
@@ -766,15 +778,8 @@ void MainWindow::openSlot() {
     }
 }
 
-void MainWindow::autoSaveSlot() {
-    if (Session::singleton().annotationFilename.isEmpty()) {
-        Session::singleton().annotationFilename = annotationFileDefaultPath();
-    }
-    saveSlot();
-}
-
 void MainWindow::saveSlot() {
-    auto & annotationFilename = Session::singleton().annotationFilename;
+    auto annotationFilename = Session::singleton().annotationFilename;
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
@@ -784,16 +789,13 @@ void MainWindow::saveSlot() {
         }
         if (Session::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(annotationFilename);
-            updateFileName(annotationFilename);
+            annotationFilename = updatedFileName(annotationFilename);
             if (index != -1) {//replace old filename with updated one
                 skeletonFileHistory.replace(index, annotationFilename);
                 historyEntryActions[index]->setText(annotationFilename);
             }
         }
-        annotationFileSave(annotationFilename);
-
-        updateRecentFile(annotationFilename);
-        updateTitlebar();
+        save(annotationFilename);
     }
 }
 
@@ -815,19 +817,33 @@ void MainWindow::saveAsSlot() {
             fileName.remove(kzipRegex);
 
             if (prevFilename != fileName + ".k.zip") {
-                const auto message = tr("The supplied filename has been changed: \n") + prevFilename + " to\n" + fileName + ".k.zip";
+                const auto message = tr("The supplied filename has been changed: \n%1 to\n%2.k.zip").arg(prevFilename).arg(fileName);
                 QMessageBox::information(this, tr("Fixed filename"), message);
             }
         }
-        fileName += ".k.zip";
-
-        Session::singleton().annotationFilename = fileName;
         saveFileDirectory = QFileInfo(fileName).absolutePath();
+        save(fileName + ".k.zip");
+    }
+}
 
-        annotationFileSave(Session::singleton().annotationFilename);
-
-        updateRecentFile(Session::singleton().annotationFilename);
-        updateTitlebar();
+void MainWindow::save(QString filename, const bool silent)
+try {
+    if (filename.isEmpty()) {
+        filename = annotationFileDefaultPath();
+    }
+    annotationFileSave(filename);
+    Session::singleton().annotationFilename = filename;
+    updateRecentFile(filename);
+    updateTitlebar();
+} catch (std::runtime_error & error) {
+    if (silent) {
+        throw;
+    } else {
+        QMessageBox errorBox;
+        errorBox.setIcon(QMessageBox::Critical);
+        errorBox.setText("File save failed");
+        errorBox.setInformativeText(filename);
+        errorBox.setDetailedText(error.what());
     }
 }
 

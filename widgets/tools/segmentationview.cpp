@@ -212,6 +212,22 @@ QVariant CategoryModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+class scope {
+    bool & protection;
+    bool prev;
+public:
+    operator bool() & {// be sure not to use a temporary scope object
+        return !prev;
+    }
+    scope(bool & protection) : protection(protection) {
+        prev = protection;
+        protection = true;
+    }
+    ~scope() {
+        protection = prev ? protection : false;
+    }
+};
+
 SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
     modeGroup.addButton(&twodBtn, 0);
     modeGroup.addButton(&threedBtn, 1);
@@ -243,29 +259,35 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     commentFilter.setPlaceholderText("Filter for comment...");
     showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
 
-    touchedObjsTable.setModel(&touchedObjectModel);
-    touchedObjsTable.setAllColumnsShowFocus(true);
-    touchedObjsTable.setContextMenuPolicy(Qt::CustomContextMenu);
-    touchedObjsTable.setRootIsDecorated(false);
-    touchedObjsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    touchedObjsTable.setUniformRowHeights(true);//perf hint from doc
-    touchedObjsTable.setItemDelegateForColumn(3, &categoryDelegate);
+    auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
+        table.setModel(&model);
+        table.setAllColumnsShowFocus(true);
+        table.setContextMenuPolicy(Qt::CustomContextMenu);
+        table.setRootIsDecorated(false);
+        table.setSelectionMode(QAbstractItemView::ExtendedSelection);
+        table.setUniformRowHeights(true);//perf hint from doc
+        table.setItemDelegateForColumn(3, &categoryDelegate);
+        table.setSortingEnabled(true);
+        table.sortByColumn(sortIndex = 1, Qt::SortOrder::AscendingOrder);
+    };
+    auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
+        return [&table, &sortIndex](const int index){
+            if (index == sortIndex && table.header()->sortIndicatorOrder() == Qt::SortOrder::AscendingOrder) {// asc (-1) → desc (==) → asc (==)
+                table.sortByColumn(sortIndex = -1);
+            } else {
+                sortIndex = index;
+            }
+        };
+    };
+
+    setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
 
     //proxy model chaining, so we can filter twice
     objectProxyModelCategory.setSourceModel(&objectModel);
     objectProxyModelComment.setSourceModel(&objectProxyModelCategory);
     objectProxyModelCategory.setFilterKeyColumn(3);
     objectProxyModelComment.setFilterKeyColumn(4);
-    objectsTable.setModel(&objectProxyModelComment);
-    objectsTable.setAllColumnsShowFocus(true);
-    objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
-    objectsTable.setRootIsDecorated(false);
-    objectsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
-    objectsTable.setUniformRowHeights(true);//perf hint from doc
-    //sorting seems pretty slow concerning selection and scroll to
-//    objectsTable.setSortingEnabled(true);
-//    objectsTable.sortByColumn(1, Qt::DescendingOrder);
-    objectsTable.setItemDelegateForColumn(3, &categoryDelegate);
+    setupTable(objectsTable, objectProxyModelComment, objSortSectionIndex);
 
     filterLayout.addWidget(&categoryFilter);
     filterLayout.addWidget(&commentFilter);
@@ -345,18 +367,18 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         updateLabels();//maybe subobject count changed
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int id){
-        objectSelectionProtection = true;
-        const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
-        //selection lookup is way cheaper than reselection (sadly)
-        const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
-        if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
-            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
-            objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+        if (scope s{objectSelectionProtection}) {
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            //selection lookup is way cheaper than reselection (sadly)
+            const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
+            if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
+                objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+            } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
+                objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+            }
+            touchedObjectModel.recreate();
+            updateTouchedObjSelection();
         }
-        objectSelectionProtection = false;
-        touchedObjectModel.recreate();
-        updateTouchedObjSelection();
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
         touchedObjsTable.clearSelection();
@@ -382,6 +404,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     deleteAction.setShortcut(Qt::Key_Delete);
     QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
 
+    QObject::connect(touchedObjsTable.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(touchedObjsTable, touchedObjSortSectionIndex));
+    QObject::connect(objectsTable.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(objectsTable, objSortSectionIndex));
     QObject::connect(&objectsTable, &QTreeView::doubleClicked, [this](const QModelIndex index){
         if (index.column() == 1) {//only on id cell
             Segmentation::singleton().jumpToObject(indexFromRow(objectModel, index));
@@ -443,13 +467,12 @@ void SegmentationView::touchedObjSelectionChanged(const QItemSelection & selecte
 }
 
 void SegmentationView::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
-    if (objectSelectionProtection) {
-        return;
+    if (scope s{objectSelectionProtection}) {
+        const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
+        const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
+        commitSelection(proxySelected, proxyDeselected);
+        updateTouchedObjSelection();
     }
-    const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
-    const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
-    commitSelection(proxySelected, proxyDeselected);
-    updateTouchedObjSelection();
 }
 
 void SegmentationView::updateTouchedObjSelection() {

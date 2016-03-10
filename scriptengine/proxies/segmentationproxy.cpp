@@ -2,24 +2,24 @@
 
 #include "segmentation/segmentation.h"
 
-void SegmentationProxy::subobjectFromId(quint64 subObjId, QList<int> coord) {
+void SegmentationProxy::subobjectFromId(const quint64 subObjId, const QList<int> & coord) {
     Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord));
 }
 
-quint64 SegmentationProxy::largestObjectContainingSubobject(quint64 subObjId, QList<int> coord) {
+quint64 SegmentationProxy::largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord) {
     return Segmentation::singleton().largestObjectContainingSubobject(
                 Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord)));
 }
 
-void SegmentationProxy::changeComment(quint64 objIndex, QString comment) {
+void SegmentationProxy::changeComment(const quint64 objIndex, const QString & comment) {
     Segmentation::singleton().changeComment(Segmentation::singleton().objects[objIndex], comment);
 }
 
-void SegmentationProxy::removeObject(quint64 objIndex) {
+void SegmentationProxy::removeObject(const quint64 objIndex) {
     Segmentation::singleton().removeObject(Segmentation::singleton().objects[objIndex]);
 }
 
-void SegmentationProxy::setRenderAllObjs(bool b) {
+void SegmentationProxy::setRenderAllObjs(const bool b) {
     Segmentation::singleton().setRenderAllObjs(b);
 }
 
@@ -35,7 +35,7 @@ QList<quint64> SegmentationProxy::objectIds() {
     return objectIds;
 }
 
-QList<quint64> SegmentationProxy::subobjectIdsOfObject(quint64 objId) {
+QList<quint64> SegmentationProxy::subobjectIdsOfObject(const quint64 objId) {
     const auto it = Segmentation::singleton().objectIdToIndex.find(objId);
     if (it == std::end(Segmentation::singleton().objectIdToIndex)) {
         return {};
@@ -47,4 +47,39 @@ QList<quint64> SegmentationProxy::subobjectIdsOfObject(quint64 objId) {
         subobjectIds.append(elem.get().id);
     }
     return subobjectIds;
+}
+
+QList<quint64> SegmentationProxy::getAllObjectIdx() {
+    QList<quint64> allObjIdx;
+    for (const auto & elem : Segmentation::singleton().objects) {
+        allObjIdx.append(elem.index);
+    }
+    return allObjIdx;
+}
+
+QList<quint64> SegmentationProxy::getSelectedObjectIndices() {
+    QList<quint64> selected;
+    for (const auto index : Segmentation::singleton().selectedObjectIndices) {
+        selected.append(index);
+    }
+    return selected;
+}
+
+void SegmentationProxy::selectObject(const quint64 objIdx) {
+    Segmentation::singleton().selectObject(objIdx);
+}
+
+void SegmentationProxy::unselectObject(const quint64 objectIndex) {
+    Segmentation::singleton().unselectObject(objectIndex);
+}
+
+void SegmentationProxy::jumpToObject(const quint64 objIdx) {
+    Segmentation::singleton().jumpToObject(objIdx);
+}
+
+QList<int> SegmentationProxy::getObjectLocation(const quint64 objectIndex) {
+    if (objectIndex < Segmentation::singleton().objects.size()) {
+        return Segmentation::singleton().objects[objectIndex].location.list();
+    }
+    return {};
 }

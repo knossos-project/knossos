@@ -132,11 +132,6 @@ int main(int argc, char *argv[]) {
 
     Scripting scripts;
 
-    QObject::connect(pythonProxySignalDelegate, &PythonProxySignalDelegate::userMoveSignal, &viewer, &Viewer::userMove);
-    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::loadSkeleton, &annotationFileLoad);
-    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::saveSkeleton, &annotationFileSave);
-    QObject::connect(skeletonProxySignalDelegate, &SkeletonProxySignalDelegate::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonSlotNoGUI);
-
     state.mainWindow->loadSettings();
     state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset(boost::none);
     state.mainWindow->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();

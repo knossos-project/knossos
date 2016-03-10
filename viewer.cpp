@@ -92,6 +92,53 @@ void Viewer::setMovementAreaFactor(float alpha) {
     emit movementAreaFactorChangedSignal();
 }
 
+uint Viewer::highestMag() {
+    return viewerState.datasetMagLock ? state->magnification : state->highestAvailableMag;
+}
+
+uint Viewer::lowestMag() {
+    return viewerState.datasetMagLock ? state->magnification : state->lowestAvailableMag;
+}
+
+float Viewer::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag() : state->lowestAvailableMag);
+    auto * vp = viewportXY;
+    float FOVinDCs = static_cast<float>(state->M) - 1.f;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
+    return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
+}
+
+float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag() : state->highestAvailableMag);
+    auto * vp = viewportXY;
+    float FOVinDCs = static_cast<float>(state->M) - 1.f;
+    float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
+    return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
+}
+
+uint Viewer::calcMag(const float screenPxXPerDataPx) {
+    const float exactMag = state->highestAvailableMag * lowestScreenPxXPerDataPx() / screenPxXPerDataPx;
+    const uint roundedPower = std::ceil(std::log(exactMag) / std::log(2));
+    return std::min(state->highestAvailableMag, std::max(static_cast<uint>(std::pow(2, roundedPower)), state->lowestAvailableMag));
+}
+
+void Viewer::setMagnificationLock(const bool locked) {
+    viewerState.datasetMagLock = locked;
+    if (!locked) {
+        const uint newMag = calcMag(viewportXY->screenPxXPerDataPx);
+        if (newMag != static_cast<uint>(state->magnification)) {
+            updateDatasetMag(newMag);
+            float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / viewportXY->screenPxXPerDataPx;
+            window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+                orthoVP.texture.FOV = newFOV;
+            });
+        }
+    }
+    emit magnificationLockChanged(locked);
+}
+
 bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT) {
     datacube += dcOffset;
     const auto & session = Session::singleton();

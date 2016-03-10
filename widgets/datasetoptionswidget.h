@@ -77,11 +77,6 @@ class DatasetOptionsWidget : public QDialog {
     QLabel *lowestActiveMagDatasetLabel;
     void applyZoom(const float newScreenPxXPerDataPx);
     void reinitializeOrthoZoomWidgets();
-    uint highestMag();
-    uint lowestMag();
-    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    uint calcMag(const float screenPxXPerDataPx);
     float zoomStep{1};
     void updateOrthogonalZoomSpinBox();
     void updateOrthogonalZoomSlider();

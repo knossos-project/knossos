@@ -1,7 +1,7 @@
 #include "skeletonproxy.h"
 
-#include "stateInfo.h"
 #include "functions.h"
+#include "stateInfo.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -11,14 +11,6 @@
 #include <QApplication>
 #include <QDir>
 #include <QFile>
-
-SkeletonProxySignalDelegate *skeletonProxySignalDelegate = new SkeletonProxySignalDelegate();
-
-SkeletonProxy::SkeletonProxy(QObject *parent) :
-    QObject(parent)
-{
-
-}
 
 treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
@@ -74,14 +66,10 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 
-bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
+void SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     Skeletonizer::singleton().selectNodes({node});
-    if (!Skeletonizer::singleton().moveSelectedNodesToTree(tree_id)) {
-        emit echo (QString("Skeletonizer::moveSelectedNodesToTree failed!"));
-        return false;
-    }
-    return true;
+    Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
 }
 
 nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {
@@ -114,30 +102,6 @@ int SkeletonProxy::annotation_time() {
 
 QString SkeletonProxy::skeleton_file() {
     return Session::singleton().annotationFilename;
-}
-
-bool SkeletonProxy::annotation_load(const QString &filename, bool isMerge) {
-    bool isSuccess = false;
-    bool isMergePrevValue = state->skeletonState->mergeOnLoadFlag;
-    QString tmpStr("");
-    state->skeletonState->mergeOnLoadFlag = isMerge;
-    emit skeletonProxySignalDelegate->loadSkeleton(filename, tmpStr, &isSuccess);
-    state->skeletonState->mergeOnLoadFlag = isMergePrevValue;
-    if (!isSuccess) {
-        emit echo(QString("could not load from %1").arg(filename));
-        return false;
-    }
-    return true;
-}
-
-bool SkeletonProxy::annotation_save(const QString &filename) {
-    bool isSuccess = false;
-    emit skeletonProxySignalDelegate->saveSkeleton(filename, &isSuccess);
-    if (!isSuccess) {
-        emit echo(QString("could not save to %1").arg(filename));
-        return false;
-    }
-    return true;
 }
 
 // TEST LATER
@@ -182,7 +146,7 @@ bool SkeletonProxy::has_unsaved_changes() {
 }
 
 void SkeletonProxy::delete_skeleton() {
-    emit skeletonProxySignalDelegate->clearSkeletonSignal();
+    Skeletonizer::singleton().clearSkeleton();
 }
 
 bool SkeletonProxy::delete_segment(int source_id, int target_id) {
