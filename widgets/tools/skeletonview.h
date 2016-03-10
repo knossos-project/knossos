@@ -23,6 +23,7 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     const std::vector<QString> header = {"Tree ID", "Comment", ""/*color*/, "Node Count", "Render"};
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, 0, Qt::ItemIsUserCheckable};
 public:
+    std::vector<std::reference_wrapper<class treeListElement>> cache;
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
@@ -37,6 +38,7 @@ class NodeModel : public AbstractSkeletonModel<NodeModel> {
     const std::vector<QString> header = {"Node ID", "Comment", "x", "y", "z", "Radius"};
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
 public:
+    std::vector<std::reference_wrapper<class nodeListElement>> cache;
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;

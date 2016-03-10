@@ -123,8 +123,6 @@ public:
     void toggleSelection(const QSet<T*> & nodes);
     template<typename Elem>
     void notifySelection();
-    std::vector<nodeListElement*> nodesOrdered;
-    std::vector<treeListElement*> treesOrdered;
 
     SkeletonState skeletonState;
     Skeletonizer() {

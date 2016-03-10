@@ -45,14 +45,6 @@
 
 #define CATCH_RADIUS 10
 
-auto nodeCompare = [](const nodeListElement * const lhs, const uint64_t & rhs){
-    return lhs->nodeID < rhs;
-};
-
-auto treeCompare = [](const treeListElement * const lhs, const int & rhs){
-    return lhs->treeID < rhs;
-};
-
 template<typename T, typename Func>
 bool connectedComponent(T & node, Func func) {
     std::queue<T*> queue;
@@ -786,7 +778,6 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
     }
 
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
-    nodesOrdered.erase(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeToDel->nodeID, nodeCompare));//binfind pointer
 
     if (nodeToDel->selected) {
         auto & selectedNodes = state->skeletonState->selectedNodes;
@@ -844,7 +835,6 @@ bool Skeletonizer::delTree(int treeID) {
         skeletonState.activeTree = nullptr;
     }
 
-    treesOrdered.erase(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), treeToDel->treeID, treeCompare));//binfind pointer
     skeletonState.trees.erase(treeToDel->iterator);
     skeletonState.treesByID.erase(treeID);
     --skeletonState.treeElements;
@@ -1015,9 +1005,6 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
 
     if (nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
-        nodesOrdered.emplace_back(&tempNode);
-    } else {
-        nodesOrdered.emplace(std::lower_bound(std::begin(nodesOrdered), std::end(nodesOrdered), nodeID, nodeCompare), &tempNode);
     }
     Session::singleton().unsavedChanges = true;
 
@@ -1204,9 +1191,6 @@ treeListElement * Skeletonizer::addTreeListElement(int treeID, color4F color) {
 
     if (newTree.treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newTree.treeID;
-        treesOrdered.emplace_back(&newTree);
-    } else {
-        treesOrdered.emplace(std::lower_bound(std::begin(treesOrdered), std::end(treesOrdered), newTree.treeID, treeCompare), &newTree);
     }
 
     Session::singleton().unsavedChanges = true;

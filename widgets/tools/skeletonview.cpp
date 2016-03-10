@@ -48,17 +48,17 @@ int TreeModel::rowCount(const QModelIndex &) const {
 }
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
-    auto * tree = Skeletonizer::singleton().treesOrdered[index.row()];
+    const auto & tree = cache[index.row()].get();
 
     if (index.column() == 2 && role == Qt::BackgroundRole) {
-        return QColor(tree->color.r * 255, tree->color.g * 255, tree->color.b * 255, tree->color.a * 255);
+        return QColor(tree.color.r * 255, tree.color.g * 255, tree.color.b * 255, tree.color.a * 255);
     } else if (index.column() == 4 && role == Qt::CheckStateRole) {
-        return tree->render ? Qt::Checked : Qt::Unchecked;
+        return tree.render ? Qt::Checked : Qt::Unchecked;
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
-        case 0: return tree->treeID;
-        case 1: return tree->comment;
-        case 3: return static_cast<quint64>(tree->nodes.size());
+        case 0: return tree.treeID;
+        case 1: return tree.comment;
+        case 3: return static_cast<quint64>(tree.nodes.size());
         }
     }
     return QVariant();//return invalid QVariant
@@ -68,16 +68,16 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (!index.isValid()) {
         return false;
     }
-    auto * const tree = Skeletonizer::singleton().treesOrdered[index.row()];
+    auto & tree = cache[index.row()].get();
 
     if (index.column() == 4 && role == Qt::CheckStateRole) {
-        tree->render = value.toBool();
+        tree.render = value.toBool();
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 2) {
         const QColor color{value.value<QColor>()};
-        tree->color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
+        tree.color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
         const QString comment{value.toString()};
-        Skeletonizer::singleton().addTreeComment(tree->treeID, comment);
+        Skeletonizer::singleton().addTreeComment(tree.treeID, comment);
     } else {
         return false;
     }
@@ -92,16 +92,16 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     if (state->skeletonState->trees.empty()) {
         return QVariant();//return invalid QVariant
     }
-    auto * node = Skeletonizer::singleton().nodesOrdered[index.row()];
+    const auto & node = cache[index.row()].get();
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
-        case 0: return static_cast<quint64>(node->nodeID);
-        case 1: return node->comment != nullptr ? node->comment->content : "";
-        case 2: return node->position.x;
-        case 3: return node->position.y;
-        case 4: return node->position.z;
-        case 5: return node->radius;
+        case 0: return static_cast<quint64>(node.nodeID);
+        case 1: return node.comment != nullptr ? node.comment->content : "";
+        case 2: return node.position.x;
+        case 3: return node.position.y;
+        case 4: return node.position.z;
+        case 5: return node.radius;
         }
     }
     return QVariant();//return invalid QVariant
@@ -111,23 +111,23 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (state->skeletonState->trees.empty() || !index.isValid() || !(role == Qt::DisplayRole || role == Qt::EditRole)) {
         return false;
     }
-    auto * const node = Skeletonizer::singleton().nodesOrdered[index.row()];
+    auto & node = cache[index.row()].get();
 
     if (index.column() == 1) {
         const QString comment{value.toString()};
-        Skeletonizer::singleton().setComment(*node, comment);
+        Skeletonizer::singleton().setComment(node, comment);
     } else if (index.column() == 2) {
-        const Coordinate position{value.toInt(), node->position.y, node->position.z};
-        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
+        const Coordinate position{value.toInt(), node.position.y, node.position.z};
+        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 3) {
-        const Coordinate position{node->position.x, value.toInt(), node->position.z};
-        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
+        const Coordinate position{node.position.x, value.toInt(), node.position.z};
+        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 4) {
-        const Coordinate position{node->position.x, node->position.y, value.toInt()};
-        Skeletonizer::singleton().editNode(0, node, node->radius, position, node->createdInMag);
+        const Coordinate position{node.position.x, node.position.y, value.toInt()};
+        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 5) {
         const float radius{value.toFloat()};
-        Skeletonizer::singleton().editNode(0, node, radius, node->position, node->createdInMag);
+        Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);
     } else {
         return false;
     }
@@ -144,44 +144,42 @@ bool TreeModel::dropMimeData(const QMimeData *, Qt::DropAction, int, int, const 
 
 void TreeModel::recreate() {
     beginResetModel();
+    cache.clear();
+    for (auto && tree : state->skeletonState->trees) {
+        cache.emplace_back(tree);
+    }
     endResetModel();
 }
 
 void NodeModel::recreate() {
     beginResetModel();
+    cache.clear();
+    for (auto && tree : state->skeletonState->trees)
+    for (auto && node : tree.nodes) {
+        cache.emplace_back(node);
+    }
     endResetModel();
 }
 
 void NodeView::mousePressEvent(QMouseEvent * event) {
     const auto index = indexAt(event->pos());
     if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
-        const auto selected = Skeletonizer::singleton().nodesOrdered[index.row()]->selected;
+        const auto selected = static_cast<NodeModel&>(*model()).cache[index.row()].get().selected;
         setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
     }
     QTreeView::mousePressEvent(event);
 }
 
-template<typename T>
-std::vector<T*> ordered();
-template<>
-std::vector<nodeListElement*> ordered() {
-    return Skeletonizer::singleton().nodesOrdered;
-}
-template<>
-std::vector<treeListElement*> ordered() {
-    return Skeletonizer::singleton().treesOrdered;
-}
-
-template<typename T>
-auto selectElems(const bool & selectionProtection) {
-    return [&selectionProtection](const QItemSelection & selected, const QItemSelection & deselected){
-        if (!selectionProtection) {
+template<typename T, typename Model>
+auto selectElems(Model & model) {
+    return [&model](const QItemSelection & selected, const QItemSelection & deselected){
+        if (!model.selectionProtection) {
             auto indices = selected.indexes();
             indices.append(deselected.indexes());
             QSet<T*> elems;
             for (const auto & modelIndex : indices) {
                 if (modelIndex.column() == 0) {
-                    elems.insert(ordered<T>()[modelIndex.row()]);
+                    elems.insert(&model.cache[modelIndex.row()].get());
                 }
             }
             Skeletonizer::singleton().toggleSelection(elems);
@@ -191,7 +189,7 @@ auto selectElems(const bool & selectionProtection) {
 
 template<typename T, typename U>
 auto updateSelection(QTreeView & view, U & model) {
-    const auto selectedIndices = blockSelection(model, ordered<T>());
+    const auto selectedIndices = blockSelection(model, model.cache);
     model.selectionProtection = true;
     view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
     model.selectionProtection = false;
@@ -264,13 +262,13 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget(parent) {
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
         const auto index = parent.row();
-        const auto droppedOnTreeID = Skeletonizer::singleton().treesOrdered[index]->treeID;
+        const auto droppedOnTreeID = treeModel.cache[index].get().treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID);
         question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text, tr(""));
     });
 
-    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel.selectionProtection));
-    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel.selectionProtection));
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel));
+    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel));
 
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
