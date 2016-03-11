@@ -166,21 +166,22 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         const float prevFOV = state->viewer->viewportXY->texture.FOV;
         float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
-        if (prevFOV == VPZOOMMIN && static_cast<uint>(state->magnification) < state->viewer->highestMag() && prevFOV < newFOV) {
-           state->viewer->updateDatasetMag(state->magnification * 2);
-           newFOV = 0.5;
-        }
-        else if(prevFOV == 0.5 && static_cast<uint>(state->magnification) > state->viewer->lowestMag() && prevFOV > newFOV) {
-            state->viewer->updateDatasetMag(state->magnification / 2);
-            newFOV = VPZOOMMIN;
-        } else {
-            const float zoomMax = static_cast<float>(state->magnification) == state->lowestAvailableMag ? VPZOOMMAX : 0.5;
-            newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
+        if (state->viewerState->datasetMagLock == false) {
+            if (prevFOV == VPZOOMMIN && static_cast<uint>(state->magnification) < state->viewer->highestMag() && prevFOV < newFOV) {
+               state->viewer->updateDatasetMag(state->magnification * 2);
+               newFOV = 0.5;
+            }
+            else if(prevFOV == 0.5 && static_cast<uint>(state->magnification) > state->viewer->lowestMag() && prevFOV > newFOV) {
+                state->viewer->updateDatasetMag(state->magnification / 2);
+                newFOV = VPZOOMMIN;
+            } else {
+                const float zoomMax = static_cast<float>(state->magnification) == state->lowestAvailableMag ? VPZOOMMAX : 0.5;
+                newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
+            }
         }
         state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
             orthoVP.texture.FOV = newFOV;
         });
-
         state->viewer->recalcTextureOffsets();
         updateOrthogonalZoomSpinBox();
         updateOrthogonalZoomSlider();
