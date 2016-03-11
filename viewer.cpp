@@ -136,6 +136,7 @@ void Viewer::setMagnificationLock(const bool locked) {
             });
         }
     }
+    recalcTextureOffsets();
     emit magnificationLockChanged(locked);
 }
 
@@ -853,7 +854,6 @@ bool Viewer::updateDatasetMag(const uint mag) {
     oc_reslice_notify_visible();
 
     loader_notify();//start loading
-
     emit zoomChanged();
     return true;
 }
