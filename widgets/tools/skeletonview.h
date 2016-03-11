@@ -12,6 +12,8 @@
 #include <QTreeView>
 #include <QVBoxLayout>
 
+#include <functional>
+
 template<typename ConcreteModel>
 class AbstractSkeletonModel : public QAbstractListModel {
 public:

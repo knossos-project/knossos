@@ -7,6 +7,7 @@
 #include "skeleton/tree.h"
 
 #include <QCheckBox>
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
 
