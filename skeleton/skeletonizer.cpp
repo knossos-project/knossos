@@ -801,8 +801,6 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         state->viewer->skeletonizer->setActiveNode(newActiveNode);
     }
 
-    state->skeletonState->totalNodeElements--;
-
     Session::singleton().unsavedChanges = true;
 
     return true;
@@ -837,7 +835,6 @@ bool Skeletonizer::delTree(int treeID) {
 
     skeletonState.trees.erase(treeToDel->iterator);
     skeletonState.treesByID.erase(treeID);
-    --skeletonState.treeElements;
 
     //no references to tree left
     emit treeRemovedSignal(treeID);//updates tools
@@ -983,9 +980,6 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const 
         qDebug() << tr("There exists no tree with the provided ID %1!").arg(treeID);
         return boost::none;
     }
-
-    // One node more in all trees
-    ++state->skeletonState->totalNodeElements;
 
     if (nodeID == 0) {
         nodeID = findAvailableNodeID();
@@ -1176,8 +1170,6 @@ treeListElement * Skeletonizer::addTreeListElement(int treeID, color4F color) {
     treeListElement & newTree = skeletonState.trees.back();
     newTree.iterator = std::prev(std::end(skeletonState.trees));
     state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
-    ++state->skeletonState->treeElements;
-
 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
@@ -1217,7 +1209,7 @@ treeListElement * Skeletonizer::getTreeWithRelationalID(treeListElement * curren
     }
 
     treeListElement * treeFound = nullptr;
-    int extremalIdDistance = skeletonState.treeElements;
+    int extremalIdDistance = skeletonState.trees.size();
     for (auto & tree : skeletonState.trees) {
         if (func(tree.treeID, currentTree->treeID)) {
             const auto distance = std::max(currentTree->treeID, tree.treeID) - std::min(currentTree->treeID, tree.treeID);

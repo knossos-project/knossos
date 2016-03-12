@@ -1986,7 +1986,7 @@ std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint ce
 
     //4 elems per node: hit_count(always 1), min, max and 1 name
     //generous amount of addional space for non-node-glloadname-calls
-    std::vector<GLuint> selectionBuffer(state->skeletonState->totalNodeElements * 4 + 2048);
+    std::vector<GLuint> selectionBuffer(state->skeletonState->nodesByNodeID.size() * 4 + 2048);
     glSelectBuffer(selectionBuffer.size(), selectionBuffer.data());
 
     state->viewerState->selectModeFlag = true;

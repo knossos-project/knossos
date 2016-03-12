@@ -647,7 +647,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
     bool mergeSkeleton = mergeAll;
     bool mergeSegmentation = mergeAll;
-    if (!mergeAll && state->skeletonState->treeElements > 0) {
+    if (!mergeAll && !state->skeletonState->trees.empty()) {
         const auto text = tr("Which Action do you like to choose?<ul>")
             + tr("<li>Merge the new Skeleton into the current one</li>")
             + tr("<li>Override the current Skeleton</li>")
@@ -933,7 +933,7 @@ void MainWindow::toggleSegments() {
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    if(Session::singleton().unsavedChanges || state->skeletonState->treeElements > 0) {
+    if(Session::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);

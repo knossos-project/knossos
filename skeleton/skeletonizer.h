@@ -58,8 +58,6 @@ struct SkeletonState {
     std::list<treeListElement> trees;
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
-    int treeElements{0};
-    int totalNodeElements{0};
     int greatestTreeID{0};
     std::uint64_t greatestNodeID{0};
 
