@@ -76,6 +76,7 @@ class SkeletonView : public QWidget {
     QSortFilterProxyModel treeSortAndCommentFilterProxy;
     int treeSortSectionIndex{-1};
     QTreeView treeView;
+    QLabel treeCountLabel;
 
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
@@ -87,10 +88,7 @@ class SkeletonView : public QWidget {
     QSortFilterProxyModel nodeSortAndCommentFilterProxy;
     int nodeSortSectionIndex{-1};
     NodeView nodeView;
-
-    QHBoxLayout bottomHLayout;
-    QLabel treeCountLabel{"trees"};
-    QLabel nodeCountLabel{"nodes"};
+    QLabel nodeCountLabel;
 
     QMenu treeContextMenu{&treeView};
     QMenu nodeContextMenu{&nodeView};

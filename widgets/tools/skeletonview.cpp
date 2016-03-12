@@ -262,6 +262,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     treeOptionsLayout.addWidget(&treeRegex);
     treeLayout.addLayout(&treeOptionsLayout);
     treeLayout.addWidget(&treeView);
+    treeLayout.addWidget(&treeCountLabel);
     treeDummyWidget.setLayout(&treeLayout);
     splitter.addWidget(&treeDummyWidget);
 
@@ -270,21 +271,27 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     nodeOptionsLayout.addWidget(&nodeRegex);
     nodeLayout.addLayout(&nodeOptionsLayout);
     nodeLayout.addWidget(&nodeView);
+    nodeLayout.addWidget(&nodeCountLabel);
     nodeDummyWidget.setLayout(&nodeLayout);
     splitter.addWidget(&nodeDummyWidget);
 
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
-    bottomHLayout.addWidget(&treeCountLabel);
-    bottomHLayout.addWidget(&nodeCountLabel);
     mainLayout.addWidget(&splitter);
-    mainLayout.addLayout(&bottomHLayout);
     setLayout(&mainLayout);
 
     static auto updateTreeSelection = [this](){
         updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);
+        const auto all = state->skeletonState->trees.size();
+        const auto shown = static_cast<std::size_t>(treeView.model()->rowCount());
+        const auto selected = state->skeletonState->selectedTrees.size();
+        treeCountLabel.setText(tr("%1 trees").arg(all) + (all != shown ? tr(", %2 shown").arg(shown) : "") + (selected != 0 ? tr(", %3 selected").arg(selected) : ""));
     };
     static auto updateNodeSelection = [this](){
         updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
+        const auto all = state->skeletonState->nodesByNodeID.size();
+        const auto shown = static_cast<std::size_t>(nodeView.model()->rowCount());
+        const auto selected = state->skeletonState->selectedNodes.size();
+        nodeCountLabel.setText(tr("%1 nodes").arg(all) + (all != shown ? tr(", %2 shown").arg(shown) : "") + (selected != 0 ? tr(", %3 selected").arg(selected) : ""));
     };
     static auto treeRecreate = [&, this](){
         treeView.selectionModel()->reset();
