@@ -145,6 +145,11 @@ public:
 };
 
 template<typename ComponentType, typename CoordinateDerived>
+constexpr CoordinateDerived operator*(const ComponentType scalar, const CoordinateBase<ComponentType, CoordinateDerived> & coord) {
+    return static_cast<CoordinateDerived>(coord * scalar);
+}
+
+template<typename ComponentType, typename CoordinateDerived>
 QDebug operator<<(QDebug stream, const CoordinateBase<ComponentType, CoordinateDerived> & coord) {
     return stream << coord.x << coord.y << coord.z;
 }
