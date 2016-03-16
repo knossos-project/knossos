@@ -248,10 +248,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     Dataset info;
     Dataset::CubeType raw_compression;
-    if (datasetUrl.toString().contains("/ocp/ca/")) {
-        info = Dataset::parseOpenConnectomeJson(datasetUrl, download.second);
+    if (path.toString().contains("/ocp/ca/")) {
+        info = Dataset::parseOpenConnectomeJson(path, download.second);
     } else {
-        info = Dataset::fromLegacyConf(datasetUrl, download.second);
+        info = Dataset::fromLegacyConf(path, download.second);
         try {
             info.checkMagnifications();
         } catch (std::exception &) {
