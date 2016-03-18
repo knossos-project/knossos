@@ -213,7 +213,6 @@ public:
     int gpucubeedge = 64;
     bool gpuRendering = false;
 
-    floatCoordinate v1, v2, v3;
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     ViewportArb *viewportArb;
     void zoom(const float factor);

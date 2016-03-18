@@ -60,8 +60,6 @@ Viewer::Viewer() {
 
     state->viewerState->renderInterval = FAST;
 
-    resetRotation();
-
     state->viewerState->movementAreaFactor = 80;
     state->viewerState->showOverlay = true;
     state->viewerState->autoTracingMode = navigationMode::recenter;
@@ -897,12 +895,9 @@ void Viewer::run() {
 
     // for arbitrary viewport orientation
     if(rotation.alpha != 0) {
-        rotateAndNormalize(v1, rotation.axis, rotation.alpha);
-        rotateAndNormalize(v2, rotation.axis, rotation.alpha);
-        rotateAndNormalize(v3, rotation.axis, rotation.alpha);
-        viewportArb->v1 = v1;
-        viewportArb->v2 = v2;
-        viewportArb->n = v3;
+        rotateAndNormalize(viewportArb->v1, rotation.axis, rotation.alpha);
+        rotateAndNormalize(viewportArb->v2, rotation.axis, rotation.alpha);
+        rotateAndNormalize(viewportArb->n, rotation.axis, rotation.alpha);
         rotation = Rotation();
         if (viewportArb->hasCursor) {
             viewportArb->sendCursorPosition();
@@ -1356,12 +1351,9 @@ void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
 void Viewer::resetRotation() {
     alphaCache = 0;
     rotation = Rotation();
-    v1 = {1, 0, 0};
-    v2 = {0, 1, 0};
-    v3 = {0, 0, 1};
-    viewportArb->v1 = v1;
-    viewportArb->v2 = v2;
-    viewportArb->n = v3;
+    viewportArb->v1 = {1, 0, 0};
+    viewportArb->v2 = {0, 1, 0};
+    viewportArb->n = {0, 0, 1};
     viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
     recalcTextureOffsets();
 }
