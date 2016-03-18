@@ -93,9 +93,9 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
         switch (index.column()) {
         case 0: return static_cast<quint64>(node.nodeID);
         case 1: return node.comment != nullptr ? node.comment->content : "";
-        case 2: return node.position.x;
-        case 3: return node.position.y;
-        case 4: return node.position.z;
+        case 2: return node.position.x + 1;
+        case 3: return node.position.y + 1;
+        case 4: return node.position.z + 1;
         case 5: return node.radius;
         }
     }
@@ -112,13 +112,13 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
         const QString comment{value.toString()};
         Skeletonizer::singleton().setComment(node, comment);
     } else if (index.column() == 2) {
-        const Coordinate position{value.toInt(), node.position.y, node.position.z};
+        const Coordinate position{value.toInt() - 1, node.position.y, node.position.z};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 3) {
-        const Coordinate position{node.position.x, value.toInt(), node.position.z};
+        const Coordinate position{node.position.x, value.toInt() - 1, node.position.z};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 4) {
-        const Coordinate position{node.position.x, node.position.y, value.toInt()};
+        const Coordinate position{node.position.x, node.position.y, value.toInt() - 1};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
     } else if (index.column() == 5) {
         const float radius{value.toFloat()};
