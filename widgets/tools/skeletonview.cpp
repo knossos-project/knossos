@@ -265,6 +265,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
     treeDummyWidget.setLayout(&treeLayout);
+    splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&treeDummyWidget);
 
     nodeOptionsLayout.addWidget(&displayModeCombo);
