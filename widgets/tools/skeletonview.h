@@ -28,8 +28,8 @@ public:
 class TreeModel : public AbstractSkeletonModel<TreeModel> {
     Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
-    const std::vector<QString> header = {"Tree ID", "Comment", ""/*color*/, "Node Count", "Render"};
-    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, 0, Qt::ItemIsUserCheckable};
+    const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment"};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
@@ -42,7 +42,7 @@ signals:
 
 class NodeModel : public AbstractSkeletonModel<NodeModel> {
     friend class AbstractSkeletonModel<NodeModel>;
-    const std::vector<QString> header = {"Node ID", "Comment", "x", "y", "z", "Radius"};
+    const std::vector<QString> header = {"ID", "x", "y", "z", "Radius", "Comment"};
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;

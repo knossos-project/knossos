@@ -49,15 +49,15 @@ template class AbstractSkeletonModel<TreeModel>;//please clang, should actually 
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
 
-    if (index.column() == 2 && role == Qt::BackgroundRole) {
+    if (index.column() == 1 && role == Qt::BackgroundRole) {
         return QColor(tree.color.r * 255, tree.color.g * 255, tree.color.b * 255, tree.color.a * 255);
-    } else if (index.column() == 4 && role == Qt::CheckStateRole) {
+    } else if (index.column() == 2 && role == Qt::CheckStateRole) {
         return tree.render ? Qt::Checked : Qt::Unchecked;
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
         case 0: return tree.treeID;
-        case 1: return tree.comment;
         case 3: return static_cast<quint64>(tree.nodes.size());
+        case 4: return tree.comment;
         }
     }
     return QVariant();//return invalid QVariant
@@ -69,12 +69,12 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     }
     auto & tree = cache[index.row()].get();
 
-    if (index.column() == 4 && role == Qt::CheckStateRole) {
+    if (index.column() == 2 && role == Qt::CheckStateRole) {
         tree.render = value.toBool();
-    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 2) {
+    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 0) {
         const QColor color{value.value<QColor>()};
         tree.color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
-    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
+    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
         const QString comment{value.toString()};
         Skeletonizer::singleton().addTreeComment(tree.treeID, comment);
     } else {
@@ -92,11 +92,11 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
         case 0: return static_cast<quint64>(node.nodeID);
-        case 1: return node.comment != nullptr ? node.comment->content : "";
-        case 2: return node.position.x + 1;
-        case 3: return node.position.y + 1;
-        case 4: return node.position.z + 1;
-        case 5: return node.radius;
+        case 1: return node.position.x + 1;
+        case 2: return node.position.y + 1;
+        case 3: return node.position.z + 1;
+        case 4: return node.radius;
+        case 5: return node.comment != nullptr ? node.comment->content : "";
         }
     }
     return QVariant();//return invalid QVariant
@@ -109,20 +109,20 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     auto & node = cache[index.row()].get();
 
     if (index.column() == 1) {
-        const QString comment{value.toString()};
-        Skeletonizer::singleton().setComment(node, comment);
-    } else if (index.column() == 2) {
         const Coordinate position{value.toInt() - 1, node.position.y, node.position.z};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
-    } else if (index.column() == 3) {
+    } else if (index.column() == 2) {
         const Coordinate position{node.position.x, value.toInt() - 1, node.position.z};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
-    } else if (index.column() == 4) {
+    } else if (index.column() == 3) {
         const Coordinate position{node.position.x, node.position.y, value.toInt() - 1};
         Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
-    } else if (index.column() == 5) {
+    } else if (index.column() == 4) {
         const float radius{value.toFloat()};
         Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);
+    } else if (index.column() == 5) {
+        const QString comment{value.toString()};
+        Skeletonizer::singleton().setComment(node, comment);
     } else {
         return false;
     }
