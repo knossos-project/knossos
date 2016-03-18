@@ -237,6 +237,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
         table.setUniformRowHeights(true);//perf hint from doc
+        table.setRootIsDecorated(false);//remove padding to the left of each cell’s content
         table.setSelectionMode(QAbstractItemView::ExtendedSelection);
         table.setSortingEnabled(true);
         table.sortByColumn(sortIndex = 0, Qt::SortOrder::AscendingOrder);
