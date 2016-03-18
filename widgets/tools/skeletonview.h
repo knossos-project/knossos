@@ -1,6 +1,8 @@
 #ifndef SKELETONVIEW_H
 #define SKELETONVIEW_H
 
+#include "UserOrientableSplitter.h"
+
 #include <QAbstractListModel>
 #include <QCheckBox>
 #include <QComboBox>
@@ -8,7 +10,6 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QSortFilterProxyModel>
-#include <QSplitter>
 #include <QTreeView>
 #include <QVBoxLayout>
 
@@ -65,7 +66,7 @@ class SkeletonView : public QWidget {
     friend class AnnotationWidget;
 
     QVBoxLayout mainLayout;
-    QSplitter splitter;
+    UserOrientableSplitter splitter;
 
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;

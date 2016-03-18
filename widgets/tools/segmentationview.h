@@ -2,6 +2,7 @@
 #define SEGMENTATIONVIEW_H
 
 #include "segmentation/segmentation.h"
+#include "UserOrientableSplitter.h"
 
 #include <QAbstractListModel>
 #include <QButtonGroup>
@@ -12,7 +13,6 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QSortFilterProxyModel>
-#include <QSplitter>
 #include <QStyledItemDelegate>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -96,7 +96,7 @@ Q_OBJECT
 
     CategoryDelegate categoryDelegate;
 
-    QSplitter splitter;
+    UserOrientableSplitter splitter;
     QTreeView touchedObjsTable;
     QTreeView objectsTable;
     int objSortSectionIndex;
