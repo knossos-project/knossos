@@ -54,30 +54,6 @@ float degToRad(float deg) {
     return ((deg / 180.) * boost::math::constants::pi<float>());
 }
 
-void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
-    // axis must be a normalized vector
-    float matrix[3][3];
-    const auto c = std::cos(angle);
-    const auto s = std::sin(angle);
-    matrix[0][0] = axis.x*axis.x*(1 - c) + c;
-    matrix[0][1] = axis.x*axis.y*(1 - c) - axis.z*s;
-    matrix[0][2] = axis.x*axis.z*(1 - c) + axis.y*s;
-
-    matrix[1][0] = axis.y*axis.x*(1 - c) + axis.z*s;
-    matrix[1][1] = axis.y*axis.y*(1 - c) + c;
-    matrix[1][2] = axis.y*axis.z*(1 - c) - axis.x*s;
-
-    matrix[2][0] = axis.x*axis.z*(1 - c) - axis.y*s;
-    matrix[2][1] = axis.y*axis.z*(1 - c) + axis.x*s;
-    matrix[2][2] = axis.z*axis.z*(1 - c) + c;
-
-    const auto x = matrix[0][0]*v.x + matrix[0][1]*v.y + matrix[0][2]*v.z;
-    const auto y = matrix[1][0]*v.x + matrix[1][1]*v.y + matrix[1][2]*v.z;
-    const auto z = matrix[2][0]*v.x + matrix[2][1]*v.y + matrix[2][2]*v.z;
-    v = {x, y, z};
-    v.normalize();
-}
-
 bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
                            const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
                            floatCoordinate & intersectionPoint) {

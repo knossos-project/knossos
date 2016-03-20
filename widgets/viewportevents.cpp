@@ -521,13 +521,13 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L) {
-        const float angle = ctrl ? -boost::math::constants::pi<float>()/180 : boost::math::constants::pi<float>()/180;
+        const float angle = ctrl ? -1: 1;
         switch(event->key()) {
         case Qt::Key_K:
-            emit rotationSignal({0., 0., 1.}, angle);
+            emit rotationSignal(QQuaternion::fromAxisAndAngle(0., 0., 1., angle));
             break;
         case Qt::Key_L:
-            emit rotationSignal({0., 1., 0.}, angle);
+            emit rotationSignal(QQuaternion::fromAxisAndAngle(0., 1., 0., angle));
             break;
         }
     } else if (ctrl && event->key() == Qt::Key_0) {

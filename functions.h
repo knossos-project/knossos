@@ -25,8 +25,6 @@ int sgn(float number);
 float radToDeg(float rad);
 float degToRad(float deg);
 
-void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle);
-
 bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
                            const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
                            floatCoordinate & intersectionPoint);

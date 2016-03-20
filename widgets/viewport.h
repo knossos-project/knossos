@@ -262,7 +262,7 @@ public:
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
 
-    void rotationSignal(const floatCoordinate & axis, const float angle);
+    void rotationSignal(const QQuaternion &);
     void pasteCoordinateSignal();
 
     void compressionRatioToggled();

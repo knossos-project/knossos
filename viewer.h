@@ -38,6 +38,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QLineEdit>
+#include <QQuaternion>
 
 #define SLOW 1000
 #define FAST 10
@@ -186,7 +187,7 @@ class Viewer : public QObject {
 private:
     QElapsedTimer baseTime;
     float alphaCache;
-    Rotation rotation;
+    QQuaternion rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;
@@ -248,7 +249,7 @@ public slots:
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
     bool vpGenerateTexture(ViewportOrtho & vp);
-    void setRotation(const floatCoordinate &axis, const float angle);
+    void setRotation(const QQuaternion & quaternion);
     void resetRotation();
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();

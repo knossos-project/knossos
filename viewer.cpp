@@ -37,9 +37,9 @@
 #include <QDesktopWidget>
 #include <qopengl.h>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QVector3D>
 
 #include <fstream>
-
 #include <cmath>
 
 Viewer::Viewer() {
@@ -894,11 +894,14 @@ void Viewer::run() {
     // have been processed, we go into an idle state, in which we wait for events.
 
     // for arbitrary viewport orientation
-    if(rotation.alpha != 0) {
-        rotateAndNormalize(viewportArb->v1, rotation.axis, rotation.alpha);
-        rotateAndNormalize(viewportArb->v2, rotation.axis, rotation.alpha);
-        rotateAndNormalize(viewportArb->n, rotation.axis, rotation.alpha);
-        rotation = Rotation();
+    if(rotation.scalar() != 0) {
+        QVector3D newV1 = rotation.rotatedVector({viewportArb->v1.x, viewportArb->v1.y, viewportArb->v1.z});
+        QVector3D newV2 = rotation.rotatedVector({viewportArb->v2.x, viewportArb->v2.y, viewportArb->v2.z});
+        QVector3D newN = rotation.rotatedVector({viewportArb->n.x, viewportArb->n.y, viewportArb->n.z});
+        viewportArb->v1 = {newV1.x(), newV1.y(), newV1.z()};
+        viewportArb->v2 = {newV2.x(), newV2.y(), newV2.z()};
+        viewportArb->n = {newN.x(), newN.y(), newN.z()};
+        rotation = QQuaternion(0, 0, 0, 0);
         if (viewportArb->hasCursor) {
             viewportArb->sendCursorPosition();
         }
@@ -1340,9 +1343,12 @@ void Viewer::rewire() {
     // --- end widget signals
 }
 
-void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
-    alphaCache += angle; // angles are added up here until they are processed in the thread loop
-    rotation = Rotation(axis, alphaCache);
+void Viewer::setRotation(const QQuaternion & quaternion) {
+    float anglePart = 0;
+    QVector3D axis;
+    quaternion.getAxisAndAngle(&axis, &anglePart);
+    alphaCache += anglePart; // angles are added up here until they are processed in the thread loop
+    rotation = QQuaternion::fromAxisAndAngle(axis, alphaCache);
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
         vpOrtho.dcResliceNecessary = vpOrtho.ocResliceNecessary = true;
     });
@@ -1350,7 +1356,7 @@ void Viewer::setRotation(const floatCoordinate & axis, const float angle) {
 
 void Viewer::resetRotation() {
     alphaCache = 0;
-    rotation = Rotation();
+    rotation = QQuaternion(0, 0, 0, 0);
     viewportArb->v1 = {1, 0, 0};
     viewportArb->v2 = {0, 1, 0};
     viewportArb->n = {0, 0, 1};

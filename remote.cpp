@@ -27,6 +27,9 @@
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
+#include <QQuaternion>
+#include <QVector3D>
+
 #include <algorithm>
 #include <cmath>
 
@@ -115,7 +118,7 @@ void Remote::remoteWalk() {
     * singleMove to match mag, not the length of the movement on one axis.
     *
     */
-    Rotation rotation; // initially no rotation
+    QQuaternion quaternion; // initially no rotation
     if (rotate) {
         std::deque<floatCoordinate> lastRecenterings = getLastNodes();
         if (!lastRecenterings.empty()) {
@@ -127,11 +130,8 @@ void Remote::remoteWalk() {
 
             const auto target = state->viewerState->currentPosition + recenteringOffset;
             floatCoordinate delta = target - avg;
-            delta.normalize();
-            float scalar = state->viewer->window->viewportOrtho(activeVP)->n.dot(delta);
-            rotation.alpha = std::acos(std::min(1.f, std::max(-1.f, scalar)));
-            rotation.axis = state->viewer->window->viewportOrtho(activeVP)->n.cross(delta);
-            rotation.axis.normalize();
+            const auto normal = state->viewer->window->viewportOrtho(activeVP)->n;
+            quaternion = QQuaternion::rotationTo({normal.x, normal.y, normal.z}, {delta.x, delta.y, delta.z});
         }
     }
 
@@ -139,14 +139,17 @@ void Remote::remoteWalk() {
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
     const floatCoordinate singleMove = recenteringOffset / totalMoves;
 
+    float angle = 0;
+    QVector3D axis;
     if (rotate) {
-        auto anglesPerStep = rotation.alpha / totalMoves;
-        state->viewer->setRotation(rotation.axis, anglesPerStep);
+        quaternion.getAxisAndAngle(&axis, &angle);
+        quaternion = QQuaternion::fromAxisAndAngle(axis, angle / totalMoves);
+        state->viewer->setRotation(quaternion);
     }
 
     state->viewer->userMove(singleMove);
     recenteringOffset -= singleMove;
-    if (std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough && rotation.alpha < goodEnough) {
+    if (std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough && angle < goodEnough) {
         state->viewer->userMoveRound();
         timer.stop();
     } else {
