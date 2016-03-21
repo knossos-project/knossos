@@ -647,7 +647,11 @@ void ViewportOrtho::renderViewportFast() {
     const float gpucubeedge = state->viewer->gpucubeedge;
     const auto fov = (state->M - 1) * state->cubeEdgeLength / (arb ? std::sqrt(2) : 1);//remove cpu overlap
     const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
-    const auto cpos = state->viewerState->currentPosition;
+    floatCoordinate cpos = state->viewerState->currentPosition;
+    const auto scale = state->scale.z / state->scale.x;
+    if (arb) {
+        cpos.z *= scale;
+    }
 
     std::vector<std::array<GLfloat, 3>> triangleVertices;
     triangleVertices.reserve(6);
@@ -660,7 +664,7 @@ void ViewportOrtho::renderViewportFast() {
     for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
     for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
     for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
-        const float frame = (xy ? cpos.z : xz ? cpos.y : cpos.x) % state->viewer->gpucubeedge;
+        const float frame = std::fmod(xy ? cpos.z : xz ? cpos.y : cpos.x, state->viewer->gpucubeedge);
         const auto texR = (0.5f + frame) / gpucubeedge;
 
         if (xy) {
@@ -683,13 +687,13 @@ void ViewportOrtho::renderViewportFast() {
 
     QMatrix4x4 viewMatrix;
     QMatrix4x4 projectionMatrix;
-    projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), 0, gpucubeedge);
+    projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), -scale * gpucubeedge, scale * gpucubeedge);
 
     auto qvec = [](auto coord){
         return QVector3D(coord.x, coord.y, coord.z);
     };
     //z component of vp vectors specifies portion of scale to apply
-    const auto zScaleIncrement = state->scale.z / state->scale.x - 1;
+    const auto zScaleIncrement = !arb ? scale - 1 : 0;
     const float hfov = fov / (1 + zScaleIncrement * std::abs(v1.z));
     const float vfov = fov / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
@@ -783,7 +787,7 @@ void ViewportOrtho::renderViewportFast() {
                         triangleVertices.clear();
                         textureVertices.clear();
                         for (const auto & vertex : cube.vertices) {
-                            triangleVertices.push_back({{vertex.x, vertex.y, vertex.z}});
+                            triangleVertices.push_back({{vertex.x, vertex.y, vertex.z * scale}});
                             const auto depthOffset = static_cast<float>(vertex.z - pos.z * gpucubeedge);
                             const auto texR = (0.5f + depthOffset) / gpucubeedge;
                             textureVertices.push_back({{static_cast<float>(vertex.x - pos.x * gpucubeedge) / gpucubeedge
