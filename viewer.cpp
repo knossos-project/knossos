@@ -527,6 +527,7 @@ void Viewer::arbCubes(ViewportArb & vp) {
     };
 
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
+    const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
     for (auto & layer : layers) {
         layer.pendingArbCubes.clear();
@@ -555,7 +556,7 @@ void Viewer::arbCubes(ViewportArb & vp) {
         std::vector<floatCoordinate> points;
         auto addPoints = [&](const floatCoordinate & plane, const floatCoordinate & axis){
             floatCoordinate point;
-            if (intersectLineAndPlane(vp.n, root, plane, axis, point)) {
+            if (intersectLineAndPlane(normal, root, plane, axis, point)) {
                 if (pointInCube(currentGPUDc, point)) {
                     points.emplace_back(point);
                 }
@@ -577,7 +578,6 @@ void Viewer::arbCubes(ViewportArb & vp) {
         if (!points.empty()) {
             const auto center = std::accumulate(std::begin(points), std::end(points), floatCoordinate{}) / points.size();
             const auto first = points.front() - center;
-            const auto normal = vp.n;
             std::sort(std::begin(points), std::end(points), [=](const floatCoordinate & lhs, const floatCoordinate & rhs){
                 // http://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors#16544330
                 const auto line0 = lhs - center;
