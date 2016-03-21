@@ -57,8 +57,8 @@ float degToRad(float deg) {
 void rotateAndNormalize(floatCoordinate &v, floatCoordinate axis, float angle) {
     // axis must be a normalized vector
     float matrix[3][3];
-    const auto c = cosf(angle);
-    const auto s = sinf(angle);
+    const auto c = std::cos(angle);
+    const auto s = std::sin(angle);
     matrix[0][0] = axis.x*axis.x*(1 - c) + c;
     matrix[0][1] = axis.x*axis.y*(1 - c) - axis.z*s;
     matrix[0][2] = axis.x*axis.z*(1 - c) + axis.y*s;
