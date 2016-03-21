@@ -271,6 +271,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     nodeOptionsLayout.addWidget(&displayModeCombo);
     nodeOptionsLayout.addWidget(&nodeCommentFilter);
     nodeOptionsLayout.addWidget(&nodeRegex);
+    nodeLayout.addWidget(&activeNodeLabel);
     nodeLayout.addLayout(&nodeOptionsLayout);
     nodeLayout.addWidget(&nodeView);
     nodeLayout.addWidget(&nodeCountLabel);
@@ -289,6 +290,15 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         treeCountLabel.setText(tr("%1 trees").arg(all) + (all != shown ? tr(", %2 shown").arg(shown) : "") + (selected != 0 ? tr(", %3 selected").arg(selected) : ""));
     };
     static auto updateNodeSelection = [this](){
+        auto text = tr("Active Node: ");
+        if (state->skeletonState->activeNode != nullptr) {
+            const auto & node = *state->skeletonState->activeNode;
+             text += tr("%1 (%2, %3, %4), %5").arg(node.nodeID).arg(node.position.x).arg(node.position.y).arg(node.position.z).arg(node.radius);
+             if (node.comment != nullptr) {
+                 text += tr(", »%1«").arg(node.comment->content);
+             }
+        }
+        activeNodeLabel.setText(text);
         updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
         const auto all = state->skeletonState->nodesByNodeID.size();
         const auto shown = static_cast<std::size_t>(nodeView.model()->rowCount());

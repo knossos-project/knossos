@@ -81,6 +81,7 @@ class SkeletonView : public QWidget {
 
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
+    QLabel activeNodeLabel;
     QHBoxLayout nodeOptionsLayout;
     QComboBox displayModeCombo;
     QLineEdit nodeCommentFilter;
