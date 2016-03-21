@@ -25,10 +25,8 @@ set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
+set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_AUTOSTATICPLUGINS ON)#https://github.com/Alexpux/MINGW-packages/issues/577
-endif()
 
 find_package(Boost 1.50 REQUIRED)
 find_package(OpenGL REQUIRED)

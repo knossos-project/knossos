@@ -45,10 +45,11 @@
 #include <iostream>
 #include <fstream>
 
-#if defined(Q_OS_WIN) && defined(QT_STATIC)
-#include <QtPlugin>
-Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
-#endif
+// obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
+//#if defined(Q_OS_WIN) && defined(QT_STATIC)
+//#include <QtPlugin>
+//Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
+//#endif
 
 class Splash {
     QSplashScreen screen;
