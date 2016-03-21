@@ -753,12 +753,12 @@ void ViewportOrtho::renderViewportFast() {
             };
             if (!arb) {
                 const float halfsc = fov * 0.5f / gpucubeedge;
-                const float offsetx = state->viewerState->currentPosition.x / gpucubeedge - halfsc * !zy;
-                const float offsety = state->viewerState->currentPosition.y / gpucubeedge - halfsc * !xz;
-                const float offsetz = state->viewerState->currentPosition.z / gpucubeedge - halfsc * !xy;
-                const float startx = 0 * state->viewerState->currentPosition.x / gpucubeedge;
-                const float starty = 0 * state->viewerState->currentPosition.y / gpucubeedge;
-                const float startz = 0 * state->viewerState->currentPosition.z / gpucubeedge;
+                const float offsetx = cpos.x / gpucubeedge - halfsc * !zy;
+                const float offsety = cpos.y / gpucubeedge - halfsc * !xz;
+                const float offsetz = cpos.z / gpucubeedge - halfsc * !xy;
+                const float startx = 0 * cpos.x / gpucubeedge;
+                const float starty = 0 * cpos.y / gpucubeedge;
+                const float startz = 0 * cpos.z / gpucubeedge;
                 const float endx = startx + (zy ? 1 : gpusupercube);
                 const float endy = starty + (xz ? 1 : gpusupercube);
                 const float endz = startz + (xy ? 1 : gpusupercube);
