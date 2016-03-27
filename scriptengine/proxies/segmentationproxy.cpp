@@ -7,8 +7,9 @@ void SegmentationProxy::subobjectFromId(const quint64 subObjId, const QList<int>
 }
 
 quint64 SegmentationProxy::largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord) {
-    return Segmentation::singleton().largestObjectContainingSubobject(
-                Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord)));
+    const auto & subobject = Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord));
+    const auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
+    return Segmentation::singleton().objects[objIndex].id;
 }
 
 void SegmentationProxy::changeComment(const quint64 objIndex, const QString & comment) {
