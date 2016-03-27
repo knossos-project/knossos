@@ -53,8 +53,6 @@ public:
     QStringList getRecentPathItems();
 
 signals:
-    void clearSkeletonSignalGUI();
-    void clearSkeletonSignalNoGUI();
     void updateDatasetCompression();
     void datasetChanged(bool showOverlays);
     void datasetSwitchZoomDefaults();

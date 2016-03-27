@@ -237,8 +237,7 @@ public slots:
 
     /* edit skeleton menu*/
     void setWorkMode(AnnotationMode workMode);
-    void clearSkeletonSlotNoGUI();
-    void clearSkeletonSlotGUI();
+    void clearSkeletonSlot();
 
     /* view menu */
     void dragDatasetSlot();

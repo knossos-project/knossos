@@ -510,7 +510,7 @@ void MainWindow::createMenus() {
     //skeleton
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
-    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
+    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
     //proof reading mode
@@ -932,7 +932,7 @@ void MainWindow::toggleSegments() {
     }
 }
 
-void MainWindow::clearSkeletonSlotGUI() {
+void MainWindow::clearSkeletonSlot() {
     if(Session::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -943,14 +943,10 @@ void MainWindow::clearSkeletonSlotGUI() {
         question.addButton(QMessageBox::No);
         question.exec();
         if(question.clickedButton() == ok) {
-            clearSkeletonSlotNoGUI();
+            Skeletonizer::singleton().clearSkeleton();
+            updateTitlebar();
         }
     }
-}
-
-void MainWindow::clearSkeletonSlotNoGUI() {
-    Skeletonizer::singleton().clearSkeleton();
-    updateTitlebar();
 }
 
 /* view menu functionality */
