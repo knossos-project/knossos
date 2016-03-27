@@ -35,6 +35,25 @@ QList<quint64> SegmentationProxy::objectIds() {
     return objectIds;
 }
 
+quint64 SegmentationProxy::objectIdxFromId(const quint64 objId) {
+    const auto it = Segmentation::singleton().objectIdToIndex.find(objId);
+    if (it == std::end(Segmentation::singleton().objectIdToIndex)) {
+        return {};
+    }
+    const auto objIndex = it->second;
+
+    return objIndex;
+}
+
+QList<quint64> SegmentationProxy::subobjectIdsOfObjectByIndex(const quint64 objIndex) {
+    QList<quint64> subobjectIds;
+    const auto & obj = Segmentation::singleton().objects[objIndex];
+    for (const auto & elem : obj.subobjects) {
+        subobjectIds.append(elem.get().id);
+    }
+    return subobjectIds;
+}
+
 QList<quint64> SegmentationProxy::subobjectIdsOfObject(const quint64 objId) {
     const auto it = Segmentation::singleton().objectIdToIndex.find(objId);
     if (it == std::end(Segmentation::singleton().objectIdToIndex)) {

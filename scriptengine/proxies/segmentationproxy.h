@@ -15,6 +15,8 @@ public slots:
     bool isRenderAllObjs();
     QList<quint64> objectIds();
     QList<quint64> subobjectIdsOfObject(const quint64 objId);
+    QList<quint64> subobjectIdsOfObjectByIndex(const quint64 objIndex);
+    quint64 objectIdxFromId(const quint64 objId);
     QList<quint64> getAllObjectIdx();
     void selectObject(const quint64 objIdx);
     void unselectObject(const quint64 objectIndex);
