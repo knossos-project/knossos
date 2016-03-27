@@ -824,6 +824,7 @@ try {
         errorBox.setText("File save failed");
         errorBox.setInformativeText(filename);
         errorBox.setDetailedText(error.what());
+        errorBox.exec();
     }
 }
 
