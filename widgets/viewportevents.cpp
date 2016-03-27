@@ -306,7 +306,7 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
 }
 
 void ViewportOrtho::handleMouseMotionLeftHold(const QMouseEvent *event) {
-    if (event->modifiers() == Qt::NoModifier && state->viewerState->clickReaction == ON_CLICK_DRAG) {
+    if (event->modifiers() == Qt::NoModifier) {
         state->viewer->userMove(handleMovement(event->pos()), USERMOVE_HORIZONTAL, n);
     }
     ViewportBase::handleMouseMotionLeftHold(event);

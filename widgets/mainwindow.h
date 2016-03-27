@@ -172,9 +172,6 @@ public:
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
 
-    QAction *dragDatasetAction;
-    QAction *recenterOnClickAction;
-
     QList<QString> skeletonFileHistory;
     QFile *loadedFile;
 
@@ -238,10 +235,6 @@ public slots:
     /* edit skeleton menu*/
     void setWorkMode(AnnotationMode workMode);
     void clearSkeletonSlot();
-
-    /* view menu */
-    void dragDatasetSlot();
-    void recenterOnClickSlot();
 
     /* preferences menu */
     void loadCustomPreferencesSlot();

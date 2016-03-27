@@ -522,26 +522,6 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("Navigation");
 
-    QActionGroup* workModeViewMenuGroup = new QActionGroup(this);
-    dragDatasetAction = workModeViewMenuGroup->addAction(tr("Drag Dataset"));
-    dragDatasetAction->setCheckable(true);
-
-    recenterOnClickAction = workModeViewMenuGroup->addAction(tr("Recenter on Click"));
-    recenterOnClickAction->setCheckable(true);
-
-    if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
-        dragDatasetAction->setChecked(true);
-    } else if(state->viewerState->clickReaction == ON_CLICK_RECENTER) {
-        recenterOnClickAction->setChecked(true);
-    }
-
-    QObject::connect(dragDatasetAction, &QAction::triggered, this, &MainWindow::dragDatasetSlot);
-    QObject::connect(recenterOnClickAction, &QAction::triggered, this, &MainWindow::recenterOnClickSlot);
-
-    viewMenu->addActions({dragDatasetAction, recenterOnClickAction});
-
-    viewMenu->addSeparator();
-
     QAction * penmodeAction = new QAction("Pen-Mode", this);
 
     penmodeAction->setCheckable(true);
@@ -947,22 +927,6 @@ void MainWindow::clearSkeletonSlot() {
             updateTitlebar();
         }
     }
-}
-
-/* view menu functionality */
-
-void MainWindow::dragDatasetSlot() {
-   state->viewerState->clickReaction = ON_CLICK_DRAG;
-   if(recenterOnClickAction->isChecked()) {
-       recenterOnClickAction->setChecked(false);
-   }
-}
-
-void MainWindow::recenterOnClickSlot() {
-   state->viewerState->clickReaction = ON_CLICK_RECENTER;
-   if(dragDatasetAction->isChecked()) {
-       dragDatasetAction->setChecked(false);
-   }
 }
 
 /* preference menu functionality */

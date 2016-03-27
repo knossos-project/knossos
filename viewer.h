@@ -43,9 +43,6 @@
 #define SLOW 1000
 #define FAST 10
 
-#define ON_CLICK_DRAG    0
-#define ON_CLICK_RECENTER 1
-
 #define MAX_COLORVAL 255.
 
 enum class SkeletonDisplay {
@@ -103,9 +100,6 @@ struct ViewerState {
     float voxelDimZ;
     //ZY can't be different to XZ because of the intrinsic properties of the SBF-SEM.
     float voxelXYtoZRatio;
-
-    // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
-    uint clickReaction{ON_CLICK_DRAG};
 
     // Advanced Tracing Modes Stuff
     navigationMode autoTracingMode{navigationMode::recenter};
