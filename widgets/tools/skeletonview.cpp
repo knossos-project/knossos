@@ -12,18 +12,16 @@
 #include <QMessageBox>
 
 template<typename Func>
-void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText, const bool condition = true) {
-    if (condition) {
-        QMessageBox prompt(parent);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setText(text);
-        prompt.setInformativeText(extraText);
-        const auto & confirmButton = *prompt.addButton(acceptButtonText, QMessageBox::AcceptRole);
-        prompt.addButton(QMessageBox::Cancel);
-        prompt.exec();
-        if (prompt.clickedButton() == &confirmButton) {
-            func();
-        }
+void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
+    QMessageBox prompt(parent);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setText(text);
+    prompt.setInformativeText(extraText);
+    const auto & confirmButton = *prompt.addButton(acceptButtonText, QMessageBox::AcceptRole);
+    prompt.addButton(QMessageBox::Cancel);
+    prompt.exec();
+    if (prompt.clickedButton() == &confirmButton) {
+        func();
     }
 }
 
@@ -371,7 +369,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         const auto index = parent.row();//already is a source model index
         const auto droppedOnTreeID = treeModel.cache[index].get().treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID);
-        question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text, tr(""));
+        question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text);
     });
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel, treeSortAndCommentFilterProxy));
@@ -415,7 +413,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(treeID);
-        question(this, [treeID](){ Skeletonizer::singleton().moveSelectedNodesToTree(treeID); }, tr("Move"), text, tr(""));
+        question(this, [treeID](){ Skeletonizer::singleton().moveSelectedNodesToTree(treeID); }, tr("Move"), text);
     });
     QObject::connect(treeContextMenu.addAction("&Merge trees"), &QAction::triggered, [this](){
         question(this, [](){
@@ -426,7 +424,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
                 initiallySelectedTrees.erase(std::begin(initiallySelectedTrees)+1);//HACK mergeTrees deletes tree2
                 Skeletonizer::singleton().mergeTrees(treeID1, treeID2);
             }
-        }, tr("Merge"), tr("Do you really want to merge all selected trees?"), tr(""));
+        }, tr("Merge"), tr("Do you really want to merge all selected trees?"));
     });
     QObject::connect(treeContextMenu.addAction("Set &comment for trees"), &QAction::triggered, [this](){
         bool applied = false;
@@ -452,7 +450,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         }
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
-        question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete the selected trees?"), tr(""), !state->skeletonState->selectedTrees.empty());
+        if (!state->skeletonState->selectedTrees.empty()) {
+            question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete the selected trees?"));
+        }
     });
 
 
@@ -520,7 +520,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
             Skeletonizer::singleton().deleteSelectedNodes();
         } else {
-            question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"), tr(""));
+            question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"));
         }
     });
 
