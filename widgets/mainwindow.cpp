@@ -597,16 +597,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
     saveSettings();
 
-    if(Session::singleton().unsavedChanges) {
-         QMessageBox question;
-         question.setWindowFlags(Qt::WindowStaysOnTopHint);
+    if (Session::singleton().unsavedChanges) {
+         QMessageBox question(this);
          question.setIcon(QMessageBox::Question);
-         question.setWindowTitle("Confirmation required.");
-         question.setText("There are unsaved changes. Really Quit?");
-         question.addButton("Yes", QMessageBox::ActionRole);
-         const QPushButton * const no = question.addButton("No", QMessageBox::ActionRole);
+         question.setText(tr("Really quit KNOSSOS despite changes?"));
+         question.setInformativeText(tr("All unsaved changes which will get lost."));
+         question.addButton(tr("&Quit"), QMessageBox::AcceptRole);
+         const QPushButton * const cancelButton = question.addButton(QMessageBox::Cancel);
          question.exec();
-         if(question.clickedButton() == no) {
+         if (question.clickedButton() == cancelButton) {
              event->ignore();
              return;//we changed our mind – we dont want to quit anymore
          }
@@ -725,7 +724,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 void MainWindow::newAnnotationSlot() {
     if (Session::singleton().unsavedChanges) {
         const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
-        const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("Cancel"), QString(), 0);
+        const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("&Cancel"), {}, 0);
         if (button == 1) {
             return;
         }
@@ -819,7 +818,7 @@ try {
     if (silent) {
         throw;
     } else {
-        QMessageBox errorBox;
+        QMessageBox errorBox(this);
         errorBox.setIcon(QMessageBox::Critical);
         errorBox.setText("File save failed");
         errorBox.setInformativeText(filename);
@@ -915,15 +914,14 @@ void MainWindow::toggleSegments() {
 
 void MainWindow::clearSkeletonSlot() {
     if(Session::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
-        QMessageBox question;
-        question.setWindowFlags(Qt::WindowStaysOnTopHint);
+        QMessageBox question(this);
         question.setIcon(QMessageBox::Question);
-        question.setWindowTitle("Confirmation required");
-        question.setText("Really clear skeleton (you cannot undo this)?");
-        QPushButton *ok = question.addButton(QMessageBox::Ok);
-        question.addButton(QMessageBox::No);
+        question.setText(tr("Do you really want to clear the skeleton?"));
+        question.setInformativeText(tr("This erases all trees and their nodes and cannot be undone."));
+        QPushButton const * const ok = question.addButton(tr("Clear Skeleton"), QMessageBox::AcceptRole);
+        question.addButton(QMessageBox::Cancel);
         question.exec();
-        if(question.clickedButton() == ok) {
+        if (question.clickedButton() == ok) {
             Skeletonizer::singleton().clearSkeleton();
             updateTitlebar();
         }
