@@ -1064,7 +1064,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glBindTexture(GL_TEXTURE_2D, texture.texHandle);
         glBegin(GL_QUADS);
             glNormal3i(n.x, n.y, n.z);
-            const auto offset = viewportType == VIEWPORT_XZ ? n * -1 : n;
+            const auto offset = n;
             glTexCoord2f(texture.texLUx, texture.texLUy);
             glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x, -dataPxX * v1.y - dataPxY * v2.y + offset.y, -dataPxX * v1.z - dataPxY * v2.z + offset.z);
             glTexCoord2f(texture.texRUx, texture.texRUy);
@@ -1082,7 +1082,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
             glBegin(GL_QUADS);
                 glNormal3i(n.x, n.y, n.z);
-                const auto offset = viewportType == VIEWPORT_XZ ? n * 0.1 : n * -0.1;
+                const auto offset = n * -0.1;
                 glTexCoord2f(texture.texLUx, texture.texLUy);
                 glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x,
                            -dataPxX * v1.y - dataPxY * v2.y + offset.y,
