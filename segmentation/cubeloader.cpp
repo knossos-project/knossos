@@ -61,7 +61,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
     std::vector<floatCoordinate> localPoints(8);
     for (std::size_t i = 0; i < localPoints.size(); ++i) { // all possible combinations. Ordering like in a truth table (with - and + instead of false and true). I just didn't want to type it all out…
         localPoints[i].x = (i < 4) ? posArb.x - width : posArb.x + width;
-        localPoints[i].y = (i < 8 && (i < 2 || i > 3)) ? posArb.y - height : posArb.y + height;
+        localPoints[i].y = (i % 4 < 2) ? posArb.y - height : posArb.y + height;
         localPoints[i].z = (i % 2 == 0) ? posArb.z - depth : posArb.z + depth;
     }
     auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
