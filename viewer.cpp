@@ -1212,12 +1212,13 @@ bool Viewer::recalcTextureOffsets() {
             orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.y - orthoVP.leftUpperDataPxOnScreen.y)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
             break;
         case VIEWPORT_ARBITRARY: {
-            //v1: vector in Viewport x-direction, parameter s corresponds to v1
-            //v2: vector in Viewport y-direction, parameter t corresponds to v2
+            //v1: vector in horizontal Viewport direction
+            //v2: vector in vertical Viewport direction
             auto & arbVP = static_cast<ViewportArb&>(orthoVP);
             arbVP.vpLenghtInDataPx = arbVP.vpHeightInDataPx = (((int)((state->M / 2 + 1) * state->cubeEdgeLength / sqrt(2.))) / 2) * 2;
-            float voxelV1X = sqrtf(powf(arbVP.v1.x, 2.0) + powf(arbVP.v1.y / state->viewerState->voxelXYRatio, 2.0) + powf(arbVP.v1.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
-            float voxelV2X = sqrtf((powf(arbVP.v2.x, 2.0) + powf(arbVP.v2.y / state->viewerState->voxelXYRatio, 2.0) + powf(arbVP.v2.z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0)));
+            const floatCoordinate voxelRatio = {1, state->viewerState->voxelXYRatio, state->viewerState->voxelXYRatio * state->viewerState->voxelXYtoZRatio};
+            float voxelV1X = (arbVP.v1 / voxelRatio).length();
+            float voxelV2X = (arbVP.v2 / voxelRatio).length();
 
             arbVP.texture.displayedEdgeLengthX /= voxelV1X;
             arbVP.texture.displayedEdgeLengthY /= voxelV2X;
@@ -1229,17 +1230,9 @@ bool Viewer::recalcTextureOffsets() {
             // Update screen pixel to data pixel mapping values
             arbVP.screenPxXPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
             arbVP.screenPxYPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
-            arbVP.displayedlengthInNmX =
-                sqrtf(powf(state->viewerState->voxelDimX * arbVP.v1.x,2.)
-                      + powf(state->viewerState->voxelDimY * arbVP.v1.y,2.)
-                      + powf(state->viewerState->voxelDimZ * arbVP.v1.z,2.)
-                ) * (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
+            arbVP.displayedlengthInNmX = arbVP.v1.componentMul(state->scale).length() * (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
 
-            arbVP.displayedlengthInNmY =
-                sqrtf(powf(state->viewerState->voxelDimX * arbVP.v2.x,2.)
-                      + powf(state->viewerState->voxelDimY * arbVP.v2.y,2.)
-                      + powf(state->viewerState->voxelDimZ * arbVP.v2.z,2.)
-                ) * (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
+            arbVP.displayedlengthInNmY = arbVP.v2.componentMul(state->scale).length() * (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
 
             //Update arbVP.leftUpperDataPxOnScreen with this call
             calcLeftUpperTexAbsPx();
