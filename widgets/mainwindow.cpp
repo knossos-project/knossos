@@ -601,7 +601,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          QMessageBox question(this);
          question.setIcon(QMessageBox::Question);
          question.setText(tr("Really quit KNOSSOS despite changes?"));
-         question.setInformativeText(tr("All unsaved changes which will get lost."));
+         question.setInformativeText(tr("All unsaved changes will be lost."));
          question.addButton(tr("&Quit"), QMessageBox::AcceptRole);
          const QPushButton * const cancelButton = question.addButton(QMessageBox::Cancel);
          question.exec();
