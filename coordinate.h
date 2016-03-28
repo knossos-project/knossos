@@ -118,6 +118,10 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
+    constexpr CoordinateDerived abs() const {
+        return {std::abs(x), std::abs(y), std::abs(z)};
+    }
+
     constexpr float length() const {
         return std::sqrt(x*x + y*y + z*z);
     }
@@ -141,6 +145,14 @@ public:
             , std::max(min.y, std::min(y, max.y))
             , std::max(min.z, std::min(z, max.z))
         };
+    }
+
+    constexpr CoordinateDerived toWorldFrom(const CoordinateDerived & v1, const CoordinateDerived & v2, const CoordinateDerived & n) const {
+        return x * v1 + y * v2 + z * n;
+    }
+
+    constexpr CoordinateDerived toLocal(const CoordinateDerived & v1, const CoordinateDerived & v2, const CoordinateDerived & n) const {
+        return CoordinateDerived(v1.dot({x, y, z}), v2.dot({x, y, z}), n.dot({x, y, z}));
     }
 };
 
