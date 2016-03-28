@@ -40,7 +40,6 @@
 #include <QApplication>
 #include <QMessageBox>
 
-#include <boost/math/constants/constants.hpp>
 #include <boost/optional.hpp>
 
 #include <cstdlib>

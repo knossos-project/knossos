@@ -323,6 +323,10 @@ class ViewportOrtho : public ViewportBase {
 
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
+
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+
     bool mouseEventAtValidDatasetPosition(const QMouseEvent *event);
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleMouseHover(const QMouseEvent *event) override;

@@ -13,7 +13,7 @@ public:
         two_dim, three_dim
     };
     enum class view_t {
-        xy, xz, zy
+        xy, xz, zy, arb
     };
     enum class shape_t {
         angular, round
@@ -24,6 +24,9 @@ public:
     mode_t mode = mode_t::two_dim;
     view_t view = view_t::xy;
     shape_t shape = shape_t::round;
+    floatCoordinate v1{1, 0, 0};
+    floatCoordinate v2{0, 1, 0};
+    floatCoordinate n{0, 0, 1};
 };
 
 class brush_subject : public QObject, private brush_t {
@@ -53,8 +56,11 @@ public:
     int getRadius() const {
         return radius;
     }
-    void setView(const view_t newView) {
+    void setView(const view_t newView, const floatCoordinate & newV1, const floatCoordinate & newV2, const floatCoordinate & newN) {
         view = newView;
+        v1 = newV1;
+        v2 = newV2;
+        n = newN;
     }
     view_t getView() const {
         return view;

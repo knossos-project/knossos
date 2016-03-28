@@ -53,25 +53,25 @@ bool isInsideSphere(const double xi, const double yi, const double zi, const dou
     return sqdistance < radius * radius;
 }
 
-std::pair<Coordinate, Coordinate> getRegion(const Coordinate & centerPos, const brush_t & brush) {
-    const auto xsize = brush.radius / state->scale.x;
-    const auto ysize = brush.radius / state->scale.y;
-    const auto zsize = brush.radius / state->scale.z;
-    const auto brushExtents = Coordinate(xsize, ysize, zsize);
-    auto globalFirst = (centerPos - brushExtents).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
-    auto globalLast = (centerPos + brushExtents).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
-
-    if (brush.mode == brush_t::mode_t::two_dim) {//disable depth
-        if (brush.view == brush_t::view_t::xy) {
-            globalFirst.z = globalLast.z = centerPos.z;
-        } else if(brush.view == brush_t::view_t::xz) {
-            globalFirst.y = globalLast.y = centerPos.y;
-        } else if(brush.view == brush_t::view_t::zy) {
-            globalFirst.x = globalLast.x = centerPos.x;
-        }
+std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, const brush_t & brush) { // calcs global AABB of local coordinate system's region
+    const auto posArb = centerPos.toLocal(brush.v1, brush.v2, brush.n);
+    const auto width = brush.radius / state->scale.componentMul(brush.v1).length();
+    const auto height = brush.radius / state->scale.componentMul(brush.v2).length();
+    const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / state->scale.componentMul(brush.n).length() : 0;
+    std::vector<floatCoordinate> localPoints(8);
+    for (std::size_t i = 0; i < localPoints.size(); ++i) { // all possible combinations. Ordering like in a truth table (with - and + instead of false and true). I just didn't want to type it all out…
+        localPoints[i].x = (i < 4) ? posArb.x - width : posArb.x + width;
+        localPoints[i].y = (i < 8 && (i < 2 || i > 3)) ? posArb.y - height : posArb.y + height;
+        localPoints[i].z = (i % 2 == 0) ? posArb.z - depth : posArb.z + depth;
     }
-
-    return std::make_pair(globalFirst, globalLast);
+    auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
+    floatCoordinate max{0, 0, 0};
+    for (const auto localCoord : localPoints) {
+        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).abs().capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+        min = {std::min(worldCoord.x, min.x), std::min(worldCoord.y, min.y), std::min(worldCoord.z, min.z)};
+        max = {std::max(worldCoord.x, max.x), std::max(worldCoord.y, max.y), std::max(worldCoord.z, max.z)};
+    }
+    return std::make_pair(min, max);
 }
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {

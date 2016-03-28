@@ -166,6 +166,16 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
     timeFBase.start();
 }
 
+void ViewportOrtho::mouseMoveEvent(QMouseEvent *event) {
+    ViewportBase::mouseMoveEvent(event);
+    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType), v1, v2, n);
+}
+
+void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
+    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType), v1, v2, n);
+    ViewportBase::mousePressEvent(event);
+}
+
 void ViewportOrtho::resetTexture() {
     const auto size = texture.edgeLengthPx;
     if (texture.texHandle != 0) {
@@ -473,8 +483,6 @@ void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
         handleMouseMotionRightHold(event);
     }
     handleMouseHover(event);
-
-    Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType));
 
     prevMouseMove = event->pos();
 }
