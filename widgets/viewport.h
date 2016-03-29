@@ -261,8 +261,6 @@ public:
     float frustum[6][4]; // Stores the current view frustum planes
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
-
-    void rotationSignal(const QQuaternion &);
     void pasteCoordinateSignal();
 
     void compressionRatioToggled();
@@ -299,8 +297,6 @@ public:
 
     void zoomIn() override { zoom(zoomStep()); }
     void zoomOut() override { zoom(-zoomStep()); }
-signals:
-    void rotationSignal(const floatCoordinate & axis, const float angle);
 };
 
 class ViewportOrtho : public ViewportBase {
