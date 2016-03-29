@@ -767,8 +767,10 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
 }
 
 void ViewportOrtho::sendCursorPosition() {
-    const auto cursorPos = mapFromGlobal(QCursor::pos());
-    emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), viewportType);
+    if (hasCursor) {
+        const auto cursorPos = mapFromGlobal(QCursor::pos());
+        emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), viewportType);
+    }
 }
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {

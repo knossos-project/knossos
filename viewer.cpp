@@ -902,9 +902,7 @@ void Viewer::run() {
         viewportArb->v2 = {newV2.x(), newV2.y(), newV2.z()};
         viewportArb->n = {newN.x(), newN.y(), newN.z()};
         rotation = QQuaternion(0, 0, 0, 0);
-        if (viewportArb->hasCursor) {
-            viewportArb->sendCursorPosition();
-        }
+        viewportArb->sendCursorPosition();
         alphaCache = 0;
         recalcTextureOffsets();
     }
@@ -1310,9 +1308,7 @@ void Viewer::rewire() {
             window->updateCursorLabel(Coordinate(), VIEWPORT_SKELETON);
         } else {
             window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                if (orthoVP.hasCursor) {
-                    orthoVP.sendCursorPosition();
-                }
+                orthoVP.sendCursorPosition();
             });
         }
     });
