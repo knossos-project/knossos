@@ -238,7 +238,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             box.exec();
             open();
         }
-        qDebug() << "no config";
+        qDebug() << "no config at" << path;
         return false;
     }
 
