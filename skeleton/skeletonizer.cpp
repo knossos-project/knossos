@@ -32,6 +32,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QDataStream>
 #include <QElapsedTimer>
 #include <QMessageBox>
 #include <QXmlStreamAttributes>
@@ -277,7 +278,16 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("inMag", QString::number(node.createdInMag));
             xml.writeAttribute("time", QString::number(node.timestamp));
             for (auto propertyIt = node.properties.constBegin(); propertyIt != node.properties.constEnd(); ++propertyIt) {
-                xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
+                if (propertyIt.key() == "zombie_comments") {
+                    QByteArray array;
+                    {
+                        QDataStream serializer(&array, QIODevice::WriteOnly);
+                        serializer << propertyIt.value();
+                    }
+                    xml.writeAttribute(propertyIt.key(), array.toBase64());
+                } else {
+                    xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
+                }
             }
             xml.writeEndElement(); // end node
         }
@@ -627,6 +637,14 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                     inMag = {value.toInt()};
                                 } else if (name == "time") {
                                     ms = {value.toULongLong()};
+                                } else if (name == "zombie_comments") {
+                                    QVariant zombies;
+                                    {
+                                        const auto array = QByteArray::fromBase64(value.toString().toUtf8());
+                                        QDataStream serializer(array);
+                                        serializer >> zombies;
+                                    }
+                                    properties.insert(name.toString(), zombies);
                                 } else {
                                     properties.insert(name.toString(), value.toString());
                                 }
@@ -683,9 +701,16 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
 
     for (const auto & elem : commentsVector) {
-        const auto & currentNode = findNodeByNodeID(elem.first);
+        auto * const currentNode = findNodeByNodeID(elem.first);
         if (currentNode != nullptr) {
-            setComment(*currentNode, elem.second);
+            if (currentNode->comment != nullptr) {
+                auto && zombies = currentNode->properties["zombie_comments"];
+                auto zombieHash = zombies.toHash();
+                zombieHash.insert(elem.second, {});
+                zombies = zombieHash;
+            } else {
+                setComment(*currentNode, elem.second);
+            }
         }
     }
 
