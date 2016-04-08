@@ -7,7 +7,6 @@
 
 #include <cstddef>
 
-class commentListElement;
 class segmentListElement;
 class treeListElement;
 
@@ -26,7 +25,6 @@ public:
     treeListElement * correspondingTree = nullptr;
 
     std::list<segmentListElement> segments;
-    commentListElement * comment = nullptr;
     // circumsphere radius - max. of length of all segments and node radius.
     //Used for frustum culling
     float circRadius = radius;
@@ -34,6 +32,8 @@ public:
     bool selected = false;
 
     QList<segmentListElement *> *getSegments();
+    QString getComment() const;
+    void setComment(const QString & comment);
 };
 
 class segmentListElement {
@@ -47,15 +47,4 @@ public:
     //reference to the segment inside the target node
     std::list<segmentListElement>::iterator sisterSegment;
 };
-
-class commentListElement {
-public:
-    commentListElement *next;
-    commentListElement *previous;
-
-    char *content;
-
-    nodeListElement *node;
-};
-
 #endif//NODE_H

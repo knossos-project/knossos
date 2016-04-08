@@ -14,9 +14,8 @@ QList<segmentListElement *> *NodeListDecorator::segments(nodeListElement *self) 
     return self->getSegments();
 }
 
-commentListElement *NodeListDecorator::comment(nodeListElement *self) {
-
-    return self->comment;
+QString NodeListDecorator::comment(nodeListElement *self) {
+    return self->getComment();
 }
 
 int NodeListDecorator::time(nodeListElement *self) {

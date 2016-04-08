@@ -550,8 +550,12 @@ void MainWindow::createMenus() {
 
     auto commentsMenu = menuBar()->addMenu("Comments");
 
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, &MainWindow::nextCommentNodeSlot, Qt::Key_N);
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previous Comment"), this, &MainWindow::previousCommentNodeSlot, Qt::Key_P);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), &Skeletonizer::singleton(), [this] () {
+        Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), true);
+    }, Qt::Key_N);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previous Comment"), &Skeletonizer::singleton(), [this] () {
+        Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), false);
+    }, Qt::Key_P);
 
     commentsMenu->addSeparator();
 
@@ -1199,14 +1203,6 @@ void MainWindow::newTreeSlot() {
     Skeletonizer::singleton().addTreeListElement();
 }
 
-void MainWindow::nextCommentNodeSlot() {
-    Skeletonizer::singleton().nextComment(state->skeletonState->nodeCommentFilter);
-}
-
-void MainWindow::previousCommentNodeSlot() {
-    Skeletonizer::singleton().previousComment(state->skeletonState->nodeCommentFilter);
-}
-
 void MainWindow::pushBranchNodeSlot() {
     if(state->skeletonState->activeNode) {
         Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
@@ -1222,13 +1218,13 @@ void MainWindow::placeComment(const int index) {
         CommentSetting comment = CommentSetting::comments[index];
         if (!comment.text.isEmpty()) {
             if(comment.appendComment) {
-                if(state->skeletonState->activeNode->comment) {
-                    QString text(state->skeletonState->activeNode->comment->content);
-                    text.append(' ');
-                    comment.text.prepend(text);
+                auto activeNodeComment = state->skeletonState->activeNode->getComment();
+                if(activeNodeComment.isEmpty() == false) {
+                    activeNodeComment.append(' ');
+                    comment.text.prepend(activeNodeComment);
                 }
             }
-            Skeletonizer::singleton().setComment(comment.text, state->skeletonState->activeNode, 0);
+            Skeletonizer::singleton().setComment(*state->skeletonState->activeNode, comment.text);
         }
     } else {
         Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);

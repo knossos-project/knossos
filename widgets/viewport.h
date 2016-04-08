@@ -125,7 +125,6 @@ public:
 };
 
 constexpr int defaultFonsSize = 10;
-class commentListElement;
 class nodeListElement;
 class segmentListElement;
 class mesh;

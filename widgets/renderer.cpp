@@ -323,7 +323,8 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
     // Render the node description
     glColor4f(0.f, 0.f, 0.f, 1.f);
     auto nodeID = (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node))? QString::number(node.nodeID) : "";
-    const auto comment = (ViewportOrtho::showNodeComments && node.comment)? QString(":%1").arg(node.comment->content) : "";
+    auto comment = node.getComment();
+    comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
     if(nodeID.isEmpty() == false || comment.isEmpty() == false) {
         renderText(node.position, nodeID.append(comment));
     }
@@ -2209,7 +2210,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 for (auto & currentSegment : nodeIt->segments) {
                     //isBranchNode tells you only whether the node is on the branch point stack,
                     //not whether it is actually a node connected to more than two other nodes!
-                    const bool mustBeRendered = nodeIt->comment != nullptr || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
+                    const bool mustBeRendered = nodeIt->getComment().isEmpty() == false || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
+                    if (!mustBeRendered)
+                        qDebug() << nodeIt->nodeID << mustBeRendered;
                     const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
                     if (cullingCandidate) {
                         //Node is a candidate for LOD culling

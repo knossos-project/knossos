@@ -2,7 +2,6 @@
 #define NODELISTDECORATOR_H
 
 #include "coordinate.h"
-#include "nodecommentdecorator.h"
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
 
@@ -22,7 +21,7 @@ public slots:
     int node_id(nodeListElement *self);
     QList<segmentListElement *> *segments(nodeListElement *self);
     bool is_branch_node(nodeListElement *self);
-    commentListElement *comment(nodeListElement *self);
+    QString comment(nodeListElement *self);
     int time(nodeListElement *self);
     float radius(nodeListElement *self);
     treeListElement *parent_tree(nodeListElement *self);

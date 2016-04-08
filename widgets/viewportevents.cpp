@@ -196,7 +196,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 if (splitNode) {
                     const auto comment = background ? "ecs" : "split";
                     Skeletonizer::singleton().setSubobject(splitNode.get(), subobjectId);
-                    Skeletonizer::singleton().addComment(comment, splitNode.get());
+                    Skeletonizer::singleton().setComment(splitNode.get(), comment);
                     Skeletonizer::singleton().setActiveNode(oldNode);
                 }
             } else if (auto stumpNode = Skeletonizer::singleton().addSkeletonNodeAndLinkWithActive(clickedCoordinate, viewportType, false)) {

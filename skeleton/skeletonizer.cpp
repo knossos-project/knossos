@@ -109,7 +109,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
 
     if (state->skeletonState->activeTree->nodes.size() == 1) {//First node tree is branch node
         pushBranchNode(addedNode.get());
-        addComment("First Node", addedNode.get());
+        setComment(addedNode.get(), "First Node");
     }
     return addedNode.get();
 }
@@ -143,7 +143,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     if (state->skeletonState->activeTree->nodes.size() == 1) {
         /* First node in this tree */
         pushBranchNode(targetNode.get());
-        addComment("First Node", targetNode.get());
+        setComment(targetNode.get(), "First Node");
     }
 
     return targetNode.get();
@@ -310,13 +310,13 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     }
 
     xml.writeStartElement("comments");
-    for (auto currentComment = state->skeletonState->currentComment; currentComment != nullptr; currentComment = currentComment->next) {
-        xml.writeStartElement("comment");
-        xml.writeAttribute("node", QString::number(currentComment->node->nodeID));
-        xml.writeAttribute("content", QString(currentComment->content));
-        xml.writeEndElement();
-        if (currentComment->next == state->skeletonState->currentComment) {//comment list is circular
-            break;
+    const auto & comments = state->skeletonState->comments;
+    for (const auto key : comments.uniqueKeys()) {
+        for (auto iter = comments.find(key); iter != comments.end() && iter.key() == key; ++iter) {
+            xml.writeStartElement("comment");
+            xml.writeAttribute("node", QString::number(iter.value()));
+            xml.writeAttribute("content", iter.key());
+            xml.writeEndElement();
         }
     }
     xml.writeEndElement(); // end comments
@@ -703,7 +703,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     for (const auto & elem : commentsVector) {
         auto * const currentNode = findNodeByNodeID(elem.first);
         if (currentNode != nullptr) {
-            if (currentNode->comment != nullptr) {
+                if (currentNode->getComment().isEmpty() == false) {
                 auto && zombies = currentNode->properties["zombie_comments"];
                 auto zombieHash = zombies.toHash();
                 zombieHash.insert(elem.second, {});
@@ -790,9 +790,9 @@ bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
         return false;
     }
     nodeID = nodeToDel->nodeID;
-    if (nodeToDel->comment) {
-        delComment(nodeToDel->comment, 0);
-    }
+
+    setComment(*nodeToDel, ""); // deletes from comment hashtable
+
     if (nodeToDel->isBranchNode) {
         auto foundIt = std::find(std::begin(state->skeletonState->branchStack), std::end(state->skeletonState->branchStack), nodeToDel->nodeID);
         state->skeletonState->branchStack.erase(foundIt);
@@ -956,10 +956,8 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
 
         setActiveTreeByID(node->correspondingTree->treeID);
 
-        state->skeletonState->commentBuffer.clear();
-        if (node->comment) {
-            state->skeletonState->currentComment = node->comment;
-            state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
+        if (node->getComment().isEmpty() == false) {
+            state->skeletonState->currentCommentNode = node;
         }
     }
 
@@ -1074,9 +1072,6 @@ void Skeletonizer::toggleLink(nodeListElement & lhs, nodeListElement & rhs) {
 
 void Skeletonizer::clearSkeleton() {
     const auto blockState = blockSignals(true);
-    while (skeletonState.currentComment) {
-        delComment(skeletonState.currentComment, 0);
-    }
     blockSignals(blockState);
     skeletonState = SkeletonState{};
     Session::singleton().resetMovementArea();
@@ -1169,7 +1164,7 @@ nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
 QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, const QString & comment) {
     QList<nodeListElement *> hits;
     for (auto & node : tree.nodes) {
-        if (node.comment != nullptr && QString(node.comment->content).contains(comment)) {
+        if (node.getComment().contains(comment)) {
             hits.append(&node);
         }
     }
@@ -1388,270 +1383,56 @@ bool Skeletonizer::extractConnectedComponent(int nodeID) {
     return true;
 }
 
-bool Skeletonizer::addComment(QString content, nodeListElement & node) {
-    commentListElement *newComment;
-
-    std::string content_stdstr = content.toStdString();
-    const char *content_cstr = content_stdstr.c_str();
-
-    newComment = (commentListElement*)malloc(sizeof(commentListElement));
-    memset(newComment, '\0', sizeof(commentListElement));
-
-    newComment->content = (char*)malloc(strlen(content_cstr) * sizeof(char) + 1);
-    memset(newComment->content, '\0', strlen(content_cstr) * sizeof(char) + 1);
-
-    newComment->node = &node;
-    node.comment = newComment;
-
-    if(content_cstr) {
-        strncpy(newComment->content, content_cstr, strlen(content_cstr));
-    }
-
-    if(!state->skeletonState->currentComment) {
-        state->skeletonState->currentComment = newComment;
-        //We build a circular linked list
-        newComment->next = newComment;
-        newComment->previous = newComment;
-    }
-    else {
-        //We insert into a circular linked list
-        state->skeletonState->currentComment->previous->next = newComment;
-        newComment->next = state->skeletonState->currentComment;
-        newComment->previous = state->skeletonState->currentComment->previous;
-        state->skeletonState->currentComment->previous = newComment;
-
-        state->skeletonState->currentComment = newComment;
-    }
-
-
-    //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
-    state->skeletonState->commentBuffer.clear();
-    state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
-
-    Session::singleton().unsavedChanges = true;
-    state->skeletonState->totalComments++;
-
-    emit nodeChangedSignal(node);
-    return true;
-}
-
-bool Skeletonizer::setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID) {
-    if(commentNodeID) {
-        commentNode = findNodeByNodeID(commentNodeID);
-    }
-    if (!commentNode) {
-        qDebug() << "Please provide a valid comment node to set!";
-        return false;
-    }
-    setComment(*commentNode, newContent);
-    return true;
-}
-
 void Skeletonizer::setComment(nodeListElement & commentNode, const QString & newContent) {
-    if (commentNode.comment == nullptr) {
-        addComment(newContent, commentNode);
+    auto oldComment = commentNode.properties.value("comment").toString();
+    if (newContent != oldComment) {
+        state->skeletonState->comments.remove(oldComment, commentNode.nodeID);
+    }
+    if (newContent.isEmpty()) {
+        commentNode.properties.remove("comment");
     } else {
-        if (newContent.isEmpty()) {
-            delComment(commentNode.comment, 0);
-        } else {
-            editComment(commentNode.comment, 0, newContent, nullptr, 0);
-        }
-    }
-}
-
-bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNodeID) {
-    nodeListElement *commentNode = NULL;
-
-    if(commentNodeID) {
-        commentNode = findNodeByNodeID(commentNodeID);
-        if(commentNode) {
-            currentComment = commentNode->comment;
-        }
-    }
-
-    if(!currentComment) {
-        qDebug() << "Please provide a valid comment node to delete!";
-        return false;
-    }
-
-    if(currentComment->content) {
-        free(currentComment->content);
-    }
-    if(currentComment->node) {
-        currentComment->node->comment = NULL;
-    }
-
-    if (state->skeletonState->currentComment == currentComment) {
-        state->skeletonState->commentBuffer.clear();
-    }
-
-    if(currentComment->next == currentComment) {
-        state->skeletonState->currentComment = NULL;
-    }
-    else {
-        currentComment->next->previous = currentComment->previous;
-        currentComment->previous->next = currentComment->next;
-
-        if(state->skeletonState->currentComment == currentComment) {
-            state->skeletonState->currentComment = currentComment->next;
-        }
-    }
-
-    auto & node = *currentComment->node;
-    free(currentComment);
-
-    Session::singleton().unsavedChanges = true;
-
-    state->skeletonState->totalComments--;
-
-    emit nodeChangedSignal(node);
-
-    return true;
-}
-
-bool Skeletonizer::editComment(commentListElement *currentComment, uint nodeID, QString newContent,
-                               nodeListElement *newNode, uint newNodeID) {
-    // this function also seems to be kind of useless as you could do just the same
-    // thing with addComment() with minimal changes ....?
-
-    std::string newContent_strstd = newContent.toStdString();
-    const char *newContent_cstr = newContent_strstd.c_str();
-
-    if(nodeID) {
-        currentComment = findNodeByNodeID(nodeID)->comment;
-    }
-    if(!currentComment) {
-        qDebug() << "Please provide a valid comment element to edit!";
-        return false;
-    }
-
-    nodeID = currentComment->node->nodeID;
-
-    if(newContent_cstr) {
-        if(currentComment->content) {
-            free(currentComment->content);
-        }
-        currentComment->content = (char*)malloc(strlen(newContent_cstr) * sizeof(char) + 1);
-        memset(currentComment->content, '\0', strlen(newContent_cstr) * sizeof(char) + 1);
-        strncpy(currentComment->content, newContent_cstr, strlen(newContent_cstr));
-    }
-
-    if(newNodeID) {
-        newNode = findNodeByNodeID(newNodeID);
-    }
-    if(newNode) {
-        if(currentComment->node) {
-            currentComment->node->comment = NULL;
-        }
-        currentComment->node = newNode;
-        newNode->comment = currentComment;
+        state->skeletonState->comments.insert(newContent, commentNode.nodeID);
+        commentNode.setComment(newContent);
+        state->skeletonState->currentCommentNode = &commentNode;
     }
 
     Session::singleton().unsavedChanges = true;
 
-    emit nodeChangedSignal(*currentComment->node);
-
-    return true;
+    emit nodeChangedSignal(commentNode);
 }
 
-commentListElement* Skeletonizer::nextComment(QString searchString) {
-   commentListElement *firstComment, *currentComment;
-
-   std::string searchString_stdstr = searchString.toStdString();
-   const char *searchString_cstr = searchString_stdstr.c_str();
-
-    if(!strlen(searchString_cstr)) {
-        //->previous here because it would be unintuitive for the user otherwise.
-        //(we insert new comments always as first elements)
-        if(state->skeletonState->currentComment) {
-            state->skeletonState->currentComment = state->skeletonState->currentComment->previous;
-            setActiveNode(state->skeletonState->currentComment->node);
-            jumpToNode(*state->skeletonState->currentComment->node);
-        }
-    }
-    else {
-        if(state->skeletonState->currentComment) {
-            firstComment = state->skeletonState->currentComment->previous;
-            currentComment = firstComment;
-            do {
-                if(strstr(currentComment->content, searchString_cstr) != NULL) {
-                    state->skeletonState->currentComment = currentComment;
-                    setActiveNode(state->skeletonState->currentComment->node);
-                    jumpToNode(*state->skeletonState->currentComment->node);
-                    break;
-                }
-                currentComment = currentComment->previous;
-
-            } while (firstComment != currentComment);
-        }
-    }
-
-    state->skeletonState->commentBuffer.clear();
-
-    if (state->skeletonState->currentComment != nullptr) {
-        state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
+void Skeletonizer::gotoComment(QString searchString, const bool next /*or previous*/) {
+    const auto setNextNode = [searchString, this] (nodeListElement * nextNode) {
+        setActiveNode(nextNode);
+        jumpToNode(*nextNode);
+        state->skeletonState->currentCommentNode = nextNode;
         if (state->skeletonState->lockPositions) {
-            if (state->skeletonState->commentBuffer == state->skeletonState->onCommentLock) {
-                lockPosition(state->skeletonState->currentComment->node->position);
+            if (searchString == state->skeletonState->onCommentLock) {
+                lockPosition(nextNode->position);
             } else {
                 unlockPosition();
             }
         }
+    };
+
+    const auto currentNode = state->skeletonState->currentCommentNode;
+    bool currentCommentNodeRelevant = currentNode != nullptr && currentNode->getComment() == searchString;
+    const auto values  = state->skeletonState->comments.values(searchString);
+    if (values.empty()) {
+        return;
     }
-    return state->skeletonState->currentComment;
-}
-
-commentListElement* Skeletonizer::previousComment(QString searchString) {
-    commentListElement *firstComment, *currentComment;
-    // ->next here because it would be unintuitive for the user otherwise.
-    // (we insert new comments always as first elements)
-
-    std::string searchString_stdstr = searchString.toStdString();
-    const char *searchString_cstr = searchString_stdstr.c_str();
-
-    if(!strlen(searchString_cstr)) {
-        if(state->skeletonState->currentComment) {
-            state->skeletonState->currentComment = state->skeletonState->currentComment->next;
-            setActiveNode(state->skeletonState->currentComment->node);
-            jumpToNode(*state->skeletonState->currentComment->node);
-        }
-    }
-    else {
-        if(state->skeletonState->currentComment) {
-            firstComment = state->skeletonState->currentComment->next;
-            currentComment = firstComment;
-            do {
-                if(strstr(currentComment->content, searchString_cstr) != NULL) {
-                    state->skeletonState->currentComment = currentComment;
-                    setActiveNode(state->skeletonState->currentComment->node);
-                    jumpToNode(*state->skeletonState->currentComment->node);
-                    break;
-                }
-                currentComment = currentComment->next;
-
-            } while (firstComment != currentComment);
-
-        }
-    }
-
-    state->skeletonState->commentBuffer.clear();
-
-    if (state->skeletonState->currentComment != nullptr) {
-        state->skeletonState->commentBuffer = state->skeletonState->currentComment->content;
-        if (state->skeletonState->lockPositions) {
-            if (state->skeletonState->commentBuffer == state->skeletonState->onCommentLock) {
-                lockPosition(state->skeletonState->currentComment->node->position);
-            } else {
-                unlockPosition();
+    if (currentCommentNodeRelevant) {
+        const auto currentIndex = values.indexOf(currentNode->nodeID);
+        if (currentIndex >= 0) {
+            auto nextIndex = currentIndex == values.length() - 1 ? 0 : currentIndex + 1;
+            if (next == false) {
+                nextIndex = currentIndex == 0 ? values.length() - 1 : currentIndex - 1;
             }
+            setNextNode(state->skeletonState->nodesByNodeID[values.at(nextIndex)]);
         }
+    } else {
+        setNextNode(state->skeletonState->nodesByNodeID[values.first()]);
     }
-    return state->skeletonState->currentComment;
-}
-
-bool Skeletonizer::searchInComment(char */*searchString*/, commentListElement */*comment*/) {
-    // BUG unimplemented method!
-    return true;
 }
 
 bool Skeletonizer::unlockPosition() {
@@ -1772,11 +1553,13 @@ float Skeletonizer::radius(const nodeListElement & node) const {
     const auto propertyName = state->viewerState->highlightedNodePropertyByRadius;
     if(!propertyName.isEmpty() && node.properties.contains(propertyName)) {
         return state->viewerState->nodePropertyRadiusScale * node.properties.value(propertyName).toDouble();
-    }
-    else if(node.comment && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(QString(node.comment->content));
-        if(newRadius != 0) {
-            return newRadius;
+    } else {
+        const auto comment = node.getComment();
+        if(comment.isEmpty() == false && CommentSetting::useCommentNodeRadius) {
+            float newRadius = CommentSetting::getRadius(comment);
+            if(newRadius != 0) {
+                return newRadius;
+            }
         }
     }
     return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
@@ -1784,8 +1567,9 @@ float Skeletonizer::radius(const nodeListElement & node) const {
 
 float Skeletonizer::segmentSizeAt(const nodeListElement & node) const {
     float radius = state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
-    if(node.comment && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(QString(node.comment->content));
+    const auto comment = node.getComment();
+    if(comment.isEmpty() == false && CommentSetting::useCommentNodeRadius) {
+        float newRadius = CommentSetting::getRadius(comment);
         if(newRadius != 0 && newRadius < radius) {
             return newRadius;
         }

@@ -96,6 +96,7 @@ class SkeletonView : public QWidget {
     QMenu nodeContextMenu{&nodeView};
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
+    QString getFilterComment() const;
 };
 
 #endif//SKELETONVIEW_H

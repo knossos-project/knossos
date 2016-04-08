@@ -253,8 +253,6 @@ public slots:
 
     // from the event handler
     void newTreeSlot();
-    void nextCommentNodeSlot();
-    void previousCommentNodeSlot();
     void pushBranchNodeSlot();
     void popBranchNodeSlot();
     void pythonPropertiesSlot();

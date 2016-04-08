@@ -16,3 +16,11 @@ QList<segmentListElement *> *nodeListElement::getSegments() {
     }
     return segmentList;
 }
+
+QString nodeListElement::getComment() const {
+    return properties.value("comment").toString();
+}
+
+void nodeListElement::setComment(const QString & comment) {
+    properties.insert("comment", comment);
+}

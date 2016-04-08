@@ -1384,9 +1384,9 @@ color4F Viewer::getNodeColor(const nodeListElement & node) const {
     if (node.isBranchNode) { //branch nodes are always blue
         return {0.f, 0.f, 1.f, 1.f};
     }
-    if (CommentSetting::useCommentNodeColor && node.comment && strlen(node.comment->content) != 0) {
+    if (CommentSetting::useCommentNodeColor && node.getComment().isEmpty() == false) {
         // default color for comment nodes
-        auto newColor = CommentSetting::getColor(QString(node.comment->content));
+        auto newColor = CommentSetting::getColor(node.getComment());
         return color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
     }
     if (node.correspondingTree == state->skeletonState->activeTree && state->viewerState->highlightActiveTree) {

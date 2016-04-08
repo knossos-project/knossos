@@ -3,7 +3,6 @@
 #include "decorators/colordecorator.h"
 #include "decorators/coordinatedecorator.h"
 #include "decorators/floatcoordinatedecorator.h"
-#include "decorators/nodecommentdecorator.h"
 #include "decorators/nodelistdecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
@@ -91,7 +90,6 @@ Scripting::Scripting() : _ctx{[](){
     makeDecorator(new CoordinateDecorator, "Coordinate");
     makeDecorator(new FloatCoordinateDecorator, "floatCoordinate");
     makeDecorator(new NodeListDecorator, "Node");
-    makeDecorator(new NodeCommentDecorator, "NodeComment");
     makeDecorator(new SegmentListDecorator, "Segment");
     makeDecorator(new TreeListDecorator, "Tree");
 

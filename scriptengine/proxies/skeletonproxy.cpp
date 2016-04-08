@@ -234,11 +234,21 @@ bool SkeletonProxy::set_active_tree(int tree_id) {
 }
 
 bool SkeletonProxy::set_comment(int node_id, char *comment) {
-    return Skeletonizer::singleton().setComment(comment, NULL, node_id);
+    auto node = state->skeletonState->nodesByNodeID[node_id];
+    if (node) {
+        Skeletonizer::singleton().setComment(*node, QString(comment));
+        return true;
+    }
+    return false;
 }
 
 bool SkeletonProxy::delete_comment(int node_id) {
-    return Skeletonizer::singleton().delComment(NULL, node_id);
+    auto node = state->skeletonState->nodesByNodeID[node_id];
+    if (node) {
+        Skeletonizer::singleton().setComment(*node, "");
+        return true;
+    }
+    return false;
 }
 
 bool SkeletonProxy::add_segment(int source_id, int target_id) {

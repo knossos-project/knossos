@@ -94,7 +94,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
         case 2: return node.position.y + 1;
         case 3: return node.position.z + 1;
         case 4: return node.radius;
-        case 5: return node.comment != nullptr ? node.comment->content : "";
+        case 5: return node.getComment();
         }
     }
     return QVariant();//return invalid QVariant
@@ -174,7 +174,7 @@ void NodeModel::recreate() {
     } else if (mode == NON_EMPTY_COMMENT) {
         for (auto && tree : state->skeletonState->trees)
         for (auto && node : tree.nodes) {
-            if (node.comment != nullptr) {
+            if (node.getComment().isEmpty() == false) {
                 cache.emplace_back(node);
             }
         }
@@ -292,8 +292,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         if (state->skeletonState->activeNode != nullptr) {
             const auto & node = *state->skeletonState->activeNode;
              text += tr("%1 (%2, %3, %4), %5").arg(node.nodeID).arg(node.position.x).arg(node.position.y).arg(node.position.z).arg(node.radius);
-             if (node.comment != nullptr) {
-                 text += tr(", »%1«").arg(node.comment->content);
+             const auto comment = node.getComment();
+             if (comment.isEmpty() == false) {
+                 text += tr(", »%1«").arg(comment);
              }
         }
         activeNodeLabel.setText(text);
@@ -344,23 +345,23 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
 
-    static auto filter = [](auto & regex, auto & model, const QString & filterText){
+    static auto filter = [](auto & regex, auto & model, const QString & filterText) {
         if (regex.isChecked()) {
             model.setFilterRegExp(filterText);
         } else {
             model.setFilterFixedString(filterText);
         }
     };
-    QObject::connect(&treeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText){
+    QObject::connect(&treeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText) {
         filter(treeRegex, treeSortAndCommentFilterProxy, filterText);
         updateTreeSelection();
     });
 
-    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
+    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index) {
         nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
         nodeRecreate();
     });
-    QObject::connect(&nodeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText){
+    QObject::connect(&nodeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText) {
         filter(nodeRegex, nodeSortAndCommentFilterProxy, filterText);
         updateNodeSelection();
     });
@@ -532,4 +533,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     QObject::connect(&nodeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex &){
         nodeContextMenu.defaultAction()->trigger();
     });
+}
+
+QString SkeletonView::getFilterComment() const {
+    return nodeCommentFilter.text();
 }

@@ -31,6 +31,7 @@
 
 #include <QObject>
 #include <QSet>
+#include <QMultiHash>
 #include <QVariantHash>
 
 #include <boost/optional.hpp>
@@ -41,7 +42,6 @@
 
 class nodeListElement;
 class segmentListElement;
-class commentListElement;
 
 // skeleton vp orientation
 #define SKELVP_XY_VIEW 0
@@ -58,6 +58,8 @@ struct SkeletonState {
     std::list<treeListElement> trees;
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<uint, nodeListElement *> nodesByNodeID;
+    QMultiHash<QString, std::uint64_t> comments;
+
     int greatestTreeID{0};
     std::uint64_t greatestNodeID{0};
 
@@ -67,11 +69,8 @@ struct SkeletonState {
     std::vector<std::uint64_t> branchStack;
     bool branchpointUnresolved{false};
 
-    commentListElement * currentComment{nullptr};
-    QString commentBuffer;
-    uint totalComments{0};
+    nodeListElement *currentCommentNode{nullptr};
 
-    QString nodeCommentFilter;
     QString treeCommentFilter;
 
     float defaultNodeRadius{1.5f};
@@ -178,15 +177,10 @@ public slots:
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
-    commentListElement *nextComment(QString searchString);
-    commentListElement *previousComment(QString searchString);
+    void gotoComment(QString searchString, const bool next);
     bool editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(uint nodeID, nodeListElement *nodeToDel);
-    bool addComment(QString content, nodeListElement &node);
-    bool editComment(commentListElement *currentComment, uint nodeID, QString newContent, nodeListElement *newNode, uint newNodeID);
     void setComment(nodeListElement & commentNode, const QString & newContent);
-    bool setComment(QString newContent, nodeListElement *commentNode, uint commentNodeID);
-    bool delComment(commentListElement *currentComment, uint commentNodeID);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
     void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode);
     void updateSubobjectCountFromProperty(nodeListElement & node);
@@ -224,7 +218,6 @@ public slots:
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
-    bool searchInComment(char *searchString, commentListElement *comment);
     static bool updateCircRadius(nodeListElement *node);
 
 public:
