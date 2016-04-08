@@ -1423,14 +1423,15 @@ bool Skeletonizer::setComment(QString newContent, nodeListElement *commentNode, 
 }
 
 void Skeletonizer::setComment(nodeListElement & commentNode, const QString & newContent) {
-    if (commentNode.comment) {
+    if (commentNode.comment == nullptr) {
+        addComment(newContent, commentNode);
+    } else {
         if (newContent.isEmpty()) {
             delComment(commentNode.comment, 0);
         } else {
             editComment(commentNode.comment, 0, newContent, nullptr, 0);
         }
     }
-    addComment(newContent, commentNode);
 }
 
 bool Skeletonizer::delComment(commentListElement *currentComment, uint commentNodeID) {
