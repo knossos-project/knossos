@@ -684,8 +684,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     for (const auto & elem : commentsVector) {
         const auto & currentNode = findNodeByNodeID(elem.first);
-        if(currentNode != nullptr) {
-            addComment(elem.second, *currentNode);
+        if (currentNode != nullptr) {
+            setComment(*currentNode, elem.second);
         }
     }
 
