@@ -700,17 +700,27 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             pushBranchNode(*currentNode);
     }
 
+    QHash<std::uint64_t, QSet<QString>> conflictsById;
     for (const auto & elem : commentsVector) {
         auto * const currentNode = findNodeByNodeID(elem.first);
         if (currentNode != nullptr) {
-                if (currentNode->getComment().isEmpty() == false) {
-                auto && conflicts = currentNode->properties["conflicting_comments"];
-                auto conflictHash = conflicts.toHash();
-                conflictHash.insert(elem.second, {});
-                conflicts = conflictHash;
+            if (!currentNode->getComment().isEmpty()) {
+                conflictsById[currentNode->nodeID].insert(elem.second);
             } else {
                 setComment(*currentNode, elem.second);
             }
+        }
+    }
+
+    for (auto it = std::cbegin(conflictsById); it != std::cend(conflictsById); ++it) {
+        auto * const currentNode = findNodeByNodeID(it.key());
+        if (currentNode != nullptr) {
+            auto && conflicts = currentNode->properties["conflicting_comments"];
+            auto conflictHash = conflicts.toHash();
+            for (auto && comment : it.value()) {
+                conflictHash.insert(comment, {});
+            }
+            conflicts = conflictHash;
         }
     }
 
