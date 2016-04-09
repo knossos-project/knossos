@@ -2211,8 +2211,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     //isBranchNode tells you only whether the node is on the branch point stack,
                     //not whether it is actually a node connected to more than two other nodes!
                     const bool mustBeRendered = nodeIt->getComment().isEmpty() == false || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
-                    if (!mustBeRendered)
-                        qDebug() << nodeIt->nodeID << mustBeRendered;
                     const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
                     if (cullingCandidate) {
                         //Node is a candidate for LOD culling
