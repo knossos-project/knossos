@@ -243,7 +243,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
 
     treeCommentFilter.setPlaceholderText("tree comment");
 
-    treeSortAndCommentFilterProxy.setFilterKeyColumn(1);
+    treeSortAndCommentFilterProxy.setFilterKeyColumn(4);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
@@ -254,7 +254,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     nodeCommentFilter.setPlaceholderText("node comment");
 
     nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
-    nodeSortAndCommentFilterProxy.setFilterKeyColumn(1);
+    nodeSortAndCommentFilterProxy.setFilterKeyColumn(5);
     setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 
     treeOptionsLayout.addWidget(&treeCommentFilter);
