@@ -185,7 +185,7 @@ void NodeModel::recreate() {
 void NodeView::mousePressEvent(QMouseEvent * event) {
     const auto index = proxy.mapToSource(indexAt(event->pos()));
     if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
-        const auto selected = source.cache[index.row()].get().selected;
+        const auto selected = source.cache[index.row()].get().selected && !event->modifiers().testFlag(Qt::ControlModifier) && !event->modifiers().testFlag(Qt::ShiftModifier);
         setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
     }
     QTreeView::mousePressEvent(event);
