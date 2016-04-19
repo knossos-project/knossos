@@ -483,7 +483,7 @@ void SegmentationView::updateSelection() {
     objectSelectionProtection = false;
 
     if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
-        objectsTable.scrollTo(objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(selectedItems.indexes().front())));
+        objectsTable.scrollTo(proxySelection.indexes().front());
     }
 }
 
