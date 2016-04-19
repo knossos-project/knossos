@@ -263,9 +263,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         table.setModel(&model);
         table.setAllColumnsShowFocus(true);
         table.setContextMenuPolicy(Qt::CustomContextMenu);
+        table.setUniformRowHeights(true);//perf hint from doc
         table.setRootIsDecorated(false);//remove padding to the left of each cell’s content
         table.setSelectionMode(QAbstractItemView::ExtendedSelection);
-        table.setUniformRowHeights(true);//perf hint from doc
         table.setItemDelegateForColumn(3, &categoryDelegate);
         table.setSortingEnabled(true);
         table.sortByColumn(sortIndex = 1, Qt::SortOrder::AscendingOrder);
