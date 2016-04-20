@@ -213,8 +213,10 @@ auto selectElems(Model & model, Proxy & proxy) {
 template<typename Model, typename Proxy>
 auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
     const auto selectedIndices = proxy.mapSelectionFromSource(blockSelection(model, model.cache));
+    // we destroy the views ›current‹ selection with this, every mouse move during a rubberband selection starts a new ›current‹ selection which prevents shrinking it
     model.selectionProtection = true;
-    view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);
+    view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);// this is the new ›current‹ selection
+    view.selectionModel()->select(QItemSelection{}, QItemSelectionModel::Select);// turn ›current‹ into committed selection, because the view overwrites the ›current‹ selection
     model.selectionProtection = false;
 
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
