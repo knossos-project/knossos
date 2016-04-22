@@ -553,7 +553,7 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), &Skeletonizer::singleton(), [this] () {
         Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), true);
     }, Qt::Key_N);
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previous Comment"), &Skeletonizer::singleton(), [this] () {
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found Comment"), &Skeletonizer::singleton(), [this] () {
         Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), false);
     }, Qt::Key_P);
 

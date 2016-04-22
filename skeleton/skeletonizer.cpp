@@ -27,6 +27,7 @@
 #include "functions.h"
 #include "segmentation/cubeloader.h"
 #include "skeleton/node.h"
+#include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
 #include "version.h"
 #include "viewer.h"
@@ -1412,6 +1413,8 @@ void Skeletonizer::setComment(nodeListElement & commentNode, const QString & new
 }
 
 void Skeletonizer::gotoComment(QString searchString, const bool next /*or previous*/) {
+    static TreeTraverser commentTraverser(state->skeletonState->trees, skeletonState.activeNode);
+    static nodeListElement *lastNode = nullptr;
     const auto setNextNode = [searchString, this] (nodeListElement * nextNode) {
         setActiveNode(nextNode);
         jumpToNode(*nextNode);
@@ -1425,23 +1428,36 @@ void Skeletonizer::gotoComment(QString searchString, const bool next /*or previo
         }
     };
 
-    const auto currentNode = state->skeletonState->currentCommentNode;
-    bool currentCommentNodeRelevant = currentNode != nullptr && currentNode->getComment() == searchString;
-    const auto values  = state->skeletonState->comments.values(searchString);
-    if (values.empty()) {
+    auto oneStep = next ? []() { ++commentTraverser; } : []() { --commentTraverser; };
+    auto canContinue = next ? []() { return !commentTraverser.reachedEnd; } : []() { return !commentTraverser.reachedStart(); };
+    auto reachedEndMsg = [&searchString]() {
+        QMessageBox msgBox(state->viewer->window);
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText(tr("No more occurences."));
+        msgBox.setInformativeText(tr("Found all occurences of nodes with comment “%0”.").arg(searchString));
+        msgBox.exec();
+    };
+    if ((lastNode != skeletonState.activeNode) || (skeletonState.activeNode && !skeletonState.activeNode->getComment().contains(searchString))) {
+        // reset when invalidated by changing active node or search string
+        commentTraverser = TreeTraverser(state->skeletonState->trees, skeletonState.activeNode);
+    }
+    if (canContinue()) {
+        oneStep();
+    } else {
+        reachedEndMsg();
         return;
     }
-    if (currentCommentNodeRelevant) {
-        const auto currentIndex = values.indexOf(currentNode->nodeID);
-        if (currentIndex >= 0) {
-            auto nextIndex = currentIndex == values.length() - 1 ? 0 : currentIndex + 1;
-            if (next == false) {
-                nextIndex = currentIndex == 0 ? values.length() - 1 : currentIndex - 1;
-            }
-            setNextNode(state->skeletonState->nodesByNodeID[values.at(nextIndex)]);
+    while (!commentTraverser.reachedEnd) {
+        if ((*commentTraverser).getComment().contains(searchString) && &(*commentTraverser) != skeletonState.activeNode) {
+            setNextNode(&(*commentTraverser));
+            lastNode = &(*commentTraverser);
+            return;
+        } else if (canContinue()) {
+            oneStep();
+        } else {
+            reachedEndMsg();
+            return;
         }
-    } else {
-        setNextNode(state->skeletonState->nodesByNodeID[values.first()]);
     }
 }
 
