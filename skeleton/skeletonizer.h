@@ -31,7 +31,6 @@
 
 #include <QObject>
 #include <QSet>
-#include <QMultiHash>
 #include <QVariantHash>
 
 #include <boost/optional.hpp>
@@ -58,7 +57,6 @@ struct SkeletonState {
     std::list<treeListElement> trees;
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
-    QMultiHash<QString, std::uint64_t> comments;
 
     int greatestTreeID{0};
     std::uint64_t greatestNodeID{0};
@@ -68,8 +66,6 @@ struct SkeletonState {
 
     std::vector<std::uint64_t> branchStack;
     bool branchpointUnresolved{false};
-
-    nodeListElement *currentCommentNode{nullptr};
 
     QString treeCommentFilter;
 

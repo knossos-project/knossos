@@ -311,12 +311,12 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     }
 
     xml.writeStartElement("comments");
-    const auto & comments = state->skeletonState->comments;
-    for (const auto key : comments.uniqueKeys()) {
-        for (auto iter = comments.find(key); iter != comments.end() && iter.key() == key; ++iter) {
+    TreeTraverser commentTraverser(state->skeletonState->trees);
+    for (; !commentTraverser.reachedEnd; ++commentTraverser) {
+        if(!(*commentTraverser).getComment().isEmpty()) {
             xml.writeStartElement("comment");
-            xml.writeAttribute("node", QString::number(iter.value()));
-            xml.writeAttribute("content", iter.key());
+            xml.writeAttribute("node", QString::number((*commentTraverser).nodeID));
+            xml.writeAttribute("content", (*commentTraverser).getComment());
             xml.writeEndElement();
         }
     }
@@ -966,10 +966,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
         selectObjectForNode(*node);
 
         setActiveTreeByID(node->correspondingTree->treeID);
-
-        if (node->getComment().isEmpty() == false) {
-            state->skeletonState->currentCommentNode = node;
-        }
     }
 
     Session::singleton().unsavedChanges = true;
@@ -1395,16 +1391,10 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
 }
 
 void Skeletonizer::setComment(nodeListElement & commentNode, const QString & newContent) {
-    auto oldComment = commentNode.properties.value("comment").toString();
-    if (newContent != oldComment) {
-        state->skeletonState->comments.remove(oldComment, commentNode.nodeID);
-    }
     if (newContent.isEmpty()) {
         commentNode.properties.remove("comment");
     } else {
-        state->skeletonState->comments.insert(newContent, commentNode.nodeID);
         commentNode.setComment(newContent);
-        state->skeletonState->currentCommentNode = &commentNode;
     }
 
     Session::singleton().unsavedChanges = true;
@@ -1418,7 +1408,6 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
     const auto setNextNode = [&searchString, this] (nodeListElement * nextNode) {
         setActiveNode(nextNode);
         jumpToNode(*nextNode);
-        state->skeletonState->currentCommentNode = nextNode;
         if (state->skeletonState->lockPositions) {
             if (searchString == state->skeletonState->onCommentLock) {
                 lockPosition(nextNode->position);
