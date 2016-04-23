@@ -14,7 +14,7 @@
 void CommentsModel::fill() {
     beginResetModel();
     for(int i = 1; i < 11; ++i) {
-        CommentSetting::comments.emplace_back(QString("F%0").arg(i));
+        CommentSetting::comments.emplace_back(QString("F%1").arg(i));
     }
     endResetModel();
 }
@@ -126,9 +126,9 @@ void CommentsTab::loadSettings() {
     QSettings settings;
     settings.beginGroup(COMMENTS_TAB);
     for(int i = 0; i < 10; ++i) {
-        CommentSetting::comments[i].text = settings.value(QString("comment%0").arg(i+1)).toString();
-        CommentSetting::comments[i].color = settings.value(QString("color%0").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
-        CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%0").arg(i+1), 1.5).toFloat();
+        CommentSetting::comments[i].text = settings.value(QString("comment%1").arg(i+1)).toString();
+        CommentSetting::comments[i].color = settings.value(QString("color%1").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
+        CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%1").arg(i+1), 1.5).toFloat();
     }
     useCommentColorCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODECOLOR, true).toBool());
     useCommentRadiusCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODERADIUS, false).toBool());
@@ -141,9 +141,9 @@ void CommentsTab::saveSettings() {
     QSettings settings;
     settings.beginGroup(COMMENTS_TAB);
     for(int i = 0; i < 10; ++i) {
-        settings.setValue(QString("comment%0").arg(i+1), CommentSetting::comments[i].text);
-        settings.setValue(QString("color%0").arg(i+1), CommentSetting::comments[i].color);
-        settings.setValue(QString("radius%0").arg(i+1), CommentSetting::comments[i].nodeRadius);
+        settings.setValue(QString("comment%1").arg(i+1), CommentSetting::comments[i].text);
+        settings.setValue(QString("color%1").arg(i+1), CommentSetting::comments[i].color);
+        settings.setValue(QString("radius%1").arg(i+1), CommentSetting::comments[i].nodeRadius);
     }
 
     settings.setValue(CUSTOM_COMMENT_NODECOLOR, useCommentColorCheckbox.isChecked());

@@ -79,7 +79,7 @@ public:
             return elemA.second < elemB.second;
         });
         for (uint i = 1; i <= modes.size(); ++i) {
-            workModes[i - 1].second = tr("%0. ").arg(i) + workModes[i -1].second;
+            workModes[i - 1].second = tr("%1. ").arg(i) + workModes[i -1].second;
         }
         endResetModel();
     }

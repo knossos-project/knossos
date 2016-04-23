@@ -127,7 +127,7 @@ bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModel
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Question);
             prompt.setWindowTitle(tr("Lock Object"));
-            prompt.setText(tr("Lock the object with id %0?").arg(obj.id));
+            prompt.setText(tr("Lock the object with id %1?").arg(obj.id));
             const auto & lockButton = prompt.addButton(tr("Lock"), QMessageBox::YesRole);
             prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
             prompt.exec();
@@ -387,7 +387,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id){
-        subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %0").arg(subobject_id));
+        subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %1").arg(subobject_id));
     });
 
     auto & deleteAction = *new QAction("delete", this);
@@ -499,8 +499,8 @@ void SegmentationView::filter() {
 }
 
 void SegmentationView::updateLabels() {
-    objectCountLabel.setText(QString("Objects: %0").arg(Segmentation::singleton().objects.size()));
-    subobjectCountLabel.setText(QString("Subobjects: %0").arg(Segmentation::singleton().subobjects.size()));
+    objectCountLabel.setText(QString("Objects: %1").arg(Segmentation::singleton().objects.size()));
+    subobjectCountLabel.setText(QString("Subobjects: %1").arg(Segmentation::singleton().subobjects.size()));
 }
 
 uint64_t SegmentationView::indexFromRow(const SegmentationObjectModel &, const QModelIndex index) const {

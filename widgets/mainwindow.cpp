@@ -986,7 +986,7 @@ void MainWindow::defaultPreferencesSlot() {
 /* toolbar slots */
 
 void MainWindow::copyClipboardCoordinates() {
-    const auto content = QString("%0, %1, %2").arg(xField->value()).arg(yField->value()).arg(zField->value());
+    const auto content = QString("%1, %2, %3").arg(xField->value()).arg(yField->value()).arg(zField->value());
     QApplication::clipboard()->setText(content);
 }
 
