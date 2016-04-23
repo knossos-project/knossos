@@ -29,8 +29,4 @@ bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordin
                            const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
                            floatCoordinate & intersectionPoint);
 
-bool checkTreeParameter(int id, float r, float g, float b, float a);
-bool checkNodeParameter(int id, int x, int y, int z);
-bool chedNodeID(int id);
-
 #endif // FUNCTIONS_H

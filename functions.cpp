@@ -64,26 +64,3 @@ bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordin
     }
     return false;
 }
-
-bool checkTreeParameter(int id, float r, float g, float b, float a) {
-    if(id < 0 || r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1) {
-        return false;
-    }
-    return true;
-}
-
-bool checkNodeParameter(int id, int x, int y, int z) {
-    if(id < 0 || x < 0 || y < 0 || z < 0) {
-        return false;
-    }
-    return true;
-}
-
-bool checkNodeParameter(int id) {
-    if(id < 0) {
-        return false;
-    }
-
-    return true;
-}
-
