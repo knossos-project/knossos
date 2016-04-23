@@ -12,11 +12,11 @@ nodeListElement * SegmentListDecorator::target(segmentListElement *self) {
     return &self->target;
 }
 
-std::uint64_t SegmentListDecorator::source_id(segmentListElement *self) {
+quint64 SegmentListDecorator::source_id(segmentListElement *self) {
     return self->source.nodeID;
 }
 
-std::uint64_t SegmentListDecorator::target_id(segmentListElement *self) {
+quint64 SegmentListDecorator::target_id(segmentListElement *self) {
     return self->target.nodeID;
 }
 

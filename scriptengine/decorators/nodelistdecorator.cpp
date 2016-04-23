@@ -2,7 +2,7 @@
 
 NodeListDecorator::NodeListDecorator(QObject *parent) : QObject(parent) {}
 
-std::uint64_t NodeListDecorator::node_id(nodeListElement *self) {
+quint64 NodeListDecorator::node_id(nodeListElement *self) {
     return self->nodeID;
 }
 

@@ -16,8 +16,8 @@ signals:
 public slots:
     nodeListElement * source(segmentListElement *self);
     nodeListElement * target(segmentListElement *self);
-    uint64_t source_id(segmentListElement *self);
-    uint64_t target_id(segmentListElement *self);
+    quint64 source_id(segmentListElement *self);
+    quint64 target_id(segmentListElement *self);
     QString static_Segment_help();
 };
 
