@@ -18,7 +18,7 @@ signals:
 
 public slots:
 
-    int node_id(nodeListElement *self);
+    std::uint64_t node_id(nodeListElement *self);
     QList<segmentListElement *> *segments(nodeListElement *self);
     bool is_branch_node(nodeListElement *self);
     QString comment(nodeListElement *self);

@@ -57,7 +57,7 @@ struct SkeletonState {
 
     std::list<treeListElement> trees;
     std::unordered_map<int, treeListElement *> treesByID;
-    std::unordered_map<uint, nodeListElement *> nodesByNodeID;
+    std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
     QMultiHash<QString, std::uint64_t> comments;
 
     int greatestTreeID{0};
@@ -149,7 +149,7 @@ signals:
     void branchPushedSignal();
     void nodeAddedSignal(const nodeListElement & node);
     void nodeChangedSignal(const nodeListElement & node);
-    void nodeRemovedSignal(const uint nodeID);
+    void nodeRemovedSignal(const std::uint64_t nodeID);
     void propertiesChanged(const QSet<QString> & numberProperties);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
@@ -159,8 +159,8 @@ signals:
     void treeSelectionChangedSignal();
     void resetData();
 public slots:
-    uint64_t findAvailableNodeID();
-    boost::optional<nodeListElement &> addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
+    std::uint64_t findAvailableNodeID();
+    boost::optional<nodeListElement &> addNode(std::uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     void selectNodes(QSet<nodeListElement *> nodes);
     void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
@@ -177,9 +177,9 @@ public slots:
     bool addTreeComment(int treeID, QString comment);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
-    void gotoComment(QString searchString, const bool next);
-    bool editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
-    bool delNode(uint nodeID, nodeListElement *nodeToDel);
+    void gotoComment(const QString &searchString, const bool next);
+    bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
+    bool delNode(std::uint64_t nodeID, nodeListElement *nodeToDel);
     void setComment(nodeListElement & commentNode, const QString & newContent);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
     void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode);
@@ -202,14 +202,14 @@ public slots:
     bool moveToNextNode();
     void moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
-    static nodeListElement *findNodeByNodeID(uint nodeID);
+    static nodeListElement *findNodeByNodeID(std::uint64_t nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);
     bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
     bool delSegment(std::list<segmentListElement>::iterator segToDelIt);
     void toggleLink(nodeListElement & lhs, nodeListElement & rhs);
     void restoreDefaultTreeColor(treeListElement & tree);
 
-    bool extractConnectedComponent(int nodeID);
+    bool extractConnectedComponent(std::uint64_t nodeID);
     int findAvailableTreeID();
     treeListElement * addTreeListElement();
     treeListElement * addTreeListElement(int treeID, color4F color = {-1, -1, -1, 1});

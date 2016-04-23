@@ -358,13 +358,13 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     QXmlStreamReader xml(&file);
 
     QString experimentName, taskCategory, taskName;
-    uint64_t activeNodeID = 0;
-    const uint64_t greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
+    std::uint64_t activeNodeID = 0;
+    const std::uint64_t greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
     const int greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
     Coordinate loadedPosition;
-    std::vector<uint64_t> branchVector;
-    std::vector<std::pair<uint64_t, QString>> commentsVector;
-    std::vector<std::pair<uint64_t, uint64_t>> edgeVector;
+    std::vector<std::uint64_t> branchVector;
+    std::vector<std::pair<std::uint64_t, QString>> commentsVector;
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> edgeVector;
 
     bench.start();
     const auto blockState = this->signalsBlocked();
@@ -529,7 +529,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("id");
                     if(attribute.isNull() == false) {
-                        uint64_t nodeID = attribute.toULongLong();;
+                        std::uint64_t nodeID = attribute.toULongLong();;
                         if(merge) {
                             nodeID += greatestNodeIDbeforeLoading;
                         }
@@ -546,7 +546,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "comment") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("node");
-                    uint64_t nodeID = attribute.toULongLong();
+                    std::uint64_t nodeID = attribute.toULongLong();
                     if(merge) {
                         nodeID += greatestNodeIDbeforeLoading;
                     }
@@ -612,7 +612,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "nodes") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "node") {
-                            uint64_t nodeID = 0;
+                            std::uint64_t nodeID = 0;
                             float radius = state->skeletonState->defaultNodeRadius;
                             Coordinate currentCoordinate;
                             ViewportType inVP = VIEWPORT_UNDEFINED;
@@ -663,8 +663,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
                             attributes = xml.attributes();
-                            uint64_t sourceNodeId = attributes.value("source").toULongLong();
-                            uint64_t targetNodeId = attributes.value("target").toULongLong();
+                            std::uint64_t sourceNodeId = attributes.value("source").toULongLong();
+                            std::uint64_t targetNodeId = attributes.value("target").toULongLong();
                             if(merge) {
                                 sourceNodeId += greatestNodeIDbeforeLoading;
                                 targetNodeId += greatestNodeIDbeforeLoading;
@@ -792,12 +792,12 @@ bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt
  * We have to delete the node from 2 structures: the skeleton's nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
-bool Skeletonizer::delNode(uint nodeID, nodeListElement *nodeToDel) {
+bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
     if (!nodeToDel) {
         nodeToDel = findNodeByNodeID(nodeID);
     }
     if (!nodeToDel) {
-        qDebug("The given node %u doesn't exist. Unable to delete it.", nodeID);
+        qDebug() << tr("The given node %1 doesn't exist. Unable to delete it.").arg(nodeID);
         return false;
     }
     nodeID = nodeToDel->nodeID;
@@ -977,11 +977,11 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
     return true;
 }
 
-uint64_t Skeletonizer::findAvailableNodeID() {
+std::uint64_t Skeletonizer::findAvailableNodeID() {
     return state->skeletonState->greatestNodeID + 1;
 }
 
-boost::optional<nodeListElement &> Skeletonizer::addNode(uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
+boost::optional<nodeListElement &> Skeletonizer::addNode(std::uint64_t nodeID, const float radius, const int treeID, const Coordinate & position
         , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
     state->skeletonState->branchpointUnresolved = false;
 
@@ -1167,7 +1167,7 @@ nodeListElement * Skeletonizer::getNodeWithNextID(nodeListElement * currentNode,
     return getNodeWithRelationalID(currentNode, sameTree, std::greater<decltype(nodeListElement::nodeID)>{});
 }
 
-nodeListElement* Skeletonizer::findNodeByNodeID(uint nodeID) {
+nodeListElement* Skeletonizer::findNodeByNodeID(std::uint64_t nodeID) {
     const auto nodeIt = state->skeletonState->nodesByNodeID.find(nodeID);
     return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
 }
@@ -1306,12 +1306,12 @@ std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeLis
     return std::end(sourceNode.segments);
 }
 
-bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
+bool Skeletonizer::editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
     if(!node) {
         node = findNodeByNodeID(nodeID);
     }
     if(!node) {
-        qDebug("Cannot edit: node id %u invalid.", nodeID);
+        qDebug() << tr("Cannot edit: node id %1 invalid.").arg(nodeID);
         return false;
     }
 
@@ -1336,7 +1336,7 @@ bool Skeletonizer::editNode(uint nodeID, nodeListElement *node, float newRadius,
     return true;
 }
 
-bool Skeletonizer::extractConnectedComponent(int nodeID) {
+bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
     //  This function takes a node and splits the connected component
     //  containing that node into a new tree, unless the connected component
     //  is equivalent to exactly one entire tree.
@@ -1412,10 +1412,10 @@ void Skeletonizer::setComment(nodeListElement & commentNode, const QString & new
     emit nodeChangedSignal(commentNode);
 }
 
-void Skeletonizer::gotoComment(QString searchString, const bool next /*or previous*/) {
+void Skeletonizer::gotoComment(const QString & searchString, const bool next /*or previous*/) {
     static TreeTraverser commentTraverser(state->skeletonState->trees, skeletonState.activeNode);
     static nodeListElement *lastNode = nullptr;
-    const auto setNextNode = [searchString, this] (nodeListElement * nextNode) {
+    const auto setNextNode = [&searchString, this] (nodeListElement * nextNode) {
         setActiveNode(nextNode);
         jumpToNode(*nextNode);
         state->skeletonState->currentCommentNode = nextNode;
@@ -1434,7 +1434,7 @@ void Skeletonizer::gotoComment(QString searchString, const bool next /*or previo
         QMessageBox msgBox(state->viewer->window);
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText(tr("No more occurences."));
-        msgBox.setInformativeText(tr("Found all occurences of nodes with comment “%0”.").arg(searchString));
+        msgBox.setInformativeText(tr("Found all occurences of nodes with comment “%1”.").arg(searchString));
         msgBox.exec();
     };
     if ((lastNode != skeletonState.activeNode) || (skeletonState.activeNode && !skeletonState.activeNode->getComment().contains(searchString))) {

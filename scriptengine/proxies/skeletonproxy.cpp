@@ -58,7 +58,7 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
     return true;
 }
 
-nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
+nodeListElement *SkeletonProxy::find_node_by_id(std::uint64_t node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }
 
@@ -66,7 +66,7 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 
-void SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
+void SkeletonProxy::move_node_to_tree(std::uint64_t node_id, int tree_id) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     Skeletonizer::singleton().selectNodes({node});
     Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
@@ -78,17 +78,17 @@ nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, i
     return Skeletonizer::singleton().findNearbyNode(tree, coord);
 }
 
-nodeListElement *SkeletonProxy::node_with_prev_id(int node_id, bool same_tree) {
+nodeListElement *SkeletonProxy::node_with_prev_id(std::uint64_t node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     return Skeletonizer::singleton().getNodeWithPrevID(node, same_tree);
 }
 
-nodeListElement *SkeletonProxy::node_with_next_id(int node_id, bool same_tree) {
+nodeListElement *SkeletonProxy::node_with_next_id(std::uint64_t node_id, bool same_tree) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     return Skeletonizer::singleton().getNodeWithNextID(node, same_tree);
 }
 
-bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, int in_mag) {
+bool SkeletonProxy::edit_node(std::uint64_t node_id, float radius, int x, int y, int z, int in_mag) {
     if (!Skeletonizer::singleton().editNode(node_id, 0, radius, {x, y, z}, in_mag)) {
         emit echo (QString("Skeletonizer::editNode failed!"));
         return false;
@@ -149,7 +149,7 @@ void SkeletonProxy::delete_skeleton() {
     Skeletonizer::singleton().clearSkeleton();
 }
 
-bool SkeletonProxy::delete_segment(int source_id, int target_id) {
+bool SkeletonProxy::delete_segment(std::uint64_t source_id, std::uint64_t target_id) {
     auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
     auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
     if (sourceNode && targetNode) {
@@ -162,7 +162,7 @@ bool SkeletonProxy::delete_segment(int source_id, int target_id) {
     return false;
 }
 
-bool SkeletonProxy::delete_node(int node_id) {
+bool SkeletonProxy::delete_node(std::uint64_t node_id) {
     if (!Skeletonizer::singleton().delNode(node_id, NULL)) {
         emit echo(QString("could not delete the node with id %1").arg(node_id));
         return false;
@@ -170,7 +170,7 @@ bool SkeletonProxy::delete_node(int node_id) {
     return true;
 }
 
-bool SkeletonProxy::set_active_node(int node_id) {
+bool SkeletonProxy::set_active_node(std::uint64_t node_id) {
     if (!Skeletonizer::singleton().setActiveNode(find_node_by_id(node_id))) {
         emit echo(QString("could not set the node with id %1 to active node").arg(node_id));
         return false;
@@ -182,11 +182,11 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
-int SkeletonProxy::findAvailableNodeID() {
+std::uint64_t SkeletonProxy::findAvailableNodeID() {
     return Skeletonizer::singleton().findAvailableNodeID();
 }
 
-bool SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
+bool SkeletonProxy::add_node(std::uint64_t node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
     if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, coordinate, (ViewportType)inVp, inMag, time, false)) {
         emit echo(QString("could not add the node with node id %1").arg(node_id));
@@ -233,7 +233,7 @@ bool SkeletonProxy::set_active_tree(int tree_id) {
     return true;
 }
 
-bool SkeletonProxy::set_comment(int node_id, char *comment) {
+bool SkeletonProxy::set_comment(std::uint64_t node_id, char *comment) {
     auto node = state->skeletonState->nodesByNodeID[node_id];
     if (node) {
         Skeletonizer::singleton().setComment(*node, QString(comment));
@@ -242,7 +242,7 @@ bool SkeletonProxy::set_comment(int node_id, char *comment) {
     return false;
 }
 
-bool SkeletonProxy::delete_comment(int node_id) {
+bool SkeletonProxy::delete_comment(std::uint64_t node_id) {
     auto node = state->skeletonState->nodesByNodeID[node_id];
     if (node) {
         Skeletonizer::singleton().setComment(*node, "");
@@ -251,7 +251,7 @@ bool SkeletonProxy::delete_comment(int node_id) {
     return false;
 }
 
-bool SkeletonProxy::add_segment(int source_id, int target_id) {
+bool SkeletonProxy::add_segment(std::uint64_t source_id, std::uint64_t target_id) {
     auto * sourceNode = Skeletonizer::findNodeByNodeID(source_id);
     auto * targetNode = Skeletonizer::findNodeByNodeID(target_id);
     if(sourceNode != nullptr && targetNode != nullptr) {
@@ -264,7 +264,7 @@ bool SkeletonProxy::add_segment(int source_id, int target_id) {
     return false;
 }
 
-bool SkeletonProxy::set_branch_node(int node_id) {
+bool SkeletonProxy::set_branch_node(std::uint64_t node_id) {
     nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
     if(nullptr == currentNode) {
         emit echo(QString("no node with id %1 found").arg(node_id));
