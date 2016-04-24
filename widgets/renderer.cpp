@@ -66,12 +66,6 @@ enum GLNames {
     NodeOffset
 };
 
-void loadName(GLuint name) {
-    if (state->viewerState->selectModeFlag) {
-        glLoadName(name);
-    }
-}
-
 bool ViewportBase::initMesh(mesh & toInit, uint initialSize) {
     toInit.vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
     toInit.normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
@@ -603,7 +597,9 @@ void Viewport3D::renderViewportFrontFace() {
 }
 
 void ViewportBase::renderScaleBar(const int fontSize) {
-    loadName(GLNames::Scalebar);
+    if (state->viewerState->selectModeFlag) {
+        glLoadName(GLNames::Scalebar);
+    }
     const auto vp_edgelen_um = 0.001 * displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
     auto sizeLabel = QString("%1 µm").arg(rounded_scalebar_len_um);
@@ -624,7 +620,10 @@ void ViewportBase::renderScaleBar(const int fontSize) {
     glEnd();
 
     renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
-    loadName(GLNames::None);
+
+    if (state->viewerState->selectModeFlag) {
+        glLoadName(GLNames::None);
+    }
 }
 
 void ViewportOrtho::renderViewportFast() {
@@ -819,7 +818,7 @@ void ViewportOrtho::renderViewportFast() {
 }
 
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
-    if(options.selectionBuffer) {
+    if(state->viewerState->selectModeFlag) {
         glDisable(GL_DEPTH_TEST);
     }
     glEnable(GL_BLEND);
@@ -1963,10 +1962,14 @@ boost::optional<nodeListElement &> ViewportBase::pickNode(uint x, uint y, uint w
 
 QSet<nodeListElement *> ViewportBase::pickNodes(uint centerX, uint centerY, uint width, uint height) {
     RenderOptions options;
-    options.selectionBuffer = true;
-    const auto selection = pickingBox([&]() { renderViewport(options); }, centerX, centerY, width, height);
+    const auto renderFunc = [&options, this]() { renderViewport(options); };
+    options.selectionPass = RenderOptions::SelectionPass::NodeIDLowerBits;
+    const auto lowerBitSelection = pickingBox(renderFunc, centerX, centerY, width, height);
+    options.selectionPass = RenderOptions::SelectionPass::NodeIDHigherBits;
+    const auto higherBitSelection = pickingBox(renderFunc, centerX, centerY, width, height);
     QSet<nodeListElement *> foundNodes;
-    for (const auto name : selection) {
+    for (size_t i = 0; i < lowerBitSelection.size(); ++i) {
+        const std::uint64_t name = static_cast<std::uint64_t>(higherBitSelection[i]) << 32 | lowerBitSelection[i];
         nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
         if (foundNode != nullptr) {
             foundNodes.insert(foundNode);
@@ -2250,9 +2253,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     }
                     renderSegment(currentSegment, currentColor, options);
                 }
-                loadName(GLNames::NodeOffset + nodeIt->nodeID);
+                if (state->viewerState->selectModeFlag) {
+                    const auto name = GLNames::NodeOffset + nodeIt->nodeID;
+                    GLuint pickedBits = (options.selectionPass == RenderOptions::SelectionPass::NodeIDLowerBits) ? static_cast<GLuint>(name) : name >> 32;
+                    glLoadName(pickedBits);
+                }
                 renderNode(*nodeIt, options);
-                loadName(GLNames::None);
+                if (state->viewerState->selectModeFlag) {
+                    glLoadName(GLNames::None);
+                }
                 lastRenderedNode = &*nodeIt;
             }
             previousNode = &*nodeIt;

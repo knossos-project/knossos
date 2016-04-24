@@ -90,6 +90,7 @@ struct viewportTexture {
 };
 
 struct RenderOptions {
+    enum class SelectionPass { NoSelection, NodeIDLowerBits, NodeIDHigherBits };
     // default
     RenderOptions();
     // snapshot render options
@@ -105,7 +106,7 @@ struct RenderOptions {
     bool enableTextScaling;
     bool highlightActiveNode;
     bool highlightSelection;
-    bool selectionBuffer;
+    SelectionPass selectionPass{SelectionPass::NoSelection};
 };
 
 class ViewportBase;

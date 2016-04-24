@@ -45,11 +45,11 @@ bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
 RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(state->overlay && state->viewerState->showOverlay),
-drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionBuffer(false) {}
+drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection) {}
 
 RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
     : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(false), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
-      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionBuffer(false) {}
+      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionPass(SelectionPass::NoSelection) {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
