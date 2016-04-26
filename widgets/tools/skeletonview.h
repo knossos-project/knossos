@@ -74,20 +74,19 @@ class SkeletonView : public QWidget {
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"regex"};
     TreeModel treeModel;
-    QSortFilterProxyModel treeSortAndCommentFilterProxy;
+    QSortFilterProxyModel & treeSortAndCommentFilterProxy;
     int treeSortSectionIndex{-1};
     QTreeView treeView;
     QLabel treeCountLabel;
 
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
-    QLabel activeNodeLabel;
     QHBoxLayout nodeOptionsLayout;
     QComboBox displayModeCombo;
     QLineEdit nodeCommentFilter;
     QCheckBox nodeRegex{"regex"};
     NodeModel nodeModel;
-    QSortFilterProxyModel nodeSortAndCommentFilterProxy;
+    QSortFilterProxyModel & nodeSortAndCommentFilterProxy;
     int nodeSortSectionIndex{-1};
     NodeView nodeView;
     QLabel nodeCountLabel;

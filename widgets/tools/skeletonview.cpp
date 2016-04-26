@@ -165,6 +165,9 @@ void NodeModel::recreate() {
             cache.emplace_back(*node);
         }
     } else if (mode == BRANCH) {
+        if (state->skeletonState->activeNode != nullptr && !state->skeletonState->activeNode->isBranchNode) {
+            cache.emplace_back(*state->skeletonState->activeNode);//add active node explicitly
+        }
         for (auto && tree : state->skeletonState->trees)
         for (auto && node : tree.nodes) {
             if (node.isBranchNode) {
@@ -172,6 +175,9 @@ void NodeModel::recreate() {
             }
         }
     } else if (mode == NON_EMPTY_COMMENT) {
+        if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->getComment().isEmpty()) {
+            cache.emplace_back(*state->skeletonState->activeNode);//add active node explicitly
+        }
         for (auto && tree : state->skeletonState->trees)
         for (auto && node : tree.nodes) {
             if (node.getComment().isEmpty() == false) {
@@ -233,7 +239,30 @@ void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args)
     deleteAction->setShortcutContext(Qt::WidgetShortcut);
 }
 
-SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
+class TreeProxy : public QSortFilterProxyModel {
+public:
+    using QSortFilterProxyModel::QSortFilterProxyModel;
+    ~TreeProxy() {}
+protected:
+    virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
+        const bool isActive{&static_cast<TreeModel&>(*sourceModel()).cache[source_row].get() == state->skeletonState->activeTree};
+        return isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
+    }
+};
+class NodeProxy : public QSortFilterProxyModel {
+public:
+    using QSortFilterProxyModel::QSortFilterProxyModel;
+    ~NodeProxy() {}
+protected:
+    virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
+        const bool isActive{&static_cast<NodeModel&>(*sourceModel()).cache[source_row].get() == state->skeletonState->activeNode};
+        return isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
+    }
+};
+
+SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
+        , treeSortAndCommentFilterProxy{*new TreeProxy{this}}, nodeSortAndCommentFilterProxy{*new NodeProxy{this}}//cleanup through QObject hierarchy
+        , nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
     auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
         table.setUniformRowHeights(true);//perf hint from doc
@@ -271,7 +300,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
     nodeOptionsLayout.addWidget(&displayModeCombo);
     nodeOptionsLayout.addWidget(&nodeCommentFilter);
     nodeOptionsLayout.addWidget(&nodeRegex);
-    nodeLayout.addWidget(&activeNodeLabel);
     nodeLayout.addLayout(&nodeOptionsLayout);
     nodeLayout.addWidget(&nodeView);
     nodeLayout.addWidget(&nodeCountLabel);
@@ -290,16 +318,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         treeCountLabel.setText(tr("%1 trees").arg(all) + (all != shown ? tr(", %2 shown").arg(shown) : "") + (selected != 0 ? tr(", %3 selected").arg(selected) : ""));
     };
     static auto updateNodeSelection = [this](){
-        auto text = tr("Active Node: ");
-        if (state->skeletonState->activeNode != nullptr) {
-            const auto & node = *state->skeletonState->activeNode;
-             text += tr("%1 (%2, %3, %4), %5").arg(node.nodeID).arg(node.position.x).arg(node.position.y).arg(node.position.z).arg(node.radius);
-             const auto comment = node.getComment();
-             if (comment.isEmpty() == false) {
-                 text += tr(", »%1«").arg(comment);
-             }
-        }
-        activeNodeLabel.setText(text);
         updateSelection(nodeView, nodeModel, nodeSortAndCommentFilterProxy);
         const auto all = state->skeletonState->nodesByNodeID.size();
         const auto shown = static_cast<std::size_t>(nodeView.model()->rowCount());
@@ -330,6 +348,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         if (nodeModel.mode == NodeModel::PART_OF_SELECTED_TREE) {
             nodeRecreate();
         }
+        emit treeCommentFilter.textEdited(treeCommentFilter.text());//active tree might have changed
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
@@ -339,6 +358,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}, nodeView{n
         if (nodeModel.mode == NodeModel::SELECTED) {
             nodeRecreate();
         }
+        emit nodeCommentFilter.textEdited(nodeCommentFilter.text());//active node might have changed
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
