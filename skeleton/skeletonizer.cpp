@@ -1404,6 +1404,11 @@ void Skeletonizer::setComment(nodeListElement & commentNode, const QString & new
 
 void Skeletonizer::gotoComment(const QString & searchString, const bool next /*or previous*/) {
     static TreeTraverser commentTraverser(state->skeletonState->trees, skeletonState.activeNode);
+
+    if (searchString.isEmpty()) {
+        return;
+    }
+
     static nodeListElement *lastNode = nullptr;
     const auto setNextNode = [&searchString, this] (nodeListElement * nextNode) {
         setActiveNode(nextNode);
