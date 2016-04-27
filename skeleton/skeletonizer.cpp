@@ -1507,6 +1507,7 @@ void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
 
 void Skeletonizer::jumpToNode(const nodeListElement & node) {
     state->viewer->userMove(node.position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
+    emit jumpedToNodeSignal(node);
 }
 
 nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {

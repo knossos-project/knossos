@@ -364,6 +364,16 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::jumpedToNodeSignal, [this](const nodeListElement & node){
+        const auto it = std::find_if(std::cbegin(nodeModel.cache), std::cend(nodeModel.cache), [node](const std::reference_wrapper<nodeListElement> & elem){
+            return elem.get().nodeID == node.nodeID;
+        });
+        const auto index = std::distance(std::cbegin(nodeModel.cache), it);
+        const auto modelIndex = nodeSortAndCommentFilterProxy.mapFromSource(nodeModel.index(index, 0));
+        if (modelIndex.isValid()) {
+            nodeView.scrollTo(modelIndex);
+        }
+    });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, allRecreate);
 
