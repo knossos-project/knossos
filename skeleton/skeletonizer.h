@@ -73,7 +73,7 @@ struct SkeletonState {
 
     bool lockPositions{false};
     bool positionLocked{false};
-    QString onCommentLock{"seed"};
+    QString lockingComment{"seed"};
     Coordinate lockedPosition;
     long unsigned int lockRadius{100};
 

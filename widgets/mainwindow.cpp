@@ -870,7 +870,6 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
         setSegmentState(SegmentState::On);
     }
     newTreeAction->setVisible(trees);
-    widgetContainer.annotationWidget.commandsTab.enableNewTreeButton(trees);
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);

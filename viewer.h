@@ -117,8 +117,6 @@ struct ViewerState {
     //In pennmode right and left click are switched
     bool penmode = false;
 
-    QString lockComment;
-
     float movementAreaFactor{80.f};
 
     // dataset & segmentation rendering options

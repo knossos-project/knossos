@@ -22,7 +22,6 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
 
     tabs.addTab(&skeletonTab, "Skeleton");
     tabs.addTab(&segmentationTab, "Segmentation");
-    tabs.addTab(&commandsTab, "Commands");
     tabs.addTab(&commentsTab, "Comments");
 
     mainLayout.addWidget(&tabs);
@@ -60,44 +59,6 @@ void AnnotationWidget::loadSettings() {
     skeletonTab.treeCommentFilter.setText(settings.value(SEARCH_FOR_TREE, "").toString());
     skeletonTab.nodeCommentFilter.setText(settings.value(SEARCH_FOR_NODE, "").toString());
 
-    if(settings.value(USE_LAST_RADIUS_AS_DEFAULT).isNull() == false) {
-        commandsTab.useLastRadiusAsDefaultCheck->setChecked(settings.value(USE_LAST_RADIUS_AS_DEFAULT).toBool());
-    }
-    else {
-        commandsTab.useLastRadiusAsDefaultCheck->setChecked(false);
-    }
-
-    if(settings.value(DEFAULT_NODE_RADIUS).isNull() == false) {
-        state->skeletonState->defaultNodeRadius = settings.value(DEFAULT_NODE_RADIUS).toDouble();
-    }
-    else {
-        state->skeletonState->defaultNodeRadius = 1.5;
-    }
-    commandsTab.defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
-
-    if(settings.value(ENABLE_COMMENT_LOCKING).isNull() == false) {
-        commandsTab.commentLockingCheck->setChecked(settings.value(ENABLE_COMMENT_LOCKING).toBool());
-    }
-    else {
-        commandsTab.commentLockingCheck->setChecked(false);
-    }
-
-    if(settings.value(LOCKING_RADIUS).isNull() == false) {
-        state->skeletonState->lockRadius = settings.value(LOCKING_RADIUS).toInt();
-    }
-    else {
-        state->skeletonState->lockRadius = 10;
-    }
-    commandsTab.lockingRadiusSpin->setValue(state->skeletonState->lockRadius);
-
-    if(settings.value(LOCK_TO_NODES_WITH_COMMENT).isNull() == false) {
-        state->viewerState->lockComment = settings.value(LOCK_TO_NODES_WITH_COMMENT).toString();
-    }
-    else {
-        state->viewerState->lockComment = "seed";
-    }
-    commandsTab.commentLockEdit->setText(state->viewerState->lockComment);
-
     settings.endGroup();
 
     if(visible) {
@@ -123,11 +84,6 @@ void AnnotationWidget::saveSettings() {
 
     settings.setValue(SEARCH_FOR_TREE, skeletonTab.treeCommentFilter.text());
     settings.setValue(SEARCH_FOR_NODE, skeletonTab.nodeCommentFilter.text());
-    settings.setValue(USE_LAST_RADIUS_AS_DEFAULT, commandsTab.useLastRadiusAsDefaultCheck->isChecked());
-    settings.setValue(DEFAULT_NODE_RADIUS, commandsTab.defaultRadiusSpin->value());
-    settings.setValue(ENABLE_COMMENT_LOCKING, commandsTab.commentLockingCheck->isChecked());
-    settings.setValue(LOCKING_RADIUS, commandsTab.lockingRadiusSpin->value());
-    settings.setValue(LOCK_TO_NODES_WITH_COMMENT, commandsTab.commentLockEdit->text());
     settings.endGroup();
 
     commentsTab.saveSettings();

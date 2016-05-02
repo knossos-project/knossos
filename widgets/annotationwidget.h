@@ -3,7 +3,6 @@
 
 #include "tools/segmentationview.h"
 #include "tools/skeletonview.h"
-#include "tools/toolscommandstab.h"
 #include "tools/commentstab.h"
 
 #include <QDialog>
@@ -18,7 +17,6 @@ public:
     QVBoxLayout mainLayout;
     SkeletonView skeletonTab{this};
     SegmentationView segmentationTab{this};
-    ToolsCommandsTab commandsTab;
     CommentsTab commentsTab;
     explicit AnnotationWidget(QWidget *parent = 0);
     void setSegmentationVisibility(const bool visible);

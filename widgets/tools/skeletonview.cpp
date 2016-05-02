@@ -1,4 +1,4 @@
-#include "skeletonview.h"
+﻿#include "skeletonview.h"
 
 #include "model_helper.h"
 #include "session.h"
@@ -6,7 +6,6 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 
-#include <QCheckBox>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -307,8 +306,47 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     splitter.addWidget(&nodeDummyWidget);
 
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
+
+    defaultRadiusSpin.setRange(0.01, 100000);
+    defaultRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.defaultNodeRadius);
+    lockingRadiusSpin.setMaximum(100000);
+    lockingRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.lockRadius);
+    auto * commandsLayout = new QGridLayout();
+    commandsLayout->setSpacing(3);
+    int row = 0;
+    commandsLayout->addWidget(&defaultRadiusLabel, row, 0, 1, 1);
+    commandsLayout->addWidget(&defaultRadiusSpin, row++, 1, 1, 1);
+    commandsLayout->addWidget(&lockingLabel, row++, 0, 1, 1);
+    commandsLayout->addWidget(&lockingRadiusLabel, row, 0, 1, 1);
+    commandsLayout->addWidget(&lockingRadiusSpin, row++, 1, 1, 1);
+    commandsLayout->addWidget(&commentLockingCheck, row, 0, 1, 1);
+    commandsLayout->addWidget(&commentLockEdit, row++, 1, 1, 1);
+    commandsLayout->addWidget(&lockToActiveButton, row, 0, 1, 1, Qt::AlignLeft);
+    commandsLayout->addWidget(&disableCurrentLockingButton, row++, 1, 1, 1, Qt::AlignRight);
+    commandsBox.setContentLayout(*commandsLayout);
+
     mainLayout.addWidget(&splitter);
+    mainLayout.addWidget(&commandsBox);
     setLayout(&mainLayout);
+    auto & skeleton = Skeletonizer::singleton().skeletonState;
+    connect(&defaultRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [&skeleton](const double value) { skeleton.defaultNodeRadius = value; });
+    connect(&commentLockingCheck, &QCheckBox::clicked, [&skeleton,this](const bool checked) {
+        skeleton.lockPositions = checked;
+        if(checked && commentLockEdit.text().isEmpty() == false) {
+            skeleton.lockingComment = commentLockEdit.text();
+        }
+    });
+    connect(&lockingRadiusSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&skeleton](const int value) { skeleton.lockRadius = value; });
+    connect(&commentLockEdit, &QLineEdit::textChanged, [&skeleton](const QString comment) { skeleton.lockingComment = comment; });
+    connect(&lockToActiveButton, &QPushButton::clicked,[]() {
+        if(state->skeletonState->activeNode) {
+            Skeletonizer::singleton().lockPosition(state->skeletonState->activeNode->position);
+        }
+        else {
+            qDebug() << "There is not active node to lock";
+        }
+    });
+    connect(&disableCurrentLockingButton, &QPushButton::clicked, []() { Skeletonizer::singleton().unlockPosition(); });
 
     static auto updateTreeSelection = [this](){
         updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);

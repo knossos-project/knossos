@@ -2,13 +2,17 @@
 #define SKELETONVIEW_H
 
 #include "UserOrientableSplitter.h"
+#include "widgets/Spoiler.h"
 
 #include <QAbstractListModel>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QPushButton>
+#include <QSpinBox>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -93,6 +97,19 @@ class SkeletonView : public QWidget {
 
     QMenu treeContextMenu{&treeView};
     QMenu nodeContextMenu{&nodeView};
+
+    Spoiler commandsBox{"Commands"};
+    QLabel defaultRadiusLabel{tr("Default node radius:")};
+    QDoubleSpinBox defaultRadiusSpin;
+
+    QLabel lockingLabel{"<strong>Locking</strong>"};
+    QCheckBox commentLockingCheck{tr("Lock to nodes with comment:")};
+    QLineEdit commentLockEdit{"seed"};
+    QLabel lockingRadiusLabel{tr("Locking radius:")};
+    QSpinBox lockingRadiusSpin;
+    QPushButton lockToActiveButton{tr("Lock to active node")};
+    QPushButton disableCurrentLockingButton{tr("Disable current locking")};
+
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
     QString getFilterComment() const;

@@ -203,7 +203,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeStartElement("RadiusLocking");
     xml.writeAttribute("enableCommentLocking", QString::number(state->skeletonState->lockPositions));
     xml.writeAttribute("lockingRadius", QString::number(state->skeletonState->lockRadius));
-    xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->onCommentLock));
+    xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->lockingComment));
     xml.writeEndElement();
 
     xml.writeStartElement("time");
@@ -484,7 +484,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                     attribute = attributes.value("lockToNodesWithComment");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->onCommentLock = attribute.toString();
+                        state->skeletonState->lockingComment = attribute.toString();
                     }
                 } else if(merge == false && xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
                     QStringRef attribute = attributes.value("ms");
@@ -986,11 +986,6 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(std::uint64_t nodeID, c
      // dataset.
     if (respectLocks) {
         if(state->skeletonState->positionLocked) {
-            if (state->viewerState->lockComment == QString(state->skeletonState->onCommentLock)) {
-                unlockPosition();
-                return boost::none;
-            }
-
             const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
             float lockDistance = lockVector.length();
             if (lockDistance > state->skeletonState->lockRadius) {
@@ -1413,8 +1408,8 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
     const auto setNextNode = [&searchString, this] (nodeListElement * nextNode) {
         setActiveNode(nextNode);
         jumpToNode(*nextNode);
-        if (state->skeletonState->lockPositions) {
-            if (searchString == state->skeletonState->onCommentLock) {
+        if (state->skeletonState->lockPositions && !state->skeletonState->lockingComment.isEmpty()) {
+            if (nextNode->getComment().contains(state->skeletonState->lockingComment)) {
                 lockPosition(nextNode->position);
             } else {
                 unlockPosition();
