@@ -178,8 +178,6 @@ class Viewer : public QObject {
     Q_OBJECT
 private:
     QElapsedTimer baseTime;
-    float alphaCache;
-    QQuaternion rotation;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;

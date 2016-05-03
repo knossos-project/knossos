@@ -892,21 +892,6 @@ void Viewer::run() {
     // While we are loading the textures, we check for events. Some events
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
-
-    // for arbitrary viewport orientation
-    if(rotation.scalar() != 0) {
-        QVector3D newV1 = rotation.rotatedVector({viewportArb->v1.x, viewportArb->v1.y, viewportArb->v1.z});
-        QVector3D newV2 = rotation.rotatedVector({viewportArb->v2.x, viewportArb->v2.y, viewportArb->v2.z});
-        QVector3D newN = rotation.rotatedVector({viewportArb->n.x, viewportArb->n.y, viewportArb->n.z});
-        viewportArb->v1 = {newV1.x(), newV1.y(), newV1.z()};
-        viewportArb->v2 = {newV2.x(), newV2.y(), newV2.z()};
-        viewportArb->n = {newN.x(), newN.y(), newN.z()};
-        rotation = QQuaternion(0, 0, 0, 0);
-        viewportArb->sendCursorPosition();
-        alphaCache = 0;
-        recalcTextureOffsets();
-    }
-
     if (state->gpuSlicer && gpuRendering) {
         const auto & loadPendingCubes = [&](TextureLayer & layer, std::vector<std::pair<CoordOfGPUCube, Coordinate>> & pendingCubes, QElapsedTimer & timer) {
             while (!pendingCubes.empty() && !timer.hasExpired(3)) {
@@ -1330,24 +1315,27 @@ void Viewer::rewire() {
 }
 
 void Viewer::addRotation(const QQuaternion & quaternion) {
-    float anglePart = 0;
-    QVector3D axis;
-    quaternion.getAxisAndAngle(&axis, &anglePart);
-    alphaCache += anglePart; // angles are added up here until they are processed in the thread loop
-    rotation = QQuaternion::fromAxisAndAngle(axis, alphaCache);
-    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
-        vpOrtho.dcResliceNecessary = vpOrtho.ocResliceNecessary = true;
-    });
+    const auto prevRotation = QQuaternion::fromAxes(viewportArb->v1, viewportArb->v2, viewportArb->n);
+    const auto rotation = quaternion.normalized() * prevRotation.normalized();
+
+    const auto coord = [](auto qvec){
+        return floatCoordinate{qvec.x(), qvec.y(), qvec.z()};
+    };
+    viewportArb->v1 = coord(rotation.rotatedVector({1, 0, 0}).normalized());
+    viewportArb->v2 = coord(rotation.rotatedVector({0, 1, 0}).normalized());
+    viewportArb->n  = coord(rotation.rotatedVector({0, 0, 1}).normalized());
+    viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
+    recalcTextureOffsets();
+    viewportArb->sendCursorPosition();
 }
 
 void Viewer::resetRotation() {
-    alphaCache = 0;
-    rotation = QQuaternion(0, 0, 0, 0);
     viewportArb->v1 = {1, 0, 0};
     viewportArb->v2 = {0, 1, 0};
     viewportArb->n = {0, 0, 1};
     viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
     recalcTextureOffsets();
+    viewportArb->sendCursorPosition();
 }
 
 void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge) {
