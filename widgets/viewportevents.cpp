@@ -696,7 +696,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         state->keyD = event->key() == Qt::Key_D;
         state->keyF = event->key() == Qt::Key_F;
         if (!state->viewerKeyRepeat) {
-            const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
+            const float directionSign = state->viewerState->vpKeyDirection[viewportType] * (event->key() == Qt::Key_D ? -1 : 1);
             const float shiftMultiplier = shift? 10 : 1;
             const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
             state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
