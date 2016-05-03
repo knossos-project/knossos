@@ -690,9 +690,6 @@ void ViewportOrtho::renderViewportFast() {
     QMatrix4x4 projectionMatrix;
     projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), -scale * gpucubeedge, scale * gpucubeedge);
 
-    auto qvec = [](auto coord){
-        return QVector3D(coord.x, coord.y, coord.z);
-    };
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
     const float hfov = fov / (1 + zScaleIncrement * std::abs(v1.z));
@@ -701,7 +698,7 @@ void ViewportOrtho::renderViewportFast() {
     viewMatrix.scale(1, -1);//invert y because whe want our origin in the top right corner
     viewMatrix.scale(xz || zy ? -1 : 1, 1);//HACK idk
     const auto cameraPos = floatCoordinate{cpos} + n;
-    viewMatrix.lookAt(qvec(cameraPos), qvec(cpos), qvec(v2));
+    viewMatrix.lookAt(cameraPos, cpos, v2);
 
     // raw data shader
     raw_data_shader.bind();
@@ -776,7 +773,7 @@ void ViewportOrtho::renderViewportFast() {
 
                     QMatrix4x4 modelMatrix;
                     modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
-                    modelMatrix.rotate(QQuaternion::fromAxes(qvec(v1), qvec(v2), -qvec(n)));//HACK idk why the normal has to be negative
+                    modelMatrix.rotate(QQuaternion::fromAxes(v1, v2, -n));//HACK idk why the normal has to be negative
 
                     render(ptr, modelMatrix);
                 }

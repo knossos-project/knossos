@@ -28,6 +28,7 @@
 #include <QDebug>
 #include <QList>
 #include <QVector>
+#include <QVector3D>
 #include <QMetaType>
 
 #include <cstddef>
@@ -176,6 +177,9 @@ public:
     template<typename T>
     constexpr operator Coord<T, tag>() const {
         return Coord<T, tag>(this->x, this->y, this->z);
+    }
+    constexpr operator QVector3D() const {
+        return QVector3D{this->x, this->y, this->z};
     }
 };
 
