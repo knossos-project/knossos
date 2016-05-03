@@ -1,8 +1,8 @@
 #ifndef SKELETONVIEW_H
 #define SKELETONVIEW_H
 
-#include "UserOrientableSplitter.h"
 #include "widgets/Spoiler.h"
+#include "widgets/UserOrientableSplitter.h"
 
 #include <QAbstractListModel>
 #include <QCheckBox>

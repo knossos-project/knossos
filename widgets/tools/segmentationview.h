@@ -2,7 +2,7 @@
 #define SEGMENTATIONVIEW_H
 
 #include "segmentation/segmentation.h"
-#include "UserOrientableSplitter.h"
+#include "widgets/UserOrientableSplitter.h"
 
 #include <QAbstractListModel>
 #include <QButtonGroup>

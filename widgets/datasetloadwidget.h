@@ -3,6 +3,7 @@
 
 #include "coordinate.h"
 #include "loader.h"
+#include "widgets/UserOrientableSplitter.h"
 #include "widgets/viewport.h"
 
 #include <QCheckBox>
@@ -24,6 +25,7 @@ class DatasetLoadWidget : public QDialog {
     Q_OBJECT
 
     QVBoxLayout mainLayout;
+    UserOrientableSplitter splitter;
     QTableWidget tableWidget;
     QLabel infoLabel;
     QFrame line;

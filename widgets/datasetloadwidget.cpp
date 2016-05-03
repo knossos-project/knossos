@@ -28,30 +28,31 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     setModal(true);
     setWindowTitle("Load Dataset");
 
-    cubeEdgeSpin.setRange(1, 256);
-    cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-
-    superCubeEdgeSpin.setMinimum(3);
-    superCubeEdgeSpin.setSingleStep(2);
-    superCubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-
     tableWidget.setColumnCount(3);
-
     tableWidget.verticalHeader()->setVisible(false);
     tableWidget.horizontalHeader()->setVisible(false);
-
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
     tableWidget.horizontalHeader()->resizeSection(1, 20);
     tableWidget.horizontalHeader()->resizeSection(2, 40);
     tableWidget.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
+    splitter.setOrientation(Qt::Vertical);
+    splitter.addWidget(&tableWidget);
+    splitter.addWidget(&infoLabel);
+    splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     line.setFrameShape(QFrame::HLine);
     line.setFrameShadow(QFrame::Sunken);
 
+    cubeEdgeSpin.setRange(1, 256);
+    cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    superCubeEdgeSpin.setMinimum(3);
+    superCubeEdgeSpin.setSingleStep(2);
     superCubeEdgeSpin.setAlignment(Qt::AlignLeft);
+    superCubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
     superCubeEdgeHLayout.addWidget(&superCubeEdgeSpin);
     superCubeEdgeHLayout.addWidget(&superCubeSizeLabel);
 
@@ -60,9 +61,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
 
     buttonHLayout.addWidget(&processButton);
     buttonHLayout.addWidget(&cancelButton);
-
-    mainLayout.addWidget(&tableWidget);
-    mainLayout.addWidget(&infoLabel);
+    mainLayout.addWidget(&splitter);
     mainLayout.addWidget(&line);
     mainLayout.addLayout(&superCubeEdgeHLayout);
     mainLayout.addLayout(&cubeEdgeHLayout);
@@ -78,7 +77,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
     QObject::connect(&cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
-    resize(512, 512);//random default size, will be overriden by settings if present
+    resize(600, 600);//random default size, will be overriden by settings if present
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
