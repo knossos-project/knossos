@@ -523,10 +523,10 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         const float angle = ctrl ? -1: 1;
         switch(event->key()) {
         case Qt::Key_K:
-            state->viewer->setRotation(QQuaternion::fromAxisAndAngle(0., 0., 1., angle));
+            state->viewer->addRotation(QQuaternion::fromAxisAndAngle(0., 0., 1., angle));
             break;
         case Qt::Key_L:
-            state->viewer->setRotation(QQuaternion::fromAxisAndAngle(0., 1., 0., angle));
+            state->viewer->addRotation(QQuaternion::fromAxisAndAngle(0., 1., 0., angle));
             break;
         }
     } else if (ctrl && event->key() == Qt::Key_0) {

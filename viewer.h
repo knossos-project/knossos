@@ -241,7 +241,7 @@ public slots:
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
     bool vpGenerateTexture(ViewportOrtho & vp);
-    void setRotation(const QQuaternion & quaternion);
+    void addRotation(const QQuaternion & quaternion);
     void resetRotation();
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);
     void dc_reslice_notify_visible();

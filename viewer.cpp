@@ -1329,7 +1329,7 @@ void Viewer::rewire() {
     // --- end widget signals
 }
 
-void Viewer::setRotation(const QQuaternion & quaternion) {
+void Viewer::addRotation(const QQuaternion & quaternion) {
     float anglePart = 0;
     QVector3D axis;
     quaternion.getAxisAndAngle(&axis, &anglePart);

@@ -144,7 +144,7 @@ void Remote::remoteWalk() {
     if (rotate) {
         quaternion.getAxisAndAngle(&axis, &angle);
         quaternion = QQuaternion::fromAxisAndAngle(axis, angle / totalMoves);
-        state->viewer->setRotation(quaternion);
+        state->viewer->addRotation(quaternion);
     }
 
     state->viewer->userMove(singleMove);
