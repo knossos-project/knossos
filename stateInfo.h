@@ -127,10 +127,6 @@ public:
     class Scripting * scripting;
     class SignalRelay * signalRelay;
     struct SkeletonState * skeletonState;
-    bool keyD{false};
-    bool keyF{false};
-    std::array<float, 3> repeatDirection{{}};
-    bool viewerKeyRepeat{false};
 };
 
 #endif//STATE_INFO_H

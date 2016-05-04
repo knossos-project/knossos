@@ -220,9 +220,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 state->viewerState->highlightVp = VIEWPORT_XY;
             }
             //Determine the directions for the f and d keys based on the signs of the movement components along the three dimensions
-            state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0) ? 1 : -1;
-            state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0) ? 1 : -1;
-            state->viewerState->vpKeyDirection[VIEWPORT_ZY] = (movement.x >= 0) ? 1 : -1;
+            state->viewerState->tracingDirection = movement;
 
             //Auto tracing adjustments – this is out of place here
             state->viewerState->autoTracingDelay = std::min(500, std::max(10, state->viewerState->autoTracingDelay));
@@ -230,7 +228,8 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
 
             //Additional move of specified steps along clicked viewport
             if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
-                const auto move = state->viewerState->vpKeyDirection[viewportType] * state->viewerState->autoTracingSteps;
+                const auto direction = n.dot(state->viewerState->tracingDirection) >= 0 ? 1 : -1;
+                const auto move = direction * state->viewerState->autoTracingSteps;
                 clickedCoordinate += n * move;
             }
 
@@ -514,9 +513,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             }
         }
     } else if (event->key() == Qt::Key_Shift) {
-        state->repeatDirection[0] *= 10;
-        state->repeatDirection[1] *= 10;
-        state->repeatDirection[2] *= 10;
+        state->viewerState->repeatDirection *= 10;
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
     } else if(event->key() == Qt::Key_K || event->key() == Qt::Key_L) {
@@ -635,10 +632,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
 }
 
 void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
-    const auto shift = event->modifiers().testFlag(Qt::ShiftModifier);
-    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->viewerKeyRepeat = event->isAutoRepeat();
-    }
     //events
     //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
     //^ os delay ^       ^---^ os key repeat
@@ -648,43 +641,28 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
     //^ os delay ^       ^-^ knossos specified interval
 
     //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
-    if(event->key() == Qt::Key_Left) {
-        if(shift) {
-            state->viewer->userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            state->viewer->userMove(v1 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
+    const bool keyD = event->key() == Qt::Key_D;
+    const bool keyF = event->key() == Qt::Key_F;
+    if (keyD || keyF) {
+        state->viewerState->keyRepeat = event->isAutoRepeat();
+    }
+
+    const bool shiftMultiplier = event->modifiers().testFlag(Qt::ShiftModifier) ? 10 : 1;
+    const bool keyLeft = event->key() == Qt::Key_Left;
+    const bool keyRight = event->key() == Qt::Key_Right;
+    const bool keyDown = event->key() == Qt::Key_Down;
+    const bool keyUp = event->key() == Qt::Key_Up;
+    const bool keyE = event->key() == Qt::Key_E;
+    const auto direction = n.dot(state->viewerState->tracingDirection) >= 0 ? 1 : -1;
+    const float directionSign = (keyLeft || keyUp) ? -1 : (keyRight || keyDown) ? 1 : direction * (keyD || keyE ? -1 : 1);
+    if (keyLeft || keyRight || keyDown || keyUp || keyD || keyF) {
+        const auto vector = (keyLeft || keyRight) ? v1 : (keyUp || keyDown) ? v2 : n;
+        if (!state->viewerState->keyRepeat) {// don’t change the repeat direction while repeating (you can move the mouse to another vp but continue drilling)
+            state->viewerState->repeatDirection = vector * directionSign * shiftMultiplier * state->viewerState->dropFrames * state->magnification;
+            state->viewer->userMove(state->viewerState->repeatDirection, USERMOVE_HORIZONTAL, n);
         }
-    } else if(event->key() == Qt::Key_Right) {
-        if(shift) {
-            state->viewer->userMove(v1 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            state->viewer->userMove(v1 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_Down) {
-        if(shift) {
-            state->viewer->userMove(v2 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            state->viewer->userMove(v2 * -static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_Up) {
-        if(shift) {
-            state->viewer->userMove(v2 * 10 * state->magnification, USERMOVE_HORIZONTAL, n);
-        } else {
-            state->viewer->userMove(v2 * static_cast<int>(state->viewerState->dropFrames) * state->magnification, USERMOVE_HORIZONTAL, n);
-        }
-    } else if(event->key() == Qt::Key_R || event->key() == Qt::Key_E) {
-        const int directionSign = event->key() == Qt::Key_E ? -1 : 1;
-        state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * state->viewerState->walkFrames * state->magnification);
-    } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->keyD = event->key() == Qt::Key_D;
-        state->keyF = event->key() == Qt::Key_F;
-        if (!state->viewerKeyRepeat) {
-            const float directionSign = state->viewerState->vpKeyDirection[viewportType] * (event->key() == Qt::Key_D ? -1 : 1);
-            const float shiftMultiplier = shift? 10 : 1;
-            const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
-            state->repeatDirection = {{ multiplier * n.x, multiplier * n.y, multiplier * n.z }};
-            state->viewer->userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_HORIZONTAL, n);
-        }
+    } else if(event->key() == Qt::Key_R || keyE) {
+        state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * shiftMultiplier * state->viewerState->walkFrames * state->magnification);
     }
     ViewportBase::handleKeyPress(event);
 }

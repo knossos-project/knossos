@@ -545,15 +545,10 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    if (event->key() == Qt::Key_D) {
-        state->keyD = false;
-    } else if (event->key() == Qt::Key_F) {
-        state->keyF = false;
+    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
+        state->viewerState->keyRepeat = false;
     } else if (event->key() == Qt::Key_Shift) {//decrease movement speed
-        state->repeatDirection[0] /= 10;
-        state->repeatDirection[1] /= 10;
-        state->repeatDirection[2] /= 10;
-
+        state->viewerState->repeatDirection /= 10;
         Segmentation::singleton().brush.setInverse(false);
     } else {
         handleKeyRelease(event);

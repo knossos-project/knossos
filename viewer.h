@@ -68,9 +68,6 @@ struct ViewerState {
         state->viewerState = this;
     }
 
-    int highlightVp{VIEWPORT_UNDEFINED};
-    int vpKeyDirection[3]{1,1,1};
-
     int texEdgeLength = 512;
     // don't jump between mags on zooming
     bool datasetMagLock;
@@ -79,8 +76,6 @@ struct ViewerState {
     //   is currently loaded.)
     Coordinate currentPosition;
 
-    //Keyboard repeat rate
-    uint stepsPerSec{40};
     int multisamplingOnOff;
     int lightOnOff;
 
@@ -91,8 +86,15 @@ struct ViewerState {
 
     bool selectModeFlag{false};
 
-    uint dropFrames{1};
-    uint walkFrames{10};
+    int dropFrames{1};
+    int walkFrames{10};
+
+    Coordinate tracingDirection;
+    ViewportType highlightVp{VIEWPORT_UNDEFINED};
+
+    bool keyRepeat{false};
+    floatCoordinate repeatDirection;
+    int stepsPerSec{40};
 
     float voxelDimX;
     float voxelDimY;

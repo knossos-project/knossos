@@ -879,11 +879,11 @@ void Viewer::run() {
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
     timer.singleShot(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW, this, &Viewer::run);
 
-    if (state->viewerKeyRepeat && (state->keyF || state->keyD)) {
-        qint64 interval = 1000 / state->viewerState->stepsPerSec;
+    if (viewerState.keyRepeat) {
+        qint64 interval = 1000 / viewerState.stepsPerSec;
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
-            userMove({state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]}, USERMOVE_DRILL);
+            userMove(viewerState.repeatDirection, USERMOVE_DRILL);
         }
     }
     // Event and rendering loop.
