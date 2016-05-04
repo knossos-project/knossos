@@ -594,7 +594,7 @@ void MainWindow::createMenus() {
 
     auto helpMenu = menuBar()->addMenu("Help");
     addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
-    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(show()));
+    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
