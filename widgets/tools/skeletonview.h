@@ -8,6 +8,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QGridLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -99,6 +100,7 @@ class SkeletonView : public QWidget {
     QMenu nodeContextMenu{&nodeView};
 
     Spoiler commandsBox{"Commands"};
+    QGridLayout commandsLayout;
     QLabel defaultRadiusLabel{tr("Default node radius:")};
     QDoubleSpinBox defaultRadiusSpin;
 

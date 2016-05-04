@@ -1,6 +1,7 @@
 #ifndef SPOILER_H
 #define SPOILER_H
 
+#include <QFrame>
 #include <QGridLayout>
 #include <QParallelAnimationGroup>
 #include <QScrollArea>
@@ -12,6 +13,7 @@ class Spoiler : public QWidget {
 private:
     QGridLayout mainLayout;
     QToolButton toggleButton;
+    QFrame headerLine;
     QParallelAnimationGroup toggleAnimation;
     QScrollArea contentArea;
     int animationDuration{300};
