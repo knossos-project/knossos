@@ -35,12 +35,24 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
     versionLabel.setText(KVERSION);
     revisionLabel.setText(KREVISION);
     revisionDateLabel.setText(KREVISIONDATE);
+    seperator.setFrameShape(QFrame::HLine);
+    seperator.setFrameShadow(QFrame::Sunken);
+#ifdef __VERSION__
+    compilerLabel.setText(tr("GCC %1").arg(__VERSION__));
+#endif
+#ifdef _MSC_FULL_VER
+    compilerLabel.setText(tr("VC++ cl v%1").arg(_MSC_FULL_VER));
+#endif
+    qtLabel.setText(tr("using %1 (built with %2)").arg(qVersion()).arg(QT_VERSION_STR));
 
     splash.setPixmap(QPixmap(":/resources/splash"));
 
     mainLayout.addRow(tr("Version"), &versionLabel);
     mainLayout.addRow(tr("Revision"), &revisionLabel);
     mainLayout.addRow(tr("Revision Date"), &revisionDateLabel);
+    mainLayout.addWidget(&seperator);
+    mainLayout.addRow(tr("Compiler"), &compilerLabel);
+    mainLayout.addRow(tr("Qt"), &qtLabel);
     mainLayout.addRow(&splash);
     mainLayout.setSizeConstraint(QLayout::SetFixedSize);
     setLayout(&mainLayout);

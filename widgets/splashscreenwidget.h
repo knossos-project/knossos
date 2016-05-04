@@ -37,6 +37,9 @@ private:
     QLabel versionLabel;
     QLabel revisionLabel;
     QLabel revisionDateLabel;
+    QFrame seperator;
+    QLabel compilerLabel{"Unknown"};
+    QLabel qtLabel;
     QLabel splash;
 };
 
