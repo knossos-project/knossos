@@ -216,7 +216,7 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Datas
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
 
-    qDebug() << "Allocating" << state->cubeSetBytes << "bytes for the datacubes.";
+    qDebug() << "Allocating" << state->cubeSetBytes / 1024. / 1024. << "MiB for the datacubes.";
     for(size_t i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         DcSetChunk.emplace_back(state->cubeBytes, 0);//zero init chunk of chars
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
@@ -228,7 +228,7 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Datas
 }
 
 void Loader::Worker::allocateOverlayCubes() {
-    qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES << "bytes for the overlay cubes.";
+    qDebug() << "Allocating" << state->cubeSetBytes * OBJID_BYTES / 1024. / 1024. << "MiB for the overlay cubes.";
     for(size_t i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
         OcSetChunk.emplace_back(state->cubeBytes * OBJID_BYTES, 0);//zero init chunk of chars
         freeOcSlots.emplace_back(OcSetChunk.back().data());//append newest element
