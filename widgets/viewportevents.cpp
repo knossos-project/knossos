@@ -648,23 +648,6 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
     //^ os delay ^       ^-^ knossos specified interval
 
     //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
-
-    //›#‹ events are marked isAutoRepeat correctly on Windows
-    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
-    //to emulate this the time to the previous time the same event occured is measured
-    //drawbacks of this emulation are:
-    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
-    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
-    if (!event->isAutoRepeat()) {
-        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
-        //seperate timer for each key, but only one across all vps
-        if (event->key() == Qt::Key_D) {
-            state->viewerKeyRepeat = timeDBase.restart() < 150;
-        } else if (event->key() == Qt::Key_F) {
-            state->viewerKeyRepeat = timeFBase.restart() < 150;
-        }
-    }
-
     if(event->key() == Qt::Key_Left) {
         if(shift) {
             state->viewer->userMove(v1 * (-10) * state->magnification, USERMOVE_HORIZONTAL, n);

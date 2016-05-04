@@ -162,8 +162,6 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
     default:
         throw std::runtime_error("ViewportOrtho::ViewportOrtho unknown vp");
     }
-    timeDBase.start();
-    timeFBase.start();
 }
 
 void ViewportOrtho::mouseMoveEvent(QMouseEvent *event) {

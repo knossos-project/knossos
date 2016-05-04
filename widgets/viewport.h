@@ -150,9 +150,6 @@ private:
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
-    QElapsedTimer timeDBase;
-    QElapsedTimer timeFBase;
-
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
     // rendering
