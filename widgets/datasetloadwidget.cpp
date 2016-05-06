@@ -325,7 +325,7 @@ void DatasetLoadWidget::applyGeometrySettings() {
 void DatasetLoadWidget::loadSettings() {
     auto transitionedDataset = [](const QString & dataset){//update old files from settings
         QUrl url = dataset;
-        if (QRegularExpression("^[A-Z]:*").match(dataset).hasMatch()) {//set file scheme for windows drive letters
+        if (QRegularExpression("^[A-Z]:").match(dataset).hasMatch()) {//set file scheme for windows drive letters
             url = QUrl::fromLocalFile(dataset);
         }
         if (url.isRelative()) {
