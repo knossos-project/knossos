@@ -633,7 +633,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         }
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
-                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString();
+                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString() << reply->readAll();
                         }
                         state->protectCube2Pointer.lock();
                         freeSlots.emplace_back(currentSlot);
