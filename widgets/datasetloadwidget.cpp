@@ -12,8 +12,6 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QHeaderView>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -171,13 +169,6 @@ void DatasetLoadWidget::updateDatasetInfo() {
         .arg(datasetinfo.scale.z);
 
     infoLabel.setText(infotext);
-}
-
-QString DatasetLoadWidget::extractWebKnossosToken(QString & json_raw) {
-    QJsonDocument json_conf = QJsonDocument::fromJson(json_raw.toUtf8());
-    auto jmap = json_conf.object();
-
-    return jmap["token"].toString();
 }
 
 QStringList DatasetLoadWidget::getRecentPathItems() {

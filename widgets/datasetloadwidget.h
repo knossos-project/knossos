@@ -51,7 +51,6 @@ public:
     void updateDatasetInfo();
     void insertDatasetRow(const QString & dataset, const int pos);
     void datasetCellChanged(int row, int col);
-    QString extractWebKnossosToken(QString & json_raw);
     QStringList getRecentPathItems();
 
 signals:
