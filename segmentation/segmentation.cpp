@@ -212,12 +212,12 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     if (selectedObjectsCount() != 0) {
         return colorObjectFromIndex(selectedObjectIndices.front());
     }
-    return std::make_tuple(0, 0, 0, 0);
+    return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
-        return std::make_tuple(255, 0, 0, alpha);//mark overlapping objects in red
+        return std::make_tuple(std::uint8_t{255}, std::uint8_t{0}, std::uint8_t{0}, alpha);//mark overlapping objects in red
     }
     const auto objectIndex = *std::find_if(std::begin(subobject.objects), std::end(subobject.objects), [this](const uint64_t index){
         return objects[index].selected;
@@ -227,21 +227,21 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
     if (subObjectID == backgroundId) {
-        return std::make_tuple(0, 0, 0, 0);
+        return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
     }
     const auto subobjectIt = subobjects.find(subObjectID);
     if (subobjectIt == std::end(subobjects)) {
         if (renderAllObjs || selectedObjectIndices.empty()) {
             return subobjectColor(subObjectID);
         } else {
-            return std::make_tuple(0, 0, 0, 0);
+            return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
         }
     }
     const auto & subobject = subobjectIt->second;
     if (subobject.selectedObjectsCount != 0) {
         return colorOfSelectedObject(subobject);
     } else if (!renderAllObjs) {
-        return std::make_tuple(0, 0, 0, 0);
+        return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
     }
     return colorObjectFromIndex(largestObjectContainingSubobject(subobject));
 }
