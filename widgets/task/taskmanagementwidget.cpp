@@ -190,23 +190,23 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     const auto url = taskLoginWidget.host + "/knossos/currentFile/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getFile(url);
-    setCursor(Qt::ArrowCursor);
 
     if (handleError({res.first, res.second.second})) {
         saveAndLoadFile(res.second.first, res.second.second);
     }
+    setCursor(Qt::ArrowCursor);
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
     const auto url = taskLoginWidget.host + "/knossos/newTask/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getPost(url);
-    setCursor(Qt::ArrowCursor);
 
     if (handleError({res.first, res.second.second})) {
         updateAndRefreshWidget();//task infos changed
         saveAndLoadFile(res.second.first, res.second.second);
     }
+    setCursor(Qt::ArrowCursor);
 }
 
 void TaskManagementWidget::submitFinal() {
