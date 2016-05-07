@@ -32,7 +32,7 @@ find_package(Boost 1.50 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Qt5Python27 REQUIRED)
 find_package(Snappy REQUIRED)
-find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 if(NOT AUTOGEN)
@@ -107,10 +107,8 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Core
     Qt5::Gui
     Qt5::Help
-    Qt5::OpenGL
-    Qt5::Sql
-    Qt5::Widgets
     Qt5::Network
+    Qt5::Widgets
     Qt5Python27
     QuaZip::QuaZip
     Snappy::Snappy
