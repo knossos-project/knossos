@@ -23,8 +23,6 @@ public:
 
     TaskLoginWidget taskLoginWidget;
 
-    QString username;
-
 protected:
     QLabel statusLabel;
 

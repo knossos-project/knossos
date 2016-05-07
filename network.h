@@ -22,7 +22,6 @@ public:
     }
 
     QPair<bool, QString> login(const QUrl & url, const QString & username, const QString & password);
-    QPair<bool, QString> logout(const QUrl & url);
     QPair<bool, QString> refresh(const QUrl & url);
     QPair<bool, QPair<QString, QByteArray> > getFile(const QUrl & url);
     QPair<bool, QPair<QString, QByteArray> > getPost(const QUrl & url);

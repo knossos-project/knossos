@@ -78,37 +78,50 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     const auto res = Network::singleton().refresh(url);
     setCursor(Qt::ArrowCursor);
 
-    if (res.first) {
-        QXmlStreamReader xml(res.second);
-        if (xml.readNextStartElement() && xml.name() == "session") {
-            const auto attributes = xml.attributes();
-            username = attributes.value("username").toString();
-            logoutButton.setText("Logout »" + username + "«");
-            statusLabel.setText("Hello " + username + "!");
-            const auto categoryDesciption = QByteArray::fromBase64(attributes.value("description").toUtf8());
-            const auto taskComment = QByteArray::fromBase64(attributes.value("comment").toUtf8());
-            categoryDescriptionLabel.setText(categoryDesciption);
-            taskCommentLabel.setText(taskComment);
+    QString statusText = "Please login.";
+    bool hasUser{false};
+    QXmlStreamReader xml(res.second);
+    if (res.first && xml.readNextStartElement() && xml.name() == "session") {
+        QString username, fullName, taskCategory, categoryDescription, taskName, taskComment;
+        while (xml.readNextStartElement()) {
+            if (xml.name() == "user") {
+                hasUser = true;
+                const auto attributes = xml.attributes();
+                username = attributes.value("username").toString();
+                fullName = attributes.value("first_name").toString() + ' ' + attributes.value("last_name").toString();
+            } else if (xml.name() == "category") {
+                const auto attributes = xml.attributes();
+                taskCategory = attributes.value("name").toString();
+                categoryDescription = QByteArray::fromBase64(attributes.value("description").toUtf8());
+            } else if (xml.name() == "task") {
+                const auto attributes = xml.attributes();
+                taskName = attributes.value("name").toString();
+                taskComment = QByteArray::fromBase64(attributes.value("comment").toUtf8());
+            }
+            xml.skipCurrentElement();// also discards unknown elements
         }
-        QString task;
-        if (xml.readNextStartElement() && xml.name() == "task") {
-            const auto attributes = xml.attributes();
-            const auto taskCategory = attributes.value("category").toString();
-            const auto taskName = attributes.value("name").toString();
-            Session::singleton().task = {taskCategory, taskName};
-            task = tr("%1 (%2)").arg(taskName).arg(taskCategory);
-            taskLabel.setText(task);
-        }
-        if (!username.isEmpty()) {
-            const bool hasTask = !task.isEmpty();
+        xml.readNext();// </session>
+        statusText = !xml.hasError() ? "" : tr("\nThere was an error parsing the response, please report this error: \n%1 (at line %2)").arg(xml.errorString()).arg(xml.lineNumber());
+
+        Session::singleton().task = {taskCategory,taskName};
+        if (hasUser) {
+            statusText.prepend("Hello " + fullName + "!");// statusText may already contain error Information
+            statusLabel.setText(statusText);
+            logoutButton.setText("Logout");
+
+            const bool hasTask = !taskName.isEmpty();
             //last submit/new task are mutually exclusive, show only one of both
             gridLayout.removeWidget(&loadLastSubmitButton);
             gridLayout.removeWidget(&startNewTaskButton);
             if (hasTask) {
+                taskLabel.setText(tr("“%1” (%2)").arg(taskName).arg(taskCategory));
                 gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
             } else {
+                taskLabel.setText(tr("None"));
                 gridLayout.addWidget(&startNewTaskButton, 0, 0, 1, 2);
             }
+            categoryDescriptionLabel.setText(categoryDescription);
+            taskCommentLabel.setText(taskComment);
             //buttons would still be shown after removing them from the layout
             loadLastSubmitButton.setVisible(hasTask);
             startNewTaskButton.setVisible(!hasTask);
@@ -117,18 +130,17 @@ void TaskManagementWidget::updateAndRefreshWidget() {
             submitButton.setEnabled(hasTask);
             submitFinalButton.setEnabled(hasTask);
             show();
-        } else {
-            emit visibilityChanged(false);
-            taskLoginWidget.setResponse("Please login.");
         }
-    } else {
-        emit visibilityChanged(false);
-        taskLoginWidget.setResponse("Please login.");
     }
+    if (!hasUser) {
+        emit visibilityChanged(false);
+        taskLoginWidget.setResponse(statusText);
+    }
+    qDebug() << statusText;// so errors appear in logs
 }
 
 void TaskManagementWidget::loginButtonClicked(const QString & host, const QString & username, const QString & password) {
-    const auto url = host + "/knossos/session/";
+    const auto url = host + "/knossos/login/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().login(url, username, password);
     setCursor(Qt::ArrowCursor);
@@ -143,9 +155,9 @@ void TaskManagementWidget::loginButtonClicked(const QString & host, const QStrin
 }
 
 void TaskManagementWidget::logoutButtonClicked() {
-    const auto url = taskLoginWidget.host + "/knossos/session/";
+    const auto url = taskLoginWidget.host + "/knossos/logout/";
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().logout(url);
+    const auto res = Network::singleton().refresh(url);
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res)) {
@@ -175,7 +187,7 @@ void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByte
 }
 
 void TaskManagementWidget::loadLastSubmitButtonClicked() {
-    const auto url = taskLoginWidget.host + "/knossos/activeTask/lastSubmit/";
+    const auto url = taskLoginWidget.host + "/knossos/currentFile/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getFile(url);
     setCursor(Qt::ArrowCursor);
@@ -207,7 +219,7 @@ void TaskManagementWidget::submitFinal() {
 bool TaskManagementWidget::submit(const bool final) {
     state->viewer->window->save();//save file to submit
 
-    const auto url = taskLoginWidget.host + "/knossos/activeTask/";
+    const auto url = taskLoginWidget.host + "/knossos/submit/";
     setCursor(Qt::BusyCursor);
     auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);

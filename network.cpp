@@ -140,11 +140,6 @@ QPair<bool, QString> Network::login(const QUrl & url, const QString & username, 
     return blockDownloadExtractData(reply);
 }
 
-QPair<bool, QString> Network::logout(const QUrl & url) {
-    auto & reply = *manager.deleteResource(QNetworkRequest(url));
-    return blockDownloadExtractData(reply);
-}
-
 template<typename T>
 QByteArray getCSRF(const T & cookies) {
     for (const auto & cookie : cookies) {
@@ -195,7 +190,7 @@ QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString 
     multipart.append(file_part);
     multipart.append(addFormDataPart("filename", filename.toUtf8()));
     multipart.append(addFormDataPart("submit_comment", comment.toUtf8()));
-    multipart.append(addFormDataPart("submit_work_isfinal", final ? "True" : "False"));
+    multipart.append(addFormDataPart("submit_work_is_final", final ? "True" : "False"));
 
     auto & reply = *manager.post(QNetworkRequest(url), &multipart);
     return blockDownloadExtractData(reply);
