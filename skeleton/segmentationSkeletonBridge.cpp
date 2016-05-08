@@ -61,6 +61,7 @@ void decrementSubobjectCount(nodeListElement & node, const Coordinate & oldPos, 
 
 void Skeletonizer::unsetSubobjectOfHybridNode(nodeListElement & node) {
     ifsoproperty(node, [&](const uint64_t oldSubobjectId){
+        selectObjectForNode(node);
         decrementSubobjectCount(node, node.position, oldSubobjectId);
     });
 }

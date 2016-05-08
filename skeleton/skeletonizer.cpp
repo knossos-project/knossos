@@ -958,12 +958,16 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
 
     if (node == nullptr) {
         selectNodes({});
-        Segmentation::singleton().clearObjectSelection();
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+            Segmentation::singleton().clearObjectSelection();
+        }
     } else {
         if (!node->selected) {
             selectNodes({node});
         }
-        selectObjectForNode(*node);
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+            selectObjectForNode(*node);
+        }
 
         setActiveTreeByID(node->correspondingTree->treeID);
     }

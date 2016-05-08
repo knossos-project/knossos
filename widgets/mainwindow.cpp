@@ -874,6 +874,10 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
+
+    if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
+        Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
+    }
 }
 
 void MainWindow::setSegmentState(const SegmentState newState) {
