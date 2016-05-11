@@ -5,7 +5,9 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "viewer.h"//state->viewerState->renderInterval
 
+#include <QColorDialog>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -447,6 +449,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     QObject::connect(treeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(treeView, treeSortSectionIndex));
     QObject::connect(nodeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(nodeView, nodeSortSectionIndex));
+
+    QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index){
+        static QColorDialog colorDialog;
+        if (index.column() == 1) {
+            colorDialog.setParent(this);
+            colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
+            state->viewerState->renderInterval = SLOW;
+            if (colorDialog.exec() == QColorDialog::Accepted) {
+                treeView.model()->setData(index, colorDialog.currentColor());
+            }
+            state->viewerState->renderInterval = FAST;
+        }
+    });
 
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){

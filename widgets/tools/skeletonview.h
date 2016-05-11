@@ -34,7 +34,7 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
     const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment"};
-    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, Qt::ItemIsEditable, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
