@@ -6,6 +6,7 @@
 
 #include <QAbstractListModel>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
@@ -73,6 +74,7 @@ class SkeletonView : public QWidget {
     QVBoxLayout mainLayout;
     UserOrientableSplitter splitter;
 
+    QColorDialog colorDialog;
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
     QHBoxLayout treeOptionsLayout;
