@@ -331,7 +331,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement(); // end branchpoints
 
     xml.writeStartElement("synapses");
-    for(const auto synapse : state->skeletonState->synapses) {
+    for(const auto & synapse : state->skeletonState->synapses) {
         xml.writeStartElement("synapse");
         xml.writeAttribute("pre", QString::number(synapse.presynapse->nodeID));
         xml.writeAttribute("post", QString::number(synapse.postsynapse->nodeID));
