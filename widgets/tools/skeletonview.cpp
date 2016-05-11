@@ -68,7 +68,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
 
     if (index.column() == 2 && role == Qt::CheckStateRole) {
         tree.render = value.toBool();
-    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 0) {
+    } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
         const QColor color{value.value<QColor>()};
         tree.color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
