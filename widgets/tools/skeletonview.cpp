@@ -239,6 +239,8 @@ public:
     ~TreeProxy() {}
 protected:
     virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
+        //Don't show synaptic clefts
+        if(strcmp(static_cast<TreeModel&>(*sourceModel()).cache[source_row].get().comment, "synaptic_cleft") == 0) return false;
         const bool isActive{&static_cast<TreeModel&>(*sourceModel()).cache[source_row].get() == state->skeletonState->activeTree};
         return isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
     }
