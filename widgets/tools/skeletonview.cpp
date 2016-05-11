@@ -595,12 +595,16 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
 
     treeContextMenu.setDefaultAction(treeContextMenu.actions().front());
-    QObject::connect(&treeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex &){
-        treeContextMenu.defaultAction()->trigger();
+    QObject::connect(&treeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex & index){
+        if (index.column() == 0) {
+            treeContextMenu.defaultAction()->trigger();
+        }
     });
     nodeContextMenu.setDefaultAction(nodeContextMenu.actions().front());
-    QObject::connect(&nodeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex &){
-        nodeContextMenu.defaultAction()->trigger();
+    QObject::connect(&nodeView, &QAbstractItemView::doubleClicked, [this](const QModelIndex & index){
+        if (index.column() == 0) {
+            nodeContextMenu.defaultAction()->trigger();
+        }
     });
 }
 
