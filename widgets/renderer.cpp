@@ -294,17 +294,27 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
     auto color = state->viewer->getNodeColor(node);
     const float radius = Skeletonizer::singleton().radius(node);
 
+    float mp;
+    if( radius > 30.0f) {
+        mp = 1.1; //halo only 10% bigger then node
+    } else {
+        //scale the halo size from 10% up to 100% bigger then the node size
+        //otherwise, the halo won't be visible on very small node sizes (=1.0)
+        //(x - x_0) * (f_1 - f_0)/(x_1 - x_0)  //Linear interpolation
+        mp = (radius - 1.0) * (1.1 - 2.0)/(30.0 - 1.0) + 2.0;
+    }
+
     renderSphere(node.position, radius, color, options);
 
     if(node.selected && options.highlightSelection) { // highlight selected nodes
-        renderSphere(node.position, radius * 2, {0.f, 1.f, 0.f, 0.5f});
+        renderSphere(node.position, radius * mp, {0.f, 1.f, 0.f, 0.5f});
     }
     // Highlight active node with a halo
     if(state->skeletonState->activeNode == &node && options.highlightActiveNode) {
         // Color gets changes in case there is a comment & conditional comment highlighting
         color4F haloColor = state->viewer->getNodeColor(node);
         haloColor.a = 0.2f;
-        renderSphere(node.position, Skeletonizer::singleton().radius(node) * 1.5, haloColor);
+        renderSphere(node.position, radius * ((mp - 1.0)/2.0 + 1.0), haloColor);
     }
 }
 
