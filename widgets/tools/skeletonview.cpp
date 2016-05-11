@@ -451,7 +451,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index){
         if (index.column() == 1) {
-            colorDialog.setParent(this);
             colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
             state->viewerState->renderInterval = SLOW;
             if (colorDialog.exec() == QColorDialog::Accepted) {

@@ -74,7 +74,7 @@ class SkeletonView : public QWidget {
     QVBoxLayout mainLayout;
     UserOrientableSplitter splitter;
 
-    QColorDialog colorDialog;
+    QColorDialog colorDialog{this};
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
     QHBoxLayout treeOptionsLayout;
