@@ -330,6 +330,18 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     }
     xml.writeEndElement(); // end branchpoints
 
+    xml.writeStartElement("synapses");
+    for(const auto synapse : state->skeletonState->synapses) {
+        xml.writeStartElement("synapse");
+        xml.writeAttribute("pre", QString::number(synapse.presynapse->nodeID));
+        xml.writeAttribute("post", QString::number(synapse.postsynapse->nodeID));
+        xml.writeAttribute("cleft", QString::number(synapse.synapticCleft->treeID));
+        xml.writeAttribute("pretree", QString::number(synapse.preTree->treeID));
+        xml.writeAttribute("posttree", QString::number(synapse.postTree->treeID));
+        xml.writeEndElement();
+    }
+    xml.writeEndElement(); //end synapse
+
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
 }
@@ -675,7 +687,39 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 }
             }
-        } // end thing
+        // end thing
+        } else if(xml.name() == "synapses") {
+            while(xml.readNextStartElement()) {
+                if(xml.name() == "synapse") {
+                    const auto attributes = xml.attributes();
+                    Synapse synapse;
+                    uint presynapse = attributes.value("pre").toUInt();
+                    uint postsynapse = attributes.value("post").toUInt();
+                    uint pretree = attributes.value("pretree").toUInt();
+                    uint posttree = attributes.value("posttree").toUInt();
+                    uint cleft = attributes.value("cleft").toUInt();
+
+                    if(merge) {
+                        presynapse += greatestNodeIDbeforeLoading;
+                        postsynapse += greatestNodeIDbeforeLoading;
+                        pretree += greatestTreeIDbeforeLoading;
+                        posttree += greatestTreeIDbeforeLoading;
+                        cleft += greatestTreeIDbeforeLoading;
+                    }
+
+                    synapse.presynapse = findNodeByNodeID(presynapse);
+                    synapse.postsynapse = findNodeByNodeID(postsynapse);
+                    synapse.preTree = findTreeByTreeID(pretree);
+                    synapse.postTree = findTreeByTreeID(posttree);
+                    synapse.synapticCleft = findTreeByTreeID(cleft);
+
+                    state->skeletonState->synapses.push_back(synapse);
+
+                    state->skeletonState->treesByID[cleft]->render = false; //don't render synaptic clefts
+                }
+                xml.skipCurrentElement();
+            }
+        }//end synapse
     }
     xml.readNext();//</things>
     if (!xml.isEndDocument()) {

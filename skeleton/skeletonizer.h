@@ -50,11 +50,26 @@ class segmentListElement;
 #define SKELVP_R180 4
 #define SKELVP_RESET 5
 
+class Synapse {
+public:
+    nodeListElement * presynapse{nullptr};
+    nodeListElement * postsynapse{nullptr};
+    treeListElement * preTree{nullptr};
+    treeListElement * postTree{nullptr};
+    treeListElement * synapticCleft{nullptr};
+
+    int synapseID;
+
+    QVariantHash properties;
+
+};
+
 struct SkeletonState {
     treeListElement * activeTree{nullptr};
     nodeListElement * activeNode{nullptr};
 
     std::list<treeListElement> trees;
+    std::vector<Synapse> synapses;
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
 
