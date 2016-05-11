@@ -2,6 +2,7 @@
 #define SEGMENTATIONVIEW_H
 
 #include "segmentation/segmentation.h"
+#include "widgets/PreventDeferredDelete.h"
 #include "widgets/UserOrientableSplitter.h"
 
 #include <QAbstractListModel>
@@ -20,12 +21,8 @@
 
 #include <functional>
 
-class NonRemovableQComboBox : public QComboBox {
-    bool event(QEvent * event) override;
-};
-
 class CategoryDelegate : public QStyledItemDelegate {
-    mutable NonRemovableQComboBox box;
+    mutable PreventDeferredDelete<QComboBox> box;
 public:
     CategoryDelegate(class CategoryModel & categoryModel);
     QWidget * createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const override;

@@ -14,17 +14,6 @@
 
 #include <chrono>
 
-bool NonRemovableQComboBox::event(QEvent * event) {
-    //disable implicit deletion
-    if (event->type() == QEvent::DeferredDelete) {
-        setParent(nullptr);
-        event->accept();
-        return true;
-    } else {
-        return QComboBox::event(event);
-    }
-}
-
 CategoryDelegate::CategoryDelegate(CategoryModel & categoryModel) {
     box.setModel(&categoryModel);
     box.setEditable(true);//support custom categories
