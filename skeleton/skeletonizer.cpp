@@ -646,7 +646,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                         serializer >> conflicts;
                                     }
                                     properties.insert(name.toString(), conflicts);
-                                } else {
+                                } else if (name != "comment") { // comments are added later in the comments section
                                     properties.insert(name.toString(), value.toString());
                                 }
                             }
