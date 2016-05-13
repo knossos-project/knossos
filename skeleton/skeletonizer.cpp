@@ -333,11 +333,14 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeStartElement("synapses");
     for(const auto & synapse : state->skeletonState->synapses) {
         xml.writeStartElement("synapse");
-        xml.writeAttribute("pre", QString::number(synapse.presynapse->nodeID));
-        xml.writeAttribute("post", QString::number(synapse.postsynapse->nodeID));
+        xml.writeAttribute("pre", QString::number(synapse.preSynapse->nodeID));
+        xml.writeAttribute("post", QString::number(synapse.postSynapse->nodeID));
         xml.writeAttribute("cleft", QString::number(synapse.synapticCleft->treeID));
         xml.writeAttribute("pretree", QString::number(synapse.preTree->treeID));
         xml.writeAttribute("posttree", QString::number(synapse.postTree->treeID));
+        for (auto propertyIt = synapse.properties.constBegin(); propertyIt != synapse.properties.constEnd(); ++propertyIt) {
+            xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
+        }
         xml.writeEndElement();
     }
     xml.writeEndElement(); //end synapse
@@ -707,8 +710,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         cleft += greatestTreeIDbeforeLoading;
                     }
 
-                    synapse.presynapse = findNodeByNodeID(presynapse);
-                    synapse.postsynapse = findNodeByNodeID(postsynapse);
+                    synapse.preSynapse = findNodeByNodeID(presynapse);
+                    synapse.postSynapse = findNodeByNodeID(postsynapse);
                     synapse.preTree = findTreeByTreeID(pretree);
                     synapse.postTree = findTreeByTreeID(posttree);
                     synapse.synapticCleft = findTreeByTreeID(cleft);
@@ -716,7 +719,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     state->skeletonState->synapses.push_back(synapse);
 
                     state->skeletonState->treesByID[cleft]->render = false; //don't render synaptic clefts
-                }
+                    }
                 xml.skipCurrentElement();
             }
         }//end synapse

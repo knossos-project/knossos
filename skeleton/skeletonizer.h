@@ -52,8 +52,8 @@ class segmentListElement;
 
 class Synapse {
 public:
-    nodeListElement * presynapse{nullptr};
-    nodeListElement * postsynapse{nullptr};
+    nodeListElement * preSynapse{nullptr};
+    nodeListElement * postSynapse{nullptr};
     treeListElement * preTree{nullptr};
     treeListElement * postTree{nullptr};
     treeListElement * synapticCleft{nullptr};
