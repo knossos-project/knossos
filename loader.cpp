@@ -561,29 +561,34 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
         if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
-            //transform googles oauth2 token from query item to request header
-            QUrlQuery originalQuery(dcUrl);
-            auto reducedQuery = originalQuery;
-            reducedQuery.removeQueryItem("access_token");
-            dcUrl.setQuery(reducedQuery);
-
             auto request = QNetworkRequest(dcUrl);
+//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
 
-            if (originalQuery.hasQueryItem("access_token")) {
-                const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
-                request.setRawHeader("Authorization", authorization.toUtf8());
-            }
-            //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
-            //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+            auto request2 = QNetworkRequest(dcUrl);
+            request2.setRawHeader("Content-Type", "application/octet-stream");
+            const auto cubeCord = globalCoord.cube(32, state->magnification);
+            const auto shift = loaderMagnification + 5;
+            std::array<float, 5> array{{static_cast<float>(loaderMagnification), 0.f, static_cast<float>(cubeCord.x << shift), static_cast<float>(cubeCord.y << shift), static_cast<float>(cubeCord.z << shift)}};
+
+            QByteArray data(reinterpret_cast<char*>(&array), array.size() * sizeof(array[0]));
+
             if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).cube2Global(state->cubeEdgeLength, state->magnification)) {
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
             }
-            auto * reply = qnam.get(request);
+            auto * reply = [&]{
+                switch (api) {
+                case Dataset::API::WebKnossos: return qnam.post(request2, data);
+                case Dataset::API::GoogleBrainmaps: return o2proxy.get(request);
+                default: return qnam.get(request);
+                };
+            }();
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);
             QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
+//                qDebug() << reply->rawHeaderPairs();
                 if (freeSlots.empty()) {
                     qCritical() << globalCoord << static_cast<int>(type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
@@ -594,6 +599,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (reply->error() == QNetworkReply::NoError) {
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
+//                    qDebug() << reply->size();
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
                     QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {

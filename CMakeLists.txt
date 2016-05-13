@@ -46,6 +46,8 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
+add_subdirectory(o2-master ${CMAKE_BINARY_DIR}/o2-build)
+
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
 file(GLOB uis widgets/*.ui)
@@ -168,7 +170,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
     message(STATUS "using gold linker")
     set(LINUXLINKER -fuse-ld=gold)
 endif()
-
+target_include_directories(${PROJECT_NAME} PRIVATE o2-master/src)
 target_link_libraries(${PROJECT_NAME}
     Boost::boost
     OpenGL::GLU
@@ -181,6 +183,7 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
+    o2
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )

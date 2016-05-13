@@ -227,6 +227,13 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
+#include <o2.h>
+#include <o2requestor.h>
+
+#include <QDesktopServices>
+
+O2 * o2global;
+
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
@@ -241,7 +248,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
-    if (!download.first) {
+    const auto skip = !path.toString().contains("google") && !path.toString().contains("webknossos");
+    if (skip && !download.first) {
         if (!silent) {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
@@ -274,6 +282,56 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     Dataset::CubeType raw_compression;
     if (Dataset::isNeuroDataStore(path)) {
         info = Dataset::parseNeuroDataStoreJson(path, download.second);
+    } else if (path.toString().contains("google")) {
+        static QEventLoop pause;
+        QEventLoop & pauseRef = pause;
+        static O2 & o2 = [&pauseRef]() -> O2 & {
+            static O2 o2;
+            o2global = &o2;
+
+            o2.setClientId("417200973162-ivhe0mcenpc2pcf9ogtk9dd9lgfhuufj.apps.googleusercontent.com");
+            o2.setClientSecret("jvyyGrJH8Hy4-OzmqIrhTrLt");
+            o2.setRequestUrl("https://accounts.google.com/o/oauth2/v2/auth");//https://accounts.google.com/o/oauth2/auth
+            o2.setTokenUrl("https://www.googleapis.com/oauth2/v4/token");//https://www.googleapis.com/oauth2/v4/token
+            o2.setRefreshTokenUrl("https://www.googleapis.com/oauth2/v4/token");// ?approval_prompt=force
+            o2.setScope("https://www.googleapis.com/auth/brainmaps");
+
+            QObject::connect(&o2, &O2::linkedChanged, [](){
+                qDebug() << "O2::linkedChanged";
+            });
+            QObject::connect(&o2, &O2::linkingFailed, [](){
+                qCritical() << "O2::linkingFailed";
+            });
+            QObject::connect(&o2, &O2::linkingSucceeded, [&pauseRef](){
+                qDebug() << "O2::linkingSucceeded";
+                pauseRef.exit();
+            });
+            QObject::connect(&o2, &O2::openBrowser, &QDesktopServices::openUrl);
+            QObject::connect(&o2, &O2::closeBrowser, [&pauseRef](){
+                qDebug() << "browser closed";
+            });
+
+            return o2;
+        }();
+        o2.unlink();
+        o2.link();
+        pause.exec();
+
+        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata"};
+
+        O2Requestor o2proxy(&Network::singleton().manager, o2global);
+        const auto datasets = blockDownloadExtractData(*o2proxy.get(QNetworkRequest(QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
+        qDebug() << datasets.second;
+        auto & reply = *o2proxy.get(QNetworkRequest(url));
+        const auto config = blockDownloadExtractData(reply);
+
+        if (config.first) {
+            info = Dataset::parseGoogleJson(config.second);
+        } else {
+            qDebug() << "download failed";
+            return false;
+        }
+        info.url = url;
     } else {
         info = Dataset::fromLegacyConf(path, download.second);
         try {
@@ -365,7 +423,7 @@ void DatasetLoadWidget::loadSettings() {
         if (QRegularExpression("^[A-Z]:").match(dataset).hasMatch()) {//set file scheme for windows drive letters
             url = QUrl::fromLocalFile(dataset);
         }
-        if (url.isRelative()) {
+        if (url.isRelative() && url.toString() != "google" && url.toString() != "webknossos") {
             url = QUrl::fromLocalFile(dataset);
         }
         return url;
@@ -396,6 +454,11 @@ void DatasetLoadWidget::loadSettings() {
             const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
             if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
                 appendRowSelectIfLU(url);
+            }
+        }
+        for (const auto & dataset : {"google", "webknossos"}) {
+            if (tableWidget.findItems(dataset, Qt::MatchExactly).empty()) {
+                appendRowSelectIfLU(dataset);
             }
         }
         // add Empty row at the end

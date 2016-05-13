@@ -28,9 +28,11 @@
 #include <QObject>
 #include <QThread>
 
+QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply);
+
 class Network : public QObject {
     Q_OBJECT
-
+public:
     QNetworkAccessManager manager;
     QNetworkCookieJar cookieJar;
 

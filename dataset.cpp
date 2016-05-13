@@ -236,7 +236,8 @@ void Dataset::applyToState() const {
     Skeletonizer::singleton().skeletonState.volBoundary = SkeletonState{}.volBoundary;
 }
 
-QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Dataset::CubeType type) {
+QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int scale, const Dataset::CubeType type) {
+    const int magnification = static_cast<int>(std::pow(2, scale));
     const auto cubeCoord = coord.cube(cubeEdgeLength, magnification);
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
             .arg(magnification)
@@ -274,13 +275,15 @@ QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeE
     auto path = base.path() + "/binary/subvolume";
 
     if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        path += "/format=raw";
+        path += "/subvolumeFormat=raw";
     } else if (type == Dataset::CubeType::RAW_JPG) {
-        path += "/format=singleimage";
+        path += "/subvolumeFormat=SINGLE_IMAGE";
     }
 
     path += "/scale=" + QString::number(scale);// >= 0
     path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
+    const int magnification = static_cast<int>(std::pow(2, scale));
+    coord /= magnification;
     path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
 
     query.addQueryItem("alt", "media");
@@ -288,6 +291,10 @@ QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeE
     base.setPath(path);
     base.setQuery(query);
     //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
+
+    // https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata/binary/subvolume/subvolumeFormat=raw/scale=0/size=128,128,128/corner=0,0,0?alt=media
+    // https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata/binary/subvolume/subvolumeFormat=SINGLE_IMAGE/scale=0/size=128,128,128/corner=0,0,0?alt=media
+    // curl "https://brainmaps.googleapis.com/v1beta2/volumes/$project:$dataset :$volume/binary/tile/imageFormat=JPEG/jpegQuality=75/scale=0/size=256,256,1/corner=10,10,10?alt=media" -H "authorization:Bearer $token" -o output.jpg
     return base;
 }
 
@@ -310,7 +317,7 @@ QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const i
     return base;
 }
 
-QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Dataset::CubeType type) {
+QUrl webKnossosCubeUrl(QUrl base, const int cubeEdgeLength, const Dataset::CubeType type) {
     auto query = QUrlQuery(base);
     query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
 
@@ -321,8 +328,9 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
         layer = "volume";
     }
 
-    auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    path = path.arg(unknownScale).arg(coord.x / state->cubeEdgeLength).arg(coord.y / state->cubeEdgeLength).arg(coord.z / state->cubeEdgeLength);
+    auto path = base.path() + "/layers/" + layer + "/data";
+    //"/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
+    //path = path.arg(unknownScale).arg(coord.x / state->cubeEdgeLength).arg(coord.y / state->cubeEdgeLength).arg(coord.z / state->cubeEdgeLength);
     base.setPath(path);
     base.setQuery(query);
 
@@ -334,11 +342,11 @@ QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate gl
     case API::GoogleBrainmaps:
         return googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type);
     case API::Heidelbrain:
-        return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, cubeedgelength, std::pow(2, scale), type);
+        return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, cubeedgelength, scale, type);
     case API::OpenConnectome:
         return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
     case API::WebKnossos:
-        return webKnossosCubeUrl(baseUrl, globalCoord, scale + 1, cubeedgelength, type);
+        return webKnossosCubeUrl(baseUrl, cubeedgelength, type);
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }
