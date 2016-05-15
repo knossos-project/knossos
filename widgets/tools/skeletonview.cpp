@@ -87,6 +87,9 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     }
     const auto & node = cache[index.row()].get();
 
+    if (&node == state->skeletonState->activeNode && index.column() == 0 && role == Qt::DecorationRole) {
+        return QPixmap(":/resources/icons/fa-play.png").scaled(QSize(8, 8), Qt::KeepAspectRatio);
+    }
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
         case 0: return static_cast<quint64>(node.nodeID);
