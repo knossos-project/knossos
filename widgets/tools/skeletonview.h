@@ -5,11 +5,13 @@
 #include "widgets/UserOrientableSplitter.h"
 
 #include <QAbstractListModel>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -52,12 +54,17 @@ class NodeModel : public AbstractSkeletonModel<NodeModel> {
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;
-    enum {
-        ALL, PART_OF_SELECTED_TREE, SELECTED, BRANCH, NON_EMPTY_COMMENT
-    } mode = PART_OF_SELECTED_TREE;
+    enum FilterMode {
+        All = 0x0,
+        InSelectedTree = 0x1,
+        Selected = 0x2,
+        Branch = 0x4,
+        Comment = 0x8
+    };
+    QFlags<FilterMode> mode = FilterMode::InSelectedTree;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
-    void recreate();
+    void recreate(const bool matchAll);
 };
 
 class NodeView : public QTreeView {
@@ -89,7 +96,17 @@ class SkeletonView : public QWidget {
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
     QHBoxLayout nodeOptionsLayout;
-    QComboBox displayModeCombo;
+    Spoiler displaySpoiler{"Display options"};
+    QVBoxLayout displaySpoilerLayout;
+    QCheckBox displayAllCheckbox{"All nodes"};
+    QGroupBox filterGroupBox{"Filter"};
+    QHBoxLayout filterLayout;
+    QButtonGroup filterButtonGroup;
+    QComboBox filterModeCombo;
+    QCheckBox filterInSelectedTreeCheckbox{"in selected tree"};
+    QCheckBox filterSelectedCheckbox{"selected"};
+    QCheckBox filterBranchCheckbox{"branch node"};
+    QCheckBox filterCommentCheckbox{"comment node"};
     QLineEdit nodeCommentFilter;
     QCheckBox nodeRegex{"regex"};
     NodeModel nodeModel;

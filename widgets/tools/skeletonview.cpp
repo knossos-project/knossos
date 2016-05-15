@@ -144,46 +144,37 @@ void TreeModel::recreate() {
     endResetModel();
 }
 
-void NodeModel::recreate() {
+void NodeModel::recreate(const bool matchAll = true) {
     beginResetModel();
     cache.clear();
-    if (mode == ALL) {
-        for (auto && tree : state->skeletonState->trees)
-        for (auto && node : tree.nodes) {
-            cache.emplace_back(node);
-        }
-    } else if (mode == PART_OF_SELECTED_TREE) {
-        for (auto && tree : state->skeletonState->trees) {
-            if (tree.selected) {
-                for (auto && node : tree.nodes) {
-                    cache.emplace_back(node);
+    for (auto && tree : state->skeletonState->trees)
+    for (auto && node : tree.nodes) {
+        cache.emplace_back(node);
+    }
+    if(mode.testFlag(FilterMode::All) == false) {
+        decltype(cache) hits;
+        if (matchAll == false) {
+            for (auto && node : cache) {
+                if ((mode.testFlag(FilterMode::Selected) && node.get().selected) ||
+                    (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected) ||
+                    (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode) ||
+                    (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false) ||
+                    &node.get() == state->skeletonState->activeNode) {
+                    hits.emplace_back(node);
+                }
+            }
+        } else {
+            for (auto && node : cache) { // show node if active or if for all criteria: either criterion not demanded or fulfilled.
+                if (( (!mode.testFlag(FilterMode::Selected) || node.get().selected) &&
+                      (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected) &&
+                      (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode) &&
+                      (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) ) ||
+                    &node.get() == state->skeletonState->activeNode) {
+                    hits.emplace_back(node);
                 }
             }
         }
-    } else if (mode == SELECTED) {
-        for (auto && node : state->skeletonState->selectedNodes) {
-            cache.emplace_back(*node);
-        }
-    } else if (mode == BRANCH) {
-        if (state->skeletonState->activeNode != nullptr && !state->skeletonState->activeNode->isBranchNode) {
-            cache.emplace_back(*state->skeletonState->activeNode);//add active node explicitly
-        }
-        for (auto && tree : state->skeletonState->trees)
-        for (auto && node : tree.nodes) {
-            if (node.isBranchNode) {
-                cache.emplace_back(node);
-            }
-        }
-    } else if (mode == NON_EMPTY_COMMENT) {
-        if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->getComment().isEmpty()) {
-            cache.emplace_back(*state->skeletonState->activeNode);//add active node explicitly
-        }
-        for (auto && tree : state->skeletonState->trees)
-        for (auto && node : tree.nodes) {
-            if (node.getComment().isEmpty() == false) {
-                cache.emplace_back(node);
-            }
-        }
+        cache = hits;
     }
     endResetModel();
 }
@@ -280,8 +271,28 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
 
-    displayModeCombo.addItems({"all", "from selected trees", "only selected", "branch", "comment"});
-    displayModeCombo.setCurrentIndex(nodeModel.mode);
+    filterModeCombo.addItems({"match all", "match at least one"});
+    filterLayout.addWidget(&filterModeCombo);
+    filterButtonGroup.setExclusive(false);
+    for (auto option : { std::make_pair(&filterInSelectedTreeCheckbox, NodeModel::FilterMode::InSelectedTree),
+                         {&filterSelectedCheckbox, NodeModel::FilterMode::Selected},
+                         {&filterBranchCheckbox, NodeModel::FilterMode::Branch},
+                         {&filterCommentCheckbox, NodeModel::FilterMode::Comment} }) {
+        filterButtonGroup.addButton(option.first);
+        filterButtonGroup.setId(option.first, option.second);
+        option.first->setChecked(nodeModel.mode.testFlag(option.second));
+        filterLayout.addWidget(option.first);
+    }
+    filterGroupBox.setLayout(&filterLayout);
+    filterGroupBox.setCheckable(true);
+    const bool showAllNodes = nodeModel.mode == NodeModel::FilterMode::All;
+    displayAllCheckbox.setChecked(showAllNodes);
+    filterGroupBox.setChecked(!showAllNodes);
+
+    displaySpoilerLayout.addWidget(&displayAllCheckbox);
+    displaySpoilerLayout.addWidget(&filterGroupBox);
+    displaySpoiler.setContentLayout(displaySpoilerLayout);
+
     nodeCommentFilter.setPlaceholderText("node comment");
 
     nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
@@ -297,10 +308,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&treeDummyWidget);
 
-    nodeOptionsLayout.addWidget(&displayModeCombo);
     nodeOptionsLayout.addWidget(&nodeCommentFilter);
     nodeOptionsLayout.addWidget(&nodeRegex);
     nodeLayout.addLayout(&nodeOptionsLayout);
+    nodeLayout.addWidget(&displaySpoiler);
     nodeLayout.addWidget(&nodeView);
     nodeLayout.addWidget(&nodeCountLabel);
     nodeDummyWidget.setLayout(&nodeLayout);
@@ -369,7 +380,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     };
     static auto nodeRecreate = [&, this](){
         nodeView.selectionModel()->reset();
-        nodeModel.recreate();
+        nodeModel.recreate(filterModeCombo.currentIndex() == 0);
         updateNodeSelection();
     };
     static auto allRecreate = [&](){
@@ -377,13 +388,41 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeRecreate();
     };
 
+    QObject::connect(&displayAllCheckbox, &QCheckBox::clicked, [this](const bool checked) {
+        filterGroupBox.setChecked(!checked);
+        if (checked) {
+            nodeModel.mode = NodeModel::FilterMode::All;
+            nodeRecreate();
+        } else {
+            filterGroupBox.clicked(true);
+        }
+    });
+    QObject::connect(&filterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
+        displayAllCheckbox.setChecked(!checked);
+        nodeModel.mode = NodeModel::FilterMode::All;
+        if (checked) {
+            for (auto * checkbox : filterButtonGroup.buttons()) {
+                if (checkbox->isChecked()) {
+                    nodeModel.mode |= QFlags<NodeModel::FilterMode>(filterButtonGroup.id(checkbox));
+                }
+            }
+        }
+        nodeRecreate();
+    });
+    QObject::connect(&filterModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int) { nodeRecreate(); });
+    QObject::connect(&filterButtonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int id) {
+        const auto flag = QFlags<NodeModel::FilterMode>(id);
+        nodeModel.mode = filterButtonGroup.button(id)->isChecked() ? nodeModel.mode | flag : nodeModel.mode & ~flag;
+        nodeRecreate();
+    });
+
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
         updateTreeSelection();
-        if (nodeModel.mode == NodeModel::PART_OF_SELECTED_TREE) {
+        if (nodeModel.mode.testFlag(NodeModel::FilterMode::InSelectedTree)) {
             nodeRecreate();
         }
         emit treeCommentFilter.textEdited(treeCommentFilter.text());//active tree might have changed
@@ -393,9 +432,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
         updateNodeSelection();
-        if (nodeModel.mode == NodeModel::SELECTED) {
-            nodeRecreate();
-        }
+        nodeRecreate();
         emit nodeCommentFilter.textEdited(nodeCommentFilter.text());//active node might have changed
     });
 
@@ -427,10 +464,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         updateTreeSelection();
     });
 
-    QObject::connect(&displayModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index) {
-        nodeModel.mode = static_cast<decltype(nodeModel.mode)>(index);
-        nodeRecreate();
-    });
     QObject::connect(&nodeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText) {
         filter(nodeRegex, nodeSortAndCommentFilterProxy, filterText);
         updateNodeSelection();
