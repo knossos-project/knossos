@@ -1,6 +1,7 @@
 #include "profiler.h"
 
 #include <algorithm>
+#include <numeric>
 
 void Profiler::start() {
     start_time = std::chrono::steady_clock::now();
