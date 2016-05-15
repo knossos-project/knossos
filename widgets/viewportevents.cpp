@@ -690,7 +690,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         state->viewerState->keyRepeat = event->isAutoRepeat();
     }
 
-    const bool shiftMultiplier = event->modifiers().testFlag(Qt::ShiftModifier) ? 10 : 1;
+    const int shiftMultiplier = event->modifiers().testFlag(Qt::ShiftModifier) ? 10 : 1;
     const bool keyLeft = event->key() == Qt::Key_Left;
     const bool keyRight = event->key() == Qt::Key_Right;
     const bool keyDown = event->key() == Qt::Key_Down;
