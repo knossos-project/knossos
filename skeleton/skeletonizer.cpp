@@ -1501,6 +1501,68 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
     }
 }
 
+/*
+ * Create a synapse, starting with a presynapse
+ * 1. shift+s: Active Node is marked as a presynapse
+ * 2. Start tracing the synaptic cleft (shift+s on finish)
+ * 3. Next node is a postsynapse
+ */
+void Skeletonizer::addSynapse() {
+    if(synapseState == preSynapse) { //set active Node as presynapse
+        temporarySynapse.preSynapse = skeletonState.activeNode;
+        temporarySynapse.preTree = skeletonState.activeTree;
+        addTreeComment(addTreeListElement()->treeID, "synaptic_cleft");
+        synapseState = synapticCleft;
+    } else if(synapseState == synapticCleft) {
+        temporarySynapse.synapticCleft = skeletonState.activeTree;
+        addTreeListElement();
+        synapseState = postSynapse;
+    }
+}
+
+/*
+ * Create a synapse from two nodes from different trees
+ */
+void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
+
+
+    temporarySynapse.preSynapse = nodes[0];
+    temporarySynapse.preSynapse->properties.insert("synapse", "preSynapse");
+    temporarySynapse.preTree = nodes[0]->correspondingTree;
+    temporarySynapse.postSynapse = nodes[1];
+    temporarySynapse.postSynapse->properties.insert("synapse", "postSynapse");
+    temporarySynapse.postTree = nodes[1]->correspondingTree;
+
+    auto synapticCleft = addTreeListElement();
+    addTreeComment(synapticCleft->treeID, "synaptic_cleft");
+
+    temporarySynapse.synapticCleft = synapticCleft;
+
+    //Add a synaptic cleft tree with one node between the two selected nodes
+    const auto minx = std::min(nodes[0]->position.x, nodes[1]->position.x);
+    const auto miny = std::min(nodes[0]->position.y, nodes[1]->position.y);
+    const auto minz = std::min(nodes[0]->position.z, nodes[1]->position.z);
+
+    Coordinate coord = { minx + ( std::abs(nodes[0]->position.x-nodes[1]->position.x)/2 ),
+                          miny + ( std::abs(nodes[0]->position.y-nodes[1]->position.y)/2 ),
+                          minz + ( std::abs(nodes[0]->position.z-nodes[1]->position.z)/2 )};
+
+    addNode(  0,
+              state->skeletonState->defaultNodeRadius,
+              state->skeletonState->activeTree->treeID,
+              coord,
+              VIEWPORT_UNDEFINED,
+              state->magnification,
+              boost::none,
+              true);
+
+    temporarySynapse.synapticCleft->render = false;
+
+    skeletonState.synapses.push_back(temporarySynapse);
+
+    temporarySynapse = Synapse();
+}
+
 bool Skeletonizer::unlockPosition() {
     if(state->skeletonState->positionLocked) {
         qDebug() << "Spatial locking disabled.";

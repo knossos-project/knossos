@@ -154,6 +154,10 @@ public:
 
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
+    enum synapseMode {preSynapse, synapticCleft, postSynapse};
+    int synapseState{preSynapse};
+    Synapse temporarySynapse;
+
 signals:
     void guiModeLoaded();
     void branchPoppedSignal();
@@ -187,6 +191,8 @@ public slots:
     bool setActiveNode(nodeListElement *node);
     bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
+    void addSynapse();
+    void addSynapse(std::vector<nodeListElement *> & nodes);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
     void gotoComment(const QString &searchString, const bool next);

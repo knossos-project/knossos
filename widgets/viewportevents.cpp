@@ -188,7 +188,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
 
     if (annotationMode.testFlag(AnnotationMode::LinkedNodes)) {
         if (oldNode == nullptr || state->skeletonState->activeTree->nodes.empty()) {
-            //no node to link with or no empty tree
+            //no node to link with or empty tree
             newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate, viewportType);
         } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
             if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
@@ -244,6 +244,14 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 clickedCoordinate += movement;
             }
             clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, state->boundary);// Do not allow clicks outside the dataset
+
+            if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse) {
+                //The synapse workflow has been interrupted
+                //Reset the synapse
+                Skeletonizer::singleton().delTree(Skeletonizer::singleton().temporarySynapse.synapticCleft->treeID);
+                Skeletonizer::singleton().temporarySynapse = Synapse(); //reset temporary class
+                Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
+            }
         }
     } else { // unlinked
         newNode = Skeletonizer::singleton().UI_addSkeletonNode(clickedCoordinate,viewportType);
@@ -264,6 +272,16 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         auto & mainWin = *state->viewer->window;
         if (mainWin.segmentState == SegmentState::Off_Once) {
             mainWin.setSegmentState(SegmentState::On);
+        }
+        if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
+            Skeletonizer::singleton().temporarySynapse.postSynapse = state->skeletonState->activeNode;
+            Skeletonizer::singleton().temporarySynapse.postTree = state->skeletonState->activeTree;
+            Skeletonizer::singleton().temporarySynapse.preSynapse->properties.insert("synapse", "preSynapse"); //set node properties
+            Skeletonizer::singleton().temporarySynapse.postSynapse->properties.insert("synapse", "postSynapse"); //set node properties
+            Skeletonizer::singleton().temporarySynapse.synapticCleft->render = false;
+            state->skeletonState->synapses.push_back(Skeletonizer::singleton().temporarySynapse); //move finished synapse to our synapse vector
+            Skeletonizer::singleton().temporarySynapse = Synapse(); //reset temporary class
+            Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
         }
     }
     ViewportBase::handleMouseButtonRight(event);
@@ -479,6 +497,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
 void ViewportBase::handleKeyPress(const QKeyEvent *event) {
     const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
     const auto alt = event->modifiers().testFlag(Qt::AltModifier);
+    const auto shift = event->modifiers().testFlag(Qt::ShiftModifier);
     if (event->key() == Qt::Key_H && Session::singleton().guiMode != GUIMode::ProofReading) {
         if (isDocked) {
             hide();
@@ -512,7 +531,31 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 isFullOrigDocked = false;
             }
         }
-    } else if (event->key() == Qt::Key_Shift) {
+    } else if (!ctrl && shift &&  event->key() == Qt::Key_S) { //synapse mode
+        if(state->skeletonState->selectedNodes.size() < 2) {
+            Skeletonizer::singleton().addSynapse();
+        } else if(state->skeletonState->selectedNodes.size() == 2) {
+            Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
+        }
+    } else if (ctrl && shift && event->key() == Qt::Key_S) { //synapse mode swap post and presynapse
+        if(state->skeletonState->activeNode->properties.value("synapse").toString() == "postSynapse"
+                || state->skeletonState->activeNode->properties.value("synapse").toString() == "preSynapse") {
+            for(auto & synapse : state->skeletonState->synapses) {
+                if(synapse.postSynapse == state->skeletonState->activeNode
+                        || synapse.preSynapse == state->skeletonState->activeNode) {
+                    auto tmpPostSynapse = synapse.postSynapse;
+                    auto tmpPostTree = synapse.postTree;
+                    synapse.postSynapse = synapse.preSynapse;
+                    synapse.postTree = synapse.preTree;
+                    synapse.preSynapse = tmpPostSynapse;
+                    synapse.preTree = tmpPostTree;
+                    synapse.postSynapse->properties.insert("synapse", "postSynapse");
+                    synapse.preSynapse->properties.insert("synapse", "preSynapse");
+                    break;
+                }
+            }
+        }
+    } else if (shift) {
         state->viewerState->repeatDirection *= 10;
         //enable erase mode on shift down
         Segmentation::singleton().brush.setInverse(true);
