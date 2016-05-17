@@ -380,6 +380,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> edgeVector;
+    std::vector<std::array<std::uint64_t, 5>> synapseVector;
 
     bench.start();
     const auto blockState = this->signalsBlocked();
@@ -695,31 +696,12 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             while(xml.readNextStartElement()) {
                 if(xml.name() == "synapse") {
                     const auto attributes = xml.attributes();
-                    Synapse synapse;
-                    uint presynapse = attributes.value("pre").toUInt();
-                    uint postsynapse = attributes.value("post").toUInt();
-                    uint pretree = attributes.value("pretree").toUInt();
-                    uint posttree = attributes.value("posttree").toUInt();
-                    uint cleft = attributes.value("cleft").toUInt();
-
-                    if(merge) {
-                        presynapse += greatestNodeIDbeforeLoading;
-                        postsynapse += greatestNodeIDbeforeLoading;
-                        pretree += greatestTreeIDbeforeLoading;
-                        posttree += greatestTreeIDbeforeLoading;
-                        cleft += greatestTreeIDbeforeLoading;
-                    }
-
-                    synapse.preSynapse = findNodeByNodeID(presynapse);
-                    synapse.postSynapse = findNodeByNodeID(postsynapse);
-                    synapse.preTree = findTreeByTreeID(pretree);
-                    synapse.postTree = findTreeByTreeID(posttree);
-                    synapse.synapticCleft = findTreeByTreeID(cleft);
-
-                    state->skeletonState->synapses.push_back(synapse);
-
-                    state->skeletonState->treesByID[cleft]->render = false; //don't render synaptic clefts
-                    }
+                    synapseVector.push_back({attributes.value("pre").toULongLong()
+                                                , attributes.value("post").toULongLong()
+                                                , attributes.value("pretree").toULongLong()
+                                                , attributes.value("posttree").toULongLong()
+                                                , attributes.value("cleft").toULongLong()});
+                }
                 xml.skipCurrentElement();
             }
         }//end synapse
@@ -746,6 +728,17 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         const auto & currentNode = findNodeByNodeID(elem);
         if(currentNode != nullptr)
             pushBranchNode(*currentNode);
+    }
+
+    for (const auto & elem : synapseVector) {
+        skeletonState.synapses.push_back({
+            findNodeByNodeID(elem[0] + merge * greatestNodeIDbeforeLoading)
+            , findNodeByNodeID(elem[1] + merge * greatestNodeIDbeforeLoading)
+            , findTreeByTreeID(elem[2] + merge * greatestTreeIDbeforeLoading)
+            , findTreeByTreeID(elem[3] + merge * greatestTreeIDbeforeLoading)
+            , findTreeByTreeID(elem[4] + merge * greatestTreeIDbeforeLoading)
+        });
+        skeletonState.synapses.back().synapticCleft->render = false; //don't render synaptic clefts
     }
 
     QHash<std::uint64_t, QSet<QString>> conflictsById;
