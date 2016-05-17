@@ -182,13 +182,10 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
-quint64 SkeletonProxy::findAvailableNodeID() {
-    return Skeletonizer::singleton().findAvailableNodeID();
-}
-
 bool SkeletonProxy::add_node(quint64 node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     Coordinate coordinate(x, y, z);
-    if (!Skeletonizer::singleton().addNode(node_id, radius, parent_tree_id, coordinate, (ViewportType)inVp, inMag, time, false)) {
+    const auto nodeId = boost::make_optional(node_id == 0, static_cast<decltype(nodeListElement::nodeID)>(node_id));
+    if (!Skeletonizer::singleton().addNode(nodeId, radius, parent_tree_id, coordinate, (ViewportType)inVp, inMag, time, false)) {
         emit echo(QString("could not add the node with node id %1").arg(node_id));
         return false;
     }
@@ -201,10 +198,6 @@ QList<treeListElement *> *SkeletonProxy::trees() {
         trees->append(&tree);
     }
     return trees;
-}
-
-int SkeletonProxy::findAvailableTreeID() {
-    return Skeletonizer::singleton().findAvailableTreeID();
 }
 
 bool SkeletonProxy::add_tree(int tree_id, float r, float g, float b, float a) {

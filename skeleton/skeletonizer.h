@@ -73,8 +73,8 @@ struct SkeletonState {
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
 
-    int greatestTreeID{0};
-    std::uint64_t greatestNodeID{0};
+    decltype(treeListElement::treeID) nextAvailableTreeID{1};
+    decltype(nodeListElement::nodeID) nextAvailableNodeID{1};
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
@@ -121,7 +121,6 @@ class Skeletonizer : public QObject {
     Q_OBJECT
     QSet<QString> textProperties;
     QSet<QString> numberProperties;
-
 public:
     template<typename T>
     void select(QSet<T*>);
@@ -175,8 +174,7 @@ signals:
     void treeSelectionChangedSignal();
     void resetData();
 public slots:
-    std::uint64_t findAvailableNodeID();
-    boost::optional<nodeListElement &> addNode(std::uint64_t nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
+    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     void selectNodes(QSet<nodeListElement *> nodes);
     void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
@@ -228,9 +226,8 @@ public slots:
     void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(std::uint64_t nodeID);
-    int findAvailableTreeID();
     treeListElement * addTreeListElement();
-    treeListElement * addTreeListElement(int treeID, color4F color = {-1, -1, -1, 1});
+    treeListElement * addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, color4F color = {-1, -1, -1, 1});
     bool mergeTrees(int treeID1, int treeID2);
     void updateTreeColors();
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
