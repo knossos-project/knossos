@@ -12,7 +12,7 @@ int TreeListDecorator::tree_id(treeListElement *self) {
     return self->treeID;
 }
 
-char *TreeListDecorator::comment(treeListElement *self) {
+QString TreeListDecorator::comment(treeListElement *self) {
     return self->comment;
 }
 

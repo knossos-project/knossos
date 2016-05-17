@@ -80,7 +80,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
 QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString &comment) {
     QList<treeListElement *> hits;
     for (auto & tree : skeletonState.trees) {
-        if (QString(tree.comment).contains(comment)) {
+        if (tree.comment.contains(comment)) {
             hits.append(&tree);
         }
     }
@@ -263,8 +263,8 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("color.b", QString("-1."));
             xml.writeAttribute("color.a", QString("1."));
         }
-        if (currentTree.comment[0] != '\0') {
-            xml.writeAttribute("comment", QString(currentTree.comment));
+        if (!currentTree.comment.isEmpty()) {
+            xml.writeAttribute("comment", currentTree.comment);
         }
 
         xml.writeStartElement("nodes");
@@ -1336,8 +1336,8 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
 
     tree = findTreeByTreeID(treeID);
 
-    if((!comment.isNull()) && tree) {
-        strncpy(tree->comment, comment.toStdString().c_str(), sizeof(tree->comment) - 1);//space for '\0'
+    if (tree) {
+        tree->comment = comment;
     }
 
     Session::singleton().unsavedChanges = true;

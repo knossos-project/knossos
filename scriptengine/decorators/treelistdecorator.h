@@ -19,7 +19,7 @@ public slots:
     nodeListElement *first_node(treeListElement *self);
     QList<nodeListElement *> *nodes(treeListElement *self);
     int tree_id(treeListElement *self);
-    char *comment(treeListElement *self);
+    QString comment(treeListElement *self);
     static QString static_Tree_help();
 };
 

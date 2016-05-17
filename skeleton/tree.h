@@ -25,7 +25,7 @@ public:
     bool selected{false};
     bool colorSetManually{false};
 
-    char comment[8192];
+    QString comment;
 
     QHash<uint64_t, int> subobjectCount;
 

@@ -4,9 +4,7 @@
 
 #include <QString>
 
-treeListElement::treeListElement(const int id) : treeID{id} {
-    memset(comment, '\0', sizeof(comment));
-}
+treeListElement::treeListElement(const int id) : treeID{id} {}
 
 QList<nodeListElement *> *treeListElement::getNodes() {
     QList<nodeListElement *> * nodes = new QList<nodeListElement *>();
