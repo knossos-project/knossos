@@ -229,7 +229,7 @@ public slots:
     void openSlot();
     void saveSlot();
     void saveAsSlot();
-    void save(QString filename = "", const bool silent = false);
+    void save(QString filename = Session::singleton().annotationFilename, const bool silent = false);
     void exportToNml();
 
     /* edit skeleton menu*/

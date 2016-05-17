@@ -766,18 +766,6 @@ void MainWindow::saveSlot() {
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
-        if(annotationFilename.endsWith(".nml")) {
-            annotationFilename.chop(4);
-            annotationFilename += ".k.zip";
-        }
-        if (Session::singleton().autoFilenameIncrementBool) {
-            int index = skeletonFileHistory.indexOf(annotationFilename);
-            annotationFilename = updatedFileName(annotationFilename);
-            if (index != -1) {//replace old filename with updated one
-                skeletonFileHistory.replace(index, annotationFilename);
-                historyEntryActions[index]->setText(annotationFilename);
-            }
-        }
         save(annotationFilename);
     }
 }
@@ -813,6 +801,19 @@ void MainWindow::save(QString filename, const bool silent)
 try {
     if (filename.isEmpty()) {
         filename = annotationFileDefaultPath();
+    } else {// to prevent update of the initial default path
+        if (filename.endsWith(".nml")) {
+            filename.chop(4);
+            filename += ".k.zip";
+        }
+        if (Session::singleton().autoFilenameIncrementBool) {
+            int index = skeletonFileHistory.indexOf(filename);
+            filename = updatedFileName(filename);
+            if (index != -1) {//replace old filename with updated one
+                skeletonFileHistory.replace(index, filename);
+                historyEntryActions[index]->setText(filename);
+            }
+        }
     }
     annotationFileSave(filename);
     Session::singleton().annotationFilename = filename;
