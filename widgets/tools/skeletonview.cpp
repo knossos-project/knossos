@@ -638,10 +638,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
     deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [this](){
-        if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
-            Skeletonizer::singleton().deleteSelectedNodes();
-        } else {
-            question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"));
+        if (!state->skeletonState->selectedNodes.empty()) {
+            if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
+                Skeletonizer::singleton().deleteSelectedNodes();
+            } else {
+                question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"));
+            }
         }
     });
 
