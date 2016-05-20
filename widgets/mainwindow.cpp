@@ -793,11 +793,11 @@ void MainWindow::saveAsSlot() {
             }
         }
         saveFileDirectory = QFileInfo(fileName).absolutePath();
-        save(fileName + ".k.zip");
+        save(fileName + ".k.zip", false, false);
     }
 }
 
-void MainWindow::save(QString filename, const bool silent)
+void MainWindow::save(QString filename, const bool silent, const bool allocIncrement)
 try {
     if (filename.isEmpty()) {
         filename = annotationFileDefaultPath();
@@ -806,7 +806,7 @@ try {
             filename.chop(4);
             filename += ".k.zip";
         }
-        if (Session::singleton().autoFilenameIncrementBool) {
+        if (allocIncrement && Session::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(filename);
             filename = updatedFileName(filename);
             if (index != -1) {//replace old filename with updated one
