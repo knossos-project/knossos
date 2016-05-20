@@ -505,9 +505,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1);//show
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() >= 2);//merge trees action
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//set comment
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//restore default color
+        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
     });
