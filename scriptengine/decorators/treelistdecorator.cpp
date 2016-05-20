@@ -16,7 +16,7 @@ QString TreeListDecorator::comment(treeListElement *self) {
     return self->comment;
 }
 
-color4F TreeListDecorator::color(treeListElement *self) {
+QColor TreeListDecorator::color(treeListElement *self) {
     return self->color;
 }
 

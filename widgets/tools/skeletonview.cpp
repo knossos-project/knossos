@@ -48,7 +48,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
 
     if (index.column() == 1 && role == Qt::BackgroundRole) {
-        return QColor(tree.color.r * 255, tree.color.g * 255, tree.color.b * 255, tree.color.a * 255);
+        return tree.color;
     } else if (index.column() == 2 && role == Qt::CheckStateRole) {
         return tree.render ? Qt::Checked : Qt::Unchecked;
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
@@ -70,8 +70,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (index.column() == 2 && role == Qt::CheckStateRole) {
         tree.render = value.toBool();
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
-        const QColor color{value.value<QColor>()};
-        tree.color = {static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF())};
+        tree.color = value.value<QColor>();
         tree.colorSetManually = true;
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
         const QString comment{value.toString()};

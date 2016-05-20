@@ -26,8 +26,9 @@ public slots:
     treeListElement *tree_with_previous_id(int tree_id);
     treeListElement *tree_with_next_id(int tree_id);
     QList<treeListElement *> *trees();
-    bool add_tree(int tree_id = 0, float r = -1, float g = -1, float b = -1, float a = 1);
-    bool set_tree_comment(int tree_id, const QString &comment);
+    void add_tree(int tree_id);
+    void add_tree(int tree_id, QColor color);
+    bool set_tree_comment(int tree_id, const QString & comment);
     bool set_active_tree(int tree_id);
     bool delete_tree(int tree_id);
     bool merge_trees(int tree_id, int other_tree_id);

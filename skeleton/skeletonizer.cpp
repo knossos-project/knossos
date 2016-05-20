@@ -254,10 +254,10 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
         xml.writeAttribute("id", QString::number(currentTree.treeID));
 
         if (currentTree.colorSetManually) {
-            xml.writeAttribute("color.r", QString::number(currentTree.color.r));
-            xml.writeAttribute("color.g", QString::number(currentTree.color.g));
-            xml.writeAttribute("color.b", QString::number(currentTree.color.b));
-            xml.writeAttribute("color.a", QString::number(currentTree.color.a));
+            xml.writeAttribute("color.r", QString::number(currentTree.color.redF()));
+            xml.writeAttribute("color.g", QString::number(currentTree.color.greenF()));
+            xml.writeAttribute("color.b", QString::number(currentTree.color.blueF()));
+            xml.writeAttribute("color.a", QString::number(currentTree.color.alphaF()));
         } else {
             xml.writeAttribute("color.r", QString("-1."));
             xml.writeAttribute("color.g", QString("-1."));
@@ -577,31 +577,15 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             if(attribute.isNull() == false) {
                 treeID = attribute.toInt();
             }
-            // color: -1 causes default color assignment
-            color4F neuronColor;
-            attribute = attributes.value("color.r");
-            if(attribute.isNull() == false) {
-                neuronColor.r = attribute.toLocal8Bit().toFloat();
-            } else {
-                neuronColor.r = -1;
-            }
-            attribute = attributes.value("color.g");
-            if(attribute.isNull() == false) {
-                neuronColor.g = attribute.toLocal8Bit().toFloat();
-            } else {
-                neuronColor.g = -1;
-            }
-            attribute = attributes.value("color.b");
-            if(attribute.isNull() == false) {
-                neuronColor.b = attribute.toLocal8Bit().toFloat();
-            } else {
-                neuronColor.b = -1;
-            }
-            attribute = attributes.value("color.a");
-            if(attribute.isNull() == false) {
-                neuronColor.a = attribute.toLocal8Bit().toFloat();
-            } else {
-                neuronColor.a = -1;
+            boost::optional<QColor> neuronColor;
+            bool okr, okg, okb, oka;
+            const auto red = attributes.value("color.r").toFloat(&okr);
+            const auto green = attributes.value("color.g").toFloat(&okg);
+            const auto blue = attributes.value("color.b").toFloat(&okb);
+            const auto alpha = attributes.value("color.a").toFloat(&oka);
+            if (okr && okg && okb && oka && red != -1 && green != -1 && blue != -1 && alpha != -1) {
+                qDebug() << red << green << blue << alpha;
+                neuronColor = QColor::fromRgbF(red, green, blue, alpha);
             }
 
             if (merge) {
@@ -1240,7 +1224,7 @@ treeListElement * Skeletonizer::addTreeListElement() {
     return addTreeListElement(skeletonState.nextAvailableTreeID);
 }
 
-treeListElement * Skeletonizer::addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, color4F color) {
+treeListElement * Skeletonizer::addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, const boost::optional<decltype(treeListElement::color)> & color) {
     if (!treeID) {
         treeID = skeletonState.nextAvailableTreeID;
     }
@@ -1255,13 +1239,12 @@ treeListElement * Skeletonizer::addTreeListElement(boost::optional<decltype(tree
     newTree.iterator = std::prev(std::end(skeletonState.trees));
     state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
 
-    // calling function sets values < 0 when no color was specified
-    if(color.r < 0) {//Set a tree color
+    if (!color) {// set default tree color
         const auto blockState = blockSignals(true);
         restoreDefaultTreeColor(newTree);
         blockSignals(blockState);
     } else {
-        newTree.color = color;
+        newTree.color = color.get();
         newTree.colorSetManually = true;
     }
 
@@ -1655,11 +1638,9 @@ nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const pa
 
 void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
     const auto index = (tree.treeID - 1) % state->viewerState->treeColors.size();
-    tree.color.r = std::get<0>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
-    tree.color.g = std::get<1>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
-    tree.color.b = std::get<2>(state->viewerState->treeColors[index]) / MAX_COLORVAL;
-    tree.color.a = 1.;
-
+    tree.color = QColor::fromRgb(std::get<0>(state->viewerState->treeColors[index])
+                       , std::get<1>(state->viewerState->treeColors[index])
+                       , std::get<2>(state->viewerState->treeColors[index]));
     tree.colorSetManually = false;
     Session::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);

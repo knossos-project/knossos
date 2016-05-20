@@ -227,7 +227,7 @@ public slots:
 
     bool extractConnectedComponent(std::uint64_t nodeID);
     treeListElement * addTreeListElement();
-    treeListElement * addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, color4F color = {-1, -1, -1, 1});
+    treeListElement * addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, const boost::optional<decltype(treeListElement::color)> & color = boost::none);
     bool mergeTrees(int treeID1, int treeID2);
     void updateTreeColors();
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);

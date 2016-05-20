@@ -53,9 +53,6 @@ Viewer::Viewer() {
 
     recalcTextureOffsets();
 
-    ViewportBase::initMesh(viewerState.lineVertBuffer, 1024);
-    ViewportBase::initMesh(viewerState.pointVertBuffer, 1024);
-
     rewire();
 
     state->viewerState->renderInterval = FAST;
@@ -1270,6 +1267,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
         }
     }
     //Apply the dynamic range settings to the adjustment table
+    const auto MAX_COLORVAL = 255;
     if (state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL) {
         const auto originalAdjustment = state->viewerState->datasetAdjustmentTable;
         for (int i = 0; i < 256; ++i) {
@@ -1361,24 +1359,22 @@ void Viewer::loadTreeLUT(const QString & path) {
     skeletonizer->updateTreeColors();
 }
 
-color4F Viewer::getNodeColor(const nodeListElement & node) const {
+QColor Viewer::getNodeColor(const nodeListElement & node) const {
     const auto property = state->viewerState->highlightedNodePropertyByColor;
     const auto range = state->viewerState->nodePropertyColorMapMax - state->viewerState->nodePropertyColorMapMin;
     const auto & nodeColors = state->viewerState->nodeColors;
     if (!property.isEmpty() && node.properties.contains(property) && range > 0) {
-        const int index = node.properties[property].toDouble() / range * MAX_COLORVAL;
-        return {std::get<0>(nodeColors[index])/255.f, std::get<1>(nodeColors[index])/255.f, std::get<2>(nodeColors[index])/255.f, 1.f};
+        const int index = node.properties[property].toDouble() / range * nodeColors.size();
+        return QColor::fromRgb(std::get<0>(nodeColors[index]), std::get<1>(nodeColors[index]), std::get<2>(nodeColors[index]));
     }
     if (node.isBranchNode) { //branch nodes are always blue
-        return {0.f, 0.f, 1.f, 1.f};
+        return Qt::blue;
     }
     if (CommentSetting::useCommentNodeColor && node.getComment().isEmpty() == false) {
-        // default color for comment nodes
-        auto newColor = CommentSetting::getColor(node.getComment());
-        return color4F(newColor.red()/255., newColor.green()/255., newColor.blue()/255., newColor.alpha()/255.);
+        return CommentSetting::getColor(node.getComment());
     }
     if (node.correspondingTree == state->skeletonState->activeTree && state->viewerState->highlightActiveTree) {
-        return {1.f, 0., 0., 1.f};
+        return Qt::red;
     }
     return node.correspondingTree->color;
 }

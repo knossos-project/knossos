@@ -1,9 +1,9 @@
 #ifndef TREE_H
 #define TREE_H
 
-#include "color4F.h"
 #include "node.h"
 
+#include <QColor>
 #include <QHash>
 #include <QList>
 
@@ -21,7 +21,7 @@ public:
 
     bool render{true};
 
-    color4F color;
+    QColor color;
     bool selected{false};
     bool colorSetManually{false};
 

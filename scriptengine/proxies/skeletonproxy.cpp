@@ -200,14 +200,11 @@ QList<treeListElement *> *SkeletonProxy::trees() {
     return trees;
 }
 
-bool SkeletonProxy::add_tree(int tree_id, float r, float g, float b, float a) {
-    color4F color(r, g, b, a);
-    treeListElement *theTree = Skeletonizer::singleton().addTreeListElement(tree_id, color);
-    if (!theTree) {
-        emit echo(QString("could not add the tree with tree id %1").arg(tree_id));
-        return false;
-    }
-    return true;
+void SkeletonProxy::add_tree(int tree_id) {
+    Skeletonizer::singleton().addTreeListElement(tree_id);
+}
+void SkeletonProxy::add_tree(int tree_id, QColor color) {
+    Skeletonizer::singleton().addTreeListElement(tree_id, color);
 }
 
 bool SkeletonProxy::set_tree_comment(int tree_id, const QString &comment) {

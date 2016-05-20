@@ -25,7 +25,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "color4F.h"
 #include "coordinate.h"
 #include "stateInfo.h"
 
@@ -158,10 +157,10 @@ protected:
     void renderScaleBar(const int fontSize = defaultFonsSize);
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
-    uint renderSphere(const Coordinate & pos, const float & radius, const color4F & color, const RenderOptions & options = RenderOptions());
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options = RenderOptions());
+    uint renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
-    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions());
+    virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions());
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
@@ -235,10 +234,6 @@ public:
     explicit ViewportBase(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportBase();
 
-    static bool initMesh(mesh & toInit, uint initialSize);
-    static bool doubleMeshCapacity(mesh & toDouble);
-    static bool resizemeshCapacity(mesh & toResize, uint n);
-
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed
     //data pixels can have a different axis. Keep this in mind.
@@ -308,7 +303,7 @@ class ViewportOrtho : public ViewportBase {
     void createOverlayTextures();
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    virtual void renderSegment(const segmentListElement & segment, const color4F &color, const RenderOptions & options = RenderOptions()) override;
+    virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
     uint renderSegPlaneIntersection(const segmentListElement & segment);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(const Coordinate coord);

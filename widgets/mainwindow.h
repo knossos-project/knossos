@@ -24,7 +24,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-#include "color4F.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
 #include "viewport.h"

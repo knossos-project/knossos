@@ -1,6 +1,5 @@
 #include "scripting.h"
 
-#include "decorators/colordecorator.h"
 #include "decorators/coordinatedecorator.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/nodelistdecorator.h"
@@ -86,7 +85,6 @@ Scripting::Scripting() : _ctx{[](){
         PythonQt::self()->addDecorators(decorator);
         PythonQt::self()->registerCPPClass(typeName, "", "internal");
     };
-    makeDecorator(new ColorDecorator, "color4F");
     makeDecorator(new CoordinateDecorator, "Coordinate");
     makeDecorator(new FloatCoordinateDecorator, "floatCoordinate");
     makeDecorator(new NodeListDecorator, "Node");

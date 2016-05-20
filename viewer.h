@@ -25,25 +25,23 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include "functions.h"
-#include "mesh.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
 #include "widgets/mainwindow.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 
-#include <QObject>
-#include <QDebug>
+#include <QColor>
 #include <QCursor>
-#include <QTimer>
+#include <QDebug>
 #include <QElapsedTimer>
 #include <QLineEdit>
+#include <QObject>
 #include <QQuaternion>
+#include <QTimer>
 
 #define SLOW 1000
 #define FAST 10
-
-#define MAX_COLORVAL 255.
 
 enum class SkeletonDisplay {
     OnlySelected = 0x1,
@@ -155,10 +153,11 @@ struct ViewerState {
     bool showXZplane{true};
     bool showZYplane{true};
     bool showArbplane{true};
-    // temporary vertex buffers that are available for rendering, get cleared
-    // every frame */
-    mesh lineVertBuffer; /* ONLY for lines */
-    mesh pointVertBuffer; /* ONLY for points */
+    // temporary vertex buffers that are available for rendering, get cleared every frame
+    struct {
+        std::vector<floatCoordinate> vertices;
+        std::vector<std::array<float, 4>> colors;
+    } lineVertBuffer, pointVertBuffer;
 };
 
 /**
@@ -216,7 +215,7 @@ public:
     void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
-    color4F getNodeColor(const nodeListElement & node) const;
+    QColor getNodeColor(const nodeListElement & node) const;
 signals:
     void coordinateChangedSignal(const Coordinate & pos);
     void zoomChanged();

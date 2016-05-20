@@ -23,7 +23,6 @@
  */
 #include "widgets/viewport.h"
 
-#include "mesh.h"
 #include "profiler.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -65,37 +64,6 @@ enum GLNames {
     Scalebar,
     NodeOffset
 };
-
-bool ViewportBase::initMesh(mesh & toInit, uint initialSize) {
-    toInit.vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    toInit.normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    toInit.colors = (color4F *)malloc(initialSize * sizeof(color4F));
-
-    toInit.vertsBuffSize = initialSize;
-    toInit.normsBuffSize = initialSize;
-    toInit.colsBuffSize = initialSize;
-
-    toInit.vertsIndex = 0;
-    toInit.normsIndex = 0;
-    toInit.colsIndex = 0;
-    return true;
-}
-
-bool ViewportBase::doubleMeshCapacity(mesh & toDouble) {
-    return resizemeshCapacity(toDouble, 2);
-}
-
-bool ViewportBase::resizemeshCapacity(mesh & toResize, uint n) {
-    toResize.vertices = (floatCoordinate *)realloc(toResize.vertices, n * toResize.vertsBuffSize * sizeof(floatCoordinate));
-    toResize.normals = (floatCoordinate *)realloc(toResize.normals, n * toResize.normsBuffSize * sizeof(floatCoordinate));
-    toResize.colors = (color4F *)realloc(toResize.colors, n * toResize.colsBuffSize * sizeof(color4F));
-
-    toResize.vertsBuffSize = n * toResize.vertsBuffSize;
-    toResize.normsBuffSize = n * toResize.normsBuffSize;
-    toResize.colsBuffSize = n * toResize.colsBuffSize;
-
-    return true;
-}
 
 bool setRotationState(uint setTo) {
     if (setTo == ROTATIONSTATERESET){
@@ -173,24 +141,18 @@ bool setRotationState(uint setTo) {
     return true;
 }
 
-uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, const RenderOptions & options) {
+uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     if (options.enableSkeletonDownsampling &&
         (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f) && (state->viewerState->cumDistRenderThres > 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
 
-        if(state->viewerState->lineVertBuffer.vertsBuffSize < state->viewerState->lineVertBuffer.vertsIndex + 2)
-            doubleMeshCapacity(state->viewerState->lineVertBuffer);
+        state->viewerState->lineVertBuffer.vertices.emplace_back(*base);
+        state->viewerState->lineVertBuffer.vertices.emplace_back(*top);
 
-        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex] = Coordinate{base->x, base->y, base->z};
-        state->viewerState->lineVertBuffer.vertices[state->viewerState->lineVertBuffer.vertsIndex + 1] = Coordinate{top->x, top->y, top->z};
-
-        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex] = color;
-        state->viewerState->lineVertBuffer.colors[state->viewerState->lineVertBuffer.vertsIndex + 1] = color;
-
-        state->viewerState->lineVertBuffer.vertsIndex += 2;
-
+        state->viewerState->lineVertBuffer.colors.emplace_back(color4f);
+        state->viewerState->lineVertBuffer.colors.emplace_back(color4f);
     } else {
-        GLfloat a[] = {color.r, color.g, color.b, color.a};
-        glColor4fv(a);
+        glColor4fv(color4f.data());
 
         glPushMatrix();
         GLUquadricObj * gluCylObj = gluNewQuadric();
@@ -226,9 +188,10 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     return true;
 }
 
-uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const color4F & color, const RenderOptions & options) {
+uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const QColor & color, const RenderOptions & options) {
     GLUquadricObj *gluSphereObj = NULL;
 
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     /* Render only a point if the sphere wouldn't be visible anyway */
     if (options.enableSkeletonDownsampling &&
         (((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
@@ -241,19 +204,13 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
                 glVertex3f((float)pos.x, (float)pos.y, (float)pos.z);
             glEnd();
             glPointSize(1.);
-        }
-        else {
-            if(state->viewerState->pointVertBuffer.vertsBuffSize < state->viewerState->pointVertBuffer.vertsIndex + 2)
-                doubleMeshCapacity(state->viewerState->pointVertBuffer);
-
-            state->viewerState->pointVertBuffer.vertices[state->viewerState->pointVertBuffer.vertsIndex] = Coordinate{pos.x, pos.y, pos.z};
-            state->viewerState->pointVertBuffer.colors[state->viewerState->pointVertBuffer.vertsIndex] = color;
-            state->viewerState->pointVertBuffer.vertsIndex++;
+        } else {
+            state->viewerState->pointVertBuffer.vertices.emplace_back(pos);
+            state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
         }
     }
     else {
-        GLfloat tmp[] = {color.r, color.g, color.b, color.a};
-        glColor4fv(tmp);
+        glColor4fv(color4f.data());
         glPushMatrix();
         glTranslatef((float)pos.x, (float)pos.y, (float)pos.z);
         glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
@@ -278,12 +235,12 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
     return true;
 }
 
-void ViewportBase::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
+void ViewportBase::renderSegment(const segmentListElement & segment, const QColor & color, const RenderOptions & options) {
     renderCylinder(&(segment.source.position), Skeletonizer::singleton().segmentSizeAt(segment.source) * state->viewerState->segRadiusToNodeRadius,
         &(segment.target.position), Skeletonizer::singleton().segmentSizeAt(segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
 }
 
-void ViewportOrtho::renderSegment(const segmentListElement & segment, const color4F & color, const RenderOptions & options) {
+void ViewportOrtho::renderSegment(const segmentListElement & segment, const QColor & color, const RenderOptions & options) {
     ViewportBase::renderSegment(segment, color, options);
     if (state->viewerState->showIntersections) {
         renderSegPlaneIntersection(segment);
@@ -307,13 +264,15 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
     renderSphere(node.position, radius, color, options);
 
     if(node.selected && options.highlightSelection) { // highlight selected nodes
-        renderSphere(node.position, radius * mp, {0.f, 1.f, 0.f, 0.5f});
+        auto selectedNodeColor = QColor(Qt::green);
+        selectedNodeColor.setAlphaF(0.5f);
+        renderSphere(node.position, radius * mp, selectedNodeColor);
     }
     // Highlight active node with a halo
     if(state->skeletonState->activeNode == &node && options.highlightActiveNode) {
         // Color gets changes in case there is a comment & conditional comment highlighting
-        color4F haloColor = state->viewer->getNodeColor(node);
-        haloColor.a = 0.2f;
+        auto haloColor = state->viewer->getNodeColor(node);
+        haloColor.setAlphaF(0.2);
         renderSphere(node.position, radius * ((mp - 1.0)/2.0 + 1.0), haloColor);
     }
 }
@@ -321,8 +280,7 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
 void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions & options) {
     ViewportBase::renderNode(node, options);
     if(1.5 <  Skeletonizer::singleton().radius(node)) { // draw node center to make large nodes visible and clickable in ortho vps
-        color4F color = state->viewer->getNodeColor(node);
-        renderSphere(node.position, 1.5, color);
+        renderSphere(node.position, 1.5, state->viewer->getNodeColor(node));
     }
     // Render the node description
     glColor4f(0.f, 0.f, 0.f, 1.f);
@@ -2154,14 +2112,8 @@ bool Viewport3D::rotateViewport() {
  */
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    state->viewerState->lineVertBuffer.vertsIndex = 0;
-    state->viewerState->lineVertBuffer.normsIndex = 0;
-    state->viewerState->lineVertBuffer.colsIndex = 0;
-
-    state->viewerState->pointVertBuffer.vertsIndex = 0;
-    state->viewerState->pointVertBuffer.normsIndex = 0;
-    state->viewerState->pointVertBuffer.colsIndex = 0;
-    color4F currentColor = {1.f, 0.f, 0.f, 1.f};
+    state->viewerState->lineVertBuffer.vertices.clear();
+    state->viewerState->lineVertBuffer.colors.clear();
 
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
@@ -2253,12 +2205,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             if (nodeVisible) {
                 //This sets the current color for the segment rendering
+                QColor currentColor = currentTree.color;
                 if((currentTree.treeID == state->skeletonState->activeTree->treeID)
                     && (state->viewerState->highlightActiveTree)) {
-                        currentColor = {1.f, 0.f, 0.f, 1.f};
-                }
-                else {
-                    currentColor = currentTree.color;
+                    currentColor = Qt::red;
                 }
 
                 cumDistToLastRenderedNode = 0.f;
@@ -2286,8 +2236,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                                 || synapse.preSynapse == state->skeletonState->activeNode ) {
 
                             segmentListElement virtualSegment(*synapse.postSynapse, *synapse.preSynapse);
-                            color4F col(0.0, 0.0, 0.0, 1.0);
-                            renderSegment(virtualSegment, col, options);
+                            renderSegment(virtualSegment, Qt::black, options);
 
                             auto post = synapse.postSynapse->position;
                             auto pre = synapse.preSynapse->position;
@@ -2296,9 +2245,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                                                   post.y - (post.y - pre.y)/10,
                                                   post.z - (post.z - pre.z)/10};
 
-                            renderCylinder(&arrowbase, Skeletonizer::singleton().segmentSizeAt(*synapse.preSynapse) * 3.0f,
-                                &(synapse.postSynapse->position),
-                                Skeletonizer::singleton().segmentSizeAt(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, col, options);
+                            renderCylinder(&arrowbase, Skeletonizer::singleton().segmentSizeAt(*synapse.preSynapse) * 3.0f
+                                , &synapse.postSynapse->position
+                                , Skeletonizer::singleton().segmentSizeAt(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
                         }
                     }
                 }
@@ -2319,15 +2268,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     }
 
     /* Render line geometry batch if it contains data */
-    if(state->viewerState->lineVertBuffer.vertsIndex > 0) {
+    if (!state->viewerState->lineVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->viewerState->lineVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices.data());
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->lineVertBuffer.colors.data());
 
-        glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertsIndex);
+        glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertices.size());
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -2339,15 +2288,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glPointSize(3.f);
 
     /* Render point geometry batch if it contains data */
-    if(state->viewerState->pointVertBuffer.vertsIndex > 0) {
+    if (!state->viewerState->pointVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices);
-        glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors);
+        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices.data());
+        glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors.data());
 
-        glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertsIndex);
+        glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertices.size());
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
