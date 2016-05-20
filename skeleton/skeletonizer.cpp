@@ -1813,10 +1813,10 @@ auto & selected() {
     return state->skeletonState->selectedTrees;
 }
 
-auto getId(const nodeListElement & elem) -> decltype(elem.nodeID) {
+auto getId(const nodeListElement & elem) {
     return elem.nodeID;
 }
-auto getId(const treeListElement & elem) -> decltype(elem.treeID) {
+auto getId(const treeListElement & elem) {
     return elem.treeID;
 }
 
