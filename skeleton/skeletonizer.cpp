@@ -42,6 +42,7 @@
 
 #include <cstring>
 #include <queue>
+#include <type_traits>
 #include <unordered_set>
 #include <vector>
 
@@ -1803,14 +1804,12 @@ void Skeletonizer::moveSelectedNodesToTree(int treeID) {
     }
 }
 
-template<typename T>
-std::vector<T*> & selected();
-template<>
-std::vector<nodeListElement*> & selected() {
+template<typename T, std::enable_if_t<std::is_same<T, nodeListElement>::value>* = nullptr>
+auto & selected() {
     return state->skeletonState->selectedNodes;
 }
-template<>
-std::vector<treeListElement*> & selected() {
+template<typename T, std::enable_if_t<std::is_same<T, treeListElement>::value>* = nullptr>
+auto & selected() {
     return state->skeletonState->selectedTrees;
 }
 
