@@ -189,6 +189,7 @@ public slots:
     bool setActiveNode(nodeListElement *node);
     bool addTreeCommentToSelectedTrees(QString comment);
     bool addTreeComment(int treeID, QString comment);
+    void setColor(treeListElement & tree, const QColor &color);
     void addSynapse();
     void addSynapse(std::vector<nodeListElement *> & nodes);
     static bool unlockPosition();

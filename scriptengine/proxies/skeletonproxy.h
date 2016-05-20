@@ -29,6 +29,7 @@ public slots:
     void add_tree(int tree_id);
     void add_tree(int tree_id, QColor color);
     bool set_tree_comment(int tree_id, const QString & comment);
+    void set_tree_color(int tree_id, const QColor & color);
     bool set_active_tree(int tree_id);
     bool delete_tree(int tree_id);
     bool merge_trees(int tree_id, int other_tree_id);

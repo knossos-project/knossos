@@ -1330,6 +1330,13 @@ bool Skeletonizer::addTreeComment(int treeID, QString comment) {
     return true;
 }
 
+void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
+    tree.color = color;
+    tree.colorSetManually = true;
+    Session::singleton().unsavedChanges = true;
+    emit treeChangedSignal(tree);
+}
+
 std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode) {
     for (auto segmentIt = std::begin(sourceNode.segments); segmentIt != std::end(sourceNode.segments); ++segmentIt) {
         if (!segmentIt->forward) {

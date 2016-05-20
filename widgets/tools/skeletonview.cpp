@@ -70,8 +70,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     if (index.column() == 2 && role == Qt::CheckStateRole) {
         tree.render = value.toBool();
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
-        tree.color = value.value<QColor>();
-        tree.colorSetManually = true;
+        Skeletonizer::singleton().setColor(tree, value.value<QColor>());
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
         const QString comment{value.toString()};
         Skeletonizer::singleton().addTreeComment(tree.treeID, comment);

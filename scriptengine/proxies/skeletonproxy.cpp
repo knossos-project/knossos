@@ -215,6 +215,19 @@ bool SkeletonProxy::set_tree_comment(int tree_id, const QString &comment) {
     return true;
 }
 
+treeListElement & treeFromId(int treeId) {
+    if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
+        return *tree;
+    }
+    const auto errorText = QObject::tr("skeletonproxy treeFromId: not tree with id %1").arg(treeId);
+    qWarning() << errorText;
+    throw std::runtime_error(errorText.toStdString());
+}
+
+void SkeletonProxy::set_tree_color(int tree_id, const QColor & color) {
+    Skeletonizer::singleton().setColor(treeFromId(tree_id), color);
+}
+
 bool SkeletonProxy::set_active_tree(int tree_id) {
     if (!Skeletonizer::singleton().setActiveTreeByID(tree_id)) {
         emit echo(QString("could not set active tree (id %1)").arg(tree_id));
