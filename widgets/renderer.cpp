@@ -1968,17 +1968,7 @@ std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint ce
 
     GLdouble vp_height = height();
 
-    if(viewportType != VIEWPORT_SKELETON) {
-        vp_height = height() * devicePixelRatio();
-    }
-    centerX *= devicePixelRatio();
-    centerY *= devicePixelRatio();
-    selectionWidth *= devicePixelRatio();
-    selectionHeight *= devicePixelRatio();
-
-    GLint openGLviewport[4];
-    glGetIntegerv(GL_VIEWPORT, openGLviewport);
-
+    GLint openGLviewport[4]{0, 0, width(), height()};
     gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
 
     renderFunc();
