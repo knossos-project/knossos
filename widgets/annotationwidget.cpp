@@ -25,6 +25,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
     tabs.addTab(&commentsTab, "Comments");
 
     mainLayout.addWidget(&tabs);
+    mainLayout.setContentsMargins({});
     setLayout(&mainLayout);
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));

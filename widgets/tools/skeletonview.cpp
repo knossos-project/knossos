@@ -312,6 +312,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     treeLayout.addLayout(&treeOptionsLayout);
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
+    treeLayout.setContentsMargins({});
     treeDummyWidget.setLayout(&treeLayout);
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&treeDummyWidget);
@@ -322,6 +323,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     nodeLayout.addWidget(&displaySpoiler);
     nodeLayout.addWidget(&nodeView);
     nodeLayout.addWidget(&nodeCountLabel);
+    nodeLayout.setContentsMargins({});
     nodeDummyWidget.setLayout(&nodeLayout);
     splitter.addWidget(&nodeDummyWidget);
 

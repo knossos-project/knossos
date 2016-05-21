@@ -44,6 +44,7 @@ AppearanceWidget::AppearanceWidget(QWidget *parent) : QDialog(parent) {
     tabs.addTab(&viewportTab, "Viewports");
 
     mainLayout.addWidget(&tabs);
+    mainLayout.setContentsMargins({});
     setLayout(&mainLayout);
 
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
