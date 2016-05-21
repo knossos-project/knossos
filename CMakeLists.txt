@@ -124,7 +124,12 @@ if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
         target_link_libraries(${PROJECT_NAME} xcb Xxf86vm dl)
     endif()
 endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+if(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "@executable_path/../Frameworks")
+else(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+endif(APPLE)
+
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
