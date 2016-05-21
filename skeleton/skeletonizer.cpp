@@ -280,16 +280,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("inMag", QString::number(node.createdInMag));
             xml.writeAttribute("time", QString::number(node.timestamp));
             for (auto propertyIt = node.properties.constBegin(); propertyIt != node.properties.constEnd(); ++propertyIt) {
-                if (propertyIt.key() == "conflicting_comments") {
-                    QByteArray array;
-                    {
-                        QDataStream serializer(&array, QIODevice::WriteOnly);
-                        serializer << propertyIt.value();
-                    }
-                    xml.writeAttribute(propertyIt.key(), array.toBase64());
-                } else {
-                    xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
-                }
+                xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
             }
             xml.writeEndElement(); // end node
         }
@@ -631,14 +622,6 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                     inMag = {value.toInt()};
                                 } else if (name == "time") {
                                     ms = {value.toULongLong()};
-                                } else if (name == "conflicting_comments") {
-                                    QVariant conflicts;
-                                    {
-                                        const auto array = QByteArray::fromBase64(value.toString().toUtf8());
-                                        QDataStream serializer(array);
-                                        serializer >> conflicts;
-                                    }
-                                    properties.insert(name.toString(), conflicts);
                                 } else if (name != "comment") { // comments are added later in the comments section
                                     properties.insert(name.toString(), value.toString());
                                 }
@@ -736,28 +719,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         }
     }
 
-    QHash<std::uint64_t, QSet<QString>> conflictsById;
     for (const auto & elem : commentsVector) {
         if (auto currentNode = getElem(nodeMap, elem.first, findNodeByNodeID)) {
-            if (!currentNode.get()->getComment().isEmpty()) {
-                conflictsById[currentNode.get()->nodeID].insert(elem.second);
-            } else {
-                setComment(*currentNode.get(), elem.second);
-            }
-        } else {
-//            qDebug() << tr("comment for non-existent node %1").arg(elem.first);// potential spam
-        }
-    }
-
-    for (auto it = std::cbegin(conflictsById); it != std::cend(conflictsById); ++it) {
-        auto * const currentNode = findNodeByNodeID(it.key());
-        if (currentNode != nullptr) {
-            auto && conflicts = currentNode->properties["conflicting_comments"];
-            auto conflictHash = conflicts.toHash();
-            for (auto && comment : it.value()) {
-                conflictHash.insert(comment, {});
-            }
-            conflicts = conflictHash;
+            setComment(*currentNode.get(), elem.second);
         }
     }
 
