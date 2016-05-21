@@ -58,8 +58,6 @@ public:
     treeListElement * postTree{nullptr};
     treeListElement * synapticCleft{nullptr};
 
-    int synapseID;
-
     QVariantHash properties;
 
 };

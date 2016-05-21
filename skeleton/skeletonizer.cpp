@@ -730,6 +730,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                               , *postTree
                                               , *synapticCleft});
             synapticCleft.get()->render = false; //don't render synaptic clefts
+            synapticCleft.get()->isSynapticCleft = true;
         } else {
             qWarning() << tr("broken synapse");
         }
