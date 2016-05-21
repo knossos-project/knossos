@@ -78,6 +78,7 @@ Q_OBJECT
         bool immutable;
         Coordinate location;
         QString category;
+        std::tuple<uint8_t, uint8_t, uint8_t> color;
         QString comment;
         bool selected = false;
 
@@ -110,6 +111,7 @@ Q_OBJECT
     Object & createObject(Args && ... args);
     void removeObject(Object &);
     void changeCategory(Object & obj, const QString & category);
+    void changeColor(Object & obj, const std::tuple<uint8_t, uint8_t, uint8_t> & color);
     void changeComment(Object & obj, const QString & comment);
     void newSubObject(Object & obj, uint64_t subObjID);
 
@@ -225,6 +227,7 @@ public slots:
     void unmergeSelectedObjects(const Coordinate & clickPos);
     void jumpToSelectedObject();
     void placeCommentForSelectedObject(const QString & comment);
+    void restoreDefaultColorForSelectedObjects();
 };
 
 #endif // SEGMENTATION_H

@@ -18,8 +18,9 @@ uint64_t Segmentation::Object::highestId = 0;
 uint64_t Segmentation::Object::highestIndex = -1;
 
 Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id, const bool & todo, const bool & immutable)
-    : id(id), todo(todo), immutable(immutable), location(location)
-{
+    : id(id), todo(todo), immutable(immutable), location(location) {
+    auto & colormap = Segmentation::singleton().overlayColorMap;
+    color = colormap[id % colormap.size()];
     highestId = std::max(id, highestId);
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
@@ -28,8 +29,9 @@ Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> init
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : id(++highestId), todo(false), immutable(false), location(second.location), selected{true} //merge is selected
-{
+    : id(++highestId), todo(false), immutable(false), location(second.location), selected{true} { //merge is selected
+    auto & colormap = Segmentation::singleton().overlayColorMap;
+    color = colormap[id % colormap.size()];
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
     merge(second);
@@ -179,6 +181,11 @@ void Segmentation::changeCategory(Object & obj, const QString & category) {
     emit categoriesChanged();
 }
 
+void Segmentation::changeColor(Object &obj, const std::tuple<uint8_t, uint8_t, uint8_t> & color) {
+    obj.color = color;
+    emit changedRow(obj.index);
+}
+
 void Segmentation::changeComment(Object & obj, const QString & comment) {
     obj.comment = comment;
     emit changedRow(obj.index);
@@ -203,9 +210,7 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
-    const auto & objectId = objects[objectIndex].id;
-    const auto colorIndex = objectId % overlayColorMap.size();
-    return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
+    return std::tuple_cat(objects[objectIndex].color, std::make_tuple(alpha));
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject() const {
@@ -665,5 +670,16 @@ void Segmentation::placeCommentForSelectedObject(const QString & comment) {
         int index = selectedObjectIndices.front();
         objects[index].comment = comment;
         emit changedRow(index);
+    }
+}
+
+void Segmentation::restoreDefaultColorForSelectedObjects() {
+    if (!selectedObjectIndices.empty()) {
+        for (auto index : selectedObjectIndices) {
+            auto & colormap = Segmentation::singleton().overlayColorMap;
+            auto & obj = objects[index];
+            obj.color = colormap[obj.id % colormap.size()];
+        }
+        emit resetData();
     }
 }

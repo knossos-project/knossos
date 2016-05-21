@@ -8,6 +8,7 @@
 #include <QAbstractListModel>
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -103,6 +104,8 @@ Q_OBJECT
     QLabel subobjectCountLabel;
     QLabel subobjectHoveredLabel;
     QPushButton objectCreateButton{"Create new object"};
+
+    QColorDialog colorDialog{this};
 
     bool objectSelectionProtection = false;
     bool touchedObjectSelectionProtection = false;
