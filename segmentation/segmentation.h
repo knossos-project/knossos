@@ -13,6 +13,7 @@
 
 #include <array>
 #include <atomic>
+#include <boost/optional.hpp>
 #include <functional>
 #include <random>
 #include <tuple>
@@ -78,7 +79,7 @@ Q_OBJECT
         bool immutable;
         Coordinate location;
         QString category;
-        std::tuple<uint8_t, uint8_t, uint8_t> color;
+        boost::optional<std::tuple<uint8_t, uint8_t, uint8_t>> color;
         QString comment;
         bool selected = false;
 

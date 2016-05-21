@@ -19,8 +19,6 @@ uint64_t Segmentation::Object::highestIndex = -1;
 
 Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id, const bool & todo, const bool & immutable)
     : id(id), todo(todo), immutable(immutable), location(location) {
-    auto & colormap = Segmentation::singleton().overlayColorMap;
-    color = colormap[id % colormap.size()];
     highestId = std::max(id, highestId);
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
@@ -30,8 +28,6 @@ Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> init
 
 Segmentation::Object::Object(Object & first, Object & second)
     : id(++highestId), todo(false), immutable(false), location(second.location), selected{true} { //merge is selected
-    auto & colormap = Segmentation::singleton().overlayColorMap;
-    color = colormap[id % colormap.size()];
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
     merge(second);
@@ -210,7 +206,13 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
-    return std::tuple_cat(objects[objectIndex].color, std::make_tuple(alpha));
+    if (objects[objectIndex].color) {
+        return std::tuple_cat(objects[objectIndex].color.get(), std::make_tuple(alpha));
+    } else {
+        const auto & objectId = objects[objectIndex].id;
+        const auto colorIndex = objectId % overlayColorMap.size();
+        return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
+    }
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject() const {
@@ -508,7 +510,12 @@ void Segmentation::mergelistSave(QIODevice & file) const {
             stream << ' ' << subObj.get().id;
         }
         stream << '\n';
-        stream << obj.location.x << ' ' << obj.location.y << ' ' << obj.location.z << '\n';
+        stream << obj.location.x << ' ' << obj.location.y << ' ' << obj.location.z << ' ';
+        if (obj.color) {
+            stream << std::get<0>(obj.color.get()) << ' ' << std::get<1>(obj.color.get()) << ' ' << std::get<2>(obj.color.get()) << '\n';
+        } else {
+            stream << '\n';
+        }
         stream << obj.category << '\n';
         stream << obj.comment << '\n';
     }
@@ -526,18 +533,23 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     const auto blockState = blockSignals(true);
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
-        std::istringstream coordLineStream(stream.readLine().toStdString());
+        std::istringstream coordColorLineStream(stream.readLine().toStdString());
 
         uint64_t objId;
         bool todo;
         bool immutable;
         Coordinate location;
+        uint r; uint g; uint b;
         uint64_t initialVolume;
         QString category;
         QString comment;
 
         bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
-        bool valid1 = (coordLineStream >> location.x) && (coordLineStream >> location.y) && (coordLineStream >> location.z);
+        bool valid1 = (coordColorLineStream >> location.x) && (coordColorLineStream >> location.y) && (coordColorLineStream >> location.z);
+        bool customColorValid = false;
+        if (coordColorLineStream) {
+            customColorValid = (coordColorLineStream >> r) && (coordColorLineStream >> g) && (coordColorLineStream >> b);
+        }
         bool valid2 = !(category = stream.readLine()).isNull();
         bool valid3 = !(comment = stream.readLine()).isNull();
 
@@ -548,6 +560,9 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             }
             std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
             changeCategory(obj, category);
+            if (customColorValid) {
+                changeColor(obj, std::make_tuple(r, g, b));
+            }
             obj.comment = comment;
         } else {
             blockSignals(blockState);

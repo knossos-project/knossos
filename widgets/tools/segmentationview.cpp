@@ -72,7 +72,8 @@ QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orient
 
 QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, const QModelIndex & index, int role) const {
     if (index.column() == 0 && (role == Qt::BackgroundRole || role == Qt::DecorationRole)) {
-        return QColor(std::get<0>(obj.color), std::get<1>(obj.color), std::get<2>(obj.color));
+        const auto color = Segmentation::singleton().colorObjectFromIndex(obj.index);
+        return QColor(std::get<0>(color), std::get<1>(color), std::get<2>(color));
     } else if (index.column() == 2 && role == Qt::CheckStateRole) {
         return (obj.immutable ? Qt::Checked : Qt::Unchecked);
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
