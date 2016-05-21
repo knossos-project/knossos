@@ -138,6 +138,9 @@ void NodesTab::saveSettings(QSettings & settings) const {
 
 void NodesTab::loadSettings(const QSettings & settings) {
     idCombo.setCurrentIndex(settings.value(NODE_ID_DISPLAY, 0).toInt());
+    if (idCombo.currentIndex() == -1) {
+        idCombo.setCurrentIndex(0);
+    }
     edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 1.5).toDouble());
     edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
     overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());

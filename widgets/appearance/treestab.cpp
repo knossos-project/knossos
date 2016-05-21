@@ -123,6 +123,9 @@ void TreesTab::loadSettings(const QSettings & settings) {
     depthCutoffSpin.setValue(settings.value(DEPTH_CUTOFF, 5.).toDouble());
     depthCutoffSpin.valueChanged(depthCutoffSpin.value());
     renderQualityCombo.setCurrentIndex(settings.value(RENDERING_QUALITY, 1).toInt());
+    if (renderQualityCombo.currentIndex() == -1) {
+        renderQualityCombo.setCurrentIndex(1);
+    }
     lutFilePath = settings.value(TREE_LUT_FILE, "").toString();
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
     ownTreeColorsCheck.setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());
