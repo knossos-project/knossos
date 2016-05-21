@@ -830,12 +830,28 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
     const auto pos = nodeToDel->position;
 
     unsetSubobjectOfHybridNode(*nodeToDel);
+
+    nodeListElement * newActiveNode = nullptr;
+    if (resetActiveNode) {
+        for (const auto * seg : *nodeToDel->getSegments()) {
+            if (seg->source == *nodeToDel) {
+                // activate next node in (any) tracing direction
+                newActiveNode = &seg->target;
+                break;
+            } else { // if there's no next node in tracing direction, take a node in (any) opposite tracing direction
+                newActiveNode = &seg->source;
+            }
+        }
+    }
+
     nodeToDel->correspondingTree->nodes.erase(nodeToDel->iterator);
 
     emit nodeRemovedSignal(nodeID);
 
     if (resetActiveNode) {
-        auto * newActiveNode = findNearbyNode(tree, pos);
+        if (newActiveNode == nullptr) { // nodeToDel was not connected
+            newActiveNode = findNearbyNode(tree, pos);
+        }
         state->viewer->skeletonizer->setActiveNode(newActiveNode);
     }
 
