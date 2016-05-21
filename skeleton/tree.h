@@ -20,6 +20,7 @@ public:
     std::list<nodeListElement> nodes;
 
     bool render{true};
+    bool isSynapticCleft{false};
 
     QColor color;
     bool selected{false};

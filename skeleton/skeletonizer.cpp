@@ -1512,7 +1512,8 @@ void Skeletonizer::addSynapse() {
     if(synapseState == preSynapse) { //set active Node as presynapse
         temporarySynapse.preSynapse = skeletonState.activeNode;
         temporarySynapse.preTree = skeletonState.activeTree;
-        addTreeComment(addTreeListElement()->treeID, "synaptic_cleft");
+        auto synaptic_cleft = addTreeListElement();
+        synaptic_cleft->isSynapticCleft = true;
         synapseState = synapticCleft;
     } else if(synapseState == synapticCleft) {
         temporarySynapse.synapticCleft = skeletonState.activeTree;
@@ -1535,7 +1536,7 @@ void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
     temporarySynapse.postTree = nodes[1]->correspondingTree;
 
     auto synapticCleft = addTreeListElement();
-    addTreeComment(synapticCleft->treeID, "synaptic_cleft");
+    synapticCleft->isSynapticCleft = true;
 
     temporarySynapse.synapticCleft = synapticCleft;
 
