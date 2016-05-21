@@ -709,9 +709,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     Skeletonizer::singleton().resetData();
     widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
-    Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation;//merge implies changes
-
-    Session::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : zips.front();// either an .nml or a .k.zip was loaded
+    Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
+    if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…
+        // if multiple files are loaded, let KNOSSOS generate a new filename. Otherwise either an .nml or a .k.zip was loaded
+        Session::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : zips.front();
+    }
     updateTitlebar();
 
     setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
