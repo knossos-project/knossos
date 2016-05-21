@@ -59,7 +59,8 @@ public:
         InSelectedTree = 0x1,
         Selected = 0x2,
         Branch = 0x4,
-        Comment = 0x8
+        Comment = 0x8,
+        Synapse = 0x16
     };
     QFlags<FilterMode> mode = FilterMode::InSelectedTree;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
@@ -98,7 +99,7 @@ class SkeletonView : public QWidget {
     QHBoxLayout nodeOptionsLayout;
     Spoiler displaySpoiler{"Display options"};
     QVBoxLayout displaySpoilerLayout;
-    QCheckBox displayAllCheckbox{"All nodes"};
+    QCheckBox displaySynapticCleftsCheckbox{"All nodes"};
     QGroupBox filterGroupBox{"Filter"};
     QHBoxLayout filterLayout;
     QButtonGroup filterButtonGroup;
@@ -107,6 +108,7 @@ class SkeletonView : public QWidget {
     QCheckBox filterSelectedCheckbox{"selected"};
     QCheckBox filterBranchCheckbox{"branch node"};
     QCheckBox filterCommentCheckbox{"comment node"};
+    QCheckBox filterSynapseCheckbox{"synapse node"};
     QLineEdit nodeCommentFilter;
     QCheckBox nodeRegex{"regex"};
     NodeModel nodeModel;

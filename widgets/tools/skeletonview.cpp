@@ -162,6 +162,7 @@ void NodeModel::recreate(const bool matchAll = true) {
                     (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected) ||
                     (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode) ||
                     (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false) ||
+                    (mode.testFlag(FilterMode::Synapse) && node.get().properties["synapse"].isNull()) ||
                     &node.get() == state->skeletonState->activeNode) {
                     hits.emplace_back(node);
                 }
@@ -171,7 +172,8 @@ void NodeModel::recreate(const bool matchAll = true) {
                 if (( (!mode.testFlag(FilterMode::Selected) || node.get().selected) &&
                       (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected) &&
                       (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode) &&
-                      (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) ) ||
+                      (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) &&
+                      (!mode.testFlag(FilterMode::Synapse) || !node.get().properties["synapse"].isNull()) ) ||
                     &node.get() == state->skeletonState->activeNode) {
                     hits.emplace_back(node);
                 }
@@ -240,9 +242,9 @@ public:
 protected:
     virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
         auto & cache = static_cast<TreeModel&>(*sourceModel()).cache;
-        const bool isNoSynapse{cache[source_row].get().comment != "synaptic_cleft"};
+        const bool isSynapse{cache[source_row].get().isSynapticCleft};
         const bool isActive{&cache[source_row].get() == state->skeletonState->activeTree};
-        return isNoSynapse && (isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent));
+        return !isSynapse && (isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent));
     }
 };
 class NodeProxy : public QSortFilterProxyModel {
@@ -284,7 +286,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     for (auto option : { std::make_pair(&filterInSelectedTreeCheckbox, NodeModel::FilterMode::InSelectedTree),
                          {&filterSelectedCheckbox, NodeModel::FilterMode::Selected},
                          {&filterBranchCheckbox, NodeModel::FilterMode::Branch},
-                         {&filterCommentCheckbox, NodeModel::FilterMode::Comment} }) {
+                         {&filterCommentCheckbox, NodeModel::FilterMode::Comment},
+                         {&filterSynapseCheckbox, NodeModel::FilterMode::Synapse}} ) {
         filterButtonGroup.addButton(option.first);
         filterButtonGroup.setId(option.first, option.second);
         option.first->setChecked(nodeModel.mode.testFlag(option.second));
@@ -293,10 +296,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     filterGroupBox.setLayout(&filterLayout);
     filterGroupBox.setCheckable(true);
     const bool showAllNodes = nodeModel.mode == NodeModel::FilterMode::All;
-    displayAllCheckbox.setChecked(showAllNodes);
     filterGroupBox.setChecked(!showAllNodes);
 
-    displaySpoilerLayout.addWidget(&displayAllCheckbox);
     displaySpoilerLayout.addWidget(&filterGroupBox);
     displaySpoiler.setContentLayout(displaySpoilerLayout);
 
@@ -395,17 +396,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeRecreate();
     };
 
-    QObject::connect(&displayAllCheckbox, &QCheckBox::clicked, [this](const bool checked) {
-        filterGroupBox.setChecked(!checked);
-        if (checked) {
-            nodeModel.mode = NodeModel::FilterMode::All;
-            nodeRecreate();
-        } else {
-            filterGroupBox.clicked(true);
-        }
-    });
     QObject::connect(&filterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
-        displayAllCheckbox.setChecked(!checked);
+        //displayAllCheckbox.setChecked(!checked);
         nodeModel.mode = NodeModel::FilterMode::All;
         if (checked) {
             for (auto * checkbox : filterButtonGroup.buttons()) {
