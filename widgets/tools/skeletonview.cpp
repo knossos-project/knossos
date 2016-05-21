@@ -48,7 +48,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
     if (&tree == state->skeletonState->activeTree && index.column() == 0 && role == Qt::DecorationRole) {
         return QPixmap(":/resources/icons/active-arrow.png").scaled(QSize(8, 8), Qt::KeepAspectRatio);
-    } else if (index.column() == 1 && role == Qt::BackgroundRole) {
+    } else if (index.column() == 1 && (role == Qt::BackgroundRole || role == Qt::DecorationRole)) { // background role not visible for selected row under gnome…
         return tree.color;
     } else if (index.column() == 2 && role == Qt::CheckStateRole) {
         return tree.render ? Qt::Checked : Qt::Unchecked;
@@ -275,7 +275,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
-
+    for (auto index : {0, 1, 2}) {
+        treeView.resizeColumnToContents(index);
+    }
     filterModeCombo.addItems({"match all", "match at least one"});
     filterLayout.addWidget(&filterModeCombo);
     filterButtonGroup.setExclusive(false);
