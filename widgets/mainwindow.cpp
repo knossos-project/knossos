@@ -204,8 +204,10 @@ void MainWindow::createViewports() {
     viewportArb->upperLeftCorner = {715, 30, 0};
     viewport3D->upperLeftCorner = {360, 385, 0};
     resetTextureProperties();
-    forEachVPDo([this](ViewportBase & vp) { QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel); });
-
+    forEachVPDo([this](ViewportBase & vp) {
+        QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
+        QObject::connect(&vp, &ViewportBase::snapshotTriggered, &this->widgetContainer.snapshotWidget, &SnapshotWidget::openForVP);
+    });
 }
 
 ViewportBase * MainWindow::viewport(const ViewportType vpType) {

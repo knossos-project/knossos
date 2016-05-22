@@ -10,8 +10,7 @@
 #include <QRadioButton>
 #include <QVBoxLayout>
 
-class SnapshotWidget : public QDialog
-{
+class SnapshotWidget : public QDialog {
     Q_OBJECT
     QString saveDir;
     QComboBox sizeCombo;
@@ -26,6 +25,7 @@ public:
     void saveSettings();
     void loadSettings();
 public slots:
+    void openForVP(const ViewportType type);
     void updateOptionVisibility();
 signals:
     void visibilityChanged(bool);

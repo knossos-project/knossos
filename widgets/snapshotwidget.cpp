@@ -79,6 +79,18 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
     setLayout(&mainLayout);
 }
 
+void SnapshotWidget::openForVP(const ViewportType type) {
+    vpXYRadio.setChecked(type == VIEWPORT_XY);
+    vpXZRadio.setChecked(type == VIEWPORT_XZ);
+    vpZYRadio.setChecked(type == VIEWPORT_ZY);
+    vpArbRadio.setChecked(type == VIEWPORT_ARBITRARY);
+    vp3dRadio.setChecked(type == VIEWPORT_SKELETON);
+    updateOptionVisibility();
+    show();
+    activateWindow();
+    raise();
+}
+
 uint SnapshotWidget::getCheckedViewport() const {
     return vpXYRadio.isChecked() ? VIEWPORT_XY :
            vpXZRadio.isChecked() ? VIEWPORT_XZ :

@@ -28,6 +28,7 @@
 #include "coordinate.h"
 #include "stateInfo.h"
 
+#include <QAction>
 #include <QDebug>
 #include <QDockWidget>
 #include <QFont>
@@ -37,6 +38,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
+#include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -132,13 +134,18 @@ class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp);
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
-protected: QVBoxLayout vpLayout;
+protected:
+    QVBoxLayout vpLayout;
+    QHBoxLayout vpHeadLayout;
+    QToolButton menuButton;
 private:
     QOpenGLDebugLogger oglLogger;
     bool isDocked = true;
     bool isFullOrigDocked;
     QWidget *dockParent;
     QViewportFloatWidget *floatParent = nullptr;
+    QAction snapshotAction{"Snapshot", &menuButton};
+    QAction floatingWindowAction{"Undock viewport", &menuButton};
     ResizeButton resizeButton;
     bool resizeButtonHold = false;
     void moveVP(const QPoint & globalPos);
@@ -175,11 +182,6 @@ protected:
     virtual void enterEvent(QEvent * event) override;
     virtual void leaveEvent(QEvent * event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
-    virtual void mouseDoubleClickEvent(QMouseEvent *event) override {
-        if (event->button() == Qt::MouseButton::LeftButton) {
-            setDock(!isDocked);
-        }
-    }
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
@@ -209,7 +211,10 @@ public:
     ViewportType viewportType;
 
     bool hasCursor{false};
-    virtual void showHideButtons(bool isShow) { resizeButton.setVisible(isShow); }
+    virtual void showHideButtons(bool isShow) {
+        menuButton.setVisible(isShow);
+        resizeButton.setVisible(isShow);
+    }
     void posAdapt() { posAdapt(pos()); }
     void posAdapt(const QPoint & desiredPos) {
         const auto horizontalSpace = parentWidget()->width() - width();
@@ -254,10 +259,9 @@ public:
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
     void pasteCoordinateSignal();
-
     void compressionRatioToggled();
-
     void updateDatasetOptionsWidget();
+    void snapshotTriggered(const ViewportType type);
 public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
@@ -357,7 +361,7 @@ public:
 
 class ViewportArb : public ViewportOrtho {
     Q_OBJECT
-    QPushButton resetButton{"reset"};
+    QAction resetAction{"Reset rotation", &menuButton};
     void updateOverlayTexture();
 
 protected:

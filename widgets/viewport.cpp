@@ -69,6 +69,15 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
     setMouseTracking(true);
     setFocusPolicy(Qt::WheelFocus);
 
+    QObject::connect(&snapshotAction, &QAction::triggered, [this]() { emit snapshotTriggered(this->viewportType); });
+    QObject::connect(&floatingWindowAction, &QAction::triggered, [this]() { setDock(!isDocked); });
+    menuButton.setText("…");
+    menuButton.setCursor(Qt::ArrowCursor);
+    menuButton.setMinimumSize(35, 20);
+    menuButton.setMaximumSize(menuButton.minimumSize());
+    menuButton.addAction(&snapshotAction);
+    menuButton.addAction(&floatingWindowAction);
+    menuButton.setPopupMode(QToolButton::InstantPopup);
     resizeButton.setCursor(Qt::SizeFDiagCursor);
     resizeButton.setIcon(QIcon(":/resources/icons/resize.gif"));
     resizeButton.setMinimumSize(20, 20);
@@ -87,6 +96,10 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
 
     vpLayout.setMargin(0);//attach buttons to vp border
     vpLayout.addStretch(1);
+    vpHeadLayout.setAlignment(Qt::AlignTop | Qt::AlignRight);
+    vpHeadLayout.addWidget(&menuButton);
+    vpHeadLayout.setSpacing(0);
+    vpLayout.insertLayout(0, &vpHeadLayout);
     vpLayout.addWidget(&resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
     setLayout(&vpLayout);
 }
@@ -103,14 +116,15 @@ void ViewportBase::setDock(bool isDock) {
     isDocked = isDock;
     if (isDock) {
         setParent(dockParent);
-        if (NULL != floatParent) {
+        if (nullptr != floatParent) {
             delete floatParent;
-            floatParent = NULL;
+            floatParent = nullptr;
         }
         move(dockPos);
         resize(dockSize);
         dockPos = {};
         dockSize = {};
+        floatingWindowAction.setText("Undock viewport");
     } else {
         dockPos = pos();
         dockSize = size();
@@ -121,6 +135,7 @@ void ViewportBase::setDock(bool isDock) {
             floatParent->show();
         }
         state->viewerState->defaultVPSizeAndPos = false;
+        floatingWindowAction.setText("Dock viewport");
     }
     if (wasVisible) {
         show();
@@ -187,10 +202,6 @@ void ViewportOrtho::resetTexture() {
 }
 
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
-    const auto svpLayout = new QHBoxLayout();
-    svpLayout->setSpacing(0);
-    svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
-
     for (auto * button : {&xyButton, &xzButton, &zyButton}) {
         button->setMinimumSize(30, 20);
     }
@@ -198,12 +209,11 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     r180Button.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&xyButton, &xzButton, &zyButton, &r90Button, &r180Button, &resetButton}) {
+    for (auto * button : {&resetButton, &r180Button, &zyButton, &r90Button, &xzButton, &xyButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
-        svpLayout->addWidget(button);
+        vpHeadLayout.insertWidget(0, button);
     }
-    vpLayout.insertLayout(0, svpLayout);
 
     connect(&xyButton, &QPushButton::clicked, []() {
         if(state->skeletonState->rotationcounter == 0) {
@@ -775,14 +785,8 @@ float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) con
 
 
 ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType), vpLenghtInDataPx((static_cast<int>((state->M / 2 + 1) * state->cubeEdgeLength / std::sqrt(2))  / 2) * 2), vpHeightInDataPx(vpLenghtInDataPx) {
-    const auto svpLayout = new QHBoxLayout();
-    svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
-    resetButton.setMinimumSize(45, 20);
-    resetButton.setMaximumSize(resetButton.minimumSize());
-    resetButton.setCursor(Qt::ArrowCursor);
-    svpLayout->addWidget(&resetButton);
-    vpLayout.insertLayout(0, svpLayout);
-    connect(&resetButton, &QPushButton::clicked, [this]() {
+    menuButton.addAction(&resetAction);
+    connect(&resetAction, &QAction::triggered, [this]() {
         state->viewer->resetRotation();
     });
 }
@@ -798,7 +802,6 @@ void ViewportArb::paintGL() {
 }
 
 void ViewportArb::showHideButtons(bool isShow) {
-    resetButton.setVisible(isShow);
     ViewportBase::showHideButtons(isShow);
 }
 
