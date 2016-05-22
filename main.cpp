@@ -55,7 +55,7 @@ class Splash {
     QSplashScreen screen;
     QTimer timer;
 public:
-    Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+    Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename)) {
         screen.show();
         //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
         timer.start(timeout_msec);
