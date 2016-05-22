@@ -444,6 +444,11 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
 }
 
 void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
+    if (QApplication::activeWindow() != nullptr) {//only if active widget belongs to application
+        activateWindow();//steal keyboard focus
+    }
+    setFocus();//get keyboard focus for this widget for viewport specific shortcuts
+
     const int directionSign = event->delta() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
