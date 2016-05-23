@@ -43,8 +43,17 @@ public:
     ComponentType z = 0;
 
     constexpr CoordinateBase() = default;
-    constexpr CoordinateBase(QList<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
-    constexpr CoordinateBase(QVector<ComponentType> l) : x(l[0]), y(l[1]), z(l[2]) {}
+    constexpr CoordinateBase(QList<ComponentType> l) {
+        if (l.size() != 3) {
+            throw std::runtime_error("QList too short for coordinate");
+        }
+        std::tie(x, y, z) = std::make_tuple(l[0], l[1], l[2]);
+    }
+    constexpr CoordinateBase(QVector<ComponentType> l) {
+        if (l.size() != 3) {
+            throw std::runtime_error("QVector too short for coordinate");
+        }
+        std::tie(x, y, z) = std::make_tuple(l[0], l[1], l[2]);}
     constexpr CoordinateBase(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
 
     constexpr ComponentType sum() const {
