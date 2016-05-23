@@ -192,10 +192,10 @@ bool SkeletonProxy::add_node(quint64 node_id, int x, int y, int z, int parent_tr
     return true;
 }
 
-QList<treeListElement *> *SkeletonProxy::trees() {
-    QList<treeListElement *> *trees = new QList<treeListElement *>();
+QList<treeListElement*> SkeletonProxy::trees() {
+    QList<treeListElement*> trees;
     for (auto & tree : state->skeletonState->trees) {
-        trees->append(&tree);
+        trees.append(&tree);
     }
     return trees;
 }
