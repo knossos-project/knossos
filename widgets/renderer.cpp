@@ -2104,6 +2104,8 @@ bool Viewport3D::rotateViewport() {
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
     state->viewerState->lineVertBuffer.vertices.clear();
     state->viewerState->lineVertBuffer.colors.clear();
+    state->viewerState->pointVertBuffer.vertices.clear();
+    state->viewerState->pointVertBuffer.colors.clear();
 
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
