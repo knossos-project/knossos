@@ -1200,11 +1200,7 @@ QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, co
     return hits;
 }
 
-treeListElement * Skeletonizer::addTreeListElement() {
-    return addTreeListElement(skeletonState.nextAvailableTreeID);
-}
-
-treeListElement * Skeletonizer::addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, const boost::optional<decltype(treeListElement::color)> & color) {
+treeListElement * Skeletonizer::addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color) {
     if (!treeID) {
         treeID = skeletonState.nextAvailableTreeID;
     }
