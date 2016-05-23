@@ -182,14 +182,18 @@ nodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
-bool SkeletonProxy::add_node(quint64 node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
-    Coordinate coordinate(x, y, z);
-    const auto nodeId = boost::make_optional(node_id == 0, static_cast<decltype(nodeListElement::nodeID)>(node_id));
-    if (!Skeletonizer::singleton().addNode(nodeId, radius, parent_tree_id, coordinate, (ViewportType)inVp, inMag, time, false)) {
-        emit echo(QString("could not add the node with node id %1").arg(node_id));
-        return false;
+auto & addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const QList<int> & coordinate, const treeListElement & parent_tree, const QVariantHash & properties) {
+    auto nodeIt = Skeletonizer::singleton().addNode(nodeId, {coordinate}, parent_tree, properties);
+    if (!nodeIt) {
+        throw std::runtime_error((QObject::tr("could not add node") + (nodeId ? QObject::tr(" with nodeid %1").arg(nodeId.get()) : QObject::tr(""))).toStdString());
     }
-    return true;
+    return nodeIt.get();
+}
+nodeListElement * SkeletonProxy::add_node(const QList<int> & coordinate, const treeListElement & parent_tree, const QVariantHash & properties) {
+    return &addNode(boost::none, coordinate, parent_tree, properties);
+}
+nodeListElement * SkeletonProxy::add_node(quint64 node_id, const QList<int> & coordinate, const treeListElement & parent_tree, const QVariantHash & properties) {
+    return &addNode(boost::make_optional(static_cast<decltype(nodeListElement::nodeID)>(node_id)), coordinate, parent_tree, properties);
 }
 
 QList<treeListElement*> SkeletonProxy::trees() {

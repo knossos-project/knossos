@@ -47,9 +47,8 @@ public slots:
     bool delete_node(quint64 node_id);
     bool set_active_node(quint64 node_id);
     nodeListElement *active_node();
-    bool add_node(quint64 node_id, int x, int y, int z, int parent_tree_id = 0,
-                  float radius = 1.5, int inVp = ViewportType::VIEWPORT_UNDEFINED, int inMag = 1,
-                  int time = 0);
+    nodeListElement * add_node(const QList<int> & coordinate, const treeListElement & parent_tree, const QVariantHash & properties = {});
+    nodeListElement * add_node(quint64 node_id, const QList<int> & coordinate, const treeListElement & parent_tree, const QVariantHash & properties = {});
     bool set_branch_node(quint64 node_id);
     bool add_segment(quint64 source_id, quint64 target_id);
     bool delete_segment(quint64 source_id, quint64 target_id);

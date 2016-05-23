@@ -151,6 +151,8 @@ public:
 
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
+    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const QHash<QString, QVariant> & properties);
+
     enum synapseMode {preSynapse, synapticCleft, postSynapse};
     int synapseState{preSynapse};
     Synapse temporarySynapse;
