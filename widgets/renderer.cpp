@@ -38,6 +38,7 @@
 #include <QPainter>
 #include <QQuaternion>
 #include <QVector3D>
+#include <QOpenGLBuffer>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
@@ -1254,6 +1255,230 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
+void Viewport3D::renderPointCloud() {
+    if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
+        static Profiler cloud_profiler;
+
+        static std::vector<std::array<GLfloat, 3>> points;
+        static std::vector<std::array<GLfloat, 3>> normals;
+        static std::vector<std::array<GLfloat, 4>> colors;
+        static QOpenGLBuffer position_buf;
+        static QOpenGLBuffer normal_buf;
+        static QOpenGLBuffer color_buf;
+        static QOpenGLShaderProgram pointcloud_shader;
+
+        static bool pointcloud_init = true;
+        if(pointcloud_init) {
+            position_buf.create();
+            normal_buf.create();
+            color_buf.create();
+
+            pointcloud_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+                #version 110
+                attribute vec3 vertex;
+                attribute vec3 normal;
+                attribute vec4 color;
+
+                uniform mat4 modelview_matrix;
+                uniform mat4 projection_matrix;
+
+                varying vec4 frag_color;
+                varying vec3 frag_normal;
+
+                void main() {
+                    gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
+                    frag_color = color;
+                    frag_normal = normal;
+                }
+            )shaderSource");
+            pointcloud_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+                #version 110
+                varying vec4 frag_color;
+                varying vec3 frag_normal;
+
+                void main() {
+                    vec3 light_dir = normalize(vec3(1.0f, -1.0f, 0.0f));
+                    float light_vertex_angle = acos(dot(frag_normal, light_dir));
+                    gl_FragColor = frag_color * light_vertex_angle;
+                }
+            )shaderSource");
+
+            pointcloud_shader.link();
+            pointcloud_init = false;
+        }
+
+        // ---- temporary: segmentation based dynamic point loading stub ----
+        // auto& seg = Segmentation::singleton();
+        // auto currentPosDc = state->viewerState->currentPosition / state->magnification / state->cubeEdgeLength;
+        // int M = state->M;
+        // int M_radius = (M - 1) / 2;
+
+        // static int slow_it = 0;
+        // ++slow_it;
+        // if(slow_it > 50)
+        // if(M >= 3 && M <= 15) {
+
+        //     slow_it = 0;
+        //     state->protectCube2Pointer.lock();
+
+        //     std::vector<uint64_t*> rawcubes{static_cast<std::size_t>(M*M*M)};
+        //     for(int z = 0; z < M; ++z)
+        //     for(int y = 0; y < M; ++y)
+        //     for(int x = 0; x < M; ++x) {
+        //         auto cubeIndex = z*M*M + y*M + x;
+        //         Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
+        //         rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
+        //             Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)],
+        //             {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
+        //     }
+
+
+        //     points.clear();
+        //     normals.clear();
+        //     colors.clear();
+
+        //     cloud_profiler.start();
+        //     for(int cz = 0; cz < M; ++cz)
+        //     for(int cy = 0; cy < M; ++cy)
+        //     for(int cx = 0; cx < M; ++cx) {
+        //         auto cubeIndex = cz*M*M + cy*M + cx;
+        //         auto& rawcube = rawcubes[cubeIndex];
+
+        //         if(rawcube != nullptr) {
+        //             for(int z = 1; z < cubeLen - 1; ++z)
+        //             for(int y = 1; y < cubeLen - 1; ++y)
+        //             for(int x = 1; x < cubeLen - 1; ++x) {
+
+        //                 auto indexInDc  = z*cubeLen*cubeLen + y*cubeLen + x;
+        //                 auto subobjectId = rawcube[indexInDc];
+
+        //                 if(seg.isSubObjectIdSelected(subobjectId)) {
+        //                     bool isSurface = false;
+        //                     for(int rz = -1; rz < 1; ++rz)
+        //                     for(int ry = -1; ry < 1; ++ry)
+        //                     for(int rx = -1; rx < 1; ++rx) {
+        //                         auto otherIndexInDc  = (z + rz)*cubeLen*cubeLen + (y + ry)*cubeLen + (x + rx);
+        //                         auto otherSubobjectId = rawcube[otherIndexInDc];
+        //                         if(otherSubobjectId != subobjectId) {
+        //                             isSurface = true;
+        //                             break;
+        //                         }
+        //                     }
+
+        //                     if(isSurface) {
+        //                         points.push_back({{static_cast<float>(x + (cx - M_radius) * cubeLen),
+        //                                            static_cast<float>(y + (cy - M_radius) * cubeLen),
+        //                                            static_cast<float>(z + (cz - M_radius) * cubeLen)}});
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     cloud_profiler.end();
+
+        //     state->protectCube2Pointer.unlock();
+
+        //     position_buf.bind();
+        //     position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+        //     normal_buf.bind();
+        //     normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+        //     color_buf.bind();
+        //     color_buf.allocate(colors.data(), colors.size() * 3 * sizeof(GLfloat));
+        //     color_buf.release();
+
+        //     qDebug() << "cloud profiler took:" << cloud_profiler.average_time() * 1000.0 << "ms";
+        //     qDebug() << "using" << points.size() << "points";
+        // }
+
+        points.clear();
+        normals.clear();
+        colors.clear();
+
+        if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
+            points = *Skeletonizer::tmp_hull_points;
+            normals = *Skeletonizer::tmp_hull_normals;
+            colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+
+            position_buf.bind();
+            position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            normal_buf.bind();
+            normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            color_buf.release();
+
+            qDebug() << "points: " << points.size();
+            qDebug() << "first: " << points[0][0] << points[0][1] << points[0][2];
+        }
+        // } else {
+        //     for(int z = -32; z <= 32; ++z)
+        //     for(int y = -32; y <= 32; ++y)
+        //     for(int x = -32; x <= 32; ++x) {
+        //         points.emplace_back(std::array<GLfloat, 3>{{5441.0f+x, 5313.0f+y, 2881.0f+z}});
+        //         normals.emplace_back(std::array<GLfloat, 3>({{0.0f, 0.0f, 1.0f}}));
+        //         colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+        //     }
+
+        //     position_buf.bind();
+        //     position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+        //     normal_buf.bind();
+        //     normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+        //     color_buf.bind();
+        //     color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+        //     color_buf.release();
+
+        //     qDebug() << "no hull points to render";
+        // }
+        // glEnable(GL_DEPTH_TEST);
+        if(points.size() != 0) {
+            glPointSize(4.0f);
+
+            glMatrixMode(GL_MODELVIEW_MATRIX);
+            glPushMatrix();
+            glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);
+            glTranslatef(0.5, 0.5, 0.5);
+
+            GLfloat modelview_mat[4][4];
+            glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+
+            GLfloat projection_mat[4][4];
+            glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+
+            pointcloud_shader.bind();
+            pointcloud_shader.setUniformValue("modelview_matrix", modelview_mat);
+            pointcloud_shader.setUniformValue("projection_matrix", projection_mat);
+
+            glEnableClientState(GL_VERTEX_ARRAY);
+            position_buf.bind();
+            int vertexLocation = pointcloud_shader.attributeLocation("vertex");
+            pointcloud_shader.enableAttributeArray(vertexLocation);
+            pointcloud_shader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+
+            glEnableClientState(GL_NORMAL_ARRAY);
+            normal_buf.bind();
+            int normalLocation = pointcloud_shader.attributeLocation("normal");
+            pointcloud_shader.enableAttributeArray(normalLocation);
+            pointcloud_shader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+
+            glEnableClientState(GL_COLOR_ARRAY);
+            color_buf.bind();
+            int colorLocation = pointcloud_shader.attributeLocation("color");
+            pointcloud_shader.enableAttributeArray(colorLocation);
+            pointcloud_shader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+
+            glDrawArrays(GL_POINTS, 0, points.size());
+
+            position_buf.release();
+            pointcloud_shader.release();
+
+            glDisableClientState(GL_COLOR_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glPopMatrix();
+        }
+        // glDisable(GL_DEPTH_TES   T);
+    }
+}
+
 bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if(!state->viewerState->selectModeFlag) {
         glMatrixMode(GL_PROJECTION);
@@ -1763,7 +1988,9 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPopMatrix();
     }
 
-     // Reset previously changed OGL parameters
+    renderPointCloud();
+
+    // Reset previously changed OGL parameters
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);

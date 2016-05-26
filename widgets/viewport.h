@@ -274,6 +274,7 @@ class Viewport3D : public ViewportBase {
     virtual float zoomStep() const override;
     virtual void paintGL() override;
     bool renderVolumeVP();
+    void renderPointCloud();
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     bool rotateViewport();

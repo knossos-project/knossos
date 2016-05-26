@@ -59,6 +59,10 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             QuaZipFile file(&archive);
             Segmentation::singleton().jobLoad(file);
         }
+        if (archive.setCurrentFile("hull_points.xyz")) {
+            QuaZipFile file(&archive);
+            Skeletonizer::singleton().loadHullPoints(file);
+        }
         //load skeleton last as it may depend on a loaded segmentation
         if (archive.setCurrentFile("annotation.xml")) {
             QuaZipFile file(&archive);

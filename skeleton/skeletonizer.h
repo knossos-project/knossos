@@ -153,6 +153,10 @@ public:
 
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const QHash<QString, QVariant> & properties);
 
+    void loadHullPoints(QIODevice &);
+    static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_points;
+    static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_normals;
+
     enum synapseMode {preSynapse, synapticCleft, postSynapse};
     int synapseState{preSynapse};
     Synapse temporarySynapse;
