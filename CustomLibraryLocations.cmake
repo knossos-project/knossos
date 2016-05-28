@@ -2,7 +2,6 @@
 #cmake searches for headers and libraries both directly and inside include/lib folders below
 set(CMAKE_PREFIX_PATH
     "${CMAKE_PREFIX_PATH}"#append
-    "/home/void/stuff/repo/PythonQt/bin/install"
 
 # For Mac development: required to find packages from Homebrew
     "/usr/local/opt/qt5/bin"
