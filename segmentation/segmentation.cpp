@@ -68,7 +68,7 @@ Segmentation & Segmentation::singleton() {
     return segmentation;
 }
 
-Segmentation::Segmentation() : renderAllObjs(true), hoverVersion(false), mouseFocusedObjectId(0) {
+Segmentation::Segmentation() {
     loadOverlayLutFromFile();
 }
 

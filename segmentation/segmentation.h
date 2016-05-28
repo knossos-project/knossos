@@ -139,12 +139,12 @@ public:
     void selectPrevTodoObject();
     void markSelectedObjectForSplitting(const Coordinate & pos);
 
-    bool renderAllObjs; // show all segmentations as opposed to only a selected one
+    bool renderAllObjs{true}; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
     brush_subject brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
-    bool hoverVersion;
-    uint64_t mouseFocusedObjectId;
+    bool hoverVersion{false};
+    uint64_t mouseFocusedObjectId{0};
 
     static Segmentation & singleton();
 
