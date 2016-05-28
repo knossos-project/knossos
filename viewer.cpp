@@ -590,25 +590,37 @@ void Viewer::arbCubes(ViewportArb & vp) {
                 qDebug() << prevSize << points.size();
             }
 
-            const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
-            const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
-            for (auto & layer : layers) {
-                auto cubeIt = layer.textures.find(gpuCoord);
-                if (cubeIt != std::end(layer.textures)) {
-//                    qDebug() << "foo" << gpuCoord;
-//                    for (auto & point : points) {
-//                        qDebug() << point;
-//                    }
-                    cubeIt->second->vertices = /*std::move*/(points);
-                } else {
-                    const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
-                    const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
-                    layer.pendingArbCubes.emplace_back(gpuCoord, offset);
+            // if the arb plane is parallel to one of the coordinate axis
+            // the intersection test will be true for adjacent cubes on cube boundaries
+            // because the edge coordinates at the end of a cube are inclusive to render across the last pixel
+            bool moreThanXEndBorder{false}, moreThanYEndBorder{false}, moreThanZEndBorder{false};
+            for (auto & point : points) {
+                if (point.x != rightPlaneUpVec.x) {
+                    moreThanXEndBorder = true;
+                }
+                if (point.y != bottomPlaneUpVec.y) {
+                    moreThanYEndBorder = true;
+                }
+                if (point.z != leftPlaneUpVec.z) {
+                    moreThanZEndBorder = true;
+                }
+            }
+            if (moreThanXEndBorder && moreThanYEndBorder && moreThanZEndBorder) {
+                const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
+                const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, state->magnification);
+                for (auto & layer : layers) {
+                    auto cubeIt = layer.textures.find(gpuCoord);
+                    if (cubeIt != std::end(layer.textures)) {
+                        cubeIt->second->vertices = /*std::move*/(points);
+                    } else {
+                        const auto cubeCoord = globalCoord.cube(state->cubeEdgeLength, state->magnification);
+                        const auto offset = globalCoord - cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+                        layer.pendingArbCubes.emplace_back(gpuCoord, offset);
+                    }
                 }
             }
         }
     }
-//    qDebug() << "bar";
 }
 
 void Viewer::vpGenerateTexture(ViewportArb &vp) {
