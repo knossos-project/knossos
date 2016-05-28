@@ -1267,7 +1267,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
         }
     }
     //Apply the dynamic range settings to the adjustment table
-    const auto MAX_COLORVAL = 255;
+    const double MAX_COLORVAL{255.0};
     if (state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL) {
         const auto originalAdjustment = state->viewerState->datasetAdjustmentTable;
         for (int i = 0; i < 256; ++i) {
