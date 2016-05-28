@@ -209,7 +209,7 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     r180Button.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&resetButton, &r180Button, &zyButton, &r90Button, &xzButton, &xyButton}) {
+    for (auto * button : {&resetButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
         vpHeadLayout.insertWidget(0, button);
