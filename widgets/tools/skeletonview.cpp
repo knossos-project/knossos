@@ -399,7 +399,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     };
 
     QObject::connect(&filterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
-        //displayAllCheckbox.setChecked(!checked);
         nodeModel.mode = NodeModel::FilterMode::All;
         if (checked) {
             for (auto * checkbox : filterButtonGroup.buttons()) {
