@@ -51,22 +51,11 @@ AppearanceWidget::AppearanceWidget(QWidget *parent) : QDialog(parent) {
 }
 
 void AppearanceWidget::loadSettings() {
-    int width, height, x, y;
-    bool visible;
-
     QSettings settings;
     settings.beginGroup(APPEARANCE_WIDGET);
-    width = settings.value(WIDTH, this->width()).toInt();
-    height = settings.value(HEIGHT, this->height()).toInt();
-    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
-        x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
-        y = QApplication::desktop()->screen()->rect().topRight().y() + this->height();
-    }
-    else {
-        x = settings.value(POS_X).toInt();
-        y = settings.value(POS_Y).toInt();
-    }
-    visible = settings.value(VISIBLE, false).toBool();
+
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    setVisible(settings.value(VISIBLE, false).toBool());
 
     datasetAndSegmentationTab.loadSettings(settings);
     nodesTab.loadSettings(settings);
@@ -76,17 +65,12 @@ void AppearanceWidget::loadSettings() {
     tabs.setCurrentIndex(settings.value(VP_TAB_INDEX, 0).toInt());
 
     settings.endGroup();
-    setVisible(visible);
-    setGeometry(x, y, width, height);
 }
 
 void AppearanceWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(APPEARANCE_WIDGET);
-    settings.setValue(WIDTH, geometry().width());
-    settings.setValue(HEIGHT, geometry().height());
-    settings.setValue(POS_X, geometry().x());
-    settings.setValue(POS_Y, geometry().y());
+    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     datasetAndSegmentationTab.saveSettings(settings);
