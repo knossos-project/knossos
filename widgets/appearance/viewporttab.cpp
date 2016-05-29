@@ -23,16 +23,18 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     viewport3DLayout.addWidget(&showXZPlaneCheckBox);
     viewport3DLayout.addWidget(&showZYPlaneCheckBox);
     viewport3DLayout.addWidget(&showArbPlaneCheckBox);
+    viewport3DLayout.addStretch();
     viewport3DLayout.addWidget(&boundariesPixelRadioBtn);
     viewport3DLayout.addWidget(&boundariesPhysicalRadioBtn);
+    viewport3DLayout.addStretch();
     viewport3DLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
     viewport3DLayout.addWidget(&rotateAroundActiveNodeRadioBtn);
     viewport3DLayout.addWidget(&rotateAroundCurrentPositionRadioBtn);
+
     int row = 0;
-    mainLayout.setAlignment(Qt::AlignTop);
-    mainLayout.addWidget(&generalHeader, row, 0); mainLayout.addWidget(&viewport3DHeader, row++, 1);
-    mainLayout.addWidget(&separator, row++, 0, 1, 2);
-    mainLayout.addLayout(&generalLayout, row, 0); mainLayout.addLayout(&viewport3DLayout, row++, 1);
+    mainLayout.addWidget(&generalHeader, row, 0); mainLayout.addWidget(&viewport3DHeader, row, 1);
+    mainLayout.addWidget(&separator, ++row, 0, 1, 2);
+    mainLayout.addLayout(&generalLayout, ++row, 0); mainLayout.addLayout(&viewport3DLayout, row, 1);
     setLayout(&mainLayout);
 
     QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
