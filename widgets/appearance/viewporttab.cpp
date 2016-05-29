@@ -3,16 +3,13 @@
 #include "viewer.h"
 #include "widgets/viewport.h"
 
-ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
-{
+ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     boundaryGroup.addButton(&boundariesPixelRadioBtn);
     boundaryGroup.addButton(&boundariesPhysicalRadioBtn);
 
     rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn);
     rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn);
     rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn);
-
-    resetVPsButton.setFocusPolicy(Qt::NoFocus);
 
     separator.setFrameShape(QFrame::HLine);
     separator.setFrameShadow(QFrame::Sunken);
@@ -35,7 +32,6 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
     mainLayout.addWidget(&generalHeader, row, 0); mainLayout.addWidget(&viewport3DHeader, row++, 1);
     mainLayout.addWidget(&separator, row++, 0, 1, 2);
     mainLayout.addLayout(&generalLayout, row, 0); mainLayout.addLayout(&viewport3DLayout, row++, 1);
-    mainLayout.addWidget(&resetVPsButton, row++, 0, Qt::AlignBottom | Qt::AlignLeft);
     setLayout(&mainLayout);
 
     QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
@@ -54,8 +50,6 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent)
                                              (rotateAroundActiveNodeRadioBtn.isChecked()) ? RotationCenter::ActiveNode :
                                              RotationCenter::CurrentPosition;
     });
-
-    QObject::connect(&resetVPsButton, &QPushButton::clicked, this, &ViewportTab::resetViewportPositions);
 }
 
 void ViewportTab::saveSettings(QSettings & settings) const {

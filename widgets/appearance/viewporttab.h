@@ -11,8 +11,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-class ViewportTab : public QWidget
-{
+class ViewportTab : public QWidget {
     friend class AppearanceWidget;
     friend class ViewportBase;
     friend class MainWindow;
@@ -38,7 +37,6 @@ class ViewportTab : public QWidget
     QRadioButton rotateAroundDatasetCenterRadioBtn{"Rotate around dataset center"};
     QRadioButton rotateAroundActiveNodeRadioBtn{"Rotate around active Node"};
     QRadioButton rotateAroundCurrentPositionRadioBtn{"Rotate around current position"};
-    QPushButton resetVPsButton{"Reset viewport positions and sizes"};
 
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);
@@ -47,10 +45,6 @@ public:
 
 signals:
     void setViewportDecorations(const bool);
-    void resetViewportPositions();
-
-public slots:
-
 };
 
 #endif // VIEWPORTTAB_H
