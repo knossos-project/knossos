@@ -125,7 +125,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
 QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString &comment) {
     QList<treeListElement *> hits;
     for (auto & tree : skeletonState.trees) {
-        if (tree.comment.contains(comment)) {
+        if (tree.comment.contains(comment, Qt::CaseInsensitive)) {
             hits.append(&tree);
         }
     }
@@ -1241,7 +1241,7 @@ nodeListElement* Skeletonizer::findNodeByNodeID(std::uint64_t nodeID) {
 QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, const QString & comment) {
     QList<nodeListElement *> hits;
     for (auto & node : tree.nodes) {
-        if (node.getComment().contains(comment)) {
+        if (node.getComment().contains(comment, Qt::CaseInsensitive)) {
             hits.append(&node);
         }
     }
@@ -1485,7 +1485,7 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
         setActiveNode(nextNode);
         jumpToNode(*nextNode);
         if (state->skeletonState->lockPositions && !state->skeletonState->lockingComment.isEmpty()) {
-            if (nextNode->getComment().contains(state->skeletonState->lockingComment)) {
+            if (nextNode->getComment().contains(state->skeletonState->lockingComment, Qt::CaseInsensitive)) {
                 lockPosition(nextNode->position);
             } else {
                 unlockPosition();
@@ -1502,7 +1502,7 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
         msgBox.setInformativeText(tr("Found all occurences of nodes with comment “%1”.").arg(searchString));
         msgBox.exec();
     };
-    if ((lastNode != skeletonState.activeNode) || (skeletonState.activeNode && !skeletonState.activeNode->getComment().contains(searchString))) {
+    if ((lastNode != skeletonState.activeNode) || (skeletonState.activeNode && !skeletonState.activeNode->getComment().contains(searchString, Qt::CaseInsensitive))) {
         // reset when invalidated by changing active node or search string
         commentTraverser = TreeTraverser(state->skeletonState->trees, skeletonState.activeNode);
     }
@@ -1513,7 +1513,7 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
         return;
     }
     while (!commentTraverser.reachedEnd) {
-        if ((*commentTraverser).getComment().contains(searchString) && &(*commentTraverser) != skeletonState.activeNode) {
+        if ((*commentTraverser).getComment().contains(searchString, Qt::CaseInsensitive) && &(*commentTraverser) != skeletonState.activeNode) {
             setNextNode(&(*commentTraverser));
             lastNode = &(*commentTraverser);
             return;

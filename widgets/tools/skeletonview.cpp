@@ -290,7 +290,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     };
 
     treeCommentFilter.setPlaceholderText("tree comment");
-
+    treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     treeSortAndCommentFilterProxy.setFilterKeyColumn(4);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
@@ -323,6 +323,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     nodeCommentFilter.setPlaceholderText("node comment");
 
     nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
+    nodeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     nodeSortAndCommentFilterProxy.setFilterKeyColumn(5);
     setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 

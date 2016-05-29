@@ -10,7 +10,7 @@ CommentSetting::CommentSetting(const QString shortcut, const QString text, const
 
 QColor CommentSetting::getColor(const QString comment) {
     for(const auto item : comments) {
-        if(!item.text.isEmpty() && comment.contains(item.text)) {
+        if(!item.text.isEmpty() && comment.contains(item.text, Qt::CaseInsensitive)) {
             return item.color;
         }
     }
@@ -19,7 +19,7 @@ QColor CommentSetting::getColor(const QString comment) {
 
 float CommentSetting::getRadius(const QString comment) {
     for(const auto item : comments) {
-        if(!item.text.isEmpty() && comment.contains(item.text)) {
+        if(!item.text.isEmpty() && comment.contains(item.text, Qt::CaseInsensitive)) {
             return item.nodeRadius;
         }
     }
