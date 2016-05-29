@@ -17,6 +17,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     generalLayout.addWidget(&showScalebarCheckBox);
     generalLayout.addWidget(&showVPDecorationCheckBox);
     generalLayout.addWidget(&drawIntersectionsCrossHairCheckBox);
+    generalLayout.addStretch();
 
     viewport3DLayout.addWidget(&showXYPlaneCheckBox);
     viewport3DLayout.addWidget(&showXZPlaneCheckBox);
