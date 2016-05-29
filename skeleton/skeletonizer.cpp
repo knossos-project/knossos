@@ -1594,7 +1594,7 @@ bool Skeletonizer::unlockPosition() {
         qDebug() << "Spatial locking disabled.";
     }
     state->skeletonState->positionLocked = false;
-
+    emit unlockedNode();
     return true;
 }
 
@@ -1602,7 +1602,7 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     qDebug("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
     state->skeletonState->positionLocked = true;
     state->skeletonState->lockedPosition = lockCoordinate;
-
+    emit lockedToNode(skeletonState.activeNode->nodeID);
     return true;
 }
 

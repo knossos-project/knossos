@@ -178,6 +178,7 @@ public:
 
     QLabel GUIModeLabel{""};
     QLabel cursorPositionLabel;
+    QLabel nodeLockingLabel;
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;

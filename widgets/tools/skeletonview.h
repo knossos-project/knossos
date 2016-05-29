@@ -127,6 +127,7 @@ class SkeletonView : public QWidget {
     QDoubleSpinBox defaultRadiusSpin;
 
     QLabel lockingLabel{"<strong>Locking</strong>"};
+    QLabel lockedNodeLabel{tr("Locked to nothing at the moment.")};
     QCheckBox commentLockingCheck{tr("Lock to nodes with comment:")};
     QLineEdit commentLockEdit{"seed"};
     QLabel lockingRadiusLabel{tr("Locking radius:")};

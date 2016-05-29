@@ -357,6 +357,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     commandsLayout.addWidget(&defaultRadiusLabel, row, 0, 1, 1);
     commandsLayout.addWidget(&defaultRadiusSpin, row++, 1, 1, 1);
     commandsLayout.addWidget(&lockingLabel, row++, 0, 1, 1);
+    commandsLayout.addWidget(&lockedNodeLabel, row++, 0, 1, 1);
     commandsLayout.addWidget(&lockingRadiusLabel, row, 0, 1, 1);
     commandsLayout.addWidget(&lockingRadiusSpin, row++, 1, 1, 1);
     commandsLayout.addWidget(&commentLockingCheck, row, 0, 1, 1);
@@ -383,10 +384,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().lockPosition(state->skeletonState->activeNode->position);
         }
         else {
-            qDebug() << "There is not active node to lock";
+            qDebug() << "There is no active node to lock";
         }
     });
     connect(&disableCurrentLockingButton, &QPushButton::clicked, []() { Skeletonizer::singleton().unlockPosition(); });
+    connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) { lockedNodeLabel.setText(tr("Locked to node %1").arg(nodeID)); });
+    connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { lockedNodeLabel.setText(tr("Locked to nothing at the moment")); });
 
     static auto updateTreeSelection = [this](){
         updateSelection(treeView, treeModel, treeSortAndCommentFilterProxy);

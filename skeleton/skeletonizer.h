@@ -167,6 +167,8 @@ signals:
     void guiModeLoaded();
     void branchPoppedSignal();
     void branchPushedSignal();
+    void lockedToNode(const std::uint64_t nodeID);
+    void unlockedNode();
     void nodeAddedSignal(const nodeListElement & node);
     void nodeChangedSignal(const nodeListElement & node);
     void nodeRemovedSignal(const std::uint64_t nodeID);
@@ -198,8 +200,8 @@ public slots:
     void setColor(treeListElement & tree, const QColor &color);
     void addSynapse();
     void addSynapse(std::vector<nodeListElement *> & nodes);
-    static bool unlockPosition();
-    static bool lockPosition(Coordinate lockCoordinate);
+    bool unlockPosition();
+    bool lockPosition(Coordinate lockCoordinate);
     void gotoComment(const QString &searchString, const bool next);
     bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(std::uint64_t nodeID, nodeListElement *nodeToDel);
