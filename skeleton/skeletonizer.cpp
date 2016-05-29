@@ -1840,14 +1840,12 @@ void Skeletonizer::setActive(treeListElement & elem) {
     setActiveTreeByID(elem.treeID);
 }
 
-template<typename T>
-T * active();
 template<>
-nodeListElement * active<nodeListElement>() {
+nodeListElement * Skeletonizer::active<nodeListElement>() {
     return state->skeletonState->activeNode;
 }
 template<>
-treeListElement * active<treeListElement>() {
+treeListElement * Skeletonizer::active<treeListElement>() {
     return state->skeletonState->activeTree;
 }
 

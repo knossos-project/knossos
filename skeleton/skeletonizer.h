@@ -121,6 +121,8 @@ class Skeletonizer : public QObject {
     QSet<QString> numberProperties;
 public:
     template<typename T>
+    T * active();
+    template<typename T>
     void select(QSet<T*>);
     void setActive(nodeListElement & elem);
     void setActive(treeListElement & elem);
