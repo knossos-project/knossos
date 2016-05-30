@@ -1297,7 +1297,7 @@ void Viewport3D::renderPointCloud() {
                 varying vec3 frag_normal;
 
                 void main() {
-                    vec3 light_dir = normalize(vec3(1.0f, -1.0f, 0.0f));
+                    vec3 light_dir = normalize(vec3(1.0, -1.0, 0.0));
                     float light_vertex_angle = acos(dot(frag_normal, light_dir));
                     gl_FragColor = frag_color * light_vertex_angle;
                 }
@@ -1403,13 +1403,14 @@ void Viewport3D::renderPointCloud() {
             position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
             normal_buf.bind();
             normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            color_buf.bind();
             color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
             color_buf.release();
 
             qDebug() << "points: " << points.size();
             qDebug() << "first: " << points[0][0] << points[0][1] << points[0][2];
         }
-        // } else {
+        // else {
         //     for(int z = -32; z <= 32; ++z)
         //     for(int y = -32; y <= 32; ++y)
         //     for(int x = -32; x <= 32; ++x) {
@@ -1452,30 +1453,32 @@ void Viewport3D::renderPointCloud() {
             int vertexLocation = pointcloud_shader.attributeLocation("vertex");
             pointcloud_shader.enableAttributeArray(vertexLocation);
             pointcloud_shader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            position_buf.release();
 
             glEnableClientState(GL_NORMAL_ARRAY);
             normal_buf.bind();
             int normalLocation = pointcloud_shader.attributeLocation("normal");
             pointcloud_shader.enableAttributeArray(normalLocation);
             pointcloud_shader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+            normal_buf.release();
 
             glEnableClientState(GL_COLOR_ARRAY);
             color_buf.bind();
             int colorLocation = pointcloud_shader.attributeLocation("color");
             pointcloud_shader.enableAttributeArray(colorLocation);
             pointcloud_shader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+            color_buf.release();
 
             glDrawArrays(GL_POINTS, 0, points.size());
-
-            position_buf.release();
-            pointcloud_shader.release();
 
             glDisableClientState(GL_COLOR_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);
+
+            pointcloud_shader.release();
             glPopMatrix();
         }
-        // glDisable(GL_DEPTH_TES   T);
+        // glDisable(GL_DEPTH_TEST);
     }
 }
 
@@ -1980,6 +1983,8 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glDisable(GL_BLEND);
     }
 
+    renderPointCloud();
+
     if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();
         glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
@@ -1987,8 +1992,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         renderSkeleton(options);
         glPopMatrix();
     }
-
-    renderPointCloud();
 
     // Reset previously changed OGL parameters
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

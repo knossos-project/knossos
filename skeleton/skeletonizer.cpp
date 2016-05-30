@@ -109,7 +109,7 @@ void Skeletonizer::loadHullPoints(QIODevice & file) {
 
     for(auto& verty : point_data_verts) {
         for(auto& floaty : verty) {
-            floaty /= 10.0f;
+            floaty /= 16.0f;
         }
     }
 
