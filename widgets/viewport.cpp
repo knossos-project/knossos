@@ -571,7 +571,7 @@ float Viewport3D::zoomStep() const {
 
 void Viewport3D::zoom(const float step) {
     auto & zoomLvl = state->skeletonState->zoomLevel;
-    zoomLvl = (step < 0 && zoomLvl >= SKELZOOMMIN)? std::max(zoomLvl + step, SKELZOOMMIN) : (step > 0 && zoomLvl <= SKELZOOMMAX)? std::min(zoomLvl + step, SKELZOOMMAX) : zoomLvl;
+    zoomLvl = std::min(std::max(zoomLvl + step, SKELZOOMMIN), SKELZOOMMAX);
     emit updateDatasetOptionsWidget();
 }
 
