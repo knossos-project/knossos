@@ -263,6 +263,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         , nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
     auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
+        table.setAllColumnsShowFocus(true);
         table.setUniformRowHeights(true);//perf hint from doc
         table.setRootIsDecorated(false);//remove padding to the left of each cell’s content
         table.setSelectionMode(QAbstractItemView::ExtendedSelection);
