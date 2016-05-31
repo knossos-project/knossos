@@ -207,6 +207,7 @@ auto selectElems(Model & model, Proxy & proxy) {
                     elems.insert(&model.cache[modelIndex.row()].get());
                 }
             }
+            model.selectionFromModel = true;
             Skeletonizer::singleton().toggleSelection(elems);
         }
     };
@@ -422,7 +423,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
-        updateTreeSelection();
+        if (!treeModel.selectionFromModel) {
+            treeRecreate();// show active node from vp selection
+        } else {
+            updateTreeSelection();
+        }
+        treeModel.selectionFromModel = false;
         if (nodeModel.mode.testFlag(NodeModel::FilterMode::InSelectedTree)) {
             nodeRecreate();
         }
@@ -432,8 +438,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPushedSignal, nodeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this](){
-        updateNodeSelection();
-        nodeRecreate();
+        if (!nodeModel.selectionFromModel) {
+            nodeRecreate();// show active node from vp selection
+        } else {
+            updateNodeSelection();
+        }
+        nodeModel.selectionFromModel = false;
         emit nodeCommentFilter.textEdited(nodeCommentFilter.text());//active node might have changed
     });
 
