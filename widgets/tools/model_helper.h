@@ -16,7 +16,7 @@ Elem & getElem(const std::reference_wrapper<Elem> & elem) {
     return elem.get();
 }
 
-auto deltaBlockSelection = [](const auto & model, const auto & data, const auto isAlreadySelected){
+auto deltaBlockSelection = [](const auto & model, const auto & data, const auto isAlreadySelected, const bool inverter = false){
     QItemSelection selectedItems;
 
     bool blockSelection{false};
@@ -24,8 +24,8 @@ auto deltaBlockSelection = [](const auto & model, const auto & data, const auto 
 
     std::size_t rowIndex{0};
     for (auto & elem : data) {
-        const auto alreadySelected = isAlreadySelected(rowIndex);
-        const auto selected = getElem(elem).selected;
+        const auto alreadySelected = isAlreadySelected(rowIndex) ? !inverter : inverter;
+        const auto selected = getElem(elem).selected ? !inverter : inverter;
         if (!blockSelection && selected && !alreadySelected) {// start block selection
             blockSelection = true;
             blockStartIndex = rowIndex;
