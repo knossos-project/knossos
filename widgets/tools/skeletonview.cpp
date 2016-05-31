@@ -227,6 +227,18 @@ auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
     }
     model.selectionProtection = false;
 
+    auto * active = Skeletonizer::singleton().active<typename decltype(model.cache)::value_type::type>();
+    if (!view.currentIndex().isValid() && active != nullptr) {// find active elem and set as current index
+        const auto activeIt = std::find_if(std::begin(model.cache), std::end(model.cache), [&active](const auto & elem){
+            return &elem.get() == active;
+        });
+        if (activeIt == std::end(model.cache)) {
+            throw std::runtime_error("active elem not found");
+        }
+        const std::size_t activeIndex = std::distance(std::begin(model.cache), activeIt);
+        const auto modelIndex = proxy.mapFromSource(model.index(activeIndex, 0));
+        view.selectionModel()->setCurrentIndex(modelIndex, QItemSelectionModel::NoUpdate);
+    }
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
         view.scrollTo(selectedIndices.indexes().front());
     }
