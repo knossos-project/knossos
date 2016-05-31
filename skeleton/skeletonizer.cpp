@@ -1520,10 +1520,10 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
         } else if (canContinue()) {
             oneStep();
         } else {
-            reachedEndMsg();
-            return;
+            break;
         }
     }
+    reachedEndMsg();
 }
 
 /*

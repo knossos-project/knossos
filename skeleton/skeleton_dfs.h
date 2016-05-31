@@ -26,6 +26,9 @@ struct NodeGenerator {
         }
 
         auto & node = *queue.back();
+        if (visitedNodes.empty() || queue.back() != visitedNodes.back()) {
+            visitedNodes.emplace_back(&node);
+        }
         queue.pop_back();
         for (auto & segment : node.segments) {
             auto & neighbor = segment.forward ? segment.target : segment.source;
@@ -48,13 +51,13 @@ struct NodeGenerator {
         if (reachedStart) {
             throw std::runtime_error{"no more nodes to iterate"};
         }
-        if (queue.back() != visitedNodes.back()) {
-            queue.emplace_back(visitedNodes.back());
-        } else if (visitedNodes.size() > 1) {
-            visitedNodes.pop_back();
+        if (queue.empty() || queue.back() != visitedNodes.back()) {
             queue.emplace_back(visitedNodes.back());
         }
-        if (visitedNodes.size() == 1) {
+        if (visitedNodes.size() > 0) {
+            visitedNodes.pop_back();
+        }
+        if (visitedNodes.size() == 0) {
             reachedStart = true;
         }
         reachedEnd = false;
