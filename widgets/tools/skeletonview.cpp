@@ -215,11 +215,16 @@ auto selectElems(Model & model, Proxy & proxy) {
 
 template<typename Model, typename Proxy>
 auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
-    const auto selectedIndices = proxy.mapSelectionFromSource(blockSelection(model, model.cache));
-    // we destroy the views ›current‹ selection with this, every mouse move during a rubberband selection starts a new ›current‹ selection which prevents shrinking it
+    auto isSelectedFunc = [&model, &proxy, &selectionModel = *view.selectionModel()](const int rowIndex){
+        return selectionModel.isSelected(proxy.mapFromSource(model.index(rowIndex, 0)));
+    };
+    const auto selection = deltaBlockSelection(model, model.cache, isSelectedFunc);
+    const auto selectedIndices = proxy.mapSelectionFromSource(selection);
+
     model.selectionProtection = true;
-    view.selectionModel()->select(selectedIndices, QItemSelectionModel::ClearAndSelect);// this is the new ›current‹ selection
-    view.selectionModel()->select(QItemSelection{}, QItemSelectionModel::Select);// turn ›current‹ into committed selection, because the view overwrites the ›current‹ selection
+    if (!selectedIndices.isEmpty()) {// selecting an empty index range apparently clears
+        view.selectionModel()->select(selectedIndices, QItemSelectionModel::SelectCurrent);
+    }
     model.selectionProtection = false;
 
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
@@ -386,12 +391,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeCountLabel.setText(tr("%1 nodes").arg(all) + (all != shown ? tr(", %2 shown").arg(shown) : "") + (selected != 0 ? tr(", %3 selected").arg(selected) : ""));
     };
     static auto treeRecreate = [&, this](){
-        treeView.selectionModel()->reset();
         treeModel.recreate();
         updateTreeSelection();
     };
     static auto nodeRecreate = [&, this](){
-        nodeView.selectionModel()->reset();
         nodeModel.recreate(filterModeCombo.currentIndex() == 0);
         updateNodeSelection();
     };
