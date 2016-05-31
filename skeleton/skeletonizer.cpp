@@ -768,6 +768,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     blockSignals(blockState);
     emit resetData();
+    emit lockingChanged();
     emit propertiesChanged(numberProperties);
     emit guiModeLoaded();
 
@@ -1030,7 +1031,9 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             selectObjectForNode(*node);
         }
-
+        if (skeletonState.lockPositions && node->getComment().contains(skeletonState.lockingComment, Qt::CaseInsensitive)) {
+            lockPosition(node->position);
+        }
         setActiveTreeByID(node->correspondingTree->treeID);
     }
 
@@ -1481,18 +1484,6 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
     }
 
     static nodeListElement *lastNode = nullptr;
-    const auto setNextNode = [&searchString, this] (nodeListElement * nextNode) {
-        setActiveNode(nextNode);
-        jumpToNode(*nextNode);
-        if (state->skeletonState->lockPositions && !state->skeletonState->lockingComment.isEmpty()) {
-            if (nextNode->getComment().contains(state->skeletonState->lockingComment, Qt::CaseInsensitive)) {
-                lockPosition(nextNode->position);
-            } else {
-                unlockPosition();
-            }
-        }
-    };
-
     auto oneStep = next ? []() { ++commentTraverser; } : []() { --commentTraverser; };
     auto canContinue = next ? []() { return !commentTraverser.reachedEnd; } : []() { return !commentTraverser.reachedStart(); };
     auto reachedEndMsg = [&searchString]() {
@@ -1514,7 +1505,8 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
     }
     while (!commentTraverser.reachedEnd) {
         if ((*commentTraverser).getComment().contains(searchString, Qt::CaseInsensitive) && &(*commentTraverser) != skeletonState.activeNode) {
-            setNextNode(&(*commentTraverser));
+            setActiveNode(&(*commentTraverser));
+            jumpToNode(*commentTraverser);
             lastNode = &(*commentTraverser);
             return;
         } else if (canContinue()) {

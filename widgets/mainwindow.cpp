@@ -715,6 +715,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
+    Skeletonizer::singleton().lockingChanged();
     widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
     Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes

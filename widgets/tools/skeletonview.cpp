@@ -353,17 +353,24 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     defaultRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.defaultNodeRadius);
     lockingRadiusSpin.setMaximum(100000);
     lockingRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.lockRadius);
+
+    commentConditionEdit.setPlaceholderText("comment condition for locking");
+    lockedNodeLabel.setEnabled(false);
+    commentConditionEdit.setEnabled(false);
+    lockingRadiusLabel.setEnabled(false);
+    lockingRadiusSpin.setEnabled(false);
+    disableCurrentLockingButton.setEnabled(false);
+
     commandsLayout.setSpacing(3);
     int row = 0;
     commandsLayout.addWidget(&defaultRadiusLabel, row, 0, 1, 1);
     commandsLayout.addWidget(&defaultRadiusSpin, row++, 1, 1, 1);
     commandsLayout.addWidget(&lockingLabel, row++, 0, 1, 1);
-    commandsLayout.addWidget(&lockedNodeLabel, row++, 0, 1, 1);
+    commandsLayout.addWidget(&lockedNodeLabel, row++, 0, 1, 2);
+    commandsLayout.addWidget(&lockToActiveCheckbox, row, 0, 1, 1, Qt::AlignLeft);
+    commandsLayout.addWidget(&commentConditionEdit, row++, 1, 1, 1);
     commandsLayout.addWidget(&lockingRadiusLabel, row, 0, 1, 1);
     commandsLayout.addWidget(&lockingRadiusSpin, row++, 1, 1, 1);
-    commandsLayout.addWidget(&commentLockingCheck, row, 0, 1, 1);
-    commandsLayout.addWidget(&commentLockEdit, row++, 1, 1, 1);
-    commandsLayout.addWidget(&lockToActiveButton, row, 0, 1, 1, Qt::AlignLeft);
     commandsLayout.addWidget(&disableCurrentLockingButton, row++, 1, 1, 1, Qt::AlignRight);
     commandsBox.setContentLayout(commandsLayout);
 
@@ -372,23 +379,25 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     setLayout(&mainLayout);
     auto & skeleton = Skeletonizer::singleton().skeletonState;
     connect(&defaultRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [&skeleton](const double value) { skeleton.defaultNodeRadius = value; });
-    connect(&commentLockingCheck, &QCheckBox::clicked, [&skeleton,this](const bool checked) {
-        skeleton.lockPositions = checked;
-        if(checked && commentLockEdit.text().isEmpty() == false) {
-            skeleton.lockingComment = commentLockEdit.text();
-        }
-    });
     connect(&lockingRadiusSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&skeleton](const int value) { skeleton.lockRadius = value; });
-    connect(&commentLockEdit, &QLineEdit::textChanged, [&skeleton](const QString comment) { skeleton.lockingComment = comment; });
-    connect(&lockToActiveButton, &QPushButton::clicked,[]() {
-        if(state->skeletonState->activeNode) {
-            Skeletonizer::singleton().lockPosition(state->skeletonState->activeNode->position);
+    connect(&commentConditionEdit, &QLineEdit::textChanged, [&skeleton](const QString comment) { skeleton.lockingComment = comment; });
+    connect(&lockToActiveCheckbox, &QPushButton::clicked, [&skeleton,this](const bool checked) {
+        skeleton.lockPositions = checked;
+        if (checked) {
+            if(skeleton.activeNode && skeleton.activeNode->getComment().contains(commentConditionEdit.text(), Qt::CaseInsensitive)) {
+                Skeletonizer::singleton().lockPosition(skeleton.activeNode->position);
+            }
+        } else {
+            Skeletonizer::singleton().unlockPosition();
         }
-        else {
-            qDebug() << "There is no active node to lock";
-        }
+        lockedNodeLabel.setEnabled(checked);
+        commentConditionEdit.setEnabled(checked);
+        lockingRadiusLabel.setEnabled(checked);
+        lockingRadiusSpin.setEnabled(checked);
+        disableCurrentLockingButton.setEnabled(checked);
     });
     connect(&disableCurrentLockingButton, &QPushButton::clicked, []() { Skeletonizer::singleton().unlockPosition(); });
+    connect(&Skeletonizer::singleton(), &Skeletonizer::lockingChanged, [&skeleton,this] () { lockToActiveCheckbox.setChecked(skeleton.lockPositions); lockToActiveCheckbox.clicked(); });
     connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) { lockedNodeLabel.setText(tr("Locked to node %1").arg(nodeID)); });
     connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { lockedNodeLabel.setText(tr("Locked to nothing at the moment")); });
 

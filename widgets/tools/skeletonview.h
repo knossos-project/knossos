@@ -128,11 +128,10 @@ class SkeletonView : public QWidget {
 
     QLabel lockingLabel{"<strong>Locking</strong>"};
     QLabel lockedNodeLabel{tr("Locked to nothing at the moment.")};
-    QCheckBox commentLockingCheck{tr("Lock to nodes with comment:")};
-    QLineEdit commentLockEdit{"seed"};
+    QLineEdit commentConditionEdit{"seed"};
     QLabel lockingRadiusLabel{tr("Locking radius:")};
     QSpinBox lockingRadiusSpin;
-    QPushButton lockToActiveButton{tr("Lock to active node")};
+    QCheckBox lockToActiveCheckbox{tr("Lock to active node")};
     QPushButton disableCurrentLockingButton{tr("Disable current locking")};
 
 public:

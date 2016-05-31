@@ -167,6 +167,7 @@ signals:
     void guiModeLoaded();
     void branchPoppedSignal();
     void branchPushedSignal();
+    void lockingChanged();
     void lockedToNode(const std::uint64_t nodeID);
     void unlockedNode();
     void nodeAddedSignal(const nodeListElement & node);
