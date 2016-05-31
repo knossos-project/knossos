@@ -16,32 +16,36 @@ Elem & getElem(const std::reference_wrapper<Elem> & elem) {
     return elem.get();
 }
 
-template<typename Model, typename Data>
-QItemSelection blockSelection(const Model & model, const Data & data) {
+auto deltaBlockSelection = [](const auto & model, const auto & data, const auto isAlreadySelected){
     QItemSelection selectedItems;
 
-    bool blockSelection = false;
-    std::size_t blockStartIndex;
+    bool blockSelection{false};
+    std::size_t blockStartIndex{0};
 
-    std::size_t rowIndex = 0;
+    std::size_t rowIndex{0};
     for (auto & elem : data) {
-        if (!blockSelection && getElem(elem).selected) { //start block selection
+        const auto alreadySelected = isAlreadySelected(rowIndex);
+        const auto selected = getElem(elem).selected;
+        if (!blockSelection && selected && !alreadySelected) {// start block selection
             blockSelection = true;
             blockStartIndex = rowIndex;
         }
-        if (blockSelection && !getElem(elem).selected) { //end block selection
+        if (blockSelection && (!selected || alreadySelected)) {// end block selection
             selectedItems.select(model.index(blockStartIndex, 0), model.index(rowIndex-1, model.columnCount()-1));
             blockSelection = false;
         }
         ++rowIndex;
     }
-    //finish last blockselection – if any
+    // finish last blockselection – if any
     if (blockSelection) {
         selectedItems.select(model.index(blockStartIndex, 0), model.index(rowIndex-1, model.columnCount()-1));
     }
 
     return selectedItems;
-}
+};
+auto blockSelection = [](const auto & model, const auto & data){
+    return deltaBlockSelection(model, data, [](int){return false;});
+};
 
 auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
     return [&table, &sortIndex](const int index){
