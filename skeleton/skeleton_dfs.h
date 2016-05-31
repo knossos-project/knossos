@@ -54,10 +54,10 @@ struct NodeGenerator {
         if (queue.empty() || queue.back() != visitedNodes.back()) {
             queue.emplace_back(visitedNodes.back());
         }
-        if (visitedNodes.size() > 0) {
+        if (!visitedNodes.empty()) {
             visitedNodes.pop_back();
         }
-        if (visitedNodes.size() == 0) {
+        if (visitedNodes.empty()) {
             reachedStart = true;
         }
         reachedEnd = false;
