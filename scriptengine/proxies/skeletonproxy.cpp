@@ -211,14 +211,6 @@ treeListElement * SkeletonProxy::add_tree(int tree_id) {
     return &Skeletonizer::singleton().addTree(tree_id);
 }
 
-bool SkeletonProxy::set_tree_comment(int tree_id, const QString &comment) {
-    if (!Skeletonizer::singleton().addTreeComment( tree_id, comment.toLocal8Bit().data())) {
-        emit echo(QString("could not set tree (id %1) comment").arg(tree_id));
-        return false;
-    }
-    return true;
-}
-
 treeListElement & treeFromId(int treeId) {
     if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
         return *tree;
@@ -226,6 +218,14 @@ treeListElement & treeFromId(int treeId) {
     const auto errorText = QObject::tr("skeletonproxy treeFromId: not tree with id %1").arg(treeId);
     qWarning() << errorText;
     throw std::runtime_error(errorText.toStdString());
+}
+
+bool SkeletonProxy::set_tree_comment(int tree_id, const QString &comment) {
+    if (!Skeletonizer::singleton().addTreeComment( tree_id, comment.toLocal8Bit().data())) {
+        emit echo(QString("could not set tree (id %1) comment").arg(tree_id));
+        return false;
+    }
+    return true;
 }
 
 void SkeletonProxy::set_tree_color(int tree_id, const QColor & color) {

@@ -154,6 +154,7 @@ public:
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const QHash<QString, QVariant> & properties);
+    treeListElement & addTree(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none);
 
     void loadHullPoints(QIODevice &);
     static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_points;
@@ -236,7 +237,6 @@ public slots:
     void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(std::uint64_t nodeID);
-    treeListElement & addTree(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none);
     bool mergeTrees(int treeID1, int treeID2);
     void updateTreeColors();
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
