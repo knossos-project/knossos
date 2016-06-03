@@ -619,7 +619,6 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             const auto blue = attributes.value("color.b").toFloat(&okb);
             const auto alpha = attributes.value("color.a").toFloat(&oka);
             if (okr && okg && okb && oka && red != -1 && green != -1 && blue != -1 && alpha != -1) {
-                qDebug() << red << green << blue << alpha;
                 neuronColor = QColor::fromRgbF(red, green, blue, alpha);
             }
 
