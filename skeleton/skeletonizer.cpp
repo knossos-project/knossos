@@ -1050,7 +1050,7 @@ auto findNextAvailableID(const T & lowerBound, const U & map) {
     }
 }
 
-boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const QHash<QString, QVariant> & properties) {
+boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const decltype(nodeListElement::properties) & properties) {
     return addNode(nodeId, skeletonState.defaultNodeRadius, tree.treeID, position, ViewportType::VIEWPORT_UNDEFINED, -1, boost::none, false, properties);
 }
 
