@@ -1215,7 +1215,7 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
-    Skeletonizer::singleton().addTreeListElement();
+    Skeletonizer::singleton().addTree();
 }
 
 void MainWindow::pushBranchNodeSlot() {

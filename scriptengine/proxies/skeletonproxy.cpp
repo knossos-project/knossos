@@ -205,10 +205,10 @@ QList<treeListElement*> SkeletonProxy::trees() {
 }
 
 treeListElement * SkeletonProxy::add_tree() {
-    return &Skeletonizer::singleton().addTreeListElement();
+    return &Skeletonizer::singleton().addTree();
 }
 treeListElement * SkeletonProxy::add_tree(int tree_id) {
-    return &Skeletonizer::singleton().addTreeListElement(tree_id);
+    return &Skeletonizer::singleton().addTree(tree_id);
 }
 
 bool SkeletonProxy::set_tree_comment(int tree_id, const QString &comment) {

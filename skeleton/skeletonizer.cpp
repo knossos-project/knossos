@@ -134,7 +134,7 @@ QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString 
 
 boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
     if(!state->skeletonState->activeTree) {
-        addTreeListElement();
+        addTree();
     }
 
     auto addedNode = addNode(
@@ -623,9 +623,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             }
 
             if (merge) {
-                treeID = treeMap.emplace(std::piecewise_construct, std::forward_as_tuple(treeID), std::forward_as_tuple(addTreeListElement(boost::none, neuronColor))).first->second.get().treeID;
+                treeID = treeMap.emplace(std::piecewise_construct, std::forward_as_tuple(treeID), std::forward_as_tuple(addTree(boost::none, neuronColor))).first->second.get().treeID;
             } else {
-                addTreeListElement(treeID, neuronColor);
+                addTree(treeID, neuronColor);
             }
 
             attribute = attributes.value("comment"); // the tree comment
@@ -1250,7 +1250,7 @@ QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, co
     return hits;
 }
 
-treeListElement & Skeletonizer::addTreeListElement(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color) {
+treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color) {
     if (!treeID) {
         treeID = skeletonState.nextAvailableTreeID;
     }
@@ -1446,7 +1446,7 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
         return false;
     }
 
-    auto & newTree = addTreeListElement();
+    auto & newTree = addTree();
     // Splitting the connected component.
     for (auto * nodeIt : visitedNodes) {
         if (nodeIt->correspondingTree->nodes.empty()) {//remove empty trees
@@ -1527,12 +1527,12 @@ void Skeletonizer::addSynapse() {
     if(synapseState == preSynapse) { //set active Node as presynapse
         temporarySynapse.preSynapse = skeletonState.activeNode;
         temporarySynapse.preTree = skeletonState.activeTree;
-        auto & synaptic_cleft = addTreeListElement();
+        auto & synaptic_cleft = addTree();
         synaptic_cleft.isSynapticCleft = true;
         synapseState = synapticCleft;
     } else if(synapseState == synapticCleft) {
         temporarySynapse.synapticCleft = skeletonState.activeTree;
-        addTreeListElement();
+        addTree();
         synapseState = postSynapse;
     }
 }
@@ -1550,7 +1550,7 @@ void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
     temporarySynapse.postSynapse->properties.insert("synapse", "postSynapse");
     temporarySynapse.postTree = nodes[1]->correspondingTree;
 
-    auto & synapticCleft = addTreeListElement();
+    auto & synapticCleft = addTree();
     synapticCleft.isSynapticCleft = true;
 
     temporarySynapse.synapticCleft = &synapticCleft;
