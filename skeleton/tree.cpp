@@ -4,7 +4,7 @@
 
 #include <QString>
 
-treeListElement::treeListElement(const int id) : treeID{id} {}
+treeListElement::treeListElement(const decltype(treeID) id, const decltype(PropertyQuery::properties) & properties) : PropertyQuery{properties}, treeID{id} {}
 
 QList<nodeListElement *> *treeListElement::getNodes() {
     QList<nodeListElement *> * nodes = new QList<nodeListElement *>();

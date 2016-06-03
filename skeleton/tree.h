@@ -2,6 +2,7 @@
 #define TREE_H
 
 #include "node.h"
+#include "property_query.h"
 
 #include <QColor>
 #include <QHash>
@@ -12,7 +13,7 @@
 
 class segmentListElement;
 
-class treeListElement {
+class treeListElement : public PropertyQuery {
 public:
     int treeID;
     std::list<treeListElement>::iterator iterator;
@@ -26,11 +27,9 @@ public:
     bool selected{false};
     bool colorSetManually{false};
 
-    QString comment;
-
     QHash<uint64_t, int> subobjectCount;
 
-    treeListElement(int id);
+    treeListElement(const decltype(treeID) id, const decltype(PropertyQuery::properties) & properties);
 
     QList<nodeListElement *> *getNodes();
     QList<segmentListElement *> getSegments();

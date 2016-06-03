@@ -13,7 +13,7 @@ int TreeListDecorator::tree_id(treeListElement *self) {
 }
 
 QString TreeListDecorator::comment(treeListElement *self) {
-    return self->comment;
+    return self->getComment();
 }
 
 QColor TreeListDecorator::color(treeListElement *self) {

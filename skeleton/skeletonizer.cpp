@@ -125,7 +125,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
 QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString &comment) {
     QList<treeListElement *> hits;
     for (auto & tree : skeletonState.trees) {
-        if (tree.comment.contains(comment, Qt::CaseInsensitive)) {
+        if (tree.getComment().contains(comment, Qt::CaseInsensitive)) {
             hits.append(&tree);
         }
     }
@@ -308,8 +308,8 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
             xml.writeAttribute("color.b", QString("-1."));
             xml.writeAttribute("color.a", QString("1."));
         }
-        if (!currentTree.comment.isEmpty()) {
-            xml.writeAttribute("comment", currentTree.comment);
+        for (auto propertyIt = currentTree.properties.constBegin(); propertyIt != currentTree.properties.constEnd(); ++propertyIt) {
+            xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
         }
 
         xml.writeStartElement("nodes");
@@ -605,34 +605,38 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 xml.skipCurrentElement();
             }
         } else if(xml.name() == "thing") {
-            QXmlStreamAttributes attributes = xml.attributes();
-
-            int treeID = 0;
-            QStringRef attribute = attributes.value("id");
-            if(attribute.isNull() == false) {
-                treeID = attribute.toInt();
+            int treeID{0};
+            bool okr{false}, okg{false}, okb{false}, oka{false};
+            float red{-1.0f}, green{-1.0f}, blue{-1.0f}, alpha{-1.0f};
+            QVariantHash properties;
+            for (const auto & attribute : xml.attributes()) {
+                const auto & name = attribute.name();
+                const auto & value = attribute.value();
+                if (name == "id") {
+                    treeID = value.toInt();
+                } else if (name == "color.r") {
+                    red = value.toFloat(&okr);
+                } else if (name == "color.g") {
+                    green = value.toFloat(&okg);
+                } else if (name == "color.b") {
+                    blue = value.toFloat(&okb);
+                } else if (name == "color.a") {
+                    alpha = value.toFloat(&oka);
+                } else {
+                    properties.insert(name.toString(), value.toString());
+                }
             }
             boost::optional<QColor> neuronColor;
-            bool okr, okg, okb, oka;
-            const auto red = attributes.value("color.r").toFloat(&okr);
-            const auto green = attributes.value("color.g").toFloat(&okg);
-            const auto blue = attributes.value("color.b").toFloat(&okb);
-            const auto alpha = attributes.value("color.a").toFloat(&oka);
             if (okr && okg && okb && oka && red != -1 && green != -1 && blue != -1 && alpha != -1) {
                 neuronColor = QColor::fromRgbF(red, green, blue, alpha);
             }
-
+            auto & tree = addTree(boost::make_optional(!merge, treeID), neuronColor, properties);
             if (merge) {
-                treeID = treeMap.emplace(std::piecewise_construct, std::forward_as_tuple(treeID), std::forward_as_tuple(addTree(boost::none, neuronColor))).first->second.get().treeID;
-            } else {
-                addTree(treeID, neuronColor);
+                treeMap.emplace(std::piecewise_construct, std::forward_as_tuple(treeID), std::forward_as_tuple(tree));
+                treeID = tree.treeID;// newly assigned tree id
             }
-
-            attribute = attributes.value("comment"); // the tree comment
-            if(attribute.isNull() == false && attribute.length() > 0) {
-                addTreeComment(treeID, attribute.toString());
-            } else {
-                addTreeComment(treeID, treeCmtOnMultiLoad);
+            if (tree.getComment().isEmpty()) {// sets e.g. filename as tree comment when multiple files are loaded
+                setComment(tree, treeCmtOnMultiLoad);
             }
 
             while (xml.readNextStartElement()) {
@@ -683,7 +687,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 if(xml.name() == "edges") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
-                            attributes = xml.attributes();
+                            const auto attributes = xml.attributes();
                             std::uint64_t sourceNodeId = attributes.value("source").toULongLong();
                             std::uint64_t targetNodeId = attributes.value("target").toULongLong();
                             edgeVector.emplace_back(sourceNodeId, targetNodeId);
@@ -1250,7 +1254,7 @@ QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, co
     return hits;
 }
 
-treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color) {
+treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color, const decltype(treeListElement::properties) & properties) {
     if (!treeID) {
         treeID = skeletonState.nextAvailableTreeID;
     }
@@ -1260,7 +1264,7 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
         throw std::runtime_error(errorString.toStdString());
     }
 
-    skeletonState.trees.emplace_back(treeID.get());
+    skeletonState.trees.emplace_back(treeID.get(), properties);
     treeListElement & newTree = skeletonState.trees.back();
     newTree.iterator = std::prev(std::end(skeletonState.trees));
     state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
@@ -1326,34 +1330,13 @@ treeListElement * Skeletonizer::getTreeWithNextID(treeListElement * currentTree)
     return getTreeWithRelationalID(currentTree, std::greater<decltype(treeListElement::treeID)>{});
 }
 
-bool Skeletonizer::addTreeCommentToSelectedTrees(QString comment) {
-    const auto blockState = signalsBlocked();
-    blockSignals(true);
-
-    for(const auto &tree : state->skeletonState->selectedTrees) {
-        addTreeComment(tree->treeID, comment);
+void Skeletonizer::setCommentOfSelectedTrees(const QString & comment) {
+    const auto blockState = blockSignals(true);
+    for (const auto &tree : state->skeletonState->selectedTrees) {
+        setComment(*tree, comment);
     }
-
     blockSignals(blockState);
-
     emit resetData();
-
-    return true;
-}
-
-bool Skeletonizer::addTreeComment(int treeID, QString comment) {
-    treeListElement *tree = NULL;
-
-    tree = findTreeByTreeID(treeID);
-
-    if (tree) {
-        tree->comment = comment;
-    }
-
-    Session::singleton().unsavedChanges = true;
-    emit treeChangedSignal(*tree);
-
-    return true;
 }
 
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
@@ -1463,17 +1446,25 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
     return true;
 }
 
-void Skeletonizer::setComment(nodeListElement & commentNode, const QString & newContent) {
-    if (newContent.isEmpty()) {
-        commentNode.properties.remove("comment");
-    } else {
-        commentNode.setComment(newContent);
-    }
-
-    Session::singleton().unsavedChanges = true;
-
-    emit nodeChangedSignal(commentNode);
+void Skeletonizer::notifyChanged(treeListElement & tree) {
+    emit treeChangedSignal(tree);
 }
+void Skeletonizer::notifyChanged(nodeListElement & node) {
+    emit nodeChangedSignal(node);
+}
+
+template<typename T>
+void Skeletonizer::setComment(T & elem, const QString & newContent) {
+    if (newContent.isEmpty()) {
+        elem.properties.remove("comment");
+    } else {
+        elem.setComment(newContent);
+    }
+    Session::singleton().unsavedChanges = true;
+    notifyChanged(elem);
+}
+template void Skeletonizer::setComment(treeListElement &, const QString & newContent);// explicit instantiation for other TUs
+template void Skeletonizer::setComment(nodeListElement &, const QString & newContent);
 
 void Skeletonizer::gotoComment(const QString & searchString, const bool next /*or previous*/) {
     static TreeTraverser commentTraverser(state->skeletonState->trees, skeletonState.activeNode);

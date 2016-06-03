@@ -130,6 +130,8 @@ public:
     void toggleSelection(const QSet<T*> & nodes);
     template<typename Elem>
     void notifySelection();
+    void notifyChanged(treeListElement & tree);
+    void notifyChanged(nodeListElement & node);
 
     SkeletonState skeletonState;
     Skeletonizer() {
@@ -154,7 +156,10 @@ public:
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const decltype(nodeListElement::properties) & properties);
-    treeListElement & addTree(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none);
+    treeListElement & addTree(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none, const decltype(treeListElement::properties) & properties = {});
+
+    template<typename T>
+    void setComment(T & elem, const QString & newContent);
 
     void loadHullPoints(QIODevice &);
     static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_points;
@@ -197,8 +202,7 @@ public slots:
     void clearSkeleton();
     boost::optional<nodeListElement &> UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node);
-    bool addTreeCommentToSelectedTrees(QString comment);
-    bool addTreeComment(int treeID, QString comment);
+    void setCommentOfSelectedTrees(const QString & comment);
     void setColor(treeListElement & tree, const QColor &color);
     void addSynapse();
     void addSynapse(std::vector<nodeListElement *> & nodes);
@@ -207,7 +211,6 @@ public slots:
     void gotoComment(const QString &searchString, const bool next);
     bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(std::uint64_t nodeID, nodeListElement *nodeToDel);
-    void setComment(nodeListElement & commentNode, const QString & newContent);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
     void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode);
     void updateSubobjectCountFromProperty(nodeListElement & node);

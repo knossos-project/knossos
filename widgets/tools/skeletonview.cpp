@@ -56,7 +56,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         switch (index.column()) {
         case 0: return tree.treeID;
         case 3: return static_cast<quint64>(tree.nodes.size());
-        case 4: return tree.comment;
+        case 4: return tree.getComment();
         }
     }
     return QVariant();//return invalid QVariant
@@ -74,7 +74,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
         Skeletonizer::singleton().setColor(tree, value.value<QColor>());
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
         const QString comment{value.toString()};
-        Skeletonizer::singleton().addTreeComment(tree.treeID, comment);
+        Skeletonizer::singleton().setComment(tree, comment);
     } else {
         return false;
     }
@@ -588,7 +588,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         auto comment = QInputDialog::getText(this, "Edit Tree Comment", "new tree comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
             prevComment = comment;
-            Skeletonizer::singleton().addTreeCommentToSelectedTrees(comment);
+            Skeletonizer::singleton().setCommentOfSelectedTrees(comment);
         }
     });
     QObject::connect(treeContextMenu.addAction("Show selected trees"), &QAction::triggered, [](){
@@ -643,7 +643,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                 if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
                     msg = tr("Extracted from deleted %1").arg(treeID);
                 }
-                Skeletonizer::singleton().addTreeComment(state->skeletonState->trees.back().treeID, msg);
+                Skeletonizer::singleton().setComment(state->skeletonState->trees.back(), msg);
             }
         }
     });
