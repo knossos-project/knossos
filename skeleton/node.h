@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include "property_query.h"
 #include "widgets/viewport.h"
 
 #include <QVariantHash>
@@ -10,17 +11,14 @@
 class segmentListElement;
 class treeListElement;
 
-class nodeListElement {
+class nodeListElement : public PropertyQuery {
 public:
-    nodeListElement(const std::uint64_t nodeID, const float radius, const Coordinate & position, const int inMag, const ViewportType inVP, const uint64_t ms, const QVariantHash & properties, treeListElement & tree);
-    bool operator==(const nodeListElement & other) const;
     std::uint64_t nodeID;
     float radius;
     Coordinate position;
     int createdInMag;
     ViewportType createdInVp;
     uint64_t timestamp;
-    QVariantHash properties;
     std::list<nodeListElement>::iterator iterator;
     treeListElement * correspondingTree = nullptr;
 
@@ -31,9 +29,11 @@ public:
     bool isBranchNode = false;
     bool selected = false;
 
+    nodeListElement(const decltype(nodeID) nodeID, const decltype(radius) radius, const decltype(position) & position, const decltype(createdInMag) inMag
+                    , const decltype(createdInVp) inVP, const decltype(timestamp) ms, const decltype(properties) & properties, decltype(*correspondingTree) & tree);
+    bool operator==(const nodeListElement & other) const;
+
     QList<segmentListElement *> *getSegments();
-    QString getComment() const;
-    void setComment(const QString & comment);
 };
 
 class segmentListElement {
