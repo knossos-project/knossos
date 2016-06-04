@@ -96,20 +96,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     setWindowIcon(QIcon(":/resources/icons/zoom-in.png"));
     setWindowTitle("Dataset Options");
 
-    // compression section
-    switch(state->compressionRatio) {
-    case 0:
-        compressionLabel.setText("Current compression: none (toggle with (5))");
-        break;
-    case 1000:
-        compressionLabel.setText("Current compression: jpg (toggle with (5))");
-        break;
-    case 1001:
-        compressionLabel.setText("Current compression: j2k (toggle with (5))");
-        break;
-    default:
-        compressionLabel.setText("Current compression: jp2 (toggle with (5))");
-    }
+    updateCompressionRatioDisplay();
 
     // zoom section
     skeletonViewportLabel = new QLabel("Skeleton Viewport");
