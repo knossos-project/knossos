@@ -385,4 +385,6 @@ void DatasetLoadWidget::loadSettings() {
     settings.endGroup();
 
     applyGeometrySettings();
+
+    loadDataset();// load last used dataset or show
 }

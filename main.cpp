@@ -134,7 +134,6 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
 
     state.mainWindow->loadSettings();
-    state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset(boost::none);
     state.mainWindow->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
     state.mainWindow->show();
     viewer.run();
