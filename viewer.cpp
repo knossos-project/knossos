@@ -1314,14 +1314,7 @@ void Viewer::rewire() {
         QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     });
-
     // end viewport signals
-
-    // --- widget signals ---
-    // dataset load signals --
-    QObject::connect(&window->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
-     // -- end dataset load signals
-    // --- end widget signals
 }
 
 void Viewer::addRotation(const QQuaternion & quaternion) {

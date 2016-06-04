@@ -33,7 +33,6 @@
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
-#include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
 
 #include <QApplication>
@@ -134,7 +133,6 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
 
     state.mainWindow->loadSettings();
-    state.mainWindow->widgetContainer.datasetOptionsWidget.updateCompressionRatioDisplay();
     state.mainWindow->show();
     viewer.run();
     return a.exec();
