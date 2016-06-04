@@ -21,15 +21,9 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "coordinate.h"
 #include "dataset.h"
-#include "file_io.h"
-#include "loader.h"
-#include "network.h"
-#include "remote.h"
-#include "scriptengine/proxies/skeletonproxy.h"
-#include "scriptengine/proxies/pythonproxy.h"
 #include "scriptengine/scripting.h"
-#include "skeleton/skeletonizer.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
@@ -39,7 +33,6 @@
 #include <QFileInfo>
 #include <QSplashScreen>
 #include <QStandardPaths>
-
 
 #include <iostream>
 #include <fstream>
