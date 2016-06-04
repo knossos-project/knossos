@@ -115,13 +115,6 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    stateInfo state;
-    ::state = &state;
-    Dataset::dummyDataset().applyToState();
-
-    SignalRelay signalRelay;
-    Viewer viewer;
-
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
@@ -130,6 +123,12 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
 
+    stateInfo state;
+    ::state = &state;
+    Dataset::dummyDataset().applyToState();
+
+    SignalRelay signalRelay;
+    Viewer viewer;
     Scripting scripts;
 
     state.mainWindow->loadSettings();
