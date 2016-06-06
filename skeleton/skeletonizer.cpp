@@ -73,8 +73,9 @@ bool connectedComponent(T & node, Func func) {
     return false;
 }
 
-std::unique_ptr<std::vector<std::array<float, 3>>> Skeletonizer::tmp_hull_points = nullptr;
-std::unique_ptr<std::vector<std::array<float, 3>>> Skeletonizer::tmp_hull_normals = nullptr;
+#include <QVector3D> // tmp
+std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_points = nullptr;
+std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_normals = nullptr;
 
 void Skeletonizer::loadHullPoints(QIODevice & file) {
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -83,15 +84,15 @@ void Skeletonizer::loadHullPoints(QIODevice & file) {
     QTextStream stream(&file);
     QString line;
 
-    std::vector<std::array<float, 3>> point_data_verts;
-    std::vector<std::array<float, 3>> point_data_normals;
+    std::vector<QVector3D> point_data_verts;
+    std::vector<QVector3D> point_data_normals;
 
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
 
         bool valid = true;
-        std::array<float, 3> current_point_data_verts;
-        std::array<float, 3> current_point_data_normals;
+        QVector3D current_point_data_verts;
+        QVector3D current_point_data_normals;
         for(std::size_t i = 0; i < 3; ++i) {
             valid = valid && (lineStream >> current_point_data_verts[i]);
         }
@@ -108,13 +109,11 @@ void Skeletonizer::loadHullPoints(QIODevice & file) {
     }
 
     for(auto& verty : point_data_verts) {
-        for(auto& floaty : verty) {
-            floaty /= 16.0f;
-        }
+        verty /= 16.0f;
     }
 
-    tmp_hull_points = std::make_unique<std::vector<std::array<float, 3>>>(point_data_verts);
-    tmp_hull_normals = std::make_unique<std::vector<std::array<float, 3>>>(point_data_normals);
+    tmp_hull_points = std::make_unique<std::vector<QVector3D>>(point_data_verts);
+    tmp_hull_normals = std::make_unique<std::vector<QVector3D>>(point_data_normals);
 }
 
 treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {

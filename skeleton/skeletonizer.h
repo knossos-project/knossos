@@ -32,6 +32,7 @@
 #include <QObject>
 #include <QSet>
 #include <QVariantHash>
+#include <QVector3D> // tmp
 
 #include <boost/optional.hpp>
 
@@ -162,8 +163,8 @@ public:
     void setComment(T & elem, const QString & newContent);
 
     void loadHullPoints(QIODevice &);
-    static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_points;
-    static std::unique_ptr<std::vector<std::array<float, 3>>> tmp_hull_normals;
+    static std::unique_ptr<std::vector<QVector3D>> tmp_hull_points;
+    static std::unique_ptr<std::vector<QVector3D>> tmp_hull_normals;
 
     enum synapseMode {preSynapse, synapticCleft, postSynapse};
     int synapseState{preSynapse};

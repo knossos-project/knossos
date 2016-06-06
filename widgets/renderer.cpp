@@ -1259,8 +1259,8 @@ void Viewport3D::renderPointCloud() {
     if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
         static Profiler cloud_profiler;
 
-        static std::vector<std::array<GLfloat, 3>> points;
-        static std::vector<std::array<GLfloat, 3>> normals;
+        static std::vector<QVector3D> points;
+        static std::vector<QVector3D> normals;
         static std::vector<std::array<GLfloat, 4>> colors;
         static QOpenGLBuffer position_buf;
         static QOpenGLBuffer normal_buf;
@@ -1394,66 +1394,40 @@ void Viewport3D::renderPointCloud() {
         // normals.clear();
         // colors.clear();
 
-        // if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
-        //     points = *Skeletonizer::tmp_hull_points;
-        //     normals = *Skeletonizer::tmp_hull_normals;
-        //     colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
-
-        //     position_buf.bind();
-        //     position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-        //     normal_buf.bind();
-        //     normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-        //     color_buf.bind();
-        //     color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-        //     color_buf.release();
-
-        //     qDebug() << "points: " << points.size();
-        //     qDebug() << "first: " << points[0][0] << points[0][1] << points[0][2];
-        // }
-        // else {
-        //     for(int z = -32; z <= 32; ++z)
-        //     for(int y = -32; y <= 32; ++y)
-        //     for(int x = -32; x <= 32; ++x) {
-        //         points.emplace_back(std::array<GLfloat, 3>{{5441.0f+x, 5313.0f+y, 2881.0f+z}});
-        //         normals.emplace_back(std::array<GLfloat, 3>({{0.0f, 0.0f, 1.0f}}));
-        //         colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
-        //     }
-
-        //     position_buf.bind();
-        //     position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-        //     normal_buf.bind();
-        //     normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-        //     color_buf.bind();
-        //     color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-        //     color_buf.release();
-
-        //     qDebug() << "no hull points to render";
-        // }
-        // glEnable(GL_DEPTH_TEST);
-
         static bool pointcloud_vbo_init = true;
         static std::random_device rdevice;
         static std::default_random_engine rengine(rdevice());
         static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
         static float sphere_size = 40.0f;
-        static std::array<GLfloat, 3> center{{5440.0f, 5312.0f, 2880.0f}};
-        static auto sphere_dist = [](std::array<GLfloat, 3> line){
-            return std::sqrt(line[0]*line[0] + line[1]*line[1] + line[2]*line[2]);
-        };
+        static QVector3D center{5440.0f, 5312.0f, 2880.0f};
 
         if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals && pointcloud_vbo_init) {
+            // load the data
+            points = *Skeletonizer::tmp_hull_points;
+            normals = *Skeletonizer::tmp_hull_normals;
+            colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+
+            position_buf.bind();
+            position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            normal_buf.bind();
+            normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            color_buf.bind();
+            color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            color_buf.release();
+
+            // test point sphere for comparison
             for(int i = 0; i < 320000; ++i) {
-                std::array<GLfloat, 3> spoint{{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)}};
-                while(sphere_dist(spoint) > 1.0f) {
-                    spoint = std::array<GLfloat, 3>{{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)}};
+                QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
+                while(spoint.length() > 1.0f) {
+                    spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
                 }
-                std::array<GLfloat, 3> snormal;
+                QVector3D snormal;
                 for(std::size_t j = 0; j < 3; ++j) {
-                    snormal[j] = spoint[j] / sphere_dist(spoint); // normalize
+                    snormal[j] = spoint[j] / spoint.length(); // normalize
                     spoint[j] = snormal[j]; // adjust by size
                 }
 
-                points.emplace_back(std::array<GLfloat, 3>{{center[0] + spoint[0] * sphere_size, center[1] + spoint[1] * sphere_size, center[2] + spoint[2] * sphere_size}});
+                points.emplace_back(center + spoint * sphere_size);
                 normals.emplace_back(snormal);
                 colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
             }
@@ -1467,7 +1441,8 @@ void Viewport3D::renderPointCloud() {
             color_buf.release();
 
             qDebug() << "points: " << points.size();
-            qDebug() << "first: " << points[0][0] << points[0][1] << points[0][2];
+            qDebug() << "first: " << points.front()[0] << points.front()[1] << points.front()[2];
+            qDebug() << "last:  " << points.back()[0] << points.back()[1] << points.back()[2];
             pointcloud_vbo_init = false;
         }
 
