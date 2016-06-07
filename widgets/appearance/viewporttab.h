@@ -23,6 +23,7 @@ class ViewportTab : public QWidget {
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
     QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersections crosshairs"};
+    QCheckBox addArbVPCheckBox{"Add viewport with arbitrary view"};
     // 3D viewport
     QVBoxLayout viewport3DLayout;
     QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};

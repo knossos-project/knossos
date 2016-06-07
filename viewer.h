@@ -149,6 +149,7 @@ struct ViewerState {
     RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     bool showScalebar{false};
+    bool addArbVP{false};
     bool showXYplane{true};
     bool showXZplane{true};
     bool showZYplane{true};

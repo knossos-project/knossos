@@ -79,6 +79,7 @@ const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
 const QString SHOW_SCALEBAR = "show_scalebar";
 const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
+const QString ADD_ARB_VP = "add_arb_vp";
 const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
 const QString SHOW_ZY_PLANE = "show_zy_plane";
