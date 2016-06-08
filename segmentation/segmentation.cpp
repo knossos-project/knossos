@@ -546,10 +546,7 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 
         bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
         bool valid1 = (coordColorLineStream >> location.x) && (coordColorLineStream >> location.y) && (coordColorLineStream >> location.z);
-        bool customColorValid = false;
-        if (coordColorLineStream) {
-            customColorValid = (coordColorLineStream >> r) && (coordColorLineStream >> g) && (coordColorLineStream >> b);
-        }
+        bool customColorValid = (coordColorLineStream >> r) && (coordColorLineStream >> g) && (coordColorLineStream >> b);
         bool valid2 = !(category = stream.readLine()).isNull();
         bool valid3 = !(comment = stream.readLine()).isNull();
 
