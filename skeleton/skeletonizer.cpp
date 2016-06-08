@@ -723,7 +723,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
 
     for (auto & tree : state->skeletonState->trees) {
-        if(!tree.properties["synapticCleft"].isNull()) {
+        if(tree.properties.contains("synapticCleft")) {
             auto preSynapse = getElem(nodeMap, tree.properties["preSynapse"].toULongLong(), findNodeByNodeID);
             auto postSynapse = getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID);
             auto synapticCleft = getElem(treeMap, tree.treeID, findTreeByTreeID);
@@ -1502,14 +1502,10 @@ void Skeletonizer::addSynapse() {
  * Create a synapse from two nodes from different trees
  */
 void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
-
-
     temporarySynapse.preSynapse = nodes[0];
     temporarySynapse.preSynapse->properties.insert("synapse", "preSynapse");
-    //temporarySynapse.preTree = nodes[0]->correspondingTree;
     temporarySynapse.postSynapse = nodes[1];
     temporarySynapse.postSynapse->properties.insert("synapse", "postSynapse");
-    //temporarySynapse.postTree = nodes[1]->correspondingTree;
 
     auto & synapticCleft = addTree();
     synapticCleft.isSynapticCleft = true;
