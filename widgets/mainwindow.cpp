@@ -547,8 +547,8 @@ void MainWindow::createMenus() {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
         }
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextNode, Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevNode, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
 

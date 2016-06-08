@@ -1767,24 +1767,36 @@ bool Skeletonizer::moveToNextTree() {
     return false;
 }
 
-bool Skeletonizer::moveToPrevNode() {
-    nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
-    if(prevNode) {
-        setActiveNode(prevNode);
-        state->viewer->setPositionWithRecentering(prevNode->position);
-        return true;
+void Skeletonizer::goToNode(const bool next = true) {
+    if (skeletonState.activeNode == nullptr) {
+        return;
     }
-    return false;
-}
+    static NodeGenerator traverser(*skeletonState.activeNode);
+    static nodeListElement * lastNode = skeletonState.activeNode;
+    auto oneStep = next ? []() { ++traverser; } : []() { --traverser; };
+    auto canContinue = next ? []() { return !traverser.reachedEnd; } : []() { return !traverser.reachedStart; };
 
-bool Skeletonizer::moveToNextNode() {
-    nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
-    if(nextNode) {
-        setActiveNode(nextNode);
-        state->viewer->setPositionWithRecentering(nextNode->position);
-        return true;
+    if (lastNode != skeletonState.activeNode) {
+        traverser = NodeGenerator(*skeletonState.activeNode);
     }
-    return false;
+    if (canContinue()) {
+        oneStep();
+    } else {
+        return;
+    }
+
+    while (!traverser.reachedEnd) {
+        if (&(*traverser) != skeletonState.activeNode) {
+            setActiveNode(&(*traverser));
+            lastNode = &(*traverser);
+            state->viewer->setPositionWithRecentering((*traverser).position);
+            return;
+        } else if (canContinue()) {
+            oneStep();
+        } else {
+            return;
+        }
+    }
 }
 
 void Skeletonizer::moveSelectedNodesToTree(int treeID) {

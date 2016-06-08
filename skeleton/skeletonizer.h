@@ -229,8 +229,7 @@ public slots:
     void pushBranchNode(nodeListElement & branchNode);
     bool moveToNextTree();
     bool moveToPrevTree();
-    bool moveToPrevNode();
-    bool moveToNextNode();
+    void goToNode(const bool next);
     void moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(std::uint64_t nodeID);
