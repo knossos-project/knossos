@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=KNOSSOS-junest
+Comment=3D image visualisation and annotation tool
+Categories=Qt;Science;
+Exec=/home/<user>/.junest/opt/junest/bin/junest -- knossos -style Fusion
+Icon=/home/<user>/.junest/usr/share/pixmaps/knossos.png
+Terminal=false
