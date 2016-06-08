@@ -55,12 +55,7 @@ class Synapse {
 public:
     nodeListElement * preSynapse{nullptr};
     nodeListElement * postSynapse{nullptr};
-    treeListElement * preTree{nullptr};
-    treeListElement * postTree{nullptr};
     treeListElement * synapticCleft{nullptr};
-
-    QVariantHash properties;
-
 };
 
 struct SkeletonState {

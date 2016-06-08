@@ -2378,7 +2378,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             for(auto & synapse : state->skeletonState->synapses) {
                 if(synapse.postSynapse == state->skeletonState->activeNode
                         || synapse.preSynapse == state->skeletonState->activeNode) {
-                    if(synapse.postTree->treeID == currentTree.treeID || synapse.preTree->treeID == currentTree.treeID) {
+                    if(synapse.postSynapse->correspondingTree->treeID == currentTree.treeID || synapse.preSynapse->correspondingTree->treeID == currentTree.treeID) {
                         skiprendering = false;
                         break;
                     }

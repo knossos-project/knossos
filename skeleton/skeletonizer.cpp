@@ -365,21 +365,6 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     }
     xml.writeEndElement(); // end branchpoints
 
-    xml.writeStartElement("synapses");
-    for(const auto & synapse : state->skeletonState->synapses) {
-        xml.writeStartElement("synapse");
-        xml.writeAttribute("pre", QString::number(synapse.preSynapse->nodeID));
-        xml.writeAttribute("post", QString::number(synapse.postSynapse->nodeID));
-        xml.writeAttribute("cleft", QString::number(synapse.synapticCleft->treeID));
-        xml.writeAttribute("pretree", QString::number(synapse.preTree->treeID));
-        xml.writeAttribute("posttree", QString::number(synapse.postTree->treeID));
-        for (auto propertyIt = synapse.properties.constBegin(); propertyIt != synapse.properties.constEnd(); ++propertyIt) {
-            xml.writeAttribute(propertyIt.key(), propertyIt.value().toString());
-        }
-        xml.writeEndElement();
-    }
-    xml.writeEndElement(); //end synapse
-
     xml.writeEndElement(); // end things
     xml.writeEndDocument();
 }
@@ -696,19 +681,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 }
             }
         // end thing
-        } else if(xml.name() == "synapses") {
-            while(xml.readNextStartElement()) {
-                if(xml.name() == "synapse") {
-                    const auto attributes = xml.attributes();
-                    synapseVector.push_back({attributes.value("pre").toULongLong()
-                                                , attributes.value("post").toULongLong()
-                                                , attributes.value("pretree").toULongLong()
-                                                , attributes.value("posttree").toULongLong()
-                                                , attributes.value("cleft").toULongLong()});
-                }
-                xml.skipCurrentElement();
-            }
-        }//end synapse
+        }
     }
     xml.readNext();//</things>
     if(xml.hasError()) {
@@ -743,28 +716,26 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         }
     }
 
-    for (const auto & elem : synapseVector) {
-        auto preSynapse = getElem(nodeMap, elem[0], findNodeByNodeID);
-        auto postSynapse = getElem(nodeMap, elem[1], findNodeByNodeID);
-        auto preTree = getElem(treeMap, elem[2], findTreeByTreeID);
-        auto postTree = getElem(treeMap, elem[3], findTreeByTreeID);
-        auto synapticCleft = getElem(treeMap, elem[4], findTreeByTreeID);
-        if (preSynapse && postSynapse && preTree && postTree && synapticCleft) {
-            skeletonState.synapses.push_back({*preSynapse
-                                              , *postSynapse
-                                              , *preTree
-                                              , *postTree
-                                              , *synapticCleft});
-            synapticCleft.get()->render = false; //don't render synaptic clefts
-            synapticCleft.get()->isSynapticCleft = true;
-        } else {
-            qWarning() << tr("broken synapse");
-        }
-    }
-
     for (const auto & elem : commentsVector) {
         if (auto currentNode = getElem(nodeMap, elem.first, findNodeByNodeID)) {
             setComment(*currentNode.get(), elem.second);
+        }
+    }
+
+    for (auto & tree : state->skeletonState->trees) {
+        if(!tree.properties["synapticCleft"].isNull()) {
+            auto preSynapse = getElem(nodeMap, tree.properties["preSynapse"].toULongLong(), findNodeByNodeID);
+            auto postSynapse = getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID);
+            auto synapticCleft = getElem(treeMap, tree.treeID, findTreeByTreeID);
+            if (preSynapse && postSynapse) {
+                skeletonState.synapses.push_back({*preSynapse
+                                                  , *postSynapse
+                                                  , *synapticCleft});
+                tree.render = false; //don't render synaptic clefts
+                tree.isSynapticCleft = true;
+            } else {
+                qWarning() << tr("broken synapse");
+            }
         }
     }
 
@@ -1516,7 +1487,7 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
 void Skeletonizer::addSynapse() {
     if(synapseState == preSynapse) { //set active Node as presynapse
         temporarySynapse.preSynapse = skeletonState.activeNode;
-        temporarySynapse.preTree = skeletonState.activeTree;
+        //temporarySynapse.preTree = skeletonState.activeTree;
         auto & synaptic_cleft = addTree();
         synaptic_cleft.isSynapticCleft = true;
         synapseState = synapticCleft;
@@ -1535,13 +1506,16 @@ void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
 
     temporarySynapse.preSynapse = nodes[0];
     temporarySynapse.preSynapse->properties.insert("synapse", "preSynapse");
-    temporarySynapse.preTree = nodes[0]->correspondingTree;
+    //temporarySynapse.preTree = nodes[0]->correspondingTree;
     temporarySynapse.postSynapse = nodes[1];
     temporarySynapse.postSynapse->properties.insert("synapse", "postSynapse");
-    temporarySynapse.postTree = nodes[1]->correspondingTree;
+    //temporarySynapse.postTree = nodes[1]->correspondingTree;
 
     auto & synapticCleft = addTree();
     synapticCleft.isSynapticCleft = true;
+    synapticCleft.properties.insert("synapticCleft", true);
+    synapticCleft.properties.insert("preSynapse", static_cast<long long>(nodes[0]->nodeID));
+    synapticCleft.properties.insert("postSynapse", static_cast<long long>(nodes[1]->nodeID));
 
     temporarySynapse.synapticCleft = &synapticCleft;
 
