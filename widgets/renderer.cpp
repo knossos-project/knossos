@@ -2371,8 +2371,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
                 && !currentTree.selected
-                && (state->skeletonState->activeNode->properties.value("synapse").toString() == "postSynapse"
-                    || state->skeletonState->activeNode->properties.value("synapse").toString() == "preSynapse") ) {
+                && (state->skeletonState->activeNode->isSynapticNode) ) {
             //in render only selected tree, if we have selected a synapse, render also the adjacent tree
             bool skiprendering = true;
             for(auto & synapse : state->skeletonState->synapses) {

@@ -25,9 +25,10 @@ public:
     std::list<segmentListElement> segments;
     // circumsphere radius - max. of length of all segments and node radius.
     //Used for frustum culling
-    float circRadius = radius;
-    bool isBranchNode = false;
-    bool selected = false;
+    float circRadius{radius};
+    bool isBranchNode{false};
+    bool isSynapticNode{false}; //pre- or postSynapse
+    bool selected{false};
 
     nodeListElement(const decltype(nodeID) nodeID, const decltype(radius) radius, const decltype(position) & position, const decltype(createdInMag) inMag
                     , const decltype(createdInVp) inVP, const decltype(timestamp) ms, const decltype(properties) & properties, decltype(*correspondingTree) & tree);
@@ -43,7 +44,7 @@ public:
     nodeListElement & source;
     nodeListElement & target;
     const bool forward;
-    float length = 0;
+    float length{0.0};
     //reference to the segment inside the target node
     std::list<segmentListElement>::iterator sisterSegment;
 };

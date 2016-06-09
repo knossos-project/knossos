@@ -248,8 +248,10 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse) {
                 //The synapse workflow has been interrupted
                 //Reset the synapse
-                Skeletonizer::singleton().delTree(Skeletonizer::singleton().temporarySynapse.synapticCleft->treeID);
-                Skeletonizer::singleton().temporarySynapse = Synapse(); //reset temporary class
+                auto & tempSynapse = Skeletonizer::singleton().temporarySynapse;
+                if(tempSynapse.preSynapse) tempSynapse.preSynapse->isSynapticNode = false;
+                Skeletonizer::singleton().delTree(tempSynapse.synapticCleft->treeID);
+                tempSynapse = Synapse(); //reset temporary class
                 Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
             }
         }
@@ -279,8 +281,8 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             tempSynapse.synapticCleft->properties.insert("postSynapse", static_cast<long long>(state->skeletonState->activeNode->nodeID));
             tempSynapse.synapticCleft->properties.insert("preSynapse", static_cast<long long>(tempSynapse.preSynapse->nodeID));
             tempSynapse.synapticCleft->properties.insert("synapticCleft", true);
-            tempSynapse.preSynapse->properties.insert("synapse", "preSynapse"); //set node properties
-            tempSynapse.postSynapse->properties.insert("synapse", "postSynapse"); //set node properties
+            tempSynapse.preSynapse->isSynapticNode = true;
+            tempSynapse.postSynapse->isSynapticNode = true;
             tempSynapse.synapticCleft->render = false;
             state->skeletonState->synapses.push_back(tempSynapse); //move finished synapse to our synapse vector
             tempSynapse = Synapse(); //reset temporary class
@@ -546,16 +548,11 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
         }
     } else if (ctrl && shift && event->key() == Qt::Key_S) { //synapse mode swap post and presynapse
-        if(state->skeletonState->activeNode->properties.value("synapse").toString() == "postSynapse"
-                || state->skeletonState->activeNode->properties.value("synapse").toString() == "preSynapse") {
+        if(state->skeletonState->activeNode->isSynapticNode) {
             for(auto & synapse : state->skeletonState->synapses) {
                 if(synapse.postSynapse == state->skeletonState->activeNode
                         || synapse.preSynapse == state->skeletonState->activeNode) {
-                    auto tmpPostSynapse = synapse.postSynapse;
-                    synapse.postSynapse = synapse.preSynapse;
-                    synapse.preSynapse = tmpPostSynapse;
-                    synapse.postSynapse->properties.insert("synapse", "postSynapse");
-                    synapse.preSynapse->properties.insert("synapse", "preSynapse");
+                    std::swap(synapse.postSynapse, synapse.preSynapse);
                     break;
                 }
             }

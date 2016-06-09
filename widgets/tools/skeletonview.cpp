@@ -162,7 +162,7 @@ void NodeModel::recreate(const bool matchAll = true) {
                     (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected) ||
                     (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode) ||
                     (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false) ||
-                    (mode.testFlag(FilterMode::Synapse) && !node.get().properties.contains("synapse")) ||
+                    (mode.testFlag(FilterMode::Synapse) && node.get().isSynapticNode) ||
                     &node.get() == state->skeletonState->activeNode) {
                     hits.emplace_back(node);
                 }
@@ -173,7 +173,7 @@ void NodeModel::recreate(const bool matchAll = true) {
                       (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected) &&
                       (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode) &&
                       (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) &&
-                      (!mode.testFlag(FilterMode::Synapse) || node.get().properties.contains("synapse")) ) ||
+                      (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode) ) ||
                     &node.get() == state->skeletonState->activeNode) {
                     hits.emplace_back(node);
                 }
