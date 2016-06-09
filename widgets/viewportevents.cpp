@@ -278,7 +278,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
             auto & tempSynapse = Skeletonizer::singleton().temporarySynapse;
             tempSynapse.postSynapse = state->skeletonState->activeNode;
-            tempSynapse.synapticCleft->properties.insert("postSynapse", static_cast<long long>(state->skeletonState->activeNode->nodeID));
+            tempSynapse.synapticCleft->properties.insert("postSynapse", static_cast<long long>(tempSynapse.postSynapse->nodeID));
             tempSynapse.synapticCleft->properties.insert("preSynapse", static_cast<long long>(tempSynapse.preSynapse->nodeID));
             tempSynapse.synapticCleft->properties.insert("synapticCleft", true);
             tempSynapse.preSynapse->isSynapticNode = true;
