@@ -154,6 +154,7 @@ void NodeModel::recreate(const bool matchAll = true) {
     for (auto && node : tree.nodes) {
         cache.emplace_back(node);
     }
+
     if(mode.testFlag(FilterMode::All) == false) {
         decltype(cache) hits;
         if (matchAll == false) {
@@ -174,7 +175,7 @@ void NodeModel::recreate(const bool matchAll = true) {
                       (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode) &&
                       (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) &&
                       (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode) ) ||
-                    &node.get() == state->skeletonState->activeNode) {
+                      &node.get() == state->skeletonState->activeNode) {
                     hits.emplace_back(node);
                 }
             }

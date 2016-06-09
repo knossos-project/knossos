@@ -61,7 +61,7 @@ public:
         Selected = 0x2,
         Branch = 0x4,
         Comment = 0x8,
-        Synapse = 0x16
+        Synapse = 0x10
     };
     QFlags<FilterMode> mode = FilterMode::InSelectedTree;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
