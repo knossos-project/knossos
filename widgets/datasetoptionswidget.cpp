@@ -30,18 +30,13 @@
 #include "viewer.h"
 #include "widgets/viewport.h"
 
-#include <QGridLayout>
-#include <QDoubleSpinBox>
-#include <QVBoxLayout>
-#include <QFrame>
-#include <QCheckBox>
+#include <QApplication>
 #include <QDebug>
+#include <QDesktopWidget>
 #include <QPainter>
 #include <QSettings>
-#include <QStyle>
 #include <QSpacerItem>
-#include <QApplication>
-#include <QDesktopWidget>
+#include <QStyle>
 
 void ZoomSlider::paintEvent(QPaintEvent *ev) {
     // adapted from QCommonStyle::drawComplexControl case CC_Slider
@@ -99,13 +94,9 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     updateCompressionRatioDisplay();
 
     // zoom section
-    skeletonViewportLabel = new QLabel("Skeleton Viewport");
-    skeletonViewportSpinBox = new QDoubleSpinBox();
-    skeletonViewportSpinBox->setMaximum(100);
-    skeletonViewportSpinBox->setMinimum(0);
-    skeletonViewportSpinBox->setSuffix(" %");
-    zoomDefaultsButton = new QPushButton("All Zoom defaults");
-    zoomDefaultsButton->setAutoDefault(false);
+    skeletonViewportSpinBox.setRange(0, 100);
+    skeletonViewportSpinBox.setSuffix(" %");
+    zoomDefaultsButton.setAutoDefault(false);
 
     orthoZoomSpinBox.setSuffix("%");
     orthoZoomSpinBox.setKeyboardTracking(false);
@@ -114,39 +105,33 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     orthoZoomSlider.setOrientation(Qt::Horizontal);
     orthoZoomSlider.setSingleStep(1.);
 
-    // multires section
-    lockDatasetCheckBox = new QCheckBox("Lock dataset to current mag");
-    currentActiveMagDatasetLabel = new QLabel(QString("Currently active mag dataset: %1").arg(state->magnification));
-    highestActiveMagDatasetLabel = new QLabel(QString("Highest available mag dataset: %1").arg(state->highestAvailableMag));
-    lowestActiveMagDatasetLabel = new QLabel(QString("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
-
-    QGridLayout *zoomLayout = new QGridLayout();
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
+    separator1.setFrameShape(QFrame::HLine);
+    separator1.setFrameShadow(QFrame::Sunken);
     int row = 0;
-    zoomLayout->addWidget(&zoomSectionLabel, row++, 0);
-    zoomLayout->addWidget(line, row++, 0, 1, 2);
-    zoomLayout->addWidget(&orthogonalDataViewportLabel, row, 0);
-    zoomLayout->addWidget(&orthoZoomSpinBox, row++, 1);
-    zoomLayout->addWidget(&orthoZoomSlider, row++, 0, 1, 2);
-    zoomLayout->addWidget(skeletonViewportLabel, row, 0);
-    zoomLayout->addWidget(skeletonViewportSpinBox, row++, 1);
-    zoomLayout->addWidget(zoomDefaultsButton, row, 0);
+    zoomLayout.addWidget(&zoomSectionLabel, row++, 0);
+    zoomLayout.addWidget(&separator1, row++, 0, 1, 2);
+    zoomLayout.addWidget(&orthogonalDataViewportLabel, row, 0);
+    zoomLayout.addWidget(&orthoZoomSpinBox, row++, 1);
+    zoomLayout.addWidget(&orthoZoomSlider, row++, 0, 1, 2);
+    zoomLayout.addWidget(&skeletonViewportLabel, row, 0);
+    zoomLayout.addWidget(&skeletonViewportSpinBox, row++, 1);
+    zoomLayout.addWidget(&zoomDefaultsButton, row, 0, 1, 1, Qt::AlignLeft);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(&compressionLabel);
-    line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-    mainLayout->addLayout(zoomLayout);
-    mainLayout->addWidget(&multiresSectionLabel);
-    mainLayout->addWidget(line);
-    mainLayout->addWidget(lockDatasetCheckBox);
-    mainLayout->addWidget(currentActiveMagDatasetLabel);
-    mainLayout->addWidget(highestActiveMagDatasetLabel);
-    mainLayout->addWidget(lowestActiveMagDatasetLabel);
-    setLayout(mainLayout);
+    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(state->magnification));
+    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(state->highestAvailableMag));
+    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
+
+    mainLayout.addWidget(&compressionLabel);
+    separator2.setFrameShape(QFrame::HLine);
+    separator2.setFrameShadow(QFrame::Sunken);
+    mainLayout.addLayout(&zoomLayout);
+    mainLayout.addWidget(&multiresSectionLabel);
+    mainLayout.addWidget(&separator2);
+    mainLayout.addWidget(&lockDatasetCheckBox);
+    mainLayout.addWidget(&currentActiveMagDatasetLabel);
+    mainLayout.addWidget(&highestActiveMagDatasetLabel);
+    mainLayout.addWidget(&lowestActiveMagDatasetLabel);
+    setLayout(&mainLayout);
 
     connect(&orthoZoomSlider, &QSlider::valueChanged, [this](const int value) {
         const float newScreenPxXPerDataPx = state->viewer->lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
@@ -219,22 +204,45 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         }
     });
 
-    connect(skeletonViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(skeletonSpinBoxChanged(double)));
+    connect(&skeletonViewportSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) {
+        if(userZoomSkel) {
+            userZoomSkel = false;
+            if ( ((value > lastZoomSkel && value < lastZoomSkel + 2)
+                    || (value < lastZoomSkel && value > lastZoomSkel - 2)) == false) {
+                // difference at least greater than two,
+                // so user entered a number instead of clicking the up and down buttons
+                state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
+            }
+            else { // up or down button pressed, find out which.
+                if(value > lastZoomSkel && value < lastZoomSkel + 2) { // user wants to zoom in
+                    state->viewer->window->viewport3D->zoomIn();
+                }
+                else if(value < lastZoomSkel && value > lastZoomSkel - 2) { // user wants to zoom out
+                    state->viewer->window->viewport3D->zoomOut();
+                }
+                // the following line will lead to signal emission and another call to this slot,
+                // but since userZoomSkel was set to false above, no further recursion takes place.
+                skeletonViewportSpinBox.setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
+            }
+            lastZoomSkel = skeletonViewportSpinBox.value();
+            userZoomSkel = true;
+        }
+    });
 
-    connect(zoomDefaultsButton, SIGNAL(clicked()), this, SLOT(zoomDefaultsClicked()));
+    connect(&zoomDefaultsButton, &QPushButton::clicked, this, &DatasetOptionsWidget::zoomDefaultsClicked);
 
-    QObject::connect(lockDatasetCheckBox, &QCheckBox::toggled, [this] (const bool on) {
+    connect(&lockDatasetCheckBox, &QCheckBox::toggled, [this] (const bool on) {
         state->viewer->setMagnificationLock(on);
     });
-    QObject::connect(state->viewer, &Viewer::magnificationLockChanged, [this](const bool locked){
-        const auto signalsBlocked = lockDatasetCheckBox->blockSignals(true);
-        lockDatasetCheckBox->setChecked(locked);
-        lockDatasetCheckBox->blockSignals(signalsBlocked);
+    connect(state->viewer, &Viewer::magnificationLockChanged, [this](const bool locked){
+        const auto signalsBlocked = lockDatasetCheckBox.blockSignals(true);
+        lockDatasetCheckBox.setChecked(locked);
+        lockDatasetCheckBox.blockSignals(signalsBlocked);
         reinitializeOrthoZoomWidgets();
     });
-    QObject::connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &DatasetOptionsWidget::reinitializeOrthoZoomWidgets);
+    connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &DatasetOptionsWidget::reinitializeOrthoZoomWidgets);
 
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void DatasetOptionsWidget::applyZoom(const float newScreenPxXPerDataPx) {
@@ -307,51 +315,10 @@ void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
     orthoZoomSlider.blockSignals(false);
 }
 
-/**
- * @brief DatasetOptionsWidget::skeletonSpinBoxChanged increments or decrements the zoom. The step width is relative to
- *        the zoom value. A very high zoom level has smaller zoom steps and vice versa to give a smooth impression to the user.
- * @param value the new value. Used to detect if a zoom in or zoom out is requested.
- *
- * 'lastZoomSkel' stores the last spin value and helps detecting if user wants to zoom in or zoom out, since Qt has no way to
- * know if a value change was an increment or a decrement. Based on that a zoom in or zoom out is performed and the
- * spin box will be updated to the resulting zoom level in percent.
- *
- * But Qt also does not distinguish between value change via the GUI or programmatically. In both cases a signal is emitted,
- * so that the slot is called repeatedly. 'userZoomSkel' tells us if the value change was done via the GUI
- * or programmatically. A programmatic change of the spin box value should not lead to another zoom.
- */
-void DatasetOptionsWidget::skeletonSpinBoxChanged(double value) {
-    if(userZoomSkel) {
-        userZoomSkel = false;
-        if ( ((value > lastZoomSkel && value < lastZoomSkel + 2)
-                || (value < lastZoomSkel && value > lastZoomSkel - 2)) == false) {
-            // difference at least greater than two,
-            // so user entered a number instead of clicking the up and down buttons
-            state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
-        }
-        else { // up or down button pressed, find out which.
-            if(value > lastZoomSkel && value < lastZoomSkel + 2) { // user wants to zoom in
-                state->viewer->window->viewport3D->zoomIn();
-            }
-            else if(value < lastZoomSkel && value > lastZoomSkel - 2) { // user wants to zoom out
-                state->viewer->window->viewport3D->zoomOut();
-            }
-            // the following line will lead to signal emission and another call to this slot,
-            // but since userZoomSkel was set to false above, no further recursion takes place.
-            skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
-        }
-        lastZoomSkel = skeletonViewportSpinBox->value();
-        userZoomSkel = true;
-    }
-}
-
-/**
- * @brief DatasetOptionsWidget::zoomDefaultsClicked restores lowest zoom level on all viewports
- */
 void DatasetOptionsWidget::zoomDefaultsClicked() {
     state->viewer->zoomReset();
     userZoomSkel = false;
-    skeletonViewportSpinBox->setValue(100*SKELZOOMMIN/SKELZOOMMAX);
+    skeletonViewportSpinBox.setValue(100 * SKELZOOMMIN/SKELZOOMMAX);
     state->skeletonState->zoomLevel = SKELZOOMMIN;
     userZoomSkel = true;
 }
@@ -359,71 +326,43 @@ void DatasetOptionsWidget::zoomDefaultsClicked() {
 void DatasetOptionsWidget::update() {
     updateOrthogonalZoomSlider();
     updateOrthogonalZoomSpinBox();
-    skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
-    QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
-    QString highestActiveMag = QString("Highest available mag dataset: %1").arg(state->highestAvailableMag);
-    QString lowestActiveMag = QString("Lowest available mag dataset: %1").arg(state->lowestAvailableMag);
+    skeletonViewportSpinBox.setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
 
-    this->currentActiveMagDatasetLabel->setText(currentActiveMag);
-    this->highestActiveMagDatasetLabel->setText(highestActiveMag);
-    this->lowestActiveMagDatasetLabel->setText(lowestActiveMag);
+    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(state->magnification));
+    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(state->highestAvailableMag));
+    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
 }
 
 void DatasetOptionsWidget::loadSettings() {
-    int width, height, x, y;
-    bool visible;
-
     QSettings settings;
     settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
-    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
-    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
-        x = QApplication::desktop()->screen()->rect().center().x();
-        y = QApplication::desktop()->screen()->rect().center().y();
-    }
-    else {
-        x = settings.value(POS_X).toInt();
-        y = settings.value(POS_Y).toInt();
-    }
-    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    setVisible(settings.value(VISIBLE, false).toBool());
 
-    if(settings.value(SKELETON_VIEW).isNull() == false) {
+    auto skeletonZoom = settings.value(SKELETON_VIEW, 0).toDouble();
+    if(skeletonZoom > 0) {
         userZoomSkel = false;
-        this->skeletonViewportSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
+        skeletonViewportSpinBox.setValue(skeletonZoom);
         userZoomSkel = true;
-        lastZoomSkel = this->skeletonViewportSpinBox->value();
+        lastZoomSkel = skeletonViewportSpinBox.value();
         state->skeletonState->zoomLevel = 0.01*lastZoomSkel * SKELZOOMMAX;
     } else {
-        this->skeletonViewportSpinBox->setValue(0);
+        skeletonViewportSpinBox.setValue(0);
     }
 
-    QVariant datasetMagLock_value = settings.value(LOCK_DATASET_TO_CURRENT_MAG);
-    this->lockDatasetCheckBox->setChecked(datasetMagLock_value.isNull() ?
-                                                    LOCK_DATASET_ORIENTATION_DEFAULT :
-                                                    datasetMagLock_value.toBool());
-    emit(lockDatasetCheckBox->toggled(lockDatasetCheckBox->isChecked()));
+    auto datasetMagLockValue = settings.value(LOCK_DATASET_TO_CURRENT_MAG, false).toBool();
+    lockDatasetCheckBox.setChecked(datasetMagLockValue);
+    emit lockDatasetCheckBox.toggled(lockDatasetCheckBox.isChecked());
 
     settings.endGroup();
-    if(visible) {
-        show();
-    }
-    else {
-        hide();
-    }
-    setGeometry(x, y, width, height);
 }
 
 void DatasetOptionsWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
-    settings.setValue(WIDTH, this->geometry().width());
-    settings.setValue(HEIGHT, this->geometry().height());
-    settings.setValue(POS_X, this->geometry().x());
-    settings.setValue(POS_Y, this->geometry().y());
-    settings.setValue(VISIBLE, this->isVisible());
-    settings.setValue(SKELETON_VIEW, this->skeletonViewportSpinBox->value());
-    settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, this->lockDatasetCheckBox->isChecked());
+    settings.setValue(GEOMETRY, saveGeometry());
+    settings.setValue(VISIBLE, isVisible());
+    settings.setValue(SKELETON_VIEW, skeletonViewportSpinBox.value());
+    settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, lockDatasetCheckBox.isChecked());
     settings.endGroup();
 }
-
-

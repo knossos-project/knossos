@@ -1,8 +1,6 @@
 #ifndef DATASETOPTIONSWIDGET_H
 #define DATASETOPTIONSWIDGET_H
 
-
-
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -27,16 +25,15 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <QCheckBox>
 #include <QDialog>
+#include <QDoubleSpinBox>
+#include <QFrame>
+#include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
-#include <QDoubleSpinBox>
-
-class QCheckBox;
-
-
-#define LOCK_DATASET_ORIENTATION_DEFAULT (false)
+#include <QVBoxLayout>
 
 // a horizontal slider with ticks and mag labels at each mag switch position
 class ZoomSlider : public QSlider {
@@ -52,29 +49,30 @@ public:
 class DatasetOptionsWidget : public QDialog {
     friend class MainWindow;
     Q_OBJECT
-    /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
-     * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
-     * See the spinBoxChanged slots for more details. */
+
     float lastZoomSkel;
     bool userZoomSkel;
 
+    QVBoxLayout mainLayout;
+    QGridLayout zoomLayout;
+    QFrame separator1;
+    QFrame separator2;
     // compression section
     QLabel compressionLabel;
     // zoom section
-    QLabel zoomSectionLabel{"Zoom Settings"};
-    QLabel orthogonalDataViewportLabel{"Orthogonal Viewports"};
-    QLabel *skeletonViewportLabel;
-    QDoubleSpinBox *skeletonViewportSpinBox;
+    QLabel zoomSectionLabel{tr("Zoom Settings")};
+    QLabel orthogonalDataViewportLabel{tr("Orthogonal Viewports")};
+    QLabel skeletonViewportLabel{tr("Skeleton Viewport")};
+    QDoubleSpinBox skeletonViewportSpinBox;
     QDoubleSpinBox orthoZoomSpinBox;
     ZoomSlider orthoZoomSlider;
-    QPushButton *zoomDefaultsButton;
+    QPushButton zoomDefaultsButton{tr("All Zoom defaults")};
     // multires section
-    QLabel multiresSectionLabel{"Magnification Settings"};
-    QLabel *lockDatasetLabel;
-    QCheckBox *lockDatasetCheckBox;
-    QLabel *currentActiveMagDatasetLabel;
-    QLabel *highestActiveMagDatasetLabel;
-    QLabel *lowestActiveMagDatasetLabel;
+    QLabel multiresSectionLabel{tr("Magnification Settings")};
+    QCheckBox lockDatasetCheckBox{tr("Lock dataset to current mag")};
+    QLabel currentActiveMagDatasetLabel;
+    QLabel highestActiveMagDatasetLabel;
+    QLabel lowestActiveMagDatasetLabel;
     void applyZoom(const float newScreenPxXPerDataPx);
     void reinitializeOrthoZoomWidgets();
     float zoomStep{1};
@@ -93,7 +91,6 @@ public:
     explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
 public slots:
     void zoomDefaultsClicked();
-    void skeletonSpinBoxChanged(double value);
     void update();
     void loadSettings();
     void saveSettings();
