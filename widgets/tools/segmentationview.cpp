@@ -109,18 +109,17 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
 bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModelIndex & index, const QVariant & value, int role) {
     if (index.column() == 2 && role == Qt::CheckStateRole) {
-        if (!obj.immutable) {//don’t remove immutability
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Question);
-            prompt.setWindowTitle(tr("Lock Object"));
-            prompt.setText(tr("Lock the object with id %1?").arg(obj.id));
-            const auto & lockButton = prompt.addButton(tr("Lock"), QMessageBox::YesRole);
-            prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
-            prompt.exec();
-            if (prompt.clickedButton() == lockButton) {
-                obj.immutable = value.toBool();
-            }
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        const auto lock = obj.immutable ? tr("Unlock") : tr("Lock");
+        prompt.setWindowTitle(lock + tr(" Object"));
+        prompt.setText(lock + tr(" the object with id %1?").arg(obj.id));
+        const auto & lockButton = prompt.addButton(lock, QMessageBox::YesRole);
+        prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
+        prompt.exec();
+        if (prompt.clickedButton() == lockButton) {
+            obj.immutable = value.toBool();
         }
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
