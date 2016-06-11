@@ -91,6 +91,7 @@ QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, con
                 subobjectIt = std::next(subobjectIt);
             }
             output.chop(2);
+            output += (obj.subobjects.size() > MAX_SHOWN_SUBOBJECTS) ? "…" : "";;
             return output;
         }
         }
