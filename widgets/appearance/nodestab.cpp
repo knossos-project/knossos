@@ -31,7 +31,7 @@ void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     idCombo.addItems({"None", "Active Node", "All Nodes"});
     edgeNodeRatioSpin.setSingleStep(0.1);
-
+    nodeRadiusSpin.setSuffix("px");
     propertyModel.recreate({});
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);

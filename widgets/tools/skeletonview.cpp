@@ -352,8 +352,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     defaultRadiusSpin.setRange(0.01, 100000);
     defaultRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.defaultNodeRadius);
+    defaultRadiusSpin.setSuffix("px");
     lockingRadiusSpin.setMaximum(100000);
     lockingRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.lockRadius);
+    lockingRadiusSpin.setSuffix("px");
 
     commentConditionEdit.setPlaceholderText("comment condition for locking");
     lockedNodeLabel.setEnabled(false);
