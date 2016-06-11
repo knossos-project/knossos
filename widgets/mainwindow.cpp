@@ -899,21 +899,21 @@ void MainWindow::setSegmentState(const SegmentState newState) {
     switch(segmentState) {
     case SegmentState::On:
         stateName = tr("<font color='green'>On</font>");
-        nextState = tr("off once");
+        nextState = tr("Off Once");
         Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
         break;
     case SegmentState::Off_Once:
         stateName = tr("<font color='darkGoldenRod'>Off once</font>");
-        nextState = tr("off");
+        nextState = tr("Off");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     case SegmentState::Off:
         stateName = tr("<font color='blue'>Off</font>");
-        nextState = tr("on");
+        nextState = tr("On");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     }
-    toggleSegmentsAction->setText(tr("Turn segments %1").arg(nextState));
+    toggleSegmentsAction->setText(tr("Turn Segments %1").arg(nextState));
     segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateName);
 }
 
