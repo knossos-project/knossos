@@ -229,7 +229,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
-    toolsLayout.addWidget(&showAllChck);
+    toolsLayout.addWidget(&showOnlySelectedChck);
     toolsLayout.addStretch();
     toolsLayout.addStretch();
     toolsLayout.addWidget(&brushRadiusLabel);
@@ -244,7 +244,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     categoryFilter.setEditable(true);
     categoryFilter.lineEdit()->setPlaceholderText("category");
     commentFilter.setPlaceholderText("Filter for comment...");
-    showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
+    showOnlySelectedChck.setChecked(Segmentation::singleton().renderOnlySelectedObjs);
 
     auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
@@ -372,7 +372,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, this, &SegmentationView::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateTouchedObjSelection);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::renderAllObjsChanged, &showAllChck, &QCheckBox::setChecked);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, &showOnlySelectedChck, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id){
         subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %1").arg(subobject_id));
@@ -424,7 +424,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     });
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::touchedObjSelectionChanged);
-    QObject::connect(&showAllChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderAllObjs);
+    QObject::connect(&showOnlySelectedChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderOnlySelectedObjs);
 
     QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);});
 

@@ -192,9 +192,9 @@ void Segmentation::newSubObject(Object & obj, uint64_t subObjID) {
     obj.addExistingSubObject(subobjectIt->second);
 }
 
-void Segmentation::setRenderAllObjs(bool all) {
-    renderAllObjs = all;
-    emit renderAllObjsChanged(renderAllObjs);
+void Segmentation::setRenderOnlySelectedObjs(const bool onlySelected) {
+    renderOnlySelectedObjs = onlySelected;
+    emit renderOnlySelectedObjsChanged(renderOnlySelectedObjs);
 }
 
 decltype(Segmentation::backgroundId) Segmentation::getBackgroundId() const {
@@ -238,7 +238,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubo
     }
     const auto subobjectIt = subobjects.find(subObjectID);
     if (subobjectIt == std::end(subobjects)) {
-        if (renderAllObjs || selectedObjectIndices.empty()) {
+        if (!renderOnlySelectedObjs || selectedObjectIndices.empty()) {
             return subobjectColor(subObjectID);
         } else {
             return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
@@ -247,7 +247,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubo
     const auto & subobject = subobjectIt->second;
     if (subobject.selectedObjectsCount != 0) {
         return colorOfSelectedObject(subobject);
-    } else if (!renderAllObjs) {
+    } else if (renderOnlySelectedObjs) {
         return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
     }
     return colorObjectFromIndex(largestObjectContainingSubobject(subobject));
@@ -603,7 +603,7 @@ void Segmentation::jobSave(QIODevice &file) const {
 void Segmentation::startJobMode() {
     alpha = 37;
     Segmentation::singleton().selectNextTodoObject();
-    setRenderAllObjs(false);
+    setRenderOnlySelectedObjs(true);
 }
 
 void Segmentation::deleteSelectedObjects() {

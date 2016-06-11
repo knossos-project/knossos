@@ -20,12 +20,12 @@ void SegmentationProxy::removeObject(const quint64 objIndex) {
     Segmentation::singleton().removeObject(Segmentation::singleton().objects[objIndex]);
 }
 
-void SegmentationProxy::setRenderAllObjs(const bool b) {
-    Segmentation::singleton().setRenderAllObjs(b);
+void SegmentationProxy::setRenderOnlySelectedObjs(const bool b) {
+    Segmentation::singleton().setRenderOnlySelectedObjs(b);
 }
 
-bool SegmentationProxy::isRenderAllObjs() {
-    return Segmentation::singleton().renderAllObjs;
+bool SegmentationProxy::isRenderOnlySelecdedObjs() {
+    return Segmentation::singleton().renderOnlySelectedObjs;
 }
 
 QList<quint64> SegmentationProxy::objectIds() {

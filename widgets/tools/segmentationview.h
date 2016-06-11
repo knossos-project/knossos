@@ -80,7 +80,7 @@ Q_OBJECT
     QSpinBox brushRadiusEdit;
     QPushButton twodBtn{"2D"};
     QPushButton threedBtn{"3D"};
-    QCheckBox showAllChck{"Show all objects"};
+    QCheckBox showOnlySelectedChck{"Show only selected objects"};
     QHBoxLayout filterLayout;
     CategoryModel categoryModel;
     QComboBox categoryFilter;

@@ -11,8 +11,8 @@ public slots:
     quint64 largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord);
     void changeComment(const quint64 objIndex, const QString & comment);
     void removeObject(const quint64 objIndex);
-    void setRenderAllObjs(const bool b);
-    bool isRenderAllObjs();
+    void setRenderOnlySelectedObjs(const bool b);
+    bool isRenderOnlySelecdedObjs();
     QList<quint64> objectIds();
     QList<quint64> subobjectIdsOfObject(const quint64 objId);
     QList<quint64> subobjectIdsOfObjectByIndex(const quint64 objIndex);

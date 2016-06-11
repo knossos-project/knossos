@@ -139,7 +139,7 @@ public:
     void selectPrevTodoObject();
     void markSelectedObjectForSplitting(const Coordinate & pos);
 
-    bool renderAllObjs{true}; // show all segmentations as opposed to only a selected one
+    bool renderOnlySelectedObjs{false};
     uint8_t alpha;
     brush_subject brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
@@ -150,7 +150,7 @@ public:
 
     Segmentation();
     //rendering
-    void setRenderAllObjs(bool);
+    void setRenderOnlySelectedObjs(const bool onlySelected);
     decltype(backgroundId) getBackgroundId() const;
     void setBackgroundId(decltype(backgroundId));
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromIndex(const uint64_t objectIndex) const;
@@ -216,7 +216,7 @@ signals:
     void resetData();
     void resetSelection();
     void resetTouchedObjects();
-    void renderAllObjsChanged(bool all);
+    void renderOnlySelectedObjsChanged(bool onlySelected);
     void backgroundIdChanged(uint64_t backgroundId);
     void categoriesChanged();
     void todosLeftChanged();
