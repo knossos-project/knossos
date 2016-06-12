@@ -402,6 +402,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     std::unordered_map<decltype(nodeListElement::nodeID), std::reference_wrapper<nodeListElement>> nodeMap;
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
 
+    const QSet<QString> knownElements({"scale", "offset", "skeletonDisplayMode"});
+    QSet<QString> skippedElements;
+
     bench.start();
     const auto blockState = this->signalsBlocked();
     blockSignals(true);
@@ -539,6 +542,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             taskName = attribute.value().toString();
                         }
                     }
+                } else if (knownElements.find(xml.name().toString()) == std::end(knownElements)) {// known but unused legacy elements are not reported
+                    skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
             }
@@ -556,6 +561,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             textProperties.insert(name);
                         }
                     }
+                } else {
+                    skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
             }
@@ -568,6 +575,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         std::uint64_t nodeID = attribute.toULongLong();;
                         branchVector.emplace_back(nodeID);
                     }
+                } else {
+                    skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
             }
@@ -584,6 +593,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if((!attribute.isNull()) && (!attribute.isEmpty())) {
                         commentsVector.emplace_back(nodeID, attribute.toString());
                     }
+                } else {
+                    skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
             }
@@ -663,23 +674,31 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             } else {
                                 addNode(nodeID, radius, treeID, currentCoordinate, inVP, inMag, ms, false, properties);
                             }
+                        } else {
+                            skippedElements.insert(xml.name().toString());
                         }
                         xml.skipCurrentElement();
                     } // end while nodes
-                }
-                if(xml.name() == "edges") {
+                } else if(xml.name() == "edges") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
                             const auto attributes = xml.attributes();
                             std::uint64_t sourceNodeId = attributes.value("source").toULongLong();
                             std::uint64_t targetNodeId = attributes.value("target").toULongLong();
                             edgeVector.emplace_back(sourceNodeId, targetNodeId);
+                        } else {
+                            skippedElements.insert(xml.name().toString());
                         }
                         xml.skipCurrentElement();
                     }
+                } else {
+                    skippedElements.insert(xml.name().toString());
+                    xml.skipCurrentElement();
                 }
             }
-        // end thing
+        } else {
+            skippedElements.insert(xml.name().toString());
+            xml.skipCurrentElement();
         }
     }
     xml.readNext();//</things>
@@ -764,10 +783,13 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         setActiveNode(&skeletonState.trees.front().nodes.front());
     }
 
+    QMessageBox msgBox(state->viewer->window);
     auto msg = tr("");
-    const auto unknownContent = !xml.isEndDocument();
-    if (unknownContent) {
-        msg += tr("• Unknown content following after line %1\n\n").arg(xml.lineNumber());
+    if (!skippedElements.empty()) {
+        msg += tr("• Some unknown elements have been skipped.\n\n").arg(xml.lineNumber());
+        QString buffer;
+        QDebug{&buffer} << skippedElements;
+        msgBox.setDetailedText(tr("Skipped elements: %1").arg(buffer));
     }
     const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
     if (mismatchedDataset) {
@@ -781,7 +803,6 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     }
     msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {
-        QMessageBox msgBox(state->viewer->window);
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
         msgBox.setInformativeText(msg);
