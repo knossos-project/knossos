@@ -738,9 +738,14 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
 void MainWindow::newAnnotationSlot() {
     if (Session::singleton().unsavedChanges) {
-        const auto text = tr("There are unsaved changes. \nCreating a new annotation will make you lose what you’ve done.");
-        const auto button = QMessageBox::question(this, tr("Unsaved changes"), text, tr("Abandon changes – Start from scratch"), tr("&Cancel"), {}, 0);
-        if (button == 1) {
+        QMessageBox question(this);
+        question.setIcon(QMessageBox::Question);
+        question.setText(tr("Create new annotation despite changes?"));
+        question.setInformativeText(tr("Creating a new annotation will make you lose what you’ve done."));
+        question.addButton(tr("&Abandon changes – Start from scratch"), QMessageBox::AcceptRole);
+        const auto * const cancelButton = question.addButton(QMessageBox::Cancel);
+        question.exec();
+        if (question.clickedButton() == cancelButton) {
             return;
         }
     }
