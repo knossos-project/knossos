@@ -225,7 +225,7 @@ public slots:
     void updateRecentFile(const QString &fileName);
 
     /* skeleton menu */
-    void newAnnotationSlot();
+    bool newAnnotationSlot();
     void openSlot();
     void saveSlot();
     void saveAsSlot();

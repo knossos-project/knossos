@@ -232,8 +232,18 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         return false;
     }
 
-    if (!silent) {
-        state->viewer->window->newAnnotationSlot();//clear skeleton, mergelist and snappy cubes
+    if (!silent && (!Session::singleton().annotationFilename.isEmpty() || Session::singleton().unsavedChanges)) {
+        QMessageBox question(this);
+        question.setIcon(QMessageBox::Question);
+        question.setText(tr("Keep the current annotation for the new dataset?"));
+        question.setInformativeText(tr("It only makes sense to keep the annotation if the new dataset matches it."));
+        question.addButton(tr("Yes, &keep"), QMessageBox::YesRole);
+        const auto * const clearButton = question.addButton(tr("No, start &new one"), QMessageBox::NoRole);
+        const auto * const cancelButton = question.addButton(QMessageBox::Cancel);
+        question.exec();
+        if (question.clickedButton() == cancelButton || (question.clickedButton() == clearButton && !state->viewer->window->newAnnotationSlot())) {// clear skeleton, mergelist and snappy cubes
+            return false;
+        }
     }
 
     Dataset info;

@@ -736,7 +736,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     return true;
 }
 
-void MainWindow::newAnnotationSlot() {
+bool MainWindow::newAnnotationSlot() {
     if (Session::singleton().unsavedChanges) {
         QMessageBox question(this);
         question.setIcon(QMessageBox::Question);
@@ -746,7 +746,7 @@ void MainWindow::newAnnotationSlot() {
         const auto * const cancelButton = question.addButton(QMessageBox::Cancel);
         question.exec();
         if (question.clickedButton() == cancelButton) {
-            return;
+            return false;
         }
     }
     Skeletonizer::singleton().clearSkeleton();
@@ -754,6 +754,7 @@ void MainWindow::newAnnotationSlot() {
     Session::singleton().unsavedChanges = false;
     Session::singleton().annotationFilename = "";
     updateTitlebar();
+    return true;
 }
 
 /**
