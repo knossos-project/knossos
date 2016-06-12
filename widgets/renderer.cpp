@@ -2469,7 +2469,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
                 /* Connect all synapses */
                 for (auto & synapse : state->skeletonState->synapses) {
-                    if (synapse.postSynapse != nullptr && synapse.preSynapse != nullptr) {
+                    if (synapse.postSynapse != nullptr && synapse.preSynapse != nullptr && synapse.preSynapse->correspondingTree->render && synapse.postSynapse->correspondingTree->render) {
                        if (!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
                                 || synapse.postSynapse == state->skeletonState->activeNode
                                 || synapse.preSynapse == state->skeletonState->activeNode ) {
