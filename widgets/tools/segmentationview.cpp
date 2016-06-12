@@ -383,7 +383,6 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
 
     static auto setColor = [this](QTreeView & table, const QModelIndex & index) {
-        state->viewerState->renderInterval = SLOW;
         if (index.column() == 0) {
             colorDialog.setCurrentColor(table.model()->data(index, Qt::BackgroundRole).value<QColor>());
             state->viewerState->renderInterval = SLOW;
