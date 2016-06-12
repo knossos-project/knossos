@@ -51,6 +51,10 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 
+enum class SynapseState {
+    Off, SynapticCleft, PostSynapse
+};
+
 enum class SegmentState {
     On, Off, Off_Once
 };
@@ -179,6 +183,7 @@ public:
     QLabel GUIModeLabel{""};
     QLabel cursorPositionLabel;
     QLabel nodeLockingLabel;
+    QLabel synapseStateLabel;
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
@@ -214,6 +219,9 @@ public:
 
     SegmentState segmentState{SegmentState::On};
     void setSegmentState(const SegmentState newState);
+    SynapseState synapseState{SynapseState::Off};
+    void setSynapseState(const SynapseState newState);
+    void toggleSynapses();
 public slots:
     void refreshPluginMenu();
     void setProofReadingUI(const bool on);

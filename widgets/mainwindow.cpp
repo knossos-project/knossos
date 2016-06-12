@@ -147,6 +147,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->addWidget(&cursorPositionLabel);
     nodeLockingLabel.setVisible(false);
     statusBar()->addPermanentWidget(&nodeLockingLabel);
+    statusBar()->addPermanentWidget(&synapseStateLabel);
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
@@ -933,6 +934,35 @@ void MainWindow::toggleSegments() {
         break;
     case SegmentState::Off:
         setSegmentState(SegmentState::On);
+        break;
+    }
+}
+
+void MainWindow::setSynapseState(const SynapseState newState) {
+    synapseState = newState;
+    switch(synapseState) {
+    case SynapseState::Off:
+        synapseStateLabel.setText(tr(""));
+        break;
+    case SynapseState::SynapticCleft:
+        synapseStateLabel.setText(tr("Synapse mode: <font color='green'>trace cleft</font>"));
+        break;
+    case SynapseState::PostSynapse:
+        synapseStateLabel.setText(tr("Synapse mode: <font color='blue'>set post synapse</font>"));
+        break;
+    }
+}
+
+void MainWindow::toggleSynapses() {
+    switch(synapseState) {
+    case SynapseState::Off:
+        setSynapseState(SynapseState::SynapticCleft);
+        break;
+    case SynapseState::SynapticCleft:
+        setSynapseState(SynapseState::PostSynapse);
+        break;
+    case SynapseState::PostSynapse:
+        setSynapseState(SynapseState::Off);
         break;
     }
 }

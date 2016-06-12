@@ -253,6 +253,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 Skeletonizer::singleton().delTree(tempSynapse.synapticCleft->treeID);
                 tempSynapse = Synapse(); //reset temporary class
                 Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
+                state->viewer->window->setSynapseState(SynapseState::Off); //reset statusbar entry
             }
         }
     } else { // unlinked
@@ -287,6 +288,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             state->skeletonState->synapses.push_back(tempSynapse); //move finished synapse to our synapse vector
             tempSynapse = Synapse(); //reset temporary class
             Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
+            state->viewer->window->toggleSynapses(); //update statusbar
         }
     }
     ViewportBase::handleMouseButtonRight(event);
@@ -543,6 +545,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if (!ctrl && shift &&  event->key() == Qt::Key_S) { //synapse mode
         if(state->skeletonState->selectedNodes.size() < 2) {
+            state->viewer->window->toggleSynapses(); //update statusbar
             Skeletonizer::singleton().addSynapse();
         } else if(state->skeletonState->selectedNodes.size() == 2) {
             Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
