@@ -1688,6 +1688,9 @@ bool Skeletonizer::moveToPrevTree() {
     treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     if(state->skeletonState->activeTree == nullptr) {
         return false;
+    } else if(prevTree != nullptr && prevTree->isSynapticCleft && !prevTree->render) {
+        //skip synaptic cleft if synaptic cleft is not rendered
+        prevTree = getTreeWithPrevID(prevTree);
     }
     if(prevTree) {
         setActiveTreeByID(prevTree->treeID);
@@ -1716,6 +1719,9 @@ bool Skeletonizer::moveToNextTree() {
     treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     if(state->skeletonState->activeTree == nullptr) {
         return false;
+    } else if(nextTree != nullptr && nextTree->isSynapticCleft && !nextTree->render) {
+        //skip synaptic cleft if synaptic cleft is not rendered
+        nextTree = getTreeWithNextID(nextTree);
     }
     if(nextTree) {
         setActiveTreeByID(nextTree->treeID);
