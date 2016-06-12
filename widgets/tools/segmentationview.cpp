@@ -258,7 +258,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     };
 
     setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
-    touchedObjsTable.hide();
+    touchedLayoutWidget.hide();
 
     //proxy model chaining, so we can filter twice
     objectProxyModelCategory.setSourceModel(&objectModel);
@@ -274,12 +274,14 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
     bottomHLayout.addWidget(&subobjectHoveredLabel);
-    bottomHLayout.addWidget(&objectCreateButton, 0, Qt::AlignRight);
 
+    touchedTableLayout.addWidget(&touchedObjectsLabel);
+    touchedTableLayout.addWidget(&touchedObjsTable);
+    touchedLayoutWidget.setLayout(&touchedTableLayout);
     splitter.setOrientation(Qt::Vertical);
-    splitter.addWidget(&touchedObjsTable);
     splitter.addWidget(&objectsTable);
-    splitter.setStretchFactor(1, 5);
+    splitter.addWidget(&touchedLayoutWidget);
+    splitter.setStretchFactor(0, 5);
     layout.addLayout(&filterLayout);
     layout.addWidget(&splitter);
     layout.addLayout(&bottomHLayout);
@@ -371,7 +373,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, [this]() {
         touchedObjectModel.recreate();
-        touchedObjsTable.setHidden(touchedObjectModel.objectCache.size() <= 1);
+        touchedLayoutWidget.setHidden(touchedObjectModel.objectCache.size() <= 1);
+        touchedObjectsLabel.setText(tr("<strong>Objects containing subobject %1</strong>").arg(Segmentation::singleton().touched_subobject_id));
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, this, &SegmentationView::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateSelection);
@@ -428,8 +431,6 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::touchedObjSelectionChanged);
     QObject::connect(&showOnlySelectedChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderOnlySelectedObjs);
-
-    QObject::connect(&objectCreateButton, &QPushButton::clicked, [](){Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);});
 
     touchedObjectModel.recreate();
     objectModel.recreate();
@@ -524,10 +525,15 @@ uint64_t SegmentationView::indexFromRow(const TouchedObjectModel & model, const 
 
 void SegmentationView::contextMenu(const QTreeView & table, const QPoint & pos) {
     QMenu contextMenu;
-    auto & jumpAction = *contextMenu.addAction("jump to object");
-    auto & mergeAction = *contextMenu.addAction("merge");
+    auto & jumpAction = *contextMenu.addAction("Jump to object");
+    auto & mergeAction = *contextMenu.addAction("Merge");
     auto & restoreColorAction = *contextMenu.addAction("Restore default color");
-    auto & deleteAction = *contextMenu.addAction("delete");
+    auto & deleteAction = *contextMenu.addAction("Delete");
+    if (&table == &objectsTable) {
+        contextMenu.addSeparator();
+        auto & newAction = *contextMenu.addAction("Create new Object");
+        QObject::connect(&newAction, &QAction::triggered, []() { Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition); });
+    }
     jumpAction.setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);
     deleteAction.setShortcut(Qt::Key_Delete);//a shortcut in a context menu doesn’t work but it _shows_ the shortcut used elsewhere
     contextMenu.setDefaultAction(&jumpAction);

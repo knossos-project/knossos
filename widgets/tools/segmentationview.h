@@ -95,6 +95,9 @@ Q_OBJECT
     CategoryDelegate categoryDelegate;
 
     UserOrientableSplitter splitter;
+    QWidget touchedLayoutWidget;
+    QVBoxLayout touchedTableLayout;
+    QLabel touchedObjectsLabel{"<strong>Objects containing subobject</strong>"};
     QTreeView touchedObjsTable;
     QTreeView objectsTable;
     int objSortSectionIndex;
@@ -103,7 +106,6 @@ Q_OBJECT
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QLabel subobjectHoveredLabel;
-    QPushButton objectCreateButton{"Create new object"};
 
     QColorDialog colorDialog{this};
 
