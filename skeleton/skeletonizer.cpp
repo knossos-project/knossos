@@ -692,7 +692,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                             skippedElements.insert(xml.name().toString());
                         }
                         xml.skipCurrentElement();
-                    } // end while nodes
+                    }); // end while nodes
                 } else if(xml.name() == "edges") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
@@ -709,12 +709,12 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     skippedElements.insert(xml.name().toString());
                     xml.skipCurrentElement();
                 }
-            }
+            });
         } else {
             skippedElements.insert(xml.name().toString());
             xml.skipCurrentElement();
         }
-    }
+    });
     xml.readNext();//</things>
     if(xml.hasError()) {
         throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
