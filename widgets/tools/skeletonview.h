@@ -56,12 +56,12 @@ class NodeModel : public AbstractSkeletonModel<NodeModel> {
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;
     enum FilterMode {
-        All = 0x0,
-        InSelectedTree = 0x1,
-        Selected = 0x2,
-        Branch = 0x4,
-        Comment = 0x8,
-        Synapse = 0x10
+        All = 0,
+        InSelectedTree = 1 << 1,
+        Selected       = 1 << 2,
+        Branch         = 1 << 3,
+        Comment        = 1 << 4,
+        Synapse        = 1 << 5
     };
     QFlags<FilterMode> mode = FilterMode::InSelectedTree;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
