@@ -7,9 +7,11 @@
 #include "skeleton/tree.h"
 #include "viewer.h"//state->viewerState->renderInterval
 
+#include <QFormLayout>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QRegExpValidator>
 
 template<typename Func>
 void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
@@ -553,6 +555,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
         nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to node
+        nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
         nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set comment
@@ -615,8 +618,38 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
 
 
-    QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
+    QObject::connect(nodeContextMenu.addAction("&Jump to this node"), &QAction::triggered, [this](){
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
+    });
+    QObject::connect(nodeContextMenu.addAction("&Jump to node with ID"), &QAction::triggered, [this](){
+        auto validatedInput = [](QWidget * parent, const QString && labelText, const QValidator && validator){
+            QDialog dialog(parent);
+            QFormLayout flayout;
+            QLineEdit edit;
+            edit.setPlaceholderText("node ID");
+            edit.setValidator(&validator);
+            QLabel warningText;
+            QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
+            buttonBox.button(QDialogButtonBox::Ok)->setEnabled(false);
+            flayout.addRow(labelText, &edit);
+            flayout.addRow(&warningText);
+            flayout.addRow(&buttonBox);
+            dialog.setLayout(&flayout);
+            edit.setFocus();
+            QObject::connect(&edit, &QLineEdit::textChanged, [&warningText, &buttonBox](const QString & text){
+                const bool nodeExists{Skeletonizer::singleton().findNodeByNodeID(text.toLongLong()) != nullptr};
+                warningText.setText(!nodeExists ? "<font color='red'>The node with the specified ID does not exist.</color>" : "");
+                buttonBox.button(QDialogButtonBox::Ok)->setEnabled(nodeExists);
+            });
+            QObject::connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+            QObject::connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+            const bool done{dialog.exec() == QDialog::Accepted};
+            return boost::make_optional(done, Skeletonizer::singleton().findNodeByNodeID(edit.text().toLongLong()));
+        };
+        if (auto node = validatedInput(this, "Please enter node ID", QRegExpValidator{QRegExp{"\\d+"}})) {
+            Skeletonizer::singleton().setActive(*node.get());
+            Skeletonizer::singleton().jumpToNode(*node.get());
+        }
     });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
