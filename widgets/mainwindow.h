@@ -130,10 +130,10 @@ class MainWindow : public QMainWindow {
     void resizeToFitViewports(int width, int height);
 
     QSpinBox *xField, *yField, *zField;
-    QMenu fileMenu{"File"};
+    QMenu fileMenu{"&File"};
     QMenu *segEditMenu;
     QMenu *skelEditMenu;
-    QMenu actionMenu{"Action"};
+    QMenu actionMenu{"&Action"};
     QMenu *pluginMenu;
     QString openFileDirectory;
     QString saveFileDirectory;

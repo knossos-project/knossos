@@ -529,7 +529,7 @@ void MainWindow::createMenus() {
 
     menuBar()->addMenu(&actionMenu);
 
-    auto viewMenu = menuBar()->addMenu("Navigation");
+    auto viewMenu = menuBar()->addMenu("&Navigation");
 
     QAction * penmodeAction = new QAction("Pen-Mode", this);
 
@@ -557,7 +557,7 @@ void MainWindow::createMenus() {
 
     viewMenu->addAction(tr("Dataset Navigation Options"), &widgetContainer.navigationWidget, SLOT(show()));
 
-    auto commentsMenu = menuBar()->addMenu("Comments");
+    auto commentsMenu = menuBar()->addMenu("&Comments");
 
     addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), &Skeletonizer::singleton(), [this] () {
         Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), true);
@@ -579,7 +579,7 @@ void MainWindow::createMenus() {
 
     commentsMenu->addSeparator();
 
-    auto preferenceMenu = menuBar()->addMenu("Preferences");
+    auto preferenceMenu = menuBar()->addMenu("&Preferences");
     preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
@@ -587,13 +587,13 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Data Saving Options"), &widgetContainer.dataSavingWidget, SLOT(show()));
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
 
-    auto windowMenu = menuBar()->addMenu("Windows");
+    auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
     windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation Window"), &widgetContainer.annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/camera.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
-    auto scriptingMenu = menuBar()->addMenu("Scripting");
+    auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
     scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
@@ -601,7 +601,7 @@ void MainWindow::createMenus() {
     pluginMenu = scriptingMenu->addMenu("Plugins");
     refreshPluginMenu();
 
-    auto helpMenu = menuBar()->addMenu("Help");
+    auto helpMenu = menuBar()->addMenu("&Help");
     addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
     helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
 }
