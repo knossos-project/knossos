@@ -390,6 +390,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     Session::singleton().guiMode = GUIMode::None;
 
     QElapsedTimer bench;
+    QElapsedTimer time;
+    time.start();
     QXmlStreamReader xml(&file);
 
     QString experimentName, taskCategory, taskName;
@@ -411,9 +413,21 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     if (!xml.readNextStartElement() || xml.name() != "things") {
         throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
     }
-    while(xml.readNextStartElement()) {
+    auto processElems = [&](auto todo){
+        while (xml.readNextStartElement()) {
+            if (time.hasExpired(10)) {
+                time.restart();
+                blockSignals(false);
+                emit loadingProgress(file.size() - file.bytesAvailable(), file.size());
+                blockSignals(true);
+            }
+            todo();
+        }
+    };
+
+    processElems([&]{
         if(xml.name() == "parameters") {
-            while(xml.readNextStartElement()) {
+            processElems([&]{
                 QXmlStreamAttributes attributes = xml.attributes();
 
                 if (xml.name() == "experiment") {
@@ -546,9 +560,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
-            }
+            });
         } else if(xml.name() == "properties") {
-            while(xml.readNextStartElement()) {
+            processElems([&]{
                 if(xml.name() == "property") {
                     const auto attributes = xml.attributes();
                     const auto name = attributes.value("name").toString();
@@ -565,9 +579,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
-            }
+            });
         } else if(xml.name() == "branchpoints") {
-            while(xml.readNextStartElement()) {
+            processElems([&]{
                 if(xml.name() == "branchpoint") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("id");
@@ -579,12 +593,12 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
-            }
+            });
         } else if(xml.name() == "comments") {
             // comments must be buffered and can only be set after thing nodes were parsed
             // and the skeleton structure was created. This is necessary, because sometimes the
             // comments node comes before the thing nodes.
-            while(xml.readNextStartElement()) {
+            processElems([&]{
                 if(xml.name() == "comment") {
                     QXmlStreamAttributes attributes = xml.attributes();
                     QStringRef attribute = attributes.value("node");
@@ -597,7 +611,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     skippedElements.insert(xml.name().toString());
                 }
                 xml.skipCurrentElement();
-            }
+            });
         } else if(xml.name() == "thing") {
             int treeID{0};
             bool okr{false}, okg{false}, okb{false}, oka{false};
@@ -633,9 +647,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 setComment(tree, treeCmtOnMultiLoad);
             }
 
-            while (xml.readNextStartElement()) {
+            processElems([&]{
                 if(xml.name() == "nodes") {
-                    while(xml.readNextStartElement()) {
+                    processElems([&]{
                         if(xml.name() == "node") {
                             boost::optional<decltype(nodeListElement::nodeID)> nodeID;
                             float radius = state->skeletonState->defaultNodeRadius;

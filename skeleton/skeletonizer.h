@@ -184,6 +184,7 @@ signals:
     void nodeSelectionChangedSignal();
     void treeSelectionChangedSignal();
     void resetData();
+    void loadingProgress(const qint64 finished, const qint64 total);
 public slots:
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 

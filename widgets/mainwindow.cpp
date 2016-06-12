@@ -631,6 +631,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     event->accept();//mainwindow takes the qapp with it
 }
 
+#include <QProgressDialog>
+
 //file menu functionality
 bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, const bool silent) {
     if (fileNames.empty()) {
@@ -675,6 +677,14 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     Session::singleton().guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
+    });
+
+    state->viewerState->renderInterval = SLOW;
+    QProgressDialog progress("Loading files...", "Abort Loading", 0, 100, this);
+    progress.setWindowModality(Qt::WindowModal);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::loadingProgress, [&](const qint64 finished, const qint64 total){
+        progress.setRange(0, total);
+        progress.setValue(finished);
     });
 
     state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
@@ -733,6 +743,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
 
     state->viewer->window->widgetContainer.datasetOptionsWidget.update();
+
+    state->viewerState->renderInterval = FAST;
 
     return true;
 }
