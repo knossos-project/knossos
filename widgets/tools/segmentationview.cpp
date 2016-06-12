@@ -258,6 +258,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     };
 
     setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
+    touchedObjsTable.hide();
 
     //proxy model chaining, so we can filter twice
     objectProxyModelCategory.setSourceModel(&objectModel);
@@ -278,6 +279,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&touchedObjsTable);
     splitter.addWidget(&objectsTable);
+    splitter.setStretchFactor(1, 5);
     layout.addLayout(&filterLayout);
     layout.addWidget(&splitter);
     layout.addLayout(&bottomHLayout);
@@ -367,7 +369,10 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         updateTouchedObjSelection();
         updateLabels();
     });
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, &touchedObjectModel, &TouchedObjectModel::recreate);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, [this]() {
+        touchedObjectModel.recreate();
+        touchedObjsTable.setHidden(touchedObjectModel.objectCache.size() <= 1);
+    });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetTouchedObjects, this, &SegmentationView::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateTouchedObjSelection);
