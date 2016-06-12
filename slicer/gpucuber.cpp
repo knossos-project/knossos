@@ -42,17 +42,31 @@ gpu_lut_cube::gpu_lut_cube(const int gpucubeedge) : gpu_raw_cube(gpucubeedge, tr
 }
 
 std::vector<gpu_lut_cube::gpu_index> gpu_lut_cube::prepare(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view) {
+    bool lastValid{false};
+    uint64_t lastElem{0};
+    uint64_t lastIndex{0};
+    std::array<std::uint8_t, 4> lastColor{{}};
+
     std::vector<gpu_index> data;
     for (const auto & d2 : view)
     for (const auto & d1 : d2)
     for (const auto & elem : d1) {
-        const auto it = id_to_lut_index.find(elem);
-        const auto existing = it != std::end(id_to_lut_index);
-        const auto index = existing ? it->second : (id_to_lut_index[elem] = highest_index++);//increment after assignment
-        data.emplace_back(index);
-        if (!existing) {
-            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(elem);
-            colors.push_back({{std::get<0>(color), std::get<1>(color), std::get<2>(color), std::get<3>(color)}});
+        if (lastValid && elem == lastElem) {
+            data.emplace_back(lastIndex);
+        } else {
+            const auto it = id_to_lut_index.find(elem);
+            const auto existing = it != std::end(id_to_lut_index);
+            const auto index = existing ? it->second : (id_to_lut_index[elem] = highest_index++);//increment after assignment
+            data.emplace_back(index);
+            if (!existing) {
+                const auto color = Segmentation::singleton().colorObjectFromSubobjectId(elem);
+                lastColor = {{std::get<0>(color), std::get<1>(color), std::get<2>(color), std::get<3>(color)}};
+                colors.push_back(lastColor);
+            }
+            lastElem = elem;
+            lastIndex = index;
+            lastColor = colors[index];
+            lastValid = true;
         }
     }
     const auto lutSize = std::pow(2, std::ceil(std::log2(colors.size())));
