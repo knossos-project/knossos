@@ -144,9 +144,12 @@ bool setRotationState(uint setTo) {
 
 uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
-    if (options.enableSkeletonDownsampling &&
-        (((screenPxXPerDataPx * baseRadius < 1.f) && (screenPxXPerDataPx * topRadius < 1.f) && (state->viewerState->cumDistRenderThres > 1.f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
-
+    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f;
+    const auto alwaysTubesAndSpheres = state->viewerState->cumDistRenderThres <= 1.0f;
+    const auto switchDynamically =  !alwaysLinesAndPoints && !alwaysTubesAndSpheres;
+    const auto dynamicLinesAndPoints = switchDynamically && screenPxXPerDataPx * baseRadius < 1.0f && screenPxXPerDataPx * topRadius < 1.0f;
+    const auto linesAndPoitns = options.enableSkeletonDownsampling && (alwaysLinesAndPoints || dynamicLinesAndPoints);
+    if (linesAndPoitns) {
         state->viewerState->lineVertBuffer.vertices.emplace_back(*base);
         state->viewerState->lineVertBuffer.vertices.emplace_back(*top);
 
