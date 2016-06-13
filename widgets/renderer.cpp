@@ -478,18 +478,6 @@ void ViewportBase::setFrontFacePerspective() {
 
 void ViewportBase::renderViewportFrontFace() {
     setFrontFacePerspective();
-    if(viewportType == state->viewerState->highlightVp) {
-        // Draw an orange border to highlight the viewport.
-        glColor4f(1., 0.3, 0., 1.);
-        glBegin(GL_LINE_LOOP);
-            glVertex3f(3, 3, -1);
-            glVertex3f(edgeLength - 3, 3, -1);
-            glVertex3f(edgeLength - 3, edgeLength - 3, -1);
-            glVertex3f(3, edgeLength - 3, -1);
-        glEnd();
-    }
-    glLineWidth(1.);
-
     // render node selection box
     if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(viewportType)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
@@ -543,6 +531,17 @@ void ViewportOrtho::renderViewportFrontFace() {
         glVertex3d(1, edgeLength - 1, -1);
         glVertex3d(1, 1, -1);
     glEnd();
+
+    if (viewportType == state->viewerState->highlightVp) {
+        // Draw an orange border to highlight the viewport.
+        glColor4f(1., 0.3, 0., 1.);
+        glBegin(GL_LINE_LOOP);
+            glVertex3f(3, 3, -1);
+            glVertex3f(edgeLength - 3, 3, -1);
+            glVertex3f(edgeLength - 3, edgeLength - 3, -1);
+            glVertex3f(3, edgeLength - 3, -1);
+        glEnd();
+    }
 
     if (state->viewerState->showScalebar) {
         renderScaleBar();
