@@ -18,6 +18,7 @@ public slots:
     QList<quint64> selectedObjects();
 
     void changeComment(const quint64 objId, const QString & comment);
+    void changeColor(const quint64 objId, const QColor & color);
     void removeObject(const quint64 objId);
     void selectObject(const quint64 objId);
     void unselectObject(const quint64 objId);

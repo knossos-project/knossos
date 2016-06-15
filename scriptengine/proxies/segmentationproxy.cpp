@@ -57,6 +57,10 @@ void SegmentationProxy::changeComment(const quint64 objId, const QString & comme
     Segmentation::singleton().changeComment(objectFromId(objId), comment);
 }
 
+void SegmentationProxy::changeColor(const quint64 objId, const QColor & color) {
+    Segmentation::singleton().changeColor(objectFromId(objId), std::make_tuple(color.red(), color.green(), color.blue()));
+}
+
 void SegmentationProxy::removeObject(const quint64 objId) {
     Segmentation::singleton().removeObject(objectFromId(objId));
 }
