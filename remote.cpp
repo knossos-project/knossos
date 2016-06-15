@@ -135,7 +135,7 @@ void Remote::remoteWalk() {
         }
     }
 
-    const auto seconds = recenteringOffset.length() / (state->viewerState->stepsPerSec * state->magnification);
+    const auto seconds = recenteringOffset.length() / (state->viewerState->movementSpeed * state->magnification);
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
     const floatCoordinate singleMove = recenteringOffset / totalMoves;
 

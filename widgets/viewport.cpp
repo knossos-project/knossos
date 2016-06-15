@@ -551,14 +551,15 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
-        state->viewerState->keyRepeat = false;
-    } else if (event->key() == Qt::Key_Shift) {//decrease movement speed
-        state->viewerState->repeatDirection /= 10;
+    if (event->key() == Qt::Key_Shift) {
+        state->viewerState->repeatDirection /= 10;// decrease movement speed
         Segmentation::singleton().brush.setInverse(false);
-    } else {
-        handleKeyRelease(event);
+    } else if (!event->isAutoRepeat()) {// don’t let shift break keyrepeat
+        state->viewer->userMoveRound();
+        state->viewerState->keyRepeat = false;
+        state->viewerState->notFirstKeyRepeat = false;
     }
+    handleKeyRelease(event);
 }
 
 void ViewportOrtho::zoom(const float step) {

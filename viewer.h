@@ -91,8 +91,9 @@ struct ViewerState {
     ViewportType highlightVp{VIEWPORT_UNDEFINED};
 
     bool keyRepeat{false};
+    bool notFirstKeyRepeat{false};
     floatCoordinate repeatDirection;
-    int stepsPerSec{40};
+    int movementSpeed{40};
 
     float voxelDimX;
     float voxelDimY;
@@ -179,7 +180,7 @@ class Viewer : public QObject {
     }();
     Q_OBJECT
 private:
-    QElapsedTimer baseTime;
+    QElapsedTimer keyRepeatTimer;
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;

@@ -79,7 +79,7 @@ Viewer::Viewer() {
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
-    baseTime.start();//keyRepeat timer
+    keyRepeatTimer.start();
 }
 
 void Viewer::setMovementAreaFactor(float alpha) {
@@ -889,10 +889,12 @@ void Viewer::run() {
     timer.singleShot(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW, this, &Viewer::run);
 
     if (viewerState.keyRepeat) {
-        qint64 interval = 1000 / viewerState.stepsPerSec;
-        if (baseTime.elapsed() >= interval) {
-            baseTime.restart();
-            userMove(viewerState.repeatDirection, USERMOVE_DRILL);
+        const double interval = 1000.0 / viewerState.movementSpeed;
+        if (keyRepeatTimer.elapsed() >= interval) {
+            const auto multiplier = viewerState.notFirstKeyRepeat * keyRepeatTimer.elapsed() / interval;
+            viewerState.notFirstKeyRepeat = true;// first repeat should only move 1 slice
+            keyRepeatTimer.restart();
+            userMove(viewerState.repeatDirection * multiplier, USERMOVE_DRILL);
         }
     }
     // Event and rendering loop.

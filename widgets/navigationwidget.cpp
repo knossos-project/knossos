@@ -174,7 +174,7 @@ void NavigationWidget::updateMovementArea() {
 }
 
 void NavigationWidget::movementSpeedChanged(int value) {
-    state->viewerState->stepsPerSec = value;
+    state->viewerState->movementSpeed = value;
 }
 
 void NavigationWidget::jumpFramesChanged(int value) {
