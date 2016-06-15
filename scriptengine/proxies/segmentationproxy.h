@@ -8,21 +8,21 @@ class SegmentationProxy : public QObject {
     Q_OBJECT
 public slots:
     void subobjectFromId(const quint64 subObjId, const QList<int> & coord);
-    quint64 largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord);
-    void changeComment(const quint64 objIndex, const QString & comment);
-    void removeObject(const quint64 objIndex);
     void setRenderOnlySelectedObjs(const bool b);
     bool isRenderOnlySelecdedObjs();
-    QList<quint64> objectIds();
+
+    quint64 largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord);
     QList<quint64> subobjectIdsOfObject(const quint64 objId);
-    QList<quint64> subobjectIdsOfObjectByIndex(const quint64 objIndex);
-    quint64 objectIdxFromId(const quint64 objId);
-    QList<quint64> getAllObjectIdx();
-    void selectObject(const quint64 objIdx);
-    void unselectObject(const quint64 objectIndex);
-    void jumpToObject(const quint64 objIdx);
-    QList<quint64> getSelectedObjectIndices();
-    QList<int> getObjectLocation(const quint64 objectIndex);
+
+    QList<quint64> objects();
+    QList<quint64> selectedObjects();
+
+    void changeComment(const quint64 objId, const QString & comment);
+    void removeObject(const quint64 objId);
+    void selectObject(const quint64 objId);
+    void unselectObject(const quint64 objId);
+    void jumpToObject(const quint64 objId);
+    QList<int> objectLocation(const quint64 objId);
 };
 
 #endif // SEGMENTATIONPROXY_H

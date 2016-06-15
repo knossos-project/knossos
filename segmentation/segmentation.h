@@ -24,6 +24,7 @@ class Segmentation : public QObject {
 Q_OBJECT
     friend void connectedComponent(const Coordinate & seed);
     friend void verticalSplittingPlane(const Coordinate & seed);
+    friend auto & objectFromId(const quint64 objId);
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
     friend class CategoryDelegate;
