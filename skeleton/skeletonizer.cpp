@@ -1914,6 +1914,18 @@ void Skeletonizer::deleteSelectedTrees() {
     const auto blockstate = signalsBlocked();
     blockSignals(true);
     for (const auto & elem : treesToDelete) {
+        if(elem->isSynapticCleft) { //if we delete a synapsticCleft, remove tree from synapses and unset the synaptic nodes
+            for(auto it = std::begin(state->skeletonState->synapses); it != std::end(state->skeletonState->synapses);) {
+                if(elem == it->synapticCleft) {
+                    it->preSynapse->isSynapticNode = false;
+                    it->postSynapse->isSynapticNode = false;
+                    it = state->skeletonState->synapses.erase(it);
+                    break;
+                } else {
+                   ++it;
+                }
+            }
+        }
         delTree(elem->treeID);
     }
     blockSignals(blockstate);
