@@ -1503,20 +1503,18 @@ void Skeletonizer::gotoComment(const QString & searchString, const bool next /*o
 
 /*
  * Create a synapse, starting with a presynapse
- * 1. shift+s: Active Node is marked as a presynapse
- * 2. Start tracing the synaptic cleft (shift+s on finish)
+ * 1. 'shift+c': Active Node is marked as a presynapse
+ * 2. Start tracing the synaptic cleft ('c' on finish)
  * 3. Next node is a postsynapse
  */
 void Skeletonizer::addSynapse() {
     if(synapseState == preSynapse) { //set active Node as presynapse
         temporarySynapse.preSynapse = skeletonState.activeNode;
-        //temporarySynapse.preTree = skeletonState.activeTree;
         auto & synaptic_cleft = addTree();
         synaptic_cleft.isSynapticCleft = true;
         synapseState = synapticCleft;
     } else if(synapseState == synapticCleft) {
         temporarySynapse.synapticCleft = skeletonState.activeTree;
-        addTree();
         synapseState = postSynapse;
     }
 }

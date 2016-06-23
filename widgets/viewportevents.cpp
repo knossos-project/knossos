@@ -543,7 +543,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 isFullOrigDocked = false;
             }
         }
-    } else if (!ctrl && shift &&  event->key() == Qt::Key_S) { //synapse mode
+    } else if (!ctrl && shift &&  event->key() == Qt::Key_C) { //synapse mode
         if(state->skeletonState->selectedNodes.size() < 2) {
             state->viewer->window->toggleSynapses(); //update statusbar
             Skeletonizer::singleton().addSynapse();

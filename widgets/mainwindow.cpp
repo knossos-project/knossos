@@ -1251,6 +1251,10 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
+    if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().synapticCleft) {
+        Skeletonizer::singleton().addSynapse(); //finish synaptic cleft
+        state->viewer->window->toggleSynapses(); //update statusbar
+    }
     Skeletonizer::singleton().addTree();
 }
 
