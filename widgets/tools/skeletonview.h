@@ -41,6 +41,12 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
+    enum FilterMode {
+        All = 0,
+        Default = 1 << 1, //Default is without synapticClefts
+        SynapticClefts = 1 << 2
+    };
+    QFlags<FilterMode> mode = FilterMode::Default;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
@@ -86,6 +92,8 @@ class SkeletonView : public QWidget {
     QColorDialog colorDialog{this};
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
+    QCheckBox displaySynapticCleftsCheckbox{"Display synaptic clefts"};
+    QVBoxLayout displayOptions;
     QHBoxLayout treeOptionsLayout;
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"regex"};
@@ -100,8 +108,11 @@ class SkeletonView : public QWidget {
     QHBoxLayout nodeOptionsLayout;
     Spoiler displaySpoiler{"Display options"};
     QVBoxLayout displaySpoilerLayout;
-    QCheckBox displaySynapticCleftsCheckbox{"All nodes"};
+    QButtonGroup filterTreeButtonGroup;
+    QCheckBox filterTreeDisplayAll{"display other tree"};
+    QCheckBox filterTreeDisplaySynapse{"display synaptic clefts"};
     QGroupBox filterGroupBox{"Filter"};
+    QHBoxLayout filterTreeLayout;
     QHBoxLayout filterLayout;
     QButtonGroup filterButtonGroup;
     QComboBox filterModeCombo;
