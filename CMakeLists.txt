@@ -1,5 +1,5 @@
 project(knossos)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
@@ -23,6 +23,8 @@ file(GLOB_RECURSE headers2 ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./
 file(GLOB_RECURSE docimages ./resources/doc/images/*)
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
 set(CMAKE_AUTOSTATICPLUGINS ON)
@@ -133,7 +135,7 @@ endif(APPLE)
 #uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14" "-pedantic-errors")
+target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
