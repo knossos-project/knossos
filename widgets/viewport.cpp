@@ -757,7 +757,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     renderViewport(options);
     if(withScale) {
         setFrontFacePerspective();
-        renderScaleBar(std::ceil(0.02*size));
+        renderScaleBar();
     }
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);

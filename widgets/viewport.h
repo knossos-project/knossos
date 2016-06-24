@@ -161,9 +161,9 @@ protected:
     // rendering
     virtual void initializeGL() override;
     void setFrontFacePerspective();
-    void renderScaleBar(const int fontSize = defaultFonsSize);
+    void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
-    void renderText(const Coordinate &pos, const QString &str, const int fontSize = defaultFonsSize, const bool centered = false);
+    void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false);
     uint renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());

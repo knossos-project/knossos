@@ -292,7 +292,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
     auto comment = node.getComment();
     comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
     if(nodeID.isEmpty() == false || comment.isEmpty() == false) {
-        renderText(node.position, nodeID.append(comment));
+        renderText(node.position, nodeID.append(comment), options.enableTextScaling);
     }
 }
 
@@ -301,7 +301,7 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
     // Render the node description
     if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
         glColor4f(0.f, 0.f, 0.f, 1.f);
-        renderText(node.position, QString::number(node.nodeID));
+        renderText(node.position, QString::number(node.nodeID), options.enableTextScaling);
     }
 }
 
@@ -328,7 +328,7 @@ static void restore_gl_state() {
     glPopClientAttrib();
 }
 
-void ViewportBase::renderText(const Coordinate & pos, const QString & str, const int fontSize, bool centered) {
+void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered) {
     GLdouble x, y, z, model[16], projection[16];
     GLint gl_viewport[4];
     glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
@@ -338,7 +338,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
-    painter.setFont(QFont(painter.font().family(), fontSize * devicePixelRatio()));
+    painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFonsSize) * devicePixelRatio()));
     gluProject(pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
     painter.drawText(centered ? x - QFontMetrics(painter.font()).width(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
@@ -567,7 +567,7 @@ void Viewport3D::renderViewportFrontFace() {
     }
 }
 
-void ViewportBase::renderScaleBar(const int fontSize) {
+void ViewportBase::renderScaleBar() {
     if (state->viewerState->selectModeFlag) {
         glLoadName(GLNames::Scalebar);
     }
@@ -590,7 +590,7 @@ void ViewportBase::renderScaleBar(const int fontSize) {
     glVertex3d(min_x, max_y, z);
     glEnd();
 
-    renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, fontSize, true);
+    renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, true, true);
 
     if (state->viewerState->selectModeFlag) {
         glLoadName(GLNames::None);
@@ -1965,7 +1965,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             gluCylinder(gluCylObj, std::ceil(0.014*gl_viewport[2]), 0., std::ceil(0.028*gl_viewport[2]), 10, 5);
             gluDeleteQuadric(gluCylObj);
             const int offset = std::ceil(0.043*gl_viewport[2]);
-            renderText({offset, offset, offset}, label, options.enableTextScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFonsSize);
+            renderText({offset, offset, offset}, label, options.enableTextScaling);
             glPopMatrix();
         };
         // remember world coordinate system
