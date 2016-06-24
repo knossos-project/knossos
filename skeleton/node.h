@@ -10,6 +10,7 @@
 
 class segmentListElement;
 class treeListElement;
+class Synapse;
 
 class nodeListElement : public PropertyQuery {
 public:
@@ -21,6 +22,7 @@ public:
     uint64_t timestamp;
     std::list<nodeListElement>::iterator iterator;
     treeListElement * correspondingTree = nullptr;
+    Synapse * correspondingSynapse = nullptr;
 
     std::list<segmentListElement> segments;
     // circumsphere radius - max. of length of all segments and node radius.

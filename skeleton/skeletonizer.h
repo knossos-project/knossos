@@ -63,7 +63,7 @@ struct SkeletonState {
     nodeListElement * activeNode{nullptr};
 
     std::list<treeListElement> trees;
-    std::vector<Synapse> synapses;
+    std::list<Synapse> synapses;
     std::unordered_map<int, treeListElement *> treesByID;
     std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
 

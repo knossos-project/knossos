@@ -2371,21 +2371,19 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             continue;
         }
 
+        const auto & activeTree = state->skeletonState->activeNode;
+
         if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
                 && !currentTree.selected
-                && (state->skeletonState->activeNode->isSynapticNode) ) {
-            //in render only selected tree, if we have selected a synapse, render also the adjacent tree
-            bool skiprendering = true;
-            for(auto & synapse : state->skeletonState->synapses) {
-                if(synapse.postSynapse == state->skeletonState->activeNode
-                        || synapse.preSynapse == state->skeletonState->activeNode) {
-                    if(synapse.postSynapse->correspondingTree->treeID == currentTree.treeID || synapse.preSynapse->correspondingTree->treeID == currentTree.treeID) {
-                        skiprendering = false;
-                        break;
-                    }
-                }
+                && activeTree->isSynapticNode
+                && activeTree->correspondingSynapse->postSynapse != nullptr
+                && activeTree->correspondingSynapse->preSynapse != nullptr) {
+            //in render only selected tree, if we have selected a synapse, render also the adjacent treeW
+            const auto & synapse = activeTree->correspondingSynapse;
+            if(!(synapse->postSynapse->correspondingTree == &currentTree
+                    || synapse->preSynapse->correspondingTree == &currentTree)) {
+                continue;
             }
-            if(skiprendering) continue;
         } else if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree.selected) {
             continue;
         }
@@ -2469,30 +2467,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     renderSegment(currentSegment, currentColor, options);
                 }
 
-                /* Connect all synapses */
-                for (auto & synapse : state->skeletonState->synapses) {
-                    if (synapse.postSynapse != nullptr && synapse.preSynapse != nullptr && synapse.preSynapse->correspondingTree->render && synapse.postSynapse->correspondingTree->render) {
-                       if (!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
-                                || synapse.postSynapse == state->skeletonState->activeNode
-                                || synapse.preSynapse == state->skeletonState->activeNode ) {
-
-                            segmentListElement virtualSegment(*synapse.postSynapse, *synapse.preSynapse);
-                            renderSegment(virtualSegment, Qt::black, options);
-
-                            auto post = synapse.postSynapse->position;
-                            auto pre = synapse.preSynapse->position;
-
-                            Coordinate arrowbase = { post.x - (post.x - pre.x)/10,
-                                                  post.y - (post.y - pre.y)/10,
-                                                  post.z - (post.z - pre.z)/10};
-
-                            renderCylinder(&arrowbase, Skeletonizer::singleton().segmentSizeAt(*synapse.preSynapse) * 3.0f
-                                , &synapse.postSynapse->position
-                                , Skeletonizer::singleton().segmentSizeAt(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
-                        }
-                    }
-                }
-
                 if (state->viewerState->selectModeFlag) {
                     const auto name = GLNames::NodeOffset + nodeIt->nodeID;
                     GLuint pickedBits = (options.selectionPass == RenderOptions::SelectionPass::NodeIDLowerBits) ? static_cast<GLuint>(name) : name >> 32;
@@ -2505,6 +2479,33 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 lastRenderedNode = &*nodeIt;
             }
             previousNode = &*nodeIt;
+        }
+    }
+
+    /* Connect all synapses */
+    for (auto & synapse : state->skeletonState->synapses) {
+        if (synapse.postSynapse != nullptr
+                && synapse.preSynapse != nullptr
+                && synapse.preSynapse->correspondingTree->render
+                && synapse.postSynapse->correspondingTree->render) {
+           if (!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
+                    || synapse.postSynapse == state->skeletonState->activeNode
+                    || synapse.preSynapse == state->skeletonState->activeNode ) {
+
+                segmentListElement virtualSegment(*synapse.postSynapse, *synapse.preSynapse);
+                renderSegment(virtualSegment, Qt::black, options);
+
+                auto post = synapse.postSynapse->position;
+                auto pre = synapse.preSynapse->position;
+
+                Coordinate arrowbase = { post.x - (post.x - pre.x)/10,
+                                      post.y - (post.y - pre.y)/10,
+                                      post.z - (post.z - pre.z)/10};
+
+                renderCylinder(&arrowbase, Skeletonizer::singleton().segmentSizeAt(*synapse.preSynapse) * 3.0f
+                    , &synapse.postSynapse->position
+                    , Skeletonizer::singleton().segmentSizeAt(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
+            }
         }
     }
 

@@ -286,6 +286,8 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             tempSynapse.postSynapse->isSynapticNode = true;
             tempSynapse.synapticCleft->render = false;
             state->skeletonState->synapses.push_back(tempSynapse); //move finished synapse to our synapse vector
+            tempSynapse.preSynapse->correspondingSynapse = &state->skeletonState->synapses.back();
+            tempSynapse.postSynapse->correspondingSynapse = &state->skeletonState->synapses.back();
             tempSynapse = Synapse(); //reset temporary class
             Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
             state->viewer->window->toggleSynapses(); //update statusbar
@@ -552,12 +554,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if (ctrl && shift && event->key() == Qt::Key_S) { //synapse mode swap post and presynapse
         if(state->skeletonState->activeNode->isSynapticNode) {
-            for(auto & synapse : state->skeletonState->synapses) {
-                if(synapse.postSynapse == state->skeletonState->activeNode
-                        || synapse.preSynapse == state->skeletonState->activeNode) {
-                    std::swap(synapse.postSynapse, synapse.preSynapse);
-                    break;
-                }
+            auto & synapse = state->skeletonState->activeNode->correspondingSynapse;
+            if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
+                std::swap(synapse->postSynapse, synapse->preSynapse);
             }
         }
     } else if (shift) {
@@ -636,8 +635,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             if(state->skeletonState->activeTree) {
                 Skeletonizer::singleton().delTree(state->skeletonState->activeTree->treeID);
             }
-        }
-        else if(state->skeletonState->selectedNodes.size() > 0) {
+        } else if(state->skeletonState->selectedNodes.size() > 0) {
             bool deleteNodes = true;
             if(state->skeletonState->selectedNodes.size() != 1) {
                 QMessageBox prompt;
