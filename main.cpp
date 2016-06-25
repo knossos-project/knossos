@@ -1,7 +1,7 @@
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2013
+ *  (C) Copyright 2007-2016
  *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -14,13 +14,12 @@
  *  GNU General Public License for more details.
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *  For further information, visit http://www.knossostool.org
+ *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-/*
- * For further information, visit http://www.knossostool.org or contact
- *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
- *     Fabian.Svara@mpimf-heidelberg.mpg.de
- */
 #include "coordinate.h"
 #include "dataset.h"
 #include "scriptengine/scripting.h"
