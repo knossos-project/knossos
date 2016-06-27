@@ -848,10 +848,10 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
 
     if (nodeToDel->isSynapticNode) {
         if(nodeToDel->correspondingSynapse->preSynapse == nodeToDel) {
-            nodeToDel->correspondingSynapse->preSynapse->properties.remove("preSynapse");
+            nodeToDel->correspondingSynapse->synapticCleft->properties.remove("preSynapse");
             nodeToDel->correspondingSynapse->preSynapse = nullptr;
         } else {
-            nodeToDel->correspondingSynapse->preSynapse->properties.remove("postSynapse");
+            nodeToDel->correspondingSynapse->synapticCleft->properties.remove("postSynapse");
             nodeToDel->correspondingSynapse->postSynapse = nullptr;
         }
     }

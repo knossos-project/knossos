@@ -59,7 +59,7 @@ public:
 class TreeModel : public AbstractSkeletonModel<TreeModel> {
     Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
-    const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment"};
+    const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment", "Properties"};
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
