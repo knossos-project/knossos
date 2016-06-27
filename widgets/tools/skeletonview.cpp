@@ -482,6 +482,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeRecreate();
         nodeRecreate();
     };
+    // populate count labels
+    updateTreeSelection();
+    updateNodeSelection();
 
     QObject::connect(&filterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
         nodeModel.mode = NodeModel::FilterMode::All;
