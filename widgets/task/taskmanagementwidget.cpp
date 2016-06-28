@@ -95,7 +95,7 @@ bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const Q
 }
 
 void TaskManagementWidget::updateAndRefreshWidget() {
-    const auto url = taskLoginWidget.host + "/knossos/session/";
+    const auto url = taskLoginWidget.host + api + "/session/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(url);
     setCursor(Qt::ArrowCursor);
@@ -162,7 +162,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
 }
 
 void TaskManagementWidget::loginButtonClicked(const QString & host, const QString & username, const QString & password) {
-    const auto url = host + "/knossos/login/";
+    const auto url = host + api + "/login/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().login(url, username, password);
     setCursor(Qt::ArrowCursor);
@@ -177,7 +177,7 @@ void TaskManagementWidget::loginButtonClicked(const QString & host, const QStrin
 }
 
 void TaskManagementWidget::logoutButtonClicked() {
-    const auto url = taskLoginWidget.host + "/knossos/logout/";
+    const auto url = taskLoginWidget.host + api + "/logout/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(url);
     setCursor(Qt::ArrowCursor);
@@ -209,7 +209,7 @@ void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByte
 }
 
 void TaskManagementWidget::loadLastSubmitButtonClicked() {
-    const auto url = taskLoginWidget.host + "/knossos/currentFile/";
+    const auto url = taskLoginWidget.host + api + "/current_file/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getFile(url);
 
@@ -220,7 +220,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
-    const auto url = taskLoginWidget.host + "/knossos/newTask/";
+    const auto url = taskLoginWidget.host + api + "/new_task/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getPost(url);
 
@@ -241,7 +241,7 @@ void TaskManagementWidget::submitFinal() {
 bool TaskManagementWidget::submit(const bool final) {
     state->viewer->window->save();//save file to submit
 
-    const auto url = taskLoginWidget.host + "/knossos/submit/";
+    const auto url = taskLoginWidget.host + api + "/submit/";
     setCursor(Qt::BusyCursor);
     auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setCursor(Qt::ArrowCursor);
