@@ -71,7 +71,7 @@ public:
     void popRowBegin();
     void appendRow();
     void popRow();
-    void changeRow(int index);
+    void changeRow(int idx);
 };
 
 class TouchedObjectModel : public SegmentationObjectModel {

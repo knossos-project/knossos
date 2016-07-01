@@ -195,8 +195,8 @@ void SegmentationObjectModel::popRow() {
     endRemoveRows();
 }
 
-void SegmentationObjectModel::changeRow(int id) {
-    emit dataChanged(index(id, 0), index(id, columnCount()-1));
+void SegmentationObjectModel::changeRow(int idx) {
+    emit dataChanged(index(idx, 0), index(idx, columnCount()-1));
 }
 
 void CategoryModel::recreate() {
@@ -365,19 +365,19 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         updateTouchedObjSelection();
         updateLabels();
     });
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, [this](int id){
-        objectModel.changeRow(id);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, [this](int index){
+        objectModel.changeRow(index);
         touchedObjectModel.recreate();
         updateLabels();//maybe subobject count changed
     });
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int id){
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int index){
         if (scope s{objectSelectionProtection}) {
-            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(id, 0)));
+            const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(index, 0)));
             //selection lookup is way cheaper than reselection (sadly)
             const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);
-            if (Segmentation::singleton().objects[id].selected && !alreadySelected) {
+            if (Segmentation::singleton().objects[index].selected && !alreadySelected) {
                 objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-            } else if (!Segmentation::singleton().objects[id].selected && alreadySelected) {
+            } else if (!Segmentation::singleton().objects[index].selected && alreadySelected) {
                 objectsTable.selectionModel()->setCurrentIndex(proxyIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
             }
             touchedObjectModel.recreate();
