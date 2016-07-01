@@ -650,14 +650,16 @@ void Segmentation::mergeSelectedObjects() {
         //4 (im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
             flat_deselect(secondObj);
+            const auto firstIndex = firstObj.index;
+            const auto secondIndex = secondObj.index;
 
             secondObj.todo = false;//secondObj will get invalidated
-            uint64_t newIndex = createObject(secondObj, firstObj).index;//create new object from merge result
+            uint64_t newIndex = createObject(secondObj, firstObj).index;//create new object from merge result, invalidates firstObj and secondObj references since vector size changed
 
+            flat_deselect(objects[firstIndex]);//firstObj got invalidated
             selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
-            flat_deselect(objects[selectedObjectIndices.back()]);//firstObj got invalidated
-            emit changedRowSelection(firstObj.index);
-            emit changedRowSelection(secondObj.index);
+            emit changedRowSelection(firstIndex);
+            emit changedRowSelection(secondIndex);
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
