@@ -1280,16 +1280,16 @@ void Viewer::datasetColorAdjustmentsChanged() {
         }
     }
     //Apply the dynamic range settings to the adjustment table
-    const double MAX_COLORVAL{255.0};
-    if (state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL) {
+    const uint MAX_COLORVAL{255};
+    if (state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL) {
         const auto originalAdjustment = state->viewerState->datasetAdjustmentTable;
-        for (int i = 0; i < 256; ++i) {
-            int dynIndex = ((i - state->viewerState->luminanceBias) / (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
+        for (std::size_t i = 0; i < 256; ++i) {
+            int dynIndex = ((i - state->viewerState->luminanceBias) / (state->viewerState->luminanceRangeDelta / static_cast<double>(MAX_COLORVAL)));
             dynIndex = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
             state->viewerState->datasetAdjustmentTable[i] = originalAdjustment[dynIndex];
         }
     }
-    state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias != 0 || state->viewerState->luminanceRangeDelta != MAX_COLORVAL;
+    state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL;
 
     dc_reslice_notify_visible();
 }

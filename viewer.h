@@ -120,7 +120,7 @@ struct ViewerState {
     float movementAreaFactor{80.f};
 
     // dataset & segmentation rendering options
-    int luminanceRangeDelta{255};
+    uint luminanceRangeDelta{255};
     int luminanceBias{0};
     bool showOverlay{true};
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT

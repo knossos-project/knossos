@@ -30,26 +30,18 @@
 #include <QMessageBox>
 
 DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent) {
-    biasSpinBox.setMaximum(255);
-    biasSpinBox.setSingleStep(1);
-    biasSlider.setMaximum(255);
-    biasSlider.setSingleStep(1);
+    biasSpinBox.setRange(0, 255);
+    biasSlider.setRange(0, 255);
 
-    rangeDeltaSlider.setMaximum(255);
-    rangeDeltaSlider.setSingleStep(1);
-    rangeDeltaSpinBox.setMaximum(255);
-    rangeDeltaSpinBox.setSingleStep(1);
+    rangeDeltaSlider.setRange(1, 255);
+    rangeDeltaSpinBox.setRange(1, 255);
 
-    segmentationOverlaySpinBox.setMaximum(255);
-    segmentationOverlaySpinBox.setSingleStep(1);
-    segmentationOverlaySlider.setMaximum(255);
-    segmentationOverlaySlider.setSingleStep(1);
+    segmentationOverlaySpinBox.setRange(0, 255);
+    segmentationOverlaySlider.setRange(0, 255);
 
     volumeColorButton.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
-    volumeOpaquenessSpinBox.setMaximum(255);
-    volumeOpaquenessSpinBox.setSingleStep(1);
-    volumeOpaquenessSlider.setMaximum(255);
-    volumeOpaquenessSlider.setSingleStep(1);
+    volumeOpaquenessSpinBox.setRange(0, 255);
+    volumeOpaquenessSlider.setRange(0, 255);
 
     datasetSeparator.setFrameShape(QFrame::HLine);
     datasetSeparator.setFrameShadow(QFrame::Sunken);
