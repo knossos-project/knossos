@@ -115,7 +115,7 @@ class SkeletonView : public QWidget {
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
     QCheckBox displaySynapticCleftsCheckbox{"Display synaptic clefts"};
-    QVBoxLayout displayOptions;
+    QVBoxLayout filterOptions;
     QHBoxLayout treeOptionsLayout;
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"regex"};
@@ -128,10 +128,10 @@ class SkeletonView : public QWidget {
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
     QHBoxLayout nodeOptionsLayout;
-    Spoiler displaySpoiler{"Display options"};
-    QVBoxLayout displaySpoilerLayout;
+    Spoiler filterSpoiler{"filter options"};
+    QVBoxLayout filterSpoilerLayout;
     QButtonGroup filterTreeButtonGroup;
-    QCheckBox filterTreeDisplayAll{"display other tree"};
+    QCheckBox filterTreeDisplayAll{"display other trees"};
     QCheckBox filterTreeDisplaySynapse{"display synaptic clefts"};
     QGroupBox filterGroupBox{"Filter"};
     QHBoxLayout filterTreeLayout;

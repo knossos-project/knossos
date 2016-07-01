@@ -367,9 +367,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     const bool showAllNodes = nodeModel.mode == NodeModel::FilterMode::All;
     filterGroupBox.setChecked(!showAllNodes);
 
-    displaySpoilerLayout.addLayout(&filterTreeLayout);
-    displaySpoilerLayout.addWidget(&filterGroupBox);
-    displaySpoiler.setContentLayout(displaySpoilerLayout);
+    filterSpoilerLayout.addWidget(&filterGroupBox);
+    filterSpoiler.setContentLayout(filterSpoilerLayout);
 
     nodeCommentFilter.setPlaceholderText("node comment");
 
@@ -378,11 +377,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     nodeSortAndCommentFilterProxy.setFilterKeyColumn(5);
     setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 
-    displayOptions.addWidget(&displaySpoiler);
+    filterOptions.addWidget(&filterSpoiler);
 
     treeOptionsLayout.addWidget(&treeCommentFilter);
     treeOptionsLayout.addWidget(&treeRegex);
-    treeLayout.addLayout(&displayOptions);
+    treeLayout.addLayout(&filterTreeLayout);
     treeLayout.addLayout(&treeOptionsLayout);
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
@@ -393,6 +392,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     nodeOptionsLayout.addWidget(&nodeCommentFilter);
     nodeOptionsLayout.addWidget(&nodeRegex);
+    nodeLayout.addLayout(&filterOptions);
     nodeLayout.addLayout(&nodeOptionsLayout);
     nodeLayout.addWidget(&nodeView);
     nodeLayout.addWidget(&nodeCountLabel);
@@ -598,14 +598,22 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1);//show
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() >= 2);//merge trees action
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//set comment
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//show
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//hide
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//restore default color
-        treeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedTrees.size() > 0);//delete
+
+        const auto & selectedTrees = state->skeletonState->selectedTrees;
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+                                                      && selectedTrees.front()->isSynapticCleft
+                                                      && selectedTrees.front()->properties.contains("preSynapse")); //jump to preSynapse
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+                                                      && selectedTrees.front()->isSynapticCleft
+                                                      && selectedTrees.front()->properties.contains("postSynapse")); //jump to postSynapse
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() >= 2);//merge trees action
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//set comment
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
     });
@@ -629,6 +637,16 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         if (!tree->nodes.empty()) {
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
+    });
+    QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [this](){
+        const auto * tree = state->skeletonState->selectedTrees.front();
+        if(tree->properties.contains("preSynapse"))
+            Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["preSynapse"].toLongLong()]);
+    });
+    QObject::connect(treeContextMenu.addAction("Jump to postSynapse"), &QAction::triggered, [this](){
+        const auto * tree = state->skeletonState->selectedTrees.front();
+        if(tree->properties.contains("preSynapse"))
+            Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
     });
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
