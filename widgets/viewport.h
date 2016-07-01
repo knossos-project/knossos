@@ -46,10 +46,6 @@
 
 enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_ZY, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
 Q_DECLARE_METATYPE(ViewportType)
-/* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
-This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
-values. The XY vp always used. */
-const auto VIEWPORT_ORTHO = VIEWPORT_XY;
 
 constexpr const double VPZOOMMAX = 0.02;
 constexpr const double VPZOOMMIN = 1.;
