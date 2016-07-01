@@ -550,7 +550,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         } else if(state->skeletonState->selectedNodes.size() == 2) {
             Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
         }
-    } else if (ctrl && shift && event->key() == Qt::Key_S) { //synapse mode swap post and presynapse
+    } else if (ctrl && shift && event->key() == Qt::Key_C) { //synapse mode swap post and presynapse
         if(state->skeletonState->activeNode->isSynapticNode) {
             auto & synapse = state->skeletonState->activeNode->correspondingSynapse;
             if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
