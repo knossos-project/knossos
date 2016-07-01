@@ -517,6 +517,16 @@ void MainWindow::createMenus() {
     //skeleton
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
+    actionMenu.addSeparator();
+    addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
+        if(state->skeletonState->selectedNodes.size() < 2) {
+            state->viewer->window->toggleSynapses(); //update statusbar
+            Skeletonizer::singleton().addSynapse();
+        } else if(state->skeletonState->selectedNodes.size() == 2) {
+            Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
+        }
+    }, Qt::ShiftModifier + Qt::Key_C);
+    actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));

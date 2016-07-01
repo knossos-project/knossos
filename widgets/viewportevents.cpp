@@ -543,18 +543,12 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 isFullOrigDocked = false;
             }
         }
-    } else if (!ctrl && shift &&  event->key() == Qt::Key_C) { //synapse mode
-        if(state->skeletonState->selectedNodes.size() < 2) {
-            state->viewer->window->toggleSynapses(); //update statusbar
-            Skeletonizer::singleton().addSynapse();
-        } else if(state->skeletonState->selectedNodes.size() == 2) {
-            Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
-        }
     } else if (ctrl && shift && event->key() == Qt::Key_C) { //synapse mode swap post and presynapse
         if(state->skeletonState->activeNode->isSynapticNode) {
             auto & synapse = state->skeletonState->activeNode->correspondingSynapse;
             if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
                 std::swap(synapse->postSynapse, synapse->preSynapse);
+                std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
             }
         }
     } else if (shift) {

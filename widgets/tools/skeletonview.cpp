@@ -620,13 +620,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to node
+        const auto & selectedNodes = state->skeletonState->selectedNodes;
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//jump to node
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set comment
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//set radius
-        nodeContextMenu.actions().at(i++)->setEnabled(state->skeletonState->selectedNodes.size() > 0);//delete
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2
+                                                      && selectedNodes.front()->isSynapticNode
+                                                      && selectedNodes.back()->isSynapticNode
+                                                      && selectedNodes.front()->correspondingSynapse
+                                                            == selectedNodes.back()->correspondingSynapse);//swap synaptic nodes
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set radius
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
     });
@@ -760,6 +766,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     QObject::connect(nodeContextMenu.addAction("&Link/Unlink nodes"), &QAction::triggered, [this](){
         Skeletonizer::singleton().toggleConnectionOfFirstPairOfSelectedNodes(this);
+    });
+    QObject::connect(nodeContextMenu.addAction("Swap synaptic nodes"), &QAction::triggered, [this](){
+        const auto & selectedNodes = state->skeletonState->selectedNodes;
+        if(selectedNodes.size() == 2
+                && selectedNodes.front()->isSynapticNode
+                && selectedNodes.back()->isSynapticNode
+                && selectedNodes.front()->correspondingSynapse
+                        == selectedNodes.back()->correspondingSynapse) {
+            auto & synapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
+            std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
+            std::swap(synapse->postSynapse, synapse->preSynapse);
+            allRecreate();
+        }
     });
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
