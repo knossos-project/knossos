@@ -563,5 +563,9 @@ void SegmentationView::contextMenu(const QTreeView & table, const QPoint & pos) 
     QObject::connect(&mergeAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
     QObject::connect(&restoreColorAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
     QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
+    jumpAction.setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);
+    mergeAction.setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);
+    restoreColorAction.setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);
+    deleteAction.setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);
     contextMenu.exec(table.viewport()->mapToGlobal(pos));
 }
