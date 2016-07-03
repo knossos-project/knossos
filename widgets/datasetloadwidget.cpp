@@ -183,7 +183,8 @@ void DatasetLoadWidget::updateDatasetInfo() {
     } else {
         infotext = infotext.arg("Local").arg("");
     }
-    infotext += QString("Boundary (x y z): %1 %2 %3<br />Compression: %4<br />cubeEdgeLength: %5<br />Magnification: %6<br />Scale (x y z): %7 %8 %9")
+    infotext += QString("Name: %1<br />Boundary (x y z): %2 %3 %4<br />Compression: %5<br />cubeEdgeLength: %6<br />Magnification: %7<br />Scale (x y z): %8 %9 %10")
+        .arg(datasetinfo.experimentname)
         .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
         .arg(datasetinfo.compressionRatio)
         .arg(datasetinfo.cubeEdgeLength)
