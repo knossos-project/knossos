@@ -53,8 +53,8 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     tableWidget.horizontalHeader()->setVisible(false);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
-    tableWidget.horizontalHeader()->resizeSection(1, 20);
-    tableWidget.horizontalHeader()->resizeSection(2, 40);
+    tableWidget.horizontalHeader()->resizeSection(1, 25);
+    tableWidget.horizontalHeader()->resizeSection(2, 20);
     tableWidget.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
     splitter.setOrientation(Qt::Vertical);
@@ -114,28 +114,30 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
         return -1;
     };
 
-    QPushButton *addDs = new QPushButton("…");
-    QObject::connect(addDs, &QPushButton::clicked, [this, rowFromCell, addDs](){
+    QPushButton *addDatasetButton = new QPushButton("…");
+    addDatasetButton->setToolTip(tr("Select a dataset from file…"));
+    QObject::connect(addDatasetButton, &QPushButton::clicked, [this, rowFromCell, addDatasetButton](){
         state->viewerState->renderInterval = SLOW;
-        const auto selectFile = QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
+        const auto selectedFile = QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         state->viewerState->renderInterval = FAST;
-        if (!selectFile.isEmpty()) {
-            QTableWidgetItem * const t = new QTableWidgetItem(selectFile);
-            const int row = rowFromCell(1, addDs);
-            tableWidget.setItem(row, 0, t);
+        if (!selectedFile.isEmpty()) {
+            QTableWidgetItem * const datasetPathItem = new QTableWidgetItem(selectedFile);
+            const int row = rowFromCell(1, addDatasetButton);
+            tableWidget.setItem(row, 0, datasetPathItem);
         }
     });
 
-    QPushButton *delDs = new QPushButton("Del");
-    QObject::connect(delDs, &QPushButton::clicked, [this, rowFromCell, delDs](){
-        const int row = rowFromCell(2, delDs);
+    QPushButton *removeDatasetButton = new QPushButton("×");
+    removeDatasetButton->setToolTip(tr("Remove this dataset from the list"));
+    QObject::connect(removeDatasetButton, &QPushButton::clicked, [this, rowFromCell, removeDatasetButton](){
+        const int row = rowFromCell(2, removeDatasetButton);
         tableWidget.removeRow(row);
     });
 
-    QTableWidgetItem *t = new QTableWidgetItem(dataset);
-    tableWidget.setItem(row, 0, t);
-    tableWidget.setCellWidget(row, 1, addDs);
-    tableWidget.setCellWidget(row, 2, delDs);
+    QTableWidgetItem *datasetPathItem = new QTableWidgetItem(dataset);
+    tableWidget.setItem(row, 0, datasetPathItem);
+    tableWidget.setCellWidget(row, 1, addDatasetButton);
+    tableWidget.setCellWidget(row, 2, removeDatasetButton);
 }
 
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {
