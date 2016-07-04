@@ -28,6 +28,7 @@
 #include "mainwindow.h"
 
 #include <QDesktopServices>
+#include <QDir>
 #include <QFileInfo>
 #include <QSettings>
 
