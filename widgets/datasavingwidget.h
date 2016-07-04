@@ -23,33 +23,25 @@
 #ifndef DATASAVINGWIDGET_H
 #define DATASAVINGWIDGET_H
 
+#include <QCheckBox>
 #include <QDialog>
+#include <QFormLayout>
+#include <QLabel>
+#include <QSpinBox>
+#include <QVBoxLayout>
 
-class QCheckBox;
-class QLabel;
-class QSpinBox;
-class DataSavingWidget : public QDialog
-{
-    friend class MainWindow;
+class DataSavingWidget : public QDialog {
     Q_OBJECT
+    QVBoxLayout mainLayout;
+    QFormLayout formLayout;
+    QCheckBox autosaveCheckbox{"Auto-Saving (triggered by changes)"};
+    QLabel autosaveIntervalLabel{"Saving interval [min]"};
+    QSpinBox autosaveIntervalSpinBox;
+    QCheckBox autoincrementFileNameButton{"Autoincrement File Name"};
 public:
-    explicit DataSavingWidget(QWidget *parent = 0);
+    explicit DataSavingWidget(QWidget * parent = nullptr);
     void loadSettings();
     void saveSettings();
-protected:
-    QCheckBox *autosaveCheckbox;
-    QLabel *autosaveIntervalLabel;
-    QSpinBox *autosaveIntervalSpinBox;
-    QLabel *autoincrementFileNameLabel;
-    QCheckBox *autoincrementFileNameButton;
-
-signals:
-    void uncheckSignal();
-
-protected:
-    void closeEvent(QCloseEvent *event);
-
-
 };
 
 #endif // DATASAVINGWIDGET_H
