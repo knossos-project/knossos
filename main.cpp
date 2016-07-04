@@ -32,6 +32,7 @@
 #include <QFileInfo>
 #include <QSplashScreen>
 #include <QStandardPaths>
+#include <QStyleFactory>
 
 #include <iostream>
 #include <fstream>
@@ -93,7 +94,16 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
+    const auto end = std::next(argv, argc);
+    bool styleOverwrite = std::find_if(argv, end, [](const auto & argvv){
+        return QString::fromUtf8(argvv).contains("-style");
+    }) != end;
     QApplication a(argc, argv);
+#ifdef Q_OS_OSX
+    if (!styleOverwrite) {// default to Fusion style on OSX if nothing contrary was specified (because the default theme looks bad)
+        QApplication::setStyle(QStyleFactory::create("Fusion"));
+    }
+#endif
     qInstallMessageHandler(debugMessageHandler);
     /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
