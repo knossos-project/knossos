@@ -22,10 +22,13 @@
 
 #include "datasavingwidget.h"
 
+#include "file_io.h"
 #include "GuiConstants.h"
 #include "viewer.h"
 #include "mainwindow.h"
 
+#include <QDesktopServices>
+#include <QFileInfo>
 #include <QSettings>
 
 DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
@@ -33,11 +36,17 @@ DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::Windo
     mainLayout.setSizeConstraint(QLayout::SetFixedSize);// non-resizable
 
     autosaveIntervalSpinBox.setMinimum(1);
+    autosaveIntervalSpinBox.setSuffix(" min");
+    autosaveLocationEdit.setText(QFileInfo(annotationFileDefaultPath()).dir().absolutePath());
+    autosaveLocationEdit.setWordWrap(true);
+    autosaveLocationEdit.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
 
     mainLayout.addWidget(&autosaveCheckbox);
     formLayout.addRow(&autosaveIntervalLabel, &autosaveIntervalSpinBox);
     mainLayout.addLayout(&formLayout);
     mainLayout.addWidget(&autoincrementFileNameButton);
+    mainLayout.addWidget(&revealButton);
+    mainLayout.addWidget(&autosaveLocationEdit);
     setLayout(&mainLayout);
 
     QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
@@ -55,6 +64,9 @@ DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::Windo
             Session::singleton().autoSaveTimer.stop();
         }
         state->viewer->window->updateTitlebar();
+    });
+    QObject::connect(&revealButton, &QPushButton::clicked, [this]() {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(autosaveLocationEdit.text()));
     });
 }
 

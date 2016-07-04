@@ -26,7 +26,9 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
 
@@ -34,10 +36,12 @@ class DataSavingWidget : public QDialog {
     Q_OBJECT
     QVBoxLayout mainLayout;
     QFormLayout formLayout;
-    QCheckBox autosaveCheckbox{"Auto-Saving (triggered by changes)"};
-    QLabel autosaveIntervalLabel{"Saving interval [min]"};
+    QCheckBox autosaveCheckbox{"Auto saving (triggered by changes)"};
+    QLabel autosaveIntervalLabel{"Saving interval"};
     QSpinBox autosaveIntervalSpinBox;
-    QCheckBox autoincrementFileNameButton{"Autoincrement File Name"};
+    QCheckBox autoincrementFileNameButton{"Auto increment file name"};
+    QPushButton revealButton{"Reveal default location"};
+    QLabel autosaveLocationEdit;
 public:
     explicit DataSavingWidget(QWidget * parent = nullptr);
     void loadSettings();
