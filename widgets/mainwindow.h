@@ -120,6 +120,7 @@ class MainWindow : public QMainWindow {
     QAction *newTreeAction;
     QAction *pushBranchAction;
     QAction *popBranchAction;
+    QAction *createSynapse;
     QAction *clearSkeletonAction;
     QAction *clearMergelistAction;
 

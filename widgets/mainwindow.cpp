@@ -518,7 +518,7 @@ void MainWindow::createMenus() {
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     actionMenu.addSeparator();
-    addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
+    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             state->viewer->window->toggleSynapses(); //update statusbar
             Skeletonizer::singleton().addSynapse();
@@ -899,6 +899,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     newTreeAction->setVisible(trees);
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
+    createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     clearSkeletonAction->setVisible(skeleton);
     clearMergelistAction->setVisible(segmentation);
 
