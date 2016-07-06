@@ -454,13 +454,14 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
 
                     Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
-                } else if(xml.name() == "time" && merge == false) { // in case of a merge the current annotation's time is kept.
-                    const auto ms = attributes.value("ms").toULongLong();
-                    Session::singleton().setAnnotationTime(ms);
-                } else if(xml.name() == "activeNode" && !merge) {
-                    QStringRef attribute = attributes.value("id");
-                    if(attribute.isNull() == false) {
-                        activeNodeID = attribute.toULongLong();
+                } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
+                    if (!merge) {
+                        const auto ms = attributes.value("ms").toULongLong();
+                        Session::singleton().setAnnotationTime(ms);
+                    }
+                } else if(xml.name() == "activeNode") {
+                    if (!merge) {
+                        activeNodeID = attributes.value("id").toULongLong();
                     }
                 } else if(xml.name() == "segmentation") {
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
@@ -474,25 +475,16 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     attribute = attributes.value("z");
                     if(attribute.isNull() == false)
                         loadedPosition.z = attribute.toLocal8Bit().toInt();
+                } else if(xml.name() == "skeletonVPState") {
+                    if (!merge) {
+                        for (int j = 0; j < 16; ++j) {
+                            state->skeletonState->skeletonVpModelView[j] = attributes.value(QString("E%1").arg(j)).toFloat();
+                        }
+                        glMatrixMode(GL_MODELVIEW);
+                        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
-                } else if(xml.name() == "skeletonVPState" && !merge) {
-                    int j = 0;
-                    char element [8];
-                    for (j = 0; j < 16; j++){
-                        sprintf (element, "E%d", j);
-                        QStringRef attribute = attributes.value(element);
-                        state->skeletonState->skeletonVpModelView[j] = attribute.toString().toFloat();
-                    }
-                    glMatrixMode(GL_MODELVIEW);
-                    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-
-                    QStringRef attribute = attributes.value("translateX");
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->translateX = attribute.toString().toFloat();
-                    }
-                    attribute = attributes.value("translateY");
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->translateY = attribute.toString().toFloat();
+                        state->skeletonState->translateX = attributes.value("translateX").toFloat();
+                        state->skeletonState->translateY = attributes.value("translateY").toFloat();
                     }
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
