@@ -519,8 +519,6 @@ void ViewportOrtho::renderViewportFast() {
     if (state->viewer->layers.empty()) {
         return;
     }
-    static QElapsedTimer time;
-//    qDebug() << time.restart();
 
     QOpenGLTimeMonitor times;
     times.setSampleCount(3);
