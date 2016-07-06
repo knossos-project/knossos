@@ -37,7 +37,7 @@ class SnapshotWidget : public QDialog {
     QString saveDir;
     QComboBox sizeCombo;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpZYRadio{"ZY viewport"}, vpArbRadio{"Arb viewport"}, vp3dRadio{"3D viewport"};
-    QCheckBox withAxesCheck{"Dataset Axes"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
+    QCheckBox withAxesCheck{"Dataset axes"}, withBoxCheck{"Dataset box"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
     QVBoxLayout mainLayout;
     uint getCheckedViewport() const;
@@ -51,7 +51,7 @@ public slots:
     void updateOptionVisibility();
 signals:
     void visibilityChanged(bool);
-    void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 
 private:
     void showEvent(QShowEvent *event) override {

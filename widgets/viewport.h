@@ -89,7 +89,7 @@ struct RenderOptions {
     // default
     RenderOptions();
     // snapshot render options
-    RenderOptions(const bool drawBoundaryAxes, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
+    RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
 
     bool drawBoundaryAxes;
     bool drawBoundaryBox;
@@ -257,7 +257,7 @@ signals:
     void updateDatasetOptionsWidget();
     void snapshotTriggered(const ViewportType type);
 public slots:
-    void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
 class Viewport3D : public ViewportBase {

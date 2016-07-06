@@ -159,6 +159,7 @@ const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
 // Snapshot settings
 const QString VIEWPORT = "viewport";
 const QString WITH_AXES = "with_axes";
+const QString WITH_BOX = "with_box";
 const QString WITH_OVERLAY = "with_overlay";
 const QString WITH_SKELETON = "with_skeleton";
 const QString WITH_SCALE = "with_scale";

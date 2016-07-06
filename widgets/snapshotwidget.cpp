@@ -61,10 +61,12 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
 
     auto imageOptionsLayout = new QVBoxLayout();
     withAxesCheck.setChecked(true);
+    withBoxCheck.setChecked(false);
     withOverlayCheck.setChecked(true);
     withScaleCheck.setChecked(true);
     withVpPlanes.setHidden(true);
     imageOptionsLayout->addWidget(&withAxesCheck);
+    imageOptionsLayout->addWidget(&withBoxCheck);
     imageOptionsLayout->addWidget(&withOverlayCheck);
     imageOptionsLayout->addWidget(&withSkeletonCheck);
     imageOptionsLayout->addWidget(&withScaleCheck);
@@ -95,7 +97,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir:
                             vpArbRadio.isChecked() ? VIEWPORT_ARBITRARY :
                                                     VIEWPORT_SKELETON;
 
-            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
+            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
     });
     setLayout(&mainLayout);
@@ -126,6 +128,7 @@ void SnapshotWidget::updateOptionVisibility() {
     withSkeletonCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withScaleCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withAxesCheck.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withBoxCheck.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
     withVpPlanes.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
 }
 
@@ -150,6 +153,7 @@ void SnapshotWidget::saveSettings() {
 
     settings.setValue(VIEWPORT, getCheckedViewport());
     settings.setValue(WITH_AXES, withAxesCheck.isChecked());
+    settings.setValue(WITH_BOX, withBoxCheck.isChecked());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
     settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
@@ -174,6 +178,7 @@ void SnapshotWidget::loadSettings() {
         default: vp3dRadio.setChecked(true); break;
     }
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
+    withBoxCheck.setChecked(settings.value(WITH_BOX, false).toBool());
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
     withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
