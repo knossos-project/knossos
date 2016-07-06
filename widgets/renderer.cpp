@@ -57,7 +57,6 @@
 #define ROTATIONSTATEXY    0
 #define ROTATIONSTATEXZ    1
 #define ROTATIONSTATEZY    2
-#define ROTATIONSTATERESET 3
 
 enum GLNames {
     None,
@@ -66,24 +65,6 @@ enum GLNames {
 };
 
 bool setRotationState(uint setTo) {
-    if (setTo == ROTATIONSTATERESET){
-        state->skeletonState->rotationState[0] = 0.866025;
-        state->skeletonState->rotationState[1] = 0.286788;
-        state->skeletonState->rotationState[2] = 0.409576;
-        state->skeletonState->rotationState[3] = 0.0;
-        state->skeletonState->rotationState[4] = -0.5;
-        state->skeletonState->rotationState[5] = 0.496732;
-        state->skeletonState->rotationState[6] = 0.709407;
-        state->skeletonState->rotationState[7] = 0.0;
-        state->skeletonState->rotationState[8] = 0.0;
-        state->skeletonState->rotationState[9] = 0.819152;
-        state->skeletonState->rotationState[10] = -0.573576;
-        state->skeletonState->rotationState[11] = 0.0;
-        state->skeletonState->rotationState[12] = 0.0;
-        state->skeletonState->rotationState[13] = 0.0;
-        state->skeletonState->rotationState[14] = 0.0;
-        state->skeletonState->rotationState[15] = 1.0;
-    }
     if (setTo == ROTATIONSTATEXY){//x @ 0°
         state->skeletonState->rotationState[0] = 1.0;//1
         state->skeletonState->rotationState[1] = 0.0;
@@ -1715,7 +1696,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             state->skeletonState->rotationcounter = 0;
         }
         break;
-    case SKELVP_RESET:
+    case SKELVP_RESET: {
         state->skeletonState->definedSkeletonVpView = -1;
         state->skeletonState->translateX = 0;
         state->skeletonState->translateY = 0;
@@ -1724,13 +1705,17 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
-        glScalef(-1., 1., 1.);
-        glRotatef(235., 1., 0., 0.);
-        glRotatef(210., 0., 0., 1.);
+        glRotatef(-25., 1., 0., 0.);
+        glRotatef(-25., 0., 1., 0.);
+        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
         state->skeletonState->zoomLevel = SKELZOOMMIN;
-        setRotationState(ROTATIONSTATERESET);
+        QMatrix4x4 rotMat;
+        rotMat.rotate(25, {1, 0, 0});
+        rotMat.rotate(25, {0, 1, 0});
+        rotMat.copyDataTo(state->skeletonState->rotationState);
         break;
+    }
     default:
         break;
     }
