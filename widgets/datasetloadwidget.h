@@ -52,7 +52,7 @@ class DatasetLoadWidget : public QDialog {
     QLabel infoLabel;
     QFrame line;
     QHBoxLayout superCubeEdgeHLayout;
-    QSpinBox superCubeEdgeSpin;
+    QSpinBox fovSpin;
     QLabel superCubeSizeLabel;
     QHBoxLayout cubeEdgeHLayout;
     QLabel cubeEdgeLabel{"Cubesize"};
