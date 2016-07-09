@@ -1247,7 +1247,7 @@ void MainWindow::resetViewports() {
     } else {
         forEachVPDo([](ViewportBase & vp) {
             vp.setDock(true);
-            vp.setVisible(state->viewerState->addArbVP || vp.viewportType != VIEWPORT_ARBITRARY);
+            vp.setVisible(state->viewerState->enableArbVP || vp.viewportType != VIEWPORT_ARBITRARY);
         });
     }
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());

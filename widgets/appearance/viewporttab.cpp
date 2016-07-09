@@ -63,8 +63,9 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
     QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, &ViewportTab::setViewportDecorations);
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
-    QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [](const bool on){
-        state->viewerState->addArbVP = on;
+    QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [this](const bool on){
+        showArbPlaneCheckBox.setEnabled(on);
+        state->viewerState->enableArbVP = on;
         state->viewer->viewportArb->setVisible(on);
     });
     // 3D viewport

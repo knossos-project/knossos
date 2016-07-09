@@ -1788,7 +1788,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glBindTexture (GL_TEXTURE_2D, 0);
                 break;
             case VIEWPORT_ARBITRARY:
-                if (!state->viewerState->showArbplane) break;
+                if (!state->viewerState->enableArbVP || !state->viewerState->showArbplane) break;
                 renderArbitrarySlicePane(orthoVP);
                 break;
             default:
@@ -1864,6 +1864,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 glEnd();
                 break;
             case VIEWPORT_ARBITRARY:
+                if (!state->viewerState->enableArbVP) break;
                 glColor4f(orthoVP.n.z, orthoVP.n.y, orthoVP.n.x, 1.);
 
                 glBegin(GL_LINE_LOOP);
