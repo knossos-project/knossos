@@ -40,6 +40,29 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+class FOVSpinBox : public QSpinBox {
+public:
+    uint cubeEdge{128};
+
+    virtual QValidator::State validate(QString &input, int &pos) const override {
+        if (QSpinBox::validate(input, pos) == QValidator::Invalid) {
+            return QValidator::Invalid;
+        }
+        auto number = valueFromText(input);
+        return ((number % cubeEdge == 0) && ((number / cubeEdge) % 2 == 0)) ? QValidator::Acceptable : QValidator::Intermediate;
+    }
+
+    virtual void fixup(QString &input) const override {
+        auto number = valueFromText(input);
+        auto ratio = static_cast<int>(std::floor(static_cast<float>(number) / cubeEdge));
+        if (ratio % 2 == 0) {
+            input = textFromValue(ratio * cubeEdge);
+        } else {
+            input = textFromValue((ratio + 1) * cubeEdge);
+        }
+    }
+};
+
 class QScrollArea;
 class QPushButton;
 
@@ -52,7 +75,7 @@ class DatasetLoadWidget : public QDialog {
     QLabel infoLabel;
     QFrame line;
     QHBoxLayout superCubeEdgeHLayout;
-    QSpinBox fovSpin;
+    FOVSpinBox fovSpin;
     QLabel superCubeSizeLabel;
     QHBoxLayout cubeEdgeHLayout;
     QLabel cubeEdgeLabel{"Cubesize"};

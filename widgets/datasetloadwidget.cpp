@@ -176,6 +176,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
     fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
+    fovSpin.cubeEdge = datasetinfo.cubeEdgeLength;
     cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
     adaptMemoryConsumption();
 
@@ -414,6 +415,7 @@ void DatasetLoadWidget::loadSettings() {
     state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);
+    fovSpin.cubeEdge = state->cubeEdgeLength;
     fovSpin.setValue(state->cubeEdgeLength * (state->M - 1));
     segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
     adaptMemoryConsumption();
