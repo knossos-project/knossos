@@ -28,8 +28,9 @@
 
 #include <QByteArray>
 #include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QStandardPaths>
-#include <QXmlStreamReader>
 
 #include <fstream>
 
@@ -100,65 +101,45 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     const auto res = Network::singleton().refresh(url);
     setCursor(Qt::ArrowCursor);
 
-    QString statusText = "Please login.";
-    bool hasUser{false};
-    QXmlStreamReader xml(res.second);
-    if (res.first && xml.readNextStartElement() && xml.name() == "session") {
-        QString username, fullName, taskCategory, categoryDescription, taskName, taskComment;
-        while (xml.readNextStartElement()) {
-            if (xml.name() == "user") {
-                hasUser = true;
-                const auto attributes = xml.attributes();
-                username = attributes.value("username").toString();
-                fullName = attributes.value("first_name").toString() + ' ' + attributes.value("last_name").toString();
-            } else if (xml.name() == "category") {
-                const auto attributes = xml.attributes();
-                taskCategory = attributes.value("name").toString();
-                categoryDescription = QByteArray::fromBase64(attributes.value("description").toUtf8());
-            } else if (xml.name() == "task") {
-                const auto attributes = xml.attributes();
-                taskName = attributes.value("name").toString();
-                taskComment = QByteArray::fromBase64(attributes.value("comment").toUtf8());
-            }
-            xml.skipCurrentElement();// also discards unknown elements
+    const auto jmap = QJsonDocument::fromJson(res.second.toUtf8()).object();
+    if (res.first && !jmap.isEmpty()) {
+//        auto username = jmap["username"].toString();// username is not used
+        auto fullName = jmap["first_name"].toString() + ' ' + jmap["last_name"].toString();
+        auto taskName = jmap["task_name"].toString("");
+        auto taskComment = jmap["task_comment"].toString();
+        auto taskCategory = jmap["task_category_name"].toString("");
+        auto categoryDescription = jmap["task_category_description"].toString();
+        const bool hasTask = !taskName.isEmpty();
+
+        Session::singleton().task = {taskCategory, taskName};
+        auto statusText = tr("Hello ") + fullName + tr("!");
+        statusLabel.setText(statusText);
+        logoutButton.setText("Logout");
+
+        //last submit/new task are mutually exclusive, show only one of both
+        gridLayout.removeWidget(&loadLastSubmitButton);
+        gridLayout.removeWidget(&startNewTaskButton);
+        if (hasTask) {
+            taskLabel.setText(tr("“%1” (%2)").arg(taskName).arg(taskCategory));
+            gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
+        } else {
+            taskLabel.setText(tr("None"));
+            gridLayout.addWidget(&startNewTaskButton, 0, 0, 1, 2);
         }
-        xml.readNext();// </session>
-        statusText = !xml.hasError() ? "" : tr("\nThere was an error parsing the response, please report this error: \n%1 (at line %2)").arg(xml.errorString()).arg(xml.lineNumber());
+        categoryDescriptionLabel.setText(categoryDescription);
+        taskCommentLabel.setText(taskComment);
+        //buttons would still be shown after removing them from the layout
+        loadLastSubmitButton.setVisible(hasTask);
+        startNewTaskButton.setVisible(!hasTask);
 
-        Session::singleton().task = {taskCategory,taskName};
-        if (hasUser) {
-            statusText.prepend("Hello " + fullName + "!");// statusText may already contain error Information
-            statusLabel.setText(statusText);
-            logoutButton.setText("Logout");
-
-            const bool hasTask = !taskName.isEmpty();
-            //last submit/new task are mutually exclusive, show only one of both
-            gridLayout.removeWidget(&loadLastSubmitButton);
-            gridLayout.removeWidget(&startNewTaskButton);
-            if (hasTask) {
-                taskLabel.setText(tr("“%1” (%2)").arg(taskName).arg(taskCategory));
-                gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
-            } else {
-                taskLabel.setText(tr("None"));
-                gridLayout.addWidget(&startNewTaskButton, 0, 0, 1, 2);
-            }
-            categoryDescriptionLabel.setText(categoryDescription);
-            taskCommentLabel.setText(taskComment);
-            //buttons would still be shown after removing them from the layout
-            loadLastSubmitButton.setVisible(hasTask);
-            startNewTaskButton.setVisible(!hasTask);
-
-            submitCommentEdit.setEnabled(hasTask);
-            submitButton.setEnabled(hasTask);
-            submitFinalButton.setEnabled(hasTask);
-            show();
-        }
-    }
-    if (!hasUser) {
+        submitCommentEdit.setEnabled(hasTask);
+        submitButton.setEnabled(hasTask);
+        submitFinalButton.setEnabled(hasTask);
+        show();
+    } else {
         emit visibilityChanged(false);
-        taskLoginWidget.setResponse(statusText);
+        taskLoginWidget.setResponse("Please login.");
     }
-    qDebug() << statusText;// so errors appear in logs
 }
 
 void TaskManagementWidget::loginButtonClicked(const QString & host, const QString & username, const QString & password) {
