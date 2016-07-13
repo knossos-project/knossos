@@ -1275,6 +1275,7 @@ void Viewport3D::renderPointCloud() {
                     frag_normal = normal;
                 }
             )shaderSource");
+
             pointcloud_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
                 #version 110
 
@@ -1321,99 +1322,12 @@ void Viewport3D::renderPointCloud() {
             pointcloud_init = false;
         }
 
-        // ---- temporary: segmentation based dynamic point loading stub ----
-        // auto& seg = Segmentation::singleton();
-        // auto currentPosDc = state->viewerState->currentPosition / state->magnification / state->cubeEdgeLength;
-        // int M = state->M;
-        // int M_radius = (M - 1) / 2;
-
-        // static int slow_it = 0;
-        // ++slow_it;
-        // if(slow_it > 50)
-        // if(M >= 3 && M <= 15) {
-
-        //     slow_it = 0;
-        //     state->protectCube2Pointer.lock();
-
-        //     std::vector<uint64_t*> rawcubes{static_cast<std::size_t>(M*M*M)};
-        //     for(int z = 0; z < M; ++z)
-        //     for(int y = 0; y < M; ++y)
-        //     for(int x = 0; x < M; ++x) {
-        //         auto cubeIndex = z*M*M + y*M + x;
-        //         Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
-        //         rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
-        //             Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)],
-        //             {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
-        //     }
-
-
-        //     points.clear();
-        //     normals.clear();
-        //     colors.clear();
-
-        //     cloud_profiler.start();
-        //     for(int cz = 0; cz < M; ++cz)
-        //     for(int cy = 0; cy < M; ++cy)
-        //     for(int cx = 0; cx < M; ++cx) {
-        //         auto cubeIndex = cz*M*M + cy*M + cx;
-        //         auto& rawcube = rawcubes[cubeIndex];
-
-        //         if(rawcube != nullptr) {
-        //             for(int z = 1; z < cubeLen - 1; ++z)
-        //             for(int y = 1; y < cubeLen - 1; ++y)
-        //             for(int x = 1; x < cubeLen - 1; ++x) {
-
-        //                 auto indexInDc  = z*cubeLen*cubeLen + y*cubeLen + x;
-        //                 auto subobjectId = rawcube[indexInDc];
-
-        //                 if(seg.isSubObjectIdSelected(subobjectId)) {
-        //                     bool isSurface = false;
-        //                     for(int rz = -1; rz < 1; ++rz)
-        //                     for(int ry = -1; ry < 1; ++ry)
-        //                     for(int rx = -1; rx < 1; ++rx) {
-        //                         auto otherIndexInDc  = (z + rz)*cubeLen*cubeLen + (y + ry)*cubeLen + (x + rx);
-        //                         auto otherSubobjectId = rawcube[otherIndexInDc];
-        //                         if(otherSubobjectId != subobjectId) {
-        //                             isSurface = true;
-        //                             break;
-        //                         }
-        //                     }
-
-        //                     if(isSurface) {
-        //                         points.push_back({{static_cast<float>(x + (cx - M_radius) * cubeLen),
-        //                                            static_cast<float>(y + (cy - M_radius) * cubeLen),
-        //                                            static_cast<float>(z + (cz - M_radius) * cubeLen)}});
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     cloud_profiler.end();
-
-        //     state->protectCube2Pointer.unlock();
-
-        //     position_buf.bind();
-        //     position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-        //     normal_buf.bind();
-        //     normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-        //     color_buf.bind();
-        //     color_buf.allocate(colors.data(), colors.size() * 3 * sizeof(GLfloat));
-        //     color_buf.release();
-
-        //     qDebug() << "cloud profiler took:" << cloud_profiler.average_time() * 1000.0 << "ms";
-        //     qDebug() << "using" << points.size() << "points";
-        // }
-
-        // points.clear();
-        // normals.clear();
-        // colors.clear();
-
         static bool pointcloud_vbo_init = true;
         static std::random_device rdevice;
         static std::default_random_engine rengine(rdevice());
         static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
         static float sphere_size = 40.0f;
-        static QVector3D center{5440.0f, 5312.0f, 2880.0f};
+        static QVector3D sphete_pos{5440.0f, 5312.0f, 2880.0f};
 
         if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals && pointcloud_vbo_init) {
             // load the data
@@ -1441,7 +1355,7 @@ void Viewport3D::renderPointCloud() {
                     spoint[j] = snormal[j]; // adjust by size
                 }
 
-                points.emplace_back(center + spoint * sphere_size);
+                points.emplace_back(sphete_pos + spoint * sphere_size);
                 normals.emplace_back(snormal);
                 colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
             }
@@ -1462,12 +1376,11 @@ void Viewport3D::renderPointCloud() {
 
         if(points.size() != 0) {
             float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
-            // qDebug() << point_size;
             glPointSize(point_size);
 
             glMatrixMode(GL_MODELVIEW_MATRIX);
             glPushMatrix();
-            glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);
+            glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
             glTranslatef(0.5, 0.5, 0.5);
 
             GLfloat modelview_mat[4][4];
@@ -1510,7 +1423,6 @@ void Viewport3D::renderPointCloud() {
             pointcloud_shader.release();
             glPopMatrix();
         }
-        // glDisable(GL_DEPTH_TEST);
     }
 }
 
