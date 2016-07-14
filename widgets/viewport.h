@@ -33,6 +33,7 @@
 #include <QMouseEvent>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_2_0>
+#include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
@@ -263,6 +264,10 @@ public slots:
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+    QOpenGLBuffer position_buf;
+    QOpenGLBuffer normal_buf;
+    QOpenGLBuffer color_buf;
+    QOpenGLShaderProgram pointcloud_shader;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;

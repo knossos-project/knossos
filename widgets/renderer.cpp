@@ -1244,10 +1244,6 @@ void Viewport3D::renderPointCloud() {
         static std::vector<QVector3D> points;
         static std::vector<QVector3D> normals;
         static std::vector<std::array<GLfloat, 4>> colors;
-        static QOpenGLBuffer position_buf;
-        static QOpenGLBuffer normal_buf;
-        static QOpenGLBuffer color_buf;
-        static QOpenGLShaderProgram pointcloud_shader;
 
         static bool pointcloud_init = true;
         if(pointcloud_init) {
