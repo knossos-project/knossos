@@ -70,6 +70,8 @@ protected:
     QPushButton logoutButton{"Logout"};
 
 public slots:
+    void showOrLoginOrHide(bool enable);
+
     void updateAndRefreshWidget();
 
     void submitFinal();

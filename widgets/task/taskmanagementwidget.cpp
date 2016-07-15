@@ -85,6 +85,14 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : QDialog(parent), t
     });
 }
 
+void TaskManagementWidget::showOrLoginOrHide(bool enable) {
+    if (enable) {
+        updateAndRefreshWidget();
+    } else {
+        hide();
+    }
+}
+
 bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const QString & successText) {
     if (res.first) {
         statusLabel.setText("<font color='green'>" + successText + "</font>");

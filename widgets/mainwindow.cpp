@@ -282,13 +282,7 @@ void MainWindow::createToolbars() {
     auto pythonInterpreterButton = createToolToogleButton(":/resources/icons/python.png", "Python Interpreter");
     auto snapshotButton = createToolToogleButton(":/resources/icons/camera.png", "Snapshot");
     //button → visibility
-    QObject::connect(taskManagementButton, &QToolButton::clicked, [this, &taskManagementButton](const bool down){
-        if (down) {
-            widgetContainer.taskManagementWidget.updateAndRefreshWidget();
-        } else {
-            widgetContainer.taskManagementWidget.hide();
-        }
-    });
+    QObject::connect(taskManagementButton, &QToolButton::clicked, &widgetContainer.taskManagementWidget, &TaskManagementWidget::showOrLoginOrHide);
     QObject::connect(pythonInterpreterButton, &QToolButton::clicked, &widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
     QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
