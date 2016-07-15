@@ -24,8 +24,8 @@
 #define TASKMANAGEMENTWIDGET_H
 
 #include "taskloginwidget.h"
+#include "widgets/DialogVisibilityNotify.h"
 
-#include <QDialog>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -36,7 +36,7 @@
 #include <QVBoxLayout>
 
 struct httpResponse;
-class TaskManagementWidget : public QDialog {
+class TaskManagementWidget : public DialogVisibilityNotify {
     Q_OBJECT
     friend class TaskLoginWidget;
     const QString api{"/api/2"};
@@ -82,20 +82,8 @@ public slots:
     void loginButtonClicked(const QString &host, const QString & username, const QString & password);
     void logoutButtonClicked();
 
-signals:
-    void visibilityChanged(bool);
-
 private:
     bool handleError(const QPair<bool, QString> & res, const QString & successText = "");
-
-    void showEvent(QShowEvent *event) override {
-        QDialog::showEvent(event);
-        emit visibilityChanged(true);
-    }
-    void hideEvent(QHideEvent *event) override {
-        QDialog::hideEvent(event);
-        emit visibilityChanged(false);
-    }
 };
 
 #endif//TASKMANAGEMENTWIDGET_H

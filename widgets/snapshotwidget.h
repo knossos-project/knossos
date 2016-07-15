@@ -24,6 +24,7 @@
 #define SNAPSHOTWIDGET_H
 
 #include "viewport.h"
+#include "widgets/DialogVisibilityNotify.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -32,7 +33,7 @@
 #include <QRadioButton>
 #include <QVBoxLayout>
 
-class SnapshotWidget : public QDialog {
+class SnapshotWidget : public DialogVisibilityNotify {
     Q_OBJECT
     QString saveDir;
     QComboBox sizeCombo;
@@ -50,18 +51,7 @@ public slots:
     void openForVP(const ViewportType type);
     void updateOptionVisibility();
 signals:
-    void visibilityChanged(bool);
     void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
-
-private:
-    void showEvent(QShowEvent *event) override {
-        QDialog::showEvent(event);
-        emit visibilityChanged(true);
-    }
-    void hideEvent(QHideEvent *event) override {
-        QDialog::hideEvent(event);
-        emit visibilityChanged(false);
-    }
 };
 
 #endif // SNAPSHOTWIDGET_H

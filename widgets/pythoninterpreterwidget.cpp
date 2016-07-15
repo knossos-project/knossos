@@ -27,7 +27,7 @@
 
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 
-PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : QDialog(parent) {
+PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisibilityNotify(parent) {
     setWindowIcon(QIcon(":/resources/icons/python.png"));
     setWindowTitle("Python Interpreter");
 

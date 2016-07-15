@@ -34,7 +34,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-AppearanceWidget::AppearanceWidget(QWidget *parent) : QDialog(parent) {
+AppearanceWidget::AppearanceWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
     setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
     setWindowTitle("Appearance Settings");
     tabs.addTab(&treesTab, "Trees");

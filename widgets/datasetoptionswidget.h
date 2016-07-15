@@ -23,8 +23,9 @@
 #ifndef DATASETOPTIONSWIDGET_H
 #define DATASETOPTIONSWIDGET_H
 
+#include "widgets/DialogVisibilityNotify.h"
+
 #include <QCheckBox>
-#include <QDialog>
 #include <QDoubleSpinBox>
 #include <QFrame>
 #include <QGridLayout>
@@ -44,7 +45,7 @@ public:
     int numTicks{0};
 };
 
-class DatasetOptionsWidget : public QDialog {
+class DatasetOptionsWidget : public DialogVisibilityNotify {
     friend class MainWindow;
     Q_OBJECT
 
@@ -76,15 +77,6 @@ class DatasetOptionsWidget : public QDialog {
     float zoomStep{1};
     void updateOrthogonalZoomSpinBox();
     void updateOrthogonalZoomSlider();
-
-    void showEvent(QShowEvent *event) override {
-        QDialog::showEvent(event);
-        emit visibilityChanged(true);
-    }
-    void hideEvent(QHideEvent *event) override {
-        QDialog::hideEvent(event);
-        emit visibilityChanged(false);
-    }
 public:
     explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
 public slots:
@@ -93,9 +85,6 @@ public slots:
     void loadSettings();
     void saveSettings();
     void updateCompressionRatioDisplay();
-
-signals:
-    void visibilityChanged(bool);
 };
 
 #endif // DATASETOPTIONSWIDGET_H

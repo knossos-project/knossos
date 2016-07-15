@@ -27,13 +27,12 @@
 #include "appearance/nodestab.h"
 #include "appearance/treestab.h"
 #include "appearance/viewporttab.h"
+#include "widgets/DialogVisibilityNotify.h"
 
-#include <QDialog>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
-class AppearanceWidget : public QDialog
-{
+class AppearanceWidget : public DialogVisibilityNotify {
     Q_OBJECT
     QTabWidget tabs;
 public:
@@ -46,17 +45,6 @@ public:
 
     void loadSettings();
     void saveSettings();
-signals:
-    void visibilityChanged(bool);
-private:
-    void showEvent(QShowEvent *event) override {
-        QDialog::showEvent(event);
-        emit visibilityChanged(true);
-    }
-    void hideEvent(QHideEvent *event) override {
-        QDialog::hideEvent(event);
-        emit visibilityChanged(false);
-    }
 };
 
 #endif // APPEARANCEWIDGET_H

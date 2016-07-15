@@ -19,30 +19,26 @@
  *  For further information, visit http://www.knossostool.org
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
+#ifndef DIALOG_VISIBILITY_NOTIFY_H
+#define DIALOG_VISIBILITY_NOTIFY_H
 
-#ifndef ANNOTATIONWIDGET_H
-#define ANNOTATIONWIDGET_H
+#include <QDialog>
 
-#include "tools/segmentationview.h"
-#include "tools/skeletonview.h"
-#include "tools/commentstab.h"
-#include "widgets/DialogVisibilityNotify.h"
-
-#include <QShowEvent>
-#include <QTabWidget>
-
-class AnnotationWidget : public DialogVisibilityNotify {
+class DialogVisibilityNotify : public QDialog {
     Q_OBJECT
 public:
-    QTabWidget tabs;
-    QVBoxLayout mainLayout;
-    SkeletonView skeletonTab{this};
-    SegmentationView segmentationTab{this};
-    CommentsTab commentsTab;
-    explicit AnnotationWidget(QWidget *parent = 0);
-    void setSegmentationVisibility(const bool visible);
-    void saveSettings();
-    void loadSettings();
+    using QDialog::QDialog;
+signals:
+    void visibilityChanged(bool);
+protected:
+    virtual void showEvent(QShowEvent *event) override {
+        QDialog::showEvent(event);
+        emit visibilityChanged(true);
+    }
+    virtual void hideEvent(QHideEvent *event) override {
+        QDialog::hideEvent(event);
+        emit visibilityChanged(false);
+    }
 };
 
-#endif // ANNOTATIONWIDGET_H
+#endif//DIALOG_VISIBILITY_NOTIFY_H

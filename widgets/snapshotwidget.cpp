@@ -36,7 +36,7 @@
 #include <QHBoxLayout>
 #include <QSettings>
 
-SnapshotWidget::SnapshotWidget(QWidget *parent) : QDialog(parent), saveDir(QDir::homePath()) {
+SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowTitle("Snapshot Tool");
     sizeCombo.addItem("8192 x 8192");

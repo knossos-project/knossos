@@ -38,7 +38,7 @@
 #include <QDesktopWidget>
 #include <QSplitter>
 
-AnnotationWidget::AnnotationWidget(QWidget *parent) : QDialog(parent) {
+AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
     setWindowIcon(QIcon(":/resources/icons/graph.png"));
     setWindowTitle("Annotation");
 
