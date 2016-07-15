@@ -1171,14 +1171,14 @@ void MainWindow::loadSettings() {
 
     settings.endGroup();
 
-    widgetContainer.datasetLoadWidget.loadSettings();
-    widgetContainer.dataSavingWidget.loadSettings();
-    widgetContainer.datasetOptionsWidget.loadSettings();
-    widgetContainer.appearanceWidget.loadSettings();
-    widgetContainer.navigationWidget.loadSettings();
     widgetContainer.annotationWidget.loadSettings();
-    widgetContainer.pythonPropertyWidget.loadSettings();
+    widgetContainer.appearanceWidget.loadSettings();
+    widgetContainer.dataSavingWidget.loadSettings();
+    widgetContainer.datasetLoadWidget.loadSettings();
+    widgetContainer.datasetOptionsWidget.loadSettings();
+    widgetContainer.navigationWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
+    widgetContainer.pythonPropertyWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();
 }
 

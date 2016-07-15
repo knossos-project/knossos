@@ -25,10 +25,11 @@
 
 #include "annotationwidget.h"
 #include "appearancewidget.h"
+#include "datasavingwidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
-#include "datasavingwidget.h"
 #include "documentationwidget.h"
+#include "GuiConstants.h"
 #include "navigationwidget.h"
 #include "snapshotwidget.h"
 #include "splashscreenwidget.h"
@@ -39,9 +40,9 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidget(parent), appearanceWidget(parent), datasetLoadWidget(parent)
-        , datasetOptionsWidget(parent, &datasetLoadWidget), dataSavingWidget(parent), docWidget(parent)
-        , navigationWidget(parent), pythonPropertyWidget(parent), pythonInterpreterWidget(parent)
+        : annotationWidget(parent), appearanceWidget(parent), dataSavingWidget(parent)
+        , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget), docWidget(parent)
+        , navigationWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
@@ -51,13 +52,13 @@ struct WidgetContainer {
 
     AnnotationWidget annotationWidget;
     AppearanceWidget appearanceWidget;
+    DataSavingWidget dataSavingWidget;
     DatasetLoadWidget datasetLoadWidget;
     DatasetOptionsWidget datasetOptionsWidget;
-    DataSavingWidget dataSavingWidget;
     DocumentationWidget docWidget;
     NavigationWidget navigationWidget;
-    PythonPropertyWidget pythonPropertyWidget;
     PythonInterpreterWidget pythonInterpreterWidget;
+    PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
     SplashScreenWidget splashWidget;
     TaskManagementWidget taskManagementWidget;
@@ -65,9 +66,9 @@ struct WidgetContainer {
     void hideAll() {
         annotationWidget.hide();
         appearanceWidget.hide();
+        dataSavingWidget.hide();
         datasetLoadWidget.hide();
         datasetOptionsWidget.hide();
-        dataSavingWidget.hide();
         docWidget.hide();
         navigationWidget.hide();
         pythonPropertyWidget.hide();
