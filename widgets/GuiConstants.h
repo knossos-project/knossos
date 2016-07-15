@@ -35,7 +35,7 @@ const QString DATASET_OPTIONS_WIDGET = "zoom_and_multires_widget";
 const QString APPEARANCE_WIDGET = "appearance_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
 const QString SNAPSHOT_WIDGET = "snapshot_widget";
-const QString TOOLS_WIDGET = "tools_widget";
+const QString ANNOTATION_WIDGET = "tools_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 

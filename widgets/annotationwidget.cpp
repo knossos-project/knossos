@@ -65,7 +65,7 @@ void AnnotationWidget::loadSettings() {
     bool visible;
 
     QSettings settings;
-    settings.beginGroup(TOOLS_WIDGET);
+    settings.beginGroup(ANNOTATION_WIDGET);
 
     width = (settings.value(WIDTH).isNull())? 700 : settings.value(WIDTH).toInt();
     height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
@@ -97,7 +97,7 @@ void AnnotationWidget::loadSettings() {
 
 void AnnotationWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(TOOLS_WIDGET);
+    settings.beginGroup(ANNOTATION_WIDGET);
 
     settings.setValue(WIDTH, this->geometry().width());
     settings.setValue(HEIGHT, this->geometry().height());
