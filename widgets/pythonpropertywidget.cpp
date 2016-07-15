@@ -86,10 +86,7 @@ void PythonPropertyWidget::autoStartFolderButtonClicked() {
 void PythonPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    settings.setValue(WIDTH, this->geometry().width());
-    settings.setValue(HEIGHT, this->geometry().height());
-    settings.setValue(POS_X, this->geometry().x());
-    settings.setValue(POS_Y, this->geometry().y());
+    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, this->isVisible());
 
     settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
@@ -102,23 +99,9 @@ void PythonPropertyWidget::saveSettings() {
 }
 
 void PythonPropertyWidget::loadSettings() {
-    int width, height, x, y;
-
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
-    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
-    if(settings.value(POS_X).isNull() || settings.value(POS_Y).isNull()) {
-        x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
-        y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
-    }
-    else {
-        x = settings.value(POS_X).toInt();
-        y = settings.value(POS_Y).toInt();
-    }
-
-    this->move(x, y);
-    this->resize(width, height);
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
     auto autoStartFolderValue = settings.value(PYTHON_AUTOSTART_FOLDER);
     if(!autoStartFolderValue.isNull() && !autoStartFolderValue.toString().isEmpty()) {
