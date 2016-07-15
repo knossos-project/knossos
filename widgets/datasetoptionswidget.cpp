@@ -334,7 +334,7 @@ void DatasetOptionsWidget::update() {
 
 void DatasetOptionsWidget::loadSettings() {
     QSettings settings;
-    settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
+    settings.beginGroup(DATASET_OPTIONS_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     setVisible(settings.value(VISIBLE, false).toBool());
 
@@ -358,7 +358,7 @@ void DatasetOptionsWidget::loadSettings() {
 
 void DatasetOptionsWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
+    settings.beginGroup(DATASET_OPTIONS_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
     settings.setValue(SKELETON_VIEW, skeletonViewportSpinBox.value());
