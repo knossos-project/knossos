@@ -94,10 +94,12 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
+#ifdef Q_OS_OSX
     const auto end = std::next(argv, argc);
     bool styleOverwrite = std::find_if(argv, end, [](const auto & argvv){
         return QString::fromUtf8(argvv).contains("-style");
     }) != end;
+#endif
     QApplication a(argc, argv);
 #ifdef Q_OS_OSX
     if (!styleOverwrite) {// default to Fusion style on OSX if nothing contrary was specified (because the default theme looks bad)
