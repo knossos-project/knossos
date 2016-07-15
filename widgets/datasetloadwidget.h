@@ -84,6 +84,8 @@ class DatasetLoadWidget : public QDialog {
     QHBoxLayout buttonHLayout;
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
+
+    bool segmentationToggled{false};
 public:
     QUrl datasetUrl;//meh
 

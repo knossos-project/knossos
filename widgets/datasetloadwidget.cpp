@@ -213,6 +213,7 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
 }
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
+    segmentationToggled = true;
     const auto fov = fovSpin.value();
     auto mebibytes = std::pow(fov + cubeEdgeSpin.value(), 3) / std::pow(1024, 2);
     mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
@@ -221,7 +222,22 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
 }
 
 void DatasetLoadWidget::cancelButtonClicked() {
-    this->hide();
+    if (segmentationToggled) {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Warning);
+        box.setText(tr("%1 of segmentation requires dataset reload.").arg(segmentationOverlayCheckbox.isChecked() ? "Enabling" : "Disabling"));
+        box.setInformativeText(tr("You have changed the segmentation overlay setting."));
+        box.addButton("Close without reloading", QMessageBox::RejectRole);
+        const auto reloadButton = box.addButton("Reload dataset", QMessageBox::AcceptRole);
+        box.exec();
+        if (box.clickedButton() == reloadButton) {
+            processButtonClicked();
+        } else {
+            segmentationOverlayCheckbox.setChecked(!segmentationOverlayCheckbox.isChecked());
+        }
+    }
+    segmentationToggled = false;
+    hide();
 }
 
 void DatasetLoadWidget::processButtonClicked() {
@@ -229,6 +245,7 @@ void DatasetLoadWidget::processButtonClicked() {
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
     } else if (loadDataset(boost::none, dataset)) {
+        segmentationToggled = false;
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
