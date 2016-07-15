@@ -35,7 +35,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-struct httpResponse;
 class TaskManagementWidget : public DialogVisibilityNotify {
     Q_OBJECT
     friend class TaskLoginWidget;
