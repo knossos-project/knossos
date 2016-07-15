@@ -229,58 +229,14 @@ void NavigationWidget::loadSettings() {
     Session::singleton().resetMovementArea();
 
     movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
-
-    if(!settings.value(JUMP_FRAMES).isNull()) {
-        this->jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES).toInt());
-    } else {
-        this->jumpFramesSpinBox->setValue(1);
-    }
-
-    if(!settings.value(WALK_FRAMES).isNull()) {
-        this->walkFramesSpinBox->setValue(settings.value(WALK_FRAMES).toInt());
-    } else {
-        this->walkFramesSpinBox->setValue(10);
-    }
-
-    if(!settings.value(NORMAL_MODE).isNull()) {
-        this->normalModeButton->setChecked(settings.value(NORMAL_MODE).toBool());
-    } else {
-        this->normalModeButton->setVisible(true);
-    }
-
-    if(!settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).isNull()) {
-        this->additionalViewportDirectionMoveButton->setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).toBool());
-    } else {
-
-    }
-
-    if(!settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).isNull()) {
-        this->additionalTracingDirectionMoveButton->setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).toBool());
-    } else {
-
-    }
-
-    if(!settings.value(ADDITIONAL_MIRRORED_MOVE).isNull()) {
-         this->additionalMirroredMoveButton->setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE).toBool());
-    } else {
-
-    }
-
-    if(!normalModeButton->isChecked() && !additionalMirroredMoveButton->isChecked() && !additionalTracingDirectionMoveButton->isChecked() && !additionalTracingDirectionMoveButton->isChecked())
-        normalModeButton->setChecked(true);
-
-    if(!settings.value(DELAY_TIME_PER_STEP).isNull()) {
-        this->delayTimePerStepSpinBox->setValue(settings.value(DELAY_TIME_PER_STEP).toInt());
-    } else {
-        this->delayTimePerStepSpinBox->setValue(50);
-    }
-
-    if(!settings.value(NUMBER_OF_STEPS).isNull()) {
-        this->numberOfStepsSpinBox->setValue(settings.value(NUMBER_OF_STEPS).toInt());
-    } else {
-        this->numberOfStepsSpinBox->setValue(10);
-    }
-
+    jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES, 1).toInt());
+    walkFramesSpinBox->setValue(settings.value(WALK_FRAMES, 10).toInt());
+    normalModeButton->setChecked(settings.value(NORMAL_MODE, true).toBool());
+    additionalViewportDirectionMoveButton->setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, false).toBool());
+    additionalTracingDirectionMoveButton->setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE, false).toBool());
+    additionalMirroredMoveButton->setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE, false).toBool());
+    delayTimePerStepSpinBox->setValue(settings.value(DELAY_TIME_PER_STEP, 50).toInt());
+    numberOfStepsSpinBox->setValue(settings.value(NUMBER_OF_STEPS, 10).toInt());
     settings.endGroup();
 }
 
@@ -288,17 +244,16 @@ void NavigationWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(NAVIGATION_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
-    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(VISIBLE, isVisible());
 
-    settings.setValue(MOVEMENT_SPEED, this->movementSpeedSpinBox->value());
-    settings.setValue(JUMP_FRAMES, this->jumpFramesSpinBox->value());
-    settings.setValue(WALK_FRAMES, this->walkFramesSpinBox->value());
-    settings.setValue(NORMAL_MODE, this->normalModeButton->isChecked());
-    settings.setValue(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, this->additionalViewportDirectionMoveButton->isChecked());
-    settings.setValue(ADDITIONAL_TRACING_DIRECTION_MOVE, this->additionalTracingDirectionMoveButton->isChecked());
-    settings.setValue(ADDITIONAL_MIRRORED_MOVE, this->additionalMirroredMoveButton->isChecked());
-    settings.setValue(DELAY_TIME_PER_STEP, this->delayTimePerStepSpinBox->value());
-    settings.setValue(NUMBER_OF_STEPS, this->numberOfStepsSpinBox->value());
+    settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox->value());
+    settings.setValue(JUMP_FRAMES, jumpFramesSpinBox->value());
+    settings.setValue(WALK_FRAMES, walkFramesSpinBox->value());
+    settings.setValue(NORMAL_MODE, normalModeButton->isChecked());
+    settings.setValue(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, additionalViewportDirectionMoveButton->isChecked());
+    settings.setValue(ADDITIONAL_TRACING_DIRECTION_MOVE, additionalTracingDirectionMoveButton->isChecked());
+    settings.setValue(ADDITIONAL_MIRRORED_MOVE, additionalMirroredMoveButton->isChecked());
+    settings.setValue(DELAY_TIME_PER_STEP, delayTimePerStepSpinBox->value());
+    settings.setValue(NUMBER_OF_STEPS, numberOfStepsSpinBox->value());
     settings.endGroup();
-
 }

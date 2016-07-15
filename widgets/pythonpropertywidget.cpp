@@ -87,7 +87,7 @@ void PythonPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
-    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
     settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
@@ -103,26 +103,10 @@ void PythonPropertyWidget::loadSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
-    auto autoStartFolderValue = settings.value(PYTHON_AUTOSTART_FOLDER);
-    if(!autoStartFolderValue.isNull() && !autoStartFolderValue.toString().isEmpty()) {
-        autoStartFolderEdit->setText(settings.value(PYTHON_AUTOSTART_FOLDER).toString());
-    }
-
-    auto workingDirValue = settings.value(PYTHON_WORKING_DIRECTORY);
-    if(!workingDirValue.isNull() && !workingDirValue.toString().isEmpty()) {
-        workingDirectoryEdit->setText(settings.value(PYTHON_WORKING_DIRECTORY).toString());
-    }
-
-    auto autoStartTerminalValue = settings.value(PYTHON_AUTOSTART_TERMINAL);
-    if(!autoStartTerminalValue.isNull()) {
-        autoStartTerminalCheckbox->setChecked(autoStartTerminalValue.toBool());
-    }
-
-    auto customPathsValue = settings.value(PYTHON_CUSTOM_PATHS);
-    if(!customPathsValue.isNull()) {
-        customPathsEdit->setText(customPathsValue.toStringList().join("\n"));
-    }
-
+    autoStartFolderEdit->setText(settings.value(PYTHON_AUTOSTART_FOLDER, "").toString());
+    workingDirectoryEdit->setText(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
+    autoStartTerminalCheckbox->setChecked(settings.value(PYTHON_AUTOSTART_TERMINAL, false).toBool());
+    customPathsEdit->setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
     settings.endGroup();
 }
 

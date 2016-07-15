@@ -76,7 +76,7 @@ void AnnotationWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(ANNOTATION_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
-    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(SEARCH_FOR_TREE, skeletonTab.treeCommentFilter.text());
     settings.setValue(SEARCH_FOR_NODE, skeletonTab.nodeCommentFilter.text());
