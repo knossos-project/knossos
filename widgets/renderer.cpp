@@ -1237,6 +1237,54 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
+void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
+    glMatrixMode(GL_MODELVIEW_MATRIX);
+    glPushMatrix();
+    glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
+    glTranslatef(0.5, 0.5, 0.5);
+
+    // get modelview and projection matrices
+    GLfloat modelview_mat[4][4];
+    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+    GLfloat projection_mat[4][4];
+    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+
+    pointcloudShader.bind();
+    pointcloudShader.setUniformValue("modelview_matrix", modelview_mat);
+    pointcloudShader.setUniformValue("projection_matrix", projection_mat);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    buf.position_buf.bind();
+    int vertexLocation = pointcloudShader.attributeLocation("vertex");
+    pointcloudShader.enableAttributeArray(vertexLocation);
+    pointcloudShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    buf.position_buf.release();
+
+    buf.normal_buf.bind();
+    int normalLocation = pointcloudShader.attributeLocation("normal");
+    pointcloudShader.enableAttributeArray(normalLocation);
+    pointcloudShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+    buf.normal_buf.release();
+
+    buf.color_buf.bind();
+    int colorLocation = pointcloudShader.attributeLocation("color");
+    pointcloudShader.enableAttributeArray(colorLocation);
+    pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+    buf.color_buf.release();
+
+    glDrawArrays(GL_POINTS, 0, buf.vertex_count);
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+    pointcloudShader.release();
+    glPopMatrix();
+}
+
 void Viewport3D::renderPointCloud() {
     if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
         static Profiler cloud_profiler;
@@ -1247,11 +1295,11 @@ void Viewport3D::renderPointCloud() {
 
         static bool pointcloud_init = true;
         if(pointcloud_init) {
-            position_buf.create();
-            normal_buf.create();
-            color_buf.create();
+            pointcloudBuffer.position_buf.create();
+            pointcloudBuffer.normal_buf.create();
+            pointcloudBuffer.color_buf.create();
 
-            pointcloud_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+            pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
                 #version 110
                 attribute vec3 vertex;
                 attribute vec3 normal;
@@ -1272,7 +1320,7 @@ void Viewport3D::renderPointCloud() {
                 }
             )shaderSource");
 
-            pointcloud_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+            pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
                 #version 110
 
                 uniform mat4 modelview_matrix;
@@ -1314,7 +1362,7 @@ void Viewport3D::renderPointCloud() {
                 }
             )shaderSource");
 
-            pointcloud_shader.link();
+            pointcloudShader.link();
             pointcloud_init = false;
         }
 
@@ -1331,13 +1379,14 @@ void Viewport3D::renderPointCloud() {
             normals = *Skeletonizer::tmp_hull_normals;
             colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
 
-            position_buf.bind();
-            position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            normal_buf.bind();
-            normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            color_buf.bind();
-            color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            color_buf.release();
+            pointcloudBuffer.vertex_count += points.size();
+            pointcloudBuffer.position_buf.bind();
+            pointcloudBuffer.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            pointcloudBuffer.normal_buf.bind();
+            pointcloudBuffer.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            pointcloudBuffer.color_buf.bind();
+            pointcloudBuffer.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            pointcloudBuffer.color_buf.release();
 
             // test point sphere for comparison
             for(int i = 0; i < 320000; ++i) {
@@ -1356,13 +1405,14 @@ void Viewport3D::renderPointCloud() {
                 colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
             }
 
-            position_buf.bind();
-            position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            normal_buf.bind();
-            normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            color_buf.bind();
-            color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            color_buf.release();
+            pointcloudBuffer.vertex_count += points.size();
+            pointcloudBuffer.position_buf.bind();
+            pointcloudBuffer.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            pointcloudBuffer.normal_buf.bind();
+            pointcloudBuffer.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            pointcloudBuffer.color_buf.bind();
+            pointcloudBuffer.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            pointcloudBuffer.color_buf.release();
 
             qDebug() << "points: " << points.size();
             qDebug() << "first: " << points.front()[0] << points.front()[1] << points.front()[2];
@@ -1374,50 +1424,7 @@ void Viewport3D::renderPointCloud() {
             float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
             glPointSize(point_size);
 
-            glMatrixMode(GL_MODELVIEW_MATRIX);
-            glPushMatrix();
-            glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
-            glTranslatef(0.5, 0.5, 0.5);
-
-            GLfloat modelview_mat[4][4];
-            glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-
-            GLfloat projection_mat[4][4];
-            glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
-
-            pointcloud_shader.bind();
-            pointcloud_shader.setUniformValue("modelview_matrix", modelview_mat);
-            pointcloud_shader.setUniformValue("projection_matrix", projection_mat);
-
-            glEnableClientState(GL_VERTEX_ARRAY);
-            position_buf.bind();
-            int vertexLocation = pointcloud_shader.attributeLocation("vertex");
-            pointcloud_shader.enableAttributeArray(vertexLocation);
-            pointcloud_shader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-            position_buf.release();
-
-            glEnableClientState(GL_NORMAL_ARRAY);
-            normal_buf.bind();
-            int normalLocation = pointcloud_shader.attributeLocation("normal");
-            pointcloud_shader.enableAttributeArray(normalLocation);
-            pointcloud_shader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
-            normal_buf.release();
-
-            glEnableClientState(GL_COLOR_ARRAY);
-            color_buf.bind();
-            int colorLocation = pointcloud_shader.attributeLocation("color");
-            pointcloud_shader.enableAttributeArray(colorLocation);
-            pointcloud_shader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
-            color_buf.release();
-
-            glDrawArrays(GL_POINTS, 0, points.size());
-
-            glDisableClientState(GL_COLOR_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
-
-            pointcloud_shader.release();
-            glPopMatrix();
+            renderPointCloudBuffer(pointcloudBuffer);
         }
     }
 }

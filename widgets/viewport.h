@@ -261,19 +261,25 @@ public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
-class Viewport3D : public ViewportBase {
-    Q_OBJECT
-    QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+struct PointcloudBuffer {
+    std::size_t vertex_count;
     QOpenGLBuffer position_buf;
     QOpenGLBuffer normal_buf;
     QOpenGLBuffer color_buf;
-    QOpenGLShaderProgram pointcloud_shader;
+};
+
+class Viewport3D : public ViewportBase {
+    Q_OBJECT
+    QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
+    PointcloudBuffer pointcloudBuffer;
+    QOpenGLShaderProgram pointcloudShader;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
     virtual void paintGL() override;
     bool renderVolumeVP();
     void renderPointCloud();
+    void renderPointCloudBuffer(PointcloudBuffer& buf);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     bool rotateViewport();
