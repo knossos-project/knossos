@@ -82,12 +82,13 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         case 3: return static_cast<quint64>(tree.nodes.size());
         case 4: return tree.getComment();
         case 5:
-            QString props("");
-            QHash<QString, QVariant>::iterator it;
-            for(it = cache[index.row()].get().properties.begin(); it != cache[index.row()].get().properties.end(); ++it) {
-                props += it.key() + ": " + it.value().toString() + "; ";
+            QString propertyString("");
+            for (auto it = std::cbegin(tree.properties); it != std::cend(tree.properties); ++it) {
+                if (it.key() != "comment") {
+                    propertyString += it.key() + ": " + it.value().toString() + "; ";
+                }
             }
-            return props;
+            return propertyString;
         }
     }
     return QVariant();//return invalid QVariant
