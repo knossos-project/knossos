@@ -44,9 +44,6 @@ public:
     explicit NavigationWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
-
-signals:
-    void uncheckSignal();
 public slots:
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
@@ -57,9 +54,7 @@ public slots:
     void additionalMirroredMoveSelected(bool on);
     void delayTimePerStepChanged(int value);
     void numberOfStepsChanged(int value);
-protected:
-    void closeEvent(QCloseEvent *event);
-
+public:
     QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
     QPushButton *resetMovementAreaButton;
 

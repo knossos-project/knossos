@@ -216,11 +216,6 @@ void NavigationWidget::numberOfStepsChanged(int value) {
     state->viewerState->autoTracingSteps = value;
 }
 
-void NavigationWidget::closeEvent(QCloseEvent */*event*/) {
-    this->hide();
-    emit uncheckSignal();
-}
-
 void NavigationWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(NAVIGATION_WIDGET);
