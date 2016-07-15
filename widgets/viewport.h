@@ -262,6 +262,12 @@ public slots:
 };
 
 struct PointcloudBuffer {
+    PointcloudBuffer() {
+        position_buf.create();
+        normal_buf.create();
+        color_buf.create();
+    }
+
     std::size_t vertex_count;
     QOpenGLBuffer position_buf;
     QOpenGLBuffer normal_buf;
@@ -271,7 +277,7 @@ struct PointcloudBuffer {
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    PointcloudBuffer pointcloudBuffer;
+    std::unordered_map<int, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
 
     virtual void zoom(const float zoomStep) override;

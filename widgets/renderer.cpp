@@ -1295,10 +1295,6 @@ void Viewport3D::renderPointCloud() {
 
         static bool pointcloud_init = true;
         if(pointcloud_init) {
-            pointcloudBuffer.position_buf.create();
-            pointcloudBuffer.normal_buf.create();
-            pointcloudBuffer.color_buf.create();
-
             pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
                 #version 110
                 attribute vec3 vertex;
@@ -1379,14 +1375,16 @@ void Viewport3D::renderPointCloud() {
             normals = *Skeletonizer::tmp_hull_normals;
             colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
 
-            pointcloudBuffer.vertex_count += points.size();
-            pointcloudBuffer.position_buf.bind();
-            pointcloudBuffer.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            pointcloudBuffer.normal_buf.bind();
-            pointcloudBuffer.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            pointcloudBuffer.color_buf.bind();
-            pointcloudBuffer.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            pointcloudBuffer.color_buf.release();
+            PointcloudBuffer dataBuf;
+            dataBuf.vertex_count = points.size();
+            dataBuf.position_buf.bind();
+            dataBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            dataBuf.normal_buf.bind();
+            dataBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            dataBuf.color_buf.bind();
+            dataBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            dataBuf.color_buf.release();
+            pointcloudBuffers.emplace(1234, dataBuf);
 
             // test point sphere for comparison
             for(int i = 0; i < 320000; ++i) {
@@ -1405,14 +1403,16 @@ void Viewport3D::renderPointCloud() {
                 colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
             }
 
-            pointcloudBuffer.vertex_count += points.size();
-            pointcloudBuffer.position_buf.bind();
-            pointcloudBuffer.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            pointcloudBuffer.normal_buf.bind();
-            pointcloudBuffer.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            pointcloudBuffer.color_buf.bind();
-            pointcloudBuffer.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            pointcloudBuffer.color_buf.release();
+            PointcloudBuffer sphereBuf;
+            sphereBuf.vertex_count = points.size();
+            sphereBuf.position_buf.bind();
+            sphereBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+            sphereBuf.normal_buf.bind();
+            sphereBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+            sphereBuf.color_buf.bind();
+            sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+            sphereBuf.color_buf.release();
+            pointcloudBuffers.emplace(1235, sphereBuf);
 
             qDebug() << "points: " << points.size();
             qDebug() << "first: " << points.front()[0] << points.front()[1] << points.front()[2];
@@ -1424,7 +1424,9 @@ void Viewport3D::renderPointCloud() {
             float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
             glPointSize(point_size);
 
-            renderPointCloudBuffer(pointcloudBuffer);
+            for(auto& id_buf : pointcloudBuffers) {
+                renderPointCloudBuffer(id_buf.second);
+            }
         }
     }
 }
