@@ -75,7 +75,6 @@ void DataSavingWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATA_SAVING_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
-    setVisible(settings.value(VISIBLE).toBool());
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autosaveCheckbox.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot

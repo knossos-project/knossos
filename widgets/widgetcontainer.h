@@ -38,6 +38,8 @@
 #include "pythoninterpreterwidget.h"
 #include "pythonpropertywidget.h"
 
+#include <QSettings>
+
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), appearanceWidget(parent), dataSavingWidget(parent)
@@ -62,6 +64,17 @@ struct WidgetContainer {
     SnapshotWidget snapshotWidget;
     SplashScreenWidget splashWidget;
     TaskManagementWidget taskManagementWidget;
+
+    void applyVisibility() {
+        QSettings settings;
+        annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
+        appearanceWidget.setVisible(settings.value(APPEARANCE_WIDGET + '/' + VISIBLE, false).toBool());
+        dataSavingWidget.setVisible(settings.value(DATA_SAVING_WIDGET + '/' + VISIBLE, false).toBool());
+        datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
+        navigationWidget.setVisible(settings.value(NAVIGATION_WIDGET + '/' + VISIBLE, false).toBool());
+        pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
+        snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
+    }
 
     void hideAll() {
         annotationWidget.hide();

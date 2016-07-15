@@ -55,7 +55,6 @@ void AppearanceWidget::loadSettings() {
     settings.beginGroup(APPEARANCE_WIDGET);
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
-    setVisible(settings.value(VISIBLE, false).toBool());
 
     datasetAndSegmentationTab.loadSettings(settings);
     nodesTab.loadSettings(settings);

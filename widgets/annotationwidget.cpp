@@ -62,7 +62,6 @@ void AnnotationWidget::setSegmentationVisibility(const bool visible) {
 
 void AnnotationWidget::loadSettings() {
     int width, height, x, y;
-    bool visible;
 
     QSettings settings;
     settings.beginGroup(ANNOTATION_WIDGET);
@@ -77,19 +76,12 @@ void AnnotationWidget::loadSettings() {
         x = settings.value(POS_X).toInt();
         y = settings.value(POS_Y).toInt();
     }
-    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
     skeletonTab.treeCommentFilter.setText(settings.value(SEARCH_FOR_TREE, "").toString());
     skeletonTab.nodeCommentFilter.setText(settings.value(SEARCH_FOR_NODE, "").toString());
 
     settings.endGroup();
 
-    if(visible) {
-        show();
-    }
-    else {
-        hide();
-    }
     setGeometry(x, y, width, height);
 
     commentsTab.loadSettings();

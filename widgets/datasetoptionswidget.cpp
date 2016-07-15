@@ -336,7 +336,6 @@ void DatasetOptionsWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_OPTIONS_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
-    setVisible(settings.value(VISIBLE, false).toBool());
 
     auto skeletonZoom = settings.value(SKELETON_VIEW, 0).toDouble();
     if(skeletonZoom > 0) {

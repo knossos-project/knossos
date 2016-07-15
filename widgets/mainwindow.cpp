@@ -1174,6 +1174,9 @@ void MainWindow::loadSettings() {
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();
+
+    show();
+    widgetContainer.applyVisibility();
 }
 
 void MainWindow::clearSettings() {

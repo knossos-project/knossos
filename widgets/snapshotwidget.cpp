@@ -167,7 +167,6 @@ void SnapshotWidget::loadSettings() {
     settings.beginGroup(SNAPSHOT_WIDGET);
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
-    setVisible(settings.value(VISIBLE, false).toBool());
 
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     switch(vp) {

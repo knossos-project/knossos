@@ -103,7 +103,6 @@ void PythonPropertyWidget::saveSettings() {
 
 void PythonPropertyWidget::loadSettings() {
     int width, height, x, y;
-    bool visible;
 
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
@@ -117,17 +116,9 @@ void PythonPropertyWidget::loadSettings() {
         x = settings.value(POS_X).toInt();
         y = settings.value(POS_Y).toInt();
     }
-    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
-    if(visible) {
-        show();
-    }
-    else {
-        hide();
-    }
 
     this->move(x, y);
     this->resize(width, height);
-    this->setVisible(visible);
 
     auto autoStartFolderValue = settings.value(PYTHON_AUTOSTART_FOLDER);
     if(!autoStartFolderValue.isNull() && !autoStartFolderValue.toString().isEmpty()) {

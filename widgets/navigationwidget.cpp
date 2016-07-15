@@ -223,7 +223,6 @@ void NavigationWidget::closeEvent(QCloseEvent */*event*/) {
 
 void NavigationWidget::loadSettings() {
     int width, height, x, y;
-    bool visible;
 
     QSettings settings;
     settings.beginGroup(NAVIGATION_WIDGET);
@@ -236,15 +235,6 @@ void NavigationWidget::loadSettings() {
     else {
         x = settings.value(POS_X).toInt();
         y = settings.value(POS_Y).toInt();
-    }
-    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
-
-
-    if(visible) {
-        show();
-    }
-    else {
-        hide();
     }
     setGeometry(x, y, width, height);
 

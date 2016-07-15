@@ -134,9 +134,7 @@ int main(int argc, char *argv[]) {
     SignalRelay signalRelay;
     Viewer viewer;
     Scripting scripts;
-
-    state.mainWindow->loadSettings();
-    state.mainWindow->show();
+    state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
     viewer.run();
     return a.exec();
 }
