@@ -516,13 +516,15 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     if(attribute.isNull() == false) {
                         state->skeletonState->lockingComment = attribute.toString();
                     }
-                } else if(merge == false && xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
-                    QStringRef attribute = attributes.value("ms");
-                    if (attribute.isNull() == false) {
-                        const auto annotationTime = Session::singleton().getAnnotationTime();
-                        const auto idleTime = attribute.toString().toInt();
-                        //subract from annotationTime
-                        Session::singleton().setAnnotationTime(annotationTime - idleTime);
+                } else if(xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
+                    if (!merge) {
+                        QStringRef attribute = attributes.value("ms");
+                        if (attribute.isNull() == false) {
+                            const auto annotationTime = Session::singleton().getAnnotationTime();
+                            const auto idleTime = attribute.toString().toInt();
+                            //subract from annotationTime
+                            Session::singleton().setAnnotationTime(annotationTime - idleTime);
+                        }
                     }
                 } else if(xml.name() == "task") {
                     for (auto && attribute : attributes) {
