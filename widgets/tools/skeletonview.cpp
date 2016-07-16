@@ -176,13 +176,9 @@ void TreeModel::recreate() {
     for (auto && tree : state->skeletonState->trees) {
         if ((mode.testFlag(FilterMode::SynapticClefts) && tree.isSynapticCleft)
                 || (mode.testFlag(FilterMode::Default) && !tree.isSynapticCleft)) {
-            tree.render = true;
             cache.emplace_back(tree);
-        } else {
-            tree.render = false;
         }
     }
-
     endResetModel();
 }
 

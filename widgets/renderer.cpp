@@ -2301,25 +2301,21 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         /* Render only trees we want to be rendered*/
-        if (!currentTree.render) {
-            continue;
-        }
-
-        const auto & activeTree = state->skeletonState->activeNode;
-
-        if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
-                && !currentTree.selected
-                && activeTree->isSynapticNode
-                && activeTree->correspondingSynapse->postSynapse != nullptr
-                && activeTree->correspondingSynapse->preSynapse != nullptr) {
-            //in render only selected tree, if we have selected a synapse, render also the adjacent treeW
-            const auto & synapse = activeTree->correspondingSynapse;
-            if(!(synapse->postSynapse->correspondingTree == &currentTree
-                    || synapse->preSynapse->correspondingTree == &currentTree)) {
+        const auto * activeNode = state->skeletonState->activeNode;
+        const bool isActiveSynapse = currentTree.isSynapticCleft && activeNode != nullptr && activeNode->correspondingTree == &currentTree;
+        const bool cleftActive = activeNode != nullptr && activeNode->correspondingTree->isSynapticCleft;
+        const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
+        const bool alwaysShow = isActiveSynapse || (!cleftActive && ((!onlySelected && currentTree.render) || (onlySelected && currentTree.selected)));
+        if (!alwaysShow) {
+            if (activeNode != nullptr && activeNode->isSynapticNode) {// render clefts if post or pre synapse is active
+                auto & synapse = *activeNode->correspondingSynapse;
+                const bool cleft = synapse.synapticCleft != nullptr ? synapse.synapticCleft == &currentTree : false;
+                if (!cleft) {
+                    continue;
+                }
+            } else {
                 continue;
             }
-        } else if(state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !currentTree.selected) {
-            continue;
         }
 
         nodeListElement * previousNode = nullptr;
