@@ -122,7 +122,7 @@ class SkeletonView : public QWidget {
     QCheckBox filterTreeDisplayAll{"display other trees"};
     QCheckBox filterTreeDisplaySynapse{"display synaptic clefts"};
     TreeModel treeModel;
-    QSortFilterProxyModel & treeSortAndCommentFilterProxy;
+    QSortFilterProxyModel treeSortAndCommentFilterProxy;
     int treeSortSectionIndex{-1};
     QTreeView treeView;
     QLabel treeCountLabel;
@@ -145,7 +145,7 @@ class SkeletonView : public QWidget {
     QLineEdit nodeCommentFilter;
     QCheckBox nodeRegex{"regex"};
     NodeModel nodeModel;
-    QSortFilterProxyModel & nodeSortAndCommentFilterProxy;
+    QSortFilterProxyModel nodeSortAndCommentFilterProxy;
     int nodeSortSectionIndex{-1};
     NodeView nodeView;
     QLabel nodeCountLabel;

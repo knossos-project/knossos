@@ -174,9 +174,8 @@ void TreeModel::recreate() {
     beginResetModel();
     cache.clear();
     for (auto && tree : state->skeletonState->trees) {
-        if( ((mode.testFlag(FilterMode::SynapticClefts) && tree.isSynapticCleft) ||
-            (mode.testFlag(FilterMode::Default) && !tree.isSynapticCleft)) ||
-            &tree == state->skeletonState->activeTree) {
+        if ((mode.testFlag(FilterMode::SynapticClefts) && tree.isSynapticCleft)
+                || (mode.testFlag(FilterMode::Default) && !tree.isSynapticCleft)) {
             tree.render = true;
             cache.emplace_back(tree);
         } else {
@@ -199,23 +198,21 @@ void NodeModel::recreate(const bool matchAll = true) {
         decltype(cache) hits;
         if (matchAll == false) {
             for (auto && node : cache) {
-                if ((mode.testFlag(FilterMode::Selected) && node.get().selected) ||
-                    (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected) ||
-                    (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode) ||
-                    (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false) ||
-                    (mode.testFlag(FilterMode::Synapse) && node.get().isSynapticNode) ||
-                    &node.get() == state->skeletonState->activeNode) {
+                if ((mode.testFlag(FilterMode::Selected) && node.get().selected)
+                        || (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected)
+                        || (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode)
+                        || (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false)
+                        || (mode.testFlag(FilterMode::Synapse) && node.get().isSynapticNode)) {
                     hits.emplace_back(node);
                 }
             }
         } else {
-            for (auto && node : cache) { // show node if active or if for all criteria: either criterion not demanded or fulfilled.
-                if (( (!mode.testFlag(FilterMode::Selected) || node.get().selected) &&
-                      (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected) &&
-                      (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode) &&
-                      (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false) &&
-                      (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode) ) ||
-                      &node.get() == state->skeletonState->activeNode) {
+            for (auto && node : cache) { // show node if for all criteria: either criterion not demanded or fulfilled.
+                if ((!mode.testFlag(FilterMode::Selected) || node.get().selected)
+                        && (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected)
+                        && (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode)
+                        && (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false)
+                        && (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode)) {
                     hits.emplace_back(node);
                 }
             }
@@ -273,12 +270,11 @@ auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
         const auto activeIt = std::find_if(std::begin(model.cache), std::end(model.cache), [&active](const auto & elem){
             return &elem.get() == active;
         });
-        if (activeIt == std::end(model.cache)) {
-            throw std::runtime_error("active elem not found");
+        if (activeIt != std::end(model.cache)) {
+            const std::size_t activeIndex = std::distance(std::begin(model.cache), activeIt);
+            const auto modelIndex = proxy.mapFromSource(model.index(activeIndex, 0));
+            view.selectionModel()->setCurrentIndex(modelIndex, QItemSelectionModel::NoUpdate);
         }
-        const std::size_t activeIndex = std::distance(std::begin(model.cache), activeIt);
-        const auto modelIndex = proxy.mapFromSource(model.index(activeIndex, 0));
-        view.selectionModel()->setCurrentIndex(modelIndex, QItemSelectionModel::NoUpdate);
     }
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
         view.scrollTo(selectedIndices.indexes().front());
@@ -294,30 +290,7 @@ void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args)
     deleteAction->setShortcutContext(Qt::WidgetShortcut);
 }
 
-class TreeProxy : public QSortFilterProxyModel {
-public:
-    using QSortFilterProxyModel::QSortFilterProxyModel;
-    ~TreeProxy() {}
-protected:
-    virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
-        auto & cache = static_cast<TreeModel&>(*sourceModel()).cache;
-        const bool isActive{&cache[source_row].get() == state->skeletonState->activeTree};
-        return (isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent));
-    }
-};
-class NodeProxy : public QSortFilterProxyModel {
-public:
-    using QSortFilterProxyModel::QSortFilterProxyModel;
-    ~NodeProxy() {}
-protected:
-    virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
-        const bool isActive{&static_cast<NodeModel&>(*sourceModel()).cache[source_row].get() == state->skeletonState->activeNode};
-        return isActive || QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
-    }
-};
-
 SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
-        , treeSortAndCommentFilterProxy{*new TreeProxy{this}}, nodeSortAndCommentFilterProxy{*new NodeProxy{this}}//cleanup through QObject hierarchy
         , nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
     auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
@@ -524,7 +497,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         if (nodeModel.mode.testFlag(NodeModel::FilterMode::InSelectedTree)) {
             nodeRecreate();
         }
-        emit treeCommentFilter.textEdited(treeCommentFilter.text());//active tree might have changed
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::branchPoppedSignal, nodeRecreate);
@@ -536,7 +508,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             updateNodeSelection();
         }
         nodeModel.selectionFromModel = false;
-        emit nodeCommentFilter.textEdited(nodeCommentFilter.text());//active node might have changed
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
