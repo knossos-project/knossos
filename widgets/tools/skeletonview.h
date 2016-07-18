@@ -168,7 +168,7 @@ class SkeletonView : public QWidget {
 
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
-    QString getFilterComment() const;
+    void jumpToNextNode(bool forward) const;
 };
 
 #endif//SKELETONVIEW_H

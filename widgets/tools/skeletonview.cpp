@@ -794,6 +794,14 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
 }
 
-QString SkeletonView::getFilterComment() const {
-    return nodeCommentFilter.text();
+void SkeletonView::jumpToNextNode(bool forward) const {
+    auto current = nodeView.currentIndex();
+    auto next = forward ? nodeView.indexBelow(current) : nodeView.indexAbove(current);
+    next = !next.isValid() ? current : next;// cap over- and underflow
+    if (next.isValid()) {// no current index will fail here
+        // mapping to source always succeeds
+        auto & node = nodeModel.cache[nodeSortAndCommentFilterProxy.mapToSource(next).row()].get();
+        Skeletonizer::singleton().setActiveNode(&node);
+        Skeletonizer::singleton().jumpToNode(node);
+    }
 }

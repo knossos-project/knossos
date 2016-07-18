@@ -561,12 +561,8 @@ void MainWindow::createMenus() {
 
     auto commentsMenu = menuBar()->addMenu("&Comments");
 
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), &Skeletonizer::singleton(), [this] () {
-        Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), true);
-    }, Qt::Key_N);
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found Comment"), &Skeletonizer::singleton(), [this] () {
-        Skeletonizer::singleton().gotoComment(widgetContainer.annotationWidget.skeletonTab.getFilterComment(), false);
-    }, Qt::Key_P);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found Comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
 
     commentsMenu->addSeparator();
 

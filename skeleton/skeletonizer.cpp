@@ -1481,48 +1481,6 @@ void Skeletonizer::setComment(T & elem, const QString & newContent) {
 template void Skeletonizer::setComment(treeListElement &, const QString & newContent);// explicit instantiation for other TUs
 template void Skeletonizer::setComment(nodeListElement &, const QString & newContent);
 
-void Skeletonizer::gotoComment(const QString & searchString, const bool next /*or previous*/) {
-    static TreeTraverser commentTraverser(state->skeletonState->trees, skeletonState.activeNode);
-
-    if (searchString.isEmpty()) {
-        return;
-    }
-
-    static nodeListElement *lastNode = nullptr;
-    auto oneStep = next ? []() { ++commentTraverser; } : []() { --commentTraverser; };
-    auto canContinue = next ? []() { return !commentTraverser.reachedEnd; } : []() { return !commentTraverser.reachedStart(); };
-    auto reachedEndMsg = [&searchString]() {
-        QMessageBox msgBox(state->viewer->window);
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("No more occurences."));
-        msgBox.setInformativeText(tr("Found all occurences of nodes with comment “%1”.").arg(searchString));
-        msgBox.exec();
-    };
-    if ((lastNode != skeletonState.activeNode) || (skeletonState.activeNode && !skeletonState.activeNode->getComment().contains(searchString, Qt::CaseInsensitive))) {
-        // reset when invalidated by changing active node or search string
-        commentTraverser = TreeTraverser(state->skeletonState->trees, skeletonState.activeNode);
-    }
-    if (canContinue()) {
-        oneStep();
-    } else {
-        reachedEndMsg();
-        return;
-    }
-    while (!commentTraverser.reachedEnd) {
-        if ((*commentTraverser).getComment().contains(searchString, Qt::CaseInsensitive) && &(*commentTraverser) != skeletonState.activeNode) {
-            setActiveNode(&(*commentTraverser));
-            jumpToNode(*commentTraverser);
-            lastNode = &(*commentTraverser);
-            return;
-        } else if (canContinue()) {
-            oneStep();
-        } else {
-            break;
-        }
-    }
-    reachedEndMsg();
-}
-
 /*
  * Create a synapse, starting with a presynapse
  * 1. 'shift+c': Active Node is marked as a presynapse

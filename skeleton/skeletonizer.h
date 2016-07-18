@@ -202,7 +202,6 @@ public slots:
     void addSynapse(std::vector<nodeListElement *> & nodes);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);
-    void gotoComment(const QString &searchString, const bool next);
     bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
     bool delNode(std::uint64_t nodeID, nodeListElement *nodeToDel);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
