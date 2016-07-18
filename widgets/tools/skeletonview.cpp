@@ -529,12 +529,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             model.setFilterFixedString(filterText);
         }
     };
-    QObject::connect(&treeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText) {
+    QObject::connect(&treeCommentFilter, &QLineEdit::textChanged, [this](const QString & filterText) {
         filter(treeRegex, treeSortAndCommentFilterProxy, filterText);
         updateTreeSelection();
     });
 
-    QObject::connect(&nodeCommentFilter, &QLineEdit::textEdited, [this](const QString & filterText) {
+    QObject::connect(&nodeCommentFilter, &QLineEdit::textChanged, [this](const QString & filterText) {
         filter(nodeRegex, nodeSortAndCommentFilterProxy, filterText);
         updateNodeSelection();
     });
