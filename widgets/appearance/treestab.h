@@ -53,10 +53,10 @@ class TreesTab : public QWidget
     QLabel renderQualityLabel{tr("Skeleton rendering quality:")};
     QComboBox renderQualityCombo;
     // tree visibility
-    QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in Ortho VPs")};
-    QCheckBox skeletonIn3DVPCheck{tr("Show skeleton in 3D VP")};
     QRadioButton wholeSkeletonRadio{tr("Show whole skeleton")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
+    QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in Ortho VPs")};
+    QCheckBox skeletonIn3DVPCheck{tr("Show skeleton in 3D VP")};
 
     void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");

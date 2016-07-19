@@ -39,10 +39,10 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
                                   "<b>Lines & points:</b> renders segments as lines and nodes as points<br/>"));
 
     auto treeDisplayLayout = new QVBoxLayout();
-    treeDisplayLayout->addWidget(&wholeSkeletonRadio);
-    treeDisplayLayout->addWidget(&selectedTreesRadio);
     treeDisplayLayout->addWidget(&skeletonInOrthoVPsCheck);
     treeDisplayLayout->addWidget(&skeletonIn3DVPCheck);
+    treeDisplayLayout->addWidget(&wholeSkeletonRadio);
+    treeDisplayLayout->addWidget(&selectedTreesRadio);
 
     auto row = 0;
     // trees
