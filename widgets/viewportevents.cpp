@@ -591,34 +591,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
         skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
         skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
-    } else if(event->key() == Qt::Key_Plus) {
-        if(ctrl) {
-            Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1);
-        } else {
-            if(Segmentation::singleton().alpha + 10 > 255) {
-                Segmentation::singleton().alpha = 255;
-            }
-            else {
-                Segmentation::singleton().alpha += 10;
-            }
-            auto & segSettings = state->viewer->window->widgetContainer.appearanceWidget.datasetAndSegmentationTab;
-            segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
-        }
-    } else if(event->key() == Qt::Key_Minus) {
-        if(ctrl) {
-            if(Segmentation::singleton().brush.getRadius() > 0) {
-                Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1);
-            }
-        } else {
-            if(Segmentation::singleton().alpha - 10 < 0) {
-                Segmentation::singleton().alpha = 0;
-            }
-            else {
-                Segmentation::singleton().alpha -= 10;
-            }
-            auto & segSettings = state->viewer->window->widgetContainer.appearanceWidget.datasetAndSegmentationTab;
-            segSettings.segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
-        }
     } else if(event->key() == Qt::Key_Space) {
         state->viewerState->showOverlay = false;
         state->viewer->oc_reslice_notify_visible();

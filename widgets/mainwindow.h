@@ -122,6 +122,10 @@ class MainWindow : public QMainWindow {
     QAction *popBranchAction;
     QAction *createSynapse;
     QAction *clearSkeletonAction;
+    QAction *increaseOpacityAction;
+    QAction *decreaseOpacityAction;
+    QAction *enlargeBrushAction;
+    QAction *shrinkBrushAction;
     QAction *clearMergelistAction;
 
     void resizeEvent(QResizeEvent *event);
@@ -222,6 +226,9 @@ public:
     SynapseState synapseState{SynapseState::Off};
     void setSynapseState(const SynapseState newState);
     void toggleSynapses();
+
+signals:
+    void overlayOpacityChanged();
 public slots:
     void refreshPluginMenu();
     void setProofReadingUI(const bool on);

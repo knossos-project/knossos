@@ -504,8 +504,8 @@ void MainWindow::createMenus() {
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
-    const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     //advanced skeleton
+    const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     //skeleton
@@ -523,6 +523,16 @@ void MainWindow::createMenus() {
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
+    auto setOverlayOpacity = [this](int value) {
+        Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
+    };
+    increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase overlay opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
+    decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease overlay opacity"), this, [&]() { setOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
+    enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + scroll)"), &Segmentation::singleton(),
+                                                 []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1); }, Qt::SHIFT + Qt::Key_Plus);
+    shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + scroll)"), &Segmentation::singleton(),
+                                                []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1); }, Qt::SHIFT + Qt::Key_Minus);
+
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
     //proof reading mode
     modeSwitchSeparator = actionMenu.addSeparator();
@@ -891,6 +901,10 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     clearSkeletonAction->setVisible(skeleton);
+    increaseOpacityAction->setVisible(segmentation);
+    decreaseOpacityAction->setVisible(segmentation);
+    enlargeBrushAction->setVisible(segmentation);
+    shrinkBrushAction->setVisible(segmentation);
     clearMergelistAction->setVisible(segmentation);
 
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection

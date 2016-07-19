@@ -22,6 +22,7 @@
 
 #include "datasetsegmentationtab.h"
 #include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 #include "segmentation/segmentation.h"
 #include "viewer.h"
 
@@ -135,6 +136,8 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().volume_opacity = value;
         Segmentation::singleton().volume_update_required = true;
     });
+
+    QObject::connect(&state->viewer->mainWindow, &MainWindow::overlayOpacityChanged, [this]() { segmentationOverlaySlider.setValue(Segmentation::singleton().alpha); });
 }
 
 void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
