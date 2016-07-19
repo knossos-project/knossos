@@ -30,7 +30,6 @@
 const QString MAIN_WINDOW = "main_window";
 const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_WIDGET = "dataset_widget";
-const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString DATASET_OPTIONS_WIDGET = "zoom_and_multires_widget";
 const QString APPEARANCE_WIDGET = "appearance_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";

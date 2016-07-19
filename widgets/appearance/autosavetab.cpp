@@ -20,22 +20,19 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "datasavingwidget.h"
+#include "autosavetab.h"
 
 #include "file_io.h"
-#include "GuiConstants.h"
+#include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 #include "viewer.h"
-#include "mainwindow.h"
 
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
 #include <QSettings>
 
-DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
-    setWindowTitle("Data Saving Options");
-    mainLayout.setSizeConstraint(QLayout::SetFixedSize);// non-resizable
-
+AutosaveTab::AutosaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
     autosaveIntervalSpinBox.setMinimum(1);
     autosaveIntervalSpinBox.setSuffix(" min");
     autosaveLocationEdit.setText(QFileInfo(annotationFileDefaultPath()).dir().absolutePath());
@@ -43,11 +40,14 @@ DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::Windo
     autosaveLocationEdit.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
 
     mainLayout.addWidget(&autosaveCheckbox);
+    autosaveIntervalSpinBox.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     formLayout.addRow(&autosaveIntervalLabel, &autosaveIntervalSpinBox);
     mainLayout.addLayout(&formLayout);
     mainLayout.addWidget(&autoincrementFileNameButton);
+    revealButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     mainLayout.addWidget(&revealButton);
     mainLayout.addWidget(&autosaveLocationEdit);
+    mainLayout.addStretch();
     setLayout(&mainLayout);
 
     QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
@@ -71,23 +71,14 @@ DataSavingWidget::DataSavingWidget(QWidget * parent) : QDialog(parent, Qt::Windo
     });
 }
 
-void DataSavingWidget::loadSettings() {
-    QSettings settings;
-    settings.beginGroup(DATA_SAVING_WIDGET);
-    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+void AutosaveTab::loadSettings(const QSettings & settings) {
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autosaveCheckbox.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
-    settings.endGroup();
 }
 
-void DataSavingWidget::saveSettings() {
-    QSettings settings;
-    settings.beginGroup(DATA_SAVING_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
-    settings.setValue(VISIBLE, isVisible());
+void AutosaveTab::saveSettings(QSettings & settings) {
     settings.setValue(AUTO_SAVING, autosaveCheckbox.isChecked());
     settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());
-    settings.endGroup();
 }

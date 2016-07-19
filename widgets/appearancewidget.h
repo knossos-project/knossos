@@ -23,6 +23,7 @@
 #ifndef APPEARANCEWIDGET_H
 #define APPEARANCEWIDGET_H
 
+#include "appearance/autosavetab.h"
 #include "appearance/datasetsegmentationtab.h"
 #include "appearance/nodestab.h"
 #include "appearance/treestab.h"
@@ -41,6 +42,7 @@ public:
     NodesTab nodesTab;
     TreesTab treesTab;
     ViewportTab viewportTab;
+    AutosaveTab autosaveTab;
     QVBoxLayout mainLayout;
 
     void loadSettings();

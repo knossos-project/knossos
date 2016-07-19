@@ -592,7 +592,6 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(tr("Data Saving Options"), &widgetContainer.dataSavingWidget, SLOT(show()));
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("&Windows");
@@ -1120,7 +1119,6 @@ void MainWindow::saveSettings() {
     settings.endGroup();
 
     widgetContainer.datasetLoadWidget.saveSettings();
-    widgetContainer.dataSavingWidget.saveSettings();
     widgetContainer.datasetOptionsWidget.saveSettings();
     widgetContainer.appearanceWidget.saveSettings();
     widgetContainer.navigationWidget.saveSettings();
@@ -1177,7 +1175,6 @@ void MainWindow::loadSettings() {
 
     widgetContainer.annotationWidget.loadSettings();
     widgetContainer.appearanceWidget.loadSettings();
-    widgetContainer.dataSavingWidget.loadSettings();
     widgetContainer.datasetLoadWidget.loadSettings();
     widgetContainer.datasetOptionsWidget.loadSettings();
     widgetContainer.navigationWidget.loadSettings();

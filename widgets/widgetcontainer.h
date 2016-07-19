@@ -25,7 +25,6 @@
 
 #include "annotationwidget.h"
 #include "appearancewidget.h"
-#include "datasavingwidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
 #include "documentationwidget.h"
@@ -42,7 +41,7 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidget(parent), appearanceWidget(parent), dataSavingWidget(parent)
+        : annotationWidget(parent), appearanceWidget(parent)
         , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget), docWidget(parent)
         , navigationWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
@@ -54,7 +53,6 @@ struct WidgetContainer {
 
     AnnotationWidget annotationWidget;
     AppearanceWidget appearanceWidget;
-    DataSavingWidget dataSavingWidget;
     DatasetLoadWidget datasetLoadWidget;
     DatasetOptionsWidget datasetOptionsWidget;
     DocumentationWidget docWidget;
@@ -69,7 +67,6 @@ struct WidgetContainer {
         QSettings settings;
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
         appearanceWidget.setVisible(settings.value(APPEARANCE_WIDGET + '/' + VISIBLE, false).toBool());
-        dataSavingWidget.setVisible(settings.value(DATA_SAVING_WIDGET + '/' + VISIBLE, false).toBool());
         datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
         navigationWidget.setVisible(settings.value(NAVIGATION_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
@@ -79,7 +76,6 @@ struct WidgetContainer {
     void hideAll() {
         annotationWidget.hide();
         appearanceWidget.hide();
-        dataSavingWidget.hide();
         datasetLoadWidget.hide();
         datasetOptionsWidget.hide();
         docWidget.hide();

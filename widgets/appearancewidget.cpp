@@ -41,6 +41,7 @@ AppearanceWidget::AppearanceWidget(QWidget *parent) : DialogVisibilityNotify(par
     tabs.addTab(&nodesTab, "Nodes");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
     tabs.addTab(&viewportTab, "Viewports");
+    tabs.addTab(&autosaveTab, "Autosave");
 
     mainLayout.addWidget(&tabs);
     mainLayout.setContentsMargins({});
@@ -56,6 +57,7 @@ void AppearanceWidget::loadSettings() {
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
+    autosaveTab.loadSettings(settings);
     datasetAndSegmentationTab.loadSettings(settings);
     nodesTab.loadSettings(settings);
     treesTab.loadSettings(settings);
@@ -72,6 +74,7 @@ void AppearanceWidget::saveSettings() {
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
+    autosaveTab.saveSettings(settings);
     datasetAndSegmentationTab.saveSettings(settings);
     nodesTab.saveSettings(settings);
     treesTab.saveSettings(settings);

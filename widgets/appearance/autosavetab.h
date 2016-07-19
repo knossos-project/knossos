@@ -20,19 +20,20 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef DATASAVINGWIDGET_H
-#define DATASAVINGWIDGET_H
+#ifndef AUTOSAVETAB_H
+#define AUTOSAVETAB_H
 
 #include <QCheckBox>
-#include <QDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <QWidget>
 
-class DataSavingWidget : public QDialog {
+class QSettings;
+class AutosaveTab : public QWidget {
     Q_OBJECT
     QVBoxLayout mainLayout;
     QFormLayout formLayout;
@@ -43,9 +44,9 @@ class DataSavingWidget : public QDialog {
     QPushButton revealButton{"Reveal default location"};
     QLabel autosaveLocationEdit;
 public:
-    explicit DataSavingWidget(QWidget * parent = nullptr);
-    void loadSettings();
-    void saveSettings();
+    explicit AutosaveTab(QWidget * parent = nullptr);
+    void loadSettings(const QSettings &settings);
+    void saveSettings(QSettings &settings);
 };
 
-#endif // DATASAVINGWIDGET_H
+#endif//AUTOSAVETAB_H
