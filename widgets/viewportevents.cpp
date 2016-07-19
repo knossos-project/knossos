@@ -578,9 +578,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         auto & vpSettings = state->viewer->window->widgetContainer.appearanceWidget.viewportTab;
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
-    } else if(event->key() == Qt::Key_I) {
+    } else if(event->key() == Qt::Key_Plus && ctrl) {
         zoomIn();
-    } else if(event->key() == Qt::Key_O) {
+    } else if(event->key() == Qt::Key_Minus && ctrl) {
         zoomOut();
     } else if(event->key() == Qt::Key_V) {
         if(ctrl) {
