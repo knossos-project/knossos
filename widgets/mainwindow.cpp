@@ -849,7 +849,7 @@ try {
 }
 
 void MainWindow::exportToNml() {
-    if (!state->skeletonState->trees.empty()) {
+    if (state->skeletonState->trees.empty()) {
         QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
         return;
     }
