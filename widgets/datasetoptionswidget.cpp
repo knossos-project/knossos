@@ -268,7 +268,7 @@ void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
     const auto interval = 50;
 
     zoomStep = std::pow(2, 1./interval);
-    int max_value = std::log(state->viewer->highestScreenPxXPerDataPx() / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep);
+    int max_value = std::ceil(std::log(state->viewer->highestScreenPxXPerDataPx() / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep));
     orthoZoomSlider.numTicks = mags > 1 ? mags : 0;
     orthoZoomSlider.highestMag = state->viewer->highestMag();
     const auto orthoZoomSliderBlock = orthoZoomSlider.blockSignals(true);
@@ -309,7 +309,7 @@ void DatasetOptionsWidget::updateOrthogonalZoomSpinBox() {
 
 void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
     orthoZoomSlider.blockSignals(true);
-    const int newValue = std::log(state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep);
+    const int newValue = std::ceil(std::log(state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep));
     orthoZoomSlider.setValue(newValue);
     orthoZoomSlider.blockSignals(false);
 }
