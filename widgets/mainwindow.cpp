@@ -565,10 +565,6 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
 
-    viewMenu->addSeparator();
-
-    viewMenu->addAction(tr("Dataset Navigation Options"), &widgetContainer.navigationWidget, SLOT(show()));
-
     auto commentsMenu = menuBar()->addMenu("&Comments");
 
     addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
@@ -1121,7 +1117,6 @@ void MainWindow::saveSettings() {
     widgetContainer.datasetLoadWidget.saveSettings();
     widgetContainer.datasetOptionsWidget.saveSettings();
     widgetContainer.appearanceWidget.saveSettings();
-    widgetContainer.navigationWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
     widgetContainer.pythonInterpreterWidget.saveSettings();
@@ -1177,7 +1172,6 @@ void MainWindow::loadSettings() {
     widgetContainer.appearanceWidget.loadSettings();
     widgetContainer.datasetLoadWidget.loadSettings();
     widgetContainer.datasetOptionsWidget.loadSettings();
-    widgetContainer.navigationWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();

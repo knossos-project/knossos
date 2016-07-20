@@ -32,8 +32,8 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "viewer.h"
+#include "widgets/appearance/navigationtab.h"
 #include "widgets/mainwindow.h"
-#include "widgets/navigationwidget.h"
 
 #include <QApplication>
 #include <QMessageBox>

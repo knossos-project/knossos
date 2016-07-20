@@ -29,7 +29,6 @@
 #include "datasetoptionswidget.h"
 #include "documentationwidget.h"
 #include "GuiConstants.h"
-#include "navigationwidget.h"
 #include "snapshotwidget.h"
 #include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
@@ -43,7 +42,7 @@ struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), appearanceWidget(parent)
         , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget), docWidget(parent)
-        , navigationWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
+        , pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
@@ -56,7 +55,6 @@ struct WidgetContainer {
     DatasetLoadWidget datasetLoadWidget;
     DatasetOptionsWidget datasetOptionsWidget;
     DocumentationWidget docWidget;
-    NavigationWidget navigationWidget;
     PythonInterpreterWidget pythonInterpreterWidget;
     PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
@@ -68,7 +66,6 @@ struct WidgetContainer {
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
         appearanceWidget.setVisible(settings.value(APPEARANCE_WIDGET + '/' + VISIBLE, false).toBool());
         datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
-        navigationWidget.setVisible(settings.value(NAVIGATION_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
         snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
     }
@@ -79,7 +76,6 @@ struct WidgetContainer {
         datasetLoadWidget.hide();
         datasetOptionsWidget.hide();
         docWidget.hide();
-        navigationWidget.hide();
         pythonPropertyWidget.hide();
         pythonInterpreterWidget.hide();
         snapshotWidget.hide();

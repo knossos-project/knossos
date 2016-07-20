@@ -25,6 +25,7 @@
 
 #include "appearance/autosavetab.h"
 #include "appearance/datasetsegmentationtab.h"
+#include "appearance/navigationtab.h"
 #include "appearance/nodestab.h"
 #include "appearance/treestab.h"
 #include "appearance/viewporttab.h"
@@ -43,6 +44,7 @@ public:
     TreesTab treesTab;
     ViewportTab viewportTab;
     AutosaveTab autosaveTab;
+    NavigationTab navigationTab;
     QVBoxLayout mainLayout;
 
     void loadSettings();

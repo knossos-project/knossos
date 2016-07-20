@@ -26,8 +26,8 @@
 #include "functions.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
+#include "widgets/appearance/navigationtab.h"
 #include "widgets/mainwindow.h"
-#include "widgets/navigationwidget.h"
 #include "widgets/viewport.h"
 
 #include <QColor>
@@ -204,7 +204,7 @@ public:
 
     std::list<TextureLayer> layers;
     int gpucubeedge = 64;
-    bool gpuRendering = false;
+    bool gpuRendering = true;
 
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     ViewportArb *viewportArb;
