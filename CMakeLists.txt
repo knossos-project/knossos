@@ -37,6 +37,7 @@ endif()
 option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
+include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
@@ -46,7 +47,9 @@ file(GLOB_RECURSE docimages ./resources/doc/images/*)
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_EXTENSIONS OFF)
+if(NOT COMMAND cotire)#https://github.com/sakra/cotire/issues/99
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
 set(CMAKE_AUTOSTATICPLUGINS ON)
@@ -178,7 +181,6 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "R
     target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
 endif()
 
-include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)
     cotire(${PROJECT_NAME})
 endif()
