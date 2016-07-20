@@ -54,7 +54,7 @@ class NodesTab : public QWidget
     QComboBox idCombo;
     QCheckBox nodeCommentsCheck{"Show node comments"};
     QCheckBox overrideNodeRadiusCheck{"Override node radius"};
-    QDoubleSpinBox nodeRadiusSpin;
+    QDoubleSpinBox overrideNodeRadiusSpin;
     QLabel edgeNodeRatioLabel{"Edge : Node radius ratio"};
     QDoubleSpinBox edgeNodeRatioSpin;
     // property visualization

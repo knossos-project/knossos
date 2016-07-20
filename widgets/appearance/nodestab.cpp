@@ -52,8 +52,9 @@ void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
 
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     idCombo.addItems({"None", "Active Node", "All Nodes"});
+    overrideNodeRadiusSpin.setSingleStep(0.1);
+    overrideNodeRadiusSpin.setSuffix(" px");
     edgeNodeRatioSpin.setSingleStep(0.1);
-    nodeRadiusSpin.setSuffix("px");
     propertyModel.recreate({});
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
@@ -74,7 +75,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&idCombo, row++, 1);
     mainLayout.addWidget(&nodeCommentsCheck, row++, 0);
     mainLayout.addWidget(&overrideNodeRadiusCheck, row, 0);
-    mainLayout.addWidget(&nodeRadiusSpin, row++, 1);
+    mainLayout.addWidget(&overrideNodeRadiusSpin, row++, 1);
     mainLayout.addWidget(&edgeNodeRatioLabel, row, 0);
     mainLayout.addWidget(&edgeNodeRatioSpin, row++, 1);
     mainLayout.addWidget(&propertyHeader, row++, 0);
@@ -93,11 +94,11 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&idCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
         state->viewerState->idDisplay = index == 2 ? IdDisplay::AllNodes : index == 1 ? IdDisplay::ActiveNode : IdDisplay::None;
     });
-    QObject::connect(&nodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
+    QObject::connect(&overrideNodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
     QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { ViewportOrtho::showNodeComments = checked; });
     QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::clicked, [this](const bool on) {
         state->viewerState->overrideNodeRadiusBool = on;
-        nodeRadiusSpin.setEnabled(on);
+        overrideNodeRadiusSpin.setEnabled(on);
     });
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
@@ -150,7 +151,7 @@ void NodesTab::saveSettings(QSettings & settings) const {
     settings.setValue(NODE_ID_DISPLAY, idCombo.currentIndex());
     settings.setValue(EDGE_TO_NODE_RADIUS, edgeNodeRatioSpin.value());
     settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, overrideNodeRadiusCheck.isChecked());
-    settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, nodeRadiusSpin.value());
+    settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, overrideNodeRadiusSpin.value());
     settings.setValue(SHOW_NODE_COMMENTS, nodeCommentsCheck.isChecked());
     settings.setValue(NODE_PROPERTY_RADIUS_SCALE, propertyRadiusScaleSpin.value());
     settings.setValue(NODE_PROPERTY_LUT_PATH, lutPath);
@@ -167,9 +168,9 @@ void NodesTab::loadSettings(const QSettings & settings) {
     edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
     overrideNodeRadiusCheck.setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED, false).toBool());
     overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
-    nodeRadiusSpin.setEnabled(state->viewerState->overrideNodeRadiusBool);
-    nodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
-    nodeRadiusSpin.valueChanged(nodeRadiusSpin.value());
+    overrideNodeRadiusSpin.setEnabled(state->viewerState->overrideNodeRadiusBool);
+    overrideNodeRadiusSpin.setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE, 1.5).toDouble());
+    overrideNodeRadiusSpin.valueChanged(overrideNodeRadiusSpin.value());
     edgeNodeRatioSpin.setValue(settings.value(EDGE_TO_NODE_RADIUS, 0.5).toFloat());
     edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
     nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());
