@@ -115,6 +115,11 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     });
     QObject::connect(&volumeRenderCheckBox, &QCheckBox::clicked, [this](bool checked){
         Segmentation::singleton().volume_render_toggle = checked;
+        volumeOpaquenessLabel.setEnabled(checked);
+        volumeOpaquenessSlider.setEnabled(checked);
+        volumeOpaquenessSpinBox.setEnabled(checked);
+        volumeColorLabel.setEnabled(checked);
+        volumeColorButton.setEnabled(checked);
         emit volumeRenderToggled();
     });
     QObject::connect(&volumeColorButton, &QPushButton::clicked, [this]() {
