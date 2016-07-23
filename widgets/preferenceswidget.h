@@ -20,25 +20,25 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef APPEARANCEWIDGET_H
-#define APPEARANCEWIDGET_H
+#ifndef PREFERENCESWIDGET_H
+#define PREFERENCESWIDGET_H
 
-#include "appearance/autosavetab.h"
-#include "appearance/datasetsegmentationtab.h"
-#include "appearance/navigationtab.h"
-#include "appearance/nodestab.h"
-#include "appearance/treestab.h"
-#include "appearance/viewporttab.h"
+#include "preferences/autosavetab.h"
+#include "preferences/datasetsegmentationtab.h"
+#include "preferences/navigationtab.h"
+#include "preferences/nodestab.h"
+#include "preferences/treestab.h"
+#include "preferences/viewporttab.h"
 #include "widgets/DialogVisibilityNotify.h"
 
 #include <QTabWidget>
 #include <QVBoxLayout>
 
-class AppearanceWidget : public DialogVisibilityNotify {
+class PreferencesWidget : public DialogVisibilityNotify {
     Q_OBJECT
     QTabWidget tabs;
 public:
-    explicit AppearanceWidget(QWidget *parent = 0);
+    explicit PreferencesWidget(QWidget *parent = 0);
     DatasetAndSegmentationTab datasetAndSegmentationTab;
     NodesTab nodesTab;
     TreesTab treesTab;
@@ -51,4 +51,4 @@ public:
     void saveSettings();
 };
 
-#endif // APPEARANCEWIDGET_H
+#endif // PREFERENCESWIDGET_H

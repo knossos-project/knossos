@@ -31,7 +31,7 @@ const QString MAIN_WINDOW = "main_window";
 const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_WIDGET = "dataset_widget";
 const QString DATASET_OPTIONS_WIDGET = "zoom_and_multires_widget";
-const QString APPEARANCE_WIDGET = "appearance_settings_widget";
+const QString PREFERENCES_WIDGET = "preferences_widget";
 const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString ANNOTATION_WIDGET = "tools_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
@@ -63,7 +63,7 @@ const QString DATASET_LAST_USED = "dataset_last_used";
 const QString SKELETON_VIEW = "skeleton_view";
 const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 
-// Appearance Tree Tab
+// Preferences Tree Tab
 const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString LIGHT_EFFECTS = "light_effects";
@@ -76,7 +76,7 @@ const QString ONLY_SELECTED_TREES = "only_selected_trees";
 const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
 const QString SHOW_SKELETON_SKELVP = "Show_skeleton_skelvp";
 
-// Appearance Nodes Tab
+// Preferences Nodes Tab
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
 const QString NODE_PROPERTY_LUT_PATH = "node_property_lut_path";
 const QString NODE_PROPERTY_MAP_MIN = "node_property_map_min";
@@ -87,7 +87,7 @@ const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
 const QString NODE_ID_DISPLAY = "node_id_display";
 const QString SHOW_NODE_COMMENTS = "show_node_comments";
 
-// Appearance Dataset & Segmentation Tab
+// Preferences Dataset & Segmentation Tab
 const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";
 const QString DATASET_LUT_FILE = "dataset_lut_file";
 const QString DATASET_LUT_FILE_USED = "dataset_lut_file_used";
@@ -95,7 +95,7 @@ const QString BIAS = "bias";
 const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
 
-// Appearance Viewports Tab
+// Preferences Viewports Tab
 const QString SHOW_SCALEBAR = "show_scalebar";
 const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";

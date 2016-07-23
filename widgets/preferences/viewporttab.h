@@ -34,7 +34,7 @@
 #include <QWidget>
 
 class ViewportTab : public QWidget {
-    friend class AppearanceWidget;
+    friend class PreferencesWidget;
     friend class ViewportBase;
     friend class MainWindow;
     Q_OBJECT

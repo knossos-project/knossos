@@ -96,14 +96,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.appearanceWidget.nodesTab, &NodesTab::updateProperties);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.preferencesWidget.nodesTab, &NodesTab::updateProperties);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) {
         nodeLockingLabel.setText(tr("Locked to node %1").arg(nodeID));
         nodeLockingLabel.show();
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
-    QObject::connect(&widgetContainer.appearanceWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
+    QObject::connect(&widgetContainer.preferencesWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         std::map<AnnotationMode, QString> rawModes = workModes;
@@ -267,7 +267,7 @@ void MainWindow::createToolbars() {
     addToolBar(&basicToolbar);
     addToolBar(&defaultToolbar);
 
-    auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
+    auto createToolToggleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
         button->setToolTip(tooltip);
@@ -275,24 +275,24 @@ void MainWindow::createToolbars() {
         defaultToolbar.addWidget(button);
         return button;
     };
-    auto taskManagementButton = createToolToogleButton(":/resources/icons/task.png", "Task Management");
-    auto zoomAndMultiresButton = createToolToogleButton(":/resources/icons/zoom-in.png", "Dataset Options");
-    auto appearanceButton = createToolToogleButton(":/resources/icons/view-list-icons-symbolic.png", "Appearance Settings");
-    auto annotationButton = createToolToogleButton(":/resources/icons/graph.png", "Annotation");
-    auto pythonInterpreterButton = createToolToogleButton(":/resources/icons/python.png", "Python Interpreter");
-    auto snapshotButton = createToolToogleButton(":/resources/icons/camera.png", "Snapshot");
+    auto taskManagementButton = createToolToggleButton(":/resources/icons/task.png", "Task Management");
+    auto zoomAndMultiresButton = createToolToggleButton(":/resources/icons/zoom-in.png", "Dataset Options");
+    auto preferencesButton = createToolToggleButton(":/resources/icons/view-list-icons-symbolic.png", "Preferences");
+    auto annotationButton = createToolToggleButton(":/resources/icons/graph.png", "Annotation");
+    auto pythonInterpreterButton = createToolToggleButton(":/resources/icons/python.png", "Python Interpreter");
+    auto snapshotButton = createToolToggleButton(":/resources/icons/camera.png", "Snapshot");
     //button → visibility
     QObject::connect(taskManagementButton, &QToolButton::clicked, &widgetContainer.taskManagementWidget, &TaskManagementWidget::showOrLoginOrHide);
     QObject::connect(pythonInterpreterButton, &QToolButton::clicked, &widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(appearanceButton, &QToolButton::clicked, &widgetContainer.appearanceWidget, &AppearanceWidget::setVisible);
+    QObject::connect(preferencesButton, &QToolButton::clicked, &widgetContainer.preferencesWidget, &PreferencesWidget::setVisible);
     QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
     QObject::connect(snapshotButton, &QToolButton::clicked, &widgetContainer.snapshotWidget, &SnapshotWidget::setVisible);
     //visibility → button
     QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::visibilityChanged, pythonInterpreterButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.appearanceWidget, &AppearanceWidget::visibilityChanged, appearanceButton, &QToolButton::setChecked);
+    QObject::connect(&widgetContainer.preferencesWidget, &PreferencesWidget::visibilityChanged, preferencesButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::visibilityChanged, snapshotButton, &QToolButton::setChecked);
 
@@ -588,7 +588,7 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Appearance Settings", &widgetContainer.appearanceWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
@@ -720,7 +720,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
     Skeletonizer::singleton().lockingChanged();
-    widgetContainer.appearanceWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
+    widgetContainer.preferencesWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
     Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
     if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…
@@ -1116,7 +1116,7 @@ void MainWindow::saveSettings() {
 
     widgetContainer.datasetLoadWidget.saveSettings();
     widgetContainer.datasetOptionsWidget.saveSettings();
-    widgetContainer.appearanceWidget.saveSettings();
+    widgetContainer.preferencesWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
     widgetContainer.pythonInterpreterWidget.saveSettings();
@@ -1169,7 +1169,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
 
     widgetContainer.annotationWidget.loadSettings();
-    widgetContainer.appearanceWidget.loadSettings();
+    widgetContainer.preferencesWidget.loadSettings();
     widgetContainer.datasetLoadWidget.loadSettings();
     widgetContainer.datasetOptionsWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
@@ -1253,7 +1253,7 @@ void MainWindow::resetViewports() {
 }
 
 void MainWindow::showVPDecorationClicked() {
-    bool isShow = widgetContainer.appearanceWidget.viewportTab.showVPDecorationCheckBox.isChecked();
+    bool isShow = widgetContainer.preferencesWidget.viewportTab.showVPDecorationCheckBox.isChecked();
     forEachVPDo([&isShow](ViewportBase & vp) { vp.showHideButtons(isShow); });
 }
 

@@ -24,7 +24,7 @@
 #define WIDGETCONTAINER_H
 
 #include "annotationwidget.h"
-#include "appearancewidget.h"
+#include "preferenceswidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
 #include "documentationwidget.h"
@@ -40,18 +40,18 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidget(parent), appearanceWidget(parent)
+        : annotationWidget(parent), preferencesWidget(parent)
         , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget), docWidget(parent)
         , pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, &datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
-        QObject::connect(&appearanceWidget.datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, &snapshotWidget, &SnapshotWidget::updateOptionVisibility);
+        QObject::connect(&preferencesWidget.datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, &snapshotWidget, &SnapshotWidget::updateOptionVisibility);
     }
 
     AnnotationWidget annotationWidget;
-    AppearanceWidget appearanceWidget;
+    PreferencesWidget preferencesWidget;
     DatasetLoadWidget datasetLoadWidget;
     DatasetOptionsWidget datasetOptionsWidget;
     DocumentationWidget docWidget;
@@ -64,7 +64,7 @@ struct WidgetContainer {
     void applyVisibility() {
         QSettings settings;
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
-        appearanceWidget.setVisible(settings.value(APPEARANCE_WIDGET + '/' + VISIBLE, false).toBool());
+        preferencesWidget.setVisible(settings.value(PREFERENCES_WIDGET + '/' + VISIBLE, false).toBool());
         datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
         snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
@@ -72,7 +72,7 @@ struct WidgetContainer {
 
     void hideAll() {
         annotationWidget.hide();
-        appearanceWidget.hide();
+        preferencesWidget.hide();
         datasetLoadWidget.hide();
         datasetOptionsWidget.hide();
         docWidget.hide();

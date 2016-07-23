@@ -35,7 +35,7 @@
 
 class DatasetAndSegmentationTab : public QWidget
 {
-    friend class AppearanceWidget;
+    friend class PreferencesWidget;
     Q_OBJECT
     QGridLayout mainLayout;
     // dataset

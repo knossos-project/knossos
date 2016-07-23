@@ -32,7 +32,7 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "viewer.h"
-#include "widgets/appearance/navigationtab.h"
+#include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
 
 #include <QApplication>
@@ -575,7 +575,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        auto & vpSettings = state->viewer->window->widgetContainer.appearanceWidget.viewportTab;
+        auto & vpSettings = state->viewer->window->widgetContainer.preferencesWidget.viewportTab;
         vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
 
     } else if(event->key() == Qt::Key_Plus && ctrl) {
@@ -587,7 +587,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             emit pasteCoordinateSignal();
         }
     } else if(event->key() == Qt::Key_1) { // !
-        auto & skelSettings = state->viewer->window->widgetContainer.appearanceWidget.treesTab;
+        auto & skelSettings = state->viewer->window->widgetContainer.preferencesWidget.treesTab;
         const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
         skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
         skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);

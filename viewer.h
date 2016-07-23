@@ -26,7 +26,7 @@
 #include "functions.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
-#include "widgets/appearance/navigationtab.h"
+#include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 

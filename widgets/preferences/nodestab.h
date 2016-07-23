@@ -46,7 +46,7 @@ public:
 
 class NodesTab : public QWidget
 {
-    friend class AppearanceWidget;
+    friend class PreferencesWidget;
     Q_OBJECT
     QGridLayout mainLayout;
     QFrame nodeSeparator;

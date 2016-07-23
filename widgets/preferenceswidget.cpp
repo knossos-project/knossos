@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "appearancewidget.h"
+#include "preferenceswidget.h"
 
 #include "GuiConstants.h"
 #include "viewer.h"
@@ -34,9 +34,9 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-AppearanceWidget::AppearanceWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
+PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
     setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
-    setWindowTitle("Appearance Settings");
+    setWindowTitle("Preferences");
     tabs.addTab(&treesTab, "Trees");
     tabs.addTab(&nodesTab, "Nodes");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
@@ -52,9 +52,9 @@ AppearanceWidget::AppearanceWidget(QWidget *parent) : DialogVisibilityNotify(par
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void AppearanceWidget::loadSettings() {
+void PreferencesWidget::loadSettings() {
     QSettings settings;
-    settings.beginGroup(APPEARANCE_WIDGET);
+    settings.beginGroup(PREFERENCES_WIDGET);
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
@@ -70,9 +70,9 @@ void AppearanceWidget::loadSettings() {
     settings.endGroup();
 }
 
-void AppearanceWidget::saveSettings() {
+void PreferencesWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(APPEARANCE_WIDGET);
+    settings.beginGroup(PREFERENCES_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
