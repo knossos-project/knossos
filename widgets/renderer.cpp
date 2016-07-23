@@ -776,26 +776,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         if(state->viewerState->multisamplingOnOff) {
             glEnable(GL_MULTISAMPLE);
         }
-
-        if(state->viewerState->lightOnOff) {
-            /* Configure light. optimize that! TDitem */
-            glEnable(GL_LIGHTING);
-            GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
-            GLfloat diffuseLight[] = {1., 1., 1., 1.};
-            GLfloat lightPos[] = {0., 0., 1., 1.};
-
-            glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
-            glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
-            glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
-            glEnable(GL_LIGHT0);
-
-            GLfloat global_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-
-            /* Enable materials with automatic color assignment */
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-            glEnable(GL_COLOR_MATERIAL);
-        }
     }
 
     /* Multiplying by state->magnification increases the area covered
@@ -1445,26 +1425,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
     displayedlengthInNmX = edgeLength / screenPxXPerDataPx * state->scale.x;
 
-    if(state->viewerState->lightOnOff) {
-        // Configure light
-        glEnable(GL_LIGHTING);
-        GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
-        GLfloat diffuseLight[] = {1., 1., 1., 1.};
-        GLfloat lightPos[] = {0., 0., 1., 1.};
-
-        glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
-        glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
-        glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
-        glEnable(GL_LIGHT0);
-
-        GLfloat global_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-
-        // Enable materials with automatic color tracking
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-        glEnable(GL_COLOR_MATERIAL);
-    }
-
     if(state->viewerState->multisamplingOnOff) {
         glEnable(GL_MULTISAMPLE);
     }
@@ -1949,7 +1909,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     // Reset previously changed OGL parameters
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
     return true;
@@ -2286,6 +2245,25 @@ bool Viewport3D::rotateViewport() {
  */
 
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
+    if(state->viewerState->lightOnOff && state->viewerState->selectModeFlag == false) {
+        // Configure light
+        glEnable(GL_LIGHTING);
+        GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
+        GLfloat diffuseLight[] = {1., 1., 1., 1.};
+        GLfloat lightPos[] = {0., 0., 1., 1.};
+
+        glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
+        glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
+        glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
+        glEnable(GL_LIGHT0);
+
+        GLfloat global_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+
+        // Enable materials with automatic color tracking
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+        glEnable(GL_COLOR_MATERIAL);
+    }
     state->viewerState->lineVertBuffer.vertices.clear();
     state->viewerState->lineVertBuffer.colors.clear();
     state->viewerState->pointVertBuffer.vertices.clear();
@@ -2478,6 +2456,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPopMatrix(); // Restore modelview matrix
     glEnable(GL_BLEND);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_COLOR_MATERIAL);
 }
 
 bool ViewportBase::updateFrustumClippingPlanes() {
