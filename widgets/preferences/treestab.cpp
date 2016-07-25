@@ -38,22 +38,24 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
                                   "<b>Switch dynamically:</b> Switches dynamically between \"Tubes & spheres\" and \"Lines & points\" depending on zoom<br/>"
                                   "<b>Lines & points:</b> renders segments as lines and nodes as points<br/>"));
 
-    auto treeDisplayLayout = new QVBoxLayout();
-    treeDisplayLayout->addWidget(&skeletonInOrthoVPsCheck);
-    treeDisplayLayout->addWidget(&skeletonIn3DVPCheck);
-    treeDisplayLayout->addWidget(&wholeSkeletonRadio);
-    treeDisplayLayout->addWidget(&selectedTreesRadio);
-
-    auto row = 0;
     // trees
-    mainLayout.setAlignment(Qt::AlignTop);
-    mainLayout.addWidget(&highlightActiveTreeCheck, row, 0);  mainLayout.addLayout(treeDisplayLayout, row++, 3, 4, 1);
-    mainLayout.addWidget(&highlightIntersectionsCheck, row++, 0);
-    mainLayout.addWidget(&lightEffectsCheck, row++, 0);
-    mainLayout.addWidget(&ownTreeColorsCheck, row, 0);  mainLayout.addWidget(&loadTreeLUTButton, row++, 1);
-    mainLayout.addWidget(&depthCutOffLabel, row, 0);  mainLayout.addWidget(&depthCutoffSpin, row++, 1);
-    mainLayout.addWidget(&renderQualityLabel, row, 0);  mainLayout.addWidget(&renderQualityCombo, row++, 1);
+    renderingLayout.setAlignment(Qt::AlignTop);
+    renderingLayout.addRow(&highlightActiveTreeCheck);
+    renderingLayout.addRow(&highlightIntersectionsCheck);
+    renderingLayout.addRow(&lightEffectsCheck);
+    renderingLayout.addRow(&ownTreeColorsCheck, &loadTreeLUTButton);
+    renderingLayout.addRow(tr("Depth cutoff:"), &depthCutoffSpin);
+    renderingLayout.addRow(tr("Skeleton rendering quality:"), &renderQualityCombo);
+    renderingGroup.setLayout(&renderingLayout);
+    visibilityLayout.setAlignment(Qt::AlignTop);
+    visibilityLayout.addWidget(&skeletonInOrthoVPsCheck);
+    visibilityLayout.addWidget(&skeletonIn3DVPCheck);
+    visibilityLayout.addWidget(&wholeSkeletonRadio);
+    visibilityLayout.addWidget(&selectedTreesRadio);
+    visibilityGroup.setLayout(&visibilityLayout);
 
+    mainLayout.addWidget(&renderingGroup);
+    mainLayout.addWidget(&visibilityGroup);
     setLayout(&mainLayout);
 
     // trees render options

@@ -27,11 +27,14 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
 #include <QFrame>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QSettings>
+#include <QVBoxLayout>
 #include <QWidget>
 
 class PropertyModel : public QAbstractListModel {
@@ -48,17 +51,17 @@ class NodesTab : public QWidget
 {
     friend class PreferencesWidget;
     Q_OBJECT
-    QGridLayout mainLayout;
-    QFrame nodeSeparator;
-    QLabel idLabel{"Show node IDs"};
+    QVBoxLayout mainLayout;
+    QGroupBox generalGroup{tr("Rendering")};
+    QFormLayout generalLayout;
     QComboBox idCombo;
     QCheckBox nodeCommentsCheck{"Show node comments"};
     QCheckBox overrideNodeRadiusCheck{"Override node radius"};
     QDoubleSpinBox overrideNodeRadiusSpin;
-    QLabel edgeNodeRatioLabel{"Edge : Node radius ratio"};
     QDoubleSpinBox edgeNodeRatioSpin;
     // property visualization
-    QLabel propertyHeader{"<strong>Property Highlighting</strong>"};
+    QGroupBox propertiesGroup{tr("Property Highlighting")};
+    QGridLayout propertiesLayout;
     PropertyModel propertyModel;
     QComboBox propertyRadiusCombo;
     QLabel propertyRadiusLabel{"Scale property and use as node radius:"};

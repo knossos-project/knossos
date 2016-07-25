@@ -40,8 +40,8 @@ AutosaveTab::AutosaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() &
     autosaveLocationEdit.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
 
     mainLayout.addWidget(&autosaveCheckbox);
-    autosaveIntervalSpinBox.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     formLayout.addRow(&autosaveIntervalLabel, &autosaveIntervalSpinBox);
+    formLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
     mainLayout.addLayout(&formLayout);
     mainLayout.addWidget(&autoincrementFileNameButton);
     revealButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

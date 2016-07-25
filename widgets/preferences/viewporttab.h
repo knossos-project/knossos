@@ -25,7 +25,8 @@
 
 #include <QButtonGroup>
 #include <QCheckBox>
-#include <QGridLayout>
+#include <QGroupBox>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
@@ -38,24 +39,29 @@ class ViewportTab : public QWidget {
     friend class ViewportBase;
     friend class MainWindow;
     Q_OBJECT
-    QGridLayout mainLayout;
+    QHBoxLayout mainLayout;
+    QGroupBox generalBox{tr("General")};
     QVBoxLayout generalLayout;
-    QFrame separator;
-    QLabel generalHeader{"<strong>General</strong>"};
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
     QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersections crosshairs"};
     QCheckBox addArbVPCheckBox{"Add viewport with arbitrary view"};
     // 3D viewport
+    QGroupBox viewport3DBox{tr("3D Viewport")};
     QVBoxLayout viewport3DLayout;
-    QLabel viewport3DHeader{"<strong>3D Viewport</strong>"};
+    QGroupBox planesBox{tr("Viewport planes")};
+    QVBoxLayout planesLayout;
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
     QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
     QCheckBox showZYPlaneCheckBox{"Show ZY Plane"};
     QCheckBox showArbPlaneCheckBox{"Show arbitrary Plane"};
+    QGroupBox boundaryBox{tr("Boundaries")};
+    QVBoxLayout boundaryLayout;
     QButtonGroup boundaryGroup;
     QRadioButton boundariesPixelRadioBtn{"Display dataset boundaries in pixels"};
     QRadioButton boundariesPhysicalRadioBtn{"Display dataset boundaries in µm"};
+    QGroupBox rotationBox{tr("Rotation")};
+    QVBoxLayout rotationLayout;
     QButtonGroup rotationCenterGroup;
     QRadioButton rotateAroundDatasetCenterRadioBtn{"Rotate around dataset center"};
     QRadioButton rotateAroundActiveNodeRadioBtn{"Rotate around active Node"};

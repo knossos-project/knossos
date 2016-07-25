@@ -59,37 +59,37 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
     propertyRadiusScaleSpin.setPrefix("×");
+    propertyRadiusCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     propertyColorCombo.setModel(&propertyModel);
     propertyColorCombo.setCurrentIndex(0);
+    propertyColorCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     propertyMinSpin.setSingleStep(0.1);
     propertyMinSpin.setPrefix("Min: ");
     propertyMaxSpin.setSingleStep(0.1);
     propertyMaxSpin.setPrefix("Max: ");
 
-    nodeSeparator.setFrameShape(QFrame::HLine);
-    nodeSeparator.setFrameShadow(QFrame::Sunken);
-    mainLayout.setAlignment(Qt::AlignTop);
+    generalLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+    generalLayout.setAlignment(Qt::AlignTop);
+    generalLayout.addRow(tr("Show node IDs"), &idCombo);
+    generalLayout.addRow(&nodeCommentsCheck);
+    generalLayout.addRow(&overrideNodeRadiusCheck, &overrideNodeRadiusSpin);
+    generalLayout.addRow(tr("Edge:Node radius ratio"), &edgeNodeRatioSpin);
+    generalGroup.setLayout(&generalLayout);
     int row = 0;
-    mainLayout.addWidget(&idLabel, row, 0);
-    mainLayout.addWidget(&idCombo, row++, 1);
-    mainLayout.addWidget(&nodeCommentsCheck, row++, 0);
-    mainLayout.addWidget(&overrideNodeRadiusCheck, row, 0);
-    mainLayout.addWidget(&overrideNodeRadiusSpin, row++, 1);
-    mainLayout.addWidget(&edgeNodeRatioLabel, row, 0);
-    mainLayout.addWidget(&edgeNodeRatioSpin, row++, 1);
-    mainLayout.addWidget(&propertyHeader, row++, 0);
-    mainLayout.addWidget(&nodeSeparator, row++, 0, 1, 4);
-    mainLayout.addWidget(&propertyRadiusLabel, row++, 0, 1, 4);
-    mainLayout.addWidget(&propertyRadiusCombo, row, 0);
-    mainLayout.addWidget(&propertyRadiusScaleSpin, row++, 1);
-    mainLayout.addWidget(&propertyColorLabel, row++, 0, 1, 4);
-    mainLayout.addWidget(&propertyColorCombo, row, 0);
-    mainLayout.addWidget(&propertyMinSpin, row, 1);
-    mainLayout.addWidget(&propertyMaxSpin, row, 2);
-    mainLayout.addWidget(&propertyLUTButton, row++, 3);
-    mainLayout.addWidget(&lutLabel, row++, 0, 1, 4, Qt::AlignRight);
-    mainLayout.setColumnStretch(0, 1);
+    propertiesLayout.addWidget(&propertyRadiusLabel, row++, 0, 1, 4);
+    propertiesLayout.addWidget(&propertyRadiusCombo, row, 0);
+    propertiesLayout.addWidget(&propertyRadiusScaleSpin, row++, 1);
+    propertiesLayout.addWidget(&propertyColorLabel, row++, 0, 1, 4);
+    propertiesLayout.addWidget(&propertyColorCombo, row, 0);
+    propertiesLayout.addWidget(&propertyMinSpin, row, 1);
+    propertiesLayout.addWidget(&propertyMaxSpin, row, 2);
+    propertiesLayout.addWidget(&propertyLUTButton, row++, 3);
+    propertiesLayout.addWidget(&lutLabel, row++, 0, 1, 4, Qt::AlignRight);
+    propertiesLayout.setColumnStretch(0, 1);
+    propertiesGroup.setLayout(&propertiesLayout);
+    mainLayout.addWidget(&generalGroup);
+    mainLayout.addWidget(&propertiesGroup);
     setLayout(&mainLayout);
     QObject::connect(&idCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
         state->viewerState->idDisplay = index == 2 ? IdDisplay::AllNodes : index == 1 ? IdDisplay::ActiveNode : IdDisplay::None;
@@ -179,6 +179,7 @@ void NodesTab::loadSettings(const QSettings & settings) {
     propertyRadiusScaleSpin.valueChanged(propertyRadiusScaleSpin.value());
     // from http://peterkovesi.com/projects/colourmaps/index.html
     lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/linear_kry_5-98_c75.json").toString();
+    lutLabel.setText("Current LUT: " + lutPath);
     propertyMinSpin.setValue(settings.value(NODE_PROPERTY_MAP_MIN, 0).toDouble());
     propertyMinSpin.valueChanged(propertyMinSpin.value());
     propertyMaxSpin.setValue(settings.value(NODE_PROPERTY_MAP_MAX, 0).toDouble());

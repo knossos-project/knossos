@@ -25,14 +25,16 @@
 
 #include <QCheckBox>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
 #include <QFrame>
-#include <QLabel>
+#include <QGroupBox>
+#include <QHBoxLayout>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSettings>
 #include <QSpinBox>
 #include <QComboBox>
-#include <QGridLayout>
+#include <QVBoxLayout>
 #include <QWidget>
 
 class TreesTab : public QWidget
@@ -40,19 +42,21 @@ class TreesTab : public QWidget
     friend class PreferencesWidget;
     friend class ViewportBase;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
-    QGridLayout mainLayout;
+    QHBoxLayout mainLayout;
     // tree render options
+    QGroupBox renderingGroup{tr("Rendering")};
+    QFormLayout renderingLayout;
     QCheckBox highlightActiveTreeCheck{tr("Highlight active tree")};
     QCheckBox highlightIntersectionsCheck{tr("Highlight intersections")};
     QCheckBox lightEffectsCheck{tr("Enable light effects")};
     QCheckBox ownTreeColorsCheck{tr("Use custom tree colors")};
     QString lutFilePath;
     QPushButton loadTreeLUTButton{tr("Load …")};
-    QLabel depthCutOffLabel{tr("Depth cutoff:")};
     QDoubleSpinBox depthCutoffSpin;
-    QLabel renderQualityLabel{tr("Skeleton rendering quality:")};
     QComboBox renderQualityCombo;
     // tree visibility
+    QGroupBox visibilityGroup{tr("Visibility")};
+    QVBoxLayout visibilityLayout;
     QRadioButton wholeSkeletonRadio{tr("Show whole skeleton")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
     QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in Ortho VPs")};

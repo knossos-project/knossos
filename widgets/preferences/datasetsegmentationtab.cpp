@@ -44,28 +44,24 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     volumeOpaquenessSpinBox.setRange(0, 255);
     volumeOpaquenessSlider.setRange(0, 255);
 
-    datasetSeparator.setFrameShape(QFrame::HLine);
-    datasetSeparator.setFrameShadow(QFrame::Sunken);
-    segmentationSeparator.setFrameShape(QFrame::HLine);
-    segmentationSeparator.setFrameShadow(QFrame::Sunken);
-
-    int row = 0;
-    mainLayout.setAlignment(Qt::AlignTop);
     // dataset
-    mainLayout.addWidget(&datasetHeader, row++, 0);
-    mainLayout.addWidget(&datasetSeparator, row++, 0, 1, 3);
-    mainLayout.addWidget(&datasetLinearFilteringCheckBox, row++, 0, 1, 2);
-    mainLayout.addWidget(&useOwnDatasetColorsCheckBox, row, 0); mainLayout.addWidget(&useOwnDatasetColorsButton, row++, 1, Qt::AlignLeft);
-    mainLayout.addWidget(&biasLabel, row, 0); mainLayout.addWidget(&biasSlider, row, 1); mainLayout.addWidget(&biasSpinBox, row++, 2);
-    mainLayout.addWidget(&rangeDeltaLabel, row, 0); mainLayout.addWidget(&rangeDeltaSlider, row, 1); mainLayout.addWidget(&rangeDeltaSpinBox, row++, 2);
-    // segmentation overlay
-    mainLayout.addWidget(&segmentationHeader, row++, 0);
-    mainLayout.addWidget(&segmentationSeparator, row++, 0, 1, 3);
-    mainLayout.addWidget(&segmentationOverlayLabel, row, 0); mainLayout.addWidget(&segmentationOverlaySlider, row, 1); mainLayout.addWidget(&segmentationOverlaySpinBox, row++, 2);
-    // segmentation volume
-    mainLayout.addWidget(&volumeRenderCheckBox, row++, 0, 1, 2);
-    mainLayout.addWidget(&volumeOpaquenessLabel, row, 0); mainLayout.addWidget(&volumeOpaquenessSlider, row, 1); mainLayout.addWidget(&volumeOpaquenessSpinBox, row++, 2);
-    mainLayout.addWidget(&volumeColorLabel, row, 0); mainLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
+    int row = 0;
+    datasetLayout.addWidget(&datasetLinearFilteringCheckBox, row++, 0, 1, 2);
+    datasetLayout.addWidget(&useOwnDatasetColorsCheckBox, row, 0); datasetLayout.addWidget(&useOwnDatasetColorsButton, row++, 1, Qt::AlignLeft);
+    datasetLayout.addWidget(&biasLabel, row, 0); datasetLayout.addWidget(&biasSlider, row, 1); datasetLayout.addWidget(&biasSpinBox, row++, 2);
+    datasetLayout.addWidget(&rangeDeltaLabel, row, 0); datasetLayout.addWidget(&rangeDeltaSlider, row, 1); datasetLayout.addWidget(&rangeDeltaSpinBox, row++, 2);
+    datasetLayout.setAlignment(Qt::AlignTop);
+    datasetGroup.setLayout(&datasetLayout);
+    // segmentation
+    row = 0;
+    segmentationLayout.addWidget(&segmentationOverlayLabel, row, 0); segmentationLayout.addWidget(&segmentationOverlaySlider, row, 1); segmentationLayout.addWidget(&segmentationOverlaySpinBox, row++, 2);
+    segmentationLayout.addWidget(&volumeRenderCheckBox, row++, 0, 1, 2);
+    segmentationLayout.addWidget(&volumeOpaquenessLabel, row, 0); segmentationLayout.addWidget(&volumeOpaquenessSlider, row, 1); segmentationLayout.addWidget(&volumeOpaquenessSpinBox, row++, 2);
+    segmentationLayout.addWidget(&volumeColorLabel, row, 0); segmentationLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
+    segmentationLayout.setAlignment(Qt::AlignTop);
+    segmentationGroup.setLayout(&segmentationLayout);
+    mainLayout.addWidget(&datasetGroup);
+    mainLayout.addWidget(&segmentationGroup);
     setLayout(&mainLayout);
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {

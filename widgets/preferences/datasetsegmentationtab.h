@@ -25,22 +25,24 @@
 
 #include <QCheckBox>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QSettings>
 #include <QSlider>
 #include <QSpinBox>
+#include <QVBoxLayout>
 #include <QWidget>
 
 class DatasetAndSegmentationTab : public QWidget
 {
     friend class PreferencesWidget;
     Q_OBJECT
-    QGridLayout mainLayout;
+    QVBoxLayout mainLayout;
     // dataset
-    QLabel datasetHeader{"<strong>Dataset</strong>"};
-    QFrame datasetSeparator;
+    QGroupBox datasetGroup{tr("Dataset")};
+    QGridLayout datasetLayout;
     QCheckBox datasetLinearFilteringCheckBox{"Enable linear filtering"};
     QCheckBox useOwnDatasetColorsCheckBox{"Use own dataset colors"};
     QPushButton useOwnDatasetColorsButton{"Load …"};
@@ -49,8 +51,8 @@ class DatasetAndSegmentationTab : public QWidget
     QSpinBox biasSpinBox, rangeDeltaSpinBox;
     QSlider biasSlider{Qt::Horizontal}, rangeDeltaSlider{Qt::Horizontal};
     // segmentation overlay
-    QLabel segmentationHeader{"<strong>Segmentation</strong>"};
-    QFrame segmentationSeparator;
+    QGroupBox segmentationGroup{tr("Segmentation")};
+    QGridLayout segmentationLayout;
     QLabel segmentationOverlayLabel{"Overlay opacity"};
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
