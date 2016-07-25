@@ -301,6 +301,7 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
+    bool addTreePointcloud(int tree_id);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }

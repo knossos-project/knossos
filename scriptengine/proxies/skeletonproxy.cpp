@@ -80,6 +80,11 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
     return true;
 }
 
+bool SkeletonProxy::add_tree_pointcloud(int tree_id, const QVector<float> & vec) {
+  qDebug() << vec;
+  return state->mainWindow->viewport3D->addTreePointcloud(tree_id);
+}
+
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }

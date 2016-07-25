@@ -1266,12 +1266,8 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
 }
 
 void Viewport3D::renderPointCloud() {
-    if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
+    // if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
         static Profiler cloud_profiler;
-
-        static std::vector<QVector3D> points;
-        static std::vector<QVector3D> normals;
-        static std::vector<std::array<GLfloat, 4>> colors;
 
         static bool pointcloud_init = true;
         if(pointcloud_init) {
@@ -1310,10 +1306,10 @@ void Viewport3D::renderPointCloud() {
                 void main() {
                     vec3 specular_color = vec3(1.0, 1.0, 1.0);
                     float specular_exp = 3.0;
-                    vec3 view_dir = vec3(0.0, 0.0, -1.0);
+                    vec3 view_dir = vec3(0.0, 0.0, 1.0);
 
                     // diffuse lighting
-                    vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 0.0, 1.0, 0.0)).xyz);
+                    vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 1.0, 0.0, 0.0)).xyz);
                     float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
 
                     // pseudo ambient lighting
@@ -1342,73 +1338,37 @@ void Viewport3D::renderPointCloud() {
             pointcloud_init = false;
         }
 
-        static bool pointcloud_vbo_init = true;
-        static std::random_device rdevice;
-        static std::default_random_engine rengine(rdevice());
-        static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
-        static float sphere_size = 40.0f;
-        static QVector3D sphete_pos{5440.0f, 5312.0f, 2880.0f};
+        // std::vector<QVector3D> points;
+        // std::vector<QVector3D> normals;
+        // std::vector<std::array<GLfloat, 4>> colors;
 
-        if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals && pointcloud_vbo_init) {
-            // load the data
-            points = *Skeletonizer::tmp_hull_points;
-            normals = *Skeletonizer::tmp_hull_normals;
-            colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+        // static bool pointcloud_vbo_init = true;
+        // if(pointcloud_vbo_init) {
+        //     // load the data
+        //     points = *Skeletonizer::tmp_hull_points;
+        //     normals = *Skeletonizer::tmp_hull_normals;
+        //     colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
 
-            PointcloudBuffer dataBuf;
-            dataBuf.vertex_count = points.size();
-            dataBuf.position_buf.bind();
-            dataBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            dataBuf.normal_buf.bind();
-            dataBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            dataBuf.color_buf.bind();
-            dataBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            dataBuf.color_buf.release();
-            pointcloudBuffers.emplace(1234, dataBuf);
+        //     PointcloudBuffer dataBuf;
+        //     dataBuf.vertex_count = points.size();
+        //     dataBuf.position_buf.bind();
+        //     dataBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+        //     dataBuf.normal_buf.bind();
+        //     dataBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+        //     dataBuf.color_buf.bind();
+        //     dataBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+        //     dataBuf.color_buf.release();
+        //     pointcloudBuffers.emplace(1234, dataBuf);
+        //     pointcloud_vbo_init = false;
+        // }
 
-            // test point sphere for comparison
-            for(int i = 0; i < 320000; ++i) {
-                QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-                while(spoint.length() > 1.0f) {
-                    spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-                }
-                QVector3D snormal;
-                for(std::size_t j = 0; j < 3; ++j) {
-                    snormal[j] = spoint[j] / spoint.length(); // normalize
-                    spoint[j] = snormal[j]; // adjust by size
-                }
+        float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
+        glPointSize(point_size);
 
-                points.emplace_back(sphete_pos + spoint * sphere_size);
-                normals.emplace_back(snormal);
-                colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
-            }
-
-            PointcloudBuffer sphereBuf;
-            sphereBuf.vertex_count = points.size();
-            sphereBuf.position_buf.bind();
-            sphereBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-            sphereBuf.normal_buf.bind();
-            sphereBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-            sphereBuf.color_buf.bind();
-            sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-            sphereBuf.color_buf.release();
-            pointcloudBuffers.emplace(1235, sphereBuf);
-
-            qDebug() << "points: " << points.size();
-            qDebug() << "first: " << points.front()[0] << points.front()[1] << points.front()[2];
-            qDebug() << "last:  " << points.back()[0] << points.back()[1] << points.back()[2];
-            pointcloud_vbo_init = false;
+        for(auto& id_buf : pointcloudBuffers) {
+            renderPointCloudBuffer(id_buf.second);
         }
-
-        if(points.size() != 0) {
-            float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
-            glPointSize(point_size);
-
-            for(auto& id_buf : pointcloudBuffers) {
-                renderPointCloudBuffer(id_buf.second);
-            }
-        }
-    }
+    // }
 }
 
 bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {

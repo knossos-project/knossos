@@ -745,6 +745,48 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
+bool Viewport3D::addTreePointcloud(int tree_id) {
+    // test point sphere for comparison
+    std::vector<QVector3D> points;
+    std::vector<QVector3D> normals;
+    std::vector<std::array<GLfloat, 4>> colors;
+
+    static std::random_device rdevice;
+    static std::default_random_engine rengine(rdevice());
+    static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
+    static float sphere_size = 40.0f;
+    static QVector3D sphere_pos{5440.0f, 5312.0f, 2880.0f};
+
+    for(int i = 0; i < 320000; ++i) {
+        QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
+        while(spoint.length() > 1.0f) {
+            spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
+        }
+        QVector3D snormal;
+        for(std::size_t j = 0; j < 3; ++j) {
+            snormal[j] = spoint[j] / spoint.length(); // normalize
+            spoint[j] = snormal[j]; // adjust by size
+        }
+
+        points.emplace_back(sphere_pos + spoint * sphere_size);
+        normals.emplace_back(snormal);
+        colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+    }
+
+    PointcloudBuffer sphereBuf;
+    sphereBuf.vertex_count = points.size();
+    sphereBuf.position_buf.bind();
+    sphereBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+    sphereBuf.normal_buf.bind();
+    sphereBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+    sphereBuf.color_buf.bind();
+    sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+    sphereBuf.color_buf.release();
+    pointcloudBuffers.emplace(tree_id, sphereBuf);
+
+    return true;
+}
+
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
