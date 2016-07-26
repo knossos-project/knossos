@@ -68,6 +68,16 @@ int AbstractSkeletonModel<ConcreteModel>::rowCount(const QModelIndex &) const {
 
 template class AbstractSkeletonModel<TreeModel>;//please clang, should actually be implicitly instantiated in here anyway
 
+QString propertyStringWithoutComment(const QVariantHash & properties) {
+    QString propertiesString("");
+    for (auto it = std::cbegin(properties); it != std::cend(properties); ++it) {
+        if (it.key() != "comment") {
+            propertiesString += it.key() + ": " + it.value().toString() + "; ";
+        }
+    }
+    return propertiesString;
+}
+
 QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
     if (&tree == state->skeletonState->activeTree && index.column() == 0 && role == Qt::DecorationRole) {
@@ -81,14 +91,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         case 0: return tree.treeID;
         case 3: return static_cast<quint64>(tree.nodes.size());
         case 4: return tree.getComment();
-        case 5:
-            QString propertyString("");
-            for (auto it = std::cbegin(tree.properties); it != std::cend(tree.properties); ++it) {
-                if (it.key() != "comment") {
-                    propertyString += it.key() + ": " + it.value().toString() + "; ";
-                }
-            }
-            return propertyString;
+        case 5: return propertyStringWithoutComment(tree.properties);
         }
     }
     return QVariant();//return invalid QVariant
@@ -130,6 +133,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
         case 3: return node.position.z + 1;
         case 4: return node.radius;
         case 5: return node.getComment();
+        case 6: return propertyStringWithoutComment(node.properties);
         }
     }
     return QVariant();//return invalid QVariant
