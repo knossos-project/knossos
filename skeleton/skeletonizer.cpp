@@ -432,28 +432,30 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
-                    Coordinate movementAreaMin;//0
-                    Coordinate movementAreaMax = state->boundary;
+                    if (!merge) {
+                        Coordinate movementAreaMin;//0
+                        Coordinate movementAreaMax = state->boundary;
 
-                    for (const auto & attribute : attributes) {
-                        const auto & name = attribute.name();
-                        const auto & value = attribute.value();
-                        if (name == "min.x") {
-                            movementAreaMin.x = value.toInt();
-                        } else if (name == "min.y") {
-                            movementAreaMin.y = value.toInt();
-                        } else if (name == "min.z") {
-                            movementAreaMin.z = value.toInt();
-                        } else if (name == "max.x") {
-                            movementAreaMax.x = value.toInt();
-                        } else if (name == "max.y") {
-                            movementAreaMax.y = value.toInt();
-                        } else if (name == "max.z") {
-                            movementAreaMax.z = value.toInt();
+                        for (const auto & attribute : attributes) {
+                            const auto & name = attribute.name();
+                            const auto & value = attribute.value();
+                            if (name == "min.x") {
+                                movementAreaMin.x = value.toInt();
+                            } else if (name == "min.y") {
+                                movementAreaMin.y = value.toInt();
+                            } else if (name == "min.z") {
+                                movementAreaMin.z = value.toInt();
+                            } else if (name == "max.x") {
+                                movementAreaMax.x = value.toInt();
+                            } else if (name == "max.y") {
+                                movementAreaMax.y = value.toInt();
+                            } else if (name == "max.z") {
+                                movementAreaMax.z = value.toInt();
+                            }
                         }
-                    }
 
-                    Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
+                        Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
+                    }
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
                     if (!merge) {
                         const auto ms = attributes.value("ms").toULongLong();
