@@ -242,7 +242,6 @@ public slots:
 public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
-    float segmentSizeAt(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }
 };
 

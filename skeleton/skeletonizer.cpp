@@ -1696,18 +1696,6 @@ float Skeletonizer::radius(const nodeListElement & node) const {
     return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
 }
 
-float Skeletonizer::segmentSizeAt(const nodeListElement & node) const {
-    float radius = state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
-    const auto comment = node.getComment();
-    if(comment.isEmpty() == false && CommentSetting::useCommentNodeRadius) {
-        float newRadius = CommentSetting::getRadius(comment);
-        if(newRadius != 0 && newRadius < radius) {
-            return newRadius;
-        }
-    }
-    return radius;
-}
-
 bool Skeletonizer::moveToPrevTree() {
     treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     if(state->skeletonState->activeTree == nullptr) {

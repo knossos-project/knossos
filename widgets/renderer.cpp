@@ -220,8 +220,8 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
 }
 
 void ViewportBase::renderSegment(const segmentListElement & segment, const QColor & color, const RenderOptions & options) {
-    renderCylinder(&(segment.source.position), Skeletonizer::singleton().segmentSizeAt(segment.source) * state->viewerState->segRadiusToNodeRadius,
-        &(segment.target.position), Skeletonizer::singleton().segmentSizeAt(segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
+    renderCylinder(&(segment.source.position), Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius,
+        &(segment.target.position), Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius, color, options);
 }
 
 void ViewportOrtho::renderSegment(const segmentListElement & segment, const QColor & color, const RenderOptions & options) {
@@ -2370,9 +2370,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                                       post.y - (post.y - pre.y)/10,
                                       post.z - (post.z - pre.z)/10};
 
-                renderCylinder(&arrowbase, Skeletonizer::singleton().segmentSizeAt(*synapse.preSynapse) * 3.0f
+                renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.preSynapse) * 3.0f
                     , &synapse.postSynapse->position
-                    , Skeletonizer::singleton().segmentSizeAt(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
+                    , Skeletonizer::singleton().radius(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
             }
         }
     }
