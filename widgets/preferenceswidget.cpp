@@ -48,7 +48,7 @@ PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(p
     mainLayout.setContentsMargins({});
     mainLayout.setSizeConstraint(QLayout::SetFixedSize);
     setLayout(&mainLayout);
-
+    resize(700, 600);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
