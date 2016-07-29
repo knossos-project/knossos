@@ -221,7 +221,7 @@ Loader::Worker::Worker(const QUrl & baseUrl, const Dataset::API api, const Datas
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
     }
 
-    if(state->overlay) {
+    if(Segmentation::enabled) {
         allocateOverlayCubes();
     }
 }
@@ -651,7 +651,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
-            if (state->overlay) {
+            if (Segmentation::enabled) {
                 startDownload(globalCoord, typeOc, ocDownload, ocDecompression, freeOcSlots, state->Oc2Pointer[loaderMagnification]);
             }
             workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925

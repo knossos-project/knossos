@@ -25,6 +25,7 @@
 #include "file_io.h"
 #include "functions.h"
 #include "segmentation/cubeloader.h"
+#include "segmentation/segmentation.h"
 #include "skeleton/node.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
@@ -218,7 +219,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
-    xml.writeAttribute("overlay", QString::number(static_cast<int>(state->overlay)));
+    xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::enabled)));
     xml.writeEndElement();
 
     if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
@@ -427,8 +428,8 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
-                    const bool overlay = attributes.value("overlay").isEmpty() ? state->overlay : static_cast<bool>(attributes.value("overlay").toInt());
-                    if (experimentName != state->name || overlay != state->overlay) {
+                    const bool overlay = attributes.value("overlay").isEmpty() ? Segmentation::enabled : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (experimentName != state->name || overlay != Segmentation::enabled) {
                         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {

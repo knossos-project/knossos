@@ -162,6 +162,7 @@ public:
     void selectPrevTodoObject();
     void markSelectedObjectForSplitting(const Coordinate & pos);
 
+    static bool enabled;
     bool renderOnlySelectedObjs{false};
     uint8_t alpha;
     brush_subject brush;

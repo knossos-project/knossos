@@ -23,6 +23,7 @@
 #include "dataset.h"
 
 #include "network.h"
+#include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 
@@ -219,7 +220,7 @@ void Dataset::applyToState() const {
     state->name = experimentname;
     state->cubeEdgeLength = cubeEdgeLength;
     state->compressionRatio = compressionRatio;
-    state->overlay = overlay;
+    Segmentation::enabled = overlay;
 
     Skeletonizer::singleton().skeletonState.volBoundary = SkeletonState{}.volBoundary;
 }

@@ -43,7 +43,7 @@ bool ViewportBase::oglDebug = false;
 bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
-RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(state->overlay && state->viewerState->showOverlay),
+RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(Segmentation::enabled && state->viewerState->showOverlay),
 drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection) {}
 
 RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
@@ -837,7 +837,7 @@ void ViewportArb::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         state->viewer->arbCubes(*this);
-    } else if (state->overlay && state->viewerState->showOverlay) {
+    } else if (Segmentation::enabled && state->viewerState->showOverlay) {
         updateOverlayTexture();
     }
     ViewportOrtho::paintGL();

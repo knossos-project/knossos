@@ -47,7 +47,7 @@ boost::multi_array_ref<uint64_t, 3> getCubeRef(char * const rawcube) {
 
 uint64_t readVoxel(const Coordinate & pos) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !Segmentation::enabled || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
     const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
@@ -56,7 +56,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !state->overlay || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !Segmentation::enabled || !cubeIt.first) {
         return false;
     }
     const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);

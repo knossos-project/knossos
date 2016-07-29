@@ -65,8 +65,6 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
 class stateInfo {
 public:
     //  Info about the data
-    // Use overlay cubes to color the data.
-    bool overlay;
     bool gpuSlicer = false;
     // How user movement was generated
     UserMoveType loaderUserMoveType{USERMOVE_NEUTRAL};

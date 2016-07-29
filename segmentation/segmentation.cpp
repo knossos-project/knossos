@@ -35,6 +35,7 @@
 #include <sstream>
 #include <utility>
 
+bool Segmentation::enabled = false;
 uint64_t Segmentation::SubObject::highestId = 0;
 uint64_t Segmentation::Object::highestId = 0;
 uint64_t Segmentation::Object::highestIndex = -1;

@@ -64,8 +64,8 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             const auto & fileInside = archive.getCurrentFileName();
             const auto match = cubeRegEx.match(fileInside);
             if (match.hasMatch()) {
-                if (!state->overlay) {
-                    state->overlay = true;
+                if (!Segmentation::enabled) {
+                    Segmentation::enabled = true;
                     Loader::Controller::singleton().enableOverlay();
                 }
                 file.open(QIODevice::ReadOnly);
