@@ -36,7 +36,7 @@ Spoiler::Spoiler(const QString & title, const int animationDuration, QWidget *pa
     headerLine.setFrameShadow(QFrame::Sunken);
     headerLine.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
 
-    contentArea.setStyleSheet("QScrollArea { background-color: white; border: none; }");
+    contentArea.setStyleSheet("QScrollArea { border: none; }");
     contentArea.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     // start out collapsed
     contentArea.setMaximumHeight(0);
