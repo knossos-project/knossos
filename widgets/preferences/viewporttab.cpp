@@ -48,8 +48,8 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     boundaryLayout.addWidget(&boundariesPixelRadioBtn);
     boundaryLayout.addWidget(&boundariesPhysicalRadioBtn);
     boundaryBox.setLayout(&boundaryLayout);
-    rotationLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
     rotationLayout.addWidget(&rotateAroundActiveNodeRadioBtn);
+    rotationLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
     rotationLayout.addWidget(&rotateAroundCurrentPositionRadioBtn);
     rotationBox.setLayout(&rotationLayout);
     viewport3DLayout.addWidget(&planesBox);
@@ -119,7 +119,7 @@ void ViewportTab::loadSettings(const QSettings & settings) {
     boundariesPhysicalRadioBtn.setChecked(showPhysicalBoundaries);
     boundaryGroup.buttonToggled(&boundariesPhysicalRadioBtn, boundariesPhysicalRadioBtn.isChecked());
 
-    auto * rotationButton = rotationCenterGroup.button(settings.value(ROTATION_CENTER, rotationCenterGroup.id(&rotateAroundDatasetCenterRadioBtn)).toInt());
+    auto * rotationButton = rotationCenterGroup.button(settings.value(ROTATION_CENTER, rotationCenterGroup.id(&rotateAroundActiveNodeRadioBtn)).toInt());
     rotationButton->setChecked(true);
     rotationCenterGroup.buttonToggled(rotationButton, true);
 }
