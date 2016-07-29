@@ -30,6 +30,8 @@
 
 #include <QCheckBox>
 #include <QDialog>
+#include <QFormLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -73,19 +75,17 @@ class DatasetLoadWidget : public QDialog {
     UserOrientableSplitter splitter;
     QTableWidget tableWidget;
     QLabel infoLabel;
-    QFrame line;
-    QHBoxLayout superCubeEdgeHLayout;
+    QGroupBox datasetSettingsGroup;
+    QFormLayout datasetSettingsLayout;
     FOVSpinBox fovSpin;
     QLabel superCubeSizeLabel;
-    QHBoxLayout cubeEdgeHLayout;
     QLabel cubeEdgeLabel{"Cubesize"};
     QSpinBox cubeEdgeSpin;
     QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
+    QLabel reloadRequiredLabel{tr("Reload dataset for changes to take effect.")};
     QHBoxLayout buttonHLayout;
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
-
-    bool segmentationToggled{false};
 public:
     QUrl datasetUrl;//meh
 
@@ -106,7 +106,6 @@ signals:
     void datasetSwitchZoomDefaults();
 public slots:
     void adaptMemoryConsumption();
-    void cancelButtonClicked();
     void processButtonClicked();
 };
 

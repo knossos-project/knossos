@@ -27,6 +27,7 @@
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
+#include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
@@ -62,9 +63,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     splitter.addWidget(&infoLabel);
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    line.setFrameShape(QFrame::HLine);
-    line.setFrameShadow(QFrame::Sunken);
-
     cubeEdgeSpin.setRange(1, 256);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     cubeEdgeSpin.hide();
@@ -75,19 +73,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     fovSpin.setAlignment(Qt::AlignLeft);
     fovSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    superCubeEdgeHLayout.addWidget(&fovSpin);
-    superCubeEdgeHLayout.addWidget(&superCubeSizeLabel);
-
-    cubeEdgeHLayout.addWidget(&cubeEdgeSpin);
-    cubeEdgeHLayout.addWidget(&cubeEdgeLabel);
+    datasetSettingsLayout.addRow(&fovSpin, &superCubeSizeLabel);
+    datasetSettingsLayout.addRow(&segmentationOverlayCheckbox);
+    datasetSettingsLayout.addRow(&reloadRequiredLabel);
+    datasetSettingsGroup.setLayout(&datasetSettingsLayout);
 
     buttonHLayout.addWidget(&processButton);
     buttonHLayout.addWidget(&cancelButton);
     mainLayout.addWidget(&splitter);
-    mainLayout.addWidget(&line);
-    mainLayout.addLayout(&superCubeEdgeHLayout);
-    mainLayout.addLayout(&cubeEdgeHLayout);
-    mainLayout.addWidget(&segmentationOverlayCheckbox);
+    mainLayout.addWidget(&datasetSettingsGroup);
     mainLayout.addLayout(&buttonHLayout);
 
     setLayout(&mainLayout);
@@ -98,7 +92,12 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
     QObject::connect(&fovSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
-    QObject::connect(&cancelButton, &QPushButton::clicked, this, &DatasetLoadWidget::cancelButtonClicked);
+    static auto resetSettings = [this]() {
+        fovSpin.setValue(state->cubeEdgeLength * (state->M - 1));
+        segmentationOverlayCheckbox.setChecked(Segmentation::enabled);
+    };
+    QObject::connect(this, &DatasetLoadWidget::rejected, [&, this]() { resetSettings(); });
+    QObject::connect(&cancelButton, &QPushButton::clicked, [&, this]() { resetSettings(); hide(); });
     resize(600, 600);//random default size, will be overriden by settings if present
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
@@ -213,7 +212,6 @@ QStringList DatasetLoadWidget::getRecentPathItems() {
 }
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
-    segmentationToggled = true;
     const auto fov = fovSpin.value();
     auto mebibytes = std::pow(fov + cubeEdgeSpin.value(), 3) / std::pow(1024, 2);
     mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
@@ -221,31 +219,11 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     superCubeSizeLabel.setText(text);
 }
 
-void DatasetLoadWidget::cancelButtonClicked() {
-    if (segmentationToggled) {
-        QMessageBox box(this);
-        box.setIcon(QMessageBox::Warning);
-        box.setText(tr("%1 of segmentation requires dataset reload.").arg(segmentationOverlayCheckbox.isChecked() ? "Enabling" : "Disabling"));
-        box.setInformativeText(tr("You have changed the segmentation overlay setting."));
-        box.addButton("Close without reloading", QMessageBox::RejectRole);
-        const auto reloadButton = box.addButton("Reload dataset", QMessageBox::AcceptRole);
-        box.exec();
-        if (box.clickedButton() == reloadButton) {
-            processButtonClicked();
-        } else {
-            segmentationOverlayCheckbox.setChecked(!segmentationOverlayCheckbox.isChecked());
-        }
-    }
-    segmentationToggled = false;
-    hide();
-}
-
 void DatasetLoadWidget::processButtonClicked() {
     const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
     if (dataset.isEmpty()) {
         QMessageBox::information(this, "Unable to load", "No path selected");
     } else if (loadDataset(boost::none, dataset)) {
-        segmentationToggled = false;
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
@@ -323,7 +301,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
-    state->overlay = segmentationOverlayCheckbox.isChecked();
+    Segmentation::enabled = segmentationOverlayCheckbox.isChecked();
 
     state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
@@ -361,7 +339,7 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_CUBE_EDGE, state->cubeEdgeLength);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
-    settings.setValue(DATASET_OVERLAY, state->overlay);
+    settings.setValue(DATASET_OVERLAY, Segmentation::enabled);
 
     settings.endGroup();
 }
@@ -427,18 +405,16 @@ void DatasetLoadWidget::loadSettings() {
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     }
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        state->overlay = settings.value(DATASET_OVERLAY, false).toBool();
+        Segmentation::enabled = settings.value(DATASET_OVERLAY, false).toBool();
     }
     state->viewer->resizeTexEdgeLength(state->cubeEdgeLength, state->M);
 
     cubeEdgeSpin.setValue(state->cubeEdgeLength);
     fovSpin.cubeEdge = state->cubeEdgeLength;
     fovSpin.setValue(state->cubeEdgeLength * (state->M - 1));
-    segmentationOverlayCheckbox.setCheckState(state->overlay ? Qt::Checked : Qt::Unchecked);
+    segmentationOverlayCheckbox.setChecked(Segmentation::enabled);
     adaptMemoryConsumption();
-
     settings.endGroup();
-
     applyGeometrySettings();
 
     loadDataset();// load last used dataset or show
