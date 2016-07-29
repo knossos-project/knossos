@@ -738,23 +738,24 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     for (const auto & tree : state->skeletonState->trees) {
         if(tree.properties.contains("synapticCleft")) {
-            auto preSynapse = tree.properties.contains("preSynapse") ? getElem(nodeMap, tree.properties["preSynapse"].toULongLong(), findNodeByNodeID) : nullptr;
-            auto postSynapse = tree.properties.contains("postSynapse") ? getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID) : nullptr;
+            auto preSynapse = tree.properties.contains("preSynapse") ? getElem(nodeMap, tree.properties["preSynapse"].toULongLong(), findNodeByNodeID) : boost::none;
+            auto postSynapse = tree.properties.contains("postSynapse") ? getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID) : boost::none;
             auto synapticCleft = getElem(treeMap, tree.treeID, findTreeByTreeID);
+            if (preSynapse && postSynapse && synapticCleft) {
+                skeletonState.synapses.push_back({*preSynapse, *postSynapse, *synapticCleft});
+                synapticCleft.get()->render = false; //don't render synaptic clefts
+                synapticCleft.get()->isSynapticCleft = true;
 
-            skeletonState.synapses.push_back({*preSynapse
-                                              , *postSynapse
-                                              , *synapticCleft});
-            synapticCleft.get()->render = false; //don't render synaptic clefts
-            synapticCleft.get()->isSynapticCleft = true;
-
-            if(preSynapse) {
-                preSynapse.get()->isSynapticNode = true;
-                preSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
-            }
-            if(postSynapse) {
-                postSynapse.get()->isSynapticNode = true;
-                postSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
+                if(preSynapse) {
+                    preSynapse.get()->isSynapticNode = true;
+                    preSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
+                }
+                if(postSynapse) {
+                    postSynapse.get()->isSynapticNode = true;
+                    postSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
+                }
+            } else {
+                qWarning() << tr("Incomplete synapse %1 could not be loaded. The “preSynapse”, “postSynapse” or “synapticCleft“ property are either missing or invalid.").arg(tree.treeID);
             }
         }
     }
