@@ -48,7 +48,7 @@ class NavigationTab : public QWidget {
     QHBoxLayout mainLayout;
     QVBoxLayout leftLayout;
 
-    QGroupBox movementAreaGroup{"Movement Area"};
+    QGroupBox movementAreaGroup{"Movement area"};
     QVBoxLayout movementAreaLayout;
     QHBoxLayout areaMinLayout;
     QHBoxLayout areaMaxLayout;
@@ -61,15 +61,15 @@ class NavigationTab : public QWidget {
     QSpinBox jumpFramesSpinBox;
     QSpinBox walkFramesSpinBox;
 
-    QGroupBox advancedGroup{"Advanced Tracing Modes"};
+    QGroupBox advancedGroup{"Advanced tracing modes"};
     QVBoxLayout advancedLayout;
     QFormLayout advancedFormLayout;
     QButtonGroup recenteringButtonGroup;
-    QRadioButton normalModeButton{"Normal Mode (Recentering)"};
-    QRadioButton noRecenteringButton{"No Recentering"};
-    QRadioButton additionalViewportDirectionMoveButton{"Additional Viewport Direction Move"};
-    QRadioButton additionalTracingDirectionMoveButton{"Additional Tracing Direction Move"};
-    QRadioButton additionalMirroredMoveButton{"Additional Mirrored Move"};
+    QRadioButton normalModeButton{"Normal mode (recentering)"};
+    QRadioButton noRecenteringButton{"No recentering"};
+    QRadioButton additionalViewportDirectionMoveButton{"Additional viewport direction move"};
+    QRadioButton additionalTracingDirectionMoveButton{"Additional tracing direction move"};
+    QRadioButton additionalMirroredMoveButton{"Additional mirrored move"};
     QSpinBox delayTimePerStepSpinBox;
     QSpinBox numberOfStepsSpinBox;
 

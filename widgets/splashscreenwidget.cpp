@@ -47,7 +47,7 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) : QDialog(parent) {
 
     mainLayout.addRow(tr("Version"), &versionLabel);
     mainLayout.addRow(tr("Revision"), &revisionLabel);
-    mainLayout.addRow(tr("Revision Date"), &revisionDateLabel);
+    mainLayout.addRow(tr("Revision date"), &revisionDateLabel);
     mainLayout.addWidget(&seperator);
     mainLayout.addRow(tr("Compiler"), &compilerLabel);
     mainLayout.addRow(tr("Qt"), &qtLabel);

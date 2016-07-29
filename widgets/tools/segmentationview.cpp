@@ -263,7 +263,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     categoryModel.recreate();
     categoryFilter.setModel(&categoryModel);
     categoryFilter.setEditable(true);
-    categoryFilter.lineEdit()->setPlaceholderText("category");
+    categoryFilter.lineEdit()->setPlaceholderText("Category");
     commentFilter.setPlaceholderText("Filter for comment...");
     showOnlySelectedChck.setChecked(Segmentation::singleton().renderOnlySelectedObjs);
 
@@ -404,13 +404,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, &showOnlySelectedChck, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id){
-        subobjectHoveredLabel.setText(QString("hovered raw segmentation id: %1").arg(subobject_id));
+        subobjectHoveredLabel.setText(QString("Hovered raw segmentation ID: %1").arg(subobject_id));
     });
-
-    auto & deleteAction = *new QAction("delete", this);
-    addAction(&deleteAction);
-    deleteAction.setShortcut(Qt::Key_Delete);
-    QObject::connect(&deleteAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
 
     static auto setColor = [this](QTreeView & table, const QModelIndex & index) {
         if (index.column() == 0) {
@@ -553,7 +548,7 @@ void SegmentationView::contextMenu(const QTreeView & table, const QPoint & pos) 
     auto & deleteAction = *contextMenu.addAction("Delete");
     if (&table == &objectsTable) {
         contextMenu.addSeparator();
-        auto & newAction = *contextMenu.addAction("Create new Object");
+        auto & newAction = *contextMenu.addAction("Create new object");
         QObject::connect(&newAction, &QAction::triggered, []() { Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition); });
     }
     jumpAction.setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);

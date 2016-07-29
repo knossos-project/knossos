@@ -238,8 +238,8 @@ void MainWindow::createToolbars() {
     basicToolbar.setFloatable(false);
     basicToolbar.setMaximumHeight(45);
 
-    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
-    basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open annotation", this, SLOT(openSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save annotation", this, SLOT(saveSlot()));
     basicToolbar.addSeparator();
     workModeModel.recreate(workModes);
     modeCombo.setModel(&workModeModel);
@@ -298,7 +298,7 @@ void MainWindow::createToolbars() {
 
     defaultToolbar.addSeparator();
 
-    auto resetVPsButton = new QPushButton("Reset VP Positions", this);
+    auto resetVPsButton = new QPushButton("Reset vp positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
@@ -483,11 +483,11 @@ void MainWindow::updateRecentFile(const QString & fileName) {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose Dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load Annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
-    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent Annotation File(s)"));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create new annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
+    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent annotation file(s)"));
     int i = 0;
     for (auto & elem : historyEntryActions) {
         elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
@@ -497,22 +497,22 @@ void MainWindow::createMenus() {
         });
         ++i;
     }
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save Annotation As…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save annotation as…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
     fileMenu.addSeparator();
-    fileMenu.addAction(tr("Export to NML..."), this, SLOT(exportToNml()));
+    fileMenu.addAction(tr("Export to nml..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     //advanced skeleton
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
-    newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     //skeleton
-    pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
-    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
+    pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push branch node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
+    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop branch node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     actionMenu.addSeparator();
-    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
+    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             state->viewer->window->toggleSynapses(); //update statusbar
             Skeletonizer::singleton().addSynapse();
@@ -521,19 +521,19 @@ void MainWindow::createMenus() {
         }
     }, Qt::ShiftModifier + Qt::Key_C);
     actionMenu.addSeparator();
-    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
+    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
     auto setOverlayOpacity = [this](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
     increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase overlay opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
     decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease overlay opacity"), this, [&]() { setOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
-    enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + scroll)"), &Segmentation::singleton(),
+    enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase brush size (Shift + scroll)"), &Segmentation::singleton(),
                                                  []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1); }, Qt::SHIFT + Qt::Key_Plus);
-    shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + scroll)"), &Segmentation::singleton(),
+    shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease brush size (Shift + scroll)"), &Segmentation::singleton(),
                                                 []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1); }, Qt::SHIFT + Qt::Key_Minus);
 
-    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
+    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear merge list", &Segmentation::singleton(), SLOT(clear()));
     //proof reading mode
     modeSwitchSeparator = actionMenu.addSeparator();
     setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
@@ -543,7 +543,7 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
-    QAction * penmodeAction = new QAction("Pen-Mode", this);
+    QAction * penmodeAction = new QAction("Pen mode", this);
 
     penmodeAction->setCheckable(true);
 
@@ -555,20 +555,20 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump To Active Node"), &Skeletonizer::singleton(), []() {
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to active node"), &Skeletonizer::singleton(), []() {
         if(state->skeletonState->activeNode) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
         }
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Next Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move To Previous Tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to next node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to previous node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to next tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to previous tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
 
     auto commentsMenu = menuBar()->addMenu("&Comments");
 
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next Comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found Comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
+    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
 
     commentsMenu->addSeparator();
 
@@ -578,27 +578,27 @@ void MainWindow::createMenus() {
     };
     for (int number = 1; number < 11; ++number) {
         const auto numberString = QString::number(number) + (number == 1 ? "st" : number == 2 ? "nd" : number == 3 ? "rd" : "th");
-        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), numberString + tr(" Comment Shortcut"));
+        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), numberString + tr(" comment shortcut"));
     }
 
     commentsMenu->addSeparator();
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
-    preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
+    preferenceMenu->addAction(tr("Load custom preferences"), this, SLOT(loadCustomPreferencesSlot()));
+    preferenceMenu->addAction(tr("Save custom preferences"), this, SLOT(saveCustomPreferencesSlot()));
+    preferenceMenu->addAction(tr("Reset to default preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
     preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation Window"), &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/camera.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
-    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
+    scriptingMenu->addAction("Run file", this, SLOT(pythonFileSlot()));
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
     scriptingMenu->addAction("Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
@@ -643,11 +643,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     bool mergeSkeleton = mergeAll;
     bool mergeSegmentation = mergeAll;
     if (!mergeAll && !state->skeletonState->trees.empty()) {
-        const auto text = tr("Which Action do you like to choose?<ul>")
-            + tr("<li>Merge the new Skeleton into the current one</li>")
-            + tr("<li>Override the current Skeleton</li>")
+        const auto text = tr("Which action would you like to choose?<ul>")
+            + tr("<li>Merge the new skeleton into the current one</li>")
+            + tr("<li>Override the current skeleton</li>")
             + tr("</ul>");
-        const auto button = QMessageBox::question(this, tr("Existing Skeleton"), text, tr("Merge"), tr("Override"), tr("Cancel"), 0, 2);
+        const auto button = QMessageBox::question(this, tr("Existing skeleton"), text, tr("Merge"), tr("Override"), tr("Cancel"), 0, 2);
 
         if (button == 0) {
             mergeSkeleton = true;
@@ -658,11 +658,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         }
     }
     if (!mergeAll && Segmentation::singleton().hasObjects()) {
-        const auto text = tr("Which Action do you like to choose?<ul>")
-            + tr("<li>Merge the new Mergelist into the current one?</li>")
-            + tr("<li>Override the current Segmentation</li>")
+        const auto text = tr("Which action would you like to choose?<ul>")
+            + tr("<li>Merge the new merge list into the current one?</li>")
+            + tr("<li>Override the current segmentation</li>")
             + tr("</ul>");
-        const auto button = QMessageBox::question(this, tr("Existing Merge List"), text, tr("Merge"), tr("Clear and Load"), tr("Cancel"), 0, 2);
+        const auto button = QMessageBox::question(this, tr("Existing merge list"), text, tr("Merge"), tr("Clear and load"), tr("Cancel"), 0, 2);
 
         if (button == 0) {
             mergeSegmentation = true;
@@ -704,7 +704,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             QMessageBox fileErrorBox(this);
             fileErrorBox.setIcon(QMessageBox::Warning);
             fileErrorBox.setText(tr("Loading failed."));
-            fileErrorBox.setInformativeText(tr("One of the files could not be successfully loaded."));
+            fileErrorBox.setInformativeText(tr("One of the files could not be loaded successfully."));
             fileErrorBox.setDetailedText(error.what());
             fileErrorBox.exec();
         }
@@ -769,12 +769,12 @@ bool MainWindow::newAnnotationSlot() {
   */
 void MainWindow::openSlot() {
 #ifdef Q_OS_MAC
-    QString choices = "KNOSSOS Annotation file(s) (*.zip *.nml)";
+    QString choices = "KNOSSOS annotation file(s) (*.zip *.nml)";
 #else
-    QString choices = "KNOSSOS Annotation file(s) (*.k.zip *.nml)";
+    QString choices = "KNOSSOS annotation file(s) (*.k.zip *.nml)";
 #endif
     state->viewerState->renderInterval = SLOW;
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Annotation File(s)", openFileDirectory, choices);
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open annotation file(s)", openFileDirectory, choices);
     state->viewerState->renderInterval = FAST;
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
@@ -798,7 +798,7 @@ void MainWindow::saveAsSlot() {
 #ifdef Q_OS_MAC
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
 #else
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile, "KNOSSOS Annotation file (*.k.zip)");
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile, "KNOSSOS annotation file (*.k.zip)");
 #endif
     state->viewerState->renderInterval = FAST;
 
@@ -864,7 +864,7 @@ void MainWindow::exportToNml() {
     defaultpath += ".nml";
     const auto & suggestedFilepath = Session::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
     state->viewerState->renderInterval = SLOW;
-    auto filename = QFileDialog::getSaveFileName(this, "Export to Skeleton file", suggestedFilepath, "KNOSSOS Skeleton file (*.nml)");
+    auto filename = QFileDialog::getSaveFileName(this, "Export to skeleton file", suggestedFilepath, "KNOSSOS skeleton file (*.nml)");
     state->viewerState->renderInterval = FAST;
     if(filename.isEmpty() == false) {
         if(filename.endsWith(".nml") == false) {
@@ -914,21 +914,21 @@ void MainWindow::setSegmentState(const SegmentState newState) {
     switch(segmentState) {
     case SegmentState::On:
         stateName = tr("<font color='green'>On</font>");
-        nextState = tr("Off Once");
+        nextState = tr("off once");
         Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
         break;
     case SegmentState::Off_Once:
         stateName = tr("<font color='darkGoldenRod'>Off once</font>");
-        nextState = tr("Off");
+        nextState = tr("off");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     case SegmentState::Off:
         stateName = tr("<font color='blue'>Off</font>");
-        nextState = tr("On");
+        nextState = tr("on");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     }
-    toggleSegmentsAction->setText(tr("Turn Segments %1").arg(nextState));
+    toggleSegmentsAction->setText(tr("Turn segments %1").arg(nextState));
     segmentStateLabel.setText(tr("Segments (toggle with a): ") + stateName);
 }
 
@@ -981,7 +981,7 @@ void MainWindow::clearSkeletonSlot() {
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Do you really want to clear the skeleton?"));
         question.setInformativeText(tr("This erases all trees and their nodes and cannot be undone."));
-        QPushButton const * const ok = question.addButton(tr("Clear Skeleton"), QMessageBox::AcceptRole);
+        QPushButton const * const ok = question.addButton(tr("Clear skeleton"), QMessageBox::AcceptRole);
         question.addButton(QMessageBox::Cancel);
         question.exec();
         if (question.clickedButton() == ok) {
@@ -994,7 +994,7 @@ void MainWindow::clearSkeletonSlot() {
 /* preference menu functionality */
 void MainWindow::loadCustomPreferencesSlot()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open custom preferences file", QDir::homePath(), "KNOSOS GUI preferences file (*.ini)");
     if(!fileName.isEmpty()) {
         QSettings settings;
 
@@ -1014,7 +1014,7 @@ void MainWindow::saveCustomPreferencesSlot()
     QSettings settings;
     QString originSettings = settings.fileName();
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.ini)");
+    QString fileName = QFileDialog::getSaveFileName(this, "Save custom preferences file as", QDir::homePath(), "KNOSSOS GUI preferences file (*.ini)");
     if(!fileName.isEmpty()) {
         QFile file;
         file.setFileName(originSettings);
@@ -1344,11 +1344,11 @@ void MainWindow::refreshPluginMenu() {
                          [pluginName](){state->scripting->reloadPlugin(pluginName,false);});
         QObject::connect(pluginSubMenu->addAction("Instantiate"), &QAction::triggered,
                          [pluginName](){state->scripting->instantiatePlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Remove Instance"), &QAction::triggered,
+        QObject::connect(pluginSubMenu->addAction("Remove instance"), &QAction::triggered,
                          [pluginName](){state->scripting->removePluginInstance(pluginName,false);});
         QObject::connect(pluginSubMenu->addAction("Import"), &QAction::triggered,
                          [pluginName](){state->scripting->importPlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Remove Import"), &QAction::triggered,
+        QObject::connect(pluginSubMenu->addAction("Remove import"), &QAction::triggered,
                          [pluginName](){state->scripting->removePluginImport(pluginName,false);});
     }
 }
@@ -1369,16 +1369,16 @@ void MainWindow::pythonPluginMgrSlot() {
     auto pluginMgrPath = QString("%1/%2").arg(pluginDir).arg(pluginMgrFn);
     auto existed = QFile(pluginMgrPath).exists();
     if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
-        return showError(QString("Cannot temporarily place default plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
+        return showError(QString("Cannot temporarily place default Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
     }
     state->scripting->importPlugin(PLUGIN_MGR_NAME, false);
     if (!existed) {
         QFile pluginMgrFile(pluginMgrPath);
         if (!pluginMgrFile.setPermissions(QFile::WriteOther)) {
-            return showError(QString("Cannot set write permissions for temporarily placed plugin manager in plugin directory:\n%1").arg(pluginMgrPath));
+            return showError(QString("Cannot set write permissions for temporarily placed Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
         }
         if (!pluginMgrFile.remove()) {
-            return showError(QString("Cannot remove temporarily placed plugin manager from plugin directory:\n%1").arg(pluginMgrPath));
+            return showError(QString("Cannot remove temporarily placed Plugin Manager from plugin directory:\n%1").arg(pluginMgrPath));
         }
     }
     state->scripting->openPlugin(PLUGIN_MGR_NAME, false);

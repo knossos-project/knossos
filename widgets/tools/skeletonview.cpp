@@ -302,7 +302,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         table.sortByColumn(sortIndex = 0, Qt::SortOrder::AscendingOrder);
     };
 
-    treeCommentFilter.setPlaceholderText("tree comment");
+    treeCommentFilter.setPlaceholderText("Tree comment");
     treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     treeSortAndCommentFilterProxy.setFilterKeyColumn(4);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
@@ -322,7 +322,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         filterTreeLayout.addWidget(option.first);
     }
 
-    filterModeCombo.addItems({"match all", "match at least one"});
+    filterModeCombo.addItems({"Match all", "Match at least one"});
     filterLayout.addWidget(&filterModeCombo);
     filterButtonGroup.setExclusive(false);
     for (auto option : { std::make_pair(&filterInSelectedTreeCheckbox, NodeModel::FilterMode::InSelectedTree),
@@ -344,7 +344,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     filterSpoilerLayout.addWidget(&filterGroupBox);
     filterSpoiler.setContentLayout(filterSpoilerLayout);
 
-    nodeCommentFilter.setPlaceholderText("node comment");
+    nodeCommentFilter.setPlaceholderText("Node comment");
 
     nodeSortAndCommentFilterProxy.setSourceModel(&nodeModel);
     nodeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -383,7 +383,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     lockingRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.lockRadius);
     lockingRadiusSpin.setSuffix("px");
 
-    commentConditionEdit.setPlaceholderText("comment condition for locking");
+    commentConditionEdit.setPlaceholderText("Comment condition for locking");
     lockedNodeLabel.setEnabled(false);
     commentConditionEdit.setEnabled(false);
     lockingRadiusLabel.setEnabled(false);
@@ -645,7 +645,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(treeContextMenu.addAction("Set &comment for trees"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");
-        auto comment = QInputDialog::getText(this, "Edit Tree Comment", "new tree comment", QLineEdit::Normal, prevComment, &applied);
+        auto comment = QInputDialog::getText(this, "Edit tree comment", "New tree comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
             prevComment = comment;
             Skeletonizer::singleton().setCommentOfSelectedTrees(comment);
@@ -667,7 +667,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
         if (!state->skeletonState->selectedTrees.empty()) {
-            question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete the selected trees?"));
+            question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete selected trees?"));
         }
     });
 
@@ -755,7 +755,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");
-        auto comment = QInputDialog::getText(this, "Edit Node Comment", "new node comment", QLineEdit::Normal, prevComment, &applied);
+        auto comment = QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
             prevComment = comment;
             for (auto node : state->skeletonState->selectedNodes) {
@@ -766,7 +766,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &radius for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevRadius = Skeletonizer::singleton().skeletonState.defaultNodeRadius;
-        auto radius = QInputDialog::getDouble(this, "Edit Node Radii", "new node radius", prevRadius, 0, 100000, 1, &applied);
+        auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, 100000, 1, &applied);
         if (applied) {
             prevRadius = radius;
             for (auto * node : state->skeletonState->selectedNodes) {

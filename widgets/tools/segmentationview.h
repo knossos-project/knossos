@@ -98,7 +98,7 @@ Q_OBJECT
     QVBoxLayout layout;
     QHBoxLayout toolsLayout;
     QButtonGroup modeGroup;
-    QLabel brushRadiusLabel{"Brush Radius"};
+    QLabel brushRadiusLabel{"Brush radius"};
     QSpinBox brushRadiusEdit;
     QPushButton twodBtn{"2D"};
     QPushButton threedBtn{"3D"};
@@ -107,7 +107,7 @@ Q_OBJECT
     CategoryModel categoryModel;
     QComboBox categoryFilter;
     QLineEdit commentFilter;
-    QCheckBox regExCheckbox{"regex"};
+    QCheckBox regExCheckbox{"Regex"};
 
     SegmentationObjectModel objectModel;
     QSortFilterProxyModel objectProxyModelCategory;

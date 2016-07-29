@@ -51,7 +51,7 @@ void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
 }
 
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
-    idCombo.addItems({"None", "Active Node", "All Nodes"});
+    idCombo.addItems({"None", "Active node", "All nodes"});
     overrideNodeRadiusSpin.setSingleStep(0.1);
     overrideNodeRadiusSpin.setSuffix(" px");
     edgeNodeRatioSpin.setSingleStep(0.1);
@@ -74,7 +74,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     generalLayout.addRow(tr("Show node IDs"), &idCombo);
     generalLayout.addRow(&nodeCommentsCheck);
     generalLayout.addRow(&overrideNodeRadiusCheck, &overrideNodeRadiusSpin);
-    generalLayout.addRow(tr("Edge:Node radius ratio"), &edgeNodeRatioSpin);
+    generalLayout.addRow(tr("Edge:node radius ratio"), &edgeNodeRatioSpin);
     generalGroup.setLayout(&generalLayout);
     int row = 0;
     propertiesLayout.addWidget(&propertyRadiusLabel, row++, 0, 1, 4);
@@ -132,7 +132,9 @@ void NodesTab::updateProperties(const QSet<QString> & numberProperties) {
 
 void NodesTab::loadNodeLUTRequest(QString path) {
     if (path.isEmpty()) {
-        path = QFileDialog::getOpenFileName(this, "Load Node Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        state->viewerState->renderInterval = SLOW;
+        path = QFileDialog::getOpenFileName(this, "Load node color lookup table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        state->viewerState->renderInterval = FAST;
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {

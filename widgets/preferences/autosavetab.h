@@ -40,7 +40,7 @@ class AutosaveTab : public QWidget {
     QCheckBox autosaveCheckbox{"Auto saving (triggered by changes)"};
     QLabel autosaveIntervalLabel{"Saving interval"};
     QSpinBox autosaveIntervalSpinBox;
-    QCheckBox autoincrementFileNameButton{"Auto increment file name"};
+    QCheckBox autoincrementFileNameButton{"Auto increment filename"};
     QPushButton revealButton{"Reveal default location"};
     QLabel autosaveLocationEdit;
 public:

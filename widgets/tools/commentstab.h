@@ -36,7 +36,7 @@ Q_OBJECT
     friend class CommentsTab;
 
 protected:
-    const std::vector<QString> header{"shortcut", "comment", "color", "node radius"};
+    const std::vector<QString> header{"Shortcut", "Comment", "Color", "Node radius"};
 
 public:
     void fill();

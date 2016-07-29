@@ -60,16 +60,16 @@ class NodesTab : public QWidget
     QDoubleSpinBox overrideNodeRadiusSpin;
     QDoubleSpinBox edgeNodeRatioSpin;
     // property visualization
-    QGroupBox propertiesGroup{tr("Property Highlighting")};
+    QGroupBox propertiesGroup{tr("Property highlighting")};
     QGridLayout propertiesLayout;
     PropertyModel propertyModel;
     QComboBox propertyRadiusCombo;
-    QLabel propertyRadiusLabel{"Scale property and use as node radius:"};
+    QLabel propertyRadiusLabel{"Use scaled property as node radius:"};
     QDoubleSpinBox propertyRadiusScaleSpin;
     QComboBox propertyColorCombo;
     QDoubleSpinBox propertyMinSpin;
     QDoubleSpinBox propertyMaxSpin;
-    QLabel propertyColorLabel{"Map property and use as node color:"};
+    QLabel propertyColorLabel{"Map property to node color:"};
     QString lutPath;
     QLabel lutLabel{"Current LUT: none"};
     QPushButton propertyLUTButton{"Load color LUT …"};
