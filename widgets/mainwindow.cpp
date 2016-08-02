@@ -134,7 +134,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     createToolbars();
     createMenus();
     setCentralWidget(new QWidget(this));
-    setGeometry(0, 0, width(), height());
 
     createViewports();
     setAcceptDrops(true);
@@ -203,11 +202,6 @@ void MainWindow::createViewports() {
     viewportZY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ZY));
     viewportArb = std::unique_ptr<ViewportArb>(new ViewportArb(centralWidget(), VIEWPORT_ARBITRARY));
     viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON));
-    viewportXY->upperLeftCorner = {5, 30, 0};
-    viewportXZ->upperLeftCorner = {5, 385, 0};
-    viewportZY->upperLeftCorner = {360, 30, 0};
-    viewportArb->upperLeftCorner = {715, 30, 0};
-    viewport3D->upperLeftCorner = {360, 385, 0};
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
@@ -1122,15 +1116,12 @@ void MainWindow::saveSettings() {
     widgetContainer.pythonInterpreterWidget.saveSettings();
     widgetContainer.snapshotWidget.saveSettings();
     widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
-    //widgetContainer.toolsWidget->saveSettings();
 }
 
-/**
- * this method is a proposal for the qsettings variant
- */
 void MainWindow::loadSettings() {
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
+    resize(1024, 768);// initial default size
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     restoreState(settings.value(STATE).toByteArray());
 
