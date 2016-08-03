@@ -287,7 +287,6 @@ class Viewport3D : public ViewportBase {
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
-    void rotateViewport();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;

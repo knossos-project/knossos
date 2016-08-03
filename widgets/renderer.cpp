@@ -54,73 +54,11 @@
 
 #include <cmath>
 
-#define ROTATIONSTATEXY    0
-#define ROTATIONSTATEXZ    1
-#define ROTATIONSTATEZY    2
-
 enum GLNames {
     None,
     Scalebar,
     NodeOffset
 };
-
-bool setRotationState(uint setTo) {
-    if (setTo == ROTATIONSTATEXY){//x @ 0°
-        state->skeletonState->rotationState[0] = 1.0;//1
-        state->skeletonState->rotationState[1] = 0.0;
-        state->skeletonState->rotationState[2] = 0.0;
-        state->skeletonState->rotationState[3] = 0.0;
-        state->skeletonState->rotationState[4] = 0.0;
-        state->skeletonState->rotationState[5] = 1.0;//cos
-        state->skeletonState->rotationState[6] = 0.0;//-sin
-        state->skeletonState->rotationState[7] = 0.0;
-        state->skeletonState->rotationState[8] = 0.0;
-        state->skeletonState->rotationState[9] = 0.0;//sin
-        state->skeletonState->rotationState[10] = 1.0;//cos
-        state->skeletonState->rotationState[11] = 0.0;
-        state->skeletonState->rotationState[12] = 0.0;
-        state->skeletonState->rotationState[13] = 0.0;
-        state->skeletonState->rotationState[14] = 0.0;
-        state->skeletonState->rotationState[15] = 1.0;//1
-    }
-    if (setTo == ROTATIONSTATEXZ){//x @ 90°
-        state->skeletonState->rotationState[0] = 1.0;//1
-        state->skeletonState->rotationState[1] = 0.0;
-        state->skeletonState->rotationState[2] = 0.0;
-        state->skeletonState->rotationState[3] = 0.0;
-        state->skeletonState->rotationState[4] = 0.0;
-        state->skeletonState->rotationState[5] = 0.0;//cos
-        state->skeletonState->rotationState[6] = -1.0;//-sin
-        state->skeletonState->rotationState[7] = 0.0;
-        state->skeletonState->rotationState[8] = 0.0;
-        state->skeletonState->rotationState[9] = 1.0;//sin
-        state->skeletonState->rotationState[10] = 0.0;//cos
-        state->skeletonState->rotationState[11] = 0.0;
-        state->skeletonState->rotationState[12] = 0.0;
-        state->skeletonState->rotationState[13] = 0.0;
-        state->skeletonState->rotationState[14] = 0.0;
-        state->skeletonState->rotationState[15] = 1.0;//1
-    }
-    if (setTo == ROTATIONSTATEZY){//y @ -90°
-        state->skeletonState->rotationState[0] = 0.0;//cos
-        state->skeletonState->rotationState[1] = 0.0;
-        state->skeletonState->rotationState[2] = -1.0;//sin
-        state->skeletonState->rotationState[3] = 0.0;
-        state->skeletonState->rotationState[4] = 0.0;
-        state->skeletonState->rotationState[5] = 1.0;//1
-        state->skeletonState->rotationState[6] = 0.0;
-        state->skeletonState->rotationState[7] = 0.0;
-        state->skeletonState->rotationState[8] = 1.0;//-sin
-        state->skeletonState->rotationState[9] = 0.0;
-        state->skeletonState->rotationState[10] = 0.0;//cos
-        state->skeletonState->rotationState[11] = 0.0;
-        state->skeletonState->rotationState[12] = 0.0;
-        state->skeletonState->rotationState[13] = 0.0;
-        state->skeletonState->rotationState[14] = 0.0;
-        state->skeletonState->rotationState[15] = 1.0;//1
-    }
-    return true;
-}
 
 uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
@@ -1377,10 +1315,14 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glLoadIdentity();
     }
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
-    glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-        state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY, -1000, 10 *state->skeletonState->volBoundary);
+    glScalef(1, -1, 1);// flip ogl y
+    const auto halfBoundary = state->skeletonState->volBoundary / 2;
+    const auto zoomedBoundary = state->skeletonState->volBoundary * state->skeletonState->zoomLevel;
+    glOrtho(-halfBoundary + zoomedBoundary + state->skeletonState->translateX
+        , halfBoundary - zoomedBoundary + state->skeletonState->translateX
+        , -halfBoundary + zoomedBoundary + state->skeletonState->translateY
+        , halfBoundary - zoomedBoundary + state->skeletonState->translateY
+        , -10 * state->skeletonState->volBoundary, 10 * state->skeletonState->volBoundary);
 
     screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
     displayedlengthInNmX = edgeLength / screenPxXPerDataPx * state->scale.x;
@@ -1394,129 +1336,78 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glLoadIdentity();
 
      // Now we draw the  background of our skeleton VP
-
     glPushMatrix();
-    glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
+        glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
 
-    glShadeModel(GL_SMOOTH);
-    glDisable(GL_TEXTURE_2D);
+        glShadeModel(GL_SMOOTH);
+        glDisable(GL_TEXTURE_2D);
 
-    glColor4f(1., 1., 1., 1.); // HERE
-    // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
-    glBegin(GL_QUADS);
-        glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
-        glVertex3i(state->skeletonState->volBoundary  * 10, -state->skeletonState->volBoundary * 10, 0);
-        glVertex3i(state->skeletonState->volBoundary  * 10, state->skeletonState->volBoundary  * 10, 0);
-        glVertex3i(-state->skeletonState->volBoundary * 10, state->skeletonState->volBoundary  * 10, 0);
-    glEnd();
-
+        glColor4f(1., 1., 1., 1.); // HERE
+        // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
+        glBegin(GL_QUADS);
+            glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
+            glVertex3i(state->skeletonState->volBoundary  * 10, -state->skeletonState->volBoundary * 10, 0);
+            glVertex3i(state->skeletonState->volBoundary  * 10, state->skeletonState->volBoundary  * 10, 0);
+            glVertex3i(-state->skeletonState->volBoundary * 10, state->skeletonState->volBoundary  * 10, 0);
+        glEnd();
     glPopMatrix();
 
     // load model view matrix that stores rotation state!
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
-    // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
-    if(state->skeletonState->rotdx || state->skeletonState->rotdy) {
-        floatCoordinate rotationCenter;
-        floatCoordinate datasetCenter = floatCoordinate(state->boundary) / 2.f;
-        switch(state->viewerState->rotationCenter) {
-        case RotationCenter::ActiveNode:
-            rotationCenter = state->skeletonState->activeNode ? static_cast<floatCoordinate>(state->skeletonState->activeNode->position) : datasetCenter;
-            break;
-        case RotationCenter::CurrentPosition:
+    auto rotateMe = [this](auto x, auto y){
+        floatCoordinate datasetCenter{state->boundary / 2};
+        floatCoordinate rotationCenter{datasetCenter};
+        if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
+            rotationCenter = state->skeletonState->activeNode->position;
+        } else if (state->viewerState->rotationCenter == RotationCenter::CurrentPosition) {
             rotationCenter = state->viewerState->currentPosition;
-            break;
-        default:
-            rotationCenter = {state->boundary.x / 2.f, state->boundary.y / 2.f, state->boundary.z / 2.f};
         }
-
+        // invert rotation
+        const auto rotation = QMatrix4x4{state->skeletonState->rotationState};
+        float inverseRotation[16];
+        rotation.inverted().copyDataTo(inverseRotation);
+        // add new rotation
+        QMatrix4x4 singleRotation;
+        singleRotation.rotate(y, {0, 1, 0});
+        singleRotation.rotate(x, {1, 0, 0});
+        (rotation * singleRotation).copyDataTo(state->skeletonState->rotationState);
+        // apply complete rotation
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
         glTranslatef(-datasetCenter.x, -datasetCenter.y, -datasetCenter.z);
         glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
-        glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
-        rotateViewport();
-        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+        glScalef(1, 1, state->viewerState->voxelXYtoZRatio);
+        glMultMatrixf(inverseRotation);
+        glMultMatrixf(state->skeletonState->rotationState);
+        glScalef(1, 1, 1/state->viewerState->voxelXYtoZRatio);
         glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         glTranslatef(datasetCenter.x, datasetCenter.y, datasetCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+    };
+
+    // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
+    if (state->skeletonState->rotdx != 0 || state->skeletonState->rotdy != 0) {
+        rotateMe(state->skeletonState->rotdy, -state->skeletonState->rotdx);// moving the cursor horizontally rotates the y axis
+        state->skeletonState->rotdx = state->skeletonState->rotdy = 0;
     }
 
-    switch(state->skeletonState->definedSkeletonVpView) {
-    case SKELVP_XY_VIEW:
+    const auto xy = state->skeletonState->definedSkeletonVpView == SKELVP_XY_VIEW;
+    const auto xz = state->skeletonState->definedSkeletonVpView == SKELVP_XZ_VIEW;
+    const auto zy = state->skeletonState->definedSkeletonVpView == SKELVP_ZY_VIEW;
+    if (xy || xz || zy) {
         state->skeletonState->definedSkeletonVpView = -1;
 
-        glLoadIdentity();
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / -2.);
+        QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
+        QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        rotateMe(90 * xz, -90 * zy);// updates rotationState and skeletonVpModelView, must therefore also be called for xy
 
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-        state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
-        state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
-
-        glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                -500,
-                10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEXY);
-        break;
-    case SKELVP_XZ_VIEW:
-        state->skeletonState->definedSkeletonVpView = -1;
-        glLoadIdentity();
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(-90, 1., 0., 0.);
-        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-        state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
-        state->skeletonState->translateY = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
-
-        glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                -500,
-                10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEXZ);
-        break;
-    case SKELVP_ZY_VIEW:
-        state->skeletonState->definedSkeletonVpView = -1;
-        glLoadIdentity();
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(90, 0., 1., 0.);
-        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-        state->skeletonState->translateX = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
-        state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
-
-        glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                -500,
-                10 * state->skeletonState->volBoundary);
-        setRotationState(ROTATIONSTATEZY);
-        break;
-    case SKELVP_R90:
-    case SKELVP_R180:
+        const auto translate = state->viewerState->currentPosition - state->boundary / 2;
+        state->skeletonState->translateX = zy ? translate.z : translate.x;
+        state->skeletonState->translateY = xz ? translate.z : translate.y;
+    } else if (state->skeletonState->definedSkeletonVpView == SKELVP_R90 || state->skeletonState->definedSkeletonVpView == SKELVP_R180) {
         state->skeletonState->rotdx = 10;
         state->skeletonState->rotationcounter++;
         if (state->skeletonState->rotationcounter > (state->skeletonState->definedSkeletonVpView == SKELVP_R90 ? 9 : 18)) {
@@ -1524,29 +1415,16 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             state->skeletonState->definedSkeletonVpView = -1;
             state->skeletonState->rotationcounter = 0;
         }
-        break;
-    case SKELVP_RESET: {
+
+    } else if (state->skeletonState->definedSkeletonVpView == SKELVP_RESET) {
         state->skeletonState->definedSkeletonVpView = -1;
         state->skeletonState->translateX = 0;
         state->skeletonState->translateY = 0;
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / 2.,
-                     (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(-25., 1., 0., 0.);
-        glRotatef(-25., 0., 1., 0.);
-        glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
         state->skeletonState->zoomLevel = SKELZOOMMIN;
-        QMatrix4x4 rotMat;
-        rotMat.rotate(25, {1, 0, 0});
-        rotMat.rotate(25, {0, 1, 0});
-        rotMat.copyDataTo(state->skeletonState->rotationState);
-        break;
-    }
-    default:
-        break;
+
+        QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
+        QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        rotateMe(25, 25);
     }
 
     if(options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
@@ -2087,28 +1965,6 @@ std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint ce
         i = i + 3 + hit_count;
     }
     return result;
-}
-
-void Viewport3D::rotateViewport() {
-    // for general information look at http://de.wikipedia.org/wiki/Rolling-Ball-Rotation
-
-    // undo all previous rotations
-    float inverseRotationState[16];
-    QMatrix4x4{state->skeletonState->rotationState}.inverted().copyDataTo(inverseRotationState);
-    glMultMatrixf(inverseRotationState);
-
-    // multiply all previous rotations to current rotation and overwrite state->skeletonState->rotationsState
-    QMatrix4x4 singleRotation;
-    singleRotation.rotate(state->skeletonState->rotdx, 0, -1);
-    singleRotation.rotate(state->skeletonState->rotdy, 1, 0);
-    state->skeletonState->rotdx = 0;
-    state->skeletonState->rotdy = 0;
-    float singleRotM[16];
-    singleRotation.copyDataTo(singleRotM);
-    (QMatrix4x4{state->skeletonState->rotationState} * singleRotation).copyDataTo(state->skeletonState->rotationState);
-
-    //rotate to the new rotation state
-    glMultMatrixf(state->skeletonState->rotationState);
 }
 
 /*
