@@ -1516,19 +1516,11 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         setRotationState(ROTATIONSTATEZY);
         break;
     case SKELVP_R90:
-        state->skeletonState->rotdx = 10;
-        state->skeletonState->rotationcounter++;
-        if (state->skeletonState->rotationcounter > 15) {
-            state->skeletonState->rotdx = 7.6;
-            state->skeletonState->definedSkeletonVpView = -1;
-            state->skeletonState->rotationcounter = 0;
-        }
-        break;
     case SKELVP_R180:
         state->skeletonState->rotdx = 10;
         state->skeletonState->rotationcounter++;
-        if (state->skeletonState->rotationcounter > 31) {
-            state->skeletonState->rotdx = 5.2;
+        if (state->skeletonState->rotationcounter > (state->skeletonState->definedSkeletonVpView == SKELVP_R90 ? 9 : 18)) {
+            state->skeletonState->rotdx = 0;
             state->skeletonState->definedSkeletonVpView = -1;
             state->skeletonState->rotationcounter = 0;
         }
@@ -2097,99 +2089,26 @@ std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint ce
     return result;
 }
 
-bool Viewport3D::updateRotationStateMatrix(float M1[16], float M2[16]){
-    //multiply matrix m2 to matrix m1 and save result in rotationState matrix
-    int i;
-    float M3[16];
-
-    M3[0] = M1[0] * M2[0] + M1[4] * M2[1] + M1[8] * M2[2] + M1[12] * M2[3];
-    M3[1] = M1[1] * M2[0] + M1[5] * M2[1] + M1[9] * M2[2] + M1[13] * M2[3];
-    M3[2] = M1[2] * M2[0] + M1[6] * M2[1] + M1[10] * M2[2] + M1[14] * M2[3];
-    M3[3] = M1[3] * M2[0] + M1[7] * M2[1] + M1[11] * M2[2] + M1[15] * M2[3];
-    M3[4] = M1[0] * M2[4] + M1[4] * M2[5] + M1[8] * M2[6] + M1[12] * M2[7];
-    M3[5] = M1[1] * M2[4] + M1[5] * M2[5] + M1[9] * M2[6] + M1[13] * M2[7];
-    M3[6] = M1[2] * M2[4] + M1[6] * M2[5] + M1[10] * M2[6] + M1[14] * M2[7];
-    M3[7] = M1[3] * M2[4] + M1[7] * M2[5] + M1[11] * M2[6] + M1[15] * M2[7];
-    M3[8] = M1[0] * M2[8] + M1[4] * M2[9] + M1[8] * M2[10] + M1[12] * M2[11];
-    M3[9] = M1[1] * M2[8] + M1[5] * M2[9] + M1[9] * M2[10] + M1[13] * M2[11];
-    M3[10] = M1[2] * M2[8] + M1[6] * M2[9] + M1[10] * M2[10] + M1[14] * M2[11];
-    M3[11] = M1[3] * M2[8] + M1[7] * M2[9] + M1[11] * M2[10] + M1[15] * M2[11];
-    M3[12] = M1[0] * M2[12] + M1[4] * M2[13] + M1[8] * M2[14] + M1[12] * M2[15];
-    M3[13] = M1[1] * M2[12] + M1[5] * M2[13] + M1[9] * M2[14] + M1[13] * M2[15];
-    M3[14] = M1[2] * M2[12] + M1[6] * M2[13] + M1[10] * M2[14] + M1[14] * M2[15];
-    M3[15] = M1[3] * M2[12] + M1[7] * M2[13] + M1[11] * M2[14] + M1[15] * M2[15];
-
-    for (i = 0; i < 16; i++){
-        state->skeletonState->rotationState[i] = M3[i];
-    }
-    return true;
-}
-
-bool Viewport3D::rotateViewport() {
+void Viewport3D::rotateViewport() {
     // for general information look at http://de.wikipedia.org/wiki/Rolling-Ball-Rotation
 
-    // rotdx and rotdy save the small rotations the user creates with one single mouse action
-    // singleRotM[16] is the rotation matrix for this single mouse action (see )
-    // state->skeletonstate->rotationState is the product of all rotations during KNOSSOS session
-    // inverseRotationState is the inverse (here transposed) matrix of state->skeletonstate->rotationState
-
-    float singleRotM[16];
-    float inverseRotationState[16];
-    float rotR = 100.;
-    float rotdx = (float)state->skeletonState->rotdx;
-    float rotdy = (float)state->skeletonState->rotdy;
-    state->skeletonState->rotdx = 0;
-    state->skeletonState->rotdy = 0;
-    float rotdr = pow(rotdx * rotdx + rotdy * rotdy, 0.5);
-    float rotCosT = rotR / (pow(rotR * rotR + rotdr * rotdr, 0.5));
-    float rotSinT = rotdr / (pow(rotR * rotR + rotdr * rotdr, 0.5));
-
-    //calc inverse matrix of actual rotation state
-    inverseRotationState[0] = state->skeletonState->rotationState[0];
-    inverseRotationState[1] = state->skeletonState->rotationState[4];
-    inverseRotationState[2] = state->skeletonState->rotationState[8];
-    inverseRotationState[3] = state->skeletonState->rotationState[12];
-    inverseRotationState[4] = state->skeletonState->rotationState[1];
-    inverseRotationState[5] = state->skeletonState->rotationState[5];
-    inverseRotationState[6] = state->skeletonState->rotationState[9];
-    inverseRotationState[7] = state->skeletonState->rotationState[13];
-    inverseRotationState[8] = state->skeletonState->rotationState[2];
-    inverseRotationState[9] = state->skeletonState->rotationState[6];
-    inverseRotationState[10] = state->skeletonState->rotationState[10];
-    inverseRotationState[11] = state->skeletonState->rotationState[14];
-    inverseRotationState[12] = state->skeletonState->rotationState[3];
-    inverseRotationState[13] = state->skeletonState->rotationState[7];
-    inverseRotationState[14] = state->skeletonState->rotationState[11];
-    inverseRotationState[15] = state->skeletonState->rotationState[15];
-
-    // calc matrix of one single rotation
-    singleRotM[0] = rotCosT + pow(rotdy / rotdr, 2.) * (1. - rotCosT);
-    singleRotM[1] = rotdx * rotdy / rotdr / rotdr * (rotCosT - 1.);
-    singleRotM[2] = - rotdx / rotdr * rotSinT;
-    singleRotM[3] = 0.;
-    singleRotM[4] = singleRotM[1];
-    singleRotM[5] = rotCosT + pow(rotdx / rotdr, 2.) * (1. - rotCosT);
-    singleRotM[6] = - rotdy / rotdr * rotSinT;
-    singleRotM[7] = 0.;
-    singleRotM[8] = - singleRotM[2];
-    singleRotM[9] = - singleRotM[6];
-    singleRotM[10] = rotCosT;
-    singleRotM[11] = 0.;
-    singleRotM[12] = 0.;
-    singleRotM[13] = 0.;
-    singleRotM[14] = 0.;
-    singleRotM[15] = 1.;
-
     // undo all previous rotations
+    float inverseRotationState[16];
+    QMatrix4x4{state->skeletonState->rotationState}.inverted().copyDataTo(inverseRotationState);
     glMultMatrixf(inverseRotationState);
 
     // multiply all previous rotations to current rotation and overwrite state->skeletonState->rotationsState
-    updateRotationStateMatrix(singleRotM,state->skeletonState->rotationState);
+    QMatrix4x4 singleRotation;
+    singleRotation.rotate(state->skeletonState->rotdx, 0, -1);
+    singleRotation.rotate(state->skeletonState->rotdy, 1, 0);
+    state->skeletonState->rotdx = 0;
+    state->skeletonState->rotdy = 0;
+    float singleRotM[16];
+    singleRotation.copyDataTo(singleRotM);
+    (QMatrix4x4{state->skeletonState->rotationState} * singleRotation).copyDataTo(state->skeletonState->rotationState);
 
     //rotate to the new rotation state
     glMultMatrixf(state->skeletonState->rotationState);
-
-    return true;
 }
 
 /*
