@@ -971,7 +971,7 @@ bool Skeletonizer::delTree(int treeID) {
 
 nodeListElement * Skeletonizer::findNearbyNode(treeListElement * nearbyTree, Coordinate searchPosition) {
     nodeListElement * nodeWithCurrentlySmallestDistance = nullptr;
-    float smallestDistance = skeletonState.volBoundary;//maximum distance
+    float smallestDistance = std::numeric_limits<float>::max();//maximum distance
 
     auto searchTree = [&smallestDistance, &nodeWithCurrentlySmallestDistance, searchPosition](treeListElement & tree){
         for (auto & currentNode : tree.nodes) {
