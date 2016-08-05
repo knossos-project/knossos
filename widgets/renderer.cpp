@@ -605,8 +605,8 @@ void ViewportOrtho::renderViewportFast() {
     int otexLocation = overlay_data_shader.attributeLocation("texCoordVertex");
     overlay_data_shader.enableAttributeArray(overtexLocation);
     overlay_data_shader.enableAttributeArray(otexLocation);
-    overlay_data_shader.setAttributeArray(overtexLocation, triangleVertices.data()->data(), 3);
-    overlay_data_shader.setAttributeArray(otexLocation, textureVertices.data()->data(), 3);
+    overlay_data_shader.setAttributeArray(overtexLocation, triangleVertices.data()->data(), triangleVertices.data()->size());
+    overlay_data_shader.setAttributeArray(otexLocation, textureVertices.data()->data(), textureVertices.data()->size());
     overlay_data_shader.setUniformValue("view_matrix", viewMatrix);
     overlay_data_shader.setUniformValue("projection_matrix", projectionMatrix);
     overlay_data_shader.setUniformValue("indexTexture", 0);
