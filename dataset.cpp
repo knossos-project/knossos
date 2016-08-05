@@ -222,7 +222,7 @@ void Dataset::applyToState() const {
     state->compressionRatio = compressionRatio;
     Segmentation::enabled = overlay;
 
-    Skeletonizer::singleton().skeletonState.volBoundary = 2 * std::max({state->boundary.x * 1.f, state->boundary.y * state->scale.y/state->scale.x, state->boundary.z * state->scale.z/state->scale.x});
+    Skeletonizer::singleton().skeletonState.volBoundary = SkeletonState{}.volBoundary;
 }
 
 QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Dataset::CubeType type) {
