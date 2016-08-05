@@ -55,7 +55,7 @@ public slots:
     bool set_active_tree(int tree_id);
     bool delete_tree(int tree_id);
     bool merge_trees(int tree_id, int other_tree_id);
-    bool add_tree_pointcloud(int tree_id, const QVector<float> & vec);
+    void add_tree_pointcloud(int tree_id, const QVector<float> & vec);
     bool move_to_next_tree();
     bool move_to_previous_tree();
 

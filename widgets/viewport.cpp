@@ -745,7 +745,7 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-bool Viewport3D::addTreePointcloud(int tree_id) {
+void Viewport3D::addTreePointcloud(int tree_id) {
     // test point sphere for comparison
     std::vector<QVector3D> points;
     std::vector<QVector3D> normals;
@@ -783,8 +783,6 @@ bool Viewport3D::addTreePointcloud(int tree_id) {
     sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
     sphereBuf.color_buf.release();
     pointcloudBuffers.emplace(tree_id, sphereBuf);
-
-    return true;
 }
 
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
