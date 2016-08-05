@@ -595,6 +595,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto & selectedNodes = state->skeletonState->selectedNodes;
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//jump to node
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1
+                                                      && selectedNodes.front()->isSynapticNode);
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2
@@ -703,6 +705,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().setActive(*node.get());
             Skeletonizer::singleton().jumpToNode(*node.get());
         }
+    });
+    QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
+        const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
+        Skeletonizer::singleton().jumpToNode(*correspondingSynapse->synapticCleft->getNodes()->front());
     });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
