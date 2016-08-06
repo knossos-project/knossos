@@ -288,7 +288,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             tempSynapse.postSynapse->correspondingSynapse = &state->skeletonState->synapses.back();
             tempSynapse = Synapse(); //reset temporary class
             Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
-            state->viewer->window->toggleSynapses(); //update statusbar
+            state->viewer->window->toggleSynapseState(); //update statusbar
         }
     }
     ViewportBase::handleMouseButtonRight(event);

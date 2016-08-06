@@ -508,8 +508,19 @@ void MainWindow::createMenus() {
     actionMenu.addSeparator();
     createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
-            state->viewer->window->toggleSynapses(); //update statusbar
-            Skeletonizer::singleton().addSynapse();
+            if(state->viewer->window->synapseState == SynapseState::Off) {
+                state->viewer->window->toggleSynapseState(); //update statusbar
+                createSynapse->setText(tr("Finish synapse"));
+                createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+                createSynapse->setShortcut(Qt::Key_C);
+                Skeletonizer::singleton().addSynapse();
+            } else if(state->viewer->window->synapseState == SynapseState::SynapticCleft) {
+                state->viewer->window->toggleSynapseState(); //update statusbar
+                createSynapse->setShortcutContext(Qt::ApplicationShortcut);
+                createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
+                Skeletonizer::singleton().addSynapse();
+                Skeletonizer::singleton().addTree();
+            }
         } else if(state->skeletonState->selectedNodes.size() == 2) {
             Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
         }
@@ -955,7 +966,7 @@ void MainWindow::setSynapseState(const SynapseState newState) {
     }
 }
 
-void MainWindow::toggleSynapses() {
+void MainWindow::toggleSynapseState() {
     switch(synapseState) {
     case SynapseState::Off:
         setSynapseState(SynapseState::SynapticCleft);
@@ -1251,7 +1262,10 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().synapticCleft) {
         Skeletonizer::singleton().addSynapse(); //finish synaptic cleft
-        state->viewer->window->toggleSynapses(); //update statusbar
+        state->viewer->window->toggleSynapseState(); //update statusbar
+        createSynapse->setShortcutContext(Qt::ApplicationShortcut);
+        createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
+        createSynapse->setText(tr("Create synapse"));
     }
     Skeletonizer::singleton().addTree();
 }

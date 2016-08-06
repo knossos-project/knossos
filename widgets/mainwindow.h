@@ -225,7 +225,7 @@ public:
     void setSegmentState(const SegmentState newState);
     SynapseState synapseState{SynapseState::Off};
     void setSynapseState(const SynapseState newState);
-    void toggleSynapses();
+    void toggleSynapseState();
 
 signals:
     void overlayOpacityChanged();
