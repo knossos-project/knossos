@@ -121,6 +121,7 @@ class MainWindow : public QMainWindow {
     QAction *pushBranchAction;
     QAction *popBranchAction;
     QAction *createSynapse;
+    QAction *swapSynapticNodes;
     QAction *clearSkeletonAction;
     QAction *increaseOpacityAction;
     QAction *decreaseOpacityAction;

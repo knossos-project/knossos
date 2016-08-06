@@ -745,19 +745,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("&Link/Unlink nodes"), &QAction::triggered, [this](){
         Skeletonizer::singleton().toggleConnectionOfFirstPairOfSelectedNodes(this);
     });
-    QObject::connect(nodeContextMenu.addAction("Swap synaptic nodes"), &QAction::triggered, [this](){
-        const auto & selectedNodes = state->skeletonState->selectedNodes;
-        if(selectedNodes.size() == 2
-                && selectedNodes.front()->isSynapticNode
-                && selectedNodes.back()->isSynapticNode
-                && selectedNodes.front()->correspondingSynapse
-                        == selectedNodes.back()->correspondingSynapse) {
-            auto & synapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
-            std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
-            std::swap(synapse->postSynapse, synapse->preSynapse);
-            allRecreate();
-        }
-    });
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");

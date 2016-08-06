@@ -525,6 +525,18 @@ void MainWindow::createMenus() {
             Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
         }
     }, Qt::ShiftModifier + Qt::Key_C);
+    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Change synapse direction"), this, [this](){
+        const auto & selectedNodes = state->skeletonState->selectedNodes;
+        if(selectedNodes.size() == 1
+                && selectedNodes.front()->isSynapticNode
+                && selectedNodes.front()->correspondingSynapse != nullptr) {
+            auto & synapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
+            if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
+                std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
+                std::swap(synapse->postSynapse, synapse->preSynapse);
+            }
+        }
+    }, Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
@@ -900,6 +912,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
+    swapSynapticNodes->setVisible((mode.testFlag(AnnotationMode::Mode_TracingAdvanced)));
     clearSkeletonAction->setVisible(skeleton);
     increaseOpacityAction->setVisible(segmentation);
     decreaseOpacityAction->setVisible(segmentation);
