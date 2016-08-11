@@ -745,10 +745,10 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport3D::addTreePointcloud(int tree_id) {
+void Viewport3D::addTreePointcloud(int tree_id, const QVector<float> & verts, const QVector<float> & normals, const QVector<float> & indices, int draw_mode) {
     // test point sphere for comparison
-    std::vector<QVector3D> points;
-    std::vector<QVector3D> normals;
+    std::vector<QVector3D> sphere_verts;
+    std::vector<QVector3D> sphere_normals;
     std::vector<std::array<GLfloat, 4>> colors;
 
     static std::random_device rdevice;
@@ -768,17 +768,17 @@ void Viewport3D::addTreePointcloud(int tree_id) {
             spoint[j] = snormal[j]; // adjust by size
         }
 
-        points.emplace_back(sphere_pos + spoint * sphere_size);
-        normals.emplace_back(snormal);
+        sphere_verts.emplace_back(sphere_pos + spoint * sphere_size);
+        sphere_normals.emplace_back(snormal);
         colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
     }
 
     PointcloudBuffer sphereBuf;
-    sphereBuf.vertex_count = points.size();
+    sphereBuf.vertex_count = sphere_verts.size();
     sphereBuf.position_buf.bind();
-    sphereBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
+    sphereBuf.position_buf.allocate(sphere_verts.data(), sphere_verts.size() * 3 * sizeof(GLfloat));
     sphereBuf.normal_buf.bind();
-    sphereBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+    sphereBuf.normal_buf.allocate(sphere_normals.data(), sphere_normals.size() * 3 * sizeof(GLfloat));
     sphereBuf.color_buf.bind();
     sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
     sphereBuf.color_buf.release();
