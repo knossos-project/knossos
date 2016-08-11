@@ -81,6 +81,9 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
 }
 
 void SkeletonProxy::add_tree_pointcloud(int tree_id, const QVector<float> & verts, const QVector<float> & normals, const QVector<float> & indices, int draw_mode) {
+    if(verts.size() != normals.size()) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch. %1 verts, %2 normals.").arg(verts.size()).arg(normals.size()).toStdString());
+    }
     state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, draw_mode);
 }
 
