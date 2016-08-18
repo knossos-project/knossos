@@ -262,7 +262,8 @@ public slots:
 };
 
 struct PointcloudBuffer {
-    PointcloudBuffer() {
+    PointcloudBuffer(GLenum render_mode)
+        : render_mode(render_mode) {
         position_buf.create();
         normal_buf.create();
         color_buf.create();
@@ -272,6 +273,7 @@ struct PointcloudBuffer {
     QOpenGLBuffer position_buf;
     QOpenGLBuffer normal_buf;
     QOpenGLBuffer color_buf;
+    GLenum render_mode;
 };
 
 class Viewport3D : public ViewportBase {

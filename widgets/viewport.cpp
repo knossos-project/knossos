@@ -773,7 +773,7 @@ void Viewport3D::addTreePointcloud(int tree_id, const QVector<float> & verts, co
         colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
     }
 
-    PointcloudBuffer sphereBuf;
+    PointcloudBuffer sphereBuf(GL_TRIANGLES);
     sphereBuf.vertex_count = sphere_verts.size();
     sphereBuf.position_buf.bind();
     sphereBuf.position_buf.allocate(sphere_verts.data(), sphere_verts.size() * 3 * sizeof(GLfloat));

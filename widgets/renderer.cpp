@@ -1191,7 +1191,7 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
     pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
     buf.color_buf.release();
 
-    glDrawArrays(GL_POINTS, 0, buf.vertex_count);
+    glDrawArrays(buf.render_mode, 0, buf.vertex_count);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
