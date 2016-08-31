@@ -745,44 +745,88 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport3D::addTreePointcloud(int tree_id, const QVector<float> & verts, const QVector<float> & normals, const QVector<float> & indices, int draw_mode) {
-    // test point sphere for comparison
-    std::vector<QVector3D> sphere_verts;
-    std::vector<QVector3D> sphere_normals;
+#include <algorithm>
+
+void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, int draw_mode) {
+    // // test point sphere for comparison
+    // std::vector<QVector3D> sphere_verts;
+    // std::vector<QVector3D> sphere_normals;
+    // std::vector<std::array<GLfloat, 4>> sphere_colors;
+
+    // static std::random_device rdevice;
+    // static std::default_random_engine rengine(rdevice());
+    // static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
+    // static float sphere_size = 40.0f;
+    // static QVector3D sphere_pos{5440.0f, 5312.0f, 2880.0f};
+
+    // for(int i = 0; i < 320000; ++i) {
+    //     QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
+    //     while(spoint.length() > 1.0f) {
+    //         spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
+    //     }
+    //     QVector3D snormal;
+    //     for(std::size_t j = 0; j < 3; ++j) {
+    //         snormal[j] = spoint[j] / spoint.length(); // normalize
+    //         spoint[j] = snormal[j]; // adjust by size
+    //     }
+
+    //     sphere_verts.emplace_back(sphere_pos + spoint * sphere_size);
+    //     sphere_normals.emplace_back(snormal);
+    //     sphere_colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+    // }
+
+    // PointcloudBuffer sphereBuf(GL_POINTS);
+    // sphereBuf.vertex_count = sphere_verts.size();
+    // sphereBuf.position_buf.bind();
+    // sphereBuf.position_buf.allocate(sphere_verts.data(), sphere_verts.size() * 3 * sizeof(GLfloat));
+    // sphereBuf.normal_buf.bind();
+    // sphereBuf.normal_buf.allocate(sphere_normals.data(), sphere_normals.size() * 3 * sizeof(GLfloat));
+    // sphereBuf.color_buf.bind();
+    // sphereBuf.color_buf.allocate(sphere_colors.data(), sphere_colors.size() * 4 * sizeof(GLfloat));
+    // sphereBuf.color_buf.release();
+    // pointcloudBuffers.emplace(tree_id+1, sphereBuf);
+
+
+    // temporary, color information might be switched to per-object rather than per-vertex
     std::vector<std::array<GLfloat, 4>> colors;
-
-    static std::random_device rdevice;
-    static std::default_random_engine rengine(rdevice());
-    static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
-    static float sphere_size = 40.0f;
-    static QVector3D sphere_pos{5440.0f, 5312.0f, 2880.0f};
-
-    for(int i = 0; i < 320000; ++i) {
-        QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-        while(spoint.length() > 1.0f) {
-            spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-        }
-        QVector3D snormal;
-        for(std::size_t j = 0; j < 3; ++j) {
-            snormal[j] = spoint[j] / spoint.length(); // normalize
-            spoint[j] = snormal[j]; // adjust by size
-        }
-
-        sphere_verts.emplace_back(sphere_pos + spoint * sphere_size);
-        sphere_normals.emplace_back(snormal);
-        colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
+    for(int i = 0; i < verts.size(); ++i) {
+        colors.emplace_back(std::array<GLfloat, 4>({{1.0f, 0.0f, 1.0f, 1.0f}}));
     }
 
-    PointcloudBuffer sphereBuf(GL_TRIANGLES);
-    sphereBuf.vertex_count = sphere_verts.size();
-    sphereBuf.position_buf.bind();
-    sphereBuf.position_buf.allocate(sphere_verts.data(), sphere_verts.size() * 3 * sizeof(GLfloat));
-    sphereBuf.normal_buf.bind();
-    sphereBuf.normal_buf.allocate(sphere_normals.data(), sphere_normals.size() * 3 * sizeof(GLfloat));
-    sphereBuf.color_buf.bind();
-    sphereBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-    sphereBuf.color_buf.release();
-    pointcloudBuffers.emplace(tree_id, sphereBuf);
+    if(normals.empty()) {
+        normals.resize(verts.size());
+        // generate normals of indexed vertices via cross product
+        // TODO: needs fixing, looks too edgy
+        for(int i = 0; i < indices.size()-2; i += 3) {
+            QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
+            QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
+            QVector3D p3{verts[indices[i+2]*3], verts[indices[i+2]*3+1], verts[indices[i+2]*3+2]};
+            QVector3D e1{p2 - p1};
+            QVector3D e2{p3 - p1};
+
+            QVector3D normal{e1.y() * e2.z() - e1.z() * e2.y(),
+                             e1.z() * e2.x() - e1.x() * e2.z(),
+                             e1.x() * e2.y() - e1.y() * e2.x()};
+
+            normals[indices[i]*3] =   normals[indices[i+1]*3] =   normals[indices[i+2]*3] = normal.x();
+            normals[indices[i]*3+1] = normals[indices[i+1]*3+1] = normals[indices[i+2]*3+1] = normal.y();
+            normals[indices[i]*3+2] = normals[indices[i+1]*3+2] = normals[indices[i+2]*3+2] = normal.z();
+        }
+    }
+
+    PointcloudBuffer buf{static_cast<GLenum>(draw_mode)};
+    buf.vertex_count = verts.size() / 3;
+    buf.index_count = indices.size();
+    buf.position_buf.bind();
+    buf.position_buf.allocate(verts.data(), verts.size() * 3 * sizeof(GLfloat));
+    buf.normal_buf.bind();
+    buf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+    buf.color_buf.bind();
+    buf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+    buf.index_buf.bind();
+    buf.index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
+    buf.index_buf.release();
+    pointcloudBuffers.emplace(tree_id, buf);
 }
 
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {

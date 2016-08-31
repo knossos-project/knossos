@@ -267,12 +267,15 @@ struct PointcloudBuffer {
         position_buf.create();
         normal_buf.create();
         color_buf.create();
+        index_buf.create();
     }
 
     std::size_t vertex_count;
-    QOpenGLBuffer position_buf;
-    QOpenGLBuffer normal_buf;
-    QOpenGLBuffer color_buf;
+    std::size_t index_count;
+    QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer normal_buf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
     GLenum render_mode;
 };
 
@@ -301,7 +304,7 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
-    void addTreePointcloud(int tree_id, const QVector<float> & verts, const QVector<float> & normals, const QVector<float> & indices, int draw_mode = 0);
+    void addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, int draw_mode = 0);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }
