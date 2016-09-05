@@ -2131,28 +2131,24 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     /* Connect all synapses */
     for (auto & synapse : state->skeletonState->synapses) {
-        if (synapse.postSynapse != nullptr
-                && synapse.preSynapse != nullptr
-                && synapse.preSynapse->correspondingTree->render
-                && synapse.postSynapse->correspondingTree->render) {
-           if (!state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected)
-                    || synapse.postSynapse == state->skeletonState->activeNode
-                    || synapse.preSynapse == state->skeletonState->activeNode ) {
+        const auto * activeTree = state->skeletonState->activeTree;
+        const auto * activeNode = state->skeletonState->activeNode;
+        const auto synapseCreated = synapse.postSynapse != nullptr && synapse.preSynapse != nullptr;
+        const auto synapseHidden = !synapse.preSynapse->correspondingTree->render && !synapse.postSynapse->correspondingTree->render;
+        const auto synapseSelected = synapse.synapticCleft == activeTree || synapse.postSynapse == activeNode || synapse.preSynapse == activeNode;
 
-                segmentListElement virtualSegment(*synapse.postSynapse, *synapse.preSynapse);
-                renderSegment(virtualSegment, Qt::black, options);
+        if (synapseCreated && synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
+            segmentListElement virtualSegment(*synapse.postSynapse, *synapse.preSynapse);
+            renderSegment(virtualSegment, Qt::black, options);
 
-                auto post = synapse.postSynapse->position;
-                auto pre = synapse.preSynapse->position;
+            auto post = synapse.postSynapse->position;
+            auto pre = synapse.preSynapse->position;
+            const auto offset = (post - pre)/10;
+            Coordinate arrowbase = post - offset;
 
-                Coordinate arrowbase = { post.x - (post.x - pre.x)/10,
-                                      post.y - (post.y - pre.y)/10,
-                                      post.z - (post.z - pre.z)/10};
-
-                renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.preSynapse) * 3.0f
-                    , &synapse.postSynapse->position
-                    , Skeletonizer::singleton().radius(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
-            }
+            renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.preSynapse) * 3.0f
+                , &synapse.postSynapse->position
+                , Skeletonizer::singleton().radius(*synapse.postSynapse) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
         }
     }
 
