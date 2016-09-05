@@ -109,18 +109,23 @@ class SkeletonView : public QWidget {
     friend class AnnotationWidget;
 
     QVBoxLayout mainLayout;
-    UserOrientableSplitter splitter;
 
     QColorDialog colorDialog{this};
+
+    UserOrientableSplitter splitter;
+
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
-    QHBoxLayout treeOptionsLayout;
+    // tree comment filter
+    QHBoxLayout treeCommentLayout;
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"Regex"};
-    QHBoxLayout filterTreeLayout;
-    QButtonGroup filterTreeButtonGroup;
+    // tree filter checkboxes
+    QHBoxLayout treeFilterLayout;
+    QButtonGroup treeFilterButtonGroup;
     QCheckBox filterTreeDisplayAll{"Display other trees"};
     QCheckBox filterTreeDisplaySynapse{"Display synaptic clefts"};
+
     TreeModel treeModel;
     QSortFilterProxyModel treeSortAndCommentFilterProxy;
     int treeSortSectionIndex{-1};
@@ -129,21 +134,23 @@ class SkeletonView : public QWidget {
 
     QWidget nodeDummyWidget;
     QVBoxLayout nodeLayout;
-    QHBoxLayout nodeOptionsLayout;
-    QVBoxLayout filterOptions;
-    Spoiler filterSpoiler{"Filter options"};
-    QVBoxLayout filterSpoilerLayout;
-    QGroupBox filterGroupBox{"Filter"};
-    QHBoxLayout filterLayout;
-    QButtonGroup filterButtonGroup;
-    QComboBox filterModeCombo;
-    QCheckBox filterInSelectedTreeCheckbox{"In selected tree"};
-    QCheckBox filterSelectedCheckbox{"Selected"};
-    QCheckBox filterBranchCheckbox{"Branch node"};
-    QCheckBox filterCommentCheckbox{"Comment node"};
-    QCheckBox filterSynapseCheckbox{"Synapse node"};
+    // node comment filter
+    QHBoxLayout nodeCommentLayout;
     QLineEdit nodeCommentFilter;
     QCheckBox nodeRegex{"Regex"};
+    // node filter spoiler
+    Spoiler nodeFilterSpoiler{"Filter options"};
+    QVBoxLayout nodeFilterSpoilerLayout;
+    QGroupBox nodeFilterGroupBox{"Filter"};
+    QHBoxLayout nodeGroupBoxLayout;
+    QButtonGroup nodeFilterButtonGroup;
+    QComboBox nodeFilterModeCombo;
+    QCheckBox nodeFfilterInSelectedTreeCheckbox{"In selected tree"};
+    QCheckBox nodeFilterSelectedCheckbox{"Selected"};
+    QCheckBox nodeFilterBranchCheckbox{"Branch node"};
+    QCheckBox nodeFilterCommentCheckbox{"Comment node"};
+    QCheckBox nodeFilterSynapseCheckbox{"Synapse node"};
+
     NodeModel nodeModel;
     QSortFilterProxyModel nodeSortAndCommentFilterProxy;
     int nodeSortSectionIndex{-1};
