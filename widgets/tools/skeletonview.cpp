@@ -178,8 +178,9 @@ void TreeModel::recreate() {
     beginResetModel();
     cache.clear();
     for (auto && tree : state->skeletonState->trees) {
-        if ((mode.testFlag(FilterMode::SynapticClefts) && tree.isSynapticCleft)
-                || (mode.testFlag(FilterMode::Default) && !tree.isSynapticCleft)) {
+        if ((mode == SynapseDisplayModes::Hide && tree.isSynapticCleft == false)
+                || (mode == SynapseDisplayModes::Show)
+                || (mode == SynapseDisplayModes::ShowOnly && tree.isSynapticCleft)) {
             cache.emplace_back(tree);
         }
     }
@@ -306,6 +307,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     treeSortAndCommentFilterProxy.setFilterKeyColumn(4);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
+
+    treeFilterCombo.addItems({tr("Hide synapses"), tr("Show synapses"), tr("Show only synapses")});
+    treeFilterCombo.setMinimumWidth(170);
+    treeFilterCombo.setMaximumWidth(treeFilterCombo.minimumWidth());
+
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
     treeView.setDropIndicatorShown(true);
@@ -313,16 +319,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeView.resizeColumnToContents(index);
     }
 
-    treeFilterButtonGroup.setExclusive(false);
-    for (auto option : { std::make_pair(&filterTreeDisplayAll, TreeModel::FilterMode::Default),
-                            {&filterTreeDisplaySynapse, TreeModel::FilterMode::SynapticClefts}}) {
-        treeFilterButtonGroup.addButton(option.first);
-        treeFilterButtonGroup.setId(option.first, option.second);
-        option.first->setChecked(treeModel.mode.testFlag(option.second));
-        treeFilterLayout.addWidget(option.first);
-    }
-
-    nodeFilterModeCombo.addItems({"Match all", "Match at least one"});
+    nodeFilterModeCombo.addItems({tr("Match all"), tr("Match at least one")});
     nodeGroupBoxLayout.addWidget(&nodeFilterModeCombo);
     nodeFilterButtonGroup.setExclusive(false);
     for (auto option : { std::make_pair(&nodeFfilterInSelectedTreeCheckbox, NodeModel::FilterMode::InSelectedTree),
@@ -353,7 +350,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     treeCommentLayout.addWidget(&treeCommentFilter);
     treeCommentLayout.addWidget(&treeRegex);
-    treeLayout.addLayout(&treeFilterLayout);
+    treeLayout.addWidget(&treeFilterCombo);
     treeLayout.addLayout(&treeCommentLayout);
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
@@ -458,6 +455,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     updateTreeSelection();
     updateNodeSelection();
 
+    QObject::connect(&treeFilterCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
+        treeModel.mode = static_cast<TreeModel::SynapseDisplayModes>(index);
+        treeRecreate();
+    });
+
     QObject::connect(&nodeFilterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
         nodeModel.mode = NodeModel::FilterMode::All;
         if (checked) {
@@ -474,11 +476,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto flag = QFlags<NodeModel::FilterMode>(id);
         nodeModel.mode = nodeFilterButtonGroup.button(id)->isChecked() ? nodeModel.mode | flag : nodeModel.mode & ~flag;
         nodeRecreate();
-    });
-    QObject::connect(&treeFilterButtonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int id) {
-        const auto flag = QFlags<TreeModel::FilterMode>(id);
-        treeModel.mode = treeFilterButtonGroup.button(id)->isChecked() ? treeModel.mode | flag : treeModel.mode & ~flag;
-        treeRecreate();
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, allRecreate);

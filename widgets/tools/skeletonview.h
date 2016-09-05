@@ -63,12 +63,12 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable, 0};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
-    enum FilterMode {
-        All = 0,
-        Default = 1 << 1, //Default is without synapticClefts
-        SynapticClefts = 1 << 2
+    enum SynapseDisplayModes {
+        Hide     = 0,
+        Show     = 1,
+        ShowOnly = 2
     };
-    QFlags<FilterMode> mode = FilterMode::Default;
+    SynapseDisplayModes mode = SynapseDisplayModes::Hide;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
@@ -120,11 +120,7 @@ class SkeletonView : public QWidget {
     QHBoxLayout treeCommentLayout;
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"Regex"};
-    // tree filter checkboxes
-    QHBoxLayout treeFilterLayout;
-    QButtonGroup treeFilterButtonGroup;
-    QCheckBox filterTreeDisplayAll{"Display other trees"};
-    QCheckBox filterTreeDisplaySynapse{"Display synaptic clefts"};
+    QComboBox treeFilterCombo;
 
     TreeModel treeModel;
     QSortFilterProxyModel treeSortAndCommentFilterProxy;
