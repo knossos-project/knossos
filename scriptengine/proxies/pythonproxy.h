@@ -40,7 +40,8 @@ signals:
 public slots:
     void annotationLoad(const QString & filename, const bool merge = false);
     void annotationSave(const QString & filename);
-
+    int annotation_time();
+    void set_annotation_time(int ms);
     QString getKnossosVersion();
     QString getKnossosRevision();
     int getCubeEdgeLength();

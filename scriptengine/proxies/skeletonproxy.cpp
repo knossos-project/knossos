@@ -128,9 +128,7 @@ bool SkeletonProxy::edit_node(quint64 node_id, float radius, int x, int y, int z
     return true;
 }
 
-int SkeletonProxy::annotation_time() {
-    return Session::singleton().getAnnotationTime();
-}
+
 
 QString SkeletonProxy::skeleton_file() {
     return Session::singleton().annotationFilename;

@@ -37,7 +37,7 @@ signals:
     void echo(QString message);
 
 public slots:
-    int annotation_time();
+
     QString skeleton_file();
     bool has_unsaved_changes();
 

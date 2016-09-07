@@ -231,6 +231,14 @@ void PythonProxy::setMagnificationLock(const bool locked) {
     state->viewer->setMagnificationLock(locked);
 }
 
+int PythonProxy::annotation_time() {
+    return Session::singleton().getAnnotationTime();
+}
+
+void PythonProxy::set_annotation_time(int ms) {
+    Session::singleton().setAnnotationTime(ms);
+}
+
 // UNTESTED
 bool PythonProxy::loadStyleSheet(const QString &filename) {
     QFile file(filename);
