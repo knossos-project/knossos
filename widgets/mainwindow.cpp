@@ -527,12 +527,9 @@ void MainWindow::createMenus() {
         }
     }, Qt::ShiftModifier + Qt::Key_C);
 
-    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Change synapse direction"), this, [this](){
-        const auto & selectedNodes = state->skeletonState->selectedNodes;
-        if(selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) {
-            selectedNodes.front()->correspondingSynapse->toggleDirection();
-        }
-    }, Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
+    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse synapse direction"),
+                                                this, [this](){ widgetContainer.annotationWidget.skeletonTab.reverseSynapseDirection(); },
+                                                Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
 
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
