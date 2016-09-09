@@ -506,6 +506,7 @@ void MainWindow::createMenus() {
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push branch node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop branch node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     actionMenu.addSeparator();
+
     createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             if(state->viewer->window->synapseState == SynapseState::Off) {
@@ -513,30 +514,26 @@ void MainWindow::createMenus() {
                 createSynapse->setText(tr("Finish synapse"));
                 createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
                 createSynapse->setShortcut(Qt::Key_C);
-                Skeletonizer::singleton().addSynapse();
+                Skeletonizer::singleton().continueSynapse();
             } else if(state->viewer->window->synapseState == SynapseState::SynapticCleft) {
                 state->viewer->window->toggleSynapseState(); //update statusbar
                 createSynapse->setShortcutContext(Qt::ApplicationShortcut);
                 createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
-                Skeletonizer::singleton().addSynapse();
+                Skeletonizer::singleton().continueSynapse();
                 Skeletonizer::singleton().addTree();
             }
         } else if(state->skeletonState->selectedNodes.size() == 2) {
-            Skeletonizer::singleton().addSynapse(state->skeletonState->selectedNodes);
+            Skeletonizer::singleton().addSynapseFromNodes(state->skeletonState->selectedNodes);
         }
     }, Qt::ShiftModifier + Qt::Key_C);
+
     swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Change synapse direction"), this, [this](){
         const auto & selectedNodes = state->skeletonState->selectedNodes;
-        if(selectedNodes.size() == 1
-                && selectedNodes.front()->isSynapticNode
-                && selectedNodes.front()->correspondingSynapse != nullptr) {
-            auto & synapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
-            if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
-                std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
-                std::swap(synapse->postSynapse, synapse->preSynapse);
-            }
+        if(selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) {
+            selectedNodes.front()->correspondingSynapse->toggleDirection();
         }
     }, Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
+
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
     //segmentation
@@ -1273,8 +1270,8 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
-    if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().synapticCleft) {
-        Skeletonizer::singleton().addSynapse(); //finish synaptic cleft
+    if(Synapse::state == Synapse::State::Cleft) {
+        Skeletonizer::singleton().continueSynapse(); //finish synaptic cleft
         state->viewer->window->toggleSynapseState(); //update statusbar
         createSynapse->setShortcutContext(Qt::ApplicationShortcut);
         createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);

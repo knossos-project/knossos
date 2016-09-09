@@ -243,14 +243,14 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             }
             clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, state->boundary);// Do not allow clicks outside the dataset
 
-            if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse) {
+            if(Synapse::state == Synapse::State::PostSynapse) {
                 //The synapse workflow has been interrupted
                 //Reset the synapse
-                auto & tempSynapse = Skeletonizer::singleton().temporarySynapse;
-                if(tempSynapse.preSynapse) tempSynapse.preSynapse->isSynapticNode = false;
-                Skeletonizer::singleton().delTree(tempSynapse.synapticCleft->treeID);
+                auto & tempSynapse = Synapse::temporarySynapse;
+                if (tempSynapse.getPreSynapse()) { tempSynapse.getPreSynapse()->isSynapticNode = false; }
+                Skeletonizer::singleton().delTree(tempSynapse.getCleft()->treeID);
                 tempSynapse = Synapse(); //reset temporary class
-                Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
+                Synapse::state = Synapse::State::PreSynapse;
                 state->viewer->window->setSynapseState(SynapseState::Off); //reset statusbar entry
             }
         }
@@ -274,20 +274,12 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         if (mainWin.segmentState == SegmentState::Off_Once) {
             mainWin.setSegmentState(SegmentState::On);
         }
-        if(Skeletonizer::singleton().synapseState == Skeletonizer::singleton().postSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
-            auto & tempSynapse = Skeletonizer::singleton().temporarySynapse;
-            tempSynapse.postSynapse = state->skeletonState->activeNode;
-            tempSynapse.synapticCleft->properties.insert("postSynapse", static_cast<long long>(tempSynapse.postSynapse->nodeID));
-            tempSynapse.synapticCleft->properties.insert("preSynapse", static_cast<long long>(tempSynapse.preSynapse->nodeID));
-            tempSynapse.synapticCleft->properties.insert("synapticCleft", true);
-            tempSynapse.preSynapse->isSynapticNode = true;
-            tempSynapse.postSynapse->isSynapticNode = true;
-            tempSynapse.synapticCleft->render = false;
-            state->skeletonState->synapses.push_back(tempSynapse); //move finished synapse to our synapse vector
-            tempSynapse.preSynapse->correspondingSynapse = &state->skeletonState->synapses.back();
-            tempSynapse.postSynapse->correspondingSynapse = &state->skeletonState->synapses.back();
+        if(Synapse::state == Synapse::State::PostSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
+            auto & tempSynapse = Synapse::temporarySynapse;
+            tempSynapse.setPostSynapse(state->skeletonState->activeNode);
+            Skeletonizer::singleton().addFinishedSynapse(tempSynapse.getCleft(), tempSynapse.getPreSynapse(), tempSynapse.getPostSynapse()); //move finished synapse to our synapse vector
+            Synapse::state = Synapse::State::PreSynapse;
             tempSynapse = Synapse(); //reset temporary class
-            Skeletonizer::singleton().synapseState = Skeletonizer::singleton().preSynapse;
             state->viewer->window->toggleSynapseState(); //update statusbar
         }
     }
@@ -543,13 +535,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
                 isFullOrigDocked = false;
             }
         }
-    } else if (ctrl && shift && event->key() == Qt::Key_C) { //synapse mode swap post and presynapse
+    } else if (ctrl && shift && event->key() == Qt::Key_C) {
         if(state->skeletonState->activeNode->isSynapticNode) {
-            auto & synapse = state->skeletonState->activeNode->correspondingSynapse;
-            if(synapse->postSynapse != nullptr && synapse->preSynapse != nullptr) {
-                std::swap(synapse->postSynapse, synapse->preSynapse);
-                std::swap(synapse->synapticCleft->properties["preSynapse"], synapse->synapticCleft->properties["postSynapse"]);
-            }
+            state->skeletonState->activeNode->correspondingSynapse->toggleDirection();
         }
     } else if (shift) {
         if (!event->isAutoRepeat() && state->viewerState->keyRepeat) {// if ctrl was pressed initially don’t apply it again

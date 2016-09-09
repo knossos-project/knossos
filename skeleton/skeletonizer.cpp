@@ -73,6 +73,9 @@ bool connectedComponent(T & node, Func func) {
     return false;
 }
 
+Synapse::State Synapse::state = Synapse::State::PreSynapse;
+Synapse Synapse::temporarySynapse = Synapse();
+
 #include <QVector3D> // tmp
 std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_points = nullptr;
 std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_normals = nullptr;
@@ -742,18 +745,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
             auto postSynapse = tree.properties.contains("postSynapse") ? getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID) : boost::none;
             auto synapticCleft = getElem(treeMap, tree.treeID, findTreeByTreeID);
             if (preSynapse && postSynapse && synapticCleft) {
-                skeletonState.synapses.push_back({*preSynapse, *postSynapse, *synapticCleft});
-                synapticCleft.get()->render = false; //don't render synaptic clefts
-                synapticCleft.get()->isSynapticCleft = true;
-
-                if(preSynapse) {
-                    preSynapse.get()->isSynapticNode = true;
-                    preSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
-                }
-                if(postSynapse) {
-                    postSynapse.get()->isSynapticNode = true;
-                    postSynapse.get()->correspondingSynapse = &skeletonState.synapses.back();
-                }
+                addFinishedSynapse(*synapticCleft, *preSynapse, *postSynapse);
             } else {
                 qWarning() << tr("Incomplete synapse %1 could not be loaded. The “preSynapse”, “postSynapse” or “synapticCleft“ property are either missing or invalid.").arg(tree.treeID);
             }
@@ -845,13 +837,7 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
     setComment(*nodeToDel, ""); // deletes from comment hashtable
 
     if (nodeToDel->isSynapticNode) {
-        if(nodeToDel->correspondingSynapse->preSynapse == nodeToDel) {
-            nodeToDel->correspondingSynapse->synapticCleft->properties.remove("preSynapse");
-            nodeToDel->correspondingSynapse->preSynapse = nullptr;
-        } else {
-            nodeToDel->correspondingSynapse->synapticCleft->properties.remove("postSynapse");
-            nodeToDel->correspondingSynapse->postSynapse = nullptr;
-        }
+        nodeToDel->correspondingSynapse->remove(nodeToDel);
     }
 
     if (nodeToDel->isBranchNode) {
@@ -922,11 +908,8 @@ bool Skeletonizer::delTree(int treeID) {
 
     if(treeToDel->isSynapticCleft) { //if we delete a synapsticCleft, remove tree from synapses and unset the synaptic nodes
         for(auto it = std::begin(state->skeletonState->synapses); it != std::end(state->skeletonState->synapses);) {
-            if(treeToDel == it->synapticCleft) {
-                it->preSynapse->isSynapticNode = false;
-                it->preSynapse->correspondingSynapse = nullptr;
-                it->postSynapse->isSynapticNode = false;
-                it->postSynapse->correspondingSynapse = nullptr;
+            if(treeToDel == it->getCleft()) {
+                it->reset();
                 it = state->skeletonState->synapses.erase(it);
                 break;
             } else {
@@ -1491,57 +1474,45 @@ template void Skeletonizer::setComment(nodeListElement &, const QString & newCon
  * 2. Start tracing the synaptic cleft ('c' on finish)
  * 3. Next node is a postsynapse
  */
-void Skeletonizer::addSynapse() {
-    if(synapseState == preSynapse) { //set active Node as presynapse
-        temporarySynapse.preSynapse = skeletonState.activeNode;
-        auto & synaptic_cleft = addTree();
-        synaptic_cleft.isSynapticCleft = true;
-        synapseState = synapticCleft;
-    } else if(synapseState == synapticCleft) {
-        temporarySynapse.synapticCleft = skeletonState.activeTree;
-        synapseState = postSynapse;
+void Skeletonizer::continueSynapse() {
+    if(Synapse::state == Synapse::State::PreSynapse) { //set active Node as presynapse
+        Synapse::temporarySynapse.setPreSynapse(skeletonState.activeNode);
+        auto & synapticCleft = addTree();
+        Synapse::temporarySynapse.setCleft(&synapticCleft);
+        Synapse::state = Synapse::State::Cleft;
+    } else if(Synapse::state == Synapse::State::Cleft) {
+        Synapse::state = Synapse::State::PostSynapse;
     }
+}
+
+void Skeletonizer::addFinishedSynapse(treeListElement * cleft, nodeListElement * pre, nodeListElement * post) {
+    Synapse syn;
+    syn.setCleft(cleft);
+    syn.setPreSynapse(pre);
+    syn.setPostSynapse(post);
+    skeletonState.synapses.push_back(syn);
+    cleft->correspondingSynapse = &skeletonState.synapses.back();
+    pre->correspondingSynapse = &skeletonState.synapses.back();
+    post->correspondingSynapse = &skeletonState.synapses.back();
 }
 
 /*
  * Create a synapse from two nodes from different trees
  */
-void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
-
+void Skeletonizer::addSynapseFromNodes(std::vector<nodeListElement *> & nodes) {
     if(nodes[0]->correspondingTree == nodes[1]->correspondingTree) return;
     if(nodes[0]->correspondingTree->isSynapticCleft
         || nodes[1]->correspondingTree->isSynapticCleft) return;
 
     if(nodes[0]->isSynapticNode || nodes[1]->isSynapticNode) {
         auto & synapse = nodes[0]->isSynapticNode ? nodes[0]->correspondingSynapse : nodes[1]->correspondingSynapse;
-
-        synapse->preSynapse = nodes[0];
-        synapse->preSynapse->isSynapticNode = true;
-        synapse->preSynapse->correspondingSynapse = synapse;
-        synapse->postSynapse = nodes[1];
-        synapse->postSynapse->isSynapticNode = true;
-        synapse->postSynapse->correspondingSynapse = synapse;
-
-        synapse->synapticCleft->properties.insert("preSynapse", static_cast<long long>(nodes[0]->nodeID));
-        synapse->synapticCleft->properties.insert("postSynapse", static_cast<long long>(nodes[1]->nodeID));
-
+        synapse->setPreSynapse(nodes[0]);
+        synapse->setPostSynapse(nodes[1]);
         return;
     }
-
-    temporarySynapse.preSynapse = nodes[0];
-    temporarySynapse.preSynapse->isSynapticNode = true;
-    temporarySynapse.postSynapse = nodes[1];
-    temporarySynapse.postSynapse->isSynapticNode = true;
-
-    auto & synapticCleft = addTree();
-    synapticCleft.isSynapticCleft = true;
-    synapticCleft.properties.insert("synapticCleft", true);
-    synapticCleft.properties.insert("preSynapse", static_cast<long long>(nodes[0]->nodeID));
-    synapticCleft.properties.insert("postSynapse", static_cast<long long>(nodes[1]->nodeID));
-
-    temporarySynapse.synapticCleft = &synapticCleft;
-
     //Add a synaptic cleft tree with one node between the two selected nodes
+    addFinishedSynapse(&addTree(), nodes[0], nodes[1]);
+
     const auto minx = std::min(nodes[0]->position.x, nodes[1]->position.x);
     const auto miny = std::min(nodes[0]->position.y, nodes[1]->position.y);
     const auto minz = std::min(nodes[0]->position.z, nodes[1]->position.z);
@@ -1558,15 +1529,6 @@ void Skeletonizer::addSynapse(std::vector<nodeListElement *> & nodes) {
               state->magnification,
               boost::none,
               true);
-
-    temporarySynapse.synapticCleft->render = false;
-
-    skeletonState.synapses.push_back(temporarySynapse);
-
-    temporarySynapse.preSynapse->correspondingSynapse = &skeletonState.synapses.back();
-    temporarySynapse.postSynapse->correspondingSynapse = &skeletonState.synapses.back();
-
-    temporarySynapse = Synapse();
 }
 
 bool Skeletonizer::unlockPosition() {

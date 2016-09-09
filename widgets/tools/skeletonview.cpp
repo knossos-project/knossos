@@ -703,7 +703,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
-        Skeletonizer::singleton().jumpToNode(*correspondingSynapse->synapticCleft->getNodes()->front());
+        Skeletonizer::singleton().jumpToNode(*correspondingSynapse->getCleft()->getNodes()->front());
     });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;

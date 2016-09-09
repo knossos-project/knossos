@@ -50,10 +50,85 @@ class segmentListElement;
 #define SKELVP_RESET 5
 
 class Synapse {
-public:
     nodeListElement * preSynapse{nullptr};
     nodeListElement * postSynapse{nullptr};
     treeListElement * synapticCleft{nullptr};
+
+public:
+    enum class State {PreSynapse, Cleft, PostSynapse};
+    static State state;
+    static Synapse temporarySynapse;
+
+    nodeListElement * getPreSynapse() const { return preSynapse; }
+    nodeListElement * getPostSynapse() const { return postSynapse; }
+    treeListElement * getCleft() const { return synapticCleft; }
+
+    void setPreSynapse(nodeListElement * pre) {
+        preSynapse = pre;
+        pre->correspondingSynapse = this;
+        pre->isSynapticNode = true;
+        if (synapticCleft) {
+            synapticCleft->properties.insert("preSynapse", static_cast<long long>(preSynapse->nodeID));
+        }
+    }
+
+    void setPostSynapse(nodeListElement * post) {
+        postSynapse = post;
+        post->correspondingSynapse = this;
+        post->isSynapticNode = true;
+        if (synapticCleft) {
+            synapticCleft->properties.insert("postSynapse", static_cast<long long>(postSynapse->nodeID));
+            synapticCleft->render = false;
+        }
+    }
+
+    void setCleft(treeListElement * cleft) {
+        synapticCleft = cleft;
+        cleft->isSynapticCleft = true;
+        cleft->correspondingSynapse = this;
+        cleft->properties.insert("synapticCleft", true);
+        if (preSynapse) {
+            synapticCleft->properties.insert("preSynapse", static_cast<long long>(preSynapse->nodeID));
+        }
+        if (postSynapse) {
+            synapticCleft->properties.insert("postSynapse", static_cast<long long>(postSynapse->nodeID));
+        }
+    }
+
+    void toggleDirection() {
+        if(postSynapse != nullptr && preSynapse != nullptr) {
+            std::swap(synapticCleft->properties["preSynapse"], synapticCleft->properties["postSynapse"]);
+            std::swap(preSynapse, postSynapse);
+        }
+    }
+
+    void remove(nodeListElement * synapticNode) {
+        if (synapticNode == preSynapse) {
+            synapticCleft->properties.remove("preSynapse");
+            preSynapse = nullptr;
+        } else if (synapticNode == postSynapse){
+            synapticCleft->properties.remove("postSynapse");
+            postSynapse = nullptr;
+        }
+    }
+
+    void reset() {
+        if(preSynapse) {
+            preSynapse->isSynapticNode = false;
+            preSynapse->correspondingSynapse = nullptr;
+            preSynapse = nullptr;
+        }
+        if(postSynapse) {
+            postSynapse->isSynapticNode = false;
+            postSynapse->correspondingSynapse = nullptr;
+            postSynapse = nullptr;
+        }
+        if (synapticCleft) {
+            synapticCleft->isSynapticCleft = false;
+            synapticCleft->correspondingSynapse = nullptr;
+            synapticCleft = nullptr;
+        }
+    }
 };
 
 struct SkeletonState {
@@ -159,10 +234,6 @@ public:
     static std::unique_ptr<std::vector<QVector3D>> tmp_hull_points;
     static std::unique_ptr<std::vector<QVector3D>> tmp_hull_normals;
 
-    enum synapseMode {preSynapse, synapticCleft, postSynapse};
-    int synapseState{preSynapse};
-    Synapse temporarySynapse;
-
 signals:
     void guiModeLoaded();
     void branchPoppedSignal();
@@ -198,8 +269,9 @@ public slots:
     bool setActiveNode(nodeListElement *node);
     void setCommentOfSelectedTrees(const QString & comment);
     void setColor(treeListElement & tree, const QColor &color);
-    void addSynapse();
-    void addSynapse(std::vector<nodeListElement *> & nodes);
+    void continueSynapse();
+    void addFinishedSynapse(treeListElement * cleft, nodeListElement * pre, nodeListElement * post);
+    void addSynapseFromNodes(std::vector<nodeListElement *> & nodes);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);
     bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);

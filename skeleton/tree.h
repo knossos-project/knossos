@@ -44,7 +44,7 @@ public:
 
     bool render{true};
     bool isSynapticCleft{false};
-
+    Synapse * correspondingSynapse;
     QColor color;
     bool selected{false};
     bool colorSetManually{false};
