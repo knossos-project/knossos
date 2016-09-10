@@ -62,9 +62,12 @@ bool Segmentation::Object::operator==(const Segmentation::Object & other) const 
 }
 
 void Segmentation::Object::addExistingSubObject(Segmentation::SubObject & sub) {
-    subobjects.emplace_back(sub);//add child
-    auto objectPosIt = std::lower_bound(std::begin(sub.objects), std::end(sub.objects), this->index);
+    const auto objectPosIt = std::lower_bound(std::begin(sub.objects), std::end(sub.objects), this->index);
+    if (objectPosIt != std::end(sub.objects) && *objectPosIt == this->index) {
+        throw std::runtime_error(tr("object %1 already contains subobject %2").arg(this->id).arg(sub.id).toStdString());
+    }
     sub.objects.emplace(objectPosIt, this->index);//register parent
+    subobjects.emplace_back(sub);//add child
 }
 
 Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other) {
@@ -143,6 +146,9 @@ void Segmentation::createAndSelectObject(const Coordinate & position) {
 }
 
 Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t objectId, const bool todo, const bool immutable) {
+    if (objectIdToIndex.find(objectId) != std::end(objectIdToIndex)) {
+        throw std::runtime_error(tr("object with id %1 already exists").arg(objectId).toStdString());
+    }
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
     return createObject(std::vector<std::reference_wrapper<SubObject>>{subobjectIt->second}, location, objectId, todo, immutable);
