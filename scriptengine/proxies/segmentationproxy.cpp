@@ -75,12 +75,20 @@ QList<quint64> SegmentationProxy::selectedObjects() {
     return selectedIds;
 }
 
+void SegmentationProxy::addSubobject(const quint64 objId, const quint64 subobjectId) {
+    Segmentation::singleton().newSubObject(objectFromId(objId), subobjectId);
+}
+
 void SegmentationProxy::changeComment(const quint64 objId, const QString & comment) {
     Segmentation::singleton().changeComment(objectFromId(objId), comment);
 }
 
 void SegmentationProxy::changeColor(const quint64 objId, const QColor & color) {
     Segmentation::singleton().changeColor(objectFromId(objId), std::make_tuple(color.red(), color.green(), color.blue()));
+}
+
+void SegmentationProxy::createObject(const quint64 objId, const quint64 initialSubobjectId, const QList<int> & location, const bool todo, const bool immutable) {
+    Segmentation::singleton().createObjectFromSubobjectId(initialSubobjectId, Coordinate(location), objId, todo, immutable);
 }
 
 void SegmentationProxy::removeObject(const quint64 objId) {

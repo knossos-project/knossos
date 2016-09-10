@@ -39,8 +39,10 @@ public slots:
     QList<quint64> objects();
     QList<quint64> selectedObjects();
 
+    void addSubobject(const quint64 objId, const quint64 subobjectId);
     void changeComment(const quint64 objId, const QString & comment);
     void changeColor(const quint64 objId, const QColor & color);
+    void createObject(const quint64 objId, const quint64 initialSubobjectId, const QList<int> & location = {0, 0, 0}, const bool todo = false, const bool immutable = false);
     void removeObject(const quint64 objId);
     void selectObject(const quint64 objId);
     void unselectObject(const quint64 objId);
