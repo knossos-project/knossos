@@ -27,7 +27,7 @@
 auto & objectFromId(const quint64 objId) {
     const auto it = Segmentation::singleton().objectIdToIndex.find(objId);
     if (it == std::end(Segmentation::singleton().objectIdToIndex)) {
-        throw std::runtime_error("object does not exist");
+        throw std::runtime_error(QObject::tr("object with id %1 does not exist").arg(objId).toStdString());
     }
     return Segmentation::singleton().objects[it->second];
 }
