@@ -142,10 +142,10 @@ void Segmentation::createAndSelectObject(const Coordinate & position) {
     selectObject(newObject);
 }
 
-Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t id, const bool todo, const bool immutable) {
+Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t objectId, const bool todo, const bool immutable) {
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
-    return createObject(std::vector<std::reference_wrapper<SubObject>>{subobjectIt->second}, location, id, todo, immutable);
+    return createObject(std::vector<std::reference_wrapper<SubObject>>{subobjectIt->second}, location, objectId, todo, immutable);
 }
 
 template<typename... Args>
@@ -575,8 +575,9 @@ void Segmentation::mergelistLoad(QIODevice & file) {
 
         if (valid0 && valid1 && valid2 && valid3) {
             auto & obj = createObjectFromSubobjectId(initialVolume, location, objId, todo, immutable);
-            while (lineStream >> objId) {
-                newSubObject(obj, objId);
+            uint64_t subObjId;
+            while (lineStream >> subObjId) {
+                newSubObject(obj, subObjId);
             }
             std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
             changeCategory(obj, category);
