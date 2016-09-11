@@ -818,9 +818,9 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     buf.vertex_count = verts.size() / 3;
     buf.index_count = indices.size();
     buf.position_buf.bind();
-    buf.position_buf.allocate(verts.data(), verts.size() * 3 * sizeof(GLfloat));
+    buf.position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
     buf.normal_buf.bind();
-    buf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
+    buf.normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
     buf.color_buf.bind();
     buf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
     buf.index_buf.bind();
