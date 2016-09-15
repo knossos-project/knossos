@@ -1369,18 +1369,35 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
     const auto property = state->viewerState->highlightedNodePropertyByColor;
     const auto range = state->viewerState->nodePropertyColorMapMax - state->viewerState->nodePropertyColorMapMin;
     const auto & nodeColors = state->viewerState->nodeColors;
+    QColor color;
     if (!property.isEmpty() && node.properties.contains(property) && range > 0) {
         const int index = node.properties[property].toDouble() / range * nodeColors.size();
-        return QColor::fromRgb(std::get<0>(nodeColors[index]), std::get<1>(nodeColors[index]), std::get<2>(nodeColors[index]));
+        color = QColor::fromRgb(std::get<0>(nodeColors[index]), std::get<1>(nodeColors[index]), std::get<2>(nodeColors[index]));
     }
-    if (node.isBranchNode) { //branch nodes are always blue
-        return Qt::blue;
+    else if (node.isBranchNode) { //branch nodes are always blue
+        color = Qt::blue;
     }
-    if (CommentSetting::useCommentNodeColor && node.getComment().isEmpty() == false) {
-        return CommentSetting::getColor(node.getComment());
+    else if (CommentSetting::useCommentNodeColor && node.getComment().isEmpty() == false) {
+        color = CommentSetting::getColor(node.getComment());
     }
-    if (node.correspondingTree == state->skeletonState->activeTree && state->viewerState->highlightActiveTree) {
-        return Qt::red;
+    else if (node.correspondingTree == state->skeletonState->activeTree && state->viewerState->highlightActiveTree) {
+        color = Qt::red;
+    } else {
+        color = node.correspondingTree->color;
     }
-    return node.correspondingTree->color;
+    // if focused on synapse, darken rest of skeleton
+    const auto * activeTree = state->skeletonState->activeTree;
+    const auto * activeNode = state->skeletonState->activeNode;
+    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
+                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
+                                                                               nullptr;
+    const auto synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
+    auto partOfSynapse = [&node](const Synapse * synapse) {
+        return node.correspondingSynapse == synapse || synapse->getCleft() == node.correspondingTree;
+    };
+    if ((activeSynapse && !partOfSynapse(activeSynapse)) || (synapseBuilding && !partOfSynapse(&Synapse::temporarySynapse))) {
+        color.setAlpha(Synapse::darkenedAlpha);
+    }
+
+    return color;
 }

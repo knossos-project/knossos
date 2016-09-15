@@ -2016,25 +2016,22 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPushMatrix();
 
+    const auto * activeTree = state->skeletonState->activeTree;
+    const auto * activeNode = state->skeletonState->activeNode;
+    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
+                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
+                                                                               nullptr;
+    const auto synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
-        /* Render only trees we want to be rendered*/
-        const auto * activeNode = state->skeletonState->activeNode;
-        const bool isActiveSynapse = currentTree.isSynapticCleft && activeNode != nullptr && activeNode->correspondingTree == &currentTree;
-        const bool cleftActive = activeNode != nullptr && activeNode->correspondingTree->isSynapticCleft;
-        const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
-        const bool alwaysShow = isActiveSynapse || (!cleftActive && ((!onlySelected && currentTree.render) || (onlySelected && currentTree.selected)));
-        if (!alwaysShow) {
-            if (activeNode != nullptr && activeNode->isSynapticNode) {// render clefts if post or pre synapse is active
-                auto & synapse = *activeNode->correspondingSynapse;
-                const bool cleft = synapse.getCleft() != nullptr ? synapse.getCleft() == &currentTree : false;
-                if (!cleft) {
-                    continue;
-                }
-            } else {
-                continue;
-            }
+        auto darken = false;
+        if ((synapseBuilding && currentTree.correspondingSynapse != &Synapse::temporarySynapse)
+                || (activeSynapse && activeSynapse->getCleft() != &currentTree)) {
+            // focus on synapses, darken rest of skeleton
+            darken = true;
+        } else if (synapseBuilding == false && activeSynapse == nullptr && currentTree.isSynapticCleft) {
+            // regular tracing, hide synapses
+            continue;
         }
-
         nodeListElement * previousNode = nullptr;
         nodeListElement * lastRenderedNode = nullptr;
         float cumDistToLastRenderedNode = 0.f;
@@ -2096,6 +2093,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     && (state->viewerState->highlightActiveTree)) {
                     currentColor = Qt::red;
                 }
+                if (darken) {
+                    currentColor.setAlpha(Synapse::darkenedAlpha);
+                }
 
                 cumDistToLastRenderedNode = 0.f;
 
@@ -2139,7 +2139,11 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         if (synapseCreated && synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
             segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-            renderSegment(virtualSegment, Qt::black, options);
+            QColor color = Qt::black;
+            if (synapseSelected == false) {
+                color.setAlpha(Synapse::darkenedAlpha);
+            }
+            renderSegment(virtualSegment, color, options);
 
             auto post = synapse.getPostSynapse()->position;
             auto pre = synapse.getPreSynapse()->position;
@@ -2148,7 +2152,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
                 , &synapse.getPostSynapse()->position
-                , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, Qt::black, options);
+                , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
         }
     }
 

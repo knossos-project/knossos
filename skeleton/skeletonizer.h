@@ -58,6 +58,7 @@ public:
     enum class State {PreSynapse, Cleft, PostSynapse};
     static State state;
     static Synapse temporarySynapse;
+    static const int darkenedAlpha = 60;
 
     nodeListElement * getPreSynapse() const { return preSynapse; }
     nodeListElement * getPostSynapse() const { return postSynapse; }
