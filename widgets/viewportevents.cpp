@@ -640,15 +640,15 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
     //^ os delay ^       ^-^ knossos specified interval
 
     //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
+    const bool keyD = event->key() == Qt::Key_D;
+    const bool keyF = event->key() == Qt::Key_F;
+    const bool keyLeft = event->key() == Qt::Key_Left;
+    const bool keyRight = event->key() == Qt::Key_Right;
+    const bool keyDown = event->key() == Qt::Key_Down;
+    const bool keyUp = event->key() == Qt::Key_Up;
+    const bool keyE = event->key() == Qt::Key_E;
     if (!event->isAutoRepeat()) {
         const int shiftMultiplier = event->modifiers().testFlag(Qt::ShiftModifier) ? 10 : 1;
-        const bool keyD = event->key() == Qt::Key_D;
-        const bool keyF = event->key() == Qt::Key_F;
-        const bool keyLeft = event->key() == Qt::Key_Left;
-        const bool keyRight = event->key() == Qt::Key_Right;
-        const bool keyDown = event->key() == Qt::Key_Down;
-        const bool keyUp = event->key() == Qt::Key_Up;
-        const bool keyE = event->key() == Qt::Key_E;
         const auto direction = n.dot(state->viewerState->tracingDirection) >= 0 ? 1 : -1;
         const float directionSign = (keyLeft || keyUp) ? -1 : (keyRight || keyDown) ? 1 : direction * (keyD || keyE ? -1 : 1);
         if (keyLeft || keyRight || keyDown || keyUp || keyD || keyF) {
@@ -658,7 +658,8 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         } else if(event->key() == Qt::Key_R || keyE) {
             state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * shiftMultiplier * state->viewerState->walkFrames * state->magnification);
         }
-    } else {
+    } else if (keyD || keyF || keyLeft || keyRight || keyDown || keyUp || keyE) {
+        // movement key pressed
         state->viewerState->keyRepeat = true;
     }
     ViewportBase::handleKeyPress(event);
