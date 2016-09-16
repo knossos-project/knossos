@@ -232,22 +232,31 @@ void NodeView::mousePressEvent(QMouseEvent * event) {
     QTreeView::mousePressEvent(event);
 }
 
-template<typename T, typename Model, typename Proxy>
-auto selectElems(Model & model, Proxy & proxy) {
-    return [&model, &proxy](const QItemSelection & selected, const QItemSelection & deselected){
+template<typename T, typename View, typename Model, typename Proxy>
+auto selectElems(View & view, Model & model, Proxy & proxy) {
+    return [&view, &model, &proxy](const QItemSelection & selected, const QItemSelection & deselected){
         if (!model.selectionProtection) {
             const auto & proxySelected = proxy.mapSelectionToSource(selected);
             const auto & proxyDeselected = proxy.mapSelectionToSource(deselected);
-            auto indices = proxySelected.indexes();
-            indices.append(proxyDeselected.indexes());
-            QSet<T*> elems;
-            for (const auto & modelIndex : indices) {
-                if (modelIndex.column() == 0) {
-                    elems.insert(&model.cache[modelIndex.row()].get());
+            auto collectNodes = [&model](auto && indices){
+                QSet<T*> elems;
+                for (const auto & modelIndex : indices) {
+                    if (modelIndex.column() == 0) {
+                        elems.insert(&model.cache[modelIndex.row()].get());
+                    }
                 }
-            }
+                return elems;
+            };
             model.selectionFromModel = true;
-            Skeletonizer::singleton().toggleSelection(elems);
+            const auto onlyOneNodeSelectedPreviously = state->skeletonState->selectedNodes.size() == 1;
+            const auto firstSelectionInTable = !selected.empty() && (view.selectionModel()->selection() == selected);
+            if (onlyOneNodeSelectedPreviously && firstSelectionInTable) {
+                Skeletonizer::singleton().select(collectNodes(proxySelected.indexes()));
+            } else {
+                auto indices = proxySelected.indexes();
+                indices.append(proxyDeselected.indexes());
+                Skeletonizer::singleton().toggleSelection(collectNodes(indices));
+            }
         }
     };
 }
@@ -545,8 +554,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text);
     });
 
-    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeModel, treeSortAndCommentFilterProxy));
-    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeModel, nodeSortAndCommentFilterProxy));
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeView, treeModel, treeSortAndCommentFilterProxy));
+    QObject::connect(nodeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<nodeListElement>(nodeView, nodeModel, nodeSortAndCommentFilterProxy));
 
     QObject::connect(treeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(treeView, treeSortSectionIndex));
     QObject::connect(nodeView.header(), &QHeaderView::sortIndicatorChanged, threeWaySorting(nodeView, nodeSortSectionIndex));
