@@ -276,8 +276,10 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         }
         if(Synapse::state == Synapse::State::PostSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
             auto & tempSynapse = Synapse::temporarySynapse;
-            tempSynapse.setPostSynapse(state->skeletonState->activeNode);
-            Skeletonizer::singleton().addFinishedSynapse(tempSynapse.getCleft(), tempSynapse.getPreSynapse(), tempSynapse.getPostSynapse()); //move finished synapse to our synapse vector
+            tempSynapse.setPostSynapse(*state->skeletonState->activeNode);
+            if (tempSynapse.getCleft() && tempSynapse.getPreSynapse() && tempSynapse.getPostSynapse()) {
+                Skeletonizer::singleton().addFinishedSynapse(*tempSynapse.getCleft(), *tempSynapse.getPreSynapse(), *tempSynapse.getPostSynapse()); //move finished synapse to our synapse vector
+            }
             Synapse::state = Synapse::State::PreSynapse;
             tempSynapse = Synapse(); //reset temporary class
             state->viewer->window->toggleSynapseState(); //update statusbar
@@ -536,7 +538,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             }
         }
     } else if (ctrl && shift && event->key() == Qt::Key_C) {
-        if(state->skeletonState->activeNode->isSynapticNode) {
+        if(state->skeletonState->activeNode && state->skeletonState->activeNode->isSynapticNode) {
             state->skeletonState->activeNode->correspondingSynapse->toggleDirection();
         }
     } else if (shift) {

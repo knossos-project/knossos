@@ -64,30 +64,30 @@ public:
     nodeListElement * getPostSynapse() const { return postSynapse; }
     treeListElement * getCleft() const { return synapticCleft; }
 
-    void setPreSynapse(nodeListElement * pre) {
-        preSynapse = pre;
-        pre->correspondingSynapse = this;
-        pre->isSynapticNode = true;
+    void setPreSynapse(nodeListElement & pre) {
+        preSynapse = &pre;
+        pre.correspondingSynapse = this;
+        pre.isSynapticNode = true;
         if (synapticCleft) {
             synapticCleft->properties.insert("preSynapse", static_cast<long long>(preSynapse->nodeID));
         }
     }
 
-    void setPostSynapse(nodeListElement * post) {
-        postSynapse = post;
-        post->correspondingSynapse = this;
-        post->isSynapticNode = true;
+    void setPostSynapse(nodeListElement & post) {
+        postSynapse = &post;
+        post.correspondingSynapse = this;
+        post.isSynapticNode = true;
         if (synapticCleft) {
             synapticCleft->properties.insert("postSynapse", static_cast<long long>(postSynapse->nodeID));
             synapticCleft->render = false;
         }
     }
 
-    void setCleft(treeListElement * cleft) {
-        synapticCleft = cleft;
-        cleft->isSynapticCleft = true;
-        cleft->correspondingSynapse = this;
-        cleft->properties.insert("synapticCleft", true);
+    void setCleft(treeListElement & cleft) {
+        synapticCleft = &cleft;
+        cleft.isSynapticCleft = true;
+        cleft.correspondingSynapse = this;
+        cleft.properties.insert("synapticCleft", true);
         if (preSynapse) {
             synapticCleft->properties.insert("preSynapse", static_cast<long long>(preSynapse->nodeID));
         }
@@ -271,7 +271,7 @@ public slots:
     void setCommentOfSelectedTrees(const QString & comment);
     void setColor(treeListElement & tree, const QColor &color);
     void continueSynapse();
-    void addFinishedSynapse(treeListElement * cleft, nodeListElement * pre, nodeListElement * post);
+    void addFinishedSynapse(treeListElement & cleft, nodeListElement & pre, nodeListElement & post);
     void addSynapseFromNodes(std::vector<nodeListElement *> & nodes);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);

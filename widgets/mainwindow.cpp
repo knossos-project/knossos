@@ -509,18 +509,20 @@ void MainWindow::createMenus() {
 
     createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
-            if(state->viewer->window->synapseState == SynapseState::Off) {
-                state->viewer->window->toggleSynapseState(); //update statusbar
-                createSynapse->setText(tr("Finish synapse"));
-                createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-                createSynapse->setShortcut(Qt::Key_C);
-                Skeletonizer::singleton().continueSynapse();
-            } else if(state->viewer->window->synapseState == SynapseState::SynapticCleft) {
-                state->viewer->window->toggleSynapseState(); //update statusbar
-                createSynapse->setShortcutContext(Qt::ApplicationShortcut);
-                createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
-                Skeletonizer::singleton().continueSynapse();
-                Skeletonizer::singleton().addTree();
+            if (state->skeletonState->activeNode != nullptr) {
+                if(state->viewer->window->synapseState == SynapseState::Off) {
+                    state->viewer->window->toggleSynapseState(); //update statusbar
+                    createSynapse->setText(tr("Finish synapse"));
+                    createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+                    createSynapse->setShortcut(Qt::Key_C);
+                    Skeletonizer::singleton().continueSynapse();
+                } else if(state->viewer->window->synapseState == SynapseState::SynapticCleft) {
+                    state->viewer->window->toggleSynapseState(); //update statusbar
+                    createSynapse->setShortcutContext(Qt::ApplicationShortcut);
+                    createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
+                    Skeletonizer::singleton().continueSynapse();
+                    Skeletonizer::singleton().addTree();
+                }
             }
         } else if(state->skeletonState->selectedNodes.size() == 2) {
             Skeletonizer::singleton().addSynapseFromNodes(state->skeletonState->selectedNodes);
