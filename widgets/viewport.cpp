@@ -796,7 +796,6 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     if(normals.empty()) {
         normals.resize(verts.size());
         // generate normals of indexed vertices via cross product
-        // TODO: needs fixing, looks too edgy
         for(int i = 0; i < indices.size()-2; i += 3) {
             QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
             QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
@@ -804,9 +803,7 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
             QVector3D e1{p2 - p1};
             QVector3D e2{p3 - p1};
 
-            QVector3D normal{e1.y() * e2.z() - e1.z() * e2.y(),
-                             e1.z() * e2.x() - e1.x() * e2.z(),
-                             e1.x() * e2.y() - e1.y() * e2.x()};
+            QVector3D normal{QVector3D::normal(e1, e2)};
 
             normals[indices[i]*3] =   normals[indices[i+1]*3] =   normals[indices[i+2]*3] = normal.x();
             normals[indices[i]*3+1] = normals[indices[i+1]*3+1] = normals[indices[i+2]*3+1] = normal.y();
