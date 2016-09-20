@@ -43,7 +43,7 @@ file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
 file(GLOB_RECURSE sources2 ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./widgets/*.cpp)
 file(GLOB_RECURSE headers2 ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./widgets/*.h)
-file(GLOB_RECURSE docimages ./resources/doc/images/*)
+
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 
 set(CMAKE_CXX_STANDARD 14)
@@ -80,21 +80,6 @@ elseif(APPLE)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns")
 endif()
 
-#generate docs
-find_program(QCOLLECTIONGENERATOR qcollectiongenerator)
-add_custom_command(
-    OUTPUT
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch"
-    PRE_BUILD
-    COMMAND ${QCOLLECTIONGENERATOR} "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhcp" -o "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc"
-    DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhcp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qhp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/documentation.html"
-    ${docimages}
-)
-
 add_custom_target(buildinfo DEPENDS buildinfocreator)#forces the pseudo target to be generated
 #is always triggered by the pseudo target which is never actually created, creates buildinfo.h instead
 add_custom_command(
@@ -113,7 +98,7 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
-set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/collection.qhc" "${CMAKE_CURRENT_SOURCE_DIR}/resources/doc/doc.qch")
+
 option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
     find_package(Qt5Python27_QtAll REQUIRED)

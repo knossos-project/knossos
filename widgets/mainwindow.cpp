@@ -40,6 +40,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QDesktopServices>
 #include <QDesktopWidget>
 #include <QDir>
 #include <QEvent>
@@ -617,9 +618,9 @@ void MainWindow::createMenus() {
     pluginMenu = scriptingMenu->addMenu("Plugins");
     refreshPluginMenu();
 
-    auto helpMenu = menuBar()->addMenu("&Help");
-    addApplicationShortcut(*helpMenu, QIcon(":/resources/icons/edit-select-all.png"), tr("Documentation"), &widgetContainer.docWidget, &DocumentationWidget::show, Qt::CTRL + Qt::Key_H);
-    helpMenu->addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
+    auto & helpMenu = *menuBar()->addMenu("&Help");
+    helpMenu.addAction(QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); });
+    helpMenu.addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

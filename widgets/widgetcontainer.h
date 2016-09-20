@@ -27,7 +27,6 @@
 #include "preferenceswidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
-#include "documentationwidget.h"
 #include "GuiConstants.h"
 #include "snapshotwidget.h"
 #include "splashscreenwidget.h"
@@ -41,7 +40,7 @@
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), preferencesWidget(parent)
-        , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget), docWidget(parent)
+        , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget)
         , pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
     {
@@ -54,7 +53,6 @@ struct WidgetContainer {
     PreferencesWidget preferencesWidget;
     DatasetLoadWidget datasetLoadWidget;
     DatasetOptionsWidget datasetOptionsWidget;
-    DocumentationWidget docWidget;
     PythonInterpreterWidget pythonInterpreterWidget;
     PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
@@ -75,7 +73,6 @@ struct WidgetContainer {
         preferencesWidget.hide();
         datasetLoadWidget.hide();
         datasetOptionsWidget.hide();
-        docWidget.hide();
         pythonPropertyWidget.hide();
         pythonInterpreterWidget.hide();
         snapshotWidget.hide();

@@ -156,6 +156,8 @@ class MainWindow : public QMainWindow {
     void placeComment(const int index);
     void toggleSegments();
 public:
+    static constexpr auto docUrl = "http://knossostool.org/documentation/KNOSSOS_full_doc.html";
+
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
     std::unique_ptr<ViewportOrtho> viewportZY;

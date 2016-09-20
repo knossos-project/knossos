@@ -23,8 +23,6 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/splash.png</file>
-        <file>resources/doc/collection.qhc</file>
-        <file>resources/doc/doc.qch</file>
         <file>resources/datasets/e2006.k.conf</file>
         <file>resources/datasets/ek0563.k.conf</file>
         <file>resources/icons/active-arrow.png</file>
@@ -39,7 +37,6 @@
         <file>resources/icons/document-save-as.png</file>
         <file>resources/icons/edit-copy.png</file>
         <file>resources/icons/edit-paste.png</file>
-        <file>resources/icons/edit-select-all.png</file>
         <file>resources/icons/graph.png</file>
         <file>resources/icons/insert-text.png</file>
         <file>resources/icons/knossos.png</file>
