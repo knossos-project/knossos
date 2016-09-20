@@ -747,7 +747,7 @@ void Viewport3D::updateVolumeTexture() {
 
 #include <algorithm>
 
-void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, int draw_mode) {
+void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     // // test point sphere for comparison
     // std::vector<QVector3D> sphere_verts;
     // std::vector<QVector3D> sphere_normals;
@@ -790,7 +790,7 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     // temporary, color information might be switched to per-object rather than per-vertex
     std::vector<std::array<GLfloat, 4>> colors;
     for(int i = 0; i < verts.size(); ++i) {
-        colors.emplace_back(std::array<GLfloat, 4>({{1.0f, 0.0f, 1.0f, 1.0f}}));
+        colors.push_back({{color[0], color[1], color[2], color[3]}});
     }
 
     if(normals.empty()) {

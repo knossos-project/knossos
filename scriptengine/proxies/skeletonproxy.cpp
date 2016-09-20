@@ -80,14 +80,14 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
     return true;
 }
 
-void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, int draw_mode) {
+void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     if(verts.size() != normals.size() && !normals.empty()) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal): %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
+      throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal): %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
     }
     if(verts.size() % 3 != 0) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3: %1 vert coords.").arg(verts.size()).toStdString());
+      throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3: %1 vert coords.").arg(verts.size()).toStdString());
     }
-    state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, draw_mode);
+    state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, color, draw_mode);
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
