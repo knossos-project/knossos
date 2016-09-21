@@ -58,25 +58,26 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     movementSpeedSpinBox.setSuffix(" Slices/s");
     jumpFramesSpinBox.setMaximum(1000);
     walkFramesSpinBox.setMaximum(1000);
-    generalFormLayout.addRow("Movement Speed", &movementSpeedSpinBox);
-    generalFormLayout.addRow("Jump Frames (D, F)", &jumpFramesSpinBox);
-    generalFormLayout.addRow("Walk Frames (E, R)", &walkFramesSpinBox);
-    generalGroup.setLayout(&generalFormLayout);
+    keyboardMovementLayout.addRow("Movement Speed", &movementSpeedSpinBox);
+    keyboardMovementLayout.addRow("Jump Frames (D, F)", &jumpFramesSpinBox);
+    keyboardMovementLayout.addRow("Walk Frames (E, R)", &walkFramesSpinBox);
+    keyboardMovementGroup.setLayout(&keyboardMovementLayout);
 
-    for (auto * buttonPtr : {&normalModeButton, &noRecenteringButton, &additionalViewportDirectionMoveButton, &additionalTracingDirectionMoveButton, &additionalMirroredMoveButton}) {
-        recenteringButtonGroup.addButton(buttonPtr);
-        advancedLayout.addWidget(buttonPtr);
-    }
+    numberOfStepsSpinBox.setRange(1, 100);
+    numberOfStepsSpinBox.setSuffix(" Steps");
+    numberOfStepsSpinBox.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    delayTimePerStepSpinBox.setSuffix(" ms");
-    advancedFormLayout.addRow("Delay Time Per Step", &delayTimePerStepSpinBox);
-    advancedFormLayout.addRow("Number Of Steps", &numberOfStepsSpinBox);
-    advancedLayout.addLayout(&advancedFormLayout);
-    advancedGroup.setLayout(&advancedLayout);
+    recenteringButtonGroup.addButton(&recenteringButton, static_cast<int>(Recentering::OnNode));
+    advancedFormLayout.addRow(&recenteringButton);
+    recenteringButtonGroup.addButton(&noRecenteringButton, static_cast<int>(Recentering::Off));
+    advancedFormLayout.addRow(&noRecenteringButton);
+    recenteringButtonGroup.addButton(&additionalTracingDirectionMoveButton, static_cast<int>(Recentering::AheadOfNode));
+    advancedFormLayout.addRow(&additionalTracingDirectionMoveButton, &numberOfStepsSpinBox);
+    advancedGroup.setLayout(&advancedFormLayout);
 
-    leftLayout.addWidget(&movementAreaGroup);
-    leftLayout.addWidget(&generalGroup);
-    mainLayout.addLayout(&leftLayout);
+    upperLayout.addWidget(&movementAreaGroup);
+    upperLayout.addWidget(&keyboardMovementGroup);
+    mainLayout.addLayout(&upperLayout);
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
 
@@ -103,21 +104,10 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&jumpFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->dropFrames = value; });
     QObject::connect(&walkFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->walkFrames = value; });
 
-    QObject::connect(&recenteringButtonGroup, static_cast<void(QButtonGroup::*)(QAbstractButton * button)>(&QButtonGroup::buttonClicked), [this](auto * button){
-        if (button == &normalModeButton) {
-            state->viewerState->autoTracingMode = navigationMode::recenter;
-        } else if (button == &noRecenteringButton) {
-            state->viewerState->autoTracingMode = navigationMode::noRecentering;
-        } else if (button == &additionalViewportDirectionMoveButton) {
-            state->viewerState->autoTracingMode = navigationMode::additionalVPMove;
-        } else if (button == &additionalTracingDirectionMoveButton) {
-            state->viewerState->autoTracingMode = navigationMode::additionalTracingDirectionMove;
-        } else if (button == &additionalMirroredMoveButton) {
-            state->viewerState->autoTracingMode = navigationMode::additionalMirroredMove;
-        }
+    QObject::connect(&recenteringButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [this](auto id) {
+        state->viewerState->autoTracingMode = static_cast<Recentering>(id);
+        numberOfStepsSpinBox.setEnabled(id == static_cast<int>(Recentering::AheadOfNode));
     });
-
-    QObject::connect(&delayTimePerStepSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->autoTracingDelay = value; });
     QObject::connect(&numberOfStepsSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->autoTracingSteps = value; });
 
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
@@ -135,11 +125,14 @@ void NavigationTab::loadSettings(const QSettings & settings) {
     movementSpeedSpinBox.setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
     jumpFramesSpinBox.setValue(settings.value(JUMP_FRAMES, 1).toInt());
     walkFramesSpinBox.setValue(settings.value(WALK_FRAMES, 10).toInt());
-    normalModeButton.setChecked(settings.value(NORMAL_MODE, true).toBool());
-    additionalViewportDirectionMoveButton.setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, false).toBool());
-    additionalTracingDirectionMoveButton.setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE, false).toBool());
-    additionalMirroredMoveButton.setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE, false).toBool());
-    delayTimePerStepSpinBox.setValue(settings.value(DELAY_TIME_PER_STEP, 50).toInt());
+    // i wish the button group would set the correct button for me…
+    auto buttonId = settings.value(RECENTERING, static_cast<int>(Recentering::OnNode)).toInt();
+    switch(static_cast<Recentering>(buttonId)) {
+    case Recentering::OnNode: recenteringButton.setChecked(true); break;
+    case Recentering::Off: noRecenteringButton.setChecked(true); break;
+    case Recentering::AheadOfNode: additionalTracingDirectionMoveButton.setChecked(true); break;
+    }
+    recenteringButtonGroup.buttonClicked(buttonId);
     numberOfStepsSpinBox.setValue(settings.value(NUMBER_OF_STEPS, 10).toInt());
 }
 
@@ -147,10 +140,6 @@ void NavigationTab::saveSettings(QSettings & settings) {
     settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox.value());
     settings.setValue(JUMP_FRAMES, jumpFramesSpinBox.value());
     settings.setValue(WALK_FRAMES, walkFramesSpinBox.value());
-    settings.setValue(NORMAL_MODE, normalModeButton.isChecked());
-    settings.setValue(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, additionalViewportDirectionMoveButton.isChecked());
-    settings.setValue(ADDITIONAL_TRACING_DIRECTION_MOVE, additionalTracingDirectionMoveButton.isChecked());
-    settings.setValue(ADDITIONAL_MIRRORED_MOVE, additionalMirroredMoveButton.isChecked());
-    settings.setValue(DELAY_TIME_PER_STEP, delayTimePerStepSpinBox.value());
+    settings.setValue(RECENTERING, recenteringButtonGroup.checkedId());
     settings.setValue(NUMBER_OF_STEPS, numberOfStepsSpinBox.value());
 }

@@ -220,27 +220,13 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             //Determine the directions for the f and d keys based on the signs of the movement components along the three dimensions
             state->viewerState->tracingDirection = movement;
 
-            //Auto tracing adjustments – this is out of place here
-            state->viewerState->autoTracingDelay = std::min(500, std::max(10, state->viewerState->autoTracingDelay));
-            state->viewerState->autoTracingSteps = std::min(50, std::max(1, state->viewerState->autoTracingSteps));
-
-            //Additional move of specified steps along clicked viewport
-            if (state->viewerState->autoTracingMode == navigationMode::additionalVPMove) {
-                const auto direction = n.dot(state->viewerState->tracingDirection) >= 0 ? 1 : -1;
-                const auto move = direction * state->viewerState->autoTracingSteps;
-                clickedCoordinate += n * move;
-            }
-
             //Additional move of specified steps along tracing direction
-            if (state->viewerState->autoTracingMode == navigationMode::additionalTracingDirectionMove) {
+            if (state->viewerState->autoTracingMode == Recentering::AheadOfNode) {
                 floatCoordinate walking{movement};
                 const auto factor = state->viewerState->autoTracingSteps / walking.length();
                 clickedCoordinate += Coordinate(std::lround(movement.x * factor), std::lround(movement.y * factor), std::lround(movement.z * factor));
             }
-            //Additional move of steps equal to distance between last and new node along tracing direction.
-            if (state->viewerState->autoTracingMode == navigationMode::additionalMirroredMove) {
-                clickedCoordinate += movement;
-            }
+
             clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, state->boundary);// Do not allow clicks outside the dataset
 
             if(Synapse::state == Synapse::State::PostSynapse) {
@@ -263,7 +249,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
             Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, oldNode);
         }
         // Move to the new node position
-        if (state->viewerState->autoTracingMode != navigationMode::noRecentering) {
+        if (state->viewerState->autoTracingMode != Recentering::Off) {
             if (viewportType == VIEWPORT_ARBITRARY) {
                 state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, viewportType);
             } else {

@@ -123,11 +123,7 @@ const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 const QString MOVEMENT_SPEED = "movement_speed";
 const QString JUMP_FRAMES = "jump_frames";
 const QString WALK_FRAMES = "walk_frames";
-const QString NORMAL_MODE = "normal_mode";
-const QString ADDITIONAL_VIEWPORT_DIRECTION_MOVE = "additional_viewport_direction_move";
-const QString ADDITIONAL_TRACING_DIRECTION_MOVE = "additional_tracing_direction_move";
-const QString ADDITIONAL_MIRRORED_MOVE = "additional_mirrored_move";
-const QString DELAY_TIME_PER_STEP = "delay_time_per_step";
+const QString RECENTERING = "recentering";
 const QString NUMBER_OF_STEPS = "number_of_steps";
 
 // Tools Widget QuickTab

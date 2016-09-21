@@ -102,8 +102,7 @@ struct ViewerState {
     float voxelXYtoZRatio;
 
     // Advanced Tracing Modes Stuff
-    navigationMode autoTracingMode{navigationMode::recenter};
-    int autoTracingDelay{50};
+    Recentering autoTracingMode{Recentering::OnNode};
     int autoTracingSteps{10};
 
     float cumDistRenderThres{7.f};

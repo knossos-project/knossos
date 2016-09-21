@@ -25,51 +25,44 @@
 
 #include <QButtonGroup>
 #include <QFormLayout>
-#include <QGridLayout>
 #include <QGroupBox>
-#include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include <QWidget>
 
-enum class navigationMode {
-    recenter
-    , noRecentering
-    , additionalVPMove
-    , additionalTracingDirectionMove
-    , additionalMirroredMove
+enum class Recentering {
+    OnNode
+    , Off
+    , AheadOfNode
 };
 
 class QSettings;
 class NavigationTab : public QWidget {
     Q_OBJECT
-    QHBoxLayout mainLayout;
-    QVBoxLayout leftLayout;
+    QVBoxLayout mainLayout;
+    QHBoxLayout upperLayout;
 
     QGroupBox movementAreaGroup{"Movement area"};
     QVBoxLayout movementAreaLayout;
     QHBoxLayout areaMinLayout;
     QHBoxLayout areaMaxLayout;
     QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
-    QPushButton resetMovementAreaButton{"Reset to dataset boundary"};
+    QPushButton resetMovementAreaButton{"Reset to dataset boundaries"};
 
-    QGroupBox generalGroup{"General"};
-    QFormLayout generalFormLayout;
+    QGroupBox keyboardMovementGroup{"Keyboard movement"};
+    QFormLayout keyboardMovementLayout;
     QSpinBox movementSpeedSpinBox;
     QSpinBox jumpFramesSpinBox;
     QSpinBox walkFramesSpinBox;
 
-    QGroupBox advancedGroup{"Advanced tracing modes"};
-    QVBoxLayout advancedLayout;
+    QGroupBox advancedGroup{"Recentering behaviour"};
     QFormLayout advancedFormLayout;
     QButtonGroup recenteringButtonGroup;
-    QRadioButton normalModeButton{"Normal mode (recentering)"};
+    QRadioButton recenteringButton{"Recenter on new node (default)"};
     QRadioButton noRecenteringButton{"No recentering"};
-    QRadioButton additionalViewportDirectionMoveButton{"Additional viewport direction move"};
-    QRadioButton additionalTracingDirectionMoveButton{"Additional tracing direction move"};
-    QRadioButton additionalMirroredMoveButton{"Additional mirrored move"};
+    QRadioButton additionalTracingDirectionMoveButton{"Additional movement in tracing direction"};
     QSpinBox delayTimePerStepSpinBox;
     QSpinBox numberOfStepsSpinBox;
 

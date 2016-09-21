@@ -58,9 +58,6 @@ Viewer::Viewer() {
 
     state->viewerState->movementAreaFactor = 80;
     state->viewerState->showOverlay = true;
-    state->viewerState->autoTracingMode = navigationMode::recenter;
-    state->viewerState->autoTracingDelay = 50;
-    state->viewerState->autoTracingSteps = 10;
 
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
     state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
