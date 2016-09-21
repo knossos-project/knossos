@@ -660,7 +660,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         } else if(event->key() == Qt::Key_R || keyE) {
             state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * shiftMultiplier * state->viewerState->walkFrames * state->magnification);
         }
-    } else if (keyD || keyF || keyLeft || keyRight || keyDown || keyUp || keyE) {
+    } else if (keyD || keyF || keyLeft || keyRight || keyDown || keyUp) {
         // movement key pressed
         state->viewerState->keyRepeat = true;
     }
