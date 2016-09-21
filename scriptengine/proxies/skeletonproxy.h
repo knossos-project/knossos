@@ -56,8 +56,8 @@ public slots:
     bool delete_tree(int tree_id);
     bool merge_trees(int tree_id, int other_tree_id);
     void add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
-    bool move_to_next_tree();
-    bool move_to_previous_tree();
+    void move_to_next_tree();
+    void move_to_previous_tree();
 
     nodeListElement *find_node_by_id(quint64 node_id);
     QList<nodeListElement *> find_nodes_in_tree(treeListElement & tree, const QString & comment);

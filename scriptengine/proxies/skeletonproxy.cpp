@@ -44,12 +44,12 @@ treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
     return Skeletonizer::singleton().getTreeWithNextID(tree);
 }
 
-bool SkeletonProxy::move_to_next_tree() {
-    return Skeletonizer::singleton().moveToNextTree();
+void SkeletonProxy::move_to_next_tree() {
+    state->viewer->mainWindow.widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);
 }
 
-bool SkeletonProxy::move_to_previous_tree() {
-    return Skeletonizer::singleton().moveToPrevTree();
+void SkeletonProxy::move_to_previous_tree() {
+    state->viewer->mainWindow.widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);
 }
 
 treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {

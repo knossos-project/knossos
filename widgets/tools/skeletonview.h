@@ -172,6 +172,7 @@ class SkeletonView : public QWidget {
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
     void jumpToNextNode(bool forward) const;
+    void jumpToNextTree(bool forward) const;
     void reverseSynapseDirection() const;
 };
 

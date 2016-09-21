@@ -805,6 +805,22 @@ void SkeletonView::jumpToNextNode(bool forward) const {
     }
 }
 
+void SkeletonView::jumpToNextTree(bool forward) const {
+    auto current = treeView.currentIndex();
+    auto next = forward ? treeView.indexBelow(current) : treeView.indexAbove(current);
+    next = !next.isValid() ? current : next;// cap over- and underflow
+    if (next.isValid()) {// no current index will fail here
+        // mapping to source always succeeds
+        auto & tree = treeModel.cache[treeSortAndCommentFilterProxy.mapToSource(next).row()].get();
+        Skeletonizer::singleton().setActiveTreeByID(tree.treeID);
+        if (tree.getNodes()->length() > 0) {
+            auto * firstNode = tree.getNodes()->front();
+            Skeletonizer::singleton().setActiveNode(firstNode);
+            Skeletonizer::singleton().jumpToNode(*firstNode);
+        }
+    }
+}
+
 void SkeletonView::reverseSynapseDirection() const {
     const auto & selectedNodes = state->skeletonState->selectedNodes;
     if(selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) {

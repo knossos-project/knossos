@@ -1662,68 +1662,6 @@ float Skeletonizer::radius(const nodeListElement & node) const {
     return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
 }
 
-bool Skeletonizer::moveToPrevTree() {
-    treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
-    if(state->skeletonState->activeTree == nullptr) {
-        return false;
-    } else if(prevTree != nullptr && prevTree->isSynapticCleft && !prevTree->render) {
-        //skip synaptic cleft if synaptic cleft is not rendered
-        prevTree = getTreeWithPrevID(prevTree);
-    }
-    if(prevTree) {
-        setActiveTreeByID(prevTree->treeID);
-        //set tree's first node to active node if existent
-        if (state->skeletonState->activeTree->nodes.empty()) {
-            return true;
-        } else {
-            auto & node = state->skeletonState->activeTree->nodes.front();
-            setActiveNode(&node);
-            state->viewer->setPositionWithRecentering(node.position);
-        }
-        return true;
-    }
-    QMessageBox info;
-    info.setIcon(QMessageBox::Information);
-    info.setWindowFlags(Qt::WindowStaysOnTopHint);
-    info.setWindowTitle("Information");
-    info.setText("You reached the first tree.");
-    info.exec();
-
-    return false;
-}
-
-
-bool Skeletonizer::moveToNextTree() {
-    treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
-    if(state->skeletonState->activeTree == nullptr) {
-        return false;
-    } else if(nextTree != nullptr && nextTree->isSynapticCleft && !nextTree->render) {
-        //skip synaptic cleft if synaptic cleft is not rendered
-        nextTree = getTreeWithNextID(nextTree);
-    }
-    if(nextTree) {
-        setActiveTreeByID(nextTree->treeID);
-        //set tree's first node to active node if existent
-
-        if (state->skeletonState->activeTree->nodes.empty()) {
-            return true;
-        } else {
-            auto & node = state->skeletonState->activeTree->nodes.front();
-            setActiveNode(&node);
-            state->viewer->setPositionWithRecentering(node.position);
-        }
-        return true;
-    }
-    QMessageBox info;
-    info.setIcon(QMessageBox::Information);
-    info.setWindowFlags(Qt::WindowStaysOnTopHint);
-    info.setWindowTitle("Information");
-    info.setText("You reached the last tree.");
-    info.exec();
-
-    return false;
-}
-
 void Skeletonizer::goToNode(const bool next = true) {
     if (skeletonState.activeNode == nullptr) {
         return;

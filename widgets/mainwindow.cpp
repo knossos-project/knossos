@@ -574,18 +574,15 @@ void MainWindow::createMenus() {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
         }
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to next node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to previous node"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to next tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToNextTree, Qt::Key_Z);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Move to previous tree"), &Skeletonizer::singleton(), &Skeletonizer::moveToPrevTree, Qt::SHIFT + Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Next node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Next tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
 
-    auto commentsMenu = menuBar()->addMenu("&Comments");
-
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Next comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
-    addApplicationShortcut(*commentsMenu, QIcon(), tr("Previously found comment"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
-
+    auto commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
     commentsMenu->addSeparator();
-
     auto addCommentShortcut = [&](const int number, const QKeySequence key, const QString & description){
         auto & action = addApplicationShortcut(*commentsMenu, QIcon(), description, this, [this, number](){placeComment(number-1);}, key);
         commentActions.push_back(&action);

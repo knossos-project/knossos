@@ -292,8 +292,6 @@ public slots:
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);
-    bool moveToNextTree();
-    bool moveToPrevTree();
     void goToNode(const bool next);
     void moveSelectedNodesToTree(int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
