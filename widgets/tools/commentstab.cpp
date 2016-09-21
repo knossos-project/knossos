@@ -72,7 +72,10 @@ bool CommentsModel::setData(const QModelIndex & index, const QVariant & value, i
 
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch (index.column()) {
-            case 1: comment.text = value.toString(); break;
+            case 1:
+                comment.text = value.toString();
+                state->viewer->mainWindow.updateCommentShortcut(index.row(), comment.text);
+                break;
             case 3: {
                 bool success = false;
                 float radius = value.toFloat(&success);
@@ -151,6 +154,7 @@ void CommentsTab::loadSettings() {
         CommentSetting::comments[i].text = settings.value(QString("comment%1").arg(i+1)).toString();
         CommentSetting::comments[i].color = settings.value(QString("color%1").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
         CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%1").arg(i+1), 1.5).toFloat();
+        state->viewer->mainWindow.updateCommentShortcut(i, CommentSetting::comments[i].text);
     }
     useCommentColorCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODECOLOR, true).toBool());
     useCommentRadiusCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODERADIUS, false).toBool());

@@ -582,17 +582,13 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
 
     auto commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
-    commentsMenu->addSeparator();
-    auto addCommentShortcut = [&](const int number, const QKeySequence key, const QString & description){
-        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), description, this, [this, number](){placeComment(number-1);}, key);
+    auto addCommentShortcut = [&](const int number, const QKeySequence key){
+        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), "", this, [this, number](){placeComment(number-1);}, key);
         commentActions.push_back(&action);
     };
     for (int number = 1; number < 11; ++number) {
-        const auto numberString = QString::number(number) + (number == 1 ? "st" : number == 2 ? "nd" : number == 3 ? "rd" : "th");
-        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)), numberString + tr(" comment shortcut"));
+        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)));
     }
-
-    commentsMenu->addSeparator();
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
     preferenceMenu->addAction(tr("Load custom preferences"), this, SLOT(loadCustomPreferencesSlot()));
@@ -1285,6 +1281,10 @@ void MainWindow::pushBranchNodeSlot() {
 
 void MainWindow::popBranchNodeSlot() {
     Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
+}
+
+void MainWindow::updateCommentShortcut(const int index, const QString & comment) {
+    commentActions[index]->setText(comment);
 }
 
 void MainWindow::placeComment(const int index) {
