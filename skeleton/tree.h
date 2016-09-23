@@ -54,7 +54,7 @@ public:
     treeListElement(const decltype(treeID) id, const decltype(PropertyQuery::properties) & properties);
 
     QList<nodeListElement *> *getNodes();
-    QList<segmentListElement *> getSegments();
+    QList<segmentListElement *> *getSegments();
 };
 
 #endif// TREE_H

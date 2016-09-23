@@ -709,7 +709,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
-        Skeletonizer::singleton().jumpToNode(*correspondingSynapse->getCleft()->getNodes()->front());
+        Skeletonizer::singleton().jumpToNode(correspondingSynapse->getCleft()->nodes.front());
     });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
@@ -813,10 +813,9 @@ void SkeletonView::jumpToNextTree(bool forward) const {
         // mapping to source always succeeds
         auto & tree = treeModel.cache[treeSortAndCommentFilterProxy.mapToSource(next).row()].get();
         Skeletonizer::singleton().setActiveTreeByID(tree.treeID);
-        if (tree.getNodes()->length() > 0) {
-            auto * firstNode = tree.getNodes()->front();
-            Skeletonizer::singleton().setActiveNode(firstNode);
-            Skeletonizer::singleton().jumpToNode(*firstNode);
+        if (tree.nodes.size() > 0) {
+            Skeletonizer::singleton().setActiveNode(&tree.nodes.front());
+            Skeletonizer::singleton().jumpToNode(tree.nodes.front());
         }
     }
 }

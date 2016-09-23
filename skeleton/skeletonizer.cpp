@@ -870,13 +870,13 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
 
     nodeListElement * newActiveNode = nullptr;
     if (resetActiveNode) {
-        for (const auto * seg : *nodeToDel->getSegments()) {
-            if (seg->source == *nodeToDel) {
+        for (const auto & seg : nodeToDel->segments) {
+            if (seg.source == *nodeToDel) {
                 // activate next node in (any) tracing direction
-                newActiveNode = &seg->target;
+                newActiveNode = &seg.target;
                 break;
             } else { // if there's no next node in tracing direction, take a node in (any) opposite tracing direction
-                newActiveNode = &seg->source;
+                newActiveNode = &seg.source;
             }
         }
     }
