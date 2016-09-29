@@ -826,6 +826,10 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     pointcloudBuffers.emplace(tree_id, buf);
 }
 
+void Viewport3D::deleteTreePointcloud(int tree_id) {
+    pointcloudBuffers.erase(tree_id);
+}
+
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting

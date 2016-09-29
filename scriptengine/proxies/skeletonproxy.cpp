@@ -90,6 +90,10 @@ void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVe
     state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, color, draw_mode);
 }
 
+void SkeletonProxy::delete_tree_pointcloud(int tree_id) {
+    state->mainWindow->viewport3D->deleteTreePointcloud(tree_id);
+}
+
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }

@@ -270,6 +270,13 @@ struct PointcloudBuffer {
         index_buf.create();
     }
 
+    // ~PointcloudBuffer() {
+    //     position_buf.destroy();
+    //     normal_buf.destroy();
+    //     color_buf.destroy();
+    //     index_buf.destroy();
+    // }
+
     std::size_t vertex_count;
     std::size_t index_count;
     QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
@@ -305,6 +312,7 @@ public:
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     void addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
+    void deleteTreePointcloud(int tree_id);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }
