@@ -2021,15 +2021,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
-    const auto synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
+    const bool synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
+    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
-        auto darken = false;
-        if ((synapseBuilding && currentTree.correspondingSynapse != &Synapse::temporarySynapse)
-                || (activeSynapse && activeSynapse->getCleft() != &currentTree)) {
-            // focus on synapses, darken rest of skeleton
-            darken = true;
-        } else if (synapseBuilding == false && activeSynapse == nullptr && currentTree.isSynapticCleft) {
-            // regular tracing, hide synapses
+        // focus on synapses, darken rest of skeleton
+        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &Synapse::temporarySynapse)
+                || (activeSynapse && activeSynapse->getCleft() != &currentTree);
+        const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
+        const bool selectionFilter = onlySelected && !currentTree.selected;
+        if (hideSynapses || selectionFilter || !currentTree.render) {
             continue;
         }
         nodeListElement * previousNode = nullptr;
