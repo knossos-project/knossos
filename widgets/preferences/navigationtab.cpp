@@ -125,13 +125,8 @@ void NavigationTab::loadSettings(const QSettings & settings) {
     movementSpeedSpinBox.setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
     jumpFramesSpinBox.setValue(settings.value(JUMP_FRAMES, 1).toInt());
     walkFramesSpinBox.setValue(settings.value(WALK_FRAMES, 10).toInt());
-    // i wish the button group would set the correct button for me…
-    auto buttonId = settings.value(RECENTERING, static_cast<int>(Recentering::OnNode)).toInt();
-    switch(static_cast<Recentering>(buttonId)) {
-    case Recentering::OnNode: recenteringButton.setChecked(true); break;
-    case Recentering::Off: noRecenteringButton.setChecked(true); break;
-    case Recentering::AheadOfNode: additionalTracingDirectionMoveButton.setChecked(true); break;
-    }
+    const auto buttonId = settings.value(RECENTERING, static_cast<int>(Recentering::OnNode)).toInt();
+    recenteringButtonGroup.button(buttonId)->setChecked(true);
     recenteringButtonGroup.buttonClicked(buttonId);
     numberOfStepsSpinBox.setValue(settings.value(NUMBER_OF_STEPS, 10).toInt());
 }
