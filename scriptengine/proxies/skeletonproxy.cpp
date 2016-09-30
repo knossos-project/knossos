@@ -65,11 +65,11 @@ treeListElement *SkeletonProxy::first_tree() {
 }
 
 bool SkeletonProxy::delete_tree(int tree_id) {
-   if (!Skeletonizer::singleton().delTree(tree_id)) {
-       emit echo(QString("could not delete the tree with id %1").arg(tree_id));
-       return false;
-   }
-   return true;
+    if (!Skeletonizer::singleton().delTree(tree_id)) {
+        emit echo(QString("could not delete the tree with id %1").arg(tree_id));
+        return false;
+    }
+    return true;
 }
 
 bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
@@ -82,10 +82,13 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
 
 void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     if(verts.size() != normals.size() && !normals.empty()) {
-      throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal): %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
     }
     if(verts.size() % 3 != 0) {
-      throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3: %1 vert coords.").arg(verts.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
+    }
+    if(color.size() < 3) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: color components not 3 or 4, got %1 color components.").arg(color.size()).toStdString());
     }
     state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, color, draw_mode);
 }

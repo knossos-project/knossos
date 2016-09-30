@@ -748,54 +748,19 @@ void Viewport3D::updateVolumeTexture() {
 #include <algorithm>
 
 void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
-    // // test point sphere for comparison
-    // std::vector<QVector3D> sphere_verts;
-    // std::vector<QVector3D> sphere_normals;
-    // std::vector<std::array<GLfloat, 4>> sphere_colors;
-
-    // static std::random_device rdevice;
-    // static std::default_random_engine rengine(rdevice());
-    // static std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
-    // static float sphere_size = 40.0f;
-    // static QVector3D sphere_pos{5440.0f, 5312.0f, 2880.0f};
-
-    // for(int i = 0; i < 320000; ++i) {
-    //     QVector3D spoint{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-    //     while(spoint.length() > 1.0f) {
-    //         spoint = QVector3D{uniform_dist(rengine), uniform_dist(rengine), uniform_dist(rengine)};
-    //     }
-    //     QVector3D snormal;
-    //     for(std::size_t j = 0; j < 3; ++j) {
-    //         snormal[j] = spoint[j] / spoint.length(); // normalize
-    //         spoint[j] = snormal[j]; // adjust by size
-    //     }
-
-    //     sphere_verts.emplace_back(sphere_pos + spoint * sphere_size);
-    //     sphere_normals.emplace_back(snormal);
-    //     sphere_colors.emplace_back(std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
-    // }
-
-    // PointcloudBuffer sphereBuf(GL_POINTS);
-    // sphereBuf.vertex_count = sphere_verts.size();
-    // sphereBuf.position_buf.bind();
-    // sphereBuf.position_buf.allocate(sphere_verts.data(), sphere_verts.size() * 3 * sizeof(GLfloat));
-    // sphereBuf.normal_buf.bind();
-    // sphereBuf.normal_buf.allocate(sphere_normals.data(), sphere_normals.size() * 3 * sizeof(GLfloat));
-    // sphereBuf.color_buf.bind();
-    // sphereBuf.color_buf.allocate(sphere_colors.data(), sphere_colors.size() * 4 * sizeof(GLfloat));
-    // sphereBuf.color_buf.release();
-    // pointcloudBuffers.emplace(tree_id+1, sphereBuf);
-
-
     // temporary, color information might be switched to per-object rather than per-vertex
+    auto col = color;
+    if(col.size() == 3) {
+        col.append(1.0f);
+    }
     std::vector<std::array<GLfloat, 4>> colors;
     for(int i = 0; i < verts.size(); ++i) {
-        colors.push_back({{color[0], color[1], color[2], color[3]}});
+        colors.push_back({{col[0], col[1], col[2], col[3]}});
     }
 
-    if(normals.empty()) {
+    // generate normals of indexed vertices via cross product
+    if(normals.empty() && !indices.empty()) {
         normals.resize(verts.size());
-        // generate normals of indexed vertices via cross product
         for(int i = 0; i < indices.size()-2; i += 3) {
             QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
             QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
