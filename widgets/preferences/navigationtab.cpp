@@ -40,18 +40,25 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     xMinField.setPrefix("x: "); xMaxField.setPrefix("x: ");
     yMinField.setPrefix("y: "); yMaxField.setPrefix("y: ");
     zMinField.setPrefix("z: "); zMaxField.setPrefix("z: ");
-    areaMinLayout.addWidget(new QLabel("Min"));
-    areaMinLayout.addWidget(&xMinField);
-    areaMinLayout.addWidget(&yMinField);
-    areaMinLayout.addWidget(&zMinField);
-    areaMaxLayout.addWidget(new QLabel("Max"));
-    areaMaxLayout.addWidget(&xMaxField);
-    areaMaxLayout.addWidget(&yMaxField);
-    areaMaxLayout.addWidget(&zMaxField);
-    movementAreaLayout.addLayout(&areaMinLayout);
-    movementAreaLayout.addLayout(&areaMaxLayout);
+    outVisibilitySlider.setOrientation(Qt::Horizontal);
+    auto row = 0;
+    movementAreaLayout.addWidget(&minLabel, row++, 0, 1, 3);
+    movementAreaLayout.addWidget(&xMinField, row, 0);
+    movementAreaLayout.addWidget(&yMinField, row, 1);
+    movementAreaLayout.addWidget(&zMinField, row++, 2);
+    movementAreaLayout.addWidget(&maxLabel, row++, 0);
+    movementAreaLayout.addWidget(&xMaxField, row, 0);
+    movementAreaLayout.addWidget(&yMaxField, row, 1);
+    movementAreaLayout.addWidget(&zMaxField, row++, 2);
     resetMovementAreaButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    movementAreaLayout.addWidget(&resetMovementAreaButton);
+    movementAreaLayout.addWidget(&resetMovementAreaButton, row++, 0, 1, 3);
+    separator.setFrameShape(QFrame::HLine);
+    separator.setFrameShadow(QFrame::Sunken);
+    separator.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
+    movementAreaLayout.addWidget(&separator, row++, 0, 1, 3);
+    movementAreaLayout.addWidget(&outVisibilityLabel, row++, 0, 1, 3);
+    movementAreaLayout.addWidget(&outVisibilitySlider, row, 0, 1, 2);
+    movementAreaLayout.addWidget(&outVisibilitySpin, row++, 2);
     movementAreaGroup.setLayout(&movementAreaLayout);
 
     movementSpeedSpinBox.setRange(1, 1000);
@@ -100,6 +107,20 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         zMaxField.setValue(session.movementAreaMax.z + 1);
     });
 
+    QObject::connect(&outVisibilitySlider, &QSlider::valueChanged, [this](const int value) {
+        outVisibilitySpin.blockSignals(true);
+        outVisibilitySpin.setValue(value);
+        outVisibilitySpin.blockSignals(false);
+        state->viewer->setMovementAreaFactor(value);
+    });
+
+    QObject::connect(&outVisibilitySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
+        outVisibilitySlider.blockSignals(true);
+        outVisibilitySlider.setValue(value);
+        outVisibilitySlider.blockSignals(false);
+        state->viewer->setMovementAreaFactor(value);
+    });
+
     QObject::connect(&movementSpeedSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->movementSpeed = value; });
     QObject::connect(&jumpFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->dropFrames = value; });
     QObject::connect(&walkFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->walkFrames = value; });
@@ -122,6 +143,9 @@ void NavigationTab::updateMovementArea() {
 void NavigationTab::loadSettings(const QSettings & settings) {
     Session::singleton().resetMovementArea();
 
+    const auto visibility = settings.value(OUTSIDE_AREA_VISIBILITY, 80).toInt();
+    outVisibilitySlider.setValue(visibility);
+    outVisibilitySlider.valueChanged(visibility);
     movementSpeedSpinBox.setValue(settings.value(MOVEMENT_SPEED, 100).toInt());
     jumpFramesSpinBox.setValue(settings.value(JUMP_FRAMES, 1).toInt());
     walkFramesSpinBox.setValue(settings.value(WALK_FRAMES, 10).toInt());
@@ -132,6 +156,7 @@ void NavigationTab::loadSettings(const QSettings & settings) {
 }
 
 void NavigationTab::saveSettings(QSettings & settings) {
+    settings.setValue(OUTSIDE_AREA_VISIBILITY, outVisibilitySlider.value());
     settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox.value());
     settings.setValue(JUMP_FRAMES, jumpFramesSpinBox.value());
     settings.setValue(WALK_FRAMES, walkFramesSpinBox.value());

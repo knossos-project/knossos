@@ -25,11 +25,14 @@
 
 #include <QButtonGroup>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QGroupBox>
+#include <QFrame>
+#include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSlider>
 #include <QSpinBox>
-#include <QVBoxLayout>
 #include <QWidget>
 
 enum class Recentering {
@@ -45,12 +48,15 @@ class NavigationTab : public QWidget {
     QHBoxLayout upperLayout;
 
     QGroupBox movementAreaGroup{"Movement area"};
-    QVBoxLayout movementAreaLayout;
-    QHBoxLayout areaMinLayout;
-    QHBoxLayout areaMaxLayout;
+    QGridLayout movementAreaLayout;
+    QLabel minLabel{tr("Min")};
+    QLabel maxLabel{tr("Max")};
     QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
+    QLabel outVisibilityLabel{tr("Visibility of outside area")};
+    QSlider outVisibilitySlider;
+    QSpinBox outVisibilitySpin;
     QPushButton resetMovementAreaButton{"Reset to dataset boundaries"};
-
+    QFrame separator;
     QGroupBox keyboardMovementGroup{"Keyboard movement"};
     QFormLayout keyboardMovementLayout;
     QSpinBox movementSpeedSpinBox;

@@ -120,6 +120,7 @@ const QString VP_I_VISIBLE = "vp%1_visible";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 
 // Navigation Widget
+const QString OUTSIDE_AREA_VISIBILITY = "outside_area_visibility";
 const QString MOVEMENT_SPEED = "movement_speed";
 const QString JUMP_FRAMES = "jump_frames";
 const QString WALK_FRAMES = "walk_frames";

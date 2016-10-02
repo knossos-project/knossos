@@ -56,7 +56,6 @@ Viewer::Viewer() {
 
     state->viewerState->renderInterval = FAST;
 
-    state->viewerState->movementAreaFactor = 80;
     state->viewerState->showOverlay = true;
 
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
@@ -79,7 +78,7 @@ Viewer::Viewer() {
 }
 
 void Viewer::setMovementAreaFactor(float alpha) {
-    state->viewerState->movementAreaFactor = alpha;
+    state->viewerState->outsideMovementAreaFactor = alpha;
     emit movementAreaFactorChangedSignal();
 }
 
@@ -179,7 +178,7 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                     factor = true;
                 }
                 if (factor) {
-                    float d = state->viewerState->movementAreaFactor * 1.0 / 100;
+                    float d = state->viewerState->outsideMovementAreaFactor * 1.0 / 100;
                     r *= d; g *= d; b *= d;
                 }
             }

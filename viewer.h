@@ -116,7 +116,7 @@ struct ViewerState {
     //In pennmode right and left click are switched
     bool penmode = false;
 
-    float movementAreaFactor{80.f};
+    float outsideMovementAreaFactor{80.f};
 
     // dataset & segmentation rendering options
     uint luminanceRangeDelta{255};

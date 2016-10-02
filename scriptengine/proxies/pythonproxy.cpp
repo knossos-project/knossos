@@ -216,7 +216,7 @@ QList<int> PythonProxy::getMovementArea() {
 }
 
 float PythonProxy::getMovementAreaFactor() {
-    return state->viewerState->movementAreaFactor;
+    return state->viewerState->outsideMovementAreaFactor;
 }
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
