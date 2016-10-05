@@ -113,6 +113,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_TracingAdvanced, tr("Tracing Advanced")},
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
+                                                 {AnnotationMode::Mode_Selection, tr("TA + Selection")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;

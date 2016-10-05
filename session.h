@@ -52,6 +52,8 @@ enum class AnnotationMode {
     Mode_MergeSimple = 0x10 | Brush | ObjectMerge,
 
     Mode_MergeTracing = 0x20 | NodeEditing | LinkedNodes | SkeletonCycles,
+
+    Mode_Selection = 0x40 | Mode_TracingAdvanced | ObjectSelection,
 };
 
 class Session : public QObject {
