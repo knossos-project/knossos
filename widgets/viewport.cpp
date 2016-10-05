@@ -745,8 +745,6 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-#include <algorithm>
-
 void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     // temporary, color information might be switched to per-object rather than per-vertex
     auto col = color;

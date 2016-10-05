@@ -1208,109 +1208,82 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
 }
 
 void Viewport3D::renderPointCloud() {
-    // if(Skeletonizer::tmp_hull_points && Skeletonizer::tmp_hull_normals) {
-        static Profiler cloud_profiler;
+    static bool pointcloud_init = true;
+    if(pointcloud_init) {
+        pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+            #version 110
+            attribute vec3 vertex;
+            attribute vec3 normal;
+            attribute vec4 color;
 
-        static bool pointcloud_init = true;
-        if(pointcloud_init) {
-            pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
-                #version 110
-                attribute vec3 vertex;
-                attribute vec3 normal;
-                attribute vec4 color;
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
 
-                uniform mat4 modelview_matrix;
-                uniform mat4 projection_matrix;
+            varying vec4 frag_color;
+            varying vec3 frag_normal;
+            varying mat4 mvp_matrix;
 
-                varying vec4 frag_color;
-                varying vec3 frag_normal;
-                varying mat4 mvp_matrix;
+            void main() {
+                mvp_matrix = projection_matrix * modelview_matrix;
+                gl_Position = mvp_matrix * vec4(vertex, 1.0);
+                frag_color = color;
+                frag_normal = normal;
+            }
+        )shaderSource");
 
-                void main() {
-                    mvp_matrix = projection_matrix * modelview_matrix;
-                    gl_Position = mvp_matrix * vec4(vertex, 1.0);
-                    frag_color = color;
-                    frag_normal = normal;
+        pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+            #version 110
+
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
+
+
+            varying vec4 frag_color;
+            varying vec3 frag_normal;
+            varying mat4 mvp_matrix;
+
+            void main() {
+                vec3 specular_color = vec3(1.0, 1.0, 1.0);
+                float specular_exp = 3.0;
+                vec3 view_dir = vec3(0.0, 0.0, 1.0);
+
+                // diffuse lighting
+                vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 1.0, 0.0, 0.0)).xyz);
+                float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
+
+                // pseudo ambient lighting
+                vec3 pseudo_ambient_dir = view_dir;
+                float pseudo_ambient_power = pow(abs(max(0.0, dot(pseudo_ambient_dir, frag_normal)) - 1.0), 3.0);
+
+                // specular
+                float specular_power = 0.0;
+                if (dot(frag_normal, -main_light_dir) >= 0.0) {
+                    specular_power = pow(max(0.0, dot(reflect(-main_light_dir, frag_normal), view_dir)), specular_exp);
                 }
-            )shaderSource");
 
-            pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
-                #version 110
+                vec3 fcolor = frag_color.rgb;
+                gl_FragColor = vec4((0.1 * fcolor                        // ambient
+                            + 0.9 * fcolor * main_light_power     // diffuse
+                            // + 0.4 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
+                            // + specular_color * specular_power // specular
+                            ) //* ambient_occlusion_power
+                            , 1.0);
 
-                uniform mat4 modelview_matrix;
-                uniform mat4 projection_matrix;
+                // gl_FragColor = vec4((frag_normal+1.0)/2.0, 1.0); // display normals
+            }
+        )shaderSource");
 
+        pointcloudShader.link();
+        pointcloud_init = false;
+    }
 
-                varying vec4 frag_color;
-                varying vec3 frag_normal;
-                varying mat4 mvp_matrix;
+    float screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
+    float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
+    glPointSize(point_size);
 
-                void main() {
-                    vec3 specular_color = vec3(1.0, 1.0, 1.0);
-                    float specular_exp = 3.0;
-                    vec3 view_dir = vec3(0.0, 0.0, 1.0);
-
-                    // diffuse lighting
-                    vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 1.0, 0.0, 0.0)).xyz);
-                    float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
-
-                    // pseudo ambient lighting
-                    vec3 pseudo_ambient_dir = view_dir;
-                    float pseudo_ambient_power = pow(abs(max(0.0, dot(pseudo_ambient_dir, frag_normal)) - 1.0), 3.0);
-
-                    // specular
-                    float specular_power = 0.0;
-                    if (dot(frag_normal, -main_light_dir) >= 0.0) {
-                        specular_power = pow(max(0.0, dot(reflect(-main_light_dir, frag_normal), view_dir)), specular_exp);
-                    }
-
-                    vec3 fcolor = frag_color.rgb;
-                    gl_FragColor = vec4((0.1 * fcolor                        // ambient
-                                + 0.9 * fcolor * main_light_power     // diffuse
-                                // + 0.4 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
-                                // + specular_color * specular_power // specular
-                                ) //* ambient_occlusion_power
-                                , 1.0);
-
-                    // gl_FragColor = vec4((frag_normal+1.0)/2.0, 1.0); // display normals
-                }
-            )shaderSource");
-
-            pointcloudShader.link();
-            pointcloud_init = false;
-        }
-
-        // std::vector<QVector3D> points;
-        // std::vector<QVector3D> normals;
-        // std::vector<std::array<GLfloat, 4>> colors;
-
-        // static bool pointcloud_vbo_init = true;
-        // if(pointcloud_vbo_init) {
-        //     // load the data
-        //     points = *Skeletonizer::tmp_hull_points;
-        //     normals = *Skeletonizer::tmp_hull_normals;
-        //     colors.resize(points.size(), std::array<GLfloat, 4>({{0.0f, 0.0f, 1.0f, 1.0f}}));
-
-        //     PointcloudBuffer dataBuf;
-        //     dataBuf.vertex_count = points.size();
-        //     dataBuf.position_buf.bind();
-        //     dataBuf.position_buf.allocate(points.data(), points.size() * 3 * sizeof(GLfloat));
-        //     dataBuf.normal_buf.bind();
-        //     dataBuf.normal_buf.allocate(normals.data(), normals.size() * 3 * sizeof(GLfloat));
-        //     dataBuf.color_buf.bind();
-        //     dataBuf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-        //     dataBuf.color_buf.release();
-        //     pointcloudBuffers.emplace(1234, dataBuf);
-        //     pointcloud_vbo_init = false;
-        // }
-
-        float point_size = 4.0f;//- std::pow(10.0f, (1.0f - state->skeletonState->zoomLevel / SKELZOOMMAX));
-        glPointSize(point_size);
-
-        for(auto& id_buf : pointcloudBuffers) {
-            renderPointCloudBuffer(id_buf.second);
-        }
-    // }
+    for(auto& id_buf : pointcloudBuffers) {
+        renderPointCloudBuffer(id_buf.second);
+    }
 }
 
 bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
