@@ -756,6 +756,18 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
         colors.push_back({{col[0], col[1], col[2], col[3]}});
     }
 
+    // check index validity
+    for(auto i : indices) {
+        if(i > verts.size()) {
+            qDebug() << "index wrong: " << i << "(should be smaller than " << verts.size() << ")";
+        }
+    }
+
+    std::vector<int> vertex_face_count(verts.size() / 3);
+    for(int i = 0; i < indices.size(); ++i) {
+        ++vertex_face_count[indices[i]];
+    }
+
     // generate normals of indexed vertices via cross product
     if(normals.empty() && !indices.empty()) {
         normals.resize(verts.size());
@@ -768,9 +780,15 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
 
             QVector3D normal{QVector3D::normal(e1, e2)};
 
-            normals[indices[i]*3] =   normals[indices[i+1]*3] =   normals[indices[i+2]*3] = normal.x();
-            normals[indices[i]*3+1] = normals[indices[i+1]*3+1] = normals[indices[i+2]*3+1] = normal.y();
-            normals[indices[i]*3+2] = normals[indices[i+1]*3+2] = normals[indices[i+2]*3+2] = normal.z();
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3] += normal.x() / vertex_face_count[indices[i+j]];
+            }
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3+1] += normal.y() / vertex_face_count[indices[i+j]];
+            }
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3+2] += normal.z() / vertex_face_count[indices[i+j]];
+            }
         }
     }
 

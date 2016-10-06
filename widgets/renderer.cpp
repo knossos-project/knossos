@@ -1237,7 +1237,6 @@ void Viewport3D::renderPointCloud() {
             uniform mat4 modelview_matrix;
             uniform mat4 projection_matrix;
 
-
             varying vec4 frag_color;
             varying vec3 frag_normal;
             varying mat4 mvp_matrix;
