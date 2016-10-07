@@ -1249,6 +1249,8 @@ void Viewport3D::renderPointCloud() {
                 // diffuse lighting
                 vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 1.0, 0.0, 0.0)).xyz);
                 float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
+                vec3 sub_light_dir = vec3(0.0, -1.0, 0.0);
+                float sub_light_power = max(0.0, dot(-sub_light_dir, frag_normal));
 
                 // pseudo ambient lighting
                 vec3 pseudo_ambient_dir = view_dir;
@@ -1262,7 +1264,8 @@ void Viewport3D::renderPointCloud() {
 
                 vec3 fcolor = frag_color.rgb;
                 gl_FragColor = vec4((0.1 * fcolor                        // ambient
-                            + 0.9 * fcolor * main_light_power     // diffuse
+                            + 0.9 * fcolor * main_light_power     // diffuse(main)
+                            + 0.2 * vec3(1.0, 1.0, 1.0) * sub_light_power     // diffuse(sub)
                             // + 0.4 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
                             // + specular_color * specular_power // specular
                             ) //* ambient_occlusion_power

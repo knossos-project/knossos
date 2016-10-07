@@ -751,24 +751,24 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     if(col.size() == 3) {
         col.append(1.0f);
     }
+
     std::vector<std::array<GLfloat, 4>> colors;
     for(int i = 0; i < verts.size(); ++i) {
         colors.push_back({{col[0], col[1], col[2], col[3]}});
-    }
-
-    // check index validity
-    for(auto i : indices) {
-        if(i > verts.size()) {
-            qDebug() << "index wrong: " << i << "(should be smaller than " << verts.size() << ")";
-        }
+        // tmp? scale vertices down by dataset scale
+        verts[i] /= (i%3==0)?state->scale.z:(i%2==0)?state->scale.y:state->scale.x;
     }
 
     std::vector<int> vertex_face_count(verts.size() / 3);
     for(int i = 0; i < indices.size(); ++i) {
         ++vertex_face_count[indices[i]];
+        // check index validity (can be removed if causing performance issues)
+        if(indices[i] > verts.size()) {
+            qDebug() << "index wrong: " << indices[i] << "(should be less than " << verts.size() << ")";
+        }
     }
 
-    // generate normals of indexed vertices via cross product
+    // generate normals of indexed vertices
     if(normals.empty() && !indices.empty()) {
         normals.resize(verts.size());
         for(int i = 0; i < indices.size()-2; i += 3) {
