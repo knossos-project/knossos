@@ -756,7 +756,7 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     for(int i = 0; i < verts.size(); ++i) {
         colors.push_back({{col[0], col[1], col[2], col[3]}});
         // tmp? scale vertices down by dataset scale
-        verts[i] /= (i%3==0)?state->scale.z:(i%2==0)?state->scale.y:state->scale.x;
+        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
     }
 
     std::vector<int> vertex_face_count(verts.size() / 3);
