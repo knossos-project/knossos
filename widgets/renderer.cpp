@@ -38,6 +38,7 @@
 #include <QQuaternion>
 #include <QVector3D>
 #include <QOpenGLBuffer>
+#include <QOpenGLFramebufferObject>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
@@ -1207,6 +1208,52 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
     glPopMatrix();
 }
 
+void Viewport3D::renderPointCloudBufferIds(PointcloudBuffer& buf, QOpenGLBuffer& id_color_buf) {
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
+    glTranslatef(0.5, 0.5, 0.5);
+
+    // get modelview and projection matrices
+    GLfloat modelview_mat[4][4];
+    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+    GLfloat projection_mat[4][4];
+    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+
+    pointcloudIdShader.bind();
+    pointcloudIdShader.setUniformValue("modelview_matrix", modelview_mat);
+    pointcloudIdShader.setUniformValue("projection_matrix", projection_mat);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    buf.position_buf.bind();
+    int vertexLocation = pointcloudIdShader.attributeLocation("vertex");
+    pointcloudIdShader.enableAttributeArray(vertexLocation);
+    pointcloudIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    buf.position_buf.release();
+
+    id_color_buf.bind();
+    int colorLocation = pointcloudIdShader.attributeLocation("color");
+    pointcloudIdShader.enableAttributeArray(colorLocation);
+    pointcloudIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+    id_color_buf.release();
+
+    if(buf.index_count != 0) {
+        buf.index_buf.bind();
+        glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
+        buf.index_buf.release();
+    } else {
+        glDrawArrays(buf.render_mode, 0, buf.vertex_count);
+    }
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+    pointcloudIdShader.release();
+    glPopMatrix();
+}
+
 void Viewport3D::renderPointCloud() {
     static bool pointcloud_init = true;
     if(pointcloud_init) {
@@ -1287,6 +1334,104 @@ void Viewport3D::renderPointCloud() {
         renderPointCloudBuffer(id_buf.second);
     }
 }
+
+uint32_t Viewport3D::pointcloudColorToId(std::array<unsigned char, 4> color) {
+    return color[0] + (color[1] << 8) + (color[2] << 16) + (color[3] << 24);
+}
+
+std::array<unsigned char, 4> Viewport3D::pointcloudIdToColor(uint32_t id) {
+    return {{static_cast<unsigned char>(id),
+             static_cast<unsigned char>(id >> 8),
+             static_cast<unsigned char>(id >> 16),
+             static_cast<unsigned char>(id >> 24)}};
+}
+
+struct BufferSelection {
+    int buffer_id;
+    std::array<unsigned int, 3> vertices;
+};
+
+uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
+    static bool pointcloud_id_init = true;
+    if(pointcloud_id_init) {
+        pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+            #version 110
+            attribute vec3 vertex;
+            attribute vec4 color;
+
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
+
+            varying vec4 frag_color;
+            varying mat4 mvp_matrix;
+
+            void main() {
+                mvp_matrix = projection_matrix * modelview_matrix;
+                gl_Position = mvp_matrix * vec4(vertex, 1.0);
+                frag_color = color;
+            }
+        )shaderSource");
+
+        pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+            #version 110
+
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
+
+            varying vec4 frag_color;
+            varying mat4 mvp_matrix;
+
+            void main() {
+                gl_FragColor = frag_color;
+            }
+        )shaderSource");
+
+        pointcloudIdShader.link();
+        pointcloud_id_init = false;
+    }
+
+    // turn off vertex color interpolation
+    // GLint previous_shade_model;
+    // glGetIntegerv(GL_SHADE_MODEL, &previous_shade_model);
+    // glShadeModel(GL_FLAT);
+
+    // create FBO
+    // QOpenGLFramebufferObject pickFBO{width(), height()};
+
+    // create id map
+    uint32_t id_counter = 1;
+    std::unordered_map<int, BufferSelection> selection_ids;
+    for(auto& buf : pointcloudBuffers) {
+        std::vector<std::array<unsigned char, 4>> colors;
+        colors.resize(buf.second.vertex_count);
+
+        // std::array<unsigned char, 4> col{{0, 255, 0, 255}};
+        // for(int i = 0; i < buf.second.vertex_count; ++i) {
+        //     colors[i] = std::array<unsigned char, 4>{{col[0], col[1], col[2], col[3]}};
+        // }
+        for(std::size_t i = 0; i < buf.second.index_count; i += 3) { // for each face
+            auto id_color = pointcloudIdToColor(id_counter);
+            std::array<unsigned int, 3> vertices{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
+            colors[vertices[0]] = colors[vertices[1]] = colors[vertices[2]] = id_color;
+            selection_ids.emplace(id_counter, BufferSelection{buf.first, vertices});
+            id_counter += 1;
+        }
+        QOpenGLBuffer id_color_buf{QOpenGLBuffer::VertexBuffer};
+        id_color_buf.create();
+        id_color_buf.bind();
+        id_color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GL_UNSIGNED_BYTE));
+        renderPointCloudBufferIds(buf.second, id_color_buf);
+        id_color_buf.destroy();
+    }
+
+    // revert vertex color interpolation
+    // glShadeModel(previous_shade_model);
+
+    // read color and translate to id
+    //glReadPixels(0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+    return 0;
+}
+
 
 bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if(!state->viewerState->selectModeFlag) {
@@ -1706,7 +1851,8 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glDisable(GL_BLEND);
     }
 
-    renderPointCloud();
+    // renderPointCloud();
+    pickPointCloudIdAtPosition(1,2);
 
     if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();

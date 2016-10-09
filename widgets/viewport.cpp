@@ -804,6 +804,8 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     buf.index_buf.bind();
     buf.index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     buf.index_buf.release();
+    buf.verts = verts;
+    buf.indices = indices;
     pointcloudBuffers.emplace(tree_id, buf);
 }
 

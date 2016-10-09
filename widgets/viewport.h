@@ -284,6 +284,9 @@ struct PointcloudBuffer {
     QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
     GLenum render_mode;
+
+    QVector<float> verts;
+    QVector<unsigned int> indices;
 };
 
 class Viewport3D : public ViewportBase {
@@ -291,6 +294,7 @@ class Viewport3D : public ViewportBase {
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
     std::unordered_map<int, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
+    QOpenGLShaderProgram pointcloudIdShader;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -298,6 +302,10 @@ class Viewport3D : public ViewportBase {
     bool renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
+    void renderPointCloudBufferIds(PointcloudBuffer& buf, QOpenGLBuffer& id_color_buf);
+    uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
+    std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
+    uint32_t pickPointCloudIdAtPosition(int x, int y);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
