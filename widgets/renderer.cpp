@@ -1208,7 +1208,7 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
     glPopMatrix();
 }
 
-void Viewport3D::renderPointCloudBufferIds(PointcloudBuffer& buf, QOpenGLBuffer& id_color_buf) {
+void Viewport3D::renderPointCloudBufferIds(PointcloudBuffer& buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
@@ -1233,11 +1233,11 @@ void Viewport3D::renderPointCloudBufferIds(PointcloudBuffer& buf, QOpenGLBuffer&
     pointcloudIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
 
-    id_color_buf.bind();
+    buf.color_buf.bind();
     int colorLocation = pointcloudIdShader.attributeLocation("color");
     pointcloudIdShader.enableAttributeArray(colorLocation);
     pointcloudIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-    id_color_buf.release();
+    buf.color_buf.release();
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
@@ -1390,11 +1390,6 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         pointcloud_id_init = false;
     }
 
-    // turn off vertex color interpolation
-    // GLint previous_shade_model;
-    // glGetIntegerv(GL_SHADE_MODEL, &previous_shade_model);
-    // glShadeModel(GL_FLAT);
-
     // create FBO
     // QOpenGLFramebufferObject pickFBO{width(), height()};
 
@@ -1404,28 +1399,41 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
     for(auto& buf : pointcloudBuffers) {
         std::vector<std::array<unsigned char, 4>> colors;
         colors.resize(buf.second.vertex_count);
+        std::vector<std::array<float, 3>> flat_verts;
+        std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        // std::array<unsigned char, 4> col{{0, 255, 0, 255}};
+        // std::array<GLubyte, 4> col{{0, 255, 0, 255}};
         // for(int i = 0; i < buf.second.vertex_count; ++i) {
-        //     colors[i] = std::array<unsigned char, 4>{{col[0], col[1], col[2], col[3]}};
+        //     colors[i] = std::array<GLubyte, 4>{{col[0], col[1], col[2], col[3]}};
         // }
         for(std::size_t i = 0; i < buf.second.index_count; i += 3) { // for each face
+            // generate color buffer
+            // auto id_color = pointcloudIdToColor(id_counter);
+            // std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
+            // colors[v_ids[0]] = colors[v_ids[1]] = colors[v_ids[2]] = id_color;
+            // selection_ids.emplace(id_counter, BufferSelection{buf.first, v_ids});
+            // id_counter += 1;
+            // generate flat vertex and color buffer
             auto id_color = pointcloudIdToColor(id_counter);
-            std::array<unsigned int, 3> vertices{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
-            colors[vertices[0]] = colors[vertices[1]] = colors[vertices[2]] = id_color;
-            selection_ids.emplace(id_counter, BufferSelection{buf.first, vertices});
+            std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
+            for(std::size_t j = 0; j < 3; ++j) {
+                flat_verts.emplace_back(std::array<float, 3>{{buf.second.verts[v_ids[j]], buf.second.verts[v_ids[j]+1], buf.second.verts[v_ids[j]+2]}});
+                flat_colors.emplace_back(id_color);
+            }
+            selection_ids.emplace(id_counter, BufferSelection{buf.first, v_ids});
             id_counter += 1;
         }
-        QOpenGLBuffer id_color_buf{QOpenGLBuffer::VertexBuffer};
-        id_color_buf.create();
-        id_color_buf.bind();
-        id_color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GL_UNSIGNED_BYTE));
-        renderPointCloudBufferIds(buf.second, id_color_buf);
-        id_color_buf.destroy();
-    }
+        PointcloudBuffer id_buf{GL_TRIANGLES};
+        id_buf.vertex_count = flat_verts.size();
+        id_buf.position_buf.bind();
+        id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));
 
-    // revert vertex color interpolation
-    // glShadeModel(previous_shade_model);
+        id_buf.color_buf.bind();
+        id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * 4 * sizeof(GLubyte));
+
+        renderPointCloudBufferIds(id_buf);
+        // qDebug() << "verts:" << flat_verts.size();
+    }
 
     // read color and translate to id
     //glReadPixels(0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);

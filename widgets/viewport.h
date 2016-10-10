@@ -302,7 +302,7 @@ class Viewport3D : public ViewportBase {
     bool renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
-    void renderPointCloudBufferIds(PointcloudBuffer& buf, QOpenGLBuffer& id_color_buf);
+    void renderPointCloudBufferIds(PointcloudBuffer& buf);
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
     uint32_t pickPointCloudIdAtPosition(int x, int y);
