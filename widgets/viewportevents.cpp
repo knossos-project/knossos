@@ -670,6 +670,33 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     }
 }
 
+void Viewport3D::handleKeyPress(const QKeyEvent *event) {
+    if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
+        if(!wiggle3D) {
+            wiggletimer = new QTimer();
+            wiggletimer->start(100);
+            QObject::connect(wiggletimer, &QTimer::timeout, [this](){
+                if(wiggledir) {
+                    state->skeletonState->rotdx += 5;
+                } else {
+                    state->skeletonState->rotdx -= 5;
+                }
+                wiggledir = !wiggledir;
+                if(wiggle3D) wiggletimer->start(100);
+            });
+        }
+        wiggle3D = true;
+    }
+}
+
+void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
+    if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
+        wiggle3D = false;
+        wiggletimer->stop();
+        delete wiggletimer;
+    }
+}
+
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp) {
     const auto & currentPos = state->viewerState->currentPosition;
     const auto leftUpper = currentPos - (vp.v1 * vp.edgeLength / 2 / vp.screenPxXPerDataPx) - (vp.v2 * vp.edgeLength / 2 / vp.screenPxYPerDataPx);

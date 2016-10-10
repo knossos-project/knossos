@@ -40,6 +40,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QTimer>
 
 #include <atomic>
 #include <boost/multi_array.hpp>
@@ -295,6 +296,9 @@ class Viewport3D : public ViewportBase {
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
     virtual void paintGL() override;
+    bool wiggle3D{false};
+    bool wiggledir{false};
+    QTimer *wiggletimer;
     bool renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
@@ -307,6 +311,8 @@ class Viewport3D : public ViewportBase {
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
+    virtual void handleKeyPress(const QKeyEvent *event) override;
+    virtual void handleKeyRelease(const QKeyEvent *event) override;
 public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
