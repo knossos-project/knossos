@@ -371,6 +371,11 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
     }
 }
 
+void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
+    qDebug() << "picking: " << pickPointCloudIdAtPosition(1, 2);
+    ViewportBase::handleMouseReleaseLeft(event);
+}
+
 void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched

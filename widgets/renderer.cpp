@@ -1859,8 +1859,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glDisable(GL_BLEND);
     }
 
-    // renderPointCloud();
-    pickPointCloudIdAtPosition(1,2);
+    renderPointCloud();
 
     if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();

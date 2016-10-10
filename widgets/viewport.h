@@ -314,6 +314,7 @@ class Viewport3D : public ViewportBase {
 
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
 public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
