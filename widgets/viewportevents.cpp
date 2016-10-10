@@ -372,7 +372,24 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 }
 
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    qDebug() << "picking: " << pickPointCloudIdAtPosition(1, 2);
+    makeCurrent();
+    RenderOptions options;
+    options.pointCloudPicking = true;
+    renderSkeletonVP(options);
+
+    glReadBuffer(GL_BACK);
+    glPixelStoref(GL_PACK_ALIGNMENT, 1);
+    // read color and translate to id
+
+    auto x = event->x();
+    auto y = event->y();
+    boost::multi_array<std::array<GLubyte, 4>, 2> buffer(boost::extents[width()][height()]);
+    glReadPixels(0, 0, width(), height(), GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer.data()));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFlush();
+    const auto yinverse = height() - y - 1;
+    qDebug() << buffer[yinverse][x][0] << buffer[yinverse][x][0] << buffer[yinverse][x][1] << buffer[yinverse][x][2] << buffer[yinverse][x][3];
+    qDebug() << "picking: " << pointcloudColorToId(buffer[yinverse][x]);
     ViewportBase::handleMouseReleaseLeft(event);
 }
 

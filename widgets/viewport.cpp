@@ -44,7 +44,7 @@ bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
 RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(Segmentation::enabled && state->viewerState->showOverlay),
-drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection) {}
+drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection), pointCloudPicking{false} {}
 
 RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
     : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),

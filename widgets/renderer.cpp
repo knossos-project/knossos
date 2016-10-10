@@ -1351,7 +1351,7 @@ struct BufferSelection {
     std::array<unsigned int, 3> vertices;
 };
 
-uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
+void Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
     static bool pointcloud_id_init = true;
     if(pointcloud_id_init) {
         pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
@@ -1390,6 +1390,8 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         pointcloud_id_init = false;
     }
 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
+
     // create FBO
     // QOpenGLFramebufferObject pickFBO{width(), height()};
 
@@ -1424,12 +1426,7 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * 4 * sizeof(GLubyte));
 
         renderPointCloudBufferIds(id_buf);
-        // qDebug() << "vertex_coords:" << flat_verts.size();
     }
-
-    // read color and translate to id
-    //glReadPixels(0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-    return 0;
 }
 
 
@@ -1851,7 +1848,11 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glDisable(GL_BLEND);
     }
 
-    renderPointCloud();
+    if (options.pointCloudPicking) {
+        pickPointCloudIdAtPosition(0, 0);
+    } else {
+        renderPointCloud();
+    }
 
     if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();

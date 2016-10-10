@@ -103,6 +103,7 @@ struct RenderOptions {
     bool highlightActiveNode;
     bool highlightSelection;
     SelectionPass selectionPass{SelectionPass::NoSelection};
+    bool pointCloudPicking;
 };
 
 class ViewportBase;
@@ -305,7 +306,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloudBufferIds(PointcloudBuffer& buf);
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
-    uint32_t pickPointCloudIdAtPosition(int x, int y);
+    void pickPointCloudIdAtPosition(int x, int y);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
