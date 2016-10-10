@@ -1402,26 +1402,18 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        // std::array<GLubyte, 4> col{{0, 255, 0, 255}};
-        // for(int i = 0; i < buf.second.vertex_count; ++i) {
-        //     colors[i] = std::array<GLubyte, 4>{{col[0], col[1], col[2], col[3]}};
-        // }
-        for(std::size_t i = 0; i < buf.second.index_count; i += 3) { // for each face
-            // generate color buffer
-            // auto id_color = pointcloudIdToColor(id_counter);
-            // std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
-            // colors[v_ids[0]] = colors[v_ids[1]] = colors[v_ids[2]] = id_color;
-            // selection_ids.emplace(id_counter, BufferSelection{buf.first, v_ids});
-            // id_counter += 1;
-            // generate flat vertex and color buffer
+        for(std::size_t i = 0; i < buf.second.index_count - 3; i += 3) { // for each face
             auto id_color = pointcloudIdToColor(id_counter);
             std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
             for(std::size_t j = 0; j < 3; ++j) {
-                flat_verts.emplace_back(std::array<float, 3>{{buf.second.verts[v_ids[j]], buf.second.verts[v_ids[j]+1], buf.second.verts[v_ids[j]+2]}});
+                flat_verts.emplace_back(std::array<float, 3>{{
+                    buf.second.vertex_coords[v_ids[j]*3],
+                    buf.second.vertex_coords[v_ids[j]*3+1],
+                    buf.second.vertex_coords[v_ids[j]*3+2]}});
                 flat_colors.emplace_back(id_color);
             }
             selection_ids.emplace(id_counter, BufferSelection{buf.first, v_ids});
-            id_counter += 1;
+            ++id_counter;
         }
         PointcloudBuffer id_buf{GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
@@ -1432,7 +1424,7 @@ uint32_t Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * 4 * sizeof(GLubyte));
 
         renderPointCloudBufferIds(id_buf);
-        // qDebug() << "verts:" << flat_verts.size();
+        // qDebug() << "vertex_coords:" << flat_verts.size();
     }
 
     // read color and translate to id

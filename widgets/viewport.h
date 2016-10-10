@@ -277,15 +277,15 @@ struct PointcloudBuffer {
     //     index_buf.destroy();
     // }
 
-    std::size_t vertex_count;
-    std::size_t index_count;
+    std::size_t vertex_count{0};
+    std::size_t index_count{0};
     QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer normal_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
-    GLenum render_mode;
+    GLenum render_mode{GL_POINTS};
 
-    QVector<float> verts;
+    QVector<float> vertex_coords;
     QVector<unsigned int> indices;
 };
 
