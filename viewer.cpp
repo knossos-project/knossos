@@ -1367,7 +1367,7 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
     const auto & nodeColors = state->viewerState->nodeColors;
     QColor color;
     if (!property.isEmpty() && node.properties.contains(property) && range > 0) {
-        const int index = node.properties[property].toDouble() / range * nodeColors.size();
+        const int index = (node.properties[property].toDouble() / range * nodeColors.size()) - 1;
         color = QColor::fromRgb(std::get<0>(nodeColors[index]), std::get<1>(nodeColors[index]), std::get<2>(nodeColors[index]));
     }
     else if (node.isBranchNode) { //branch nodes are always blue

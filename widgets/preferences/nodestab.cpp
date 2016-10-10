@@ -64,8 +64,11 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertyColorCombo.setModel(&propertyModel);
     propertyColorCombo.setCurrentIndex(0);
     propertyColorCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    propertyMinSpin.setRange(-10e8, 10e8);
     propertyMinSpin.setSingleStep(0.1);
     propertyMinSpin.setPrefix("Min: ");
+    propertyMaxSpin.setRange(-10e8, 10e8);
     propertyMaxSpin.setSingleStep(0.1);
     propertyMaxSpin.setPrefix("Max: ");
 
