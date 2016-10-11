@@ -1335,6 +1335,31 @@ void Viewport3D::renderPointCloud() {
     }
 }
 
+Coordinate Viewport3D::pointCloudTriangleIDToCoord(const uint32_t triangleID) const {
+    if (triangleID == 0) {
+        return {0, 0, 0};
+    }
+    uint32_t offset = 0;
+    for (const auto & buf : pointcloudBuffers) {
+        if (static_cast<uint32_t>(buf.second.indices.size()/3) >= triangleID) {
+            std::array<unsigned int, 3> vertex_ids{{
+                    buf.second.indices[(triangleID - offset) * 3 - 3],
+                    buf.second.indices[(triangleID - offset) * 3 - 2],
+                    buf.second.indices[(triangleID - offset) * 3 - 1]}};
+            Coordinate position = {0, 0, 0};
+            for (const auto vertIdx : vertex_ids) {
+                position.x += buf.second.vertex_coords[vertIdx * 3 + 0];
+                position.y += buf.second.vertex_coords[vertIdx * 3 + 1];
+                position.z += buf.second.vertex_coords[vertIdx * 3 + 2];
+            }
+            return position/3;
+        } else {
+            offset += buf.second.indices.size()/3;
+        }
+    }
+    return {0, 0, 0};
+}
+
 uint32_t Viewport3D::pointcloudColorToId(std::array<unsigned char, 4> color) {
     return color[0] + (color[1] << 8) + (color[2] << 16) + (color[3] << 24);
 }

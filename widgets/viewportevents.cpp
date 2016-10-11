@@ -383,13 +383,16 @@ void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
 
     auto x = event->x();
     auto y = event->y();
-    boost::multi_array<std::array<GLubyte, 4>, 2> buffer(boost::extents[width()][height()]);
-    glReadPixels(0, 0, width(), height(), GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer.data()));
+    const auto yinverse = height() - y - 1;
+    boost::multi_array<std::array<GLubyte, 4>, 2> buffer(boost::extents[1][1]);
+    glReadPixels(x, yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLvoid *>(buffer.data()));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glFlush();
-    const auto yinverse = height() - y - 1;
-    qDebug() << buffer[yinverse][x][0] << buffer[yinverse][x][0] << buffer[yinverse][x][1] << buffer[yinverse][x][2] << buffer[yinverse][x][3];
-    qDebug() << "picking: " << pointcloudColorToId(buffer[yinverse][x]);
+    qDebug() << "picked color" << buffer[0][0][0] << buffer[0][0][1] << buffer[0][0][2] << buffer[0][0][3];
+    auto triangleID = pointcloudColorToId(buffer[0][0]);
+    auto trianglePos = pointCloudTriangleIDToCoord(triangleID);
+    qDebug() << "picked position" << trianglePos.x << trianglePos.y << trianglePos.z;
+    qDebug() << "picked triangle ID: " << triangleID;
     ViewportBase::handleMouseReleaseLeft(event);
 }
 
