@@ -27,6 +27,7 @@
 #include <QList>
 #include <QObject>
 
+
 class nodeListElement;
 class treeListElement;
 
@@ -39,7 +40,7 @@ public slots:
     QColor color(treeListElement *self);
     nodeListElement *first_node(treeListElement *self);
     QList<nodeListElement *> *nodes(treeListElement *self);
-    int tree_id(treeListElement *self);
+    quint64 tree_id(treeListElement *self);
     QString comment(treeListElement *self);
     static QString static_Tree_help();
 };

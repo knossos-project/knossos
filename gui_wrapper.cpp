@@ -28,7 +28,7 @@
 #include <QMessageBox>
 #include <QObject>
 
-void checkedMoveNodes(QWidget * parent, int treeID) {
+void checkedMoveNodes(QWidget * parent, decltype(treeListElement::treeID) treeID) {
     QMessageBox prompt(parent);
     prompt.setIcon(QMessageBox::Question);
     prompt.setText(QObject::tr("Confirmation Requested"));

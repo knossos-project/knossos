@@ -138,8 +138,8 @@ struct SkeletonState {
 
     std::list<treeListElement> trees;
     std::list<Synapse> synapses;
-    std::unordered_map<int, treeListElement *> treesByID;
-    std::unordered_map<std::uint64_t, nodeListElement *> nodesByNodeID;
+    std::unordered_map<decltype(treeListElement::treeID), treeListElement *> treesByID;
+    std::unordered_map<decltype(nodeListElement::nodeID), nodeListElement *> nodesByNodeID;
 
     decltype(treeListElement::treeID) nextAvailableTreeID{1};
     decltype(nodeListElement::nodeID) nextAvailableNodeID{1};
@@ -235,27 +235,7 @@ public:
     static std::unique_ptr<std::vector<QVector3D>> tmp_hull_points;
     static std::unique_ptr<std::vector<QVector3D>> tmp_hull_normals;
 
-signals:
-    void guiModeLoaded();
-    void branchPoppedSignal();
-    void branchPushedSignal();
-    void lockingChanged();
-    void lockedToNode(const std::uint64_t nodeID);
-    void unlockedNode();
-    void nodeAddedSignal(const nodeListElement & node);
-    void nodeChangedSignal(const nodeListElement & node);
-    void nodeRemovedSignal(const std::uint64_t nodeID);
-    void jumpedToNodeSignal(const nodeListElement & node);
-    void propertiesChanged(const QSet<QString> & numberProperties);
-    void treeAddedSignal(const treeListElement & tree);
-    void treeChangedSignal(const treeListElement & tree);
-    void treeRemovedSignal(const int treeID);
-    void treesMerged(const int treeID,const int treeID2);
-    void nodeSelectionChangedSignal();
-    void treeSelectionChangedSignal();
-    void resetData();
-public slots:
-    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const int treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
+    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const decltype(treeListElement::treeID) treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     void selectNodes(QSet<nodeListElement *> nodes);
     void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
@@ -264,7 +244,7 @@ public slots:
     void deleteSelectedNodes();
     void toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent);
 
-    bool delTree(int treeID);
+    bool delTree(decltype(treeListElement::treeID) treeID);
     void clearSkeleton();
     boost::optional<nodeListElement &> UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node);
@@ -284,7 +264,7 @@ public slots:
     void movedHybridNode(nodeListElement & node, const quint64 newSubobjectId, const Coordinate & oldPos);
     void selectObjectForNode(const nodeListElement & node);
     void jumpToNode(const nodeListElement & node);
-    bool setActiveTreeByID(int treeID);
+    bool setActiveTreeByID(decltype(treeListElement::treeID) treeID);
 
     void loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
     void saveXmlSkeleton(QIODevice &file) const;
@@ -293,8 +273,8 @@ public slots:
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);
     void goToNode(const bool next);
-    void moveSelectedNodesToTree(int treeID);
-    static treeListElement* findTreeByTreeID(int treeID);
+    void moveSelectedNodesToTree(decltype(treeListElement::treeID) treeID);
+    static treeListElement* findTreeByTreeID(decltype(treeListElement::treeID) treeID);
     static nodeListElement *findNodeByNodeID(std::uint64_t nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);
     bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
@@ -303,17 +283,37 @@ public slots:
     void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(std::uint64_t nodeID);
-    bool mergeTrees(int treeID1, int treeID2);
+    bool mergeTrees(decltype(treeListElement::treeID) treeID1, decltype(treeListElement::treeID) treeID2);
     void updateTreeColors();
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     static bool updateCircRadius(nodeListElement *node);
 
-public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }
+
+signals:
+    void guiModeLoaded();
+    void branchPoppedSignal();
+    void branchPushedSignal();
+    void lockingChanged();
+    void lockedToNode(const std::uint64_t nodeID);
+    void unlockedNode();
+    void nodeAddedSignal(const nodeListElement & node);
+    void nodeChangedSignal(const nodeListElement & node);
+    void nodeRemovedSignal(const std::uint64_t nodeID);
+    void jumpedToNodeSignal(const nodeListElement & node);
+    void propertiesChanged(const QSet<QString> & numberProperties);
+    void treeAddedSignal(const treeListElement & tree);
+    void treeChangedSignal(const treeListElement & tree);
+    void treeRemovedSignal(const std::uint64_t treeID);
+    void treesMerged(const std::uint64_t treeID,const std::uint64_t treeID2);
+    void nodeSelectionChangedSignal();
+    void treeSelectionChangedSignal();
+    void resetData();
+
 };
 
 #endif // SKELETONIZER_H

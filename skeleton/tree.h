@@ -37,7 +37,7 @@ class segmentListElement;
 
 class treeListElement : public PropertyQuery {
 public:
-    int treeID;
+    std::uint64_t treeID;
     std::list<treeListElement>::iterator iterator;
 
     std::list<nodeListElement> nodes;

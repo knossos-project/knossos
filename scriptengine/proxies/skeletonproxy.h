@@ -42,19 +42,19 @@ public slots:
     bool has_unsaved_changes();
 
     void delete_skeleton();
-    treeListElement *find_tree_by_id(int tree_id);
+    treeListElement *find_tree_by_id(quint64 tree_id);
     QList<treeListElement *> find_trees(const QString & comment);
     treeListElement *first_tree();
-    treeListElement *tree_with_previous_id(int tree_id);
-    treeListElement *tree_with_next_id(int tree_id);
+    treeListElement *tree_with_previous_id(quint64 tree_id);
+    treeListElement *tree_with_next_id(quint64 tree_id);
     QList<treeListElement *> trees();
     treeListElement * add_tree(const QVariantHash & properties = {});
-    treeListElement * add_tree(int tree_id, const QVariantHash & properties = {});
-    void set_tree_comment(int tree_id, const QString & comment);
-    void set_tree_color(int tree_id, const QColor & color);
-    bool set_active_tree(int tree_id);
-    bool delete_tree(int tree_id);
-    bool merge_trees(int tree_id, int other_tree_id);
+    treeListElement * add_tree(quint64 tree_id, const QVariantHash & properties = {});
+    void set_tree_comment(quint64 tree_id, const QString & comment);
+    void set_tree_color(quint64 tree_id, const QColor & color);
+    bool set_active_tree(quint64 tree_id);
+    bool delete_tree(quint64 tree_id);
+    bool merge_trees(quint64 tree_id, quint64 other_tree_id);
     void add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
     void delete_tree_pointcloud(int tree_id);
     void move_to_next_tree();
@@ -62,8 +62,8 @@ public slots:
 
     nodeListElement *find_node_by_id(quint64 node_id);
     QList<nodeListElement *> find_nodes_in_tree(treeListElement & tree, const QString & comment);
-    void move_node_to_tree(quint64 node_id, int tree_id);
-    nodeListElement *find_nearby_node_from_tree(int tree_id, int x, int y, int z);
+    void move_node_to_tree(quint64 node_id, quint64 tree_id);
+    nodeListElement *find_nearby_node_from_tree(quint64 tree_id, int x, int y, int z);
     nodeListElement *node_with_prev_id(quint64 node_id, bool same_tree);
     nodeListElement *node_with_next_id(quint64 node_id, bool same_tree);
     bool edit_node(quint64 node_id, float radius, int x, int y, int z, int in_mag);

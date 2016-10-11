@@ -119,7 +119,7 @@ void Skeletonizer::loadHullPoints(QIODevice & file) {
     tmp_hull_normals = std::make_unique<std::vector<QVector3D>>(point_data_normals);
 }
 
-treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
+treeListElement* Skeletonizer::findTreeByTreeID(decltype(treeListElement::treeID) treeID) {
     const auto treeIt = state->skeletonState->treesByID.find(treeID);
     return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
 }
@@ -598,7 +598,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 xml.skipCurrentElement();
             }
         } else if(xml.name() == "thing") {
-            int treeID{0};
+            decltype(treeListElement::treeID) treeID{0};
             bool okr{false}, okg{false}, okb{false}, oka{false};
             float red{-1.0f}, green{-1.0f}, blue{-1.0f}, alpha{-1.0f};
             QVariantHash properties;
@@ -606,7 +606,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                 const auto & name = attribute.name();
                 const auto & value = attribute.value();
                 if (name == "id") {
-                    treeID = value.toInt();
+                    treeID = value.toULongLong();
                 } else if (name == "color.r") {
                     red = value.toFloat(&okr);
                 } else if (name == "color.g") {
@@ -897,10 +897,10 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
     return true;
 }
 
-bool Skeletonizer::delTree(int treeID) {
+bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
     auto * const treeToDel = findTreeByTreeID(treeID);
     if (treeToDel == nullptr) {
-        qDebug("There exists no tree with ID %d. Unable to delete it.", treeID);
+        qDebug() << tr("There exists no tree with ID %1. Unable to delete it.").arg(treeID);
         return false;
     }
 
@@ -985,11 +985,11 @@ nodeListElement * Skeletonizer::findNearbyNode(treeListElement * nearbyTree, Coo
     return nodeWithCurrentlySmallestDistance;
 }
 
-bool Skeletonizer::setActiveTreeByID(int treeID) {
+bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
     treeListElement *currentTree;
     currentTree = findTreeByTreeID(treeID);
     if (currentTree == nullptr) {
-        qDebug("There exists no tree with ID %d!", treeID);
+        qDebug() << tr("There exists no tree with ID %1!").arg(treeID);
         return false;
     } else if (currentTree == state->skeletonState->activeTree) {
         return true;
@@ -1060,7 +1060,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<decltyp
     return addNode(nodeId, skeletonState.defaultNodeRadius, tree.treeID, position, ViewportType::VIEWPORT_UNDEFINED, -1, boost::none, false, properties);
 }
 
-boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::uint64_t> nodeID, const float radius, const int treeID, const Coordinate & position
+boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::uint64_t> nodeID, const float radius, const decltype(treeListElement::treeID) treeID, const Coordinate & position
         , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
     state->skeletonState->branchpointUnresolved = false;
 
@@ -1164,7 +1164,7 @@ void Skeletonizer::clearSkeleton() {
     emit resetData();
 }
 
-bool Skeletonizer::mergeTrees(int treeID1, int treeID2) {
+bool Skeletonizer::mergeTrees(decltype(treeListElement::treeID) treeID1, decltype(treeListElement::treeID) treeID2) {
     if(treeID1 == treeID2) {
         qDebug() << "Could not merge trees. Provided IDs are the same!";
         return false;
@@ -1308,7 +1308,7 @@ treeListElement * Skeletonizer::getTreeWithRelationalID(treeListElement * curren
     }
 
     treeListElement * treeFound = nullptr;
-    int extremalIdDistance = skeletonState.trees.size();
+    std::uint64_t extremalIdDistance = skeletonState.trees.size();
     for (auto & tree : skeletonState.trees) {
         if (func(tree.treeID, currentTree->treeID)) {
             const auto distance = std::max(currentTree->treeID, tree.treeID) - std::min(currentTree->treeID, tree.treeID);
@@ -1694,7 +1694,7 @@ void Skeletonizer::goToNode(const bool next = true) {
     }
 }
 
-void Skeletonizer::moveSelectedNodesToTree(int treeID) {
+void Skeletonizer::moveSelectedNodesToTree(decltype(treeListElement::treeID) treeID) {
     if (auto * newTree = findTreeByTreeID(treeID)) {
         for (auto * const node : state->skeletonState->selectedNodes) {
             newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
