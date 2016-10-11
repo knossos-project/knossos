@@ -359,3 +359,11 @@ QString SkeletonProxy::help() {
                    "\n move_to(x, y, z) : recenters the viewport coordinates to (x, y, z)" \
                    "\n save_working_directory(path) : saves the working directory from the console");
 }
+
+quint64 SkeletonProxy::last_clicked_point_cloud_coordinate() {
+    if (state->mainWindow->viewport3D->pointCloudLastClickInformation) {
+        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it.get().first;
+    } else {
+        throw std::runtime_error{"none available"};
+    }
+}

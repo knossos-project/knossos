@@ -1335,9 +1335,9 @@ void Viewport3D::renderPointCloud() {
     }
 }
 
-boost::optional<floatCoordinate> Viewport3D::pointCloudTriangleIDToCoord(const uint32_t triangleID) const {
+boost::optional<Viewport3D::BufferSelection> Viewport3D::pointCloudTriangleIDtoInformation(const uint32_t triangleID) const {
     auto it = selection_ids.find(triangleID);
-    return it != std::end(selection_ids) ? it->second.coord : boost::optional<floatCoordinate>{};
+    return it != std::end(selection_ids) ? it->second : boost::optional<BufferSelection>{};
 }
 
 uint32_t Viewport3D::pointcloudColorToId(std::array<unsigned char, 4> color) {

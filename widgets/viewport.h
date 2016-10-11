@@ -298,7 +298,7 @@ class Viewport3D : public ViewportBase {
     QOpenGLShaderProgram pointcloudShader;
     QOpenGLShaderProgram pointcloudIdShader;
     struct BufferSelection {
-        std::pair<const std::uint64_t, PointcloudBuffer> & buf;
+        std::reference_wrapper<std::pair<const std::uint64_t, PointcloudBuffer>> it;
         floatCoordinate coord;
     };
     std::unordered_map<std::uint64_t, BufferSelection> selection_ids;
@@ -313,7 +313,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
     void renderPointCloudBufferIds(PointcloudBuffer& buf);
-    boost::optional<floatCoordinate> pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
+    boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
     void pickPointCloudIdAtPosition();
@@ -330,6 +330,8 @@ class Viewport3D : public ViewportBase {
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;
 public:
+    boost::optional<BufferSelection> pointCloudLastClickInformation;
+    boost::optional<floatCoordinate> pointCloudJumpPosition;
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
