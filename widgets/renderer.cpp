@@ -1848,11 +1848,12 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
     }
-
-    if (options.pointCloudPicking) {
-        pickPointCloudIdAtPosition();
-    } else {
-        renderPointCloud();
+    if (state->viewerState->selectModeFlag == false) {
+        if (options.pointCloudPicking) {
+            pickPointCloudIdAtPosition();
+        } else {
+            renderPointCloud();
+        }
     }
 
     if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
