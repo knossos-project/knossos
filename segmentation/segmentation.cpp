@@ -248,7 +248,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     if (selectedObjectsCount() != 0) {
         return colorObjectFromIndex(selectedObjectIndices.front());
     }
-    return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
+    return {};
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
@@ -263,21 +263,21 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
     if (subObjectID == backgroundId) {
-        return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
+        return {};
     }
     const auto subobjectIt = subobjects.find(subObjectID);
     if (subobjectIt == std::end(subobjects)) {
         if (!renderOnlySelectedObjs || selectedObjectIndices.empty()) {
             return subobjectColor(subObjectID);
         } else {
-            return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
+            return {};
         }
     }
     const auto & subobject = subobjectIt->second;
     if (subobject.selectedObjectsCount != 0) {
         return colorOfSelectedObject(subobject);
     } else if (renderOnlySelectedObjs) {
-        return std::make_tuple(std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0}, std::uint8_t{0});
+        return {};
     }
     return colorObjectFromIndex(largestObjectContainingSubobject(subobject));
 }
