@@ -309,7 +309,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
     void renderPointCloudBufferIds(PointcloudBuffer& buf);
-    floatCoordinate pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
+    boost::optional<floatCoordinate> pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
     void pickPointCloudIdAtPosition();
