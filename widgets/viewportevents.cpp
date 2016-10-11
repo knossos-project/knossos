@@ -371,6 +371,33 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
     }
 }
 
+void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
+    makeCurrent();
+    RenderOptions options;
+    options.pointCloudPicking = true;
+    renderSkeletonVP(options);
+
+    glReadBuffer(GL_BACK);
+    glPixelStoref(GL_PACK_ALIGNMENT, 1);
+    // read color and translate to id
+
+    auto x = event->x();
+    auto y = event->y();
+    const auto yinverse = height() - y - 1;
+    std::array<GLubyte, 4> buffer;
+    glReadPixels(x, yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFlush();
+    qDebug() << "picked color" << buffer[0] << buffer[1] << buffer[2] << buffer[3];
+    auto triangleID = pointcloudColorToId(buffer);
+    if (auto trianglePos = pointCloudTriangleIDToCoord(triangleID)) {
+        qDebug() << "picked position" << trianglePos->x << trianglePos->y << trianglePos->z;
+        state->viewer->setPosition(trianglePos.get());
+    }
+    qDebug() << "picked triangle ID: " << triangleID;
+    ViewportBase::handleMouseReleaseLeft(event);
+}
+
 void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched

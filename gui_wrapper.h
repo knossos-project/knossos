@@ -24,8 +24,9 @@
 #define GUI_WRAPPER_H
 
 #include "skeleton/node.h"
+#include "skeleton/tree.h"
 
-void checkedMoveNodes(QWidget * parent, int treeID);
+void checkedMoveNodes(QWidget * parent, decltype(treeListElement::treeID) treeID);
 void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs);
 
 #endif//GUI_WRAPPER_H

@@ -34,12 +34,12 @@
 #include <QDir>
 #include <QFile>
 
-treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
+treeListElement *SkeletonProxy::tree_with_previous_id(quint64 tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithPrevID(tree);
 }
 
-treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
+treeListElement *SkeletonProxy::tree_with_next_id(quint64 tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithNextID(tree);
 }
@@ -52,7 +52,7 @@ void SkeletonProxy::move_to_previous_tree() {
     state->viewer->mainWindow.widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);
 }
 
-treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
+treeListElement *SkeletonProxy::find_tree_by_id(quint64 tree_id) {
     return Skeletonizer::findTreeByTreeID(tree_id);
 }
 
@@ -64,7 +64,7 @@ treeListElement *SkeletonProxy::first_tree() {
     return &state->skeletonState->trees.front();
 }
 
-bool SkeletonProxy::delete_tree(int tree_id) {
+bool SkeletonProxy::delete_tree(quint64 tree_id) {
     if (!Skeletonizer::singleton().delTree(tree_id)) {
         emit echo(QString("could not delete the tree with id %1").arg(tree_id));
         return false;
@@ -72,7 +72,7 @@ bool SkeletonProxy::delete_tree(int tree_id) {
     return true;
 }
 
-bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
+bool SkeletonProxy::merge_trees(quint64 tree_id, quint64 other_tree_id) {
     if (!Skeletonizer::singleton().mergeTrees(tree_id, other_tree_id)) {
        emit echo (QString("Skeletonizer::mergeTrees failed!"));
        return false;
@@ -80,7 +80,7 @@ bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
     return true;
 }
 
-void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
+void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     if(verts.size() != normals.size() && !normals.empty()) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
     }
@@ -93,7 +93,7 @@ void SkeletonProxy::add_tree_pointcloud(int tree_id, QVector<float> & verts, QVe
     state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, color, draw_mode);
 }
 
-void SkeletonProxy::delete_tree_pointcloud(int tree_id) {
+void SkeletonProxy::delete_tree_pointcloud(quint64 tree_id) {
     state->mainWindow->viewport3D->deleteTreePointcloud(tree_id);
 }
 
@@ -105,13 +105,13 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
     return Skeletonizer::findNodesInTree(tree, comment);
 }
 
-void SkeletonProxy::move_node_to_tree(quint64 node_id, int tree_id) {
+void SkeletonProxy::move_node_to_tree(quint64 node_id, quint64 tree_id) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     Skeletonizer::singleton().selectNodes({node});
     Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
 }
 
-nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {
+nodeListElement *SkeletonProxy::find_nearby_node_from_tree(quint64 tree_id, int x, int y, int z) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     Coordinate coord(x, y, z);
     return Skeletonizer::singleton().findNearbyNode(tree, coord);
@@ -244,11 +244,11 @@ QList<treeListElement*> SkeletonProxy::trees() {
 treeListElement * SkeletonProxy::add_tree(const QVariantHash & properties) {
     return &Skeletonizer::singleton().addTree(boost::none, boost::none, properties);
 }
-treeListElement * SkeletonProxy::add_tree(int tree_id, const QVariantHash &properties) {
+treeListElement * SkeletonProxy::add_tree(quint64 tree_id, const QVariantHash &properties) {
     return &Skeletonizer::singleton().addTree(tree_id, boost::none, properties);
 }
 
-treeListElement & treeFromId(int treeId) {
+treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
     if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
         return *tree;
     }
@@ -257,15 +257,15 @@ treeListElement & treeFromId(int treeId) {
     throw std::runtime_error(errorText.toStdString());
 }
 
-void SkeletonProxy::set_tree_comment(int tree_id, const QString & comment) {
+void SkeletonProxy::set_tree_comment(quint64 tree_id, const QString & comment) {
     Skeletonizer::singleton().setComment(treeFromId(tree_id), comment);
 }
 
-void SkeletonProxy::set_tree_color(int tree_id, const QColor & color) {
+void SkeletonProxy::set_tree_color(quint64 tree_id, const QColor & color) {
     Skeletonizer::singleton().setColor(treeFromId(tree_id), color);
 }
 
-bool SkeletonProxy::set_active_tree(int tree_id) {
+bool SkeletonProxy::set_active_tree(quint64 tree_id) {
     if (!Skeletonizer::singleton().setActiveTreeByID(tree_id)) {
         emit echo(QString("could not set active tree (id %1)").arg(tree_id));
         return false;

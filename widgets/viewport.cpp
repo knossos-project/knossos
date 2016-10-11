@@ -44,7 +44,7 @@ bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
 RenderOptions::RenderOptions() : drawBoundaryAxes(true), drawBoundaryBox(true), drawCrosshairs(state->viewerState->drawVPCrosshairs), drawOverlay(Segmentation::enabled && state->viewerState->showOverlay),
-drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection) {}
+drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), enableTextScaling(false), highlightActiveNode(true), highlightSelection(true), selectionPass(SelectionPass::NoSelection), pointCloudPicking{false} {}
 
 RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
     : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
@@ -745,7 +745,7 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
+void Viewport3D::addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     // temporary, color information might be switched to per-object rather than per-vertex
     auto col = color;
     if(col.size() == 3) {
@@ -804,10 +804,12 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     buf.index_buf.bind();
     buf.index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     buf.index_buf.release();
+    buf.vertex_coords = verts;
+    buf.indices = indices;
     pointcloudBuffers.emplace(tree_id, buf);
 }
 
-void Viewport3D::deleteTreePointcloud(int tree_id) {
+void Viewport3D::deleteTreePointcloud(std::uint64_t tree_id) {
     pointcloudBuffers.erase(tree_id);
 }
 

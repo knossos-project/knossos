@@ -20,17 +20,17 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "skeleton/tree.h"
 #include "treelistdecorator.h"
 
 #include "scriptengine/proxies/skeletonproxy.h"
-#include "skeleton/tree.h"
 
 TreeListDecorator::TreeListDecorator(QObject *parent) :
     QObject(parent)
 {
 }
 
-int TreeListDecorator::tree_id(treeListElement *self) {
+quint64 TreeListDecorator::tree_id(treeListElement *self) {
     return self->treeID;
 }
 

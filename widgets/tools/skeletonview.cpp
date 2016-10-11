@@ -88,7 +88,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         return tree.render ? Qt::Checked : Qt::Unchecked;
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
-        case 0: return tree.treeID;
+        case 0: return static_cast<quint64>(tree.treeID);
         case 3: return static_cast<quint64>(tree.nodes.size());
         case 4: return tree.getComment();
         case 5: return propertyStringWithoutComment(tree.properties);
@@ -638,8 +638,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         question(this, [](){
             auto initiallySelectedTrees = state->skeletonState->selectedTrees;//HACK mergeTrees clears the selection by setting the merge result active
             while (initiallySelectedTrees.size() >= 2) {//2 at a time
-                const int treeID1 = initiallySelectedTrees[0]->treeID;
-                const int treeID2 = initiallySelectedTrees[1]->treeID;
+                const auto treeID1 = initiallySelectedTrees[0]->treeID;
+                const auto treeID2 = initiallySelectedTrees[1]->treeID;
                 initiallySelectedTrees.erase(std::begin(initiallySelectedTrees)+1);//HACK mergeTrees deletes tree2
                 Skeletonizer::singleton().mergeTrees(treeID1, treeID2);
             }

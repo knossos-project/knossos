@@ -104,6 +104,7 @@ struct RenderOptions {
     bool highlightActiveNode;
     bool highlightSelection;
     SelectionPass selectionPass{SelectionPass::NoSelection};
+    bool pointCloudPicking;
 };
 
 class ViewportBase;
@@ -278,20 +279,29 @@ struct PointcloudBuffer {
     //     index_buf.destroy();
     // }
 
-    std::size_t vertex_count;
-    std::size_t index_count;
+    std::size_t vertex_count{0};
+    std::size_t index_count{0};
     QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer normal_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
-    GLenum render_mode;
+    GLenum render_mode{GL_POINTS};
+
+    QVector<float> vertex_coords;
+    QVector<unsigned int> indices;
 };
 
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    std::unordered_map<int, PointcloudBuffer> pointcloudBuffers;
+    std::unordered_map<std::uint64_t, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
+    QOpenGLShaderProgram pointcloudIdShader;
+    struct BufferSelection {
+        std::pair<const std::uint64_t, PointcloudBuffer> & buf;
+        floatCoordinate coord;
+    };
+    std::unordered_map<std::uint64_t, BufferSelection> selection_ids;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -302,6 +312,11 @@ class Viewport3D : public ViewportBase {
     bool renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
+    void renderPointCloudBufferIds(PointcloudBuffer& buf);
+    boost::optional<floatCoordinate> pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
+    uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
+    std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
+    void pickPointCloudIdAtPosition();
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
@@ -310,6 +325,7 @@ class Viewport3D : public ViewportBase {
 
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;
@@ -317,8 +333,8 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
-    void addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
-    void deleteTreePointcloud(int tree_id);
+    void addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
+    void deleteTreePointcloud(std::uint64_t tree_id);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }
