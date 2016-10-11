@@ -1335,29 +1335,13 @@ void Viewport3D::renderPointCloud() {
     }
 }
 
-Coordinate Viewport3D::pointCloudTriangleIDToCoord(const uint32_t triangleID) const {
-    if (triangleID == 0) {
+floatCoordinate Viewport3D::pointCloudTriangleIDToCoord(const uint32_t triangleID) const {
+    auto it = selection_ids.find(triangleID);
+    if (it != std::end(selection_ids)) {
+        return it->second.coord;
+    } else {
         return {0, 0, 0};
     }
-    uint32_t offset = 0;
-    for (const auto & buf : pointcloudBuffers) {
-        if (static_cast<uint32_t>(buf.second.indices.size()/3) >= triangleID) {
-            std::array<unsigned int, 3> vertex_ids{{
-                    buf.second.indices[(triangleID - offset) * 3 - 3],
-                    buf.second.indices[(triangleID - offset) * 3 - 2],
-                    buf.second.indices[(triangleID - offset) * 3 - 1]}};
-            Coordinate position = {0, 0, 0};
-            for (const auto vertIdx : vertex_ids) {
-                position.x += buf.second.vertex_coords[vertIdx * 3 + 0];
-                position.y += buf.second.vertex_coords[vertIdx * 3 + 1];
-                position.z += buf.second.vertex_coords[vertIdx * 3 + 2];
-            }
-            return position/3;
-        } else {
-            offset += buf.second.indices.size()/3;
-        }
-    }
-    return {0, 0, 0};
 }
 
 uint32_t Viewport3D::pointcloudColorToId(std::array<unsigned char, 4> color) {
@@ -1370,11 +1354,6 @@ std::array<unsigned char, 4> Viewport3D::pointcloudIdToColor(uint32_t id) {
              static_cast<unsigned char>(id >> 16),
              static_cast<unsigned char>(id >> 24)}};
 }
-
-struct BufferSelection {
-    int buffer_id;
-    std::array<unsigned int, 3> vertices;
-};
 
 void Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
     static bool pointcloud_id_init = true;
@@ -1422,7 +1401,6 @@ void Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
 
     // create id map
     uint32_t id_counter = 1;
-    std::unordered_map<int, BufferSelection> selection_ids;
     for(auto& buf : pointcloudBuffers) {
         std::vector<std::array<unsigned char, 4>> colors;
         colors.resize(buf.second.vertex_count);
@@ -1432,14 +1410,16 @@ void Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
         for(std::size_t i = 0; i < buf.second.index_count - 3; i += 3) { // for each face
             auto id_color = pointcloudIdToColor(id_counter);
             std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
+            floatCoordinate centerOfMass;
             for(std::size_t j = 0; j < 3; ++j) {
                 flat_verts.emplace_back(std::array<float, 3>{{
                     buf.second.vertex_coords[v_ids[j]*3],
                     buf.second.vertex_coords[v_ids[j]*3+1],
                     buf.second.vertex_coords[v_ids[j]*3+2]}});
+                centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
                 flat_colors.emplace_back(id_color);
             }
-            selection_ids.emplace(id_counter, BufferSelection{buf.first, v_ids});
+            selection_ids.emplace(id_counter, BufferSelection{buf, centerOfMass / 3});
             ++id_counter;
         }
         PointcloudBuffer id_buf{GL_TRIANGLES};

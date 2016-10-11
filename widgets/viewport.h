@@ -296,6 +296,11 @@ class Viewport3D : public ViewportBase {
     std::unordered_map<int, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
     QOpenGLShaderProgram pointcloudIdShader;
+    struct BufferSelection {
+        std::pair<const int, PointcloudBuffer> & buf;
+        floatCoordinate coord;
+    };
+    std::unordered_map<int, BufferSelection> selection_ids;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -304,7 +309,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloud();
     void renderPointCloudBuffer(PointcloudBuffer& buf);
     void renderPointCloudBufferIds(PointcloudBuffer& buf);
-    Coordinate pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
+    floatCoordinate pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
     void pickPointCloudIdAtPosition(int x, int y);
