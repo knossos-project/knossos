@@ -297,7 +297,7 @@ class Viewport3D : public ViewportBase {
     virtual float zoomStep() const override;
     virtual void paintGL() override;
     bool wiggle3D{false};
-    bool wiggledir{false};
+    int wigglecounter{0};
     QTimer *wiggletimer;
     bool renderVolumeVP();
     void renderPointCloud();

@@ -674,15 +674,16 @@ void Viewport3D::handleKeyPress(const QKeyEvent *event) {
     if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
         if(!wiggle3D) {
             wiggletimer = new QTimer();
-            wiggletimer->start(100);
+            wiggletimer->start(30);
             QObject::connect(wiggletimer, &QTimer::timeout, [this](){
-                if(wiggledir) {
-                    state->skeletonState->rotdx += 5;
-                } else {
-                    state->skeletonState->rotdx -= 5;
+                const auto stepsize = 1;
+                if(wigglecounter < 4){
+                    state->skeletonState->rotdx += stepsize;
+                } else if(wigglecounter < 8){
+                    state->skeletonState->rotdx -= stepsize;
                 }
-                wiggledir = !wiggledir;
-                if(wiggle3D) wiggletimer->start(100);
+                if(++wigglecounter >= 8) wigglecounter = 0;
+                wiggletimer->start(30);
             });
         }
         wiggle3D = true;
