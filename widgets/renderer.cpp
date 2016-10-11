@@ -1355,7 +1355,7 @@ std::array<unsigned char, 4> Viewport3D::pointcloudIdToColor(uint32_t id) {
              static_cast<unsigned char>(id >> 24)}};
 }
 
-void Viewport3D::pickPointCloudIdAtPosition(int x, int y) {
+void Viewport3D::pickPointCloudIdAtPosition() {
     static bool pointcloud_id_init = true;
     if(pointcloud_id_init) {
         pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
@@ -1854,7 +1854,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     }
 
     if (options.pointCloudPicking) {
-        pickPointCloudIdAtPosition(0, 0);
+        pickPointCloudIdAtPosition();
     } else {
         renderPointCloud();
     }

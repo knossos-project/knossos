@@ -312,7 +312,7 @@ class Viewport3D : public ViewportBase {
     floatCoordinate pointCloudTriangleIDToCoord(const uint32_t triangleID) const;
     uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
     std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
-    void pickPointCloudIdAtPosition(int x, int y);
+    void pickPointCloudIdAtPosition();
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
