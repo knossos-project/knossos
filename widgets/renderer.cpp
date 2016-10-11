@@ -1400,7 +1400,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     // QOpenGLFramebufferObject pickFBO{width(), height()};
 
     // create id map
-    uint32_t id_counter = 1;
+    std::uint64_t id_counter = 1;
     for(auto& buf : pointcloudBuffers) {
         std::vector<std::array<unsigned char, 4>> colors;
         colors.resize(buf.second.vertex_count);

@@ -293,14 +293,14 @@ struct PointcloudBuffer {
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    std::unordered_map<int, PointcloudBuffer> pointcloudBuffers;
+    std::unordered_map<std::uint64_t, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
     QOpenGLShaderProgram pointcloudIdShader;
     struct BufferSelection {
-        std::pair<const int, PointcloudBuffer> & buf;
+        std::pair<const std::uint64_t, PointcloudBuffer> & buf;
         floatCoordinate coord;
     };
-    std::unordered_map<int, BufferSelection> selection_ids;
+    std::unordered_map<std::uint64_t, BufferSelection> selection_ids;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -327,8 +327,8 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
-    void addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
-    void deleteTreePointcloud(int tree_id);
+    void addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
+    void deleteTreePointcloud(std::uint64_t tree_id);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }

@@ -745,7 +745,7 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
+void Viewport3D::addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
     // temporary, color information might be switched to per-object rather than per-vertex
     auto col = color;
     if(col.size() == 3) {
@@ -809,7 +809,7 @@ void Viewport3D::addTreePointcloud(int tree_id, QVector<float> & verts, QVector<
     pointcloudBuffers.emplace(tree_id, buf);
 }
 
-void Viewport3D::deleteTreePointcloud(int tree_id) {
+void Viewport3D::deleteTreePointcloud(std::uint64_t tree_id) {
     pointcloudBuffers.erase(tree_id);
 }
 
