@@ -94,18 +94,18 @@ struct RenderOptions {
     // snapshot render options
     RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
 
-    bool drawBoundaryAxes;
-    bool drawBoundaryBox;
-    bool drawCrosshairs;
-    bool drawOverlay;
-    bool drawSkeleton;
-    bool drawViewportPlanes;
-    bool enableSkeletonDownsampling;
-    bool enableTextScaling;
-    bool highlightActiveNode;
-    bool highlightSelection;
+    bool drawBoundaryAxes{true};
+    bool drawBoundaryBox{true};
+    bool drawCrosshairs{true};
+    bool drawOverlay{true};
+    bool drawSkeleton{true};
+    bool drawViewportPlanes{true};
+    bool enableSkeletonDownsampling{true};
+    bool enableTextScaling{false};
+    bool highlightActiveNode{true};
+    bool highlightSelection{true};
     SelectionPass selectionPass{SelectionPass::NoSelection};
-    bool pointCloudPicking;
+    bool pointCloudPicking{false};
 };
 
 class ViewportBase;
