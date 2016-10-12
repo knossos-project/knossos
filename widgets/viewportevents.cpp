@@ -372,23 +372,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 }
 
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    makeCurrent();
-    RenderOptions options;
-    options.pointCloudPicking = true;
-    renderSkeletonVP(options);
-
-    glReadBuffer(GL_BACK);
-    glPixelStoref(GL_PACK_ALIGNMENT, 1);
-    // read color and translate to id
-
-    auto x = event->x();
-    auto y = event->y();
-    const auto yinverse = height() - y - 1;
-    std::array<GLubyte, 4> buffer;
-    glReadPixels(x, yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glFlush();
-    pointCloudLastClickInformation = pointCloudTriangleIDtoInformation(pointcloudColorToId(buffer));
+    pointCloudLastClickInformation = pickPointCloud(event->x(), event->y()).get();
     if (pointCloudLastClickInformation) {
         pointCloudJumpPosition = pointCloudLastClickInformation.get().coord;
     } else {// clear

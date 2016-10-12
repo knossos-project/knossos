@@ -1154,7 +1154,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
+void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
@@ -1208,7 +1208,7 @@ void Viewport3D::renderPointCloudBuffer(PointcloudBuffer& buf) {
     glPopMatrix();
 }
 
-void Viewport3D::renderPointCloudBufferIds(PointcloudBuffer& buf) {
+void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
@@ -1330,26 +1330,44 @@ void Viewport3D::renderPointCloud() {
     float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
     glPointSize(point_size);
 
-    for(auto& id_buf : pointcloudBuffers) {
-        renderPointCloudBuffer(id_buf.second);
+    for(auto & tree : state->skeletonState->trees) {
+        if (tree.pointCloud.vertex_count > 0) {
+            renderPointCloudBuffer(tree.pointCloud);
+        }
     }
 }
 
-boost::optional<Viewport3D::BufferSelection> Viewport3D::pointCloudTriangleIDtoInformation(const uint32_t triangleID) const {
-    auto it = selection_ids.find(triangleID);
-    return it != std::end(selection_ids) ? it->second : boost::optional<BufferSelection>{};
-}
-
-uint32_t Viewport3D::pointcloudColorToId(std::array<unsigned char, 4> color) {
+uint32_t pointcloudColorToId(std::array<unsigned char, 4> color) {
     return color[0] + (color[1] << 8) + (color[2] << 16) + (color[3] << 24);
 }
 
-std::array<unsigned char, 4> Viewport3D::pointcloudIdToColor(uint32_t id) {
+std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id) {
     return {{static_cast<unsigned char>(id),
              static_cast<unsigned char>(id >> 8),
              static_cast<unsigned char>(id >> 16),
              static_cast<unsigned char>(id >> 24)}};
 }
+
+boost::optional<BufferSelection> Viewport3D::pickPointCloud(const int x, const int y) {
+    makeCurrent();
+    RenderOptions options;
+    options.pointCloudPicking = true;
+    renderSkeletonVP(options);
+
+    glReadBuffer(GL_BACK);
+    glPixelStoref(GL_PACK_ALIGNMENT, 1);
+    // read color and translate to id
+
+    const auto yinverse = height() - y - 1;
+    std::array<GLubyte, 4> buffer;
+    glReadPixels(x, yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFlush();
+    const auto triangleID = pointcloudColorToId(buffer);
+    auto it = selection_ids.find(triangleID);
+    return (it != std::end(selection_ids)) ? it->second : boost::optional<BufferSelection>{};;
+}
+
 
 void Viewport3D::pickPointCloudIdAtPosition() {
     static bool pointcloud_id_init = true;
@@ -1396,29 +1414,32 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     // QOpenGLFramebufferObject pickFBO{width(), height()};
 
     // create id map
-    std::uint64_t id_counter = 1;
-    for(auto& buf : pointcloudBuffers) {
+    std::uint32_t id_counter = 1;
+    for(auto & tree : state->skeletonState->trees) {
+        if (tree.pointCloud.vertex_count == 0) {
+            continue;
+        }
         std::vector<std::array<unsigned char, 4>> colors;
-        colors.resize(buf.second.vertex_count);
+        colors.resize(tree.pointCloud.vertex_count);
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        for(std::size_t i = 0; i < buf.second.index_count - 3; i += 3) { // for each face
+        for(std::size_t i = 0; i < tree.pointCloud.index_count - 3; i += 3) { // for each face
             auto id_color = pointcloudIdToColor(id_counter);
-            std::array<unsigned int, 3> v_ids{{buf.second.indices[i], buf.second.indices[i+1], buf.second.indices[i+2]}};
+            std::array<unsigned int, 3> v_ids{{tree.pointCloud.indices[i], tree.pointCloud.indices[i+1], tree.pointCloud.indices[i+2]}};
             floatCoordinate centerOfMass;
             for(std::size_t j = 0; j < 3; ++j) {
                 flat_verts.emplace_back(std::array<float, 3>{{
-                    buf.second.vertex_coords[v_ids[j]*3],
-                    buf.second.vertex_coords[v_ids[j]*3+1],
-                    buf.second.vertex_coords[v_ids[j]*3+2]}});
+                    tree.pointCloud.vertex_coords[v_ids[j]*3],
+                    tree.pointCloud.vertex_coords[v_ids[j]*3+1],
+                    tree.pointCloud.vertex_coords[v_ids[j]*3+2]}});
                 centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
                 flat_colors.emplace_back(id_color);
             }
-            selection_ids.emplace(id_counter, BufferSelection{buf, centerOfMass / 3});
+            selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3});
             ++id_counter;
         }
-        PointcloudBuffer id_buf{GL_TRIANGLES};
+        PointCloud id_buf{GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
         id_buf.position_buf.bind();
         id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));

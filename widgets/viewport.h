@@ -24,6 +24,7 @@
 #define VIEWPORT_H
 
 #include "coordinate.h"
+#include "pointcloud/pointcloud.h"
 #include "stateInfo.h"
 
 #include <QAction>
@@ -263,45 +264,12 @@ public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 };
 
-struct PointcloudBuffer {
-    PointcloudBuffer(GLenum render_mode)
-        : render_mode(render_mode) {
-        position_buf.create();
-        normal_buf.create();
-        color_buf.create();
-        index_buf.create();
-    }
-
-    // ~PointcloudBuffer() {
-    //     position_buf.destroy();
-    //     normal_buf.destroy();
-    //     color_buf.destroy();
-    //     index_buf.destroy();
-    // }
-
-    std::size_t vertex_count{0};
-    std::size_t index_count{0};
-    QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer normal_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
-    GLenum render_mode{GL_POINTS};
-
-    QVector<float> vertex_coords;
-    QVector<unsigned int> indices;
-};
-
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    std::unordered_map<std::uint64_t, PointcloudBuffer> pointcloudBuffers;
     QOpenGLShaderProgram pointcloudShader;
     QOpenGLShaderProgram pointcloudIdShader;
-    struct BufferSelection {
-        std::reference_wrapper<std::pair<const std::uint64_t, PointcloudBuffer>> it;
-        floatCoordinate coord;
-    };
-    std::unordered_map<std::uint64_t, BufferSelection> selection_ids;
+    std::unordered_map<std::uint32_t, BufferSelection> selection_ids;
 
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -311,12 +279,10 @@ class Viewport3D : public ViewportBase {
     QTimer *wiggletimer;
     bool renderVolumeVP();
     void renderPointCloud();
-    void renderPointCloudBuffer(PointcloudBuffer& buf);
-    void renderPointCloudBufferIds(PointcloudBuffer& buf);
-    boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
-    uint32_t pointcloudColorToId(std::array<unsigned char, 4> color);
-    std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id);
+    void renderPointCloudBuffer(PointCloud & buf);
+    void renderPointCloudBufferIds(PointCloud & buf);
     void pickPointCloudIdAtPosition();
+    boost::optional<BufferSelection> pickPointCloud(const int x, const int y);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
@@ -335,8 +301,6 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
-    void addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
-    void deleteTreePointcloud(std::uint64_t tree_id);
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }

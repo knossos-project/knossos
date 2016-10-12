@@ -33,6 +33,7 @@
 #include <list>
 #include <memory>
 
+class PointCloud;
 class segmentListElement;
 
 class treeListElement : public PropertyQuery {
@@ -41,6 +42,7 @@ public:
     std::list<treeListElement>::iterator iterator;
 
     std::list<nodeListElement> nodes;
+    PointCloud pointCloud{};
 
     bool render{true};
     bool isSynapticCleft{false};

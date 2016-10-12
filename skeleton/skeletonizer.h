@@ -294,6 +294,7 @@ public:
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }
 
+    void addPointCloudToTree(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0);
 signals:
     void guiModeLoaded();
     void branchPoppedSignal();

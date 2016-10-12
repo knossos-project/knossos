@@ -41,8 +41,8 @@ include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
-file(GLOB_RECURSE sources2 ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./widgets/*.cpp)
-file(GLOB_RECURSE headers2 ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./widgets/*.h)
+file(GLOB_RECURSE sources2 ./pointcloud/*.cpp ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./widgets/*.cpp)
+file(GLOB_RECURSE headers2 ./pointcloud/*.h ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./widgets/*.h)
 
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2})
 

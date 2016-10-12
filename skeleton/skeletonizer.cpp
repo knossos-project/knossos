@@ -24,6 +24,7 @@
 
 #include "file_io.h"
 #include "functions.h"
+#include "pointcloud/pointcloud.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/node.h"
@@ -31,6 +32,7 @@
 #include "skeleton/tree.h"
 #include "version.h"
 #include "viewer.h"
+#include "widgets/viewport.h"
 #include "widgets/mainwindow.h"
 
 #include <QDataStream>
@@ -1344,6 +1346,13 @@ void Skeletonizer::setCommentOfSelectedTrees(const QString & comment) {
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     tree.color = color;
     tree.colorSetManually = true;
+
+    state->viewer->mainWindow.viewport3D->makeCurrent();
+    std::vector<std::array<GLfloat, 4>> colors;
+    colors.assign(tree.pointCloud.vertex_count, {{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}});
+    tree.pointCloud.color_buf.bind();
+    tree.pointCloud.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+
     Session::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
@@ -1850,4 +1859,75 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     return connectedComponent(lhs, [&rhs](const nodeListElement & node){
         return node == rhs;
     });
+}
+
+void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
+    // temporary, color information might be switched to per-object rather than per-vertex
+    auto col = color;
+    if(col.size() == 3) {
+        col.append(1.0f);
+    }
+
+    std::vector<std::array<GLfloat, 4>> colors;
+    for(int i = 0; i < verts.size(); ++i) {
+        colors.push_back({{col[0], col[1], col[2], col[3]}});
+        // tmp? scale vertices down by dataset scale
+        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
+    }
+
+    std::vector<int> vertex_face_count(verts.size() / 3);
+    for(int i = 0; i < indices.size(); ++i) {
+        ++vertex_face_count[indices[i]];
+        // check index validity (can be removed if causing performance issues)
+        if(indices[i] > verts.size()) {
+            qDebug() << "index wrong: " << indices[i] << "(should be less than " << verts.size() << ")";
+        }
+    }
+
+    // generate normals of indexed vertices
+    if(normals.empty() && !indices.empty()) {
+        normals.resize(verts.size());
+        for(int i = 0; i < indices.size()-2; i += 3) {
+            QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
+            QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
+            QVector3D p3{verts[indices[i+2]*3], verts[indices[i+2]*3+1], verts[indices[i+2]*3+2]};
+            QVector3D e1{p2 - p1};
+            QVector3D e2{p3 - p1};
+
+            QVector3D normal{QVector3D::normal(e1, e2)};
+
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3] += normal.x() / vertex_face_count[indices[i+j]];
+            }
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3+1] += normal.y() / vertex_face_count[indices[i+j]];
+            }
+            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3+2] += normal.z() / vertex_face_count[indices[i+j]];
+            }
+        }
+    }
+
+    auto * tree = findTreeByTreeID(treeID);
+    if (tree == nullptr) {
+        tree = &addTree(treeID, QColor(col[0] * 255, col[1] * 255, col[2] * 255, col[3] * 255));
+    }
+
+    state->viewer->mainWindow.viewport3D->makeCurrent();
+    tree->pointCloud = PointCloud{static_cast<GLenum>(draw_mode)};
+    tree->pointCloud.vertex_count = verts.size() / 3;
+    tree->pointCloud.index_count = indices.size();
+    tree->pointCloud.position_buf.bind();
+    tree->pointCloud.position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
+    tree->pointCloud.normal_buf.bind();
+    tree->pointCloud.normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
+    tree->pointCloud.color_buf.bind();
+    tree->pointCloud.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+    tree->pointCloud.index_buf.bind();
+    tree->pointCloud.index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
+    tree->pointCloud.index_buf.release();
+    tree->pointCloud.vertex_coords = verts;
+    tree->pointCloud.indices = indices;
+
+    Session::singleton().unsavedChanges = true;
 }

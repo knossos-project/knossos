@@ -25,6 +25,7 @@
 #include "functions.h"
 #include "GuiConstants.h"
 #include "profiler.h"
+#include "pointcloud/pointcloud.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -743,74 +744,6 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "    occlusion   : " << occlusion_profiler.average_time()*1000 << "ms";
     // qDebug() << "    tex transfer: " << tex_transfer_profiler.average_time()*1000 << "ms";
     // qDebug() << "---------------------------------------------";
-}
-
-void Viewport3D::addTreePointcloud(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
-    // temporary, color information might be switched to per-object rather than per-vertex
-    auto col = color;
-    if(col.size() == 3) {
-        col.append(1.0f);
-    }
-
-    std::vector<std::array<GLfloat, 4>> colors;
-    for(int i = 0; i < verts.size(); ++i) {
-        colors.push_back({{col[0], col[1], col[2], col[3]}});
-        // tmp? scale vertices down by dataset scale
-        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
-    }
-
-    std::vector<int> vertex_face_count(verts.size() / 3);
-    for(int i = 0; i < indices.size(); ++i) {
-        ++vertex_face_count[indices[i]];
-        // check index validity (can be removed if causing performance issues)
-        if(indices[i] > verts.size()) {
-            qDebug() << "index wrong: " << indices[i] << "(should be less than " << verts.size() << ")";
-        }
-    }
-
-    // generate normals of indexed vertices
-    if(normals.empty() && !indices.empty()) {
-        normals.resize(verts.size());
-        for(int i = 0; i < indices.size()-2; i += 3) {
-            QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
-            QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
-            QVector3D p3{verts[indices[i+2]*3], verts[indices[i+2]*3+1], verts[indices[i+2]*3+2]};
-            QVector3D e1{p2 - p1};
-            QVector3D e2{p3 - p1};
-
-            QVector3D normal{QVector3D::normal(e1, e2)};
-
-            for(int j = 0; j < 3; ++j) {
-                normals[indices[i+j]*3] += normal.x() / vertex_face_count[indices[i+j]];
-            }
-            for(int j = 0; j < 3; ++j) {
-                normals[indices[i+j]*3+1] += normal.y() / vertex_face_count[indices[i+j]];
-            }
-            for(int j = 0; j < 3; ++j) {
-                normals[indices[i+j]*3+2] += normal.z() / vertex_face_count[indices[i+j]];
-            }
-        }
-    }
-
-    PointcloudBuffer buf{static_cast<GLenum>(draw_mode)};
-    buf.vertex_count = verts.size() / 3;
-    buf.index_count = indices.size();
-    buf.position_buf.bind();
-    buf.position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
-    buf.normal_buf.bind();
-    buf.normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
-    buf.color_buf.bind();
-    buf.color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-    buf.index_buf.bind();
-    buf.index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
-    buf.index_buf.release();
-    buf.vertex_coords = verts;
-    buf.indices = indices;
-    pointcloudBuffers.emplace(tree_id, buf);
-}
-
-void Viewport3D::deleteTreePointcloud(std::uint64_t tree_id) {
-    pointcloudBuffers.erase(tree_id);
 }
 
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {

@@ -90,11 +90,7 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     if(color.size() < 3) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: color components not 3 or 4, got %1 color components.").arg(color.size()).toStdString());
     }
-    state->mainWindow->viewport3D->addTreePointcloud(tree_id, verts, normals, indices, color, draw_mode);
-}
-
-void SkeletonProxy::delete_tree_pointcloud(quint64 tree_id) {
-    state->mainWindow->viewport3D->deleteTreePointcloud(tree_id);
+    Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode);
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
@@ -362,7 +358,7 @@ QString SkeletonProxy::help() {
 
 quint64 SkeletonProxy::last_clicked_point_cloud_id() {
     if (state->mainWindow->viewport3D->pointCloudLastClickInformation) {
-        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it.get().first;
+        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it;
     } else {
         throw std::runtime_error{"none available"};
     }
