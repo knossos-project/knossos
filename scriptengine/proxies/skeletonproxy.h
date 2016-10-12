@@ -79,7 +79,7 @@ public slots:
     bool delete_comment(quint64 node_id);
     bool set_comment(quint64 node_id, char *comment);
 
-    quint64 last_clicked_point_cloud_coordinate();
+    quint64 last_clicked_point_cloud_id();
 
     void export_converter(const QString &path);
 

@@ -360,7 +360,7 @@ QString SkeletonProxy::help() {
                    "\n save_working_directory(path) : saves the working directory from the console");
 }
 
-quint64 SkeletonProxy::last_clicked_point_cloud_coordinate() {
+quint64 SkeletonProxy::last_clicked_point_cloud_id() {
     if (state->mainWindow->viewport3D->pointCloudLastClickInformation) {
         return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it.get().first;
     } else {
