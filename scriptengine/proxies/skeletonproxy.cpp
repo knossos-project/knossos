@@ -80,7 +80,7 @@ bool SkeletonProxy::merge_trees(quint64 tree_id, quint64 other_tree_id) {
     return true;
 }
 
-void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
+void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
     if(verts.size() != normals.size() && !normals.empty()) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
     }
@@ -90,7 +90,7 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     if(color.size() < 3) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: color components not 3 or 4, got %1 color components.").arg(color.size()).toStdString());
     }
-    Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode);
+    Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {

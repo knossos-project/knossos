@@ -1861,20 +1861,7 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     });
 }
 
-void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode) {
-    // temporary, color information might be switched to per-object rather than per-vertex
-    auto col = color;
-    if(col.size() == 3) {
-        col.append(1.0f);
-    }
-
-    std::vector<std::array<GLfloat, 4>> colors;
-    for(int i = 0; i < verts.size(); ++i) {
-        colors.push_back({{col[0], col[1], col[2], col[3]}});
-        // tmp? scale vertices down by dataset scale
-        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
-    }
-
+void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
     std::vector<int> vertex_face_count(verts.size() / 3);
     for(int i = 0; i < indices.size(); ++i) {
         ++vertex_face_count[indices[i]];
@@ -1904,6 +1891,34 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
             }
             for(int j = 0; j < 3; ++j) {
                 normals[indices[i+j]*3+2] += normal.z() / vertex_face_count[indices[i+j]];
+            }
+        }
+    }
+
+    // temporary, color information might be switched to per-object rather than per-vertex
+    auto col = color;
+    if(col.size() == 3) {
+        col.append(1.0f);
+    }
+
+    float tmp_x{0.0f};
+    float tmp_x_normal{0.0f};
+    qDebug() << verts.size() << normals.size();
+    std::vector<std::array<GLfloat, 4>> colors;
+    for(int i = 0; i < verts.size(); ++i) {
+        colors.push_back({{col[0], col[1], col[2], col[3]}});
+        // tmp? scale vertices down by dataset scale
+        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
+
+        if(swap_xy) {
+            if(i%3==0) { // x
+                tmp_x = verts[i];
+                tmp_x_normal = normals[i];
+            } else if(i%3==1) { // y
+                verts[i-1] = verts[i];
+                verts[i] = tmp_x;
+                normals[i-1] = normals[i];
+                normals[i] = tmp_x_normal;
             }
         }
     }
