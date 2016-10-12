@@ -1331,8 +1331,8 @@ void Viewport3D::renderPointCloud() {
     glPointSize(point_size);
 
     for(auto & tree : state->skeletonState->trees) {
-        if (tree.pointCloud.vertex_count > 0) {
-            renderPointCloudBuffer(tree.pointCloud);
+        if (tree.pointCloud != nullptr && tree.pointCloud->vertex_count > 0) {
+            renderPointCloudBuffer(*(tree.pointCloud));
         }
     }
 }
@@ -1416,23 +1416,23 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     // create id map
     std::uint32_t id_counter = 1;
     for(auto & tree : state->skeletonState->trees) {
-        if (tree.pointCloud.vertex_count == 0) {
+        if (tree.pointCloud == nullptr || tree.pointCloud->vertex_count == 0) {
             continue;
         }
         std::vector<std::array<unsigned char, 4>> colors;
-        colors.resize(tree.pointCloud.vertex_count);
+        colors.resize(tree.pointCloud->vertex_count);
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        for(std::size_t i = 0; i < tree.pointCloud.index_count - 3; i += 3) { // for each face
+        for(std::size_t i = 0; i < tree.pointCloud->index_count - 3; i += 3) { // for each face
             auto id_color = pointcloudIdToColor(id_counter);
-            std::array<unsigned int, 3> v_ids{{tree.pointCloud.indices[i], tree.pointCloud.indices[i+1], tree.pointCloud.indices[i+2]}};
+            std::array<unsigned int, 3> v_ids{{tree.pointCloud->indices[i], tree.pointCloud->indices[i+1], tree.pointCloud->indices[i+2]}};
             floatCoordinate centerOfMass;
             for(std::size_t j = 0; j < 3; ++j) {
                 flat_verts.emplace_back(std::array<float, 3>{{
-                    tree.pointCloud.vertex_coords[v_ids[j]*3],
-                    tree.pointCloud.vertex_coords[v_ids[j]*3+1],
-                    tree.pointCloud.vertex_coords[v_ids[j]*3+2]}});
+                    tree.pointCloud->vertex_coords[v_ids[j]*3],
+                    tree.pointCloud->vertex_coords[v_ids[j]*3+1],
+                    tree.pointCloud->vertex_coords[v_ids[j]*3+2]}});
                 centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
                 flat_colors.emplace_back(id_color);
             }

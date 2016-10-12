@@ -93,6 +93,10 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
 }
 
+void SkeletonProxy::delete_tree_pointcloud(quint64 tree_id) {
+    Skeletonizer::singleton().deletePointcloudOfTree(tree_id);
+}
+
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
     return Skeletonizer::findNodeByNodeID(node_id);
 }

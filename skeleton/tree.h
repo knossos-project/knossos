@@ -42,7 +42,7 @@ public:
     std::list<treeListElement>::iterator iterator;
 
     std::list<nodeListElement> nodes;
-    PointCloud pointCloud{};
+    std::unique_ptr<PointCloud> pointCloud;
 
     bool render{true};
     bool isSynapticCleft{false};

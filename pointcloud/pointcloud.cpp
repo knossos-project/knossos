@@ -6,3 +6,10 @@ PointCloud::PointCloud(GLenum render_mode) : render_mode(render_mode) {
     color_buf.create();
     index_buf.create();
 }
+
+PointCloud::~PointCloud() {
+    position_buf.destroy();
+    normal_buf.destroy();
+    color_buf.destroy();
+    index_buf.destroy();
+}

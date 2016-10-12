@@ -56,6 +56,7 @@ public slots:
     bool delete_tree(quint64 tree_id);
     bool merge_trees(quint64 tree_id, quint64 other_tree_id);
     void add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color = {1.0f, 0.0f, 0.0f, 1.0f}, int draw_mode = 0, bool swap_xy = false);
+    void delete_tree_pointcloud(quint64 tree_id);
     void move_to_next_tree();
     void move_to_previous_tree();
 

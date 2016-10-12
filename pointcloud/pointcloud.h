@@ -15,8 +15,8 @@ class PointCloud {
 public:
     boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
 
-    PointCloud() {}
-    PointCloud(GLenum render_mode);
+    PointCloud(GLenum render_mode = GL_POINTS);
+    ~PointCloud();
 
     std::size_t vertex_count{0};
     std::size_t index_count{0};
