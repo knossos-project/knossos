@@ -48,7 +48,7 @@ drawSkeleton(true), drawViewportPlanes(true), enableSkeletonDownsampling(true), 
 
 RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
     : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
-      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionPass(SelectionPass::NoSelection) {}
+      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false), selectionPass(SelectionPass::NoSelection), pointCloudPicking{false} {}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
