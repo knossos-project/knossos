@@ -1310,11 +1310,11 @@ void Viewport3D::renderPointCloud() {
                 }
 
                 vec3 fcolor = frag_color.rgb;
-                gl_FragColor = vec4((0.1 * fcolor                        // ambient
-                            + 0.9 * fcolor * main_light_power     // diffuse(main)
-                            + 0.2 * vec3(1.0, 1.0, 1.0) * sub_light_power     // diffuse(sub)
-                            // + 0.4 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
-                            // + specular_color * specular_power // specular
+                gl_FragColor = vec4((0.1 * fcolor                                 // ambient
+                            + 0.9 * fcolor * main_light_power                     // diffuse(main)
+                            + 0.4 * vec3(1.0, 1.0, 1.0) * sub_light_power         // diffuse(sub)
+                            // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
+                            // + specular_color * specular_power                  // specular
                             ) //* ambient_occlusion_power
                             , 1.0);
 
