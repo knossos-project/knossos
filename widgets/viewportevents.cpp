@@ -391,6 +391,9 @@ void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
     pointCloudLastClickInformation = pointCloudTriangleIDtoInformation(pointcloudColorToId(buffer));
     if (pointCloudLastClickInformation) {
         pointCloudJumpPosition = pointCloudLastClickInformation.get().coord;
+    } else {// clear
+        pointCloudLastClickInformation.reset();
+        pointCloudJumpPosition.reset();
     }
     ViewportBase::handleMouseReleaseLeft(event);
 }
