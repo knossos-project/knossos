@@ -1365,7 +1365,7 @@ boost::optional<BufferSelection> Viewport3D::pickPointCloud(const int x, const i
     glFlush();
     const auto triangleID = pointcloudColorToId(buffer);
     auto it = selection_ids.find(triangleID);
-    return (it != std::end(selection_ids)) ? it->second : boost::optional<BufferSelection>{};;
+    return (it != std::end(selection_ids)) ? it->second : boost::optional<BufferSelection>{};
 }
 
 

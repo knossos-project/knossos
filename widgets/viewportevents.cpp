@@ -372,7 +372,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 }
 
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    pointCloudLastClickInformation = pickPointCloud(event->x(), event->y()).get();
+    pointCloudLastClickInformation = pickPointCloud(event->x(), event->y());
     if (pointCloudLastClickInformation) {
         pointCloudJumpPosition = pointCloudLastClickInformation.get().coord;
     } else {// clear
