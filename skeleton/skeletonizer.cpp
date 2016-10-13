@@ -1905,7 +1905,6 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
 
     float tmp_x{0.0f};
     float tmp_x_normal{0.0f};
-    qDebug() << verts.size() << normals.size();
     std::vector<std::array<GLfloat, 4>> colors;
     for(int i = 0; i < verts.size(); ++i) {
         colors.push_back({{col[0], col[1], col[2], col[3]}});
@@ -1936,10 +1935,13 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
     tree->pointCloud->index_count = indices.size();
     tree->pointCloud->position_buf.bind();
     tree->pointCloud->position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
+    tree->pointCloud->position_buf.release();
     tree->pointCloud->normal_buf.bind();
     tree->pointCloud->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
+    tree->pointCloud->normal_buf.release();
     tree->pointCloud->color_buf.bind();
     tree->pointCloud->color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+    tree->pointCloud->color_buf.release();
     tree->pointCloud->index_buf.bind();
     tree->pointCloud->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     tree->pointCloud->index_buf.release();

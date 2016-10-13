@@ -1200,6 +1200,10 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
 
+    pointcloudShader.disableAttributeArray(colorLocation);
+    pointcloudShader.disableAttributeArray(normalLocation);
+    pointcloudShader.disableAttributeArray(vertexLocation);
+
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -1246,6 +1250,9 @@ void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
+
+    pointcloudIdShader.disableAttributeArray(colorLocation);
+    pointcloudIdShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
