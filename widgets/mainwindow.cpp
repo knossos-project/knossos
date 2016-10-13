@@ -572,7 +572,7 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to active node"), &Skeletonizer::singleton(), [this]() {
         if (viewport3D->pointCloudJumpPosition) {
             state->viewer->setPosition(viewport3D->pointCloudJumpPosition.get());
-            viewport3D->pointCloudJumpPosition = decltype(viewport3D->pointCloudJumpPosition){};// clear position
+            viewport3D->pointCloudJumpPosition = boost::none;// clear position
         } else if (state->skeletonState->activeNode) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
         }
