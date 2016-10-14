@@ -372,12 +372,14 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 }
 
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    pointCloudLastClickInformation = pickPointCloud(event->pos());
-    if (pointCloudLastClickInformation) {
-        pointCloudJumpPosition = pointCloudLastClickInformation.get().coord;
-    } else {// clear
-        pointCloudLastClickInformation = boost::none;
-        pointCloudJumpPosition = boost::none;
+    if (mouseDown == event->pos()) {// mouse click
+        pointCloudLastClickInformation = pickPointCloud(event->pos());
+        if (pointCloudLastClickInformation) {
+            pointCloudJumpPosition = pointCloudLastClickInformation.get().coord;
+        } else {// clear
+            pointCloudLastClickInformation = boost::none;
+            pointCloudJumpPosition = boost::none;
+        }
     }
     ViewportBase::handleMouseReleaseLeft(event);
 }
@@ -385,7 +387,7 @@ void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
 void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched
-        if (event->pos() == mouseDown) {
+        if (event->pos() == mouseDown) {// mouse click
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), *this);
             const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != segmentation.getBackgroundId()) {// don’t select the unsegmented area as object
