@@ -1355,7 +1355,7 @@ std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id) {
              static_cast<unsigned char>(id >> 24)}};
 }
 
-boost::optional<BufferSelection> Viewport3D::pickPointCloud(const int x, const int y) {
+boost::optional<BufferSelection> Viewport3D::pickPointCloud(const QPoint pos) {
     makeCurrent();
     RenderOptions options;
     options.pointCloudPicking = true;
@@ -1365,9 +1365,9 @@ boost::optional<BufferSelection> Viewport3D::pickPointCloud(const int x, const i
     glPixelStoref(GL_PACK_ALIGNMENT, 1);
     // read color and translate to id
 
-    const auto yinverse = height() - y - 1;
+    const auto yinverse = height() - pos.y() - 1;
     std::array<GLubyte, 4> buffer;
-    glReadPixels(x, yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+    glReadPixels(pos.x(), yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glFlush();
     const auto triangleID = pointcloudColorToId(buffer);

@@ -282,7 +282,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloudBuffer(PointCloud & buf);
     void renderPointCloudBufferIds(PointCloud & buf);
     void pickPointCloudIdAtPosition();
-    boost::optional<BufferSelection> pickPointCloud(const int x, const int y);
+    boost::optional<BufferSelection> pickPointCloud(const QPoint pos);
     bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
