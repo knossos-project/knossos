@@ -1192,7 +1192,11 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.enableAttributeArray(colorLocation);
     pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
     buf.color_buf.release();
-    pointcloudShader.setUniformValue("tree_color", buf.correspondingTree->color);
+    QColor color = buf.correspondingTree->color;
+    if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
+        color = Qt::red;
+    }
+    pointcloudShader.setUniformValue("tree_color", color);
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
