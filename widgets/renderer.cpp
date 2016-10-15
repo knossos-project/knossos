@@ -1363,10 +1363,7 @@ boost::optional<BufferSelection> Viewport3D::pickPointCloud(const QPoint pos) {
     RenderOptions options;
     options.pointCloudPicking = true;
     renderSkeletonVP(options);
-
-    glPixelStoref(GL_PACK_ALIGNMENT, 1);
     // read color and translate to id
-
     const auto yinverse = height() - pos.y() - 1;
     std::array<GLubyte, 4> buffer;
     glReadPixels(pos.x(), yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
