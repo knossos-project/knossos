@@ -1449,7 +1449,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
             selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3});
             ++id_counter;
         }
-        PointCloud id_buf{nullptr, GL_TRIANGLES};
+        PointCloud id_buf{nullptr, false, GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
         id_buf.position_buf.bind();
         id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));

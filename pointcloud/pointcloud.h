@@ -16,7 +16,7 @@ class PointCloud {
 public:
     boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
 
-    PointCloud(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
+    explicit PointCloud(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
     ~PointCloud();
 
     treeListElement * correspondingTree{nullptr};
