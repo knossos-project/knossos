@@ -1854,7 +1854,7 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     });
 }
 
-void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
+void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
     auto * tree = findTreeByTreeID(treeID);
     if (tree == nullptr) {
         tree = &addTree(treeID);
@@ -1923,6 +1923,14 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
     tree->pointCloud->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
     tree->pointCloud->normal_buf.release();
     tree->pointCloud->color_buf.bind();
+    if (color.empty()) {
+        for (int i = 0; i < indices.size(); ++i) {
+            color.push_back(1);
+            color.push_back(0);
+            color.push_back(0);
+            color.push_back(1);
+        }
+    }
     tree->pointCloud->color_buf.allocate(color.data(), color.size() * sizeof(GLfloat));
     tree->pointCloud->color_buf.release();
     tree->pointCloud->index_buf.bind();

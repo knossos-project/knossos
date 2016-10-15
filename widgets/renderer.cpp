@@ -1188,14 +1188,11 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     buf.normal_buf.release();
 
     int colorLocation = pointcloudShader.attributeLocation("color");
-    if (buf.useTreeColor == false) {
-        buf.color_buf.bind();
-        pointcloudShader.enableAttributeArray(colorLocation);
-        pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
-        buf.color_buf.release();
-    } else {
-        pointcloudShader.setUniformValue("tree_color", buf.correspondingTree->color);
-    }
+    buf.color_buf.bind();
+    pointcloudShader.enableAttributeArray(colorLocation);
+    pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+    buf.color_buf.release();
+    pointcloudShader.setUniformValue("tree_color", buf.correspondingTree->color);
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
@@ -1204,9 +1201,7 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-    if (buf.useTreeColor == false) {
-        pointcloudShader.disableAttributeArray(colorLocation);
-    }
+    pointcloudShader.disableAttributeArray(colorLocation);
     pointcloudShader.disableAttributeArray(normalLocation);
     pointcloudShader.disableAttributeArray(vertexLocation);
 
