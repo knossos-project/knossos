@@ -87,8 +87,8 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     if(verts.size() % 3 != 0) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
     }
-    if(color.size() < 3) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: color components not 3 or 4, got %1 color components.").arg(color.size()).toStdString());
+    if (color.size() != 0 && color.size() != verts.size() * 4) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(verts.size() * 4, color.size()).toStdString());
     }
     Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
 }

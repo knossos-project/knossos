@@ -1169,6 +1169,7 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.bind();
     pointcloudShader.setUniformValue("modelview_matrix", modelview_mat);
     pointcloudShader.setUniformValue("projection_matrix", projection_mat);
+    pointcloudShader.setUniformValue("use_tree_color", buf.useTreeColor);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1186,11 +1187,15 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
     buf.normal_buf.release();
 
-    buf.color_buf.bind();
     int colorLocation = pointcloudShader.attributeLocation("color");
-    pointcloudShader.enableAttributeArray(colorLocation);
-    pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
-    buf.color_buf.release();
+    if (buf.useTreeColor == false) {
+        buf.color_buf.bind();
+        pointcloudShader.enableAttributeArray(colorLocation);
+        pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+        buf.color_buf.release();
+    } else {
+        pointcloudShader.setUniformValue("tree_color", buf.correspondingTree->color);
+    }
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
@@ -1199,8 +1204,9 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-
-    pointcloudShader.disableAttributeArray(colorLocation);
+    if (buf.useTreeColor == false) {
+        pointcloudShader.disableAttributeArray(colorLocation);
+    }
     pointcloudShader.disableAttributeArray(normalLocation);
     pointcloudShader.disableAttributeArray(vertexLocation);
 
@@ -1290,6 +1296,8 @@ void Viewport3D::renderPointCloud() {
 
             uniform mat4 modelview_matrix;
             uniform mat4 projection_matrix;
+            uniform bool use_tree_color;
+            uniform vec4 tree_color;
 
             varying vec4 frag_color;
             varying vec3 frag_normal;
@@ -1316,7 +1324,7 @@ void Viewport3D::renderPointCloud() {
                     specular_power = pow(max(0.0, dot(reflect(-main_light_dir, frag_normal), view_dir)), specular_exp);
                 }
 
-                vec3 fcolor = frag_color.rgb;
+                vec3 fcolor = use_tree_color ? tree_color.rgb : frag_color.rgb;
                 gl_FragColor = vec4((0.1 * fcolor                                 // ambient
                             + 0.9 * fcolor * main_light_power                     // diffuse(main)
                             + 0.4 * vec3(1.0, 1.0, 1.0) * sub_light_power         // diffuse(sub)
@@ -1325,7 +1333,7 @@ void Viewport3D::renderPointCloud() {
                             ) //* ambient_occlusion_power
                             , 1.0);
 
-                // gl_FragColor = vec4((frag_normal+1.0)/2.0, 1.0); // display normals
+                // gl_FragColor = //vec4((frag_normal+1.0)/2.0, 1.0); // display normals
             }
         )shaderSource");
 
@@ -1446,7 +1454,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
             selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3});
             ++id_counter;
         }
-        PointCloud id_buf{GL_TRIANGLES};
+        PointCloud id_buf{nullptr, GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
         id_buf.position_buf.bind();
         id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));

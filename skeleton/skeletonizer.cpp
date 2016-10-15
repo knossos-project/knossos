@@ -1346,15 +1346,6 @@ void Skeletonizer::setCommentOfSelectedTrees(const QString & comment) {
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     tree.color = color;
     tree.colorSetManually = true;
-
-    if(tree.pointCloud != nullptr) {
-        state->viewer->mainWindow.viewport3D->makeCurrent();
-        std::vector<std::array<GLfloat, 4>> colors;
-        colors.assign(tree.pointCloud->vertex_count, {{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}});
-        tree.pointCloud->color_buf.bind();
-        tree.pointCloud->color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
-    }
-
     Session::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
@@ -1864,6 +1855,11 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
 }
 
 void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
+    auto * tree = findTreeByTreeID(treeID);
+    if (tree == nullptr) {
+        tree = &addTree(treeID);
+    }
+
     std::vector<int> vertex_face_count(verts.size() / 3);
     for(int i = 0; i < indices.size(); ++i) {
         ++vertex_face_count[indices[i]];
@@ -1897,17 +1893,9 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
         }
     }
 
-    // temporary, color information might be switched to per-object rather than per-vertex
-    auto col = color;
-    if(col.size() == 3) {
-        col.append(1.0f);
-    }
-
     float tmp_x{0.0f};
     float tmp_x_normal{0.0f};
-    std::vector<std::array<GLfloat, 4>> colors;
     for(int i = 0; i < verts.size(); ++i) {
-        colors.push_back({{col[0], col[1], col[2], col[3]}});
         // tmp? scale vertices down by dataset scale
         verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
 
@@ -1924,13 +1912,8 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
         }
     }
 
-    auto * tree = findTreeByTreeID(treeID);
-    if (tree == nullptr) {
-        tree = &addTree(treeID, QColor(col[0] * 255, col[1] * 255, col[2] * 255, col[3] * 255));
-    }
-
     state->viewer->mainWindow.viewport3D->makeCurrent();
-    tree->pointCloud.reset(new PointCloud(static_cast<GLenum>(draw_mode)));
+    tree->pointCloud.reset(new PointCloud(tree, color.size() == 0, static_cast<GLenum>(draw_mode)));
     tree->pointCloud->vertex_count = verts.size() / 3;
     tree->pointCloud->index_count = indices.size();
     tree->pointCloud->position_buf.bind();
@@ -1940,7 +1923,7 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
     tree->pointCloud->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
     tree->pointCloud->normal_buf.release();
     tree->pointCloud->color_buf.bind();
-    tree->pointCloud->color_buf.allocate(colors.data(), colors.size() * 4 * sizeof(GLfloat));
+    tree->pointCloud->color_buf.allocate(color.data(), color.size() * sizeof(GLfloat));
     tree->pointCloud->color_buf.release();
     tree->pointCloud->index_buf.bind();
     tree->pointCloud->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
@@ -1954,6 +1937,6 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
 void Skeletonizer::deletePointcloudOfTree(std::uint64_t tree_id) {
     auto * tree = findTreeByTreeID(tree_id);
     if (tree != nullptr) {
-        tree->pointCloud.reset(new PointCloud());
+        tree->pointCloud.reset(new PointCloud(tree));
     }
 }

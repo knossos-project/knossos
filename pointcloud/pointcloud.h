@@ -10,13 +10,16 @@
 #include <boost/optional.hpp>
 #include <unordered_map>
 
+class treeListElement;
 struct BufferSelection;
 class PointCloud {
 public:
     boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
 
-    PointCloud(GLenum render_mode = GL_POINTS);
+    PointCloud(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
     ~PointCloud();
+
+    treeListElement * correspondingTree{nullptr};
 
     std::size_t vertex_count{0};
     std::size_t index_count{0};
@@ -28,6 +31,7 @@ public:
 
     QVector<float> vertex_coords;
     QVector<unsigned int> indices;
+    bool useTreeColor{true};
 };
 
 struct BufferSelection {
