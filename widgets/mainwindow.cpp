@@ -359,7 +359,11 @@ void MainWindow::setProofReadingUI(const bool on) {
     viewportZY->setHidden(on);
     viewportArb->setHidden(on);
     viewport3D->setHidden(on);
-    resetViewports();
+    if (on) {
+        // don’t reset viewports when switching to non-proof-reading mode, user can reset himself
+        // otherwise this function resets viewport positions and sizes on file and settings load
+        resetViewports();
+    }
     GUIModeLabel.setText(on ? "Proof Reading Mode" : "");
     GUIModeLabel.setVisible(on);
 }
