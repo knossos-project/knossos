@@ -84,8 +84,8 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     if (verts.size() % 3 != 0) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
     }
-    if (draw_mode == GL_TRIANGLES && verts.size() % 9 != 0) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: triangles coordinates not divisible by 3, got %1 triangle coords.").arg(verts.size() / 3).toStdString());
+    if (draw_mode == GL_TRIANGLES && indices.size() % 3 != 0) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: triangles coordinates not divisible by 3, got %1 indices.").arg(indices.size()).toStdString());
     }
     if (!normals.empty() && normals.size() != verts.size()) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
