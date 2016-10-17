@@ -1426,7 +1426,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     // create id map
     std::uint32_t id_counter = 1;
     for(auto & tree : state->skeletonState->trees) {
-        if (tree.pointCloud == nullptr || tree.pointCloud->vertex_count == 0) {
+        if (tree.pointCloud == nullptr || tree.pointCloud->render_mode != GL_TRIANGLES || tree.pointCloud->index_count < 3) {
             continue;
         }
         std::vector<std::array<unsigned char, 4>> colors;
