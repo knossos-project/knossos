@@ -81,13 +81,19 @@ bool SkeletonProxy::merge_trees(quint64 tree_id, quint64 other_tree_id) {
 }
 
 void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
-    if(verts.size() != normals.size() && !normals.empty()) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
-    }
-    if(verts.size() % 3 != 0) {
+    if (verts.size() % 3 != 0) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
     }
-    if (color.size() != 0 && color.size() != verts.size() * 4) {
+    if (draw_mode == GL_TRIANGLES && verts.size() % 9 != 0) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: triangles coordinates not divisible by 3, got %1 triangle coords.").arg(verts.size() / 3).toStdString());
+    }
+    if (!normals.empty() && normals.size() != verts.size()) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
+    }
+    if (indices.empty()) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: indices required").toStdString());
+    }
+    if (!color.empty() && color.size() != verts.size() * 4) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(verts.size() * 4).arg(color.size()).toStdString());
     }
     Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
