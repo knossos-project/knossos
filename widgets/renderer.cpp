@@ -1424,6 +1424,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     // QOpenGLFramebufferObject pickFBO{width(), height()};
 
     // create id map
+    selection_ids.clear();
     std::uint32_t id_counter = 1;
     for(auto & tree : state->skeletonState->trees) {
         if (tree.pointCloud == nullptr || tree.pointCloud->render_mode != GL_TRIANGLES || tree.pointCloud->index_count < 3) {
