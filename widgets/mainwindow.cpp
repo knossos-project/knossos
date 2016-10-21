@@ -357,7 +357,7 @@ void MainWindow::setProofReadingUI(const bool on) {
 
     viewportXZ->setHidden(on);
     viewportZY->setHidden(on);
-    viewportArb->setHidden(on);
+    viewportArb->setHidden(on || !state->viewerState->enableArbVP);
     viewport3D->setHidden(on);
     if (on) {
         // don’t reset viewports when switching to non-proof-reading mode, user can reset himself
