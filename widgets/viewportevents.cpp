@@ -653,7 +653,7 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->viewerState->showOnlyRawData = false;
         state->viewer->oc_reslice_notify_visible();
-    } else if (event->key() == Qt::Key_5) {
+    } else if (event->key() == Qt::Key_F4) {
         static uint originalCompressionRatio;
         if (state->compressionRatio != 0) {
             originalCompressionRatio = state->compressionRatio;

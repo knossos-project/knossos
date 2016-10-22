@@ -596,7 +596,7 @@ void MainWindow::createMenus() {
         commentActions.push_back(&action);
     };
     for (int number = 1; number < 11; ++number) {
-        addCommentShortcut(number, QKeySequence(QString("F%1").arg(number)));
+        addCommentShortcut(number, QKeySequence(QString("%1").arg(number%10)));
     }
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
@@ -621,7 +621,7 @@ void MainWindow::createMenus() {
     refreshPluginMenu();
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
-    helpMenu.addAction(QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); });
+    addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
     helpMenu.addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
 }
 

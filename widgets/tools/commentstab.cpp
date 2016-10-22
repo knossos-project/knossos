@@ -36,7 +36,7 @@
 void CommentsModel::fill() {
     beginResetModel();
     for(int i = 1; i < 11; ++i) {
-        CommentSetting::comments.emplace_back(QString("F%1").arg(i));
+        CommentSetting::comments.emplace_back(QString("%1").arg(i%10));
     }
     endResetModel();
 }
