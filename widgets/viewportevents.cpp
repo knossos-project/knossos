@@ -374,7 +374,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
     if (mouseDown == event->pos()) {// mouse click
         pointCloudLastClickInformation = pickPointCloud(event->pos());
-        pointCloudLastClickCurrentlyVisisted = false;
+        pointCloudLastClickCurrentlyVisited = false;
         if (pointCloudLastClickInformation) {
             Skeletonizer::singleton().setActiveTreeByID(pointCloudLastClickInformation.get().it.get());
         }

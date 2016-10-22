@@ -297,7 +297,7 @@ class Viewport3D : public ViewportBase {
     virtual void handleKeyRelease(const QKeyEvent *event) override;
 public:
     boost::optional<BufferSelection> pointCloudLastClickInformation;
-    bool pointCloudLastClickCurrentlyVisisted{false};
+    bool pointCloudLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();

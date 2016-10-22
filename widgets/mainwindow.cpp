@@ -574,13 +574,13 @@ void MainWindow::createMenus() {
     viewMenu->addSeparator();
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to active node"), &Skeletonizer::singleton(), [this]() {
-        auto pointcloudPriority = !viewport3D->pointCloudLastClickCurrentlyVisisted || !state->skeletonState->activeNode;
+        auto pointcloudPriority = !viewport3D->pointCloudLastClickCurrentlyVisited || !state->skeletonState->activeNode;
         if (viewport3D->pointCloudLastClickInformation && pointcloudPriority) {
             state->viewer->setPosition(viewport3D->pointCloudLastClickInformation.get().coord);
-            viewport3D->pointCloudLastClickCurrentlyVisisted = true;
+            viewport3D->pointCloudLastClickCurrentlyVisited = true;
         } else if (state->skeletonState->activeNode) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
-            viewport3D->pointCloudLastClickCurrentlyVisisted = false;
+            viewport3D->pointCloudLastClickCurrentlyVisited = false;
         }
     }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
