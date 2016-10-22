@@ -56,7 +56,7 @@ Viewer::Viewer() {
 
     state->viewerState->renderInterval = FAST;
 
-    state->viewerState->showOverlay = true;
+    state->viewerState->showOnlyRawData = false;
 
     state->viewerState->depthCutOff = state->viewerState->depthCutOff;
     state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
@@ -480,7 +480,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                                 texData.data() + index);
             }
             //Take care of the overlay textures.
-            if (Segmentation::enabled && oc_reslice && state->viewerState->showOverlay) {
+            if (Segmentation::enabled && oc_reslice && state->viewerState->showOnlyRawData == false) {
                 glBindTexture(GL_TEXTURE_2D, vp.texture.overlayHandle);
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.

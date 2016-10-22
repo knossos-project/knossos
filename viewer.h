@@ -121,7 +121,7 @@ struct ViewerState {
     // dataset & segmentation rendering options
     uint luminanceRangeDelta{255};
     int luminanceBias{0};
-    bool showOverlay{true};
+    bool showOnlyRawData{false};
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
     bool datasetColortableOn{false};

@@ -555,16 +555,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if (ctrl && event->key() == Qt::Key_0) {
         state->viewer->zoomReset();
-    } else if (event->key() == Qt::Key_3) {
-        if(state->viewerState->drawVPCrosshairs) {
-           state->viewerState->drawVPCrosshairs = false;
-        }
-        else {
-           state->viewerState->drawVPCrosshairs = true;
-        }
-        auto & vpSettings = state->viewer->window->widgetContainer.preferencesWidget.viewportTab;
-        vpSettings.drawIntersectionsCrossHairCheckBox.setChecked(state->viewerState->drawVPCrosshairs);
-
     } else if(event->key() == Qt::Key_Plus && ctrl) {
         zoomIn();
     } else if(event->key() == Qt::Key_Minus && ctrl) {
@@ -573,13 +563,8 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         if(ctrl) {
             emit pasteCoordinateSignal();
         }
-    } else if(event->key() == Qt::Key_1) { // !
-        auto & skelSettings = state->viewer->window->widgetContainer.preferencesWidget.treesTab;
-        const auto showkeletonOrtho = skelSettings.skeletonInOrthoVPsCheck.isChecked();
-        skelSettings.skeletonInOrthoVPsCheck.setChecked(!showkeletonOrtho);
-        skelSettings.skeletonInOrthoVPsCheck.clicked(!showkeletonOrtho);
     } else if(event->key() == Qt::Key_Space) {
-        state->viewerState->showOverlay = false;
+        state->viewerState->showOnlyRawData = true;
         state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if(ctrl) {
@@ -666,7 +651,7 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
 
 void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
-        state->viewerState->showOverlay = true;
+        state->viewerState->showOnlyRawData = false;
         state->viewer->oc_reslice_notify_visible();
     } else if (event->key() == Qt::Key_5) {
         static uint originalCompressionRatio;

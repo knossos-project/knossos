@@ -798,7 +798,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         swapZY();
 
-        if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs)) {
+        if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
             glPushMatrix();
             glLoadIdentity();
             view();
@@ -827,7 +827,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if (options.drawCrosshairs) {
+        if (options.drawCrosshairs && state->viewerState->showOnlyRawData == false) {
             glLineWidth(1);
             glBegin(GL_LINES);
                 glColor4f(xz || zy, xy, 0, 0.3);
@@ -914,7 +914,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_DEPTH_TEST);
 
-        if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs)) {
+        if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
             glPushMatrix();
             glTranslatef(-state->viewerState->currentPosition.x, -state->viewerState->currentPosition.y, -state->viewerState->currentPosition.z);
             glTranslatef(0.5, 0.5, 0.5);//arrange to pixel center, this is never correct, TODO angle adjustments
@@ -969,7 +969,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if (options.drawCrosshairs) {
+        if (options.drawCrosshairs && state->viewerState->showOnlyRawData == false) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2.z, v2.y, v2.x, 0.3);
