@@ -2289,25 +2289,27 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         const auto * activeTree = state->skeletonState->activeTree;
         const auto * activeNode = state->skeletonState->activeNode;
         const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
-        const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
         const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
 
-        if (synapseCreated && synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
-            segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-            QColor color = Qt::black;
-            if (synapseSelected == false) {
-                color.setAlpha(Synapse::darkenedAlpha);
+        if (synapseCreated) {
+            const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
+            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
+                segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
+                QColor color = Qt::black;
+                if (synapseSelected == false) {
+                    color.setAlpha(Synapse::darkenedAlpha);
+                }
+                renderSegment(virtualSegment, color, options);
+
+                auto post = synapse.getPostSynapse()->position;
+                auto pre = synapse.getPreSynapse()->position;
+                const auto offset = (post - pre)/10;
+                Coordinate arrowbase = post - offset;
+
+                renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
+                    , &synapse.getPostSynapse()->position
+                    , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
             }
-            renderSegment(virtualSegment, color, options);
-
-            auto post = synapse.getPostSynapse()->position;
-            auto pre = synapse.getPreSynapse()->position;
-            const auto offset = (post - pre)/10;
-            Coordinate arrowbase = post - offset;
-
-            renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
-                , &synapse.getPostSynapse()->position
-                , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
         }
     }
 
