@@ -2184,7 +2184,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 || (activeSynapse && activeSynapse->getCleft() != &currentTree);
         const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
         const bool selectionFilter = onlySelected && !currentTree.selected;
-        if (hideSynapses || selectionFilter || !currentTree.render) {
+        if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
+            // hide synapse takes precedence over render flag for synapses.
             continue;
         }
         nodeListElement * previousNode = nullptr;
