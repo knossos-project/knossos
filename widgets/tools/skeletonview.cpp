@@ -583,6 +583,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("postSynapse")); //jump to postSynapse
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+                                                      && selectedTrees.front()->isSynapticCleft
+                                                      && selectedTrees.front()->properties.contains("preSynapse")
+                                                      && selectedTrees.front()->properties.contains("postSynapse")); //reverse synapse direction
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() >= 2);//merge trees action
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//set comment
@@ -603,8 +607,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                                                       && selectedNodes.front()->isSynapticNode);//jump to corresponding cleft
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1
-                                                      && selectedNodes.front()->isSynapticNode);//reverse synaptic nodes
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set radius
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//delete
@@ -619,16 +621,23 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
     });
+    treeContextMenu.addSeparator();
     QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [this](){
         const auto * tree = state->skeletonState->selectedTrees.front();
-        if(tree->properties.contains("preSynapse"))
-            Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["preSynapse"].toLongLong()]);
+        assert(tree->properties.contains("preSynapse"));
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["preSynapse"].toLongLong()]);
     });
     QObject::connect(treeContextMenu.addAction("Jump to postSynapse"), &QAction::triggered, [this](){
         const auto * tree = state->skeletonState->selectedTrees.front();
-        if(tree->properties.contains("preSynapse"))
-            Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
+        assert(tree->properties.contains("preSynapse"));
+        Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
     });
+    QObject::connect(treeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, [this](){
+        const auto * tree = state->skeletonState->selectedTrees.front();
+        assert(tree->isSynapticCleft);
+        tree->correspondingSynapse->toggleDirection();
+    });
+    treeContextMenu.addSeparator();
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(treeID);
@@ -746,7 +755,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("&Link/Unlink nodes"), &QAction::triggered, [this](){
         Skeletonizer::singleton().toggleConnectionOfFirstPairOfSelectedNodes(this);
     });
-    QObject::connect(nodeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, this, &SkeletonView::reverseSynapseDirection);
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");
