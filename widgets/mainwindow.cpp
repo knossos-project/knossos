@@ -154,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     {
         auto & action = *new QAction(this);
-        action.setShortcut(Qt::Key_7);
+        action.setShortcut(Qt::Key_F7);
         QObject::connect(&action, &QAction::triggered, [](){
             state->viewer->gpuRendering = !state->viewer->gpuRendering;
         });
