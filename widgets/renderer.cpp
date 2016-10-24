@@ -226,7 +226,7 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
 
 static void backup_gl_state() {
     glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glPushAttrib(GL_ALL_ATTRIB_BITS | GL_MULTISAMPLE_BIT);// http://mesa-dev.freedesktop.narkive.com/4FYSpYiY/patch-mesa-change-gl-all-attrib-bits-to-0xffffffff
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
     glLoadIdentity();
@@ -709,10 +709,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    if(!state->viewerState->selectModeFlag) {
-        if(state->viewerState->multisamplingOnOff) {
-            glEnable(GL_MULTISAMPLE);
-        }
+    if (state->viewerState->multisamplingOnOff && !state->viewerState->selectModeFlag) {
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        glDisable(GL_MULTISAMPLE);
     }
 
     /* Multiplying by state->magnification increases the area covered
@@ -1463,6 +1463,11 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
     }
+    if (state->viewerState->multisamplingOnOff && !state->viewerState->selectModeFlag) {
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        glDisable(GL_MULTISAMPLE);
+    }
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
     glScalef(1, -1, 1);// flip ogl y
     const auto halfBoundary = state->skeletonState->volBoundary / 2;
@@ -1476,9 +1481,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
     displayedlengthInNmX = edgeLength / screenPxXPerDataPx * state->scale.x;
 
-    if(state->viewerState->multisamplingOnOff) {
-        glEnable(GL_MULTISAMPLE);
-    }
      // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_MODELVIEW);

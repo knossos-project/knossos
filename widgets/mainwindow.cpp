@@ -188,6 +188,7 @@ void MainWindow::createViewports() {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setMajorVersion(2);
     format.setMinorVersion(0);
+    format.setSamples(8);// max samples
     format.setDepthBufferSize(24);
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
