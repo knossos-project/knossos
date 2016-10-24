@@ -1351,8 +1351,8 @@ void Viewport3D::renderPointCloud() {
     }
 }
 
-uint32_t pointcloudColorToId(std::array<unsigned char, 4> color) {
-    return color[0] + (color[1] << 8) + (color[2] << 16) + (color[3] << 24);
+uint32_t pointcloudColorToId(const QColor & color) {
+    return color.red() + (color.green() << 8) + (color.blue() << 16) + (color.alpha() << 24);
 }
 
 std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id) {
@@ -1364,20 +1364,18 @@ std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id) {
 
 boost::optional<BufferSelection> Viewport3D::pickPointCloud(const QPoint pos) {
     makeCurrent();
+    QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
+    fbo.bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     RenderOptions options;
     options.pointCloudPicking = true;
     renderSkeletonVP(options);
+    fbo.release();
     // read color and translate to id
-    const auto yinverse = height() - pos.y() - 1;
-    std::array<GLubyte, 4> buffer;
-    glReadPixels(pos.x(), yinverse, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glFlush();
-    const auto triangleID = pointcloudColorToId(buffer);
+    const auto triangleID = pointcloudColorToId(fbo.toImage().pixelColor(pos));
     auto it = selection_ids.find(triangleID);
     return (it != std::end(selection_ids)) ? boost::optional<BufferSelection>{it->second} : boost::none;
 }
-
 
 void Viewport3D::pickPointCloudIdAtPosition() {
     static bool pointcloud_id_init = true;
@@ -1419,9 +1417,6 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
-
-    // create FBO
-    // QOpenGLFramebufferObject pickFBO{width(), height()};
 
     // create id map
     selection_ids.clear();
