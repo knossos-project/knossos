@@ -32,11 +32,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
 
-    renderQualityCombo.addItems({tr("Tubes & spheres"), tr("Switch dynamically"), tr("Lines & points")});
+    renderQualityCombo.addItems({tr("High (slow)"), tr("Default (very fast)"), tr("Low (fastest)")});
     renderQualityCombo.setToolTip(tr("<b>Skeleton rendering quality:</b><br/>"
-                                  "<b>Tubes & spheres:</b> renders segments as tubes and nodes as spheres<br/>"
-                                  "<b>Switch dynamically:</b> Switches dynamically between \"Tubes & spheres\" and \"Lines & points\" depending on zoom<br/>"
-                                  "<b>Lines & points:</b> renders segments as lines and nodes as points<br/>"));
+                                  "<b>High:</b> Highest level of detail possible, but slower performance, especially for big skeletons. <br/>"
+                                  "<b>Default:</b> Dynamical adjustment of details depending on zoom level. <br/>"
+                                  "<b>Low:</b> Skeleton rendered as lines and points. Details decrease drastically when zoomed out. Very fast even for large skeletons. <br/>"));
 
     // trees
     renderingLayout.setAlignment(Qt::AlignTop);

@@ -40,7 +40,6 @@
 class TreesTab : public QWidget
 {
     friend class PreferencesWidget;
-    friend class ViewportBase;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
     QHBoxLayout mainLayout;
     // tree render options
