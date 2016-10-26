@@ -577,6 +577,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
         const auto & selectedTrees = state->skeletonState->selectedTrees;
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1 && selectedTrees.front()->isSynapticCleft);//seperator
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("preSynapse")); //jump to preSynapse
@@ -587,6 +588,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("preSynapse")
                                                       && selectedTrees.front()->properties.contains("postSynapse")); //reverse synapse direction
+        treeContextMenu.actions().at(i++)->setVisible(true); //seperator
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() >= 2);//merge trees action
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//set comment
