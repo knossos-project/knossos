@@ -47,9 +47,20 @@ bool ViewportOrtho::showNodeComments = false;
 RenderOptions::RenderOptions() : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false),
                                  drawOverlay(Segmentation::enabled && state->viewerState->showOnlyRawData == false) {}
 
-RenderOptions::RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes)
-    : drawBoundaryAxes(drawBoundaryAxes), drawBoundaryBox(drawBoundaryBox), drawCrosshairs(false), drawOverlay(drawOverlay), drawSkeleton(drawSkeleton),
-      drawViewportPlanes(drawViewportPlanes), enableSkeletonDownsampling(false), enableTextScaling(true), highlightActiveNode(false), highlightSelection(false) {}
+RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes) {
+    RenderOptions options;
+    options.drawBoundaryAxes = drawBoundaryAxes;
+    options.drawBoundaryBox = drawBoundaryBox;
+    options.drawCrosshairs = false;
+    options.drawOverlay = drawOverlay;
+    options.drawSkeleton = drawSkeleton;
+    options.drawViewportPlanes = drawViewportPlanes;
+    options.enableSkeletonDownsampling = false;
+    options.enableTextScaling = true;
+    options.highlightActiveNode = false;
+    options.highlightSelection = false;
+    return options;
+}
 
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
@@ -751,7 +762,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
     QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
-    const RenderOptions options(withAxes, withBox, withOverlay, withSkeleton, withVpPlanes);
+    const auto options = RenderOptions::snapshotRenderOptions(withAxes, withBox, withOverlay, withSkeleton, withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);

@@ -89,10 +89,8 @@ struct viewportTexture {
 
 struct RenderOptions {
     enum class SelectionPass { NoSelection, NodeIDLowerBits, NodeIDHigherBits };
-    // default
     RenderOptions();
-    // snapshot render options
-    RenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
+    static RenderOptions snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawSkeleton, const bool drawViewportPlanes);
 
     bool drawBoundaryAxes{true};
     bool drawBoundaryBox{true};
