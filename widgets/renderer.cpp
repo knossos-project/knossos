@@ -1581,7 +1581,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glTranslatef(-((float)state->boundary.x / 2.), -((float)state->boundary.y / 2.), -((float)state->boundary.z / 2.));
         glTranslatef(0.5, 0.5, 0.5);
 
-        updateFrustumClippingPlanes();
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
         glEnable(GL_TEXTURE_2D);
@@ -1885,6 +1884,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPushMatrix();
         glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
         glTranslatef(0.5, 0.5, 0.5);//arrange to pixel center
+        updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
         glPopMatrix();
     }
