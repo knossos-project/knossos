@@ -81,8 +81,6 @@ struct ViewerState {
     std::pair<int, Qt::KeyboardModifiers> nodeSelectSquareData{-1, Qt::NoModifier};
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
-    bool selectModeFlag{false};
-
     int dropFrames{1};
     int walkFrames{10};
 

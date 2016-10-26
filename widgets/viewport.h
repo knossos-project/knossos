@@ -88,8 +88,9 @@ struct viewportTexture {
 };
 
 struct RenderOptions {
-    enum class SelectionPass { NoSelection, NodeIDLowerBits, NodeIDHigherBits };
+    enum class SelectionPass { NoSelection, NodeID0_24Bits, NodeID24_48Bits, NodeID48_64Bits };
     RenderOptions();
+    static RenderOptions nodePickingRenderOptions(SelectionPass pass);
     static RenderOptions pointcloudPickingRenderOptions();
     static RenderOptions snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawPointcloud, const bool drawSkeleton, const bool drawViewportPlanes);
 
@@ -104,6 +105,7 @@ struct RenderOptions {
     bool enableTextScaling{false};
     bool highlightActiveNode{true};
     bool highlightSelection{true};
+    bool nodePicking{false};
     bool pointCloudPicking{false};
     SelectionPass selectionPass{SelectionPass::NoSelection};
 };
@@ -162,17 +164,15 @@ protected:
     void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false);
-    uint renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
+    void renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions());
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
-    QSet<nodeListElement *> pickNodes(uint centerX, uint centerY, uint width, uint height);
-    boost::optional<nodeListElement &> pickNode(uint x, uint y, uint width);
-    template<typename F>
-    std::vector<GLuint> pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight);
+    QSet<nodeListElement *> pickNodes(int centerX, int centerY, int width, int height);
+    boost::optional<nodeListElement &> pickNode(int x, int y, int width);
     void handleLinkToggle(const QMouseEvent & event);
 
     // event-handling
@@ -282,7 +282,7 @@ class Viewport3D : public ViewportBase {
     void renderPointCloudBufferIds(PointCloud & buf);
     void pickPointCloudIdAtPosition();
     boost::optional<BufferSelection> pickPointCloud(const QPoint pos);
-    bool renderSkeletonVP(const RenderOptions & options = RenderOptions());
+    void renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;

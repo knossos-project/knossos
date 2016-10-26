@@ -110,32 +110,18 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
     return true;
 }
 
-uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const QColor & color, const RenderOptions & options) {
-    GLUquadricObj *gluSphereObj = NULL;
-
+void ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const QColor & color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     /* Render only a point if the sphere wouldn't be visible anyway */
     if ((((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f && options.enableSkeletonDownsampling))) {
-        /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
-        Color buffer picking brings its own issues on the other hand, so we
-        stick with SELECT mode for the time being. */
-        if(state->viewerState->selectModeFlag) {
-            glPointSize(radius * 2.);
-            glBegin(GL_POINTS);
-                glVertex3f((float)pos.x, (float)pos.y, (float)pos.z);
-            glEnd();
-            glPointSize(1.);
-        } else {
-            state->viewerState->pointVertBuffer.vertices.emplace_back(pos);
-            state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
-        }
-    }
-    else {
+        state->viewerState->pointVertBuffer.vertices.emplace_back(pos);
+        state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
+    } else {
         glColor4fv(color4f.data());
         glPushMatrix();
         glTranslatef((float)pos.x, (float)pos.y, (float)pos.z);
         glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
-        gluSphereObj = gluNewQuadric();
+        auto * gluSphereObj = gluNewQuadric();
         gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
         gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
@@ -152,8 +138,6 @@ uint ViewportBase::renderSphere(const Coordinate & pos, const float & radius, co
         gluDeleteQuadric(gluSphereObj);
         glPopMatrix();
     }
-
-    return true;
 }
 
 void ViewportBase::renderSegment(const segmentListElement & segment, const QColor & color, const RenderOptions & options) {
@@ -172,25 +156,34 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
     auto color = state->viewer->getNodeColor(node);
     const float radius = Skeletonizer::singleton().radius(node);
 
-    float mp;
-    if( radius > 30.0f) {
-        mp = 1.1; //halo only 10% bigger then node
-    } else {
-        //scale the halo size from 10% up to 100% bigger then the node size
-        //otherwise, the halo won't be visible on very small node sizes (=1.0)
-        //(x - x_0) * (f_1 - f_0)/(x_1 - x_0)  //Linear interpolation
-        mp = (radius - 1.0) * (1.1 - 2.0)/(30.0 - 1.0) + 2.0;
+    if (options.nodePicking) {
+        const auto name = GLNames::NodeOffset + node.nodeID;
+        int shift{0};
+        if (options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
+            shift = 24;
+        } else if (options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
+            shift = 48;
+        }
+        const auto bits = static_cast<GLuint>(name >> shift);// extract 24 first, middle or 16 last bits of interest
+        color.setRed(static_cast<std::uint8_t>(bits));
+        color.setGreen(static_cast<std::uint8_t>(bits >> 8));
+        color.setBlue(static_cast<std::uint8_t>(bits >> 16));
+        color.setAlpha(255);
     }
 
     renderSphere(node.position, radius, color, options);
 
-    if(node.selected && options.highlightSelection) { // highlight selected nodes
+    // halo only 10% bigger then node or
+    // scale the halo size from 10% up to 100% bigger then the node size
+    // otherwise, the halo won't be visible on very small node sizes (=1.0)
+    // (x - x_0) * (f_1 - f_0)/(x_1 - x_0)  //Linear interpolation
+    const float mp = radius > 30.0f ? 1.1 : (radius - 1.0) * (1.1 - 2.0)/(30.0 - 1.0) + 2.0;
+    if (node.selected && options.highlightSelection) {// highlight selected nodes
         auto selectedNodeColor = QColor(Qt::green);
         selectedNodeColor.setAlphaF(0.5f);
         renderSphere(node.position, radius * mp, selectedNodeColor);
     }
-    // Highlight active node with a halo
-    if(state->skeletonState->activeNode == &node && options.highlightActiveNode) {
+    if (state->skeletonState->activeNode == &node && options.highlightActiveNode) {// highlight active node with a halo
         // Color gets changes in case there is a comment & conditional comment highlighting
         auto haloColor = state->viewer->getNodeColor(node);
         haloColor.setAlphaF(0.2);
@@ -200,25 +193,29 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
 
 void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions & options) {
     ViewportBase::renderNode(node, options);
-    if(1.5 <  Skeletonizer::singleton().radius(node)) { // draw node center to make large nodes visible and clickable in ortho vps
+    if (1.5f <  Skeletonizer::singleton().radius(node)) { // draw node center to make large nodes visible and clickable in ortho vps
         renderSphere(node.position, 1.5, state->viewer->getNodeColor(node));
     }
-    // Render the node description
-    glColor4f(0.f, 0.f, 0.f, 1.f);
-    auto nodeID = (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node))? QString::number(node.nodeID) : "";
-    auto comment = node.getComment();
-    comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
-    if(nodeID.isEmpty() == false || comment.isEmpty() == false) {
-        renderText(node.position, nodeID.append(comment), options.enableTextScaling);
+    if (!options.nodePicking) {
+        // Render the node description
+        glColor4f(0.f, 0.f, 0.f, 1.f);
+        auto nodeID = (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node))? QString::number(node.nodeID) : "";
+        auto comment = node.getComment();
+        comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
+        if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
+            renderText(node.position, nodeID.append(comment), options.enableTextScaling);
+        }
     }
 }
 
 void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & options) {
     ViewportBase::renderNode(node, options);
-    // Render the node description
-    if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
-        glColor4f(0.f, 0.f, 0.f, 1.f);
-        renderText(node.position, QString::number(node.nodeID), options.enableTextScaling);
+    if (!options.nodePicking) {
+        // Render the node description
+        if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
+            glColor4f(0.f, 0.f, 0.f, 1.f);
+            renderText(node.position, QString::number(node.nodeID), options.enableTextScaling);
+        }
     }
 }
 
@@ -382,10 +379,8 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 }
 
 void ViewportBase::setFrontFacePerspective() {
-    if(state->viewerState->selectModeFlag == false) { // messes up pick matrix
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-    }
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
     glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
 
@@ -485,9 +480,6 @@ void Viewport3D::renderViewportFrontFace() {
 }
 
 void ViewportBase::renderScaleBar() {
-    if (state->viewerState->selectModeFlag) {
-        glLoadName(GLNames::Scalebar);
-    }
     const auto vp_edgelen_um = 0.001 * displayedlengthInNmX;
     auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
     auto sizeLabel = QString("%1 µm").arg(rounded_scalebar_len_um);
@@ -508,10 +500,6 @@ void ViewportBase::renderScaleBar() {
     glEnd();
 
     renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, true, true);
-
-    if (state->viewerState->selectModeFlag) {
-        glLoadName(GLNames::None);
-    }
 }
 
 void ViewportOrtho::renderViewportFast() {
@@ -701,13 +689,10 @@ void ViewportOrtho::renderViewportFast() {
 }
 
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
-    if(state->viewerState->selectModeFlag) {
-        glDisable(GL_DEPTH_TEST);
-    }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    if (state->viewerState->multisamplingOnOff && !state->viewerState->selectModeFlag) {
+    if (state->viewerState->multisamplingOnOff) {
         glEnable(GL_MULTISAMPLE);
     } else {
         glDisable(GL_MULTISAMPLE);
@@ -723,11 +708,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     const bool zy = viewportType == VIEWPORT_ZY;
     const bool arb = viewportType == VIEWPORT_ARBITRARY;
     if (!arb) {
-        if (!state->viewerState->selectModeFlag) {
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-        }
-
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
         auto view = [&](){
             gluLookAt(state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z
                     , state->viewerState->currentPosition.x - zy, state->viewerState->currentPosition.y - xz , state->viewerState->currentPosition.z + xy
@@ -773,17 +755,19 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         swapZY();
 
         auto slice = [&](){
-            glBegin(GL_QUADS);
-                glNormal3i(0, 0, 1);
-                glTexCoord2f(texture.texLUx, texture.texLUy);
-                glVertex3f(-dataPxX, dataPxY, 0);
-                glTexCoord2f(texture.texRUx, texture.texRUy);
-                glVertex3f(dataPxX, dataPxY, 0);
-                glTexCoord2f(texture.texRLx, texture.texRLy);
-                glVertex3f(dataPxX, -dataPxY, 0);
-                glTexCoord2f(texture.texLLx, texture.texLLy);
-                glVertex3f(-dataPxX, -dataPxY, 0);
-            glEnd();
+            if (!options.nodePicking) {
+                glBegin(GL_QUADS);
+                    glNormal3i(0, 0, 1);
+                    glTexCoord2f(texture.texLUx, texture.texLUy);
+                    glVertex3f(-dataPxX, dataPxY, 0);
+                    glTexCoord2f(texture.texRUx, texture.texRUy);
+                    glVertex3f(dataPxX, dataPxY, 0);
+                    glTexCoord2f(texture.texRLx, texture.texRLy);
+                    glVertex3f(dataPxX, -dataPxY, 0);
+                    glTexCoord2f(texture.texLLx, texture.texLLy);
+                    glVertex3f(-dataPxX, -dataPxY, 0);
+                glEnd();
+            }
         };
 
         slice();
@@ -852,10 +836,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         glDepthFunc(GL_LESS);//reset depth func to default value
     } else {
-        if(!state->viewerState->selectModeFlag) {
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-        }
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
         // left, right, bottom, top, near, far clipping planes
         glOrtho(-((float)(state->boundary.x)/ 2.) + (float)state->viewerState->currentPosition.x - dataPxX,
             -((float)(state->boundary.x) / 2.) + (float)state->viewerState->currentPosition.x + dataPxX,
@@ -896,18 +878,20 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
 
-        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-        glBegin(GL_QUADS);
-            glNormal3i(n.x, n.y, n.z);
-            glTexCoord2f(texture.texLUx, texture.texLUy);
-            glVertex3f(-dataPxX * v1.x - dataPxY * v2.x, -dataPxX * v1.y - dataPxY * v2.y, -dataPxX * v1.z - dataPxY * v2.z);
-            glTexCoord2f(texture.texRUx, texture.texRUy);
-            glVertex3f(dataPxX * v1.x - dataPxY * v2.x, dataPxX * v1.y - dataPxY * v2.y, dataPxX * v1.z - dataPxY * v2.z);
-            glTexCoord2f(texture.texRLx, texture.texRLy);
-            glVertex3f(dataPxX * v1.x + dataPxY * v2.x, dataPxX * v1.y + dataPxY * v2.y, dataPxX * v1.z + dataPxY * v2.z);
-            glTexCoord2f(texture.texLLx, texture.texLLy);
-            glVertex3f(-dataPxX * v1.x + dataPxY * v2.x, -dataPxX * v1.y + dataPxY * v2.y, -dataPxX * v1.z + dataPxY * v2.z);
-        glEnd();
+        if (!options.nodePicking) {
+            glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+            glBegin(GL_QUADS);
+                glNormal3i(n.x, n.y, n.z);
+                glTexCoord2f(texture.texLUx, texture.texLUy);
+                glVertex3f(-dataPxX * v1.x - dataPxY * v2.x, -dataPxX * v1.y - dataPxY * v2.y, -dataPxX * v1.z - dataPxY * v2.z);
+                glTexCoord2f(texture.texRUx, texture.texRUy);
+                glVertex3f(dataPxX * v1.x - dataPxY * v2.x, dataPxX * v1.y - dataPxY * v2.y, dataPxX * v1.z - dataPxY * v2.z);
+                glTexCoord2f(texture.texRLx, texture.texRLy);
+                glVertex3f(dataPxX * v1.x + dataPxY * v2.x, dataPxX * v1.y + dataPxY * v2.y, dataPxX * v1.z + dataPxY * v2.z);
+                glTexCoord2f(texture.texLLx, texture.texLLy);
+                glVertex3f(-dataPxX * v1.x + dataPxY * v2.x, -dataPxX * v1.y + dataPxY * v2.y, -dataPxX * v1.z + dataPxY * v2.z);
+            glEnd();
+        }
         glBindTexture (GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_DEPTH_TEST);
@@ -924,21 +908,23 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 0.6);
 
-        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-        glBegin(GL_QUADS);
-            glNormal3i(n.x, n.y, n.z);
-            const auto offset = n;
-            glTexCoord2f(texture.texLUx, texture.texLUy);
-            glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x, -dataPxX * v1.y - dataPxY * v2.y + offset.y, -dataPxX * v1.z - dataPxY * v2.z + offset.z);
-            glTexCoord2f(texture.texRUx, texture.texRUy);
-            glVertex3f(dataPxX * v1.x - dataPxY * v2.x + offset.x, dataPxX * v1.y - dataPxY * v2.y + offset.y, dataPxX * v1.z - dataPxY * v2.z + offset.z);
-            glTexCoord2f(texture.texRLx, texture.texRLy);
+        if (!options.nodePicking) {
+            glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+            glBegin(GL_QUADS);
+                glNormal3i(n.x, n.y, n.z);
+                const auto offset = n;
+                glTexCoord2f(texture.texLUx, texture.texLUy);
+                glVertex3f(-dataPxX * v1.x - dataPxY * v2.x + offset.x, -dataPxX * v1.y - dataPxY * v2.y + offset.y, -dataPxX * v1.z - dataPxY * v2.z + offset.z);
+                glTexCoord2f(texture.texRUx, texture.texRUy);
+                glVertex3f(dataPxX * v1.x - dataPxY * v2.x + offset.x, dataPxX * v1.y - dataPxY * v2.y + offset.y, dataPxX * v1.z - dataPxY * v2.z + offset.z);
+                glTexCoord2f(texture.texRLx, texture.texRLy);
 
-            glVertex3f(dataPxX * v1.x + dataPxY * v2.x + offset.x, dataPxX * v1.y + dataPxY * v2.y + offset.y, dataPxX * v1.z + dataPxY * v2.z + offset.z);
-            glTexCoord2f(texture.texLLx, texture.texLLy);
+                glVertex3f(dataPxX * v1.x + dataPxY * v2.x + offset.x, dataPxX * v1.y + dataPxY * v2.y + offset.y, dataPxX * v1.z + dataPxY * v2.z + offset.z);
+                glTexCoord2f(texture.texLLx, texture.texLLy);
 
-            glVertex3f(-dataPxX * v1.x + dataPxY * v2.x + offset.x, -dataPxX * v1.y + dataPxY * v2.y + offset.y, -dataPxX * v1.z + dataPxY * v2.z + offset.z);
-        glEnd();
+                glVertex3f(-dataPxX * v1.x + dataPxY * v2.x + offset.x, -dataPxX * v1.y + dataPxY * v2.y + offset.y, -dataPxX * v1.z + dataPxY * v2.z + offset.z);
+            glEnd();
+        }
 
         // Draw the overlay textures
         if(options.drawOverlay) {
@@ -1142,11 +1128,13 @@ bool Viewport3D::renderVolumeVP() {
 void Viewport3D::renderViewport(const RenderOptions &options) {
     auto& seg = Segmentation::singleton();
     if (seg.volume_render_toggle) {
-        if(seg.volume_update_required) {
-            seg.volume_update_required = false;
-            updateVolumeTexture();
+        if (!options.nodePicking) {
+            if(seg.volume_update_required) {
+                seg.volume_update_required = false;
+                updateVolumeTexture();
+            }
+            renderVolumeVP();
         }
-        renderVolumeVP();
     } else {
         renderSkeletonVP(options);
     }
@@ -1454,12 +1442,10 @@ void Viewport3D::pickPointCloudIdAtPosition() {
 }
 
 
-bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
-    if(!state->viewerState->selectModeFlag) {
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-    }
-    if (state->viewerState->multisamplingOnOff && !state->viewerState->selectModeFlag) {
+void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    if (state->viewerState->multisamplingOnOff) {
         glEnable(GL_MULTISAMPLE);
     } else {
         glDisable(GL_MULTISAMPLE);
@@ -1482,22 +1468,24 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-     // Now we draw the  background of our skeleton VP
-    glPushMatrix();
-        glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
+    if (!options.nodePicking) {
+        // Now we draw the  background of our skeleton VP
+        glPushMatrix();
+            glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
 
-        glShadeModel(GL_SMOOTH);
-        glDisable(GL_TEXTURE_2D);
+            glShadeModel(GL_SMOOTH);
+            glDisable(GL_TEXTURE_2D);
 
-        glColor4f(1., 1., 1., 1.); // HERE
-        // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
-        glBegin(GL_QUADS);
-            glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
-            glVertex3i(state->skeletonState->volBoundary  * 10, -state->skeletonState->volBoundary * 10, 0);
-            glVertex3i(state->skeletonState->volBoundary  * 10, state->skeletonState->volBoundary  * 10, 0);
-            glVertex3i(-state->skeletonState->volBoundary * 10, state->skeletonState->volBoundary  * 10, 0);
-        glEnd();
-    glPopMatrix();
+            glColor4f(1., 1., 1., 1.); // HERE
+            // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
+            glBegin(GL_QUADS);
+                glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
+                glVertex3i(state->skeletonState->volBoundary  * 10, -state->skeletonState->volBoundary * 10, 0);
+                glVertex3i(state->skeletonState->volBoundary  * 10, state->skeletonState->volBoundary  * 10, 0);
+                glVertex3i(-state->skeletonState->volBoundary * 10, state->skeletonState->volBoundary  * 10, 0);
+            glEnd();
+        glPopMatrix();
+    }
 
     // load model view matrix that stores rotation state!
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
@@ -1574,7 +1562,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         rotateMe(25, 25);
     }
 
-    if(options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
+    if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPushMatrix();
 
         // single operation! TDitem
@@ -1744,7 +1732,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_TEXTURE_2D);
     }
 
-    if(options.drawBoundaryBox || options.drawBoundaryAxes) {
+    if (options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
         glEnable(GL_BLEND);
 
@@ -1872,15 +1860,13 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
     }
-    if (state->viewerState->selectModeFlag == false) {
-        if (options.pointCloudPicking) {
-            pickPointCloudIdAtPosition();
-        } else if (options.drawPointcloud) {
-            renderPointCloud();
-        }
+    if (options.pointCloudPicking) {
+        pickPointCloudIdAtPosition();
+    } else if (options.drawPointcloud) {
+        renderPointCloud();
     }
 
-    if(options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();
         glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
         glTranslatef(0.5, 0.5, 0.5);//arrange to pixel center
@@ -1893,7 +1879,6 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
-    return true;
 }
 
 void ViewportOrtho::renderBrush(const Coordinate coord) {
@@ -2042,7 +2027,7 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-boost::optional<nodeListElement &> ViewportBase::pickNode(uint x, uint y, uint width) {
+boost::optional<nodeListElement &> ViewportBase::pickNode(int x, int y, int width) {
     const auto & nodes = pickNodes(x, y, width, width);
     if (nodes.size() != 0) {
         return *(*std::begin(nodes));
@@ -2050,68 +2035,39 @@ boost::optional<nodeListElement &> ViewportBase::pickNode(uint x, uint y, uint w
     return boost::none;
 }
 
-QSet<nodeListElement *> ViewportBase::pickNodes(uint centerX, uint centerY, uint width, uint height) {
-    RenderOptions options;
-    const auto renderFunc = [&options, this]() { renderViewport(options); };
-    options.selectionPass = RenderOptions::SelectionPass::NodeIDLowerBits;
-    const auto lowerBitSelection = pickingBox(renderFunc, centerX, centerY, width, height);
-    options.selectionPass = RenderOptions::SelectionPass::NodeIDHigherBits;
-    const auto higherBitSelection = pickingBox(renderFunc, centerX, centerY, width, height);
+QSet<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int width, int height) {
+    makeCurrent();
+    QOpenGLFramebufferObject fbo(this->width(), this->height(), QOpenGLFramebufferObject::CombinedDepthStencil);
+    fbo.bind();
+    auto pickingPass = [this, &fbo](auto flag){
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderViewport(RenderOptions::nodePickingRenderOptions(flag));
+        return fbo.toImage();
+    };
+    auto image24 = pickingPass(RenderOptions::SelectionPass::NodeID0_24Bits);
+    auto image48 = pickingPass(RenderOptions::SelectionPass::NodeID24_48Bits);
+    auto image64 = pickingPass(RenderOptions::SelectionPass::NodeID48_64Bits);
+    fbo.release();
+
     QSet<nodeListElement *> foundNodes;
-    for (size_t i = 0; i < lowerBitSelection.size(); ++i) {
-        const std::uint64_t name = static_cast<std::uint64_t>(higherBitSelection[i]) << 32 | lowerBitSelection[i];
+    auto minx = centerX - width/2;
+    auto miny = centerY - height/2;
+    for (int x = minx; x < minx + width; ++x)
+    for (int y = miny; y < miny + height; ++y) {
+        const auto color24 = image24.pixelColor(x, y);
+        const auto color48 = image48.pixelColor(x, y);
+        const auto color64 = image64.pixelColor(x, y);
+        std::array<int, 8> bytes{{color24.red(), color24.green(), color24.blue(), color48.red(), color48.green(), color48.blue(), color64.red(), color64.green()}};
+        std::uint64_t name{};
+        for (std::size_t i = 0; i < bytes.size(); ++i) {
+            name |= static_cast<std::uint64_t>(bytes[i]) << (8 * i);
+        }
         nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
         if (foundNode != nullptr) {
             foundNodes.insert(foundNode);
         }
     }
     return foundNodes;
-}
-
-template<typename F>
-std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
-    makeCurrent();
-
-    //4 elems per node: hit_count(always 1), min, max and 1 name
-    //generous amount of addional space for non-node-glloadname-calls
-    std::vector<GLuint> selectionBuffer(state->skeletonState->nodesByNodeID.size() * 4 + 2048);
-    glSelectBuffer(selectionBuffer.size(), selectionBuffer.data());
-
-    state->viewerState->selectModeFlag = true;
-    glRenderMode(GL_SELECT);
-
-    glInitNames();
-    glPushName(GLNames::None);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    GLdouble vp_height = height();
-
-    GLint openGLviewport[4]{0, 0, width(), height()};
-    gluPickMatrix(centerX, vp_height - centerY, selectionWidth, selectionHeight, openGLviewport);
-
-    renderFunc();
-
-    GLint hits = glRenderMode(GL_RENDER);
-    glLoadIdentity();
-
-    qDebug() << "selection hits: " << hits;
-    state->viewerState->selectModeFlag = false;
-    std::vector<GLuint> result;
-    for (std::size_t i = 0; i < selectionBuffer.size();) {
-        if (hits == 0) { //if hits was positive and reaches 0
-            //if overflow bit was set hits is negative and we only use the buffer-end-condition
-            break;
-        }
-        --hits;
-        const GLuint hit_count = selectionBuffer[i];
-        if (hit_count > 0) {
-            result.push_back(selectionBuffer[i+3]); //the first name on the stack is the 4th element of the hit record
-        }
-        i = i + 3 + hit_count;
-    }
-    return result;
 }
 
 /*
@@ -2125,9 +2081,8 @@ std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint ce
  * smart spatial organization of the skeleton.
  * Ugly code, not nice to read, should be simplified...
  */
-
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    if(state->viewerState->lightOnOff && state->viewerState->selectModeFlag == false) {
+    if (!options.nodePicking && state->viewerState->lightOnOff) {
         // Configure light
         glEnable(GL_LIGHTING);
         GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
@@ -2145,6 +2100,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         // Enable materials with automatic color tracking
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
         glEnable(GL_COLOR_MATERIAL);
+    } else {
+        glDisable(GL_LIGHTING);
+        glDisable(GL_COLOR_MATERIAL);
     }
     state->viewerState->lineVertBuffer.vertices.clear();
     state->viewerState->lineVertBuffer.colors.clear();
@@ -2211,8 +2169,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                     }
                 }
             }
-
-            if (previousNode != nullptr && allowHeuristic && !state->viewerState->selectModeFlag) {
+            allowHeuristic = allowHeuristic && !options.nodePicking;
+            if (previousNode != nullptr && allowHeuristic) {
                 for (auto & currentSegment : nodeIt->segments) {
                     //isBranchNode tells you only whether the node is on the branch point stack,
                     //not whether it is actually a node connected to more than two other nodes!
@@ -2243,30 +2201,23 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
                 cumDistToLastRenderedNode = 0.f;
 
-                if (previousNode != lastRenderedNode) {
-                    virtualSegRendered = true;
-                    // We need a "virtual" segment now
-                    segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
-                    renderSegment(virtualSegment, currentColor, options);
-                }
-
-                /* Second pass over segments needed... But only if node is actually rendered! */
-                for (const auto & currentSegment : nodeIt->segments) {
-                    if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
-                        continue;
+                if (!options.nodePicking) {// don’t pick segments
+                    if (previousNode != lastRenderedNode) {
+                        virtualSegRendered = true;
+                        // We need a "virtual" segment now
+                        segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
+                        renderSegment(virtualSegment, currentColor, options);
                     }
-                    renderSegment(currentSegment, currentColor, options);
+                    /* Second pass over segments needed... But only if node is actually rendered! */
+                    for (const auto & currentSegment : nodeIt->segments) {
+                        if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
+                            continue;
+                        }
+                        renderSegment(currentSegment, currentColor, options);
+                    }
                 }
 
-                if (state->viewerState->selectModeFlag) {
-                    const auto name = GLNames::NodeOffset + nodeIt->nodeID;
-                    GLuint pickedBits = (options.selectionPass == RenderOptions::SelectionPass::NodeIDLowerBits) ? static_cast<GLuint>(name) : name >> 32;
-                    glLoadName(pickedBits);
-                }
                 renderNode(*nodeIt, options);
-                if (state->viewerState->selectModeFlag) {
-                    glLoadName(GLNames::None);
-                }
                 lastRenderedNode = &*nodeIt;
             }
             previousNode = &*nodeIt;
@@ -2274,36 +2225,38 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     }
 
     /* Connect all synapses */
-    for (auto & synapse : state->skeletonState->synapses) {
-        const auto * activeTree = state->skeletonState->activeTree;
-        const auto * activeNode = state->skeletonState->activeNode;
-        const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
-        const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
+    if (!options.nodePicking) {
+        for (auto & synapse : state->skeletonState->synapses) {
+            const auto * activeTree = state->skeletonState->activeTree;
+            const auto * activeNode = state->skeletonState->activeNode;
+            const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
+            const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
 
-        if (synapseCreated) {
-            const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
-                segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-                QColor color = Qt::black;
-                if (synapseSelected == false) {
-                    color.setAlpha(Synapse::darkenedAlpha);
+            if (synapseCreated) {
+                const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
+                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
+                    segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
+                    QColor color = Qt::black;
+                    if (synapseSelected == false) {
+                        color.setAlpha(Synapse::darkenedAlpha);
+                    }
+                    renderSegment(virtualSegment, color, options);
+
+                    auto post = synapse.getPostSynapse()->position;
+                    auto pre = synapse.getPreSynapse()->position;
+                    const auto offset = (post - pre)/10;
+                    Coordinate arrowbase = post - offset;
+
+                    renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
+                        , &synapse.getPostSynapse()->position
+                        , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
                 }
-                renderSegment(virtualSegment, color, options);
-
-                auto post = synapse.getPostSynapse()->position;
-                auto pre = synapse.getPreSynapse()->position;
-                const auto offset = (post - pre)/10;
-                Coordinate arrowbase = post - offset;
-
-                renderCylinder(&arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
-                    , &synapse.getPostSynapse()->position
-                    , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
             }
         }
     }
 
-    /* Render line geometry batch if it contains data */
-    if (!state->viewerState->lineVertBuffer.vertices.empty()) {
+    /* Render line geometry batch if it contains data and we don’t pick nodes */
+    if (!options.nodePicking && !state->viewerState->lineVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
@@ -2317,17 +2270,14 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 
-    if(state->viewerState->overrideNodeRadiusBool)
-        glPointSize(state->viewerState->overrideNodeRadiusVal);
-    else
-        glPointSize(3.f);
+    glPointSize(state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 3.0f);
 
     /* Render point geometry batch if it contains data */
     if (!state->viewerState->pointVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
-        /* draw all segments */
+        /* draw all nodes */
         glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices.data());
         glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors.data());
 
