@@ -1878,7 +1878,7 @@ bool Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (state->viewerState->selectModeFlag == false) {
         if (options.pointCloudPicking) {
             pickPointCloudIdAtPosition();
-        } else {
+        } else if (options.drawPointcloud) {
             renderPointCloud();
         }
     }
