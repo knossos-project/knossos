@@ -90,6 +90,7 @@ struct viewportTexture {
 struct RenderOptions {
     enum class SelectionPass { NoSelection, NodeIDLowerBits, NodeIDHigherBits };
     RenderOptions();
+    static RenderOptions pointcloudPickingRenderOptions();
     static RenderOptions snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawPointcloud, const bool drawSkeleton, const bool drawViewportPlanes);
 
     bool drawBoundaryAxes{true};
@@ -103,8 +104,8 @@ struct RenderOptions {
     bool enableTextScaling{false};
     bool highlightActiveNode{true};
     bool highlightSelection{true};
-    SelectionPass selectionPass{SelectionPass::NoSelection};
     bool pointCloudPicking{false};
+    SelectionPass selectionPass{SelectionPass::NoSelection};
 };
 
 class ViewportBase;

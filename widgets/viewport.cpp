@@ -47,6 +47,13 @@ bool ViewportOrtho::showNodeComments = false;
 RenderOptions::RenderOptions() : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false),
                                  drawOverlay(Segmentation::enabled && state->viewerState->showOnlyRawData == false) {}
 
+RenderOptions RenderOptions::pointcloudPickingRenderOptions() {
+    RenderOptions options;
+    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawViewportPlanes = false;
+    options.drawPointcloud = options.pointCloudPicking = true;
+    return options;
+}
+
 RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawPointcloud, const bool drawSkeleton, const bool drawViewportPlanes) {
     RenderOptions options;
     options.drawBoundaryAxes = drawBoundaryAxes;

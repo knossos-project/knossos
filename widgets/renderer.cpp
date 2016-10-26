@@ -1365,9 +1365,7 @@ boost::optional<BufferSelection> Viewport3D::pickPointCloud(const QPoint pos) {
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    RenderOptions options;
-    options.pointCloudPicking = true;
-    renderSkeletonVP(options);
+    renderSkeletonVP(RenderOptions::pointcloudPickingRenderOptions());
     fbo.release();
     // read color and translate to id
     const auto triangleID = pointcloudColorToId(fbo.toImage().pixelColor(pos));
