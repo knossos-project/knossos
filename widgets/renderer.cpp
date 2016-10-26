@@ -2068,11 +2068,6 @@ QSet<nodeListElement *> ViewportBase::pickNodes(uint centerX, uint centerY, uint
     return foundNodes;
 }
 
-bool ViewportBase::pickedScalebar(uint centerX, uint centerY, uint width) {
-    const auto selection = pickingBox([this]() { renderViewportFrontFace(); }, centerX, centerY, width, width);
-    return std::find(std::begin(selection), std::end(selection), GLNames::Scalebar) != std::end(selection);
-}
-
 template<typename F>
 std::vector<GLuint> ViewportBase::pickingBox(F renderFunc, uint centerX, uint centerY, uint selectionWidth, uint selectionHeight) {
     makeCurrent();

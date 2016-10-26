@@ -169,7 +169,6 @@ protected:
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
-    bool pickedScalebar(uint centerX, uint centerY, uint width);
     QSet<nodeListElement *> pickNodes(uint centerX, uint centerY, uint width, uint height);
     boost::optional<nodeListElement &> pickNode(uint x, uint y, uint width);
     template<typename F>
