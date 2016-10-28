@@ -36,8 +36,8 @@
 
 class PreferencesWidget : public DialogVisibilityNotify {
     Q_OBJECT
-    QTabWidget tabs;
 public:
+    QTabWidget tabs;
     explicit PreferencesWidget(QWidget *parent = 0);
     DatasetAndSegmentationTab datasetAndSegmentationTab;
     NodesTab nodesTab;

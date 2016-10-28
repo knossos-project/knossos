@@ -24,6 +24,7 @@
 #define NAVIGATIONTAB_H
 
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -46,6 +47,7 @@ class NavigationTab : public QWidget {
     Q_OBJECT
     QVBoxLayout mainLayout;
     QHBoxLayout upperLayout;
+    QVBoxLayout rightupperLayout;
 
     QGroupBox movementAreaGroup{"Movement area"};
     QGridLayout movementAreaLayout;
@@ -58,6 +60,9 @@ class NavigationTab : public QWidget {
     QPushButton resetMovementAreaButton{"Reset to dataset boundaries"};
     QFrame separator;
     QGroupBox keyboardMovementGroup{"Keyboard movement"};
+    QGroupBox mouseBehaviourGroup{"Mouse behaviour"};
+    QFormLayout mouseBehaviourLayout;
+    QCheckBox penModeCheckBox;
     QFormLayout keyboardMovementLayout;
     QSpinBox movementSpeedSpinBox;
     QSpinBox jumpFramesSpinBox;

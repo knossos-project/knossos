@@ -563,18 +563,6 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
-    QAction * penmodeAction = new QAction("Pen mode", this);
-
-    penmodeAction->setCheckable(true);
-
-    QObject::connect(penmodeAction, &QAction::triggered, [this, penmodeAction]() {
-        state->viewerState->penmode = penmodeAction->isChecked();
-    });
-
-    viewMenu->addActions({penmodeAction});
-
-    viewMenu->addSeparator();
-
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to active node"), &Skeletonizer::singleton(), [this]() {
         auto pointcloudPriority = !viewport3D->pointCloudLastClickCurrentlyVisited || !state->skeletonState->activeNode;
         if (viewport3D->pointCloudLastClickInformation && pointcloudPriority) {
@@ -591,6 +579,14 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
+
+    viewMenu->addSeparator();
+
+    viewMenu->addAction("Navigation Settings", [this](){
+        widgetContainer.preferencesWidget.setVisible(true);
+        widgetContainer.preferencesWidget.tabs.setCurrentIndex(5);
+
+    });
 
     auto commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
     auto addCommentShortcut = [&](const int number, const QKeySequence key){

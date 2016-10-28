@@ -70,6 +70,17 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     keyboardMovementLayout.addRow("Walk Frames (E, R)", &walkFramesSpinBox);
     keyboardMovementGroup.setLayout(&keyboardMovementLayout);
 
+    penModeCheckBox.setText("Pen mode");
+    penModeCheckBox.setToolTip("Swap mouse buttons in the viewports for a more comfortable use of a pen device");
+    penModeCheckBox.setCheckable(true);
+
+    mouseBehaviourLayout.addRow(&penModeCheckBox);
+    mouseBehaviourGroup.setLayout(&mouseBehaviourLayout);
+
+    QObject::connect(&penModeCheckBox, &QCheckBox::clicked, [this]() {
+        state->viewerState->penmode = penModeCheckBox.isChecked();
+    });
+
     numberOfStepsSpinBox.setRange(1, 100);
     numberOfStepsSpinBox.setSuffix(" Steps");
     numberOfStepsSpinBox.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -83,7 +94,11 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     advancedGroup.setLayout(&advancedFormLayout);
 
     upperLayout.addWidget(&movementAreaGroup);
-    upperLayout.addWidget(&keyboardMovementGroup);
+
+    rightupperLayout.addWidget(&keyboardMovementGroup);
+    rightupperLayout.addWidget(&mouseBehaviourGroup);
+    upperLayout.addLayout(&rightupperLayout);
+
     mainLayout.addLayout(&upperLayout);
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
