@@ -675,8 +675,10 @@ void Viewport3D::handleKeyPress(const QKeyEvent *event) {
                 const auto stepsize = 1;
                 if(wigglecounter < 4){
                     state->skeletonState->rotdx += stepsize;
+                    state->skeletonState->rotdy += stepsize;
                 } else if(wigglecounter < 8){
                     state->skeletonState->rotdx -= stepsize;
+                    state->skeletonState->rotdy -= stepsize;
                 }
                 if(++wigglecounter >= 8) wigglecounter = 0;
                 wiggletimer->start(30);
