@@ -1664,32 +1664,30 @@ float Skeletonizer::radius(const nodeListElement & node) const {
     return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
 }
 
-void Skeletonizer::goToNode(const bool next = true) {
+void Skeletonizer::goToNode(const NodeGenerator::Direction direction) {
     if (skeletonState.activeNode == nullptr) {
         return;
     }
-    static NodeGenerator traverser(*skeletonState.activeNode);
+    static NodeGenerator traverser(*skeletonState.activeNode, direction);
     static nodeListElement * lastNode = skeletonState.activeNode;
-    auto oneStep = next ? []() { ++traverser; } : []() { --traverser; };
-    auto canContinue = next ? []() { return !traverser.reachedEnd; } : []() { return !traverser.reachedStart; };
 
-    if (lastNode != skeletonState.activeNode) {
-        traverser = NodeGenerator(*skeletonState.activeNode);
+    if ((lastNode != skeletonState.activeNode) || direction != traverser.direction) {
+        traverser = NodeGenerator(*skeletonState.activeNode, direction);
     }
-    if (canContinue()) {
-        oneStep();
+    if (traverser.reachedEnd == false) {
+        ++traverser;
     } else {
         return;
     }
 
-    while (!traverser.reachedEnd) {
+    while (traverser.reachedEnd == false) {
         if (&(*traverser) != skeletonState.activeNode) {
             setActiveNode(&(*traverser));
             lastNode = &(*traverser);
             state->viewer->setPositionWithRecentering((*traverser).position);
             return;
-        } else if (canContinue()) {
-            oneStep();
+        } else if (traverser.reachedEnd == false) {
+           ++traverser;
         } else {
             return;
         }

@@ -25,6 +25,7 @@
 #include "mainwindow.h"
 #include "network.h"
 #include "skeleton/node.h"
+#include "skeleton/skeleton_dfs.h"
 #include "version.h"
 #include "viewer.h"
 #include "viewport.h"
@@ -584,8 +585,8 @@ void MainWindow::createMenus() {
             viewport3D->pointCloudLastClickCurrentlyVisited = false;
         }
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(true); }, Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(false); }, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);

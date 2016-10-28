@@ -24,6 +24,7 @@
 #define SKELETONIZER_H
 
 #include "session.h"
+#include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
 #include "widgets/viewport.h"
 
@@ -272,7 +273,7 @@ public:
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);
-    void goToNode(const bool next);
+    void goToNode(const NodeGenerator::Direction direction);
     void moveSelectedNodesToTree(decltype(treeListElement::treeID) treeID);
     static treeListElement* findTreeByTreeID(decltype(treeListElement::treeID) treeID);
     static nodeListElement *findNodeByNodeID(std::uint64_t nodeID);
