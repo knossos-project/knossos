@@ -33,7 +33,7 @@
 #include <cmath>
 
 const qint64 Remote::ms{10};
-const float Remote::goodEnough{0.01};
+const float Remote::goodEnough{0.01f};
 
 Remote::Remote() {
     timer.setTimerType(Qt::PreciseTimer);
@@ -43,7 +43,7 @@ Remote::Remote() {
 void Remote::process(const Coordinate & pos) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
-    int jumpThreshold = 0.5 * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
+    const float jumpThreshold = 0.5f * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
     if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {
@@ -123,7 +123,7 @@ void Remote::remoteWalk() {
         std::deque<floatCoordinate> lastRecenterings = getLastNodes();
         if (!lastRecenterings.empty()) {
             floatCoordinate avg;
-            for(const auto coord : lastRecenterings) {
+            for(const auto & coord : lastRecenterings) {
                 avg += coord;
             }
             avg /= lastRecenterings.size();
