@@ -47,6 +47,7 @@ void Remote::process(const Coordinate & pos) {
     if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {
+        targetPos = pos;
         recenteringOffset = pos - state->viewerState->currentPosition;
         elapsed.restart();
         timer.start(ms);
@@ -146,9 +147,15 @@ void Remote::remoteWalk() {
         state->viewer->addRotation(quaternion);
     }
 
-    state->viewer->userMove(singleMove);
-    recenteringOffset -= singleMove;
-    if (std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough && angle < goodEnough) {
+    if (state->viewerState->currentPosition != targetPos) {
+        state->viewer->userMove(singleMove);
+        recenteringOffset -= singleMove;
+    } else {
+        recenteringOffset = {};
+        state->viewer->userMoveClear();
+    }
+    const auto enoughRecentering = std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough;
+    if (enoughRecentering && angle < goodEnough) {
         state->viewer->userMoveRound();
         timer.stop();
     } else {

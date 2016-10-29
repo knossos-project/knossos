@@ -32,6 +32,7 @@
 
 class Remote {
 public:
+    Coordinate targetPos;
     floatCoordinate recenteringOffset;
     bool rotate{false};
     ViewportType activeVP{VIEWPORT_UNDEFINED};
