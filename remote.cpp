@@ -136,8 +136,13 @@ void Remote::remoteWalk() {
     }
 
     const auto seconds = recenteringOffset.length() / (state->viewerState->movementSpeed * state->magnification);
+    const auto pixelCount = std::max({std::abs(recenteringOffset.x), std::abs(recenteringOffset.y), std::abs(recenteringOffset.z)});
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
-    const floatCoordinate singleMove = recenteringOffset / totalMoves;
+    floatCoordinate singleMove;
+    if (pixelCount <= 2 || totalMoves < pixelCount) {// don’t oversample the pixel grid
+        singleMove = recenteringOffset / totalMoves;
+        elapsed.restart();
+    }
 
     float angle = 0;
     QVector3D axis;
@@ -151,14 +156,12 @@ void Remote::remoteWalk() {
         state->viewer->userMove(singleMove);
         recenteringOffset -= singleMove;
     } else {
-        recenteringOffset = {};
+        recenteringOffset = {};// no more need for moving, but maybe more angle adjustment
         state->viewer->userMoveClear();
     }
     const auto enoughRecentering = std::abs(recenteringOffset.x) < goodEnough && std::abs(recenteringOffset.y) < goodEnough && std::abs(recenteringOffset.z) < goodEnough;
     if (enoughRecentering && angle < goodEnough) {
         state->viewer->userMoveRound();
         timer.stop();
-    } else {
-        elapsed.restart();
     }
 }
