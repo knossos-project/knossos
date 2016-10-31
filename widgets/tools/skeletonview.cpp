@@ -537,15 +537,18 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             model.setFilterFixedString(filterText);
         }
     };
-    QObject::connect(&treeCommentFilter, &QLineEdit::textChanged, [this](const QString & filterText) {
+    static auto treeFilter = [this](const QString & filterText) {
         filter(treeRegex, treeSortAndCommentFilterProxy, filterText);
         updateTreeSelection();
-    });
-
-    QObject::connect(&nodeCommentFilter, &QLineEdit::textChanged, [this](const QString & filterText) {
+    };
+    static auto nodeFilter = [this](const QString & filterText) {
         filter(nodeRegex, nodeSortAndCommentFilterProxy, filterText);
         updateNodeSelection();
-    });
+    };
+    QObject::connect(&treeCommentFilter, &QLineEdit::textChanged, treeFilter);
+    QObject::connect(&treeRegex, &QCheckBox::clicked, [this](){ return treeFilter(treeCommentFilter.text()); });
+    QObject::connect(&nodeCommentFilter, &QLineEdit::textChanged, nodeFilter);
+    QObject::connect(&nodeRegex, &QCheckBox::clicked, [this](){ return nodeFilter(nodeCommentFilter.text()); });
 
     QObject::connect(&treeModel, &TreeModel::moveNodes, [this](const QModelIndex & parent){
         const auto index = parent.row();//already is a source model index
