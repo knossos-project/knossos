@@ -847,10 +847,6 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
         state->skeletonState->branchStack.erase(foundIt);
     }
 
-    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); segmentIt = std::begin(nodeToDel->segments)) {
-        delSegment(segmentIt);
-    }
-
     state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
     if (nodeID < state->skeletonState->nextAvailableNodeID) {
         state->skeletonState->nextAvailableNodeID = nodeID;
@@ -881,6 +877,10 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
                 newActiveNode = &seg.source;
             }
         }
+    }
+
+    for (auto segmentIt = std::begin(nodeToDel->segments); segmentIt != std::end(nodeToDel->segments); segmentIt = std::begin(nodeToDel->segments)) {
+        delSegment(segmentIt);
     }
 
     nodeToDel->correspondingTree->nodes.erase(nodeToDel->iterator);
