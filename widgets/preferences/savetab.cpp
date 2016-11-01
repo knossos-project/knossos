@@ -39,14 +39,20 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
     autosaveLocationEdit.setWordWrap(true);
     autosaveLocationEdit.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
 
-    mainLayout.addWidget(&autosaveCheckbox);
-    formLayout.addRow(&autosaveIntervalLabel, &autosaveIntervalSpinBox);
-    formLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-    mainLayout.addLayout(&formLayout);
-    mainLayout.addWidget(&autoincrementFileNameButton);
     revealButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    mainLayout.addWidget(&revealButton);
-    mainLayout.addWidget(&autosaveLocationEdit);
+    generalLayout.addWidget(&autoincrementFileNameButton);
+    locationFormLayout.addRow("Default location: ", &autosaveLocationEdit);
+    generalLayout.addLayout(&locationFormLayout);
+    generalLayout.addWidget(&revealButton);
+    generalGroup.setLayout(&generalLayout);
+
+    autosaveGroup.setCheckable(true);
+    formLayout.addRow("Saving interval", &autosaveIntervalSpinBox);
+    formLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+    autosaveGroup.setLayout(&formLayout);
+
+    mainLayout.addWidget(&generalGroup);
+    mainLayout.addWidget(&autosaveGroup);
     mainLayout.addStretch();
     setLayout(&mainLayout);
 
@@ -54,11 +60,11 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
         Session::singleton().autoFilenameIncrementBool = on;
     });
     QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
-        if (autosaveCheckbox.isChecked()) {
+        if (autosaveGroup.isChecked()) {
             Session::singleton().autoSaveTimer.start(value * 60 * 1000);
         }
     });
-    QObject::connect(&autosaveCheckbox, &QCheckBox::stateChanged, [this](const bool on) {
+    QObject::connect(&autosaveGroup, &QGroupBox::toggled, [this](const bool on) {
         if (on) {
             Session::singleton().autoSaveTimer.start(autosaveIntervalSpinBox.value() * 60 * 1000);
         } else {
@@ -74,11 +80,11 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
 void SaveTab::loadSettings(const QSettings & settings) {
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
-    autosaveCheckbox.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
+    autosaveGroup.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
 }
 
 void SaveTab::saveSettings(QSettings & settings) {
-    settings.setValue(AUTO_SAVING, autosaveCheckbox.isChecked());
+    settings.setValue(AUTO_SAVING, autosaveGroup.isChecked());
     settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());
 }

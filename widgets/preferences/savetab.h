@@ -25,6 +25,7 @@
 
 #include <QCheckBox>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -36,13 +37,18 @@ class QSettings;
 class SaveTab : public QWidget {
     Q_OBJECT
     QVBoxLayout mainLayout;
-    QFormLayout formLayout;
-    QCheckBox autosaveCheckbox{"Auto saving (triggered by changes)"};
-    QLabel autosaveIntervalLabel{"Saving interval"};
-    QSpinBox autosaveIntervalSpinBox;
-    QCheckBox autoincrementFileNameButton{"Auto increment filename"};
-    QPushButton revealButton{"Reveal default location"};
+
+    QGroupBox generalGroup{"General"};
+    QVBoxLayout generalLayout;
+    QCheckBox autoincrementFileNameButton{"Auto increment filename on every save"};
+
+    QFormLayout locationFormLayout;
     QLabel autosaveLocationEdit;
+    QPushButton revealButton{"Reveal"};
+
+    QGroupBox autosaveGroup{"Auto saving (triggered by changes)"};
+    QFormLayout formLayout;
+    QSpinBox autosaveIntervalSpinBox;
 public:
     explicit SaveTab(QWidget * parent = nullptr);
     void loadSettings(const QSettings &settings);
