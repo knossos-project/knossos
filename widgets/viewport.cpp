@@ -207,6 +207,17 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
     }
 }
 
+ViewportOrtho::~ViewportOrtho() {
+    makeCurrent();
+    if (texture.texHandle != 0) {
+        glDeleteTextures(1, &texture.texHandle);
+    }
+    if (texture.overlayHandle != 0) {
+        glDeleteTextures(1, &texture.overlayHandle);
+    }
+    texture.texHandle = texture.overlayHandle = 0;
+}
+
 void ViewportOrtho::mouseMoveEvent(QMouseEvent *event) {
     ViewportBase::mouseMoveEvent(event);
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType), v1, v2, n);
@@ -273,6 +284,14 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
             state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
         }
     });
+}
+
+Viewport3D::~Viewport3D() {
+    makeCurrent();
+    if (Segmentation::singleton().volume_tex_id != 0) {
+        glDeleteTextures(1, &Segmentation::singleton().volume_tex_id);
+    }
+    Segmentation::singleton().volume_tex_id = 0;
 }
 
 void ViewportBase::initializeGL() {

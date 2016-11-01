@@ -298,6 +298,7 @@ public:
     boost::optional<BufferSelection> pointCloudLastClickInformation;
     bool pointCloudLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
+    ~Viewport3D();
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
@@ -348,6 +349,7 @@ protected:
     virtual void paintGL() override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
+    ~ViewportOrtho();
     void resetTexture();
     static bool showNodeComments;
 
