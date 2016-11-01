@@ -1861,9 +1861,9 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
     std::vector<int> vertex_face_count(verts.size() / 3);
     for(int i = 0; i < indices.size(); ++i) {
         ++vertex_face_count[indices[i]];
-        // check index validity (can be removed if causing performance issues)
-        if(indices[i] > verts.size()) {
-            qDebug() << "index wrong: " << indices[i] << "(should be less than " << verts.size() << ")";
+        // check index validity (can be removed if it’s causing performance issues)
+        if (indices[i] > static_cast<std::size_t>(verts.size())) {
+            throw std::runtime_error(tr("index wrong: %1 (should be less than %2)").arg(indices[i]).arg(verts.size()).toStdString());
         }
     }
 
