@@ -691,12 +691,7 @@ void ViewportOrtho::renderViewportFast() {
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    if (state->viewerState->multisamplingOnOff) {
-        glEnable(GL_MULTISAMPLE);
-    } else {
-        glDisable(GL_MULTISAMPLE);
-    }
+    glEnable(GL_MULTISAMPLE);
 
     /* Multiplying by state->magnification increases the area covered
      * by the textured OpenGL quad for downsampled datasets. */
@@ -1445,11 +1440,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
 void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    if (state->viewerState->multisamplingOnOff) {
-        glEnable(GL_MULTISAMPLE);
-    } else {
-        glDisable(GL_MULTISAMPLE);
-    }
+    glEnable(GL_MULTISAMPLE);
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
     glScalef(1, -1, 1);// flip ogl y
     const auto halfBoundary = state->skeletonState->volBoundary / 2;

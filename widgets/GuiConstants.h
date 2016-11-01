@@ -28,6 +28,7 @@
 
 // Constants for Widget-identification
 const QString MAIN_WINDOW = "main_window";
+const QString VIEWER = "viewer";
 const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_WIDGET = "dataset_widget";
 const QString DATASET_OPTIONS_WIDGET = "zoom_and_multires_widget";
@@ -67,6 +68,7 @@ const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString LIGHT_EFFECTS = "light_effects";
+const QString MSAA_SAMPLES = "samples";
 const QString TREE_LUT_FILE = "tree_lut_file";
 const QString TREE_LUT_FILE_USED = "tree_lut_file_used";
 const QString DEPTH_CUTOFF = "depth_cutoff";

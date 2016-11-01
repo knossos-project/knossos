@@ -45,10 +45,6 @@ Viewer::Viewer() {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
-    viewportXY = window->viewportXY.get();
-    viewportXZ = window->viewportXZ.get();
-    viewportZY = window->viewportZY.get();
-    viewportArb = window->viewportArb.get();
 
     recalcTextureOffsets();
 
@@ -75,6 +71,49 @@ Viewer::Viewer() {
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
 
     keyRepeatTimer.start();
+}
+
+void Viewer::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(VIEWER);
+    // viewport position and sizes
+    settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
+
+    mainWindow.forEachVPDo([&settings] (ViewportBase & vp) {
+        settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
+        settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisible());
+
+    });
+    QList<QVariant> order;
+    for (const auto & w : mainWindow.centralWidget()->children()) {
+        mainWindow.forEachVPDo([&w, &order](ViewportBase & vp) {
+            if (w == &vp) {
+                order.append(vp.viewportType);
+            }
+        });
+    }
+    settings.setValue(VP_ORDER, order);
+    settings.endGroup();
+}
+
+void Viewer::loadSettings() {
+    QSettings settings;
+    settings.beginGroup(VIEWER);
+    state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
+    if (state->viewerState->defaultVPSizeAndPos) {
+        mainWindow.resetViewports();
+    } else {
+        mainWindow.forEachVPDo([&settings](ViewportBase & vp) {
+            vp.move(settings.value(VP_I_POS.arg(vp.viewportType)).toPoint());
+            vp.resize(settings.value(VP_I_SIZE.arg(vp.viewportType)).toSize());
+            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
+        });
+    }
+    for (const auto & i : settings.value(VP_ORDER).toList()) {
+        mainWindow.viewport(static_cast<ViewportType>(i.toInt()))->raise();
+    }
+    settings.endGroup();
 }
 
 void Viewer::setMovementAreaFactor(float alpha) {

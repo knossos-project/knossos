@@ -43,6 +43,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderingLayout.addRow(&highlightActiveTreeCheck);
     renderingLayout.addRow(&highlightIntersectionsCheck);
     renderingLayout.addRow(&lightEffectsCheck);
+    renderingLayout.addRow(tr("MSAA"), &msaaSpin);
     renderingLayout.addRow(&ownTreeColorsCheck, &loadTreeLUTButton);
     renderingLayout.addRow(tr("Depth cutoff:"), &depthCutoffSpin);
     renderingLayout.addRow(tr("Skeleton rendering quality:"), &renderQualityCombo);
@@ -64,6 +65,14 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
         state->viewerState->showIntersections = checked;
     });
     QObject::connect(&lightEffectsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->lightOnOff = on; });
+    QObject::connect(&msaaSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int samples){
+        if (samples != state->viewerState->sampleBuffers) {
+            state->viewerState->sampleBuffers = samples;
+            state->viewer->saveSettings();
+            state->mainWindow->createViewports();
+            state->viewer->loadSettings();
+        }
+    });
     QObject::connect(&ownTreeColorsCheck, &QCheckBox::clicked, [this](const bool checked) {
         if (checked) {//load file if none is cached
             loadTreeLUTButtonClicked(lutFilePath);
@@ -127,6 +136,7 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
 
 void TreesTab::saveSettings(QSettings & settings) const {
     settings.setValue(LIGHT_EFFECTS, lightEffectsCheck.isChecked());
+    settings.setValue(MSAA_SAMPLES, msaaSpin.value());
     settings.setValue(HIGHLIGHT_ACTIVE_TREE, highlightActiveTreeCheck.isChecked());
     settings.setValue(HIGHLIGHT_INTERSECTIONS, highlightIntersectionsCheck.isChecked());
     settings.setValue(TREE_LUT_FILE_USED, ownTreeColorsCheck.isChecked());
@@ -142,6 +152,8 @@ void TreesTab::saveSettings(QSettings & settings) const {
 void TreesTab::loadSettings(const QSettings & settings) {
     lightEffectsCheck.setChecked(settings.value(LIGHT_EFFECTS, true).toBool());
     lightEffectsCheck.clicked(lightEffectsCheck.isChecked());
+    msaaSpin.setValue(settings.value(MSAA_SAMPLES, 8).toInt());
+    msaaSpin.valueChanged(msaaSpin.value());
     highlightActiveTreeCheck.setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE, true).toBool());
     highlightActiveTreeCheck.clicked(highlightActiveTreeCheck.isChecked());
     highlightIntersectionsCheck.setChecked(settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool());

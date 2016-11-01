@@ -189,7 +189,7 @@ void MainWindow::createViewports() {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setMajorVersion(2);
     format.setMinorVersion(0);
-    format.setSamples(8);// max samples
+    format.setSamples(state->viewerState->sampleBuffers);
     format.setDepthBufferSize(24);
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
@@ -205,6 +205,10 @@ void MainWindow::createViewports() {
     viewportZY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_ZY));
     viewportArb = std::unique_ptr<ViewportArb>(new ViewportArb(centralWidget(), VIEWPORT_ARBITRARY));
     viewport3D = std::unique_ptr<Viewport3D>(new Viewport3D(centralWidget(), VIEWPORT_SKELETON));
+    state->viewer->viewportXY = viewportXY.get();
+    state->viewer->viewportXZ = viewportXZ.get();
+    state->viewer->viewportZY = viewportZY.get();
+    state->viewer->viewportArb = viewportArb.get();
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
@@ -1090,29 +1094,11 @@ void MainWindow::coordinateEditingFinished() {
 
 void MainWindow::saveSettings() {
     QSettings settings;
-
     settings.beginGroup(MAIN_WINDOW);
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(STATE, saveState());
 
-    // viewport position and sizes
-    settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
-
-    forEachVPDo([&settings] (ViewportBase & vp) {
-        settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
-        settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisible());
-
-    });
-    QList<QVariant> order;
-    for (const auto & w : centralWidget()->children()) {
-        forEachVPDo([&w, &order](ViewportBase & vp) {
-            if (w == &vp) {
-                order.append(vp.viewportType);
-            }
-        });
-    }
-    settings.setValue(VP_ORDER, order);
+    state->viewer->saveSettings();
 
     settings.setValue(ANNOTATION_MODE, static_cast<int>(workModeModel.at(modeCombo.currentIndex()).first));
 
@@ -1146,19 +1132,7 @@ void MainWindow::loadSettings() {
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     restoreState(settings.value(STATE).toByteArray());
 
-    state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
-    if (state->viewerState->defaultVPSizeAndPos) {
-        resetViewports();
-    } else {
-        forEachVPDo([&settings](ViewportBase & vp) {
-            vp.move(settings.value(VP_I_POS.arg(vp.viewportType)).toPoint());
-            vp.resize(settings.value(VP_I_SIZE.arg(vp.viewportType)).toSize());
-            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
-        });
-    }
-    for (const auto & i : settings.value(VP_ORDER).toList()) {
-        viewport(static_cast<ViewportType>(i.toInt()))->raise();
-    }
+    state->viewer->loadSettings();
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
     QDir().mkpath(autosaveLocation);

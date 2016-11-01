@@ -73,7 +73,7 @@ struct ViewerState {
     //   is currently loaded.)
     Coordinate currentPosition;
 
-    bool multisamplingOnOff{true};
+    int sampleBuffers{8};
     bool lightOnOff;
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
@@ -195,6 +195,8 @@ private:
     Remote remote;
 public:
     Viewer();
+    void saveSettings();
+    void loadSettings();
     Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;

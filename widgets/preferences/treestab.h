@@ -37,6 +37,33 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <bitset>
+#include <cmath>
+
+class MSAASpinBox : public QSpinBox {
+public:
+    MSAASpinBox() {
+        setSuffix(tr(" samples"));
+        setSpecialValueText("off");
+        setRange(0, 64);
+    }
+    virtual QValidator::State validate(QString &input, int &pos) const override {
+        const auto inRange = QSpinBox::validate(input, pos) == QValidator::Invalid;
+        const auto number = static_cast<unsigned long>(valueFromText(input));
+        const auto valid = inRange && (std::bitset<sizeof(number)>(number).count() <= 1);
+        return inRange ? QValidator::Invalid : valid ? QValidator::Acceptable : QValidator::Intermediate;
+    }
+    virtual void stepBy(int steps) override {
+        if (value() == 2 && steps < 0) {
+            setValue(0);
+        } else if (value() <= 0 && steps > 0) {
+            setValue(2);
+        } else {
+            setValue(static_cast<int>(std::pow(2, std::floor(std::log2(value())) + steps)));
+        }
+    }
+};
+
 class TreesTab : public QWidget
 {
     friend class PreferencesWidget;
@@ -48,6 +75,7 @@ class TreesTab : public QWidget
     QCheckBox highlightActiveTreeCheck{tr("Highlight active tree")};
     QCheckBox highlightIntersectionsCheck{tr("Highlight intersections")};
     QCheckBox lightEffectsCheck{tr("Enable light effects")};
+    MSAASpinBox msaaSpin;
     QCheckBox ownTreeColorsCheck{tr("Use custom tree colors")};
     QString lutFilePath;
     QPushButton loadTreeLUTButton{tr("Load …")};
