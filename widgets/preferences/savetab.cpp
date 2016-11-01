@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "autosavetab.h"
+#include "savetab.h"
 
 #include "file_io.h"
 #include "widgets/GuiConstants.h"
@@ -32,7 +32,7 @@
 #include <QFileInfo>
 #include <QSettings>
 
-AutosaveTab::AutosaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
+SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
     autosaveIntervalSpinBox.setMinimum(1);
     autosaveIntervalSpinBox.setSuffix(" min");
     autosaveLocationEdit.setText(QFileInfo(annotationFileDefaultPath()).dir().absolutePath());
@@ -71,13 +71,13 @@ AutosaveTab::AutosaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() &
     });
 }
 
-void AutosaveTab::loadSettings(const QSettings & settings) {
+void SaveTab::loadSettings(const QSettings & settings) {
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autosaveCheckbox.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
 }
 
-void AutosaveTab::saveSettings(QSettings & settings) {
+void SaveTab::saveSettings(QSettings & settings) {
     settings.setValue(AUTO_SAVING, autosaveCheckbox.isChecked());
     settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());

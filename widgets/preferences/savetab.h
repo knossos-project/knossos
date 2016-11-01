@@ -33,7 +33,7 @@
 #include <QWidget>
 
 class QSettings;
-class AutosaveTab : public QWidget {
+class SaveTab : public QWidget {
     Q_OBJECT
     QVBoxLayout mainLayout;
     QFormLayout formLayout;
@@ -44,7 +44,7 @@ class AutosaveTab : public QWidget {
     QPushButton revealButton{"Reveal default location"};
     QLabel autosaveLocationEdit;
 public:
-    explicit AutosaveTab(QWidget * parent = nullptr);
+    explicit SaveTab(QWidget * parent = nullptr);
     void loadSettings(const QSettings &settings);
     void saveSettings(QSettings &settings);
 };

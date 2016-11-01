@@ -41,7 +41,7 @@ PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(p
     tabs.addTab(&nodesTab, "Nodes");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
     tabs.addTab(&viewportTab, "Viewports");
-    tabs.addTab(&autosaveTab, "Autosave");
+    tabs.addTab(&saveTab, "Save");
     tabs.addTab(&navigationTab, "Navigation");
 
     mainLayout.addWidget(&tabs);
@@ -58,7 +58,7 @@ void PreferencesWidget::loadSettings() {
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
-    autosaveTab.loadSettings(settings);
+    saveTab.loadSettings(settings);
     datasetAndSegmentationTab.loadSettings(settings);
     navigationTab.loadSettings(settings);
     nodesTab.loadSettings(settings);
@@ -76,7 +76,7 @@ void PreferencesWidget::saveSettings() {
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
-    autosaveTab.saveSettings(settings);
+    saveTab.saveSettings(settings);
     datasetAndSegmentationTab.saveSettings(settings);
     navigationTab.saveSettings(settings);
     nodesTab.saveSettings(settings);

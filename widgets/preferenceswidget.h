@@ -23,7 +23,7 @@
 #ifndef PREFERENCESWIDGET_H
 #define PREFERENCESWIDGET_H
 
-#include "preferences/autosavetab.h"
+#include "preferences/savetab.h"
 #include "preferences/datasetsegmentationtab.h"
 #include "preferences/navigationtab.h"
 #include "preferences/nodestab.h"
@@ -43,7 +43,7 @@ public:
     NodesTab nodesTab;
     TreesTab treesTab;
     ViewportTab viewportTab;
-    AutosaveTab autosaveTab;
+    SaveTab saveTab;
     NavigationTab navigationTab;
     QVBoxLayout mainLayout;
 
