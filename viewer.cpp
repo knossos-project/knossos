@@ -35,7 +35,6 @@
 #include <QDebug>
 #include <QDesktopWidget>
 #include <qopengl.h>
-#include <QtConcurrent/QtConcurrentRun>
 #include <QVector3D>
 
 #include <fstream>

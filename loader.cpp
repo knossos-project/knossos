@@ -40,7 +40,7 @@
 #include <QImage>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent>
 
 #include <cmath>
 #include <fstream>
