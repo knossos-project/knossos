@@ -37,23 +37,23 @@ enum class GUIMode {
 };
 
 enum class AnnotationMode {
-    NodeEditing = 0x40,
-    LinkedNodes = 0x80,
-    SkeletonCycles = 0x100,
-    Brush = 0x200,
-    ObjectSelection = 0x400,
-    ObjectMerge = 0x800,
+    NodeEditing = 1 << 0,
+    LinkedNodes = 1 << 1,
+    SkeletonCycles = 1 << 2,
+    Brush = 1 << 3,
+    ObjectSelection = 1 << 4,
+    ObjectMerge = 1 << 5,
 
-    Mode_Tracing = 0x1 | NodeEditing,
-    Mode_TracingAdvanced = 0x2 | NodeEditing | SkeletonCycles,
+    Mode_Tracing = (1 << 6) | NodeEditing,
+    Mode_TracingAdvanced = (1 << 7) | NodeEditing | SkeletonCycles,
 
-    Mode_Paint = 0x4 | Brush | ObjectSelection,
-    Mode_Merge = 0x8 | Brush | ObjectSelection | ObjectMerge,
-    Mode_MergeSimple = 0x10 | Brush | ObjectMerge,
+    Mode_Paint = (1 << 8) | Brush | ObjectSelection,
+    Mode_Merge = (1 << 9) | Brush | ObjectSelection | ObjectMerge,
+    Mode_MergeSimple = (1 << 10) | Brush | ObjectMerge,
 
-    Mode_MergeTracing = 0x20 | NodeEditing | LinkedNodes | SkeletonCycles,
+    Mode_MergeTracing = (1 << 11) | NodeEditing | LinkedNodes | SkeletonCycles,
 
-    Mode_Selection = 0x40 | Mode_TracingAdvanced | ObjectSelection,
+    Mode_Selection = (1 << 12) | Mode_TracingAdvanced | ObjectSelection,
 };
 
 class Session : public QObject {
