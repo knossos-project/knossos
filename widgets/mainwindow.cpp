@@ -919,8 +919,8 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     clearSkeletonAction->setVisible(skeleton);
     increaseOpacityAction->setVisible(segmentation);
     decreaseOpacityAction->setVisible(segmentation);
-    enlargeBrushAction->setVisible(segmentation);
-    shrinkBrushAction->setVisible(segmentation);
+    enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
+    shrinkBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     clearMergelistAction->setVisible(segmentation);
 
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
