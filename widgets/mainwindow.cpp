@@ -546,6 +546,7 @@ void MainWindow::createMenus() {
 
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
+    actionMenu.addSeparator();
     //segmentation
     auto setOverlayOpacity = [this](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
@@ -557,6 +558,7 @@ void MainWindow::createMenus() {
     shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease brush size (Shift + scroll)"), &Segmentation::singleton(),
                                                 []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1); }, Qt::SHIFT + Qt::Key_Minus);
 
+    actionMenu.addSeparator();
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear merge list", &Segmentation::singleton(), SLOT(clear()));
     //proof reading mode
     modeSwitchSeparator = actionMenu.addSeparator();
