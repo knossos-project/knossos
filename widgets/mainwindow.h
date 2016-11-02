@@ -36,7 +36,6 @@
 #include <QMenu>
 #include <QMainWindow>
 #include <QToolBar>
-#include <QUndoStack>
 
 #include <array>
 #include <memory>
@@ -130,9 +129,9 @@ class MainWindow : public QMainWindow {
     QAction *shrinkBrushAction;
     QAction *clearMergelistAction;
 
-    void resizeEvent(QResizeEvent *event);
-    void dragEnterEvent(QDragEnterEvent *event);
-    void dropEvent(QDropEvent *event);
+    virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void dragEnterEvent(QDragEnterEvent *event) override;
+    virtual void dropEvent(QDropEvent *event) override;
     void resizeToFitViewports(int width, int height);
 
     QSpinBox *xField, *yField, *zField;
@@ -223,7 +222,7 @@ public:
     void resetTextureProperties();
     ViewportBase *viewport(const ViewportType vpType);
     ViewportOrtho *viewportOrtho(const ViewportType vpType);
-    void closeEvent(QCloseEvent *event);
+    virtual void closeEvent(QCloseEvent *event) override;
     void notifyUnsavedChanges();
     void updateTitlebar();
 
