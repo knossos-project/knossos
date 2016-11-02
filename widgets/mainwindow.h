@@ -156,6 +156,8 @@ class MainWindow : public QMainWindow {
 
     void placeComment(const int index);
     void toggleSegments();
+
+    virtual bool event(QEvent *event) override;
 public:
     static constexpr auto docUrl = "http://knossostool.org/documentation/KNOSSOS_full_doc.html";
 

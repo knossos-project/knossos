@@ -1378,3 +1378,10 @@ void MainWindow::pythonPluginMgrSlot() {
     }
     state->scripting->openPlugin(PLUGIN_MGR_NAME, false);
 }
+
+bool MainWindow::event(QEvent *event) {
+    if (event->type() == QEvent::WindowActivate) {
+        state->viewer->run();
+    }
+    return QMainWindow::event(event);
+}
