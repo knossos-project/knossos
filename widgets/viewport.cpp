@@ -284,6 +284,18 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
             state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
         }
     });
+
+    connect(&wiggletimer, &QTimer::timeout, [this](){
+       if(wigglecounter < 4) {
+           state->skeletonState->rotdx += 1;
+           state->skeletonState->rotdy += 1;
+       } else {
+           state->skeletonState->rotdx -= 1;
+           state->skeletonState->rotdy -= 1;
+       }
+       if(++wigglecounter >= 8) wigglecounter = 0;
+       wiggletimer.start(30);
+    });
 }
 
 Viewport3D::~Viewport3D() {

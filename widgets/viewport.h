@@ -275,7 +275,7 @@ class Viewport3D : public ViewportBase {
     virtual void paintGL() override;
     bool wiggle3D{false};
     int wigglecounter{0};
-    QTimer *wiggletimer;
+    QTimer wiggletimer;
     bool renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointCloud & buf);
@@ -294,6 +294,7 @@ class Viewport3D : public ViewportBase {
     virtual void handleWheelEvent(const QWheelEvent *event) override;
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;
+    virtual void focusOutEvent(QFocusEvent *event) override;
 public:
     boost::optional<BufferSelection> pointCloudLastClickInformation;
     bool pointCloudLastClickCurrentlyVisited{false};

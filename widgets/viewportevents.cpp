@@ -669,30 +669,34 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
 void Viewport3D::handleKeyPress(const QKeyEvent *event) {
     if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
         if(!wiggle3D) {
-            wiggletimer = new QTimer();
-            wiggletimer->start(30);
-            QObject::connect(wiggletimer, &QTimer::timeout, [this](){
-                const auto stepsize = 1;
-                if(wigglecounter < 4){
-                    state->skeletonState->rotdx += stepsize;
-                    state->skeletonState->rotdy += stepsize;
-                } else if(wigglecounter < 8){
-                    state->skeletonState->rotdx -= stepsize;
-                    state->skeletonState->rotdy -= stepsize;
-                }
-                if(++wigglecounter >= 8) wigglecounter = 0;
-                wiggletimer->start(30);
-            });
+                    qDebug() << "Starting pos: " << state->skeletonState->rotdx;
+            wiggle3D = true;
+            wigglecounter = 0;
+            wiggletimer.start(30);
         }
-        wiggle3D = true;
     }
+
 }
 
 void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
+        wiggletimer.stop();
         wiggle3D = false;
-        wiggletimer->stop();
-        delete wiggletimer;
+
+        auto dir = wigglecounter < 4 ? -wigglecounter : wigglecounter - 8;
+        state->skeletonState->rotdx += dir;
+        state->skeletonState->rotdy += dir;
+    }
+}
+
+void Viewport3D::focusOutEvent(QFocusEvent *event) {
+    if(event->type() ==  QEvent::FocusOut) {
+        wiggletimer.stop();
+        wiggle3D = false;
+
+        auto dir = wigglecounter < 4 ? -wigglecounter : wigglecounter - 8;
+        state->skeletonState->rotdx += dir;
+        state->skeletonState->rotdy += dir;
     }
 }
 
