@@ -52,13 +52,6 @@ Viewer::Viewer() {
     timer.setSingleShot(true);
     QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run); // timer is started in Viewer::run.
 
-    state->viewerState->renderInterval = FAST;
-
-    state->viewerState->showOnlyRawData = false;
-
-    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
-    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
-
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, this, &Viewer::oc_reslice_notify_visible);
