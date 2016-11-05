@@ -285,19 +285,12 @@ void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
 }
 
 void DatasetOptionsWidget::updateCompressionRatioDisplay() {
-    switch(state->compressionRatio) {
-    case 0:
-        compressionLabel.setText("Current compression: none (toggle with (5))");
-        break;
-    case 1000:
-        compressionLabel.setText("Current compression: jpg (toggle with (5))");
-        break;
-    case 1001:
-        compressionLabel.setText("Current compression: j2k (toggle with (5))");
-        break;
-    default:
-        compressionLabel.setText("Current compression: jp2 (toggle with (5))");
-    }
+    compressionLabel.setText(tr("Current compression: %1 (toggle with (F4))").arg(
+                                 (state->compressionRatio == 0) ? "none" :
+                                 (state->compressionRatio == 1000) ? "jpg" :
+                                 (state->compressionRatio == 1001) ? "j2k" :
+                                                                     "jp2")
+                             );
 }
 
 void DatasetOptionsWidget::updateOrthogonalZoomSpinBox() {
