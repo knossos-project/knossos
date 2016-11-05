@@ -598,10 +598,17 @@ void MainWindow::createMenus() {
     auto addCommentShortcut = [&](const int number, const QKeySequence key){
         auto & action = addApplicationShortcut(*commentsMenu, QIcon(), "", this, [this, number](){placeComment(number-1);}, key);
         commentActions.push_back(&action);
+        action.setEnabled(false);
     };
     for (int number = 1; number < 11; ++number) {
         addCommentShortcut(number, QKeySequence(QString("%1").arg(number%10)));
     }
+
+    commentsMenu->addSeparator();
+    commentsMenu->addAction("Comment Settings", [this](){
+        widgetContainer.annotationWidget.setVisible(true);
+        widgetContainer.annotationWidget.tabs.setCurrentIndex(2);
+    });
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
     preferenceMenu->addAction(tr("Load custom preferences"), this, SLOT(loadCustomPreferencesSlot()));
@@ -1268,6 +1275,7 @@ void MainWindow::popBranchNodeSlot() {
 
 void MainWindow::updateCommentShortcut(const int index, const QString & comment) {
     commentActions[index]->setText(comment);
+    commentActions[index]->setDisabled(comment.isEmpty());
 }
 
 void MainWindow::placeComment(const int index) {
