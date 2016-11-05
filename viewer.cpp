@@ -49,6 +49,9 @@ Viewer::Viewer() {
 
     rewire();
 
+    timer.setSingleShot(true);
+    QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run); // timer is started in Viewer::run.
+
     state->viewerState->renderInterval = FAST;
 
     state->viewerState->showOnlyRawData = false;
@@ -919,7 +922,8 @@ void Viewer::run() {
     }
 
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
-    timer.singleShot(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW, this, &Viewer::run);
+    timer.stop();
+    timer.start(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW);
 
     if (viewerState.keyRepeat) {
         const double interval = 1000.0 / viewerState.movementSpeed;
