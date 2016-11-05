@@ -161,7 +161,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     QString dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    const QUrl url{dataset};
+    const QUrl url{dataset + "/"};// add slash to avoid redirects
     bad = bad || !(download = Network::singleton().refresh(url)).first;
     if (bad) {
         infoLabel.setText("");
@@ -240,6 +240,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
+    path.setPath(path.path() + "/");// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {
