@@ -675,7 +675,7 @@ void Viewport3D::handleKeyPress(const QKeyEvent *event) {
             wiggletimer.start(30);
         }
     }
-
+    ViewportBase::handleKeyPress(event);
 }
 
 void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
@@ -687,6 +687,7 @@ void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
         state->skeletonState->rotdx += dir;
         state->skeletonState->rotdy += dir;
     }
+    ViewportBase::handleKeyRelease(event);
 }
 
 void Viewport3D::focusOutEvent(QFocusEvent *event) {
