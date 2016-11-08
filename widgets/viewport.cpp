@@ -807,9 +807,13 @@ void Viewport3D::updateVolumeTexture() {
 
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
     makeCurrent();
+    glEnable(GL_MULTISAMPLE);
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
     glViewport(0, 0, size, size);
-    QOpenGLFramebufferObject fbo(size, size, QOpenGLFramebufferObject::CombinedDepthStencil);
+    QOpenGLFramebufferObjectFormat format;
+    format.setSamples(state->viewerState->sampleBuffers);
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    QOpenGLFramebufferObject fbo(size, size, format);
     const auto options = RenderOptions::snapshotRenderOptions(withAxes, withBox, withOverlay, true, withSkeleton, withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
