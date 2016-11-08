@@ -101,7 +101,7 @@ struct RenderOptions {
     bool drawPointcloud{true};
     bool drawSkeleton{true};
     bool drawViewportPlanes{true};
-    bool enableSkeletonDownsampling{true};
+    bool enableLoddingAndLinesAndPoints{true};
     bool enableTextScaling{false};
     bool highlightActiveNode{true};
     bool highlightSelection{true};

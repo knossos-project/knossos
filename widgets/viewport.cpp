@@ -72,7 +72,7 @@ RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, 
     options.drawPointcloud = drawPointcloud;
     options.drawSkeleton = drawSkeleton;
     options.drawViewportPlanes = drawViewportPlanes;
-    options.enableSkeletonDownsampling = false;
+    options.enableLoddingAndLinesAndPoints = false;
     options.enableTextScaling = true;
     options.highlightActiveNode = false;
     options.highlightSelection = false;

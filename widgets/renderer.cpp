@@ -63,8 +63,8 @@ enum GLNames {
 
 uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
-    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableSkeletonDownsampling;
-    const auto switchDynamically =  !alwaysLinesAndPoints;
+    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
+    const auto switchDynamically =  !alwaysLinesAndPoints && options.enableLoddingAndLinesAndPoints;
     const auto dynamicLinesAndPoints = switchDynamically && screenPxXPerDataPx * baseRadius < 1.0f && screenPxXPerDataPx * topRadius < 1.0f;
     const auto linesAndPoints = alwaysLinesAndPoints || dynamicLinesAndPoints;
     if (linesAndPoints) {
@@ -113,7 +113,7 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
 void ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const QColor & color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     /* Render only a point if the sphere wouldn't be visible anyway */
-    if ((((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f && options.enableSkeletonDownsampling))) {
+    if (options.enableLoddingAndLinesAndPoints && (((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
         state->viewerState->pointVertBuffer.vertices.emplace_back(pos);
         state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
     } else {
@@ -2174,7 +2174,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                         //Node is a candidate for LOD culling
                         //Do we really skip this node? Test cum dist. to last rendered node!
                         cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
-                        if ((cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) && options.enableSkeletonDownsampling) {
+                        if ((cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) && options.enableLoddingAndLinesAndPoints) {
                             nodeVisible = false;
                         }
                         break;
