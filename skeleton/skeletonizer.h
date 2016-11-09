@@ -42,13 +42,9 @@
 class nodeListElement;
 class segmentListElement;
 
-// skeleton vp orientation
-#define SKELVP_XY_VIEW 0
-#define SKELVP_XZ_VIEW 1
-#define SKELVP_ZY_VIEW 2
-#define SKELVP_R90 3
-#define SKELVP_R180 4
-#define SKELVP_RESET 5
+enum skelvpOrientation {
+    SKELVP_XY_VIEW, SKELVP_XZ_VIEW, SKELVP_ZY_VIEW, SKELVP_R90, SKELVP_R180, SKELVP_RESET, SKELVP_CUSTOM
+};
 
 class Synapse {
     nodeListElement * preSynapse{nullptr};

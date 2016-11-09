@@ -1527,7 +1527,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     const auto xz = state->skeletonState->definedSkeletonVpView == SKELVP_XZ_VIEW;
     const auto zy = state->skeletonState->definedSkeletonVpView == SKELVP_ZY_VIEW;
     if (xy || xz || zy) {
-        state->skeletonState->definedSkeletonVpView = -1;
+        state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
 
         QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
@@ -1541,12 +1541,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->rotationcounter++;
         if (state->skeletonState->rotationcounter > (state->skeletonState->definedSkeletonVpView == SKELVP_R90 ? 9 : 18)) {
             state->skeletonState->rotdx = 0;
-            state->skeletonState->definedSkeletonVpView = -1;
+            state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
             state->skeletonState->rotationcounter = 0;
         }
 
     } else if (state->skeletonState->definedSkeletonVpView == SKELVP_RESET) {
-        state->skeletonState->definedSkeletonVpView = -1;
+        state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
         state->skeletonState->translateX = 0;
         state->skeletonState->translateY = 0;
         state->skeletonState->zoomLevel = SKELZOOMMIN;
