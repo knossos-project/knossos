@@ -471,11 +471,18 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
             auto& seg = Segmentation::singleton();
             seg.volume_mouse_zoom *= (event->delta() > 0) ? 1.1f : 0.9f;
         } else {
+            const QPointF mouseRel{(event->x() - 0.5 * width()), (event->y() - 0.5 * height())};
+            const auto oldZoom = 2.0 * state->skeletonState->zoomLevel;
             if (event->delta() > 0) {
                 zoomIn();
             } else {
                 zoomOut();
             }
+            const auto newZoom = 2.0 * state->skeletonState->zoomLevel;
+            const auto oldFactor = (1.0 - oldZoom) * state->skeletonState->volBoundary;
+            const auto newFactor = (1.0 - newZoom) * state->skeletonState->volBoundary;
+            state->skeletonState->translateX += mouseRel.x() * (oldFactor - newFactor) / width();
+            state->skeletonState->translateY += mouseRel.y() * (oldFactor - newFactor) / height();
         }
     }
     ViewportBase::handleWheelEvent(event);
