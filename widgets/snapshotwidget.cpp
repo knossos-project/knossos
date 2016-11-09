@@ -60,11 +60,6 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(parent)
     QObject::connect(vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
 
     auto imageOptionsLayout = new QVBoxLayout();
-    withAxesCheck.setChecked(true);
-    withBoxCheck.setChecked(false);
-    withOverlayCheck.setChecked(true);
-    withScaleCheck.setChecked(true);
-    withVpPlanes.setHidden(true);
     imageOptionsLayout->addWidget(&withAxesCheck);
     imageOptionsLayout->addWidget(&withBoxCheck);
     imageOptionsLayout->addWidget(&withOverlayCheck);
