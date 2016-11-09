@@ -1553,7 +1553,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        const auto previousRotation = state->viewerState->rotationCenter;
+        state->viewerState->rotationCenter = RotationCenter::DatasetCenter;
         rotateMe(25, 25);
+        state->viewerState->rotationCenter = previousRotation;
     }
 
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
