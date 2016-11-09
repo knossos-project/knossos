@@ -1485,23 +1485,18 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
     auto rotateMe = [this](auto x, auto y){
-        floatCoordinate datasetCenter{state->boundary / 2};
+        const floatCoordinate datasetCenter{state->boundary / 2};
         floatCoordinate rotationCenter{datasetCenter};
         if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
             rotationCenter = state->skeletonState->activeNode->position;
         } else if (state->viewerState->rotationCenter == RotationCenter::CurrentPosition) {
             rotationCenter = state->viewerState->currentPosition;
         }
-        // invert rotation
+        // calculate inverted rotation
         const auto rotation = QMatrix4x4{state->skeletonState->rotationState};
         float inverseRotation[16];
         rotation.inverted().copyDataTo(inverseRotation);
-        // add new rotation
-        QMatrix4x4 singleRotation;
-        singleRotation.rotate(y, {0, 1, 0});
-        singleRotation.rotate(x, {1, 0, 0});
-        (rotation * singleRotation).copyDataTo(state->skeletonState->rotationState);
-        // apply complete rotation
+        // invert rotation
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrixf(state->skeletonState->skeletonVpModelView);
@@ -1509,6 +1504,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
         glScalef(1, 1, state->viewerState->voxelXYtoZRatio);
         glMultMatrixf(inverseRotation);
+        // add new rotation
+        QMatrix4x4 singleRotation;
+        singleRotation.rotate(y, {0, 1, 0});
+        singleRotation.rotate(x, {1, 0, 0});
+        (rotation * singleRotation).copyDataTo(state->skeletonState->rotationState);
+        // apply complete rotation
         glMultMatrixf(state->skeletonState->rotationState);
         glScalef(1, 1, 1/state->viewerState->voxelXYtoZRatio);
         glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
