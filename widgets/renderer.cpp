@@ -2249,6 +2249,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         }
     }
 
+    // lighting isn’t really applicable to lines and points
+    glDisable(GL_LIGHTING);
+    glDisable(GL_COLOR_MATERIAL);
+
     /* Render line geometry batch if it contains data and we don’t pick nodes */
     if (!options.nodePicking && !state->viewerState->lineVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -2285,8 +2289,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPopMatrix(); // Restore modelview matrix
     glEnable(GL_BLEND);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
 }
 
 bool ViewportBase::updateFrustumClippingPlanes() {
