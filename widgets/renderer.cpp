@@ -1532,11 +1532,14 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        const auto previousRotation = state->viewerState->rotationCenter;
+        state->viewerState->rotationCenter = RotationCenter::CurrentPosition;
         rotateMe(90 * xz, -90 * zy);// updates rotationState and skeletonVpModelView, must therefore also be called for xy
+        state->viewerState->rotationCenter = previousRotation;
 
         const auto translate = state->viewerState->currentPosition - state->boundary / 2;
-        state->skeletonState->translateX = zy ? translate.z : translate.x;
-        state->skeletonState->translateY = xz ? translate.z : translate.y;
+        state->skeletonState->translateX = translate.x;
+        state->skeletonState->translateY = translate.y;
     } else if (state->skeletonState->definedSkeletonVpView == SKELVP_R90 || state->skeletonState->definedSkeletonVpView == SKELVP_R180) {
         state->skeletonState->rotdx = 10;
         state->skeletonState->rotationcounter++;
