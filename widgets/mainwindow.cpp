@@ -1354,6 +1354,8 @@ void MainWindow::refreshPluginMenu() {
         QObject::connect(pluginSubMenu->addAction("Remove import"), &QAction::triggered,
                          [pluginName](){state->scripting->removePluginImport(pluginName,false);});
     }
+    //if no plugins found (plugin folder not set?) gray out menu "Plugins"
+    pluginMenu->setEnabled(!pluginMenu->actions().empty());
 }
 
 void MainWindow::pythonInterpreterSlot() {
