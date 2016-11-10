@@ -133,7 +133,16 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
         case 3: return node.position.z + 1;
         case 4: return node.radius;
         case 5: return node.getComment();
-        case 6: return propertyStringWithoutComment(node.properties);
+        case 6:
+            auto nodeProperties = propertyStringWithoutComment(node.properties);
+            if(node.isSynapticNode) {
+                if(node.correspondingSynapse->getPreSynapse() == &node) {
+                    nodeProperties.prepend("PreSynapse");
+                } else if(node.correspondingSynapse->getPostSynapse() == &node){
+                    nodeProperties.prepend("PostSynapse");
+                }
+            }
+            return nodeProperties;
         }
     }
     return QVariant();//return invalid QVariant
