@@ -345,8 +345,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                          {&nodeFilterBranchCheckbox, NodeModel::FilterMode::Branch},
                          {&nodeFilterCommentCheckbox, NodeModel::FilterMode::Comment},
                          {&nodeFilterSynapseCheckbox, NodeModel::FilterMode::Synapse}} ) {
-        nodeFilterButtonGroup.addButton(option.first);
-        nodeFilterButtonGroup.setId(option.first, option.second);
+        nodeFilterButtonGroup.addButton(option.first, option.second);
         option.first->setChecked(nodeModel.mode.testFlag(option.second));
         nodeGroupBoxLayout.addWidget(option.first);
     }
