@@ -161,7 +161,9 @@ void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
     }
 }
 
-void DatasetAndSegmentationTab::saveSettings(QSettings & settings) const {
+void DatasetAndSegmentationTab::saveSettings() const {
+    QSettings settings;
+    settings.beginGroup(PREFERENCES_WIDGET);
     settings.setValue(DATASET_LINEAR_FILTERING, datasetLinearFilteringCheckBox.isChecked());
     settings.setValue(BIAS, biasSpinBox.value());
     settings.setValue(RANGE_DELTA, rangeDeltaSpinBox.value());
@@ -173,7 +175,9 @@ void DatasetAndSegmentationTab::saveSettings(QSettings & settings) const {
     settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color);
 }
 
-void DatasetAndSegmentationTab::loadSettings(const QSettings & settings) {
+void DatasetAndSegmentationTab::loadSettings() {
+    QSettings settings;
+    settings.beginGroup(PREFERENCES_WIDGET);
     datasetLinearFilteringCheckBox.setChecked(settings.value(DATASET_LINEAR_FILTERING, true).toBool());
     datasetLinearFilteringCheckBox.clicked(datasetLinearFilteringCheckBox.isChecked());
     lutFilePath = settings.value(DATASET_LUT_FILE, "").toString();

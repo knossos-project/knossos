@@ -59,7 +59,7 @@ void PreferencesWidget::loadSettings() {
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
     saveTab.loadSettings(settings);
-    datasetAndSegmentationTab.loadSettings(settings);
+    datasetAndSegmentationTab.loadSettings(); // these settings must be loaded before treesTab settings, because treesTab’s msaa setting needs to back them up and reload them again.
     navigationTab.loadSettings(settings);
     nodesTab.loadSettings(settings);
     treesTab.loadSettings(settings);
@@ -77,7 +77,7 @@ void PreferencesWidget::saveSettings() {
     settings.setValue(VISIBLE, isVisible());
 
     saveTab.saveSettings(settings);
-    datasetAndSegmentationTab.saveSettings(settings);
+    datasetAndSegmentationTab.saveSettings();
     navigationTab.saveSettings(settings);
     nodesTab.saveSettings(settings);
     treesTab.saveSettings(settings);

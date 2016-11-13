@@ -38,6 +38,7 @@
 class DatasetAndSegmentationTab : public QWidget
 {
     friend class PreferencesWidget;
+    friend class TreesTab;
     Q_OBJECT
     QVBoxLayout mainLayout;
     // dataset
@@ -65,8 +66,8 @@ class DatasetAndSegmentationTab : public QWidget
     QPushButton volumeColorButton;
 
     void useOwnDatasetColorsButtonClicked(QString path = "");
-    void saveSettings(QSettings & settings) const;
-    void loadSettings(const QSettings & settings);
+    void saveSettings() const;
+    void loadSettings();
 public:
     explicit DatasetAndSegmentationTab(QWidget *parent = 0);
 

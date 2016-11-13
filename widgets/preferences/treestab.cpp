@@ -69,8 +69,12 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
         if (samples != state->viewerState->sampleBuffers) {
             state->viewerState->sampleBuffers = samples;
             state->viewer->saveSettings();
+            state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.saveSettings();
+            state->viewer->window->widgetContainer.datasetOptionsWidget.saveSettings();
             state->mainWindow->createViewports();
             state->viewer->loadSettings();
+            state->viewer->window->widgetContainer.datasetOptionsWidget.loadSettings();
+            state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.loadSettings();
         }
     });
     QObject::connect(&ownTreeColorsCheck, &QCheckBox::clicked, [this](const bool checked) {
