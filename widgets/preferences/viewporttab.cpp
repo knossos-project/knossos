@@ -29,10 +29,9 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     boundaryGroup.addButton(&boundariesPixelRadioBtn);
     boundaryGroup.addButton(&boundariesPhysicalRadioBtn);
 
-    rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn);
-    rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn);
-    rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn);
-
+    rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn, static_cast<int>(RotationCenter::ActiveNode));
+    rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn, static_cast<int>(RotationCenter::DatasetCenter));
+    rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn, static_cast<int>(RotationCenter::CurrentPosition));
     generalLayout.setAlignment(Qt::AlignTop);
     generalLayout.addWidget(&showScalebarCheckBox);
     generalLayout.addWidget(&showVPDecorationCheckBox);
@@ -77,10 +76,10 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
         Viewport3D::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
-    QObject::connect(&rotationCenterGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
-        state->viewerState->rotationCenter = (rotateAroundDatasetCenterRadioBtn.isChecked()) ? RotationCenter::DatasetCenter :
-                                             (rotateAroundActiveNodeRadioBtn.isChecked()) ? RotationCenter::ActiveNode :
-                                             RotationCenter::CurrentPosition;
+    QObject::connect(&rotationCenterGroup, static_cast<void(QButtonGroup::*)(int, bool)>(&QButtonGroup::buttonToggled), [this](const int id, const bool checked) {
+        if (checked) {
+            state->viewerState->rotationCenter = static_cast<RotationCenter>(id);
+        }
     });
 }
 
