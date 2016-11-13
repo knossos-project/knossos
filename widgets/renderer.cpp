@@ -1657,27 +1657,30 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                     glVertex3f(-dataPxX, dataPxY, 0.);
                 glEnd();
 
-                glColor4f(0., 0., 0., 1.);
-                glPushMatrix();
-                glTranslatef(-dataPxX, 0., 0.);
-                glRotatef(90., 0., 1., 0.);
-                gluCylObj = gluNewQuadric();
-                gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                gluCylinder(gluCylObj, 0.4, 0.4, dataPxX * 2, 5, 5);
-                gluDeleteQuadric(gluCylObj);
-                glPopMatrix();
-
-                glPushMatrix();
-                glTranslatef(0., dataPxY, 0.);
-                glRotatef(90., 1., 0., 0.);
-                gluCylObj = gluNewQuadric();
-                gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
-                gluDeleteQuadric(gluCylObj);
-                glPopMatrix();
-
+                if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+                    glColor4f(0., 0., 0., 1.);
+                    glPushMatrix();
+                    glTranslatef(-dataPxX, 0., 0.);
+                    glRotatef(90., 0., 1., 0.);
+                    gluCylObj = gluNewQuadric();
+                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxX * 2, 5, 5);
+                    gluDeleteQuadric(gluCylObj);
+                    glPopMatrix();
+                }
+                if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+                    glColor4f(0., 0., 0., 1.);
+                    glPushMatrix();
+                    glTranslatef(0., dataPxY, 0.);
+                    glRotatef(90., 1., 0., 0.);
+                    gluCylObj = gluNewQuadric();
+                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
+                    gluDeleteQuadric(gluCylObj);
+                    glPopMatrix();
+                }
                 break;
             case VIEWPORT_XZ:
                 glColor4f(0., 0.7, 0., 1.);
@@ -1688,16 +1691,17 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                     glVertex3f(-dataPxX, 0., dataPxY);
                 glEnd();
 
-                glColor4f(0., 0., 0., 1.);
-                glPushMatrix();
-                glTranslatef(0., 0., -dataPxY);
-                gluCylObj = gluNewQuadric();
-                gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
-                gluDeleteQuadric(gluCylObj);
-                glPopMatrix();
-
+                if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+                    glColor4f(0., 0., 0., 1.);
+                    glPushMatrix();
+                    glTranslatef(0., 0., -dataPxY);
+                    gluCylObj = gluNewQuadric();
+                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
+                    gluDeleteQuadric(gluCylObj);
+                    glPopMatrix();
+                }
                 break;
             case VIEWPORT_ZY:
                 glColor4f(0., 0., 0.7, 1.);
