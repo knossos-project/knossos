@@ -1470,7 +1470,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPushMatrix();
             glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
 
-            glShadeModel(GL_SMOOTH);
             glDisable(GL_TEXTURE_2D);
 
             glColor4f(1., 1., 1., 1.); // HERE
@@ -2109,6 +2108,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         // Enable materials with automatic color tracking
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
         glEnable(GL_COLOR_MATERIAL);
+        glShadeModel(GL_SMOOTH);
     } else {
         glDisable(GL_LIGHTING);
         glDisable(GL_COLOR_MATERIAL);
