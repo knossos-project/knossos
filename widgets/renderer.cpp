@@ -1467,20 +1467,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     if (!options.nodePicking) {
         // Now we draw the  background of our skeleton VP
-        glPushMatrix();
-            glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
-
-            glDisable(GL_TEXTURE_2D);
-
-            glColor4f(1., 1., 1., 1.); // HERE
-            // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
-            glBegin(GL_QUADS);
-                glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
-                glVertex3i(state->skeletonState->volBoundary  * 10, -state->skeletonState->volBoundary * 10, 0);
-                glVertex3i(state->skeletonState->volBoundary  * 10, state->skeletonState->volBoundary  * 10, 0);
-                glVertex3i(-state->skeletonState->volBoundary * 10, state->skeletonState->volBoundary  * 10, 0);
-            glEnd();
-        glPopMatrix();
+        glClearColor(1, 1, 1, 1);// white
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 
     // load model view matrix that stores rotation state!
