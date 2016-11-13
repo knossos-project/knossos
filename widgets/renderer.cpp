@@ -810,11 +810,11 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         if (options.drawCrosshairs && state->viewerState->showOnlyRawData == false) {
             glLineWidth(1);
             glBegin(GL_LINES);
-                glColor4f(xz || zy, xy, 0, 0.3);
+                glColor4f(xz, xy || zy, 0, 0.3);// horizontal intersection
                 glVertex3f(-dataPxX, -0.5, 0);//why negative 0.5 here?
                 glVertex3f( dataPxX, -0.5, 0);
 
-                glColor4f(0, zy, xy || xz , 0.3);
+                glColor4f(zy, 0, xy || xz , 0.3);// vertical intersection
                 glVertex3f(0.5, -dataPxY, 0);
                 glVertex3f(0.5,  dataPxY, 0);
             glEnd();
