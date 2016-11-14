@@ -185,10 +185,10 @@ private:
 
     void vpGenerateTexture(ViewportArb & vp);
 
-    bool dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT);
+    void dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp, bool useCustomLUT);
     bool dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
 
-    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp);
+    void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp);
 
     bool calcLeftUpperTexAbsPx();
 

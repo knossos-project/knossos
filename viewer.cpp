@@ -164,8 +164,7 @@ void Viewer::setMagnificationLock(const bool locked) {
     emit magnificationLockChanged(locked);
 }
 
-bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp, bool useCustomLUT) {
-    datacube += dcOffset;
+void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp, bool useCustomLUT) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -227,8 +226,6 @@ bool Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
         }
         datacube += sliceSubLineIncrement;
     }
-
-    return true;
 }
 
 bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
@@ -299,9 +296,7 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
  * each pixel is tested for its position and is omitted if outside of the area.
  *
  */
-void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, size_t dcOffset, ViewportOrtho & vp) {
-    datacube += dcOffset;
-
+void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -494,10 +489,9 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 const int index = texIndex(x_dc, y_dc, 3, &(vp.texture));
 
                 if (datacube != nullptr) {
-                    dcSliceExtract(datacube,
+                    dcSliceExtract(datacube + slicePositionWithinCube,
                                    cubePosInAbsPx,
                                    texData.data() + index,
-                                   slicePositionWithinCube,
                                    vp,
                                    state->viewerState->datasetAdjustmentOn);
                 } else {
@@ -521,10 +515,9 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
 
                 if (overlayCube != nullptr) {
-                    ocSliceExtract(overlayCube,
+                    ocSliceExtract(overlayCube + slicePositionWithinCube * OBJID_BYTES,
                                    cubePosInAbsPx,
                                    texData.data() + index,
-                                   slicePositionWithinCube * OBJID_BYTES,
                                    vp);
                 } else {
                     std::fill(std::begin(texData), std::end(texData), 0);
