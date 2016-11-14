@@ -58,7 +58,7 @@ RenderOptions RenderOptions::nodePickingRenderOptions(RenderOptions::SelectionPa
 
 RenderOptions RenderOptions::pointcloudPickingRenderOptions() {
     RenderOptions options;
-    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawViewportPlanes = false;
+    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawSkeleton = options.drawViewportPlanes = false;
     options.drawPointcloud = options.pointCloudPicking = true;
     return options;
 }

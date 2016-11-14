@@ -1202,6 +1202,7 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
 }
 
 void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
+    glDisable(GL_BLEND);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(-state->boundary.x / 2., -state->boundary.y / 2., -state->boundary.z / 2.);//reset to origin of projection
