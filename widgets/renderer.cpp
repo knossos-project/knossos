@@ -253,7 +253,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFonsSize) * devicePixelRatio()));
-    gluProject(pos.x, pos.y - 3, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
+    gluProject(pos.x, pos.y - 0.01*edgeLength, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
     painter.drawText(centered ? x - QFontMetrics(painter.font()).width(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
@@ -490,16 +490,19 @@ void ViewportBase::renderScaleBar() {
         sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
         divisor = displayedlengthInNmX/rounded_scalebar_len_nm;
     }
-    int min_x = 0.02 * edgeLength, max_x = min_x + edgeLength / divisor, min_y = edgeLength - min_x - 2, max_y = min_y + 2, z = -1;
+    const int margin =  0.02 * edgeLength;
+    const int height = 0.007 * edgeLength;
+    Coordinate min(margin,  edgeLength - margin - height, -1);
+    Coordinate max(min.x + edgeLength / divisor, min.y + height, -1);
     glColor3f(0., 0., 0.);
     glBegin(GL_POLYGON);
-    glVertex3d(min_x, min_y, z);
-    glVertex3d(max_x, min_y, z);
-    glVertex3d(max_x, max_y, z);
-    glVertex3d(min_x, max_y, z);
+    glVertex3d(min.x, min.y, min.z);
+    glVertex3d(max.x, min.y, min.z);
+    glVertex3d(max.x, max.y, min.z);
+    glVertex3d(min.x, max.y, min.z);
     glEnd();
 
-    renderText(Coordinate(min_x + edgeLength / divisor / 2, min_y, z), sizeLabel, true, true);
+    renderText(Coordinate(min.x + edgeLength / divisor / 2, min.y, min.z), sizeLabel, true, true);
 }
 
 void ViewportOrtho::renderViewportFast() {
