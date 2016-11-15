@@ -117,10 +117,6 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
     resizeButton.setMinimumSize(20, 20);
     resizeButton.setMaximumSize(resizeButton.minimumSize());
     QObject::connect(&resizeButton, &ResizeButton::vpResize, [this](const QPoint & globalPos) {
-        if (!isDocked) {
-            // Floating viewports are resized indirectly by container window
-            return;
-        }
         raise();//we come from the resize button
         //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
         const auto desiredSize = mapFromGlobal(globalPos);
@@ -170,6 +166,7 @@ void ViewportBase::setDock(bool isDock) {
         state->viewerState->defaultVPSizeAndPos = false;
         floatingWindowAction.setText("Dock viewport");
     }
+    resizeButton.setVisible(isDock && state->viewerState->showVpDecorations);
     if (wasVisible) {
         show();
         setFocus();

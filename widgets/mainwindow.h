@@ -270,7 +270,6 @@ public slots:
     void updateCoordinateBar(int x, int y, int z);
     // viewports
     void resetViewports();
-    void showVPDecorationClicked();
 
     // from the event handler
     void newTreeSlot();

@@ -151,6 +151,7 @@ struct ViewerState {
     bool showXZplane{true};
     bool showZYplane{true};
     bool showArbplane{true};
+    bool showVpDecorations{true};
     // temporary vertex buffers that are available for rendering, get cleared every frame
     struct {
         std::vector<floatCoordinate> vertices;

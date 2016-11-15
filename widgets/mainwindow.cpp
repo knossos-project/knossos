@@ -101,7 +101,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         nodeLockingLabel.show();
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
-    QObject::connect(&widgetContainer.preferencesWidget.viewportTab, &ViewportTab::setViewportDecorations, this, &MainWindow::showVPDecorationClicked);
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         std::map<AnnotationMode, QString> rawModes = workModes;
@@ -1241,11 +1240,6 @@ void MainWindow::resetViewports() {
     }
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
-}
-
-void MainWindow::showVPDecorationClicked() {
-    bool isShow = widgetContainer.preferencesWidget.viewportTab.showVPDecorationCheckBox.isChecked();
-    forEachVPDo([&isShow](ViewportBase & vp) { vp.showHideButtons(isShow); });
 }
 
 void MainWindow::newTreeSlot() {

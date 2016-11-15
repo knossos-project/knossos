@@ -61,7 +61,10 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     setLayout(&mainLayout);
 
     QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
-    QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, &ViewportTab::setViewportDecorations);
+    QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, [] (const bool checked) {
+        state->viewerState->showVpDecorations = checked;
+        state->viewer->mainWindow.forEachVPDo([&checked](ViewportBase & vp) { vp.showHideButtons(checked); });
+    });
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
     QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [this](const bool on){
         showArbPlaneCheckBox.setEnabled(on);

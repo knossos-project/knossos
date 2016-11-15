@@ -216,7 +216,7 @@ public:
     bool hasCursor{false};
     virtual void showHideButtons(bool isShow) {
         menuButton.setVisible(isShow);
-        resizeButton.setVisible(isShow);
+        resizeButton.setVisible(isShow && isDocked);
     }
     void posAdapt() { posAdapt(pos()); }
     void posAdapt(const QPoint & desiredPos) {

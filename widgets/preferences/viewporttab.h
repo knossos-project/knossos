@@ -71,9 +71,6 @@ class ViewportTab : public QWidget {
     void loadSettings(const QSettings & settings);
 public:
     explicit ViewportTab(QWidget *parent = 0);
-
-signals:
-    void setViewportDecorations(const bool);
 };
 
 #endif // VIEWPORTTAB_H
