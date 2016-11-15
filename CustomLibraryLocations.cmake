@@ -29,13 +29,13 @@ set(CMAKE_PREFIX_PATH
     "/usr/local/opt/qt5/bin"
 )
 
-# find static qt libs (default msys2 location), WD should be /usr/bin or /mingw??/bin
+# find static qt libs (default msys2 location), MINGW_PREFIX is /mingw??
 if(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(STATUS "x64 static build")
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{WD}/../../mingw64/qt5-static/")
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
 elseif(WIN32 AND NOT BUILD_SHARED_LIBS AND CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "x32 static build")
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{WD}/../../mingw32/qt5-static/")
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
 endif()
 
 # find system python dll
