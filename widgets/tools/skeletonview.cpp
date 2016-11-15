@@ -91,7 +91,12 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         case 0: return static_cast<quint64>(tree.treeID);
         case 3: return static_cast<quint64>(tree.nodes.size());
         case 4: return tree.getComment();
-        case 5: return propertyStringWithoutComment(tree.properties);
+        case 5:
+            auto treeProperties = propertyStringWithoutComment(tree.properties);
+            if(tree.pointCloud != nullptr) {
+                treeProperties.prepend("PointCloud");
+            }
+            return treeProperties;
         }
     }
     return QVariant();//return invalid QVariant
