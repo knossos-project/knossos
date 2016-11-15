@@ -55,6 +55,9 @@ constexpr const double VPZOOMMIN = 1.;
 constexpr const double SKELZOOMMAX = 0.4999;
 constexpr const double SKELZOOMMIN = 0.0;
 
+constexpr const int DEFAULT_VP_MARGIN = 5;
+constexpr const int DEFAULT_VP_SIZE = 350;
+
 struct viewportTexture {
     //Handles for OpenGl
     uint texHandle{0};
@@ -122,8 +125,11 @@ signals:
 
 
 class QViewportFloatWidget : public QWidget {
+protected:
+    virtual void resizeEvent(QResizeEvent *) override;
 public:
-    explicit QViewportFloatWidget(QWidget *parent, ViewportType vpType);
+    ViewportBase *vp;
+    explicit QViewportFloatWidget(QWidget *parent, ViewportBase *vp);
 };
 
 constexpr int defaultFonsSize = 10;

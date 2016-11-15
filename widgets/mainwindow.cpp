@@ -66,10 +66,6 @@
 #include <QToolButton>
 #include <QQueue>
 
-// default position of xy viewport and default viewport size
-#define DEFAULT_VP_MARGIN 5
-#define DEFAULT_VP_SIZE 350
-
 class CoordinateSpin : public QSpinBox {
 public:
     CoordinateSpin(const QString & prefix, MainWindow & mainWindow) : QSpinBox(&mainWindow) {

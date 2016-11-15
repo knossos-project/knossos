@@ -83,11 +83,17 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
 
-QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportType vpType) : QWidget(parent) {
+QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportBase *vp) : QWidget(parent), vp(vp) {
     setWindowFlags(Qt::Window);
+    vp->setParent(this);
     const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "Arbitrary", "3D"}};
-    setWindowTitle(VP_TITLES[vpType]);
+    setWindowTitle(VP_TITLES[vp->viewportType]);
     new QVBoxLayout(this);
+}
+
+void QViewportFloatWidget::resizeEvent(QResizeEvent *) {
+    const auto len = ((size().height() <= size().width()) ? size().height() : size().width()) - 2 * DEFAULT_VP_MARGIN;
+    vp->resize(len, len);
 }
 
 ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
@@ -150,15 +156,14 @@ void ViewportBase::setDock(bool isDock) {
         }
         move(dockPos);
         resize(dockSize);
-        dockPos = {};
-        dockSize = {};
         floatingWindowAction.setText("Undock viewport");
     } else {
         dockPos = pos();
         dockSize = size();
-        floatParent = new QViewportFloatWidget(dockParent, viewportType);
-        floatParent->layout()->addWidget(this);
-        floatParent->resize(size());
+
+        floatParent = new QViewportFloatWidget(dockParent, this);
+        floatParent->resize(size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN);
+        floatParent->vp->move(QPoint(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN));
         if (wasVisible) {
             floatParent->show();
         }
