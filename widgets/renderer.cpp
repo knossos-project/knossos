@@ -1330,7 +1330,9 @@ void Viewport3D::renderPointCloud() {
     glPointSize(point_size);
 
     for(auto & tree : state->skeletonState->trees) {
-        if (tree.pointCloud != nullptr && tree.pointCloud->vertex_count > 0) {
+        const bool validPointCloud = tree.pointCloud != nullptr && tree.pointCloud->vertex_count > 0;
+        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
+        if (tree.render && selectionFilter && validPointCloud) {
             renderPointCloudBuffer(*(tree.pointCloud));
         }
     }
@@ -1405,7 +1407,9 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     selection_ids.clear();
     std::uint32_t id_counter = 1;
     for(auto & tree : state->skeletonState->trees) {
-        if (tree.pointCloud == nullptr || tree.pointCloud->render_mode != GL_TRIANGLES || tree.pointCloud->index_count < 3) {
+        const bool pickablePointCloud = tree.pointCloud != nullptr && tree.pointCloud->render_mode == GL_TRIANGLES && tree.pointCloud->index_count >= 3;
+        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
+        if (!tree.render || selectionFilter || !pickablePointCloud) {
             continue;
         }
         std::vector<std::array<unsigned char, 4>> colors;
