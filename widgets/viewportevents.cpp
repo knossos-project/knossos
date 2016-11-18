@@ -698,7 +698,7 @@ void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
 }
 
 void Viewport3D::focusOutEvent(QFocusEvent *event) {
-    if(event->type() ==  QEvent::FocusOut) {
+    if(event->type() ==  QEvent::FocusOut && wiggle3D) {
         wiggletimer.stop();
         wiggle3D = false;
 
