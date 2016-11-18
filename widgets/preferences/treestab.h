@@ -54,13 +54,10 @@ public:
         return inRange ? QValidator::Invalid : valid ? QValidator::Acceptable : QValidator::Intermediate;
     }
     virtual void stepBy(int steps) override {
-        if (value() == 2 && steps < 0) {
-            setValue(0);
-        } else if (value() <= 0 && steps > 0) {
-            setValue(2);
-        } else {
-            setValue(static_cast<int>(std::pow(2, std::floor(std::log2(value())) + steps)));
-        }
+        // we want 0 as value for 2^0 but have to calculate with 1
+        const auto oldValue = value() == 0 ? 1 : value();
+        const int newValue = std::pow(2, std::floor(std::log2(oldValue)) + steps);
+        setValue(newValue == 1 ? 0: newValue);
     }
 };
 
