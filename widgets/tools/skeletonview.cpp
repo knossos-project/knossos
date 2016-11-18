@@ -611,6 +611,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//remove pointclouds
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
@@ -693,6 +694,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, [](){
         for (auto * tree : state->skeletonState->selectedTrees) {
             Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
+        }
+    });
+    QObject::connect(treeContextMenu.addAction("&Remove pointclouds"), &QAction::triggered, [](){
+        for (auto * tree : state->skeletonState->selectedTrees) {
+            if(tree->pointCloud) tree->pointCloud.reset();
         }
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
