@@ -327,35 +327,6 @@ void ViewportBase::initializeGL() {
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
-
-    // The following code configures openGL to draw into the current VP
-    //set the drawing area in the window to our actually processed viewport.
-    glViewport(upperLeftCorner.x, upperLeftCorner.y, edgeLength, edgeLength);
-    //select the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    //reset it
-    glLoadIdentity();
-    //define coordinate system for our viewport: left right bottom top near far
-    //coordinate values
-    glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
-    //select the modelview matrix for modification
-    glMatrixMode(GL_MODELVIEW);
-    //reset it
-    glLoadIdentity();
-    //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
-
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-    /* performance tricks from mesa3d  */
-
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-    glShadeModel(GL_FLAT);
-    glDisable(GL_DITHER);
-    glDisable(GL_SCISSOR_TEST);
-    glDisable(GL_COLOR_MATERIAL);
 }
 
 void ViewportOrtho::initializeGL() {
@@ -400,11 +371,6 @@ void ViewportOrtho::initializeGL() {
         }
 
         glEnable(GL_TEXTURE_3D);
-        // glEnable(GL_DEPTH_TEST);
-        // glDepthFunc(GL_LEQUAL);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         auto vertex_shader_code = R"shaderSource(
         #version 110
@@ -473,17 +439,15 @@ void ViewportOrtho::createOverlayTextures() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
 }
 
-void ViewportBase::resizeGL(int w, int h) {
-    glViewport(0, 0, w, h);
+void ViewportBase::resizeGL(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    GLfloat x = (GLfloat)width() / height();
+    GLfloat x = (GLfloat)width / height;
 
     glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
     glMatrixMode(GL_MODELVIEW);
 
-    upperLeftCorner = {geometry().topLeft().x(), geometry().topLeft().y(), 0};
-    edgeLength = width();
+    edgeLength = width;
     state->viewer->recalcTextureOffsets();
 }
 

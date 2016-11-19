@@ -152,7 +152,7 @@ private:
 
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
-    virtual void resizeGL(int w, int h) override;
+    virtual void resizeGL(int width, int height) override;
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
@@ -249,7 +249,6 @@ public:
     virtual void zoomIn() {}
     virtual void zoomOut() {}
 
-    Coordinate upperLeftCorner; //upper left corner of viewport in screen pixel coords (max: window borders)
     uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
 
     float frustum[6][4]; // Stores the current view frustum planes

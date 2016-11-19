@@ -2114,8 +2114,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
-    /* Enable blending just once, since we never disable it? */
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glPushMatrix();
 
@@ -2296,7 +2296,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glPointSize(1.f);
 
     glPopMatrix(); // Restore modelview matrix
-    glEnable(GL_BLEND);
 }
 
 bool ViewportBase::updateFrustumClippingPlanes() {
