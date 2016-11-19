@@ -711,9 +711,7 @@ void Viewport3D::focusOutEvent(QFocusEvent *event) {
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp) {
     const auto & currentPos = state->viewerState->currentPosition;
     const auto leftUpper = currentPos - (vp.v1 * vp.edgeLength / 2 / vp.screenPxXPerDataPx) - (vp.v2 * vp.edgeLength / 2 / vp.screenPxYPerDataPx);
-    return floatCoordinate{std::floor(leftUpper.x + (x_dist / vp.screenPxXPerDataPx) * vp.v1.x + (y_dist / vp.screenPxYPerDataPx) * vp.v2.x),
-            std::floor(leftUpper.y + (x_dist / vp.screenPxXPerDataPx) * vp.v1.y + (y_dist / vp.screenPxYPerDataPx) * vp.v2.y),
-            std::floor(leftUpper.z + (x_dist / vp.screenPxXPerDataPx) * vp.v1.z + (y_dist / vp.screenPxYPerDataPx) * vp.v2.z)};
+    return floatCoordinate{leftUpper + (x_dist / vp.screenPxXPerDataPx) * vp.v1 + (y_dist / vp.screenPxYPerDataPx) * vp.v2};
 }
 
 bool ViewportOrtho::mouseEventAtValidDatasetPosition(const QMouseEvent *event) {
