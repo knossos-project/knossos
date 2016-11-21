@@ -516,7 +516,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             floatParent->hide();
         }
         state->viewerState->defaultVPSizeAndPos = false;
-    } else if (event->key() == Qt::Key_U) {
+    } else if (event->key() == Qt::Key_F11) {
         if (isDocked) {
             // Currently docked and normal
             // Undock and go fullscreen from docked
