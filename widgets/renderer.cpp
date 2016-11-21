@@ -61,7 +61,7 @@ enum GLNames {
     NodeOffset
 };
 
-uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
+void ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options) {
     decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
     const auto switchDynamically =  !alwaysLinesAndPoints && options.enableLoddingAndLinesAndPoints;
@@ -107,7 +107,6 @@ uint ViewportBase::renderCylinder(Coordinate *base, float baseRadius, Coordinate
         gluDeleteQuadric(gluCylObj);
         glPopMatrix();
     }
-    return true;
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, const float & radius, const QColor & color, const RenderOptions & options) {
@@ -261,7 +260,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
 }
 
 
-uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
+void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
     float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
     int i, distToCurrPos;
     floatCoordinate tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
@@ -375,7 +374,6 @@ uint ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 
         }
     }
-    return true;
 }
 
 void ViewportBase::setFrontFacePerspective() {
@@ -978,7 +976,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_BLEND);
 }
 
-bool Viewport3D::renderVolumeVP() {
+void Viewport3D::renderVolumeVP() {
     auto& seg = Segmentation::singleton();
 
     std::array<double, 3> background_color;
@@ -1119,8 +1117,6 @@ bool Viewport3D::renderVolumeVP() {
         //     timer = std::chrono::steady_clock::now();
         // }
     }
-
-    return true;
 }
 
 void Viewport3D::renderViewport(const RenderOptions &options) {

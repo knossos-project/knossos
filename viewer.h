@@ -187,11 +187,11 @@ private:
     void vpGenerateTexture(ViewportArb & vp);
 
     void dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp, bool useCustomLUT);
-    bool dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
+    void dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
 
     void ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp);
 
-    bool calcLeftUpperTexAbsPx();
+    void calcLeftUpperTexAbsPx();
 
     Remote remote;
 public:
@@ -232,8 +232,8 @@ public slots:
     void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void userMoveClear();
-    bool recalcTextureOffsets();
-    bool calcDisplayedEdgeLength();
+    void recalcTextureOffsets();
+    void calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);
     void run();
     void loader_notify();

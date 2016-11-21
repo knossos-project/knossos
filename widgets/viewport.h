@@ -174,7 +174,7 @@ protected:
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false);
     void renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
+    void renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions());
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
@@ -292,7 +292,7 @@ class Viewport3D : public ViewportBase {
     bool wiggle3D{false};
     int wigglecounter{0};
     QTimer wiggletimer;
-    bool renderVolumeVP();
+    void renderVolumeVP();
     void renderPointCloud();
     void renderPointCloudBuffer(PointCloud & buf);
     void renderPointCloudBufferIds(PointCloud & buf);
@@ -337,7 +337,7 @@ class ViewportOrtho : public ViewportBase {
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
-    uint renderSegPlaneIntersection(const segmentListElement & segment);
+    void renderSegPlaneIntersection(const segmentListElement & segment);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(const Coordinate coord);
     virtual void renderViewportFrontFace() override;

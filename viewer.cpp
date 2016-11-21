@@ -244,7 +244,7 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     }
 }
 
-bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
+void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(vp.v2);
@@ -263,7 +263,7 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
             // this update here - from the originial below
             *currentPxInDc_float += *v2;
         }
-        return true;
+        return;
     }
 
     while((0 <= currentPxInDc.x && currentPxInDc.x < state->cubeEdgeLength)
@@ -293,7 +293,6 @@ bool Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
         *currentPxInDc_float += *v2;
         currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     }
-    return true;
 }
 
 /**
@@ -726,7 +725,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
 
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
-bool Viewer::calcLeftUpperTexAbsPx() {
+void Viewer::calcLeftUpperTexAbsPx() {
     auto & viewerState = *state->viewerState;
 
     CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
@@ -814,10 +813,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             orthoVP.texture.leftUpperPxInAbsPx.z = 0;
         }
     });
-    return false;
 }
 
-bool Viewer::calcDisplayedEdgeLength() {
+void Viewer::calcDisplayedEdgeLength() {
     float FOVinDCs;
 
     FOVinDCs = ((float)state->M) - 1.f;
@@ -832,7 +830,6 @@ bool Viewer::calcDisplayedEdgeLength() {
             vpOrtho.texture.displayedEdgeLengthX = vpOrtho.texture.displayedEdgeLengthY = FOVinDCs * (float)state->cubeEdgeLength / (float) vpOrtho.texture.edgeLengthPx;
         }
     });
-    return true;
 }
 
 void Viewer::zoom(const float factor) {
@@ -1145,7 +1142,7 @@ void Viewer::oc_reslice_notify_visible() {
     Segmentation::singleton().volume_update_required = true;
 }
 
-bool Viewer::recalcTextureOffsets() {
+void Viewer::recalcTextureOffsets() {
     float midX = 0.,midY = 0.;
 
     calcDisplayedEdgeLength();
@@ -1292,7 +1289,6 @@ bool Viewer::recalcTextureOffsets() {
         orthoVP.texture.texLLx = orthoVP.texture.texLUx;
         orthoVP.texture.texLLy = orthoVP.texture.texRLy;
     });
-    return true;
 }
 
 void Viewer::loader_notify() {
