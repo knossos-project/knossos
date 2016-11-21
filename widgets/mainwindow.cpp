@@ -648,7 +648,11 @@ void MainWindow::closeEvent(QCloseEvent *event) {
              return;//we changed our mind – we dont want to quit anymore
          }
     }
-
+    forEachVPDo([](ViewportBase & vp) {
+        if (vp.isDocked == false) {
+            vp.floatParent.close();
+        }
+    });
     state->quitSignal = true;
     QApplication::processEvents();//ensure everything’s done
     Loader::Controller::singleton().suspendLoader();
