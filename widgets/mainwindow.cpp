@@ -1147,8 +1147,8 @@ void MainWindow::loadSettings() {
 
     setWorkMode(static_cast<AnnotationMode>(settings.value(ANNOTATION_MODE, static_cast<int>(AnnotationMode::Mode_Tracing)).toInt()));
 
-    for (int nr = 10; nr != 0; --nr) {//reverse, because new ones are added in front
-        updateRecentFile(settings.value(QString("loaded_file%1").arg(nr), "").toString());
+    for (int no = 10; no != 0; --no) {//reverse, because new ones are added in front
+        updateRecentFile(settings.value(QString("loaded_file%1").arg(no), "").toString());
     }
 
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
