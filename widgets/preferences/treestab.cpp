@@ -75,6 +75,12 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
             state->viewer->loadSettings();
             state->viewer->window->widgetContainer.datasetOptionsWidget.loadSettings();
             state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.loadSettings();
+            state->mainWindow->forEachVPDo([](ViewportBase & vp) {
+                if (vp.isDocked == false && state->mainWindow->isVisible()) {
+                    // this is true if user changes msaa settings but false if KNOSSOS was just launched.
+                    vp.setDock(false);
+                }
+            });
         }
     });
     QObject::connect(&ownTreeColorsCheck, &QCheckBox::clicked, [this](const bool checked) {

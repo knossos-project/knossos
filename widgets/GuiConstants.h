@@ -116,8 +116,13 @@ const QString VP_TAB_INDEX = "vp_tab_index";
 // Mainwindow
 const QString GUI_MODE = "gui_mode";
 const QString VP_ORDER = "vp_order";
-const QString VP_I_POS = "vp%1_pos";
-const QString VP_I_SIZE = "vp%1_size";
+const QString VP_I_DOCKED = "vp%1_docked";
+const QString VP_I_DOCKED_POS = "vp%1_pos";
+const QString VP_I_DOCKED_SIZE = "vp%1_size";
+const QString VP_I_FLOAT_POS = "vp%1_floatpos";
+const QString VP_I_FLOAT_SIZE = "vp%1_floatsize";
+const QString VP_I_FLOAT_FULLSCREEN = "vp%1_float_fullscreen";
+const QString VP_I_FLOAT_FULL_ORIG_DOCKED = "vp%1_float_fullscreen_originally_docked";
 const QString VP_I_VISIBLE = "vp%1_visible";
 const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
 

@@ -85,20 +85,47 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
 
 QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportBase *vp) : QWidget(parent), vp(vp) {
     setWindowFlags(Qt::Window);
-    vp->setParent(this);
     const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "Arbitrary", "3D"}};
     setWindowTitle(VP_TITLES[vp->viewportType]);
     new QVBoxLayout(this);
 }
 
-void QViewportFloatWidget::resizeEvent(QResizeEvent *) {
-    const auto len = ((size().height() <= size().width()) ? size().height() : size().width()) - 2 * DEFAULT_VP_MARGIN;
-    vp->resize(len, len);
+void QViewportFloatWidget::closeEvent(QCloseEvent *event) {
+    vp->setDock(true);
+    QWidget::closeEvent(event);
+}
+
+void QViewportFloatWidget::moveEvent(QMoveEvent *event) {
+    // Entering/leaving fullscreen mode and docking/undocking cause moves and resizes.
+    // These should not overwrite the non maximized position and sizes.
+    if (vp->isDocked == false && fullscreen == false) {
+        nonMaximizedPos = pos();
+    }
+    QWidget::moveEvent(event);
+}
+
+QSize vpSizeFromWindowSize(const QSize & size) {
+    const int len = ((size.height() <= size.width()) ? size.height() : size.width()) - 2 * DEFAULT_VP_MARGIN;
+    return {len, len};
+}
+
+void QViewportFloatWidget::resizeEvent(QResizeEvent *event) {
+    if (vp->isDocked == false) {
+        vp->resize(vpSizeFromWindowSize(size()));
+        if (fullscreen == false) {
+            nonMaximizedSize = size();
+        }
+    }
+    QWidget::resizeEvent(event);
+}
+
+void QViewportFloatWidget::showEvent(QShowEvent *event) {
+    vp->resize(vpSizeFromWindowSize(size()));
+    QWidget::showEvent(event);
 }
 
 ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
-    QOpenGLWidget(parent), resizeButton(this), viewportType(viewportType), edgeLength(width()) {
-    dockParent = parent;
+    QOpenGLWidget(parent), dockParent(parent), resizeButton(this), viewportType(viewportType), floatParent(parent, this), edgeLength(width()) {
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
     setFocusPolicy(Qt::WheelFocus);
@@ -142,35 +169,33 @@ ViewportBase::~ViewportBase() {
 }
 
 void ViewportBase::setDock(bool isDock) {
-    bool wasVisible = isVisible();
     isDocked = isDock;
     if (isDock) {
         setParent(dockParent);
-        if (nullptr != floatParent) {
-            delete floatParent;
-            floatParent = nullptr;
-        }
+        floatParent.hide();
         move(dockPos);
         resize(dockSize);
-        floatingWindowAction.setText("Undock viewport");
+        floatingWindowAction.setVisible(true);
     } else {
-        dockPos = pos();
-        dockSize = size();
-
-        floatParent = new QViewportFloatWidget(dockParent, this);
-        floatParent->resize(size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN);
-        floatParent->vp->move(QPoint(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN));
-        if (wasVisible) {
-            floatParent->show();
-        }
         state->viewerState->defaultVPSizeAndPos = false;
-        floatingWindowAction.setText("Dock viewport");
+        if (floatParent.nonMaximizedPos == boost::none) {
+            floatParent.nonMaximizedSize = { size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN };
+            floatParent.nonMaximizedPos = mapToGlobal(QPoint(0, 0));
+        }
+        setParent(&floatParent);
+        if (floatParent.fullscreen) {
+            floatParent.setWindowState(Qt::WindowFullScreen);
+        } else {
+            floatParent.move(floatParent.nonMaximizedPos.get());
+            floatParent.resize(floatParent.nonMaximizedSize.get());
+        }
+        move(QPoint(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN));
+        floatingWindowAction.setVisible(false);
+        floatParent.show();
     }
     resizeButton.setVisible(isDock && state->viewerState->showVpDecorations);
-    if (wasVisible) {
-        show();
-        setFocus();
-    }
+    show();
+    setFocus();
 }
 
 void ViewportBase::moveVP(const QPoint & globalPos) {
@@ -184,6 +209,20 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
     const auto desiredY = y() + position.y() - mouseDown.y();
     posAdapt({desiredX, desiredY});
     state->viewerState->defaultVPSizeAndPos = false;
+}
+
+void ViewportBase::moveEvent(QMoveEvent *event) {
+    if (isDocked) {
+        dockPos = pos();
+    }
+    QOpenGLWidget::moveEvent(event);
+}
+
+void ViewportBase::resizeEvent(QResizeEvent *event) {
+    if (isDocked) {
+        dockSize = size();
+    }
+    QOpenGLWidget::resizeEvent(event);
 }
 
 ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {

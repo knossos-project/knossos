@@ -74,11 +74,15 @@ void Viewer::saveSettings() {
     // viewport position and sizes
     settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
 
-    mainWindow.forEachVPDo([&settings] (ViewportBase & vp) {
-        settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
-        settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
+    mainWindow.forEachVPDo([&settings, this] (ViewportBase & vp) {
+        settings.setValue(VP_I_DOCKED.arg(vp.viewportType), vp.isDocked);
+        settings.setValue(VP_I_DOCKED_POS.arg(vp.viewportType), vp.dockPos);
+        settings.setValue(VP_I_DOCKED_SIZE.arg(vp.viewportType), vp.dockSize);
+        settings.setValue(VP_I_FLOAT_POS.arg(vp.viewportType), vp.floatParent.nonMaximizedPos ? vp.floatParent.nonMaximizedPos.get() : QVariant());
+        settings.setValue(VP_I_FLOAT_SIZE.arg(vp.viewportType), vp.floatParent.nonMaximizedSize ? vp.floatParent.nonMaximizedSize.get() : QVariant());
+        settings.setValue(VP_I_FLOAT_FULLSCREEN.arg(vp.viewportType), vp.floatParent.fullscreen);
+        settings.setValue(VP_I_FLOAT_FULL_ORIG_DOCKED.arg(vp.viewportType), vp.isFullOrigDocked);
         settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisibleTo(mainWindow.centralWidget())); // vps are visible only after mainwindow shows, but can already be marked for becoming visible
-
     });
     QList<QVariant> order;
     for (const auto & w : mainWindow.centralWidget()->children()) {
@@ -99,10 +103,22 @@ void Viewer::loadSettings() {
     if (state->viewerState->defaultVPSizeAndPos) {
         mainWindow.resetViewports();
     } else {
-        mainWindow.forEachVPDo([&settings](ViewportBase & vp) {
-            vp.move(settings.value(VP_I_POS.arg(vp.viewportType)).toPoint());
-            vp.resize(settings.value(VP_I_SIZE.arg(vp.viewportType)).toSize());
-            vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
+        mainWindow.forEachVPDo([&settings, this](ViewportBase & vp) {
+            const auto docked = settings.value(VP_I_DOCKED.arg(vp.viewportType), true).toBool();
+            vp.isDocked = docked;
+            vp.dockPos = settings.value(VP_I_DOCKED_POS.arg(vp.viewportType)).toPoint();
+            vp.dockSize = settings.value(VP_I_DOCKED_SIZE.arg(vp.viewportType)).toSize();
+            const auto posVariant = settings.value(VP_I_FLOAT_POS.arg(vp.viewportType));
+            vp.floatParent.nonMaximizedPos = posVariant.isValid() ? boost::optional<QPoint>{posVariant.toPoint()} : boost::none;
+            const auto sizeVariant = settings.value(VP_I_FLOAT_SIZE.arg(vp.viewportType));
+            vp.floatParent.nonMaximizedSize = sizeVariant.isValid() ? boost::optional<QSize>{sizeVariant.toSize()} : boost::none;
+            vp.floatParent.fullscreen = settings.value(VP_I_FLOAT_FULLSCREEN.arg(vp.viewportType), false).toBool();
+            vp.isFullOrigDocked = settings.value(VP_I_FLOAT_FULL_ORIG_DOCKED.arg(vp.viewportType), false).toBool();
+            if (docked) {
+                vp.resize(vp.dockSize);
+                vp.move(vp.dockPos);
+                vp.setVisible(settings.value(VP_I_VISIBLE.arg(vp.viewportType), true).toBool());
+            }
         });
     }
     for (const auto & i : settings.value(VP_ORDER).toList()) {

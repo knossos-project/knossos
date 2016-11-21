@@ -125,14 +125,20 @@ signals:
 
 
 class QViewportFloatWidget : public QWidget {
-protected:
-    virtual void resizeEvent(QResizeEvent *) override;
-public:
     ViewportBase *vp;
+protected:
+    virtual void closeEvent(QCloseEvent *event) override;
+    virtual void moveEvent(QMoveEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void showEvent(QShowEvent *event) override;
+public:
+    bool fullscreen{false};
+    boost::optional<QPoint> nonMaximizedPos;
+    boost::optional<QSize> nonMaximizedSize;
     explicit QViewportFloatWidget(QWidget *parent, ViewportBase *vp);
 };
 
-constexpr int defaultFonsSize = 10;
+constexpr int defaultFontSize = 10;
 class nodeListElement;
 class segmentListElement;
 class mesh;
@@ -146,10 +152,7 @@ protected:
     QToolButton menuButton;
 private:
     QOpenGLDebugLogger oglLogger;
-    bool isDocked = true;
-    bool isFullOrigDocked;
     QWidget *dockParent;
-    QViewportFloatWidget *floatParent = nullptr;
     QAction snapshotAction{"Snapshot", &menuButton};
     QAction floatingWindowAction{"Undock viewport", &menuButton};
     ResizeButton resizeButton;
@@ -181,6 +184,9 @@ protected:
     boost::optional<nodeListElement &> pickNode(int x, int y, int width);
     void handleLinkToggle(const QMouseEvent & event);
 
+    virtual void moveEvent(QMoveEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *event) override;
+
     // event-handling
     virtual void enterEvent(QEvent * event) override;
     virtual void leaveEvent(QEvent * event) override;
@@ -210,8 +216,9 @@ protected:
     virtual void handleWheelEvent(const QWheelEvent *event);
 
 public:
+    ViewportType viewportType; // floatparent requires this to be initialized first to set its title
+    QViewportFloatWidget floatParent;
     const static int numberViewports = 5;
-    ViewportType viewportType;
 
     bool hasCursor{false};
     virtual void showHideButtons(bool isShow) {
@@ -234,8 +241,12 @@ public:
         const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(desiredSize.x(), desiredSize.y())}));
         resize({size, size});
     }
+
+    bool isDocked{true};
     QSize dockSize;
     QPoint dockPos;
+    // holds wether vp was made fullscreen from docked state. Determines if vp is docked or floated when leaving fullscreen mode.
+    bool isFullOrigDocked;
     void setDock(bool isDock);
     static bool oglDebug;
 

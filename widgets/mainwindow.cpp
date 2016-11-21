@@ -1167,6 +1167,11 @@ void MainWindow::loadSettings() {
     widgetContainer.snapshotWidget.loadSettings();
 
     show();
+    forEachVPDo([](ViewportBase & vp) { // show undocked vps after mainwindow
+        if (vp.isDocked == false) {
+            vp.setDock(false);
+        }
+    });
     widgetContainer.applyVisibility();
 }
 
@@ -1299,6 +1304,7 @@ void MainWindow::resizeToFitViewports(int width, int height) {
         viewportZY->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN);
         viewportArb->move(DEFAULT_VP_MARGIN + 2 * mindim, DEFAULT_VP_MARGIN);
         viewport3D->move(DEFAULT_VP_MARGIN + mindim, DEFAULT_VP_MARGIN + mindim);
+
         forEachVPDo([&mindim](ViewportBase & vp) { vp.resize(mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN); });
     }
 }

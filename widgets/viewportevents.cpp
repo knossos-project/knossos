@@ -513,7 +513,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             hide();
         }
         else {
-            floatParent->hide();
+            floatParent.hide();
         }
         state->viewerState->defaultVPSizeAndPos = false;
     } else if (event->key() == Qt::Key_F11) {
@@ -521,15 +521,17 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             // Currently docked and normal
             // Undock and go fullscreen from docked
             setDock(false);
-            floatParent->setWindowState(Qt::WindowFullScreen);
+            floatParent.setWindowState(Qt::WindowFullScreen);
+            floatParent.fullscreen = true;
             isFullOrigDocked = true;
         }
         else {
             // Currently undocked
-            if (floatParent->isFullScreen()) {
+            if (floatParent.isFullScreen()) {
                 // Currently fullscreen
                 // Go normal and back to original docking state
-                floatParent->setWindowState(Qt::WindowNoState);
+                floatParent.setWindowState(Qt::WindowNoState);
+                floatParent.fullscreen = false;
                 if (isFullOrigDocked) {
                     setDock(isFullOrigDocked);
                 }
@@ -537,7 +539,8 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             else {
                 // Currently not fullscreen
                 // Go fullscreen from undocked
-                floatParent->setWindowState(Qt::WindowFullScreen);
+                floatParent.setWindowState(Qt::WindowFullScreen);
+                floatParent.fullscreen = true;
                 isFullOrigDocked = false;
             }
         }
