@@ -77,7 +77,7 @@ void Viewer::saveSettings() {
     mainWindow.forEachVPDo([&settings] (ViewportBase & vp) {
         settings.setValue(VP_I_POS.arg(vp.viewportType), vp.dockPos.isNull() ? vp.pos() : vp.dockPos);
         settings.setValue(VP_I_SIZE.arg(vp.viewportType), vp.dockSize.isEmpty() ? vp.size() : vp.dockSize);
-        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisible());
+        settings.setValue(VP_I_VISIBLE.arg(vp.viewportType), vp.isVisibleTo(mainWindow.centralWidget())); // vps are visible only after mainwindow shows, but can already be marked for becoming visible
 
     });
     QList<QVariant> order;
