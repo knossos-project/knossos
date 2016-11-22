@@ -226,22 +226,24 @@ void ViewportBase::resizeEvent(QResizeEvent *event) {
 }
 
 ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
+    // v2 is negative because it goes from top to bottom on screen
+    // n is positive if we want to look towards 0 and negative to look towards infinity
     switch(viewportType) {
     case VIEWPORT_XZ:
-        v1 = {1, 0, 0};
-        v2 = {0, 0, 1};
-        n = {0, 1, 0};
+        v1 = {1, 0,  0};
+        v2 = {0, 0, -1};
+        n  = {0, 1,  0};
         break;
     case VIEWPORT_ZY:
-        v1 = {0, 0, 1};
-        v2 = {0, 1, 0};
-        n = {1, 0, 0};
+        v1 = {0,  0, 1};
+        v2 = {0, -1, 0};
+        n  = {1,  0, 0};
         break;
     case VIEWPORT_XY:
     case VIEWPORT_ARBITRARY:
-        v1 = {1, 0, 0};
-        v2 = {0, 1, 0};
-        n = {0, 0, 1};
+        v1 = {1,  0,  0};
+        v2 = {0, -1,  0};
+        n  = {0,  0, -1};
         break;
     default:
         throw std::runtime_error("ViewportOrtho::ViewportOrtho unknown vp");
@@ -270,7 +272,7 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
 }
 
 void ViewportOrtho::resetTexture() {
-    const auto size = texture.edgeLengthPx;
+    const auto size = texture.size;
     if (texture.texHandle != 0) {
         glBindTexture(GL_TEXTURE_2D, texture.texHandle);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -391,8 +393,8 @@ void ViewportOrtho::initializeGL() {
     glTexImage2D(GL_TEXTURE_2D,
                 0,
                 GL_RGB,
-                texture.edgeLengthPx,
-                texture.edgeLengthPx,
+                texture.size,
+                texture.size,
                 0,
                 GL_RGB,
                 GL_UNSIGNED_BYTE,
@@ -475,7 +477,7 @@ void ViewportOrtho::createOverlayTextures() {
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    const auto size = texture.edgeLengthPx;
+    const auto size = texture.size;
     std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
 }
@@ -843,17 +845,17 @@ void ViewportOrtho::sendCursorPosition() {
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.edgeLengthPx);
+    float result = FOVinDCs * state->cubeEdgeLength / static_cast<float>(texture.size);
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
 float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
-    float result = vpLenghtInDataPx / static_cast<float>(texture.edgeLengthPx);
+    float result = displayedIsoPx / static_cast<float>(texture.size);
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
 
-ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType), vpLenghtInDataPx((static_cast<int>((state->M / 2 + 1) * state->cubeEdgeLength / std::sqrt(2))  / 2) * 2), vpHeightInDataPx(vpLenghtInDataPx) {
+ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
     menuButton.addAction(&resetAction);
     connect(&resetAction, &QAction::triggered, [this]() {
         state->viewer->resetRotation();
@@ -886,7 +888,7 @@ void ViewportArb::updateOverlayTexture() {
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x + v2 * state->magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x - v2 * state->magnification * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {

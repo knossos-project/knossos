@@ -65,29 +65,21 @@ struct viewportTexture {
     uint overlayHandle{0};
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
-    Coordinate leftUpperPxInAbsPx;
-    uint edgeLengthDc;
-    uint edgeLengthPx;
-
-    //These variables specifiy the area inside the textures which are used
-    //for data storage. Storage always starts at texture pixels (0,0).
-    int usedTexLengthDc;
+    floatCoordinate leftUpperPxInAbsPx;
+    std::size_t size;
 
     //These variables specifiy the lengths inside the texture that are currently displayed.
     //Their values depend on the zoom level and the data voxel dimensions (because of aspect
     //ratio correction). Units are texture coordinates.
-    float displayedEdgeLengthX;
-    float displayedEdgeLengthY;
+    float texUsedX;
+    float texUsedY;
 
     float texUnitsPerDataPx;
-
     //Texture coordinates
     float texLUx, texLUy, texLLx, texLLy, texRUx, texRUy, texRLx, texRLy;
-    //Coordinates of crosshair inside VP
-    float xOffset, yOffset;
-
     // Current zoom level. 1: no zoom; near 0: maximum zoom.
     float FOV;
+    float usedSizeInCubePixels;
 };
 
 struct RenderOptions {
@@ -173,8 +165,8 @@ protected:
     void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
     void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false);
-    void renderSphere(const Coordinate & pos, const float & radius, const QColor &color, const RenderOptions & options = RenderOptions());
-    void renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, QColor color, const RenderOptions & options = RenderOptions());
+    void renderSphere(const Coordinate &pos, float radius, const QColor &color, const RenderOptions & options = RenderOptions());
+    void renderCylinder(const Coordinate &base, float baseRadius, const Coordinate &top, float topRadius, const QColor &color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions());
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
@@ -372,14 +364,13 @@ public:
 
     void sendCursorPosition();
     Coordinate getMouseCoordinate();
-
-    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
-    Coordinate leftUpperDataPxOnScreen;
-    floatCoordinate n;
-    floatCoordinate v1; // vector in x direction
-    floatCoordinate v2; // vector in y direction
+    // vp vectors relative to the first cartesian octant
+    floatCoordinate v1;// vector in x direction
+    floatCoordinate v2;// vector in y direction
+    floatCoordinate  n;// faces away from the vp plane towards the camera
     std::atomic_bool dcResliceNecessary{true};
     std::atomic_bool ocResliceNecessary{true};
+    float displayedIsoPx;
 
     void zoomIn() override { zoom(zoomStep()); }
     void zoomOut() override { zoom(1./zoomStep()); }
@@ -398,8 +389,6 @@ protected:
     virtual void paintGL() override;
 
 public:
-    int vpLenghtInDataPx;
-    int vpHeightInDataPx;
     floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);
     virtual void showHideButtons(bool isShow) override;

@@ -92,13 +92,6 @@ struct ViewerState {
     floatCoordinate repeatDirection;
     int movementSpeed{40};
 
-    float voxelDimX;
-    float voxelDimY;
-    float voxelXYRatio;
-    float voxelDimZ;
-    //ZY can't be different to XZ because of the intrinsic properties of the SBF-SEM.
-    float voxelXYtoZRatio;
-
     // Advanced Tracing Modes Stuff
     Recentering autoTracingMode{Recentering::OnNode};
     int autoTracingSteps{10};

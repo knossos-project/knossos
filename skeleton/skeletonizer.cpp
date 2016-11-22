@@ -1136,7 +1136,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = (targetNode.position - sourceNode.position).length();
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = state->scale.componentMul(targetNode.position - sourceNode.position).length();
 
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);
@@ -1894,9 +1894,6 @@ void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & ve
     float tmp_x{0.0f};
     float tmp_x_normal{0.0f};
     for(int i = 0; i < verts.size(); ++i) {
-        // tmp? scale vertices down by dataset scale
-        verts[i] /= (i%3==0)?state->scale.x:(i%3==1)?state->scale.y:state->scale.z;
-
         if(swap_xy) {
             if(i%3==0) { // x
                 tmp_x = verts[i];

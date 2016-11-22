@@ -277,7 +277,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
 floatCoordinate ViewportOrtho::handleMovement(const QPoint & pos) {
     const QPointF posDelta(xrel(pos.x()), yrel(pos.y()));
     const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
-    const auto move = v1 * arbitraryMouseSlide.x() + v2 * arbitraryMouseSlide.y();
+    const auto move = v1 * arbitraryMouseSlide.x() - v2 * arbitraryMouseSlide.y();
     return move;
 }
 
@@ -288,6 +288,7 @@ void ViewportBase::handleMouseMotionLeftHold(const QMouseEvent *event) {
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
     }
 }
+
 void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
     if (event->modifiers() == Qt::NoModifier) {
         if (Segmentation::singleton().volume_render_toggle) {
@@ -498,7 +499,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
         }
     } else if (event->modifiers() == Qt::NoModifier) {
         const float directionSign = event->delta() > 0 ? -1 : 1;
-        const auto multiplier = directionSign * (int)state->viewerState->dropFrames * state->magnification;
+        const auto multiplier = directionSign * state->viewerState->dropFrames * state->magnification;
         state->viewer->userMove(n * multiplier, USERMOVE_DRILL, n);
     }
     ViewportBase::handleWheelEvent(event);
@@ -646,11 +647,11 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         const auto direction = n.dot(state->viewerState->tracingDirection) >= 0 ? 1 : -1;
         const float directionSign = (keyLeft || keyUp) ? -1 : (keyRight || keyDown) ? 1 : direction * (keyD || keyE ? -1 : 1);
         if (keyLeft || keyRight || keyDown || keyUp || keyD || keyF) {
-            const auto vector = (keyLeft || keyRight) ? v1 : (keyUp || keyDown) ? v2 : n;
+            const auto vector = (keyLeft || keyRight) ? v1 : (keyUp || keyDown) ? (v2 * -1) : (n * -1); // transform v2 and n from 1. to 8. octant
             state->viewerState->repeatDirection = vector * directionSign * shiftMultiplier * state->viewerState->dropFrames * state->magnification;
             state->viewer->userMove(state->viewerState->repeatDirection, USERMOVE_HORIZONTAL, n);
         } else if(event->key() == Qt::Key_R || keyE) {
-            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition + n * directionSign * shiftMultiplier * state->viewerState->walkFrames * state->magnification);
+            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition - n * directionSign * shiftMultiplier * state->viewerState->walkFrames * state->magnification);
         }
     } else if (keyD || keyF || keyLeft || keyRight || keyDown || keyUp) {
         // movement key pressed
@@ -712,9 +713,8 @@ void Viewport3D::focusOutEvent(QFocusEvent *event) {
 }
 
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp) {
-    const auto & currentPos = state->viewerState->currentPosition;
-    const auto leftUpper = currentPos - (vp.v1 * vp.edgeLength / 2 / vp.screenPxXPerDataPx) - (vp.v2 * vp.edgeLength / 2 / vp.screenPxYPerDataPx);
-    return floatCoordinate{leftUpper + (x_dist / vp.screenPxXPerDataPx) * vp.v1 + (y_dist / vp.screenPxYPerDataPx) * vp.v2};
+    const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerDataPx - vp.v2 * vp.edgeLength / vp.screenPxYPerDataPx) * 0.5;
+    return floatCoordinate{leftUpper + (x_dist / vp.screenPxXPerDataPx) * vp.v1 - (y_dist / vp.screenPxYPerDataPx) * vp.v2};
 }
 
 bool ViewportOrtho::mouseEventAtValidDatasetPosition(const QMouseEvent *event) {

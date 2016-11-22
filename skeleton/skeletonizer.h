@@ -173,7 +173,7 @@ struct SkeletonState {
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     double zoomLevel;
     //boundary of the visualized volume in the skeleton viewport
-    int volBoundary = 2 * std::max({state->boundary.x * 1.f, state->boundary.y * state->scale.y/state->scale.x, state->boundary.z * state->scale.z/state->scale.x});
+    int volBoundary = 2 * std::max({state->scale.x * state->boundary.x, state->scale.y * state->boundary.y, state->scale.z * state->boundary.z});
 
     QString skeletonCreatedInVersion{KVERSION};
     QString skeletonLastSavedInVersion;

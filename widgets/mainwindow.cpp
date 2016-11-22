@@ -164,19 +164,15 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
 }
 
 void MainWindow::resetTextureProperties() {
-    state->viewerState->voxelDimX = state->scale.x;
-    state->viewerState->voxelDimY = state->scale.y;
-    state->viewerState->voxelDimZ = state->scale.z;
-    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-        orthoVP.texture.texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength;
-        orthoVP.texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
-        orthoVP.texture.usedTexLengthDc = state->M;
-        orthoVP.texture.edgeLengthPx = state->viewerState->texEdgeLength;
-        orthoVP.texture.edgeLengthDc = state->viewerState->texEdgeLength / state->cubeEdgeLength;
+        orthoVP.texture.size = state->viewerState->texEdgeLength;
+        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / state->magnification;
         orthoVP.texture.FOV = 1;
+        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * state->cubeEdgeLength;
+        if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
+            orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
+        }
     });
 }
 

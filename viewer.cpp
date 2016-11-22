@@ -144,7 +144,7 @@ float Viewer::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
     const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag() : state->lowestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * state->cubeEdgeLength) / vp->texture.size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -153,7 +153,7 @@ float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
     const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag() : state->highestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.edgeLengthPx;
+    float displayedEdgeLen = (FOVinDCs * state->cubeEdgeLength) / vp->texture.size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -194,16 +194,16 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
 
-    const std::size_t innerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t outerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength;
+    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - state->cubeEdgeLength;
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength * 3 : 3;// RGB per pixel
+    const std::size_t texRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 3 : 0;
 
     int offsetX = 0, offsetY = 0;
-    int pixelsPerLine = state->cubeEdgeLength*state->magnification;
-    for(std::size_t y = 0; y < outerLoopBoundary; y++) {
-        for(std::size_t x = 0; x < innerLoopBoundary; x++) {
+    const int coordsPerLine = state->cubeEdgeLength * state->magnification;
+    for (auto y = state->cubeEdgeLength; y != 0; --y) {
+        for (auto x = state->cubeEdgeLength; x != 0; --x) {// x and y’s values are not used
             uint8_t r, g, b;
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
@@ -236,32 +236,29 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             reinterpret_cast<uint8_t*>(slice)[2] = b;
 
             datacube += voxelIncrement;
-            slice += 3;
-            offsetX = (offsetX + state->magnification) % pixelsPerLine;
+            slice += texNextLine;
+            offsetX = (offsetX + state->magnification) % coordsPerLine;
             offsetY += (offsetX == 0)? state->magnification : 0; // at end of line increment to next line
         }
         datacube += sliceSubLineIncrement;
+        slice -= texRevertToFirstLine;
     }
 }
 
 void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
-    Coordinate currentPxInDc;
-    int sliceIndex = 0, dcIndex = 0;
-    floatCoordinate *v2 = &(vp.v2);
-
-    currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
+    Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
 
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= state->cubeEdgeLength) || (currentPxInDc.y >= state->cubeEdgeLength) || (currentPxInDc.z >= state->cubeEdgeLength)) {
-        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        const int sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         (*t)++;
-        if(*t < vp.vpHeightInDataPx) {
+        if(*t < vp.texture.usedSizeInCubePixels) {
             // Actually, although currentPxInDc_float is passed by reference and updated here,
             // it is totally ignored (i.e. not read, then overwritten) by the calling function.
             // But to keep the functionality here compatible after this bugfix, we also replicate
             // this update here - from the originial below
-            *currentPxInDc_float += *v2;
+            *currentPxInDc_float -= vp.v2;
         }
         return;
     }
@@ -270,8 +267,8 @@ void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
           && (0 <= currentPxInDc.y && currentPxInDc.y < state->cubeEdgeLength)
           && (0 <= currentPxInDc.z && currentPxInDc.z < state->cubeEdgeLength)) {
 
-        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
-        dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
+        const int sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        const int dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == NULL) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
@@ -287,10 +284,10 @@ void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
             }
         }
         (*t)++;
-        if(*t >= vp.vpHeightInDataPx) {
+        if(*t >= vp.texture.usedSizeInCubePixels) {
             break;
         }
-        *currentPxInDc_float += *v2;
+        *currentPxInDc_float -= vp.v2;
         currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     }
 }
@@ -325,11 +322,11 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + state->cubeEdgeLength * state->magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + state->cubeEdgeLength * state->magnification;
 
-    const std::size_t innerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : state->cubeSliceArea;
-    const std::size_t outerLoopBoundary = vp.viewportType == VIEWPORT_XZ ? state->cubeEdgeLength : 1;
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
-    const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
+    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? state->cubeEdgeLength * 4 : 4;// RGBA per pixel
+    const std::size_t textRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 4 : 0;
 
     auto & seg = Segmentation::singleton();
     //cache
@@ -341,9 +338,9 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     const std::size_t max = state->cubeEdgeLength * (state->cubeEdgeLength - 1);
     std::size_t counter = 0;//slice position
     int offsetX = 0, offsetY = 0; // current texel's horizontal and vertical dataset pixel offset inside cube
-    int pixelsPerLine = state->cubeEdgeLength*state->magnification;
-    for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
-        for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
+    int coordsPerLine = state->cubeEdgeLength*state->magnification;
+    for (auto y = state->cubeEdgeLength; y != 0; --y) {
+        for (auto x = state->cubeEdgeLength; x != 0; --x) {// x and y’s values are not used
             bool hide = false;
             if(partlyInMovementArea) {
                 if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
@@ -408,12 +405,13 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 selectedCache = selected;
             }
             ++counter;
-            slice += 4;//RGBA per pixel
             datacube += voxelIncrement;
-            offsetX = (offsetX + state->magnification) % pixelsPerLine;
+            slice += texNextLine;
+            offsetX = (offsetX + state->magnification) % coordsPerLine;
             offsetY += (offsetX == 0)? state->magnification : 0; // at end of line increment to next line
         }
         datacube += sliceSubLineIncrement;
+        slice -= textRevertToFirstLine;
     }
 }
 
@@ -421,7 +419,7 @@ static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportText
     uint index = 0;
 
     index = x * state->cubeSliceArea + y
-            * (texture->edgeLengthDc * state->cubeSliceArea)
+            * (texture->size * state->cubeEdgeLength)
             * colorMultiplicationFactor;
 
     return index;
@@ -455,13 +453,13 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
         return false;
     }
 
-    const CoordOfCube upperLeftDc = vp.texture.leftUpperPxInAbsPx.cube(state->cubeEdgeLength, state->magnification);
+    const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(state->cubeEdgeLength, state->magnification);
 
     std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
-    for(int x_dc = 0; x_dc < vp.texture.usedTexLengthDc; x_dc++) {
-        for(int y_dc = 0; y_dc < vp.texture.usedTexLengthDc; y_dc++) {
+    for(int x_dc = 0; x_dc < state->M; x_dc++) {
+        for(int y_dc = 0; y_dc < state->M; y_dc++) {
             const int x_px = x_dc * state->cubeEdgeLength;
             const int y_px = y_dc * state->cubeEdgeLength;
 
@@ -473,7 +471,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
             // coordinates:
             // XY-slice: x local is x global, y local is y global
             // XZ-slice: x local is x global, y local is z global
-            // ZY-slice: x local is y global, y local is z global.
+            // ZY-slice: x local is z global, y local is y global.
             case VIEWPORT_XY:
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
                 break;
@@ -481,7 +479,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
                 break;
             case VIEWPORT_ZY:
-                currentDc = {upperLeftDc.x, upperLeftDc.y + x_dc, upperLeftDc.z + y_dc};
+                currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
                 break;
             default:
                 qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
@@ -680,9 +678,9 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < vp.vpLenghtInDataPx) {
+    while(s < vp.texture.usedSizeInCubePixels) {
         t = 0;
-        while(t < vp.vpHeightInDataPx) {
+        while(t < vp.texture.usedSizeInCubePixels) {
             Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
             Coordinate currentDc = currentPx / state->cubeEdgeLength;
 
@@ -703,7 +701,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
                            s, &t,
                            vp,
                            state->viewerState->datasetAdjustmentOn);
-            currentPx_float = currentPx_float + vp.v2 * (t - t_old);
+            currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;
         rowPx_float += vp.v1;
@@ -723,112 +721,37 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-/* this function calculates the mapping between the left upper texture pixel
- * and the real dataset pixel */
 void Viewer::calcLeftUpperTexAbsPx() {
-    auto & viewerState = *state->viewerState;
-
-    CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
-
-    //iterate over all viewports
-    //this function has to be called after the texture changed or the user moved, in the sense of a
-    //realignment of the data
-    window->forEachOrthoVPDo([&viewerState, &currentPosition_dc](ViewportOrtho & orthoVP) {
-        switch (orthoVP.viewportType) {
-        case VIEWPORT_XY:
-            //Set the coordinate of left upper data pixel currently stored in the texture
-            //orthoVP.texture.usedTexLengthDc is state->M and even int.. very funny
-            // this guy is always in mag1, even if a different mag dataset is active!!!
-            // this might be buggy for very high mags, test that!
-            orthoVP.texture.leftUpperPxInAbsPx = {
-                currentPosition_dc.x - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-                , currentPosition_dc.y - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-                , currentPosition_dc.z
-            };
-            orthoVP.texture.leftUpperPxInAbsPx *= state->cubeEdgeLength * state->magnification;
-            //if(orthoVP.texture.leftUpperPxInAbsPx.x >1000000){ qDebug("uninit x %d", orthoVP.texture.leftUpperPxInAbsPx.x);}
-            //if(orthoVP.texture.leftUpperPxInAbsPx.y > 1000000){ qDebug("uninit y %d", orthoVP.texture.leftUpperPxInAbsPx.y);}
-            //if(orthoVP.texture.leftUpperPxInAbsPx.z > 1000000){ qDebug("uninit z %d", orthoVP.texture.leftUpperPxInAbsPx.z);}
-
-            //Set the coordinate of left upper data pixel currently displayed on screen
-            //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
-            //stuff up! A more general solution would be better.
-            orthoVP.leftUpperDataPxOnScreen = {
-                viewerState.currentPosition.x - static_cast<int>((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                , viewerState.currentPosition.y - static_cast<int>((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                , viewerState.currentPosition.z
-            };
-            break;
-        case VIEWPORT_XZ:
-            //Set the coordinate of left upper data pixel currently stored in the texture
-            orthoVP.texture.leftUpperPxInAbsPx = {
-                currentPosition_dc.x - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-                , currentPosition_dc.y
-                , currentPosition_dc.z - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-            };
-            orthoVP.texture.leftUpperPxInAbsPx *= state->cubeEdgeLength * state->magnification;
-            //Set the coordinate of left upper data pixel currently displayed on screen
-            //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
-            //stuff up! A more general solution would be better.
-            orthoVP.leftUpperDataPxOnScreen = {
-                viewerState.currentPosition.x - static_cast<int>((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                , viewerState.currentPosition.y
-                , viewerState.currentPosition.z - static_cast<int>((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
-            };
-            break;
-        case VIEWPORT_ZY:
-            //Set the coordinate of left upper data pixel currently stored in the texture
-            orthoVP.texture.leftUpperPxInAbsPx = {
-                currentPosition_dc.x
-                , currentPosition_dc.y - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-                , currentPosition_dc.z - static_cast<int>(orthoVP.texture.usedTexLengthDc / 2)
-            };
-            orthoVP.texture.leftUpperPxInAbsPx *= state->cubeEdgeLength   * state->magnification;
-
-            //Set the coordinate of left upper data pixel currently displayed on screen
-            //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
-            //stuff up! A more general solution would be better.
-            orthoVP.leftUpperDataPxOnScreen = {
-                viewerState.currentPosition.x
-                , viewerState.currentPosition.y - static_cast<int>((orthoVP.texture.displayedEdgeLengthX / 2.) / orthoVP.texture.texUnitsPerDataPx)
-                , viewerState.currentPosition.z - static_cast<int>((orthoVP.texture.displayedEdgeLengthY / 2.) / orthoVP.texture.texUnitsPerDataPx)
-            };
-            break;
-        case VIEWPORT_ARBITRARY: {
+    window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+        const auto fov = orthoVP.texture.usedSizeInCubePixels;
+        const CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(state->cubeEdgeLength, state->magnification);
+        const auto xy = orthoVP.viewportType == VIEWPORT_XY;
+        const auto xz = orthoVP.viewportType == VIEWPORT_XZ;
+        const auto zy = orthoVP.viewportType == VIEWPORT_ZY;
+        orthoVP.texture.leftUpperPxInAbsPx = (currentPosition_dc - CoordOfCube{(xy || xz) * state->M / 2, (xy || zy) * state->M / 2, (xz || zy) * state->M / 2}).cube2Global(state->cubeEdgeLength, state->magnification);
+        if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             auto & arbVP = static_cast<ViewportArb&>(orthoVP);
-            arbVP.leftUpperPxInAbsPx_float = viewerState.currentPosition - (arbVP.v1 * arbVP.vpLenghtInDataPx/2 + arbVP.v2 * arbVP.vpHeightInDataPx/2) * state->magnification;
-
+            arbVP.leftUpperPxInAbsPx_float = floatCoordinate{viewerState.currentPosition} - (orthoVP.v1 - orthoVP.v2) * 0.5 * fov * state->magnification;// broken arb slicing depends on this
             arbVP.texture.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
-
-            arbVP.leftUpperDataPxOnScreen = {
-                roundFloat(arbVP.leftUpperDataPxOnScreen.x)
-                , roundFloat(arbVP.leftUpperDataPxOnScreen.y)
-                , roundFloat(arbVP.leftUpperDataPxOnScreen.z)
-            };
-            break;
-        }
-        default:
-            orthoVP.texture.leftUpperPxInAbsPx.x = 0;
-            orthoVP.texture.leftUpperPxInAbsPx.y = 0;
-            orthoVP.texture.leftUpperPxInAbsPx.z = 0;
         }
     });
 }
 
 void Viewer::calcDisplayedEdgeLength() {
-    float FOVinDCs;
+    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
+        float voxelV1X = state->scale.componentMul(vpOrtho.v1).length() / state->scale.x;
+        float voxelV2X = std::abs(state->scale.componentMul(vpOrtho.v2).length()) / state->scale.x;
 
-    FOVinDCs = ((float)state->M) - 1.f;
+        vpOrtho.texture.texUsedX = vpOrtho.texture.usedSizeInCubePixels / vpOrtho.texture.size * vpOrtho.texture.FOV / voxelV1X;
+        vpOrtho.texture.texUsedY = vpOrtho.texture.usedSizeInCubePixels / vpOrtho.texture.size * vpOrtho.texture.FOV / voxelV2X;
 
-    window->forEachOrthoVPDo([&](ViewportOrtho & vpOrtho) {
-        if (vpOrtho.viewportType==VIEWPORT_ARBITRARY) {
-            auto & vpArb = static_cast<ViewportArb&>(vpOrtho);
-            vpArb.texture.displayedEdgeLengthX = vpArb.vpLenghtInDataPx / (float) vpArb.texture.edgeLengthPx;
-            vpArb.texture.displayedEdgeLengthY = vpArb.vpHeightInDataPx / (float) vpArb.texture.edgeLengthPx;
-        }
-        else {
-            vpOrtho.texture.displayedEdgeLengthX = vpOrtho.texture.displayedEdgeLengthY = FOVinDCs * (float)state->cubeEdgeLength / (float) vpOrtho.texture.edgeLengthPx;
-        }
+        vpOrtho.displayedIsoPx = state->scale.x * 0.5 * vpOrtho.texture.usedSizeInCubePixels * vpOrtho.texture.FOV * state->magnification;// FOV is within current mag
+        const auto dataPx = vpOrtho.texture.usedSizeInCubePixels * vpOrtho.texture.FOV * state->magnification;
+        vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
+        vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
+
+        vpOrtho.displayedlengthInNmX = state->scale.componentMul(vpOrtho.v1).length() * (vpOrtho.texture.texUsedX / vpOrtho.texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmY = state->scale.componentMul(vpOrtho.v2).length() * (vpOrtho.texture.texUsedY / vpOrtho.texture.texUnitsPerDataPx);
     });
 }
 
@@ -1143,151 +1066,50 @@ void Viewer::oc_reslice_notify_visible() {
 }
 
 void Viewer::recalcTextureOffsets() {
-    float midX = 0.,midY = 0.;
-
     calcDisplayedEdgeLength();
+    calcLeftUpperTexAbsPx();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        orthoVP.texture.displayedEdgeLengthX *= orthoVP.texture.FOV;
-        orthoVP.texture.displayedEdgeLengthY *= orthoVP.texture.FOV;
-        switch(orthoVP.viewportType) {
-        case VIEWPORT_XY:
-            //Aspect ratio correction..
-            if(state->viewerState->voxelXYRatio < 1) {
-                orthoVP.texture.displayedEdgeLengthY *= state->viewerState->voxelXYRatio;
-            }
-            else {
-                orthoVP.texture.displayedEdgeLengthX /= state->viewerState->voxelXYRatio;
-            }
-            //Display only entire pixels (only truncation possible!) WHY??
-            orthoVP.texture.displayedEdgeLengthX =
-                (std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-            orthoVP.texture.displayedEdgeLengthY =
-                ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-            // Update screen pixel to data pixel mapping values
-            orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX /  orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmX = state->viewerState->voxelDimX * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmY = state->viewerState->voxelDimY * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            //Update orthoVP.leftUpperDataPxOnScreen with this call
-            calcLeftUpperTexAbsPx();
-
-            // scale to 0 - 1; midX is the current pos in tex coords
-            // leftUpperPxInAbsPx is in always in mag1, independent of
-            // the currently active mag
-            midX = (float)(state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x) * orthoVP.texture.texUnitsPerDataPx;
-            midY = (float)(state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y) * orthoVP.texture.texUnitsPerDataPx;
-
-            //Offsets for crosshair
-            orthoVP.texture.xOffset = ((float)(state->viewerState->currentPosition.x - orthoVP.leftUpperDataPxOnScreen.x)) * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
-            orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.y - orthoVP.leftUpperDataPxOnScreen.y)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
-            break;
-        case VIEWPORT_XZ:
-            //Aspect ratio correction..
-            if(state->viewerState->voxelXYtoZRatio < 1) {
-                orthoVP.texture.displayedEdgeLengthY *= state->viewerState->voxelXYtoZRatio;
-            }
-            else {
-                orthoVP.texture.displayedEdgeLengthX /= state->viewerState->voxelXYtoZRatio;
-            }
-            //Display only entire pixels (only truncation possible!)
-            orthoVP.texture.displayedEdgeLengthX = ((std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-            orthoVP.texture.displayedEdgeLengthY = ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-
-            //Update screen pixel to data pixel mapping values
-            orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmX = state->viewerState->voxelDimX * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmY = state->viewerState->voxelDimZ * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-
-            //Update orthoVP.leftUpperDataPxOnScreen with this call
-            calcLeftUpperTexAbsPx();
-
-            midX = ((float)(state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x)) * orthoVP.texture.texUnitsPerDataPx; //scale to 0 - 1
-            midY = ((float)(state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z)) * orthoVP.texture.texUnitsPerDataPx; //scale to 0 - 1
-
-            //Offsets for crosshair
-            orthoVP.texture.xOffset = ((float)(state->viewerState->currentPosition.x - orthoVP.leftUpperDataPxOnScreen.x)) * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
-            orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.z - orthoVP.leftUpperDataPxOnScreen.z)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
-            break;
-        case VIEWPORT_ZY:
-            //Aspect ratio correction..
-            if(state->viewerState->voxelXYtoZRatio < 1) {
-                orthoVP.texture.displayedEdgeLengthY *= state->viewerState->voxelXYtoZRatio;
-            }
-            else {
-                orthoVP.texture.displayedEdgeLengthX /= state->viewerState->voxelXYtoZRatio;
-            }
-
-            //Display only entire pixels (only truncation possible!)
-            orthoVP.texture.displayedEdgeLengthX = ((std::ceil(orthoVP.texture.displayedEdgeLengthX / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-            orthoVP.texture.displayedEdgeLengthY = ((std::ceil(orthoVP.texture.displayedEdgeLengthY / 2. / orthoVP.texture.texUnitsPerDataPx)) * orthoVP.texture.texUnitsPerDataPx) * 2.;
-
-            // Update screen pixel to data pixel mapping values
-            // WARNING: ZY IS ROTATED AND MIRRORED! So screenPxXPerDataPx
-            // corresponds to displayedEdgeLengthY and so on.
-            orthoVP.screenPxXPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.screenPxYPerDataPx = (float)orthoVP.edgeLength / (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmX = state->viewerState->voxelDimZ * (orthoVP.texture.displayedEdgeLengthY / orthoVP.texture.texUnitsPerDataPx);
-            orthoVP.displayedlengthInNmY = state->viewerState->voxelDimY * (orthoVP.texture.displayedEdgeLengthX / orthoVP.texture.texUnitsPerDataPx);
-
-            //Update orthoVP.leftUpperDataPxOnScreen with this call
-            calcLeftUpperTexAbsPx();
-
-            midX = ((float)(state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y)) * orthoVP.texture.texUnitsPerDataPx;
-            midY = ((float)(state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z)) * orthoVP.texture.texUnitsPerDataPx;
-
-            //Offsets for crosshair
-            orthoVP.texture.xOffset = ((float)(state->viewerState->currentPosition.z - orthoVP.leftUpperDataPxOnScreen.z)) * orthoVP.screenPxXPerDataPx + 0.5 * orthoVP.screenPxXPerDataPx;
-            orthoVP.texture.yOffset = ((float)(state->viewerState->currentPosition.y - orthoVP.leftUpperDataPxOnScreen.y)) * orthoVP.screenPxYPerDataPx + 0.5 * orthoVP.screenPxYPerDataPx;
-            break;
-        case VIEWPORT_ARBITRARY: {
-            //v1: vector in horizontal Viewport direction
-            //v2: vector in vertical Viewport direction
-            auto & arbVP = static_cast<ViewportArb&>(orthoVP);
-            arbVP.vpLenghtInDataPx = arbVP.vpHeightInDataPx = (((int)((state->M / 2 + 1) * state->cubeEdgeLength / sqrt(2.))) / 2) * 2;
-            const floatCoordinate voxelRatio = {1, state->viewerState->voxelXYRatio, state->viewerState->voxelXYRatio * state->viewerState->voxelXYtoZRatio};
-            float voxelV1X = (arbVP.v1 / voxelRatio).length();
-            float voxelV2X = (arbVP.v2 / voxelRatio).length();
-
-            arbVP.texture.displayedEdgeLengthX /= voxelV1X;
-            arbVP.texture.displayedEdgeLengthY /= voxelV2X;
-
-            //Display only entire pixels (only truncation possible!) WHY??
-            arbVP.texture.displayedEdgeLengthX = (std::ceil(arbVP.texture.displayedEdgeLengthX / 2. / arbVP.texture.texUnitsPerDataPx) * arbVP.texture.texUnitsPerDataPx) * 2.;
-            arbVP.texture.displayedEdgeLengthY = (std::ceil(arbVP.texture.displayedEdgeLengthY / 2. / arbVP.texture.texUnitsPerDataPx) * arbVP.texture.texUnitsPerDataPx) * 2.;
-
-            // Update screen pixel to data pixel mapping values
-            arbVP.screenPxXPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
-            arbVP.screenPxYPerDataPx = (float)arbVP.edgeLength / (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
-            arbVP.displayedlengthInNmX = arbVP.v1.componentMul(state->scale).length() * (arbVP.texture.displayedEdgeLengthX / arbVP.texture.texUnitsPerDataPx);
-
-            arbVP.displayedlengthInNmY = arbVP.v2.componentMul(state->scale).length() * (arbVP.texture.displayedEdgeLengthY / arbVP.texture.texUnitsPerDataPx);
-
-            //Update arbVP.leftUpperDataPxOnScreen with this call
-            calcLeftUpperTexAbsPx();
-
-            midX = arbVP.vpLenghtInDataPx / 2. * arbVP.texture.texUnitsPerDataPx * (float)state->magnification;
-            midY = arbVP.vpHeightInDataPx / 2. * arbVP.texture.texUnitsPerDataPx * (float)state->magnification;
-
-            //Offsets for crosshair
-            arbVP.texture.xOffset = midX / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxXPerDataPx + 0.5 * arbVP.screenPxXPerDataPx;
-            arbVP.texture.yOffset = midY / arbVP.texture.texUnitsPerDataPx * arbVP.screenPxYPerDataPx + 0.5 * arbVP.screenPxYPerDataPx;
-            break;
+        float midX = orthoVP.texture.texUnitsPerDataPx;
+        float midY = orthoVP.texture.texUnitsPerDataPx;
+        float xFactor = 0.5 * orthoVP.texture.texUsedX;
+        float yFactor = 0.5 * orthoVP.texture.texUsedY;
+        if (orthoVP.viewportType == VIEWPORT_XY) {
+            midX *= state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x;
+            midY *= state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y;
+        } else if (orthoVP.viewportType == VIEWPORT_XZ) {
+            midX *= state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x;
+            midY *= state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z;
+        } else if (orthoVP.viewportType == VIEWPORT_ZY) {
+            midX *= state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z;
+            midY *= state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y;
+        } else {
+            const auto texUsed = orthoVP.texture.usedSizeInCubePixels / orthoVP.texture.size;
+            midX = 0.5 * texUsed;
+            midY = 0.5 * texUsed;
         }
-        default:
-            throw std::runtime_error("Viewer::recalcTextureOffsets unknown vp");
-        }
-        //Calculate the vertices in texture coordinates
+        // Calculate the vertices in texture coordinates
         // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
-        orthoVP.texture.texLUx = midX - (orthoVP.texture.displayedEdgeLengthX / 2.);
-        orthoVP.texture.texLUy = midY - (orthoVP.texture.displayedEdgeLengthY / 2.);
-        orthoVP.texture.texRUx = midX + (orthoVP.texture.displayedEdgeLengthX / 2.);
-        orthoVP.texture.texRUy = orthoVP.texture.texLUy;
-        orthoVP.texture.texRLx = orthoVP.texture.texRUx;
-        orthoVP.texture.texRLy = midY + (orthoVP.texture.displayedEdgeLengthY / 2.);
-        orthoVP.texture.texLLx = orthoVP.texture.texLUx;
-        orthoVP.texture.texLLy = orthoVP.texture.texRLy;
+//        if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
+            orthoVP.texture.texLUx = midX - xFactor;
+            orthoVP.texture.texLUy = midY + yFactor;
+            orthoVP.texture.texRUx = midX + xFactor;
+            orthoVP.texture.texRUy = orthoVP.texture.texLUy;
+            orthoVP.texture.texRLx = orthoVP.texture.texRUx;
+            orthoVP.texture.texRLy = midY - yFactor;
+            orthoVP.texture.texLLx = orthoVP.texture.texLUx;
+            orthoVP.texture.texLLy = orthoVP.texture.texRLy;
+//        } else {// arb should use the entirety of (a specific part) of the texture
+//            const auto texUsed = 1;orthoVP.texture.fovPixel / orthoVP.texture.size * orthoVP.texture.FOV;
+//            orthoVP.texture.texLUx = 0;
+//            orthoVP.texture.texLUy = texUsed;
+//            orthoVP.texture.texRUx = texUsed;
+//            orthoVP.texture.texRUy = texUsed;
+//            orthoVP.texture.texRLx = texUsed;
+//            orthoVP.texture.texRLy = 0;
+//            orthoVP.texture.texLLx = 0;
+//            orthoVP.texture.texLLy = 0;
+//        }
     });
 }
 
@@ -1364,15 +1186,16 @@ void Viewer::addRotation(const QQuaternion & quaternion) {
     viewportArb->v1 = coord(rotation.rotatedVector({1, 0, 0}).normalized());
     viewportArb->v2 = coord(rotation.rotatedVector({0, 1, 0}).normalized());
     viewportArb->n  = coord(rotation.rotatedVector({0, 0, 1}).normalized());
+
     viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
     recalcTextureOffsets();
     viewportArb->sendCursorPosition();
 }
 
 void Viewer::resetRotation() {
-    viewportArb->v1 = {1, 0, 0};
-    viewportArb->v2 = {0, 1, 0};
-    viewportArb->n = {0, 0, 1};
+    viewportArb->v1 = {1,  0,  0};
+    viewportArb->v2 = {0, -1,  0};
+    viewportArb->n  = {0,  0, -1};
     viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
     recalcTextureOffsets();
     viewportArb->sendCursorPosition();
