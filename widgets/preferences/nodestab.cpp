@@ -123,6 +123,11 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&propertyMinSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) { state->viewerState->nodePropertyColorMapMin = value; });
     QObject::connect(&propertyMaxSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) { state->viewerState->nodePropertyColorMapMax = value; });
     QObject::connect(&propertyLUTButton, &QPushButton::clicked, [this]() { loadNodeLUTRequest(); });
+
+    createGlobalAction(Qt::CTRL + Qt::Key_R, [this](){// R for radius
+        overrideNodeRadiusCheck.toggle();
+        overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
+    });
 }
 
 void NodesTab::updateProperties(const QSet<QString> & numberProperties) {

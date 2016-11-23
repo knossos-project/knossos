@@ -89,7 +89,6 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
 }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
-    state->mainWindow = this;
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
@@ -148,14 +147,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
-    {
-        auto & action = *new QAction(this);
-        action.setShortcut(Qt::Key_F7);
-        QObject::connect(&action, &QAction::triggered, [](){
-            state->viewer->gpuRendering = !state->viewer->gpuRendering;
-        });
-        addAction(&action);
-    }
+    createGlobalAction(Qt::Key_F7, [](){
+        state->viewer->gpuRendering = !state->viewer->gpuRendering;
+    });
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {

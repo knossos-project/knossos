@@ -107,6 +107,16 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
+
+    createGlobalAction(Qt::CTRL + Qt::Key_T, [this](){// T for trees
+        if (wholeSkeletonRadio.isChecked()) {
+            selectedTreesRadio.setChecked(true);
+        } else {
+            wholeSkeletonRadio.setChecked(true);
+        }
+        wholeSkeletonRadio.clicked(wholeSkeletonRadio.isChecked());
+        selectedTreesRadio.clicked(selectedTreesRadio.isChecked());
+    });
 }
 
 void TreesTab::updateTreeDisplay() {

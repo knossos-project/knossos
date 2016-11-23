@@ -100,6 +100,10 @@ public:
 };
 
 class MainWindow : public QMainWindow {
+    const bool evilHack = [this](){
+        state->mainWindow = this;// make state->mainWindow available to widgets
+        return true;
+    }();
     Q_OBJECT
     friend class TaskManagementWidget;
     friend class SkeletonProxy;
@@ -279,6 +283,14 @@ public slots:
     void pythonFileSlot();
     void pythonInterpreterSlot();
     void pythonPluginMgrSlot();
+};
+
+auto createGlobalAction = [](auto key, auto todo){
+    auto & action = *new QAction(state->mainWindow);
+    action.setShortcut(key);
+    action.setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(&action, &QAction::triggered, todo);
+    state->mainWindow->addAction(&action);
 };
 
 #endif // MAINWINDOW_H
