@@ -591,6 +591,14 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
 
+        bool containsPointcloud{false};
+        for(const auto & selectedTree : state->skeletonState->selectedTrees) {
+            if(selectedTree->pointCloud != nullptr) {
+                containsPointcloud = true;
+                break;
+            }
+        }
+
         const auto & selectedTrees = state->skeletonState->selectedTrees;
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1 && selectedTrees.front()->isSynapticCleft);//seperator
@@ -611,7 +619,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
-        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//remove pointclouds
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0 && containsPointcloud);//remove pointclouds
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
