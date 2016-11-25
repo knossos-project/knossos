@@ -251,9 +251,7 @@ public:
     //These values depend on texUnitsPerDataPx (in struct viewportTexture),
     //the current zoom value and the data pixel voxel dimensions.
     float screenPxXPerDataPx;
-    float screenPxYPerDataPx;
     float displayedlengthInNmX;
-    float displayedlengthInNmY;
 
     virtual void zoomIn() {}
     virtual void zoomOut() {}
@@ -371,6 +369,8 @@ public:
     std::atomic_bool dcResliceNecessary{true};
     std::atomic_bool ocResliceNecessary{true};
     float displayedIsoPx;
+    float screenPxYPerDataPx;
+    float displayedlengthInNmY;
 
     void zoomIn() override { zoom(zoomStep()); }
     void zoomOut() override { zoom(1./zoomStep()); }

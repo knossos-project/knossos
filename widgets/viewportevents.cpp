@@ -296,14 +296,8 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
             seg.volume_mouse_move_x -= xrel(event->x());
             seg.volume_mouse_move_y -= yrel(event->y());
         } else {
-            state->skeletonState->translateX += -xrel(event->x()) * 2.
-                * ((float)state->skeletonState->volBoundary
-                * (0.5 - state->skeletonState->zoomLevel))
-                / ((float)edgeLength);
-            state->skeletonState->translateY += -yrel(event->y()) * 2.
-                * ((float)state->skeletonState->volBoundary
-                * (0.5 - state->skeletonState->zoomLevel))
-                / ((float)edgeLength);
+            state->skeletonState->translateX += -xrel(event->x()) / screenPxXPerDataPx;
+            state->skeletonState->translateY += -yrel(event->y()) / screenPxXPerDataPx;
         }
     }
     ViewportBase::handleMouseMotionLeftHold(event);
