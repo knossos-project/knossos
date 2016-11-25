@@ -633,12 +633,12 @@ void ViewportOrtho::zoom(const float step) {
 }
 
 float Viewport3D::zoomStep() const {
-    return (0.1* (0.5 - state->skeletonState->zoomLevel));
+    return std::pow(2, 0.25);
 }
 
 void Viewport3D::zoom(const float step) {
-    auto & zoomLvl = state->skeletonState->zoomLevel;
-    zoomLvl = std::min(std::max(zoomLvl + step, SKELZOOMMIN), SKELZOOMMAX);
+    auto & zoomLvl = zoomFactor;
+    zoomLvl = std::min(std::max(zoomLvl * step, SKELZOOMMIN), SKELZOOMMAX);
     emit updateDatasetOptionsWidget();
 }
 

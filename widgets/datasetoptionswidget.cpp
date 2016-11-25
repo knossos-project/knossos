@@ -93,7 +93,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     updateCompressionRatioDisplay();
 
     // zoom section
-    skeletonViewportSpinBox.setRange(0, 100);
+    skeletonViewportSpinBox.setRange(SKELZOOMMIN * 100, SKELZOOMMAX * 100);
     skeletonViewportSpinBox.setSuffix(" %");
     zoomDefaultsButton.setAutoDefault(false);
 
@@ -210,7 +210,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
                     || (value < lastZoomSkel && value > lastZoomSkel - 2)) == false) {
                 // difference at least greater than two,
                 // so user entered a number instead of clicking the up and down buttons
-                state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
+                state->mainWindow->viewport3D->zoomFactor = value/100;
             }
             else { // up or down button pressed, find out which.
                 if(value > lastZoomSkel && value < lastZoomSkel + 2) { // user wants to zoom in
@@ -221,7 +221,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
                 }
                 // the following line will lead to signal emission and another call to this slot,
                 // but since userZoomSkel was set to false above, no further recursion takes place.
-                skeletonViewportSpinBox.setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
+                skeletonViewportSpinBox.setValue(100 * state->mainWindow->viewport3D->zoomFactor);
             }
             lastZoomSkel = skeletonViewportSpinBox.value();
             userZoomSkel = true;
@@ -310,15 +310,15 @@ void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
 void DatasetOptionsWidget::zoomDefaultsClicked() {
     state->viewer->zoomReset();
     userZoomSkel = false;
-    skeletonViewportSpinBox.setValue(100 * SKELZOOMMIN/SKELZOOMMAX);
-    state->skeletonState->zoomLevel = SKELZOOMMIN;
+    skeletonViewportSpinBox.setValue(100);
+    state->mainWindow->viewport3D->zoomFactor = 1;
     userZoomSkel = true;
 }
 
 void DatasetOptionsWidget::update() {
     updateOrthogonalZoomSlider();
     updateOrthogonalZoomSpinBox();
-    skeletonViewportSpinBox.setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
+    skeletonViewportSpinBox.setValue(100 * state->mainWindow->viewport3D->zoomFactor);
 
     currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(state->magnification));
     highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(state->highestAvailableMag));
@@ -336,7 +336,7 @@ void DatasetOptionsWidget::loadSettings() {
         skeletonViewportSpinBox.setValue(skeletonZoom);
         userZoomSkel = true;
         lastZoomSkel = skeletonViewportSpinBox.value();
-        state->skeletonState->zoomLevel = 0.01*lastZoomSkel * SKELZOOMMAX;
+        state->mainWindow->viewport3D->zoomFactor = lastZoomSkel / 100;
     } else {
         skeletonViewportSpinBox.setValue(0);
     }

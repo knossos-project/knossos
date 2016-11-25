@@ -1129,7 +1129,7 @@ void Viewport3D::renderPointCloud() {
         pointcloud_init = false;
     }
 
-    float screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2.f * state->skeletonState->volBoundary * state->skeletonState->zoomLevel);
+    screenPxXPerDataPx = edgeLength / (state->skeletonState->volBoundary / zoomFactor);
     float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
     glPointSize(point_size);
 
@@ -1253,14 +1253,13 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glEnable(GL_MULTISAMPLE);
-    const auto halfBoundary = 0.5 * state->skeletonState->volBoundary;
-    const auto zoomedBoundary = state->skeletonState->volBoundary * state->skeletonState->zoomLevel;
+    const auto zoomedHalfBoundary = 0.5 * state->skeletonState->volBoundary / zoomFactor;
     const auto scaledBoundary = state->scale.componentMul(state->boundary);
 
-    const auto left = state->skeletonState->translateX - halfBoundary + zoomedBoundary;
-    const auto right = state->skeletonState->translateX + halfBoundary - zoomedBoundary;
-    const auto bottom = state->skeletonState->translateY + halfBoundary - zoomedBoundary;
-    const auto top = state->skeletonState->translateY - halfBoundary + zoomedBoundary;
+    const auto left = state->skeletonState->translateX - zoomedHalfBoundary;
+    const auto right = state->skeletonState->translateX + zoomedHalfBoundary;
+    const auto bottom = state->skeletonState->translateY + zoomedHalfBoundary;
+    const auto top = state->skeletonState->translateY - zoomedHalfBoundary;
     const auto nears = -state->skeletonState->volBoundary;
     const auto fars = state->skeletonState->volBoundary;
     const auto nearVal = -nears;
@@ -1270,7 +1269,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     std::array<GLint, 4> vp;
     glGetIntegerv(GL_VIEWPORT, vp.data());
     edgeLength = vp[2];// retrieve adjusted size for snapshot
-    screenPxXPerDataPx = (float)edgeLength / (state->skeletonState->volBoundary - 2 * zoomedBoundary);
+    screenPxXPerDataPx = edgeLength / (2.0 * zoomedHalfBoundary);
     displayedlengthInNmX = edgeLength / screenPxXPerDataPx;
 
      // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
@@ -1350,7 +1349,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
         state->skeletonState->translateX = 0;
         state->skeletonState->translateY = 0;
-        state->skeletonState->zoomLevel = SKELZOOMMIN;
+        zoomFactor = 1;
 
         QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
@@ -1609,7 +1608,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             if (axis.normalize()) {
                 glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
             }
-            const auto diameter = (state->skeletonState->volBoundary * (1 - 2 * state->skeletonState->zoomLevel)) * 5e-3;
+            const auto diameter = (state->skeletonState->volBoundary / zoomFactor) * 5e-3;
             const auto coneDiameter = 3 * diameter;
             const auto coneLength = 6 * diameter;
             const auto length = targetView.length() - coneLength;

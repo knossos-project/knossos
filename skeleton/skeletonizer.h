@@ -170,8 +170,6 @@ struct SkeletonState {
 
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
-    // Current zoom level. 0: no zoom; near 1: maximum zoom.
-    double zoomLevel;
     //boundary of the visualized volume in the skeleton viewport
     int volBoundary = 2 * std::max({state->scale.x * state->boundary.x, state->scale.y * state->boundary.y, state->scale.z * state->boundary.z});
 

@@ -52,8 +52,8 @@ Q_DECLARE_METATYPE(ViewportType)
 
 constexpr const double VPZOOMMAX = 0.02;
 constexpr const double VPZOOMMIN = 1.;
-constexpr const double SKELZOOMMAX = 0.4999;
-constexpr const double SKELZOOMMIN = 0.0;
+constexpr const double SKELZOOMMAX = 1024.0;
+constexpr const double SKELZOOMMIN = 0.25;
 
 constexpr const int DEFAULT_VP_MARGIN = 5;
 constexpr const int DEFAULT_VP_SIZE = 350;
@@ -302,6 +302,7 @@ class Viewport3D : public ViewportBase {
     virtual void handleKeyRelease(const QKeyEvent *event) override;
     virtual void focusOutEvent(QFocusEvent *event) override;
 public:
+    double zoomFactor{1.0};
     boost::optional<BufferSelection> pointCloudLastClickInformation;
     bool pointCloudLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
@@ -311,7 +312,7 @@ public:
     static bool showBoundariesInUm;
 
     void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(-zoomStep()); }
+    void zoomOut() override { zoom(1.0/zoomStep()); }
 };
 
 class ViewportOrtho : public ViewportBase {

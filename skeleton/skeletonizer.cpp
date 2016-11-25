@@ -291,7 +291,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.FOV));
     xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.FOV));
     xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportZY.get()->texture.FOV));
-    xml.writeAttribute("SkelVP", QString::number(state->skeletonState->zoomLevel));
+    xml.writeAttribute("SkelVP", QString::number(-(0.5 / state->mainWindow->viewport3D->zoomFactor - 0.5)));// legacy zoom: 0 → 0.5
     xml.writeEndElement();
 
     xml.writeEndElement(); // end parameters
@@ -509,7 +509,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                     }
                     attribute = attributes.value("SkelVP");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->zoomLevel = attribute.toString().toFloat();
+                        state->mainWindow->viewport3D->zoomFactor = 0.5 / (0.5 - attribute.toFloat());// legacy zoom: 0 → 0.5
                     }
                 } else if(xml.name() == "RadiusLocking") {
                     QStringRef attribute = attributes.value("enableCommentLocking");
