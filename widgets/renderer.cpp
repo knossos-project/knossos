@@ -1350,6 +1350,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->translateX = 0;
         state->skeletonState->translateY = 0;
         zoomFactor = 1;
+        emit updateDatasetOptionsWidget();
 
         QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
