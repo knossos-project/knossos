@@ -612,9 +612,6 @@ void MainWindow::createMenus() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
-    saveSettings();
-
     if (Session::singleton().unsavedChanges) {
          QMessageBox question(this);
          question.setIcon(QMessageBox::Question);
@@ -628,6 +625,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
              return;//we changed our mind – we dont want to quit anymore
          }
     }
+    EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
     forEachVPDo([](ViewportBase & vp) {
         if (vp.isDocked == false) {
             vp.floatParent.close();
@@ -636,6 +634,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     state->quitSignal = true;
     QApplication::processEvents();//ensure everything’s done
     Loader::Controller::singleton().suspendLoader();
+    saveSettings();
 
     event->accept();//mainwindow takes the qapp with it
 }
