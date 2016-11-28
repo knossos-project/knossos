@@ -253,34 +253,22 @@ void MainWindow::createToolbars() {
     addToolBar(&basicToolbar);
     addToolBar(&defaultToolbar);
 
-    auto createToolToggleButton = [&](const QString & icon, const QString & tooltip){
+    auto createToolToggleButton = [&](auto && widget, const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
         button->setToolTip(tooltip);
         button->setCheckable(true);
         defaultToolbar.addWidget(button);
+        QObject::connect(button, &QToolButton::clicked, &widget, &std::remove_reference<decltype(widget)>::type::setVisible);// button → visibility
+        QObject::connect(&widget, &std::remove_reference<decltype(widget)>::type::visibilityChanged, button, &QToolButton::setChecked);// visibility → button
         return button;
     };
-    auto taskManagementButton = createToolToggleButton(":/resources/icons/task.png", "Task Management");
-    auto zoomAndMultiresButton = createToolToggleButton(":/resources/icons/zoom-in.png", "Dataset Options");
-    auto preferencesButton = createToolToggleButton(":/resources/icons/view-list-icons-symbolic.png", "Preferences");
-    auto annotationButton = createToolToggleButton(":/resources/icons/graph.png", "Annotation");
-    auto pythonInterpreterButton = createToolToggleButton(":/resources/icons/python.png", "Python Interpreter");
-    auto snapshotButton = createToolToggleButton(":/resources/icons/camera.png", "Snapshot");
-    //button → visibility
-    QObject::connect(taskManagementButton, &QToolButton::clicked, &widgetContainer.taskManagementWidget, &TaskManagementWidget::showOrLoginOrHide);
-    QObject::connect(pythonInterpreterButton, &QToolButton::clicked, &widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::setVisible);
-    QObject::connect(annotationButton, &QToolButton::clicked, &widgetContainer.annotationWidget, &AnnotationWidget::setVisible);
-    QObject::connect(preferencesButton, &QToolButton::clicked, &widgetContainer.preferencesWidget, &PreferencesWidget::setVisible);
-    QObject::connect(zoomAndMultiresButton, &QToolButton::clicked, &widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::setVisible);
-    QObject::connect(snapshotButton, &QToolButton::clicked, &widgetContainer.snapshotWidget, &SnapshotWidget::setVisible);
-    //visibility → button
-    QObject::connect(&widgetContainer.taskManagementWidget, &TaskManagementWidget::visibilityChanged, taskManagementButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.annotationWidget, &AnnotationWidget::visibilityChanged, annotationButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.pythonInterpreterWidget, &PythonInterpreterWidget::visibilityChanged, pythonInterpreterButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.preferencesWidget, &PreferencesWidget::visibilityChanged, preferencesButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::visibilityChanged, zoomAndMultiresButton, &QToolButton::setChecked);
-    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::visibilityChanged, snapshotButton, &QToolButton::setChecked);
+    createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/task.png", "Task Management");
+    createToolToggleButton(widgetContainer.datasetOptionsWidget, ":/resources/icons/zoom-in.png", "Dataset Options");
+    createToolToggleButton(widgetContainer.preferencesWidget, ":/resources/icons/view-list-icons-symbolic.png", "Preferences");
+    createToolToggleButton(widgetContainer.annotationWidget, ":/resources/icons/graph.png", "Annotation");
+    createToolToggleButton(widgetContainer.pythonInterpreterWidget, ":/resources/icons/python.png", "Python Interpreter");
+    createToolToggleButton(widgetContainer.snapshotWidget, ":/resources/icons/camera.png", "Snapshot");
 
     defaultToolbar.addSeparator();
 
