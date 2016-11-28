@@ -55,9 +55,10 @@ set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
 set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(Qt5Python27 REQUIRED)
+find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -103,9 +104,9 @@ add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 
 option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
-    find_package(Qt5Python27_QtAll REQUIRED)
+    find_package(${pythonqt}_QtAll REQUIRED)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
-    target_link_libraries(${PROJECT_NAME} Qt5Python27_QtAll)
+    target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
 endif()
 #on static build, need to make sure the root include of a dynamic Qt is not added i.e. /mingw64/include
 #or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
@@ -124,7 +125,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Help
     Qt5::Network
     Qt5::Widgets
-    Qt5Python27
+    ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
     $<$<PLATFORM_ID:Linux>:-fuse-ld=gold>
