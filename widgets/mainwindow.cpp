@@ -602,7 +602,7 @@ void MainWindow::createMenus() {
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
     scriptingMenu->addAction("Run file", this, SLOT(pythonFileSlot()));
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
-    scriptingMenu->addAction("Interpreter", this, SLOT(pythonInterpreterSlot()));
+    scriptingMenu->addAction(QIcon(":/resources/icons/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
     refreshPluginMenu();
 
