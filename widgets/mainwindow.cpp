@@ -263,12 +263,14 @@ void MainWindow::createToolbars() {
         QObject::connect(&widget, &std::remove_reference<decltype(widget)>::type::visibilityChanged, button, &QToolButton::setChecked);// visibility → button
         return button;
     };
-    createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/task.png", "Task Management");
-    createToolToggleButton(widgetContainer.datasetOptionsWidget, ":/resources/icons/zoom-in.png", "Dataset Options");
     createToolToggleButton(widgetContainer.preferencesWidget, ":/resources/icons/view-list-icons-symbolic.png", "Preferences");
+    defaultToolbar.addSeparator();
+    createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/task.png", "Task Management");
     createToolToggleButton(widgetContainer.annotationWidget, ":/resources/icons/graph.png", "Annotation");
-    createToolToggleButton(widgetContainer.pythonInterpreterWidget, ":/resources/icons/python.png", "Python Interpreter");
+    createToolToggleButton(widgetContainer.datasetOptionsWidget, ":/resources/icons/zoom-in.png", "Dataset Options");
     createToolToggleButton(widgetContainer.snapshotWidget, ":/resources/icons/camera.png", "Snapshot");
+    defaultToolbar.addSeparator();
+    createToolToggleButton(widgetContainer.pythonInterpreterWidget, ":/resources/icons/python.png", "Python Interpreter");
 
     defaultToolbar.addSeparator();
 
