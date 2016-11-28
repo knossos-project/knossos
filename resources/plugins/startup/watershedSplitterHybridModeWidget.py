@@ -96,7 +96,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         left = int(self.widgetLeftEdit.text)
         top = int(self.widgetTopEdit.text)
         self.resize(width,height)
-        if (left <> 0) and (top <> 0):
+        if (left != 0) and (top != 0):
             self.pos = Qt.QPoint(left,top)
         return
 

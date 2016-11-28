@@ -262,7 +262,7 @@ bool Scripting::isPluginImported(const QString &pluginName) {
                 &&
                 evalScript(QString("'%1' in %2").arg(SCRIPTING_IMPORT_KEY).arg(getPluginInContainerStr(pluginName)), Py_eval_input).toBool()
                 &&
-                evalScript(QString("%1 <> None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()
+                evalScript(QString("%1 != None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()
                 );
 }
 
@@ -286,7 +286,7 @@ bool Scripting::isPluginOpen(const QString &pluginName) {
                 &&
                 evalScript(QString("'%1' in %2").arg(SCRIPTING_INSTANCE_KEY).arg(getPluginInContainerStr(pluginName)), Py_eval_input).toBool()
                 &&
-                evalScript(QString("%1 <> None").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool()
+                evalScript(QString("%1 != None").arg(getInstanceInContainerStr(pluginName)), Py_eval_input).toBool()
                 );
 }
 
@@ -349,7 +349,7 @@ bool Scripting::reloadPlugin(const QString &pluginName, bool isQuiet) {
         return pluginActionError(actionStr, pluginName, "close failed", isQuiet);
     }
     if (isPluginImported(pluginName))  {
-        if (!evalScript(QString("reload(%1) <> None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()) {
+        if (!evalScript(QString("reload(%1) != None").arg(getImportInContainerStr(pluginName)), Py_eval_input).toBool()) {
             return pluginActionError(actionStr, pluginName, "reload failed", isQuiet);
         }
     }
