@@ -204,7 +204,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
         auto comment = node.getComment();
         comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
         if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
-            renderText(node.position, nodeID.append(comment), options.enableTextScaling);
+            renderText(state->scale.componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
         }
     }
 }
@@ -215,7 +215,7 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
         // Render the node description
         if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
             glColor4f(0.f, 0.f, 0.f, 1.f);
-            renderText(node.position, QString::number(node.nodeID), options.enableTextScaling);
+            renderText(state->scale.componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
         }
     }
 }
