@@ -370,6 +370,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     nodeSortAndCommentFilterProxy.setFilterKeyColumn(5);
     setupTable(nodeView, nodeSortAndCommentFilterProxy, nodeSortSectionIndex);
 
+    colorDialog.setOption(QColorDialog::ShowAlphaChannel);
+
     treeCommentLayout.addWidget(&treeCommentFilter);
     treeCommentLayout.addWidget(&treeRegex);
     treeLayout.addWidget(&treeFilterCombo);
