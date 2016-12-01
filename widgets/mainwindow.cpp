@@ -234,6 +234,7 @@ void MainWindow::createToolbars() {
     QObject::connect(&modeCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), [this](int index) { setWorkMode(workModeModel.at(index).first); });
     modeCombo.setToolTip("<b>Select a work mode:</b><br/>"
                          "<b>" + workModes[AnnotationMode::Mode_MergeTracing] + ":</b> Merge segmentation objects by tracing<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_Selection] + ":</b> Skeleton manipulation and segmentation selection<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
