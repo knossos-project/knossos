@@ -960,6 +960,8 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.setUniformValue("projection_matrix", projection_mat);
     pointcloudShader.setUniformValue("use_tree_color", buf.useTreeColor);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -1001,6 +1003,7 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
 
     pointcloudShader.release();
     glPopMatrix();
@@ -1119,7 +1122,7 @@ void Viewport3D::renderPointCloud() {
                             // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
                             // + specular_color * specular_power                  // specular
                             ) //* ambient_occlusion_power
-                            , 1.0);
+                            , use_tree_color ? tree_color.a : frag_color.a);
 
                 // gl_FragColor = //vec4((frag_normal+1.0)/2.0, 1.0); // display normals
             }
