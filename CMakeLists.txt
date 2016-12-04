@@ -69,7 +69,7 @@ endif()
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
-    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set, but the Qt version found is not static")
+    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
 endif()
 
 #platform dependent resources
