@@ -127,6 +127,7 @@ target_link_libraries(${PROJECT_NAME}
     QuaZip::QuaZip
     Snappy::Snappy
     $<$<PLATFORM_ID:Linux>:-fuse-ld=gold>
+    $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
