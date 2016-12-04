@@ -75,7 +75,8 @@ endif()
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")# add windows icon and manifest
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc" PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/knossos.exe.manifest")
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc" PROPERTIES
+        OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/knossos.exe.manifest;${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/logo.ico")
 elseif(APPLE)
     set_source_files_properties("resources/icons/knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/knossos.icns")
