@@ -1,7 +1,7 @@
 #define MyAppName "Knossos"
 #define MyAppVersion "4.1.2"
 #define MyAppPublisher "Knossos"
-#define MyAppURL "http://www.knossostool.org"
+#define MyAppURL "https://knossostool.org"
 #define MyAppExeName "knossos64.exe"
 #define pythonSetup "python-2.7.9.amd64.msi"
 #define License "LICENSE"

@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- *  For further information, visit http://www.knossostool.org
+ *  For further information, visit https://knossostool.org
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
@@ -162,7 +162,7 @@ class MainWindow : public QMainWindow {
 
     virtual bool event(QEvent *event) override;
 public:
-    static constexpr auto docUrl = "http://knossostool.org/documentation/KNOSSOS_full_doc.html";
+    static constexpr auto docUrl = "https://knossostool.org/documentation/KNOSSOS_full_doc.html";
 
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;
