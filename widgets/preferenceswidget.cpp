@@ -34,7 +34,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
+PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent) {
     setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
     setWindowTitle("Preferences");
     tabs.addTab(&treesTab, "Trees");
@@ -73,7 +73,6 @@ void PreferencesWidget::loadSettings() {
 void PreferencesWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PREFERENCES_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     saveTab.saveSettings(settings);

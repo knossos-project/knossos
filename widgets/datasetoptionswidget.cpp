@@ -86,7 +86,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
 }
 
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
-        : DialogVisibilityNotify(parent), lastZoomSkel(0), userZoomSkel(true) {
+        : DialogVisibilityNotify(DATASET_OPTIONS_WIDGET, parent), lastZoomSkel(0), userZoomSkel(true) {
     setWindowIcon(QIcon(":/resources/icons/zoom-in.png"));
     setWindowTitle("Dataset Options");
 
@@ -351,7 +351,6 @@ void DatasetOptionsWidget::loadSettings() {
 void DatasetOptionsWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_OPTIONS_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
     settings.setValue(SKELETON_VIEW, skeletonViewportSpinBox.value());
     settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, lockDatasetCheckBox.isChecked());

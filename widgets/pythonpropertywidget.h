@@ -23,7 +23,8 @@
 #ifndef PYTHONPROPERTYWIDGET_H
 #define PYTHONPROPERTYWIDGET_H
 
-#include <QDialog>
+#include "widgets/DialogVisibilityNotify.h"
+
 #include <QTextEdit>
 #include <QWidget>
 
@@ -32,7 +33,7 @@ class QLineEdit;
 class QLabel;
 class QCheckBox;
 
-class PythonPropertyWidget : public QDialog {
+class PythonPropertyWidget : public DialogVisibilityNotify {
     Q_OBJECT
 public:
     explicit PythonPropertyWidget(QWidget *parent = 0);

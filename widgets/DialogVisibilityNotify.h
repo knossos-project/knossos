@@ -22,12 +22,16 @@
 #ifndef DIALOG_VISIBILITY_NOTIFY_H
 #define DIALOG_VISIBILITY_NOTIFY_H
 
+#include "GuiConstants.h"
+
 #include <QDialog>
+#include <QSettings>
 
 class DialogVisibilityNotify : public QDialog {
     Q_OBJECT
+    const QString settingsPrefix;
 public:
-    using QDialog::QDialog;
+    DialogVisibilityNotify(const QString & settingsPrefix, QWidget * parent) : QDialog{parent}, settingsPrefix{settingsPrefix} {}
 signals:
     void visibilityChanged(bool);
 protected:
@@ -36,6 +40,7 @@ protected:
         emit visibilityChanged(true);
     }
     virtual void hideEvent(QHideEvent *event) override {
+        QSettings{}.setValue(settingsPrefix + '/' + GEOMETRY, saveGeometry());// saving geometry only works for visible widgets
         QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }

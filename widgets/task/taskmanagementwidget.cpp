@@ -34,7 +34,7 @@
 
 #include <fstream>
 
-TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNotify(parent), taskLoginWidget(parent) {//mainwindow as parent for login
+TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNotify(HEIDELBRAIN_INTEGRATION, parent), taskLoginWidget(parent) {//mainwindow as parent for login
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/task.png"));
     setWindowTitle("Task Management");

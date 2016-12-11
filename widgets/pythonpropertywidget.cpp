@@ -39,7 +39,7 @@
 #include <QVBoxLayout>
 
 PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
-    QDialog(parent)
+    DialogVisibilityNotify(PYTHON_PROPERTY_WIDGET, parent)
 {
 
     setWindowTitle("Python Properties");
@@ -84,7 +84,6 @@ void PythonPropertyWidget::autoStartFolderButtonClicked() {
 void PythonPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());

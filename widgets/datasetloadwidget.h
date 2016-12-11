@@ -25,11 +25,11 @@
 
 #include "coordinate.h"
 #include "loader.h"
+#include "widgets/DialogVisibilityNotify.h"
 #include "widgets/UserOrientableSplitter.h"
 #include "widgets/viewport.h"
 
 #include <QCheckBox>
-#include <QDialog>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -68,7 +68,7 @@ public:
 class QScrollArea;
 class QPushButton;
 
-class DatasetLoadWidget : public QDialog {
+class DatasetLoadWidget : public DialogVisibilityNotify {
     Q_OBJECT
 
     QVBoxLayout mainLayout;

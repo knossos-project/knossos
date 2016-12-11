@@ -28,7 +28,7 @@
 
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 
-PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisibilityNotify(parent) {
+PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisibilityNotify(PYTHON_TERMINAL_WIDGET, parent) {
     setWindowIcon(QIcon(":/resources/icons/python.png"));
     setWindowTitle("Python Interpreter");
 
@@ -40,6 +40,12 @@ void PythonInterpreterWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(PYTHON_TERMINAL_WIDGET);
     settings.setValue(VISIBLE, isVisible());
+}
+
+void PythonInterpreterWidget::loadSettings() {
+    QSettings settings;
+    settings.beginGroup(PYTHON_TERMINAL_WIDGET);
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
 }
 
 void PythonInterpreterWidget::startConsole() {

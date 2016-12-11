@@ -36,7 +36,7 @@
 #include <QHBoxLayout>
 #include <QSettings>
 
-SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(parent), saveDir(QDir::homePath()) {
+SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowTitle("Snapshot Tool");
     sizeCombo.addItem("8192 x 8192");
@@ -143,7 +143,6 @@ QString SnapshotWidget::defaultFilename() const {
 void SnapshotWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(SNAPSHOT_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(VIEWPORT, getCheckedViewport());

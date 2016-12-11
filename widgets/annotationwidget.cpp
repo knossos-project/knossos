@@ -38,7 +38,7 @@
 #include <QDesktopWidget>
 #include <QSplitter>
 
-AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(parent) {
+AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(ANNOTATION_WIDGET, parent) {
     setWindowIcon(QIcon(":/resources/icons/graph.png"));
     setWindowTitle("Annotation");
 
@@ -75,7 +75,6 @@ void AnnotationWidget::loadSettings() {
 void AnnotationWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(ANNOTATION_WIDGET);
-    settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(VISIBLE, isVisible());
 
     settings.setValue(SEARCH_FOR_TREE, skeletonTab.treeCommentFilter.text());

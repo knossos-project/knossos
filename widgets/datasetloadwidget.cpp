@@ -45,7 +45,7 @@
 
 #include <stdexcept>
 
-DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : QDialog(parent) {
+DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(DATASET_WIDGET, parent) {
     setModal(true);
     setWindowTitle("Load Dataset");
 
@@ -333,7 +333,6 @@ void DatasetLoadWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
 
-    settings.setValue(DATASET_GEOMETRY, saveGeometry());
     settings.setValue(DATASET_LAST_USED, datasetUrl);
 
     settings.setValue(DATASET_MRU, getRecentPathItems());

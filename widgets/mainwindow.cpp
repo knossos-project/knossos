@@ -636,8 +636,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     QApplication::processEvents();//ensure everything’s done
     Loader::Controller::singleton().suspendLoader();
     saveSettings();
-
-    event->accept();//mainwindow takes the qapp with it
+    // event loop will stop after this
+    QApplication::closeAllWindows();// generates – otherwise missing – hideEvents for saveGeometry
+    event->accept();
 }
 
 //file menu functionality
