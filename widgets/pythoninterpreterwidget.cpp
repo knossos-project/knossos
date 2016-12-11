@@ -22,6 +22,7 @@
 
 #include "pythoninterpreterwidget.h"
 
+#include "GuiConstants.h"
 #include "scriptengine/scripting.h"
 #include "viewer.h"
 
@@ -33,6 +34,12 @@ PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisib
 
     setLayout(&mainLayout);
     resize({500, 300});
+}
+
+void PythonInterpreterWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(PYTHON_TERMINAL_WIDGET);
+    settings.setValue(VISIBLE, isVisible());
 }
 
 void PythonInterpreterWidget::startConsole() {

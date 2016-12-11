@@ -64,6 +64,7 @@ struct WidgetContainer {
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
         preferencesWidget.setVisible(settings.value(PREFERENCES_WIDGET + '/' + VISIBLE, false).toBool());
         datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
+        pythonInterpreterWidget.setVisible(settings.value(PYTHON_TERMINAL_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
         snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
     }

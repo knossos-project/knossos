@@ -119,7 +119,6 @@ private:
     void addPresetCustomPythonPaths();
     void addPythonPath(const QString &customPath);
     void addWidgets();
-    void autoStartTerminal();
     bool pluginActionError(const QString &actionStr, const QString &pluginName, const QString &errorStr, bool isQuiet);
 public slots:
     QString getPluginInContainerStr(const QString &pluginName);

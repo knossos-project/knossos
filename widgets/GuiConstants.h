@@ -148,9 +148,11 @@ const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
 const QString ANNOTATION_MODE = "annotation_mode";
 const QString SEGMENT_STATE = "segment_state";
 
-/* Python Property Widget */
+// Python Terminal Widget
+const QString PYTHON_TERMINAL_WIDGET = "python_terminal_widget";
+
+// Python Property Widget
 const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
-const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
 const QString PYTHON_CUSTOM_PATHS = "python_custom_paths";
 

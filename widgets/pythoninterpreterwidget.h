@@ -34,7 +34,7 @@ class PythonInterpreterWidget : public DialogVisibilityNotify {
 public:
     explicit PythonInterpreterWidget(QWidget * parent = nullptr);
     void loadSettings() {}
-    void saveSettings() {}
+    void saveSettings();
     void startConsole();
 };
 

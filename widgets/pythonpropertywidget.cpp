@@ -50,7 +50,6 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     autoStartFolderEdit = new QLineEdit();
     autoStartFolderEdit->setToolTip("Scripts in this folder were automatically started with KNOSSOS");
     autoStartFolderButton = new QPushButton("Select Autostart Folder");
-    autoStartTerminalCheckbox = new QCheckBox("Open Terminal On Start");
     customPathsAppendButton = new QPushButton("Append Custom Path");
     customPathsEdit = new QTextEdit();
 
@@ -58,7 +57,6 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     layout->addWidget(workingDirectoryEdit);
     layout->addWidget(autoStartFolderButton);
     layout->addWidget(autoStartFolderEdit);
-    layout->addWidget(autoStartTerminalCheckbox);
     layout->addWidget(customPathsAppendButton);
     layout->addWidget(customPathsEdit);
 
@@ -91,7 +89,6 @@ void PythonPropertyWidget::saveSettings() {
 
     settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
     settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
-    settings.setValue(PYTHON_AUTOSTART_TERMINAL, autoStartTerminalCheckbox->isChecked());
     settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit->toPlainText().split("\n"));
 
     settings.endGroup();
@@ -105,7 +102,6 @@ void PythonPropertyWidget::loadSettings() {
 
     autoStartFolderEdit->setText(settings.value(PYTHON_AUTOSTART_FOLDER, "").toString());
     workingDirectoryEdit->setText(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
-    autoStartTerminalCheckbox->setChecked(settings.value(PYTHON_AUTOSTART_TERMINAL, false).toBool());
     customPathsEdit->setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
     settings.endGroup();
 }

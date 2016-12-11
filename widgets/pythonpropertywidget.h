@@ -40,7 +40,6 @@ protected:
     QPushButton *autoStartFolderButton;
     QPushButton *workingDirectoryButton;
     QLineEdit *autoStartFolderEdit;
-    QCheckBox *autoStartTerminalCheckbox;
     QLineEdit *workingDirectoryEdit;
     QPushButton *customPathsAppendButton;
     QTextEdit *customPathsEdit;

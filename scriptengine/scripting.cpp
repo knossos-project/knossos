@@ -127,7 +127,7 @@ Scripting::Scripting() : _ctx{[](){
     executeResourceStartup();
     executeFromUserDirectory();
 
-    autoStartTerminal();
+    state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 
 QVariant getSettingsValue(const QString &key) {
@@ -136,16 +136,6 @@ QVariant getSettingsValue(const QString &key) {
     auto value = settings.value(key);
     settings.endGroup();
     return value;
-}
-
-void Scripting::autoStartTerminal() {
-    state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
-    auto value = getSettingsValue(PYTHON_AUTOSTART_TERMINAL);
-    if (value.isNull()) { return; }
-    auto autoStartTerminal = value.toBool();
-    if (autoStartTerminal) {
-        state->viewer->window->widgetContainer.pythonInterpreterWidget.show();
-    }
 }
 
 void Scripting::setPluginDir(const QString &pluginDir) {
