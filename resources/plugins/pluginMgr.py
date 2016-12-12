@@ -255,7 +255,8 @@ Each version component has to be the pythonic string representation of a number.
 
     def getUrl(self, url):
         try:
-            return urllib2.urlopen(url).read()
+            req = urllib2.Request(url, headers={'User-Agent' : "Knossos"})
+            return urllib2.urlopen(req).read()
         except:
             self.showError("network", "error fetching URL: " + url)
             raise
