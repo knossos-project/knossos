@@ -183,9 +183,13 @@ void NodesTab::loadSettings(const QSettings & settings) {
     edgeNodeRatioSpin.valueChanged(edgeNodeRatioSpin.value());
     nodeCommentsCheck.setChecked(settings.value(SHOW_NODE_COMMENTS, false).toBool());
     nodeCommentsCheck.clicked(nodeCommentsCheck.isChecked());
+    propertyRadiusCombo.setCurrentIndex(0);
+    propertyRadiusCombo.currentIndexChanged(propertyRadiusCombo.currentIndex());
     propertyRadiusScaleSpin.setValue(settings.value(NODE_PROPERTY_RADIUS_SCALE, 1).toDouble());
     propertyRadiusScaleSpin.valueChanged(propertyRadiusScaleSpin.value());
     // from http://peterkovesi.com/projects/colourmaps/index.html
     lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/linear_kry_5-98_c75.json").toString();
     lutLabel.setText("Current LUT: " + lutPath);
+    propertyColorCombo.setCurrentIndex(0);
+    propertyColorCombo.currentIndexChanged(propertyColorCombo.currentIndex());
 }
