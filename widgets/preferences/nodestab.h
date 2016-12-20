@@ -63,16 +63,17 @@ class NodesTab : public QWidget
     QGroupBox propertiesGroup{tr("Property highlighting")};
     QGridLayout propertiesLayout;
     PropertyModel propertyModel;
-    QComboBox propertyRadiusCombo;
     QLabel propertyRadiusLabel{"Use scaled property as node radius:"};
+    QComboBox propertyRadiusCombo;
     QDoubleSpinBox propertyRadiusScaleSpin;
+    QLabel propertyColorLabel{"Map property to node color:"};
     QComboBox propertyColorCombo;
     QDoubleSpinBox propertyMinSpin;
     QDoubleSpinBox propertyMaxSpin;
-    QLabel propertyColorLabel{"Map property to node color:"};
-    QString lutPath;
-    QLabel lutLabel{"Current LUT: none"};
     QPushButton propertyLUTButton{"Load color LUT …"};
+    QLabel lutLabel{"Current LUT: none"};
+
+    QString lutPath;
     void loadNodeLUTRequest(QString path = "");
     void saveSettings(QSettings &settings) const;
     void loadSettings(const QSettings &settings);
