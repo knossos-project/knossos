@@ -58,6 +58,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertyModel.recreate({});
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
+    propertyRadiusScaleSpin.setSingleStep(0.5);
     propertyRadiusScaleSpin.setPrefix("×");
     propertyRadiusCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
