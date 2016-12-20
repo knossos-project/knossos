@@ -60,11 +60,9 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertyRadiusCombo.setCurrentIndex(0);
     propertyRadiusScaleSpin.setSingleStep(0.5);
     propertyRadiusScaleSpin.setPrefix("×");
-    propertyRadiusCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     propertyColorCombo.setModel(&propertyModel);
     propertyColorCombo.setCurrentIndex(0);
-    propertyColorCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     propertyMinSpin.setRange(-10e8, 10e8);
     propertyMinSpin.setSingleStep(0.1);
@@ -90,7 +88,6 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertiesLayout.addWidget(&propertyMaxSpin, row, 2);
     propertiesLayout.addWidget(&propertyLUTButton, ++row, 0);
     propertiesLayout.addWidget(&lutLabel, row, 1, 1, 3, Qt::AlignRight);
-    propertiesLayout.setColumnStretch(0, 1);
     propertiesGroup.setLayout(&propertiesLayout);
     mainLayout.addWidget(&generalGroup);
     mainLayout.addWidget(&propertiesGroup);
