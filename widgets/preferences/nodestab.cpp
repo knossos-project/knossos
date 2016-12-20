@@ -165,8 +165,6 @@ void NodesTab::saveSettings(QSettings & settings) const {
     settings.setValue(SHOW_NODE_COMMENTS, nodeCommentsCheck.isChecked());
     settings.setValue(NODE_PROPERTY_RADIUS_SCALE, propertyRadiusScaleSpin.value());
     settings.setValue(NODE_PROPERTY_LUT_PATH, lutPath);
-    settings.setValue(NODE_PROPERTY_MAP_MIN, propertyMinSpin.value());
-    settings.setValue(NODE_PROPERTY_MAP_MAX, propertyMaxSpin.value());
 }
 
 void NodesTab::loadSettings(const QSettings & settings) {
@@ -190,8 +188,4 @@ void NodesTab::loadSettings(const QSettings & settings) {
     // from http://peterkovesi.com/projects/colourmaps/index.html
     lutPath = settings.value(NODE_PROPERTY_LUT_PATH, ":/resources/color_palette/linear_kry_5-98_c75.json").toString();
     lutLabel.setText("Current LUT: " + lutPath);
-    propertyMinSpin.setValue(settings.value(NODE_PROPERTY_MAP_MIN, 0).toDouble());
-    propertyMinSpin.valueChanged(propertyMinSpin.value());
-    propertyMaxSpin.setValue(settings.value(NODE_PROPERTY_MAP_MAX, 0).toDouble());
-    propertyMaxSpin.valueChanged(propertyMaxSpin.value());
 }

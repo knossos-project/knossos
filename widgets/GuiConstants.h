@@ -81,8 +81,6 @@ const QString SHOW_SKELETON_SKELVP = "Show_skeleton_skelvp";
 // Preferences Nodes Tab
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
 const QString NODE_PROPERTY_LUT_PATH = "node_property_lut_path";
-const QString NODE_PROPERTY_MAP_MIN = "node_property_map_min";
-const QString NODE_PROPERTY_MAP_MAX = "node_property_map_max";
 const QString NODE_PROPERTY_RADIUS_SCALE = "node_property_radius_scale";
 const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
