@@ -21,8 +21,9 @@
  */
 
 #include "nodestab.h"
-#include "widgets/GuiConstants.h"
+#include "skeleton/skeletonizer.h"
 #include "viewer.h"
+#include "widgets/GuiConstants.h"
 #include "widgets/viewport.h"
 
 #include <QFileDialog>
@@ -86,12 +87,23 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertiesLayout.addWidget(&propertyColorCombo, ++row, 0);
     propertiesLayout.addWidget(&propertyMinSpin, row, 1);
     propertiesLayout.addWidget(&propertyMaxSpin, row, 2);
+    propertiesLayout.addWidget(&propertyMinMaxButton, row, 3);
     propertiesLayout.addWidget(&propertyLUTButton, ++row, 0);
     propertiesLayout.addWidget(&lutLabel, row, 1, 1, 3, Qt::AlignRight);
     propertiesGroup.setLayout(&propertiesLayout);
     mainLayout.addWidget(&generalGroup);
     mainLayout.addWidget(&propertiesGroup);
     setLayout(&mainLayout);
+
+    static auto findAndSetPropertyRange = [this](const auto & property){
+        const auto minmax = std::minmax_element(std::begin(state->skeletonState->nodesByNodeID), std::end(state->skeletonState->nodesByNodeID), [property](const auto & lhs, const auto & rhs){
+            return lhs.second->properties[property].toDouble() < rhs.second->properties[property].toDouble();
+        });
+        propertyMinSpin.setValue(minmax.first->second->properties[property].toDouble());
+        propertyMaxSpin.setValue(minmax.second->second->properties[property].toDouble());
+        propertyMinMaxButton.setEnabled(false);
+    };
+
     QObject::connect(&idCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
         state->viewerState->idDisplay = index == 2 ? IdDisplay::AllNodes : index == 1 ? IdDisplay::ActiveNode : IdDisplay::None;
     });
@@ -109,23 +121,37 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&propertyRadiusScaleSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->nodePropertyRadiusScale = value; });
     QObject::connect(&propertyColorCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
-        state->viewerState->highlightedNodePropertyByColor = (index > 0) ? propertyModel.properties[index] : "";
+        const auto property = state->viewerState->highlightedNodePropertyByColor = (index > 0) ? propertyModel.properties[index] : "";
         propertyMinSpin.setEnabled(index > 0);
         propertyMaxSpin.setEnabled(index > 0);
+        propertyMinMaxButton.setEnabled(index > 0);
         propertyLUTButton.setEnabled(index > 0);
         lutLabel.setEnabled(index > 0);
-        if(index > 0) {
+        if (index > 0) {
+            findAndSetPropertyRange(property);
             loadNodeLUTRequest(lutPath);
         }
     });
-    QObject::connect(&propertyMinSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) { state->viewerState->nodePropertyColorMapMin = value; });
-    QObject::connect(&propertyMaxSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) { state->viewerState->nodePropertyColorMapMax = value; });
+    QObject::connect(&propertyMinSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value){
+        state->viewerState->nodePropertyColorMapMin = value;
+        propertyMinMaxButton.setEnabled(true);
+    });
+    QObject::connect(&propertyMaxSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value){
+        state->viewerState->nodePropertyColorMapMax = value;
+        propertyMinMaxButton.setEnabled(true);
+    });
+    QObject::connect(&propertyMinMaxButton, &QPushButton::clicked, [this]() { findAndSetPropertyRange(state->viewerState->highlightedNodePropertyByColor); });
     QObject::connect(&propertyLUTButton, &QPushButton::clicked, [this]() { loadNodeLUTRequest(); });
 
     createGlobalAction(Qt::CTRL + Qt::Key_R, [this](){// R for radius
         overrideNodeRadiusCheck.toggle();
         overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
     });
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){ propertyMinMaxButton.setEnabled(true); });
 }
 
 void NodesTab::updateProperties(const QSet<QString> & numberProperties) {

@@ -70,6 +70,7 @@ class NodesTab : public QWidget
     QComboBox propertyColorCombo;
     QDoubleSpinBox propertyMinSpin;
     QDoubleSpinBox propertyMaxSpin;
+    QPushButton propertyMinMaxButton{"Find range"};
     QPushButton propertyLUTButton{"Load color LUT …"};
     QLabel lutLabel{"Current LUT: none"};
 
