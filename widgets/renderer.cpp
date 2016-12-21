@@ -958,7 +958,7 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.bind();
     pointcloudShader.setUniformValue("modelview_matrix", modelview_mat);
     pointcloudShader.setUniformValue("projection_matrix", projection_mat);
-    pointcloudShader.setUniformValue("use_tree_color", buf.useTreeColor);
+    pointcloudShader.setUniformValue("use_tree_color", false&buf.useTreeColor);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -978,6 +978,21 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     pointcloudShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
     buf.normal_buf.release();
 
+    std::array<unsigned int, 3> colorOffset;
+    if (pointCloudLastClickInformation) {
+        buf.index_buf.bind();
+        auto offset = pointCloudLastClickInformation.get().triangleID;
+        buf.index_buf.read((offset * 3 + 0) * sizeof(unsigned int), &colorOffset[0], sizeof(unsigned int));
+        buf.index_buf.read((offset * 3 + 1) * sizeof(unsigned int), &colorOffset[1], sizeof(unsigned int));
+        buf.index_buf.read((offset * 3 + 2) * sizeof(unsigned int), &colorOffset[2], sizeof(unsigned int));
+    }
+    buf.color_buf.bind();
+    if (pointCloudLastClickInformation) {
+        std::array<GLfloat, 4> selectedColor{{0, 0, 1, 1}};
+        buf.color_buf.write(colorOffset[0] * selectedColor.size() * sizeof(selectedColor[0]), selectedColor.data(), selectedColor.size() * sizeof(selectedColor[0]));
+        buf.color_buf.write(colorOffset[1] * selectedColor.size() * sizeof(selectedColor[0]), selectedColor.data(), selectedColor.size() * sizeof(selectedColor[0]));
+        buf.color_buf.write(colorOffset[2] * selectedColor.size() * sizeof(selectedColor[0]), selectedColor.data(), selectedColor.size() * sizeof(selectedColor[0]));
+    }
     int colorLocation = pointcloudShader.attributeLocation("color");
     buf.color_buf.bind();
     pointcloudShader.enableAttributeArray(colorLocation);
@@ -1236,7 +1251,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
                 centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
                 flat_colors.emplace_back(id_color);
             }
-            selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
+            selection_ids.emplace(id_counter, BufferSelection{id_counter, tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
             ++id_counter;
         }
         PointCloud id_buf{nullptr, false, GL_TRIANGLES};

@@ -35,7 +35,8 @@ public:
 };
 
 struct BufferSelection {
-    std::reference_wrapper<const std::uint64_t> it;
+    std::uint64_t triangleID;
+    std::uint64_t treeID;
     floatCoordinate coord;
 };
 

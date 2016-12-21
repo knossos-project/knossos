@@ -368,7 +368,7 @@ QString SkeletonProxy::help() {
 
 quint64 SkeletonProxy::last_clicked_point_cloud_id() {
     if (state->mainWindow->viewport3D->pointCloudLastClickInformation) {
-        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it;
+        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().treeID;
     } else {
         throw std::runtime_error{"none available"};
     }
