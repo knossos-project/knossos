@@ -68,8 +68,8 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&msaaSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int samples){
         if (samples != state->viewerState->sampleBuffers) {
             state->viewerState->sampleBuffers = samples;
-            state->viewer->saveSettings();
-            state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.saveSettings();
+            state->viewer->saveSettings();// viewport geometries
+            state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.saveSettings();// linear filtering
             state->viewer->window->widgetContainer.datasetOptionsWidget.saveSettings();
             state->mainWindow->createViewports();
             state->viewer->loadSettings();
