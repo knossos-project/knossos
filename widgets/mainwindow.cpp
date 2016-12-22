@@ -603,7 +603,7 @@ void MainWindow::createMenus() {
 
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
-    scriptingMenu->addAction("Run file", this, SLOT(pythonFileSlot()));
+    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
     scriptingMenu->addAction(QIcon(":/resources/icons/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
@@ -1312,6 +1312,11 @@ void MainWindow::refreshPluginMenu() {
     for (auto action : actions) {
         pluginMenu->removeAction(action);
     }
+    QObject::connect(pluginMenu->addAction("Open Plugins Directory"),
+                     &QAction::triggered,
+                     [](){QDesktopServices::openUrl(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QDir::separator() + PLUGINS_DIRECTORY));});
+    pluginMenu->addSeparator();
+
     QStringList pluginNames = state->scripting->getPluginNames().split(";");
     for (auto pluginName : pluginNames) {
         if (pluginName.isEmpty()) {
@@ -1337,8 +1342,6 @@ void MainWindow::refreshPluginMenu() {
         QObject::connect(pluginSubMenu->addAction("Remove import"), &QAction::triggered,
                          [pluginName](){state->scripting->removePluginImport(pluginName,false);});
     }
-    //if no plugins found (plugin folder not set?) gray out menu "Plugins"
-    pluginMenu->setEnabled(!pluginMenu->actions().empty());
 }
 
 void MainWindow::pythonInterpreterSlot() {
