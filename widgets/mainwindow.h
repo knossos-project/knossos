@@ -195,6 +195,7 @@ public:
 
     QLabel GUIModeLabel{""};
     QLabel cursorPositionLabel;
+    QLabel hideClutterInfoLabel{"Hide viewport clutter (hold space)"};
     QLabel nodeLockingLabel;
     QLabel synapseStateLabel;
     QLabel segmentStateLabel;

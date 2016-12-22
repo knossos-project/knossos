@@ -141,6 +141,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     nodeLockingLabel.setVisible(false);
     statusBar()->addPermanentWidget(&nodeLockingLabel);
     statusBar()->addPermanentWidget(&synapseStateLabel);
+    hideClutterInfoLabel.setToolTip("Hold space to temporarily show only the raw data. Everything else is hidden.");
+    statusBar()->addPermanentWidget(&hideClutterInfoLabel);
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
