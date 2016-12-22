@@ -42,6 +42,7 @@
 #include <QFileInfoList>
 #include <QMessageBox>
 #include <QSettings>
+#include <QStandardPaths>
 
 void PythonQtInit() {
     PythonQt::init(PythonQt::RedirectStdOut);
@@ -169,7 +170,7 @@ void Scripting::setPluginNames(const QString &pluginNamesStr) {
 }
 
 QString Scripting::getDefaultPluginDir() {
-    return QString("%1/%2").arg(QDir::homePath()).arg("knossos_plugins");
+    return QString("%1/%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(PLUGINS_DIRECTORY);
 }
 
 void Scripting::createDefaultPluginDir() {
