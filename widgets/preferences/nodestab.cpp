@@ -97,7 +97,11 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
 
     static auto findAndSetPropertyRange = [this](const auto & property){
         const auto minmax = std::minmax_element(std::begin(state->skeletonState->nodesByNodeID), std::end(state->skeletonState->nodesByNodeID), [property](const auto & lhs, const auto & rhs){
-            return lhs.second->properties[property].toDouble() < rhs.second->properties[property].toDouble();
+            const auto lhsIt = lhs.second->properties.find(property);
+            const auto rhsIt = rhs.second->properties.find(property);
+            const auto lhsValue = lhsIt != std::end(lhs.second->properties) ? lhsIt->toDouble() : 0.0;
+            const auto rhsValue = rhsIt != std::end(rhs.second->properties) ? lhsIt->toDouble() : 0.0;
+            return lhsValue < rhsValue;
         });
         propertyMinSpin.setValue(minmax.first->second->properties[property].toDouble());
         propertyMaxSpin.setValue(minmax.second->second->properties[property].toDouble());
