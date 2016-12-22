@@ -2072,6 +2072,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
 
+    const auto nanometerPerPixel = width() / displayedlengthInNmX;
+    const auto pointDiameter = nanometerPerPixel * state->scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
+    glLineWidth(state->viewerState->segRadiusToNodeRadius * pointDiameter);
     /* Render line geometry batch if it contains data and we don’t pick nodes */
     if (!options.nodePicking && !state->viewerState->lineVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -2087,8 +2090,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 
-    glPointSize(state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 3.0f);
-
+    glPointSize(pointDiameter);
     /* Render point geometry batch if it contains data */
     if (!state->viewerState->pointVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
