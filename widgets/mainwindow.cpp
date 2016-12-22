@@ -1314,7 +1314,7 @@ void MainWindow::refreshPluginMenu() {
     }
     QObject::connect(pluginMenu->addAction("Open Plugins Directory"),
                      &QAction::triggered,
-                     [](){QDesktopServices::openUrl(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QDir::separator() + PLUGINS_DIRECTORY));});
+                     [](){QDesktopServices::openUrl(QUrl::fromLocalFile(state->scripting->getPluginDir()));});
     pluginMenu->addSeparator();
 
     QStringList pluginNames = state->scripting->getPluginNames().split(";");
