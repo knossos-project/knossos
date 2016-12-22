@@ -999,7 +999,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
 
 void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     moveCache += floatStep;
-    const Coordinate step{moveCache};
+    const Coordinate step(moveCache);
     moveCache -= step;
     userMoveVoxels(step, userMoveType, viewportNormal);
 }
