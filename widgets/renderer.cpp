@@ -737,6 +737,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     view();
     updateFrustumClippingPlanes();
 
+    glColor4f(1, 1, 1, 1);// 100% alpha for first slice
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
