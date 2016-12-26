@@ -59,5 +59,6 @@
         <file>resources/color_palette/default.json</file>
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/plugins/pluginMgr.py</file>
+        <file>resources/splash@2x.png</file>
     </qresource>
 </RCC>
