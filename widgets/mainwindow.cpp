@@ -224,7 +224,7 @@ void MainWindow::createToolbars() {
 
     basicToolbar.setMovable(false);
     basicToolbar.setFloatable(false);
-    basicToolbar.setMaximumHeight(45);
+    basicToolbar.setIconSize(QSize(24, 24));
 
     basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open annotation", this, SLOT(openSlot()));
     basicToolbar.addAction(QIcon(":/resources/icons/document-save.png"), "Save annotation", this, SLOT(saveSlot()));
@@ -252,6 +252,8 @@ void MainWindow::createToolbars() {
     basicToolbar.addWidget(xField);
     basicToolbar.addWidget(yField);
     basicToolbar.addWidget(zField);
+
+    defaultToolbar.setIconSize(QSize(24, 24));
 
     addToolBar(&basicToolbar);
     addToolBar(&defaultToolbar);
