@@ -295,17 +295,17 @@ void ViewportOrtho::resetTexture() {
 
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     wiggleButton.setCheckable(true);
-    wiggleButton.setToolTip("Hold W");
+    wiggleButton.setToolTip("Wiggle stereoscopy (Hold W)");
 
     for (auto * button : {&xyButton, &xzButton, &zyButton}) {
         button->setMinimumSize(30, 20);
     }
+    wiggleButton.setMinimumSize(35, 20);
     r90Button.setMinimumSize(35, 20);
     r180Button.setMinimumSize(40, 20);
-    wiggleButton.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&resetButton, &wiggleButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton}) {
+    for (auto * button : {&resetButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton, &wiggleButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
         vpHeadLayout.insertWidget(0, button);
