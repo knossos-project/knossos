@@ -672,7 +672,8 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
 
 void Viewport3D::handleKeyPress(const QKeyEvent *event) {
     if (event->key() == Qt::Key_W && !event->isAutoRepeat()) {// real key press
-        wiggletimer.start(30);
+        wiggletimer.start();
+        wiggleButton.setChecked(true);
     }
     ViewportBase::handleKeyPress(event);
 }
@@ -683,6 +684,7 @@ void Viewport3D::resetWiggle() {
     state->skeletonState->rotdy -= wiggle;
     wiggleDirection = true;
     wiggle = 0;
+    wiggleButton.setChecked(false);
 }
 
 void Viewport3D::handleKeyRelease(const QKeyEvent *event) {

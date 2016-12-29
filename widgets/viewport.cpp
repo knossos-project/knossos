@@ -284,14 +284,18 @@ void ViewportOrtho::resetTexture() {
 }
 
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
+    wiggleButton.setCheckable(true);
+    wiggleButton.setToolTip("Hold W");
+
     for (auto * button : {&xyButton, &xzButton, &zyButton}) {
         button->setMinimumSize(30, 20);
     }
     r90Button.setMinimumSize(35, 20);
     r180Button.setMinimumSize(40, 20);
+    wiggleButton.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
 
-    for (auto * button : {&resetButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton}) {
+    for (auto * button : {&resetButton, &wiggleButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton}) {
         button->setMaximumSize(button->minimumSize());
         button->setCursor(Qt::ArrowCursor);
         vpHeadLayout.insertWidget(0, button);
@@ -322,12 +326,20 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
             state->skeletonState->definedSkeletonVpView = SKELVP_R180;
         }
     });
+    QObject::connect(&wiggleButton, &QPushButton::clicked, [this](bool checked){
+        if (checked) {
+            wiggletimer.start();
+        } else {
+            resetWiggle();
+        }
+    });
     connect(&resetButton, &QPushButton::clicked, []() {
         if(state->skeletonState->rotationcounter == 0) {
             state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
         }
     });
 
+    wiggletimer.setInterval(30);
     QObject::connect(&wiggletimer, &QTimer::timeout, [this](){
         const auto inc = wiggleDirection ? 1 : -1;
         state->skeletonState->rotdx += inc;
@@ -647,6 +659,7 @@ void Viewport3D::showHideButtons(bool isShow) {
     zyButton.setVisible(isShow);
     r90Button.setVisible(isShow);
     r180Button.setVisible(isShow);
+    wiggleButton.setVisible(isShow);
     resetButton.setVisible(isShow);
 }
 
