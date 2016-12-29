@@ -470,7 +470,7 @@ void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/graph.png"), tr("Create new annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/annotation.png"), tr("Create new annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent annotation file(s)"));
     int i = 0;
@@ -482,7 +482,7 @@ void MainWindow::createMenus() {
         });
         ++i;
     }
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save.png"), tr("Save annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/save-annotation.png"), tr("Save annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save annotation as…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
     fileMenu.addSeparator();
     fileMenu.addAction(tr("Export to nml..."), this, SLOT(exportToNml()));
@@ -595,13 +595,13 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(tr("Save custom preferences"), this, SLOT(saveCustomPreferencesSlot()));
     preferenceMenu->addAction(tr("Reset to default preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(QIcon(":/resources/icons/view-list-icons-symbolic.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("&Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/task.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/graph.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/zoom-in.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/camera.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/dataset-options.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/snapshot.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));

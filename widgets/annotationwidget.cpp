@@ -39,7 +39,7 @@
 #include <QSplitter>
 
 AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(ANNOTATION_WIDGET, parent) {
-    setWindowIcon(QIcon(":/resources/icons/graph.png"));
+    setWindowIcon(QIcon(":/resources/icons/annotation.png"));
     setWindowTitle("Annotation");
 
     tabs.addTab(&skeletonTab, "Skeleton");

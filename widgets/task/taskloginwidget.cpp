@@ -35,7 +35,7 @@
 
 TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-    setWindowIcon(QIcon(":/resources/icons/task.png"));
+    setWindowIcon(QIcon(":/resources/icons/tasks-management.png"));
     setWindowTitle("Task Login");
     setModal(true);
 

@@ -35,7 +35,7 @@
 #include <QDesktopWidget>
 
 PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent) {
-    setWindowIcon(QIcon(":/resources/icons/view-list-icons-symbolic.png"));
+    setWindowIcon(QIcon(":/resources/icons/preferences.png"));
     setWindowTitle("Preferences");
     tabs.addTab(&treesTab, "Trees");
     tabs.addTab(&nodesTab, "Nodes");

@@ -87,7 +87,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
 
 DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         : DialogVisibilityNotify(DATASET_OPTIONS_WIDGET, parent), lastZoomSkel(0), userZoomSkel(true) {
-    setWindowIcon(QIcon(":/resources/icons/zoom-in.png"));
+    setWindowIcon(QIcon(":/resources/icons/dataset-options.png"));
     setWindowTitle("Dataset Options");
 
     updateCompressionRatioDisplay();
