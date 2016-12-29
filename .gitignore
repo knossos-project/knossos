@@ -2,6 +2,9 @@
 resources/doc/collection.qhc
 resources/doc/doc.qch
 
+#OS X Finder
+.DS_Store
+
 #qtcreator settings
 CMakeLists.txt.user
 knossos.pro.user
