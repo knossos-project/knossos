@@ -276,11 +276,12 @@ class Viewport3D : public ViewportBase {
     QOpenGLShaderProgram pointcloudIdShader;
     std::unordered_map<std::uint32_t, BufferSelection> selection_ids;
 
+    void resetWiggle();
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
     virtual void paintGL() override;
-    bool wiggle3D{false};
-    int wigglecounter{0};
+    bool wiggleDirection{true};
+    int wiggle{0};
     QTimer wiggletimer;
     void renderVolumeVP();
     void renderPointCloud();

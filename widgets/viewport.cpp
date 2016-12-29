@@ -328,16 +328,14 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
         }
     });
 
-    connect(&wiggletimer, &QTimer::timeout, [this](){
-       if(wigglecounter < 4) {
-           state->skeletonState->rotdx += 1;
-           state->skeletonState->rotdy += 1;
-       } else {
-           state->skeletonState->rotdx -= 1;
-           state->skeletonState->rotdy -= 1;
-       }
-       if(++wigglecounter >= 8) wigglecounter = 0;
-       wiggletimer.start(30);
+    QObject::connect(&wiggletimer, &QTimer::timeout, [this](){
+        const auto inc = wiggleDirection ? 1 : -1;
+        state->skeletonState->rotdx += inc;
+        state->skeletonState->rotdy += inc;
+        wiggle += inc;
+        if (wiggle == -2 || wiggle == 2) {
+            wiggleDirection = !wiggleDirection;
+        }
     });
 }
 

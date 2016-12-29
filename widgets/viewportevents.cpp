@@ -671,38 +671,30 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
 }
 
 void Viewport3D::handleKeyPress(const QKeyEvent *event) {
-    if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
-        if(!wiggle3D) {
-                    qDebug() << "Starting pos: " << state->skeletonState->rotdx;
-            wiggle3D = true;
-            wigglecounter = 0;
-            wiggletimer.start(30);
-        }
+    if (event->key() == Qt::Key_W && !event->isAutoRepeat()) {// real key press
+        wiggletimer.start(30);
     }
     ViewportBase::handleKeyPress(event);
 }
 
-void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
-    if(event->key() == Qt::Key_W && !event->isAutoRepeat()) {
-        wiggletimer.stop();
-        wiggle3D = false;
+void Viewport3D::resetWiggle() {
+    wiggletimer.stop();
+    state->skeletonState->rotdx -= wiggle;
+    state->skeletonState->rotdy -= wiggle;
+    wiggleDirection = true;
+    wiggle = 0;
+}
 
-        auto dir = wigglecounter < 4 ? -wigglecounter : wigglecounter - 8;
-        state->skeletonState->rotdx += dir;
-        state->skeletonState->rotdy += dir;
+void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
+    if (event->key() == Qt::Key_W && !event->isAutoRepeat()) {// real key release
+        resetWiggle();
     }
     ViewportBase::handleKeyRelease(event);
 }
 
-void Viewport3D::focusOutEvent(QFocusEvent *event) {
-    if(event->type() ==  QEvent::FocusOut && wiggle3D) {
-        wiggletimer.stop();
-        wiggle3D = false;
-
-        auto dir = wigglecounter < 4 ? -wigglecounter : wigglecounter - 8;
-        state->skeletonState->rotdx += dir;
-        state->skeletonState->rotdy += dir;
-    }
+void Viewport3D::focusOutEvent(QFocusEvent * event) {
+    resetWiggle();
+    QWidget::focusOutEvent(event);
 }
 
 Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp) {
