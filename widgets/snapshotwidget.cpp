@@ -38,6 +38,7 @@
 
 SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    setWindowIcon(QIcon(":/resources/icons/snapshot.png"));
     setWindowTitle("Snapshot Tool");
     sizeCombo.addItem("8192 x 8192");
     sizeCombo.addItem("4096 x 4096");
