@@ -502,15 +502,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
     const auto ctrl = event->modifiers().testFlag(Qt::ControlModifier);
     const auto alt = event->modifiers().testFlag(Qt::AltModifier);
     const auto shift = event->modifiers().testFlag(Qt::ShiftModifier);
-    if (event->key() == Qt::Key_H && Session::singleton().guiMode != GUIMode::ProofReading) {
-        if (isDocked) {
-            hide();
-        }
-        else {
-            floatParent.hide();
-        }
-        state->viewerState->defaultVPSizeAndPos = false;
-    } else if (event->key() == Qt::Key_F11) {
+    if (event->key() == Qt::Key_F11) {
         if (isDocked) {
             // Currently docked and normal
             // Undock and go fullscreen from docked

@@ -145,8 +145,9 @@ protected:
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;
-    QAction snapshotAction{"Snapshot", &menuButton};
-    QAction floatingWindowAction{"Undock viewport", &menuButton};
+    QAction snapshotAction{tr("Snapshot"), &menuButton};
+    QAction floatingWindowAction{tr("Undock viewport"), &menuButton};
+    QAction hideAction{tr("Hide viewport"), &menuButton};
     ResizeButton resizeButton;
     bool resizeButtonHold = false;
     void moveVP(const QPoint & globalPos);

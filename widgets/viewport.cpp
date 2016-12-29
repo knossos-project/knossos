@@ -132,12 +132,23 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
 
     QObject::connect(&snapshotAction, &QAction::triggered, [this]() { emit snapshotTriggered(this->viewportType); });
     QObject::connect(&floatingWindowAction, &QAction::triggered, [this]() { setDock(!isDocked); });
+    QObject::connect(&hideAction, &QAction::triggered, [this]() {
+        if (isDocked) {
+            hide();
+        } else {
+            floatParent.hide();
+            setParent(dockParent);
+            hide();
+        }
+        state->viewerState->defaultVPSizeAndPos = false;
+    });
     menuButton.setText("…");
     menuButton.setCursor(Qt::ArrowCursor);
     menuButton.setMinimumSize(35, 20);
     menuButton.setMaximumSize(menuButton.minimumSize());
     menuButton.addAction(&snapshotAction);
     menuButton.addAction(&floatingWindowAction);
+    menuButton.addAction(&hideAction);
     menuButton.setPopupMode(QToolButton::InstantPopup);
     resizeButton.setCursor(Qt::SizeFDiagCursor);
     resizeButton.setIcon(QIcon(":/resources/icons/resize.gif"));
@@ -175,7 +186,6 @@ void ViewportBase::setDock(bool isDock) {
         floatParent.hide();
         move(dockPos);
         resize(dockSize);
-        floatingWindowAction.setVisible(true);
     } else {
         state->viewerState->defaultVPSizeAndPos = false;
         if (floatParent.nonMaximizedPos == boost::none) {
@@ -190,9 +200,9 @@ void ViewportBase::setDock(bool isDock) {
             floatParent.resize(floatParent.nonMaximizedSize.get());
         }
         move(QPoint(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN));
-        floatingWindowAction.setVisible(false);
         floatParent.show();
     }
+    floatingWindowAction.setVisible(isDock);
     resizeButton.setVisible(isDock && state->viewerState->showVpDecorations);
     show();
     setFocus();
