@@ -907,12 +907,12 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     swapSynapticNodes->setVisible((mode.testFlag(AnnotationMode::Mode_TracingAdvanced)));
-    clearSkeletonAction->setVisible(skeleton);
+    clearSkeletonAction->setVisible(skeleton && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
     increaseOpacityAction->setVisible(segmentation);
     decreaseOpacityAction->setVisible(segmentation);
     enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     shrinkBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
-    clearMergelistAction->setVisible(segmentation);
+    clearMergelistAction->setVisible(segmentation && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
 
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
         Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
