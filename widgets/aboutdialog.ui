@@ -240,6 +240,9 @@ margin-top: 8px;
            <property name="text">
             <string>&lt;a href=&quot;mailto:knossos-team@mpimf-heidelberg.mpg.de&quot;&gt;knossos-team@mpimf-heidelberg.mpg.de&lt;/a&gt;</string>
            </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -256,6 +259,9 @@ margin-top: 8px;
           <widget class="QLabel" name="mpionLinkLabel">
            <property name="text">
             <string>&lt;a href=&quot;https://www.neuro.mpg.de/home&quot;&gt;https://www.neuro.mpg.de&lt;/a&gt;</string>
+           </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -641,6 +647,9 @@ margin-top: 8px;
 &lt;li&gt;PythonQt, LGPLv2.1: &lt;a href=&quot;http://pythonqt.sourceforge.net/&quot;&gt;http://pythonqt.sourceforge.net&lt;/a&gt;
 &lt;li&gt;Snappy, MIT: &lt;a href=&quot;https://google.github.io/snappy/&quot;&gt;https://google.github.io/snappy&lt;/a&gt;
 &lt;/ul&gt;</string>
+               </property>
+               <property name="openExternalLinks">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
