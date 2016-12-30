@@ -236,19 +236,6 @@ margin-top: 8px;
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="QLabel" name="emailLabel">
            <property name="text">
             <string>&lt;a href=&quot;mailto:knossos-team@mpimf-heidelberg.mpg.de&quot;&gt;knossos-team@mpimf-heidelberg.mpg.de&lt;/a&gt;</string>
