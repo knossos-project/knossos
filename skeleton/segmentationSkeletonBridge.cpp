@@ -61,7 +61,7 @@ void setSubobjectSelectAndMerge(nodeListElement & node, const quint64 subobjectI
 
 void Skeletonizer::setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode) {
     if (previousNode != nullptr) {
-        selectObjectForNode(*previousNode);//reselect the previous active node as it got unselected during new node creation
+        selectObjectForNode(*previousNode);// reselect object of previous active node as it got unselected in setActiveNode during new node creation
     }
     setSubobjectSelectAndMerge(node, subobjectId);
 }
