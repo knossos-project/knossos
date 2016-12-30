@@ -561,6 +561,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Space) {
         state->viewerState->showOnlyRawData = true;
+        state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
+            vp.showHideButtons(false);
+        });
         state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if(ctrl) {
@@ -648,6 +651,9 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
 void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->viewerState->showOnlyRawData = false;
+        state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
+            vp.showHideButtons(state->viewerState->showVpDecorations);
+        });
         state->viewer->oc_reslice_notify_visible();
     } else if (event->key() == Qt::Key_F4) {
         static uint originalCompressionRatio;
