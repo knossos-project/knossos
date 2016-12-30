@@ -147,6 +147,7 @@ private:
     QWidget *dockParent;
     QAction snapshotAction{tr("Snapshot"), &menuButton};
     QAction floatingWindowAction{tr("Undock viewport"), &menuButton};
+    QAction fullscreenAction{tr("Fullscreen (F11)"), &menuButton};
     QAction hideAction{tr("Hide viewport"), &menuButton};
     ResizeButton resizeButton;
     bool resizeButtonHold = false;

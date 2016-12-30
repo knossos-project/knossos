@@ -503,33 +503,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
     const auto alt = event->modifiers().testFlag(Qt::AltModifier);
     const auto shift = event->modifiers().testFlag(Qt::ShiftModifier);
     if (event->key() == Qt::Key_F11) {
-        if (isDocked) {
-            // Currently docked and normal
-            // Undock and go fullscreen from docked
-            setDock(false);
-            floatParent.setWindowState(Qt::WindowFullScreen);
-            floatParent.fullscreen = true;
-            isFullOrigDocked = true;
-        }
-        else {
-            // Currently undocked
-            if (floatParent.isFullScreen()) {
-                // Currently fullscreen
-                // Go normal and back to original docking state
-                floatParent.setWindowState(Qt::WindowNoState);
-                floatParent.fullscreen = false;
-                if (isFullOrigDocked) {
-                    setDock(isFullOrigDocked);
-                }
-            }
-            else {
-                // Currently not fullscreen
-                // Go fullscreen from undocked
-                floatParent.setWindowState(Qt::WindowFullScreen);
-                floatParent.fullscreen = true;
-                isFullOrigDocked = false;
-            }
-        }
+        fullscreenAction.trigger();
     } else if (ctrl && shift && event->key() == Qt::Key_C) {
         if(state->skeletonState->activeNode && state->skeletonState->activeNode->isSynapticNode) {
             state->skeletonState->activeNode->correspondingSynapse->toggleDirection();

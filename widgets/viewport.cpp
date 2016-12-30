@@ -132,6 +132,35 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
 
     QObject::connect(&snapshotAction, &QAction::triggered, [this]() { emit snapshotTriggered(this->viewportType); });
     QObject::connect(&floatingWindowAction, &QAction::triggered, [this]() { setDock(!isDocked); });
+    QObject::connect(&fullscreenAction, &QAction::triggered, [this]() {
+        if (isDocked) {
+            // Currently docked and normal
+            // Undock and go fullscreen from docked
+            setDock(false);
+            floatParent.setWindowState(Qt::WindowFullScreen);
+            floatParent.fullscreen = true;
+            isFullOrigDocked = true;
+        }
+        else {
+            // Currently undocked
+            if (floatParent.isFullScreen()) {
+                // Currently fullscreen
+                // Go normal and back to original docking state
+                floatParent.setWindowState(Qt::WindowNoState);
+                floatParent.fullscreen = false;
+                if (isFullOrigDocked) {
+                    setDock(isFullOrigDocked);
+                }
+            }
+            else {
+                // Currently not fullscreen
+                // Go fullscreen from undocked
+                floatParent.setWindowState(Qt::WindowFullScreen);
+                floatParent.fullscreen = true;
+                isFullOrigDocked = false;
+            }
+        }
+    });
     QObject::connect(&hideAction, &QAction::triggered, [this]() {
         if (isDocked) {
             hide();
@@ -148,6 +177,7 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
     menuButton.setMaximumSize(menuButton.minimumSize());
     menuButton.addAction(&snapshotAction);
     menuButton.addAction(&floatingWindowAction);
+    menuButton.addAction(&fullscreenAction);
     menuButton.addAction(&hideAction);
     menuButton.setPopupMode(QToolButton::InstantPopup);
     resizeButton.setCursor(Qt::SizeFDiagCursor);
