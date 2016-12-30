@@ -613,7 +613,7 @@ void MainWindow::createMenus() {
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
     addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
-    helpMenu.addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.splashWidget, SLOT(exec()));
+    helpMenu.addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

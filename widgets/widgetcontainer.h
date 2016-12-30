@@ -23,26 +23,28 @@
 #ifndef WIDGETCONTAINER_H
 #define WIDGETCONTAINER_H
 
+#include "aboutdialog.h"
 #include "annotationwidget.h"
 #include "preferenceswidget.h"
 #include "datasetloadwidget.h"
 #include "datasetoptionswidget.h"
 #include "GuiConstants.h"
 #include "snapshotwidget.h"
-#include "splashscreenwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
 #include "pythoninterpreterwidget.h"
 #include "pythonpropertywidget.h"
 
 #include <QSettings>
+#include <QtUiTools>
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
         : annotationWidget(parent), preferencesWidget(parent)
         , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget)
         , pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
-        , snapshotWidget(parent), splashWidget(parent), taskManagementWidget(parent)
+        , snapshotWidget(parent), taskManagementWidget(parent)
+        , aboutDialog(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression, &datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
@@ -56,8 +58,8 @@ struct WidgetContainer {
     PythonInterpreterWidget pythonInterpreterWidget;
     PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
-    SplashScreenWidget splashWidget;
     TaskManagementWidget taskManagementWidget;
+    AboutDialog aboutDialog;
 
     void applyVisibility() {
         QSettings settings;
@@ -77,7 +79,7 @@ struct WidgetContainer {
         pythonPropertyWidget.hide();
         pythonInterpreterWidget.hide();
         snapshotWidget.hide();
-        splashWidget.hide();
+        aboutDialog.hide();
         taskManagementWidget.hide();
     }
 };
