@@ -1901,7 +1901,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnable(GL_LIGHTING);
         GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
         GLfloat diffuseLight[] = {1., 1., 1., 1.};
-        GLfloat lightPos[] = {0., 0., 1., 1.};
+        GLfloat lightPos[] = {0, state->boundary.y * state->scale.y, 0, 1.};
 
         glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
         glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
