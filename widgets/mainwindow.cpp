@@ -631,11 +631,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          }
     }
     EmitOnCtorDtor eocd(&SignalRelay::Signal_MainWindow_closeEvent, state->signalRelay, event);
-    forEachVPDo([](ViewportBase & vp) {
-        if (vp.isDocked == false) {
-            vp.floatParent.close();
-        }
-    });
     state->quitSignal = true;
     QApplication::processEvents();//ensure everything’s done
     Loader::Controller::singleton().suspendLoader();
