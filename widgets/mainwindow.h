@@ -188,6 +188,9 @@ public:
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
 
+    QAction *compressionToggleSeparator;
+    QAction *compressionToggleAction;
+
     QList<QString> skeletonFileHistory;
     QFile *loadedFile;
 
@@ -284,6 +287,8 @@ public slots:
     void pythonFileSlot();
     void pythonInterpreterSlot();
     void pythonPluginMgrSlot();
+    // dataset load widget
+    void updateCompressionRatioDisplay();
 };
 
 auto createGlobalAction = [](auto key, auto todo){

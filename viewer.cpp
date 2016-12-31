@@ -1170,7 +1170,6 @@ void Viewer::rewire() {
     //viewport signals
     window->forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(&vp, &ViewportBase::compressionRatioToggled, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::updateCompressionRatioDisplay);
         QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
     });
     // end viewport signals

@@ -264,7 +264,6 @@ public:
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
     void pasteCoordinateSignal();
-    void compressionRatioToggled();
     void updateDatasetOptionsWidget();
     void snapshotTriggered(const ViewportType type);
 public slots:

@@ -629,16 +629,6 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
             vp.showHideButtons(state->viewerState->showVpDecorations);
         });
         state->viewer->oc_reslice_notify_visible();
-    } else if (event->key() == Qt::Key_F4) {
-        static uint originalCompressionRatio;
-        if (state->compressionRatio != 0) {
-            originalCompressionRatio = state->compressionRatio;
-            state->compressionRatio = 0;
-        } else {
-            state->compressionRatio = originalCompressionRatio;
-        }
-        state->viewer->updateDatasetMag();
-        emit compressionRatioToggled();
     }
 }
 

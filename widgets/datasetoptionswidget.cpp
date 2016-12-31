@@ -90,8 +90,6 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     setWindowIcon(QIcon(":/resources/icons/dataset-options.png"));
     setWindowTitle("Dataset Options");
 
-    updateCompressionRatioDisplay();
-
     // zoom section
     skeletonViewportSpinBox.setRange(SKELZOOMMIN * 100, SKELZOOMMAX * 100);
     skeletonViewportSpinBox.setSuffix(" %");
@@ -120,7 +118,6 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(state->highestAvailableMag));
     lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
 
-    mainLayout.addWidget(&compressionLabel);
     separator2.setFrameShape(QFrame::HLine);
     separator2.setFrameShadow(QFrame::Sunken);
     mainLayout.addLayout(&zoomLayout);
@@ -282,15 +279,6 @@ void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
     orthoZoomSpinBox.setMaximum(100 * (state->viewer->highestScreenPxXPerDataPx(false) / state->viewer->lowestScreenPxXPerDataPx(false)));
     updateOrthogonalZoomSpinBox();
     orthoZoomSlider.blockSignals(orthoZoomSpinBoxBlock);
-}
-
-void DatasetOptionsWidget::updateCompressionRatioDisplay() {
-    compressionLabel.setText(tr("Current compression: %1 (toggle with (F4))").arg(
-                                 (state->compressionRatio == 0) ? "none" :
-                                 (state->compressionRatio == 1000) ? "jpg" :
-                                 (state->compressionRatio == 1001) ? "j2k" :
-                                                                     "jp2")
-                             );
 }
 
 void DatasetOptionsWidget::updateOrthogonalZoomSpinBox() {

@@ -116,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
+    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
         [this](const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
             viewport(vpType)->takeSnapshot(path, size, withAxes, withBox, withOverlay, withSkeleton, withScale, withVpPlanes);
@@ -545,6 +546,18 @@ void MainWindow::createMenus() {
     setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
     setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
 
+    compressionToggleSeparator = actionMenu.addSeparator();
+    compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle dataset compression: none"), this, [this]() {
+        static uint originalCompressionRatio;
+        if (state->compressionRatio != 0) {
+            originalCompressionRatio = state->compressionRatio;
+            state->compressionRatio = 0;
+        } else {
+            state->compressionRatio = originalCompressionRatio;
+        }
+        state->viewer->updateDatasetMag();
+        updateCompressionRatioDisplay();
+    }, Qt::Key_F4);
     menuBar()->addMenu(&actionMenu);
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
@@ -1370,6 +1383,14 @@ void MainWindow::pythonPluginMgrSlot() {
         }
     }
     state->scripting->openPlugin(PLUGIN_MGR_NAME, false);
+}
+
+void MainWindow::updateCompressionRatioDisplay() {
+    compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(
+                                        (state->compressionRatio == 0) ? "none" :
+                                        (state->compressionRatio == 1000) ? "jpg" :
+                                        (state->compressionRatio == 1001) ? "j2k" :
+                                                                            "jp2"));
 }
 
 bool MainWindow::event(QEvent *event) {

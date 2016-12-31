@@ -56,8 +56,6 @@ class DatasetOptionsWidget : public DialogVisibilityNotify {
     QGridLayout zoomLayout;
     QFrame separator1;
     QFrame separator2;
-    // compression section
-    QLabel compressionLabel;
     // zoom section
     QLabel zoomSectionLabel{tr("Zoom Settings")};
     QLabel orthogonalDataViewportLabel{tr("Orthogonal Viewports")};
@@ -84,7 +82,6 @@ public slots:
     void update();
     void loadSettings();
     void saveSettings();
-    void updateCompressionRatioDisplay();
 };
 
 #endif // DATASETOPTIONSWIDGET_H
