@@ -1664,7 +1664,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     }
     if (options.pointCloudPicking) {
         pickPointCloudIdAtPosition();
-    } else if (options.drawPointcloud) {
+    } else if (state->viewerState->pointCloudVisibilityOn && options.drawPointcloud) {
         renderPointCloud();
     }
 

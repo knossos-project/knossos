@@ -83,6 +83,7 @@ class TreesTab : public QWidget
     QVBoxLayout visibilityLayout;
     QRadioButton wholeSkeletonRadio{tr("Show whole skeleton")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
+    QCheckBox pointCloudCheck{tr("Show point cloud")};
     QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in ortho VPs")};
     QCheckBox skeletonIn3DVPCheck{tr("Show skeleton in 3D VP")};
 

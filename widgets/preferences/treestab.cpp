@@ -49,6 +49,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderingLayout.addRow(tr("Skeleton rendering quality:"), &renderQualityCombo);
     renderingGroup.setLayout(&renderingLayout);
     visibilityLayout.setAlignment(Qt::AlignTop);
+    visibilityLayout.addWidget(&pointCloudCheck);
     visibilityLayout.addWidget(&skeletonInOrthoVPsCheck);
     visibilityLayout.addWidget(&skeletonIn3DVPCheck);
     visibilityLayout.addWidget(&wholeSkeletonRadio);
@@ -105,6 +106,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     // tree visibility
     QObject::connect(&wholeSkeletonRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
+    QObject::connect(&pointCloudCheck, &QCheckBox::toggled, this, [](const bool checked) { state->viewerState->pointCloudVisibilityOn = checked; });
     QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
 
@@ -167,6 +169,7 @@ void TreesTab::saveSettings(QSettings & settings) const {
     settings.setValue(ONLY_SELECTED_TREES, selectedTreesRadio.isChecked());
     settings.setValue(SHOW_SKELETON_ORTHOVPS, skeletonInOrthoVPsCheck.isChecked());
     settings.setValue(SHOW_SKELETON_SKELVP, skeletonIn3DVPCheck.isChecked());
+    settings.setValue(SHOW_POINTCLOUD, pointCloudCheck.isChecked());
 }
 
 void TreesTab::loadSettings(const QSettings & settings) {
@@ -198,4 +201,5 @@ void TreesTab::loadSettings(const QSettings & settings) {
     skeletonInOrthoVPsCheck.clicked(skeletonInOrthoVPsCheck.isChecked());
     skeletonIn3DVPCheck.setChecked(settings.value(SHOW_SKELETON_SKELVP, true).toBool());
     skeletonIn3DVPCheck.clicked(skeletonIn3DVPCheck.isChecked());
+    pointCloudCheck.setChecked(settings.value(SHOW_POINTCLOUD, true).toBool());
 }
