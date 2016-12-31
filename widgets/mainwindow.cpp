@@ -273,7 +273,7 @@ void MainWindow::createToolbars() {
     defaultToolbar.addSeparator();
     createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/tasks-management.png", "Task Management");
     createToolToggleButton(widgetContainer.annotationWidget, ":/resources/icons/annotation.png", "Annotation");
-    createToolToggleButton(widgetContainer.datasetOptionsWidget, ":/resources/icons/dataset-options.png", "Dataset Options");
+    createToolToggleButton(widgetContainer.zoomWidget, ":/resources/icons/zoom.png", "Zoom");
     createToolToggleButton(widgetContainer.snapshotWidget, ":/resources/icons/snapshot.png", "Snapshot");
     defaultToolbar.addSeparator();
     createToolToggleButton(widgetContainer.pythonInterpreterWidget, ":/resources/icons/python.png", "Python Interpreter");
@@ -613,7 +613,7 @@ void MainWindow::createMenus() {
     auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon(":/resources/icons/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
     windowMenu->addAction(QIcon(":/resources/icons/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/dataset-options.png"), tr("Dataset Options"), &widgetContainer.datasetOptionsWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/snapshot.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
@@ -754,7 +754,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         Segmentation::singleton().startJobMode();
     }
 
-    state->viewer->window->widgetContainer.datasetOptionsWidget.update();
+    state->viewer->window->widgetContainer.zoomWidget.update();
 
     return true;
 }
@@ -1117,7 +1117,7 @@ void MainWindow::saveSettings() {
     settings.endGroup();
 
     widgetContainer.datasetLoadWidget.saveSettings();
-    widgetContainer.datasetOptionsWidget.saveSettings();
+    widgetContainer.zoomWidget.saveSettings();
     widgetContainer.preferencesWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
@@ -1158,7 +1158,7 @@ void MainWindow::loadSettings() {
     widgetContainer.annotationWidget.loadSettings();
     widgetContainer.preferencesWidget.loadSettings();
     widgetContainer.datasetLoadWidget.loadSettings();
-    widgetContainer.datasetOptionsWidget.loadSettings();
+    widgetContainer.zoomWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();

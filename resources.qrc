@@ -53,12 +53,12 @@
         <file>resources/icons/user-trash.png</file>
         <file>resources/icons/user-trash-full.png</file>
         <file>resources/icons/preferences.png</file>
-        <file>resources/icons/dataset-options.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
         <file>resources/color_palette/default.json</file>
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/plugins/pluginMgr.py</file>
         <file>resources/splash@2x.png</file>
+        <file>resources/icons/zoom.png</file>
     </qresource>
 </RCC>

@@ -70,10 +70,10 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
             state->viewerState->sampleBuffers = samples;
             state->viewer->saveSettings();// viewport geometries
             state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.saveSettings();// linear filtering
-            state->viewer->window->widgetContainer.datasetOptionsWidget.saveSettings();
+            state->viewer->window->widgetContainer.zoomWidget.saveSettings();
             state->mainWindow->createViewports();
             state->viewer->loadSettings();
-            state->viewer->window->widgetContainer.datasetOptionsWidget.loadSettings();
+            state->viewer->window->widgetContainer.zoomWidget.loadSettings();
             state->viewer->window->widgetContainer.preferencesWidget.datasetAndSegmentationTab.loadSettings();
             state->mainWindow->forEachVPDo([](ViewportBase & vp) {
                 if (vp.isDocked == false && state->mainWindow->isVisible()) {

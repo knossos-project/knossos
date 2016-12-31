@@ -264,7 +264,7 @@ public:
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
     void pasteCoordinateSignal();
-    void updateDatasetOptionsWidget();
+    void updateZoomWidget();
     void snapshotTriggered(const ViewportType type);
 public slots:
     void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);

@@ -25,61 +25,59 @@
 
 #include "aboutdialog.h"
 #include "annotationwidget.h"
-#include "preferenceswidget.h"
 #include "datasetloadwidget.h"
-#include "datasetoptionswidget.h"
 #include "GuiConstants.h"
+#include "preferenceswidget.h"
+#include "pythoninterpreterwidget.h"
+#include "pythonpropertywidget.h"
 #include "snapshotwidget.h"
 #include "task/taskloginwidget.h"
 #include "task/taskmanagementwidget.h"
-#include "pythoninterpreterwidget.h"
-#include "pythonpropertywidget.h"
+#include "zoomwidget.h"
 
 #include <QSettings>
 #include <QtUiTools>
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : annotationWidget(parent), preferencesWidget(parent)
-        , datasetLoadWidget(parent), datasetOptionsWidget(parent, &datasetLoadWidget)
-        , pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
-        , snapshotWidget(parent), taskManagementWidget(parent)
-        , aboutDialog(parent)
+        : aboutDialog(parent), annotationWidget(parent), datasetLoadWidget(parent)
+        , preferencesWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
+        , snapshotWidget(parent), taskManagementWidget(parent), zoomWidget(parent, &datasetLoadWidget)
     {
-        QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &datasetOptionsWidget, &DatasetOptionsWidget::zoomDefaultsClicked);
+        QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &zoomWidget, &ZoomWidget::zoomDefaultsClicked);
         QObject::connect(&preferencesWidget.datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, &snapshotWidget, &SnapshotWidget::updateOptionVisibility);
     }
 
+    AboutDialog aboutDialog;
     AnnotationWidget annotationWidget;
-    PreferencesWidget preferencesWidget;
     DatasetLoadWidget datasetLoadWidget;
-    DatasetOptionsWidget datasetOptionsWidget;
+    PreferencesWidget preferencesWidget;
     PythonInterpreterWidget pythonInterpreterWidget;
     PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
     TaskManagementWidget taskManagementWidget;
-    AboutDialog aboutDialog;
+    ZoomWidget zoomWidget;
 
     void applyVisibility() {
         QSettings settings;
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
         preferencesWidget.setVisible(settings.value(PREFERENCES_WIDGET + '/' + VISIBLE, false).toBool());
-        datasetOptionsWidget.setVisible(settings.value(DATASET_OPTIONS_WIDGET + '/' + VISIBLE, false).toBool());
         pythonInterpreterWidget.setVisible(settings.value(PYTHON_TERMINAL_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
         snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
+        zoomWidget.setVisible(settings.value(ZOOM_WIDGET + '/' + VISIBLE, false).toBool());
     }
 
     void hideAll() {
+        aboutDialog.hide();
         annotationWidget.hide();
-        preferencesWidget.hide();
         datasetLoadWidget.hide();
-        datasetOptionsWidget.hide();
+        preferencesWidget.hide();
         pythonPropertyWidget.hide();
         pythonInterpreterWidget.hide();
         snapshotWidget.hide();
-        aboutDialog.hide();
         taskManagementWidget.hide();
+        zoomWidget.hide();
     }
 };
 

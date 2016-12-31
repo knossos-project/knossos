@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "datasetoptionswidget.h"
+#include "zoomwidget.h"
 
 #include "datasetloadwidget.h"
 #include "GuiConstants.h"
@@ -85,10 +85,10 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
     QSlider::paintEvent(ev);
 }
 
-DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
-        : DialogVisibilityNotify(DATASET_OPTIONS_WIDGET, parent), lastZoomSkel(0), userZoomSkel(true) {
-    setWindowIcon(QIcon(":/resources/icons/dataset-options.png"));
-    setWindowTitle("Dataset Options");
+ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
+        : DialogVisibilityNotify(ZOOM_WIDGET, parent), lastZoomSkel(0), userZoomSkel(true) {
+    setWindowIcon(QIcon(":/resources/icons/zoom.png"));
+    setWindowTitle("Zoom");
 
     // zoom section
     skeletonViewportSpinBox.setRange(SKELZOOMMIN * 100, SKELZOOMMAX * 100);
@@ -102,11 +102,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     orthoZoomSlider.setOrientation(Qt::Horizontal);
     orthoZoomSlider.setSingleStep(1.);
 
-    separator1.setFrameShape(QFrame::HLine);
-    separator1.setFrameShadow(QFrame::Sunken);
     int row = 0;
-    zoomLayout.addWidget(&zoomSectionLabel, row++, 0);
-    zoomLayout.addWidget(&separator1, row++, 0, 1, 2);
     zoomLayout.addWidget(&orthogonalDataViewportLabel, row, 0);
     zoomLayout.addWidget(&orthoZoomSpinBox, row++, 1);
     zoomLayout.addWidget(&orthoZoomSlider, row++, 0, 1, 2);
@@ -118,11 +114,11 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
     highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(state->highestAvailableMag));
     lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
 
-    separator2.setFrameShape(QFrame::HLine);
-    separator2.setFrameShadow(QFrame::Sunken);
+    separator.setFrameShape(QFrame::HLine);
+    separator.setFrameShadow(QFrame::Sunken);
     mainLayout.addLayout(&zoomLayout);
     mainLayout.addWidget(&multiresSectionLabel);
-    mainLayout.addWidget(&separator2);
+    mainLayout.addWidget(&separator);
     mainLayout.addWidget(&lockDatasetCheckBox);
     mainLayout.addWidget(&currentActiveMagDatasetLabel);
     mainLayout.addWidget(&highestActiveMagDatasetLabel);
@@ -225,7 +221,7 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         }
     });
 
-    connect(&zoomDefaultsButton, &QPushButton::clicked, this, &DatasetOptionsWidget::zoomDefaultsClicked);
+    connect(&zoomDefaultsButton, &QPushButton::clicked, this, &ZoomWidget::zoomDefaultsClicked);
 
     connect(&lockDatasetCheckBox, &QCheckBox::toggled, [this] (const bool on) {
         state->viewer->setMagnificationLock(on);
@@ -236,12 +232,12 @@ DatasetOptionsWidget::DatasetOptionsWidget(QWidget *parent, DatasetLoadWidget * 
         lockDatasetCheckBox.blockSignals(signalsBlocked);
         reinitializeOrthoZoomWidgets();
     });
-    connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &DatasetOptionsWidget::reinitializeOrthoZoomWidgets);
+    connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &ZoomWidget::reinitializeOrthoZoomWidgets);
 
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void DatasetOptionsWidget::applyZoom(const float newScreenPxXPerDataPx) {
+void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
     const float prevFOV = state->viewer->viewportXY->texture.FOV;
     float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
@@ -260,7 +256,7 @@ void DatasetOptionsWidget::applyZoom(const float newScreenPxXPerDataPx) {
     state->viewer->recalcTextureOffsets();
 }
 
-void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
+void ZoomWidget::reinitializeOrthoZoomWidgets() {
     const auto mags = int_log(state->viewer->highestMag()) - int_log(state->viewer->lowestMag()) + 1;
     const auto interval = 50;
 
@@ -281,21 +277,21 @@ void DatasetOptionsWidget::reinitializeOrthoZoomWidgets() {
     orthoZoomSlider.blockSignals(orthoZoomSpinBoxBlock);
 }
 
-void DatasetOptionsWidget::updateOrthogonalZoomSpinBox() {
+void ZoomWidget::updateOrthogonalZoomSpinBox() {
     orthoZoomSpinBox.blockSignals(true);
     const double newValue = state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx(false);
     orthoZoomSpinBox.setValue(newValue * 100);
     orthoZoomSpinBox.blockSignals(false);
 }
 
-void DatasetOptionsWidget::updateOrthogonalZoomSlider() {
+void ZoomWidget::updateOrthogonalZoomSlider() {
     orthoZoomSlider.blockSignals(true);
     const int newValue = std::ceil(std::log(state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep));
     orthoZoomSlider.setValue(newValue);
     orthoZoomSlider.blockSignals(false);
 }
 
-void DatasetOptionsWidget::zoomDefaultsClicked() {
+void ZoomWidget::zoomDefaultsClicked() {
     state->viewer->zoomReset();
     userZoomSkel = false;
     skeletonViewportSpinBox.setValue(100);
@@ -303,7 +299,7 @@ void DatasetOptionsWidget::zoomDefaultsClicked() {
     userZoomSkel = true;
 }
 
-void DatasetOptionsWidget::update() {
+void ZoomWidget::update() {
     updateOrthogonalZoomSlider();
     updateOrthogonalZoomSpinBox();
     skeletonViewportSpinBox.setValue(100 * state->mainWindow->viewport3D->zoomFactor);
@@ -313,9 +309,9 @@ void DatasetOptionsWidget::update() {
     lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(state->lowestAvailableMag));
 }
 
-void DatasetOptionsWidget::loadSettings() {
+void ZoomWidget::loadSettings() {
     QSettings settings;
-    settings.beginGroup(DATASET_OPTIONS_WIDGET);
+    settings.beginGroup(ZOOM_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
     auto skeletonZoom = settings.value(SKELETON_VIEW, 0).toDouble();
@@ -336,9 +332,9 @@ void DatasetOptionsWidget::loadSettings() {
     settings.endGroup();
 }
 
-void DatasetOptionsWidget::saveSettings() {
+void ZoomWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(DATASET_OPTIONS_WIDGET);
+    settings.beginGroup(ZOOM_WIDGET);
     settings.setValue(VISIBLE, isVisible());
     settings.setValue(SKELETON_VIEW, skeletonViewportSpinBox.value());
     settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, lockDatasetCheckBox.isChecked());

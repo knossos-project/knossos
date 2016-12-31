@@ -20,8 +20,8 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef DATASETOPTIONSWIDGET_H
-#define DATASETOPTIONSWIDGET_H
+#ifndef ZOOMWIDGET_H
+#define ZOOMWIDGET_H
 
 #include "widgets/DialogVisibilityNotify.h"
 
@@ -45,7 +45,7 @@ public:
     int numTicks{0};
 };
 
-class DatasetOptionsWidget : public DialogVisibilityNotify {
+class ZoomWidget : public DialogVisibilityNotify {
     friend class MainWindow;
     Q_OBJECT
 
@@ -54,10 +54,8 @@ class DatasetOptionsWidget : public DialogVisibilityNotify {
 
     QVBoxLayout mainLayout;
     QGridLayout zoomLayout;
-    QFrame separator1;
-    QFrame separator2;
+    QFrame separator;
     // zoom section
-    QLabel zoomSectionLabel{tr("Zoom Settings")};
     QLabel orthogonalDataViewportLabel{tr("Orthogonal Viewports")};
     QLabel skeletonViewportLabel{tr("Skeleton Viewport")};
     QDoubleSpinBox skeletonViewportSpinBox;
@@ -76,7 +74,7 @@ class DatasetOptionsWidget : public DialogVisibilityNotify {
     void updateOrthogonalZoomSpinBox();
     void updateOrthogonalZoomSlider();
 public:
-    explicit DatasetOptionsWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
+    explicit ZoomWidget(QWidget *, class DatasetLoadWidget * datasetLoadWidget);
 public slots:
     void zoomDefaultsClicked();
     void update();
@@ -84,4 +82,4 @@ public slots:
     void saveSettings();
 };
 
-#endif // DATASETOPTIONSWIDGET_H
+#endif // ZOOMWIDGET_H

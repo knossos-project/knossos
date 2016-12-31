@@ -1155,7 +1155,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+    QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.zoomWidget, &ZoomWidget::update);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
         if (window->viewport3D->hasCursor) {
@@ -1170,7 +1170,7 @@ void Viewer::rewire() {
     //viewport signals
     window->forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(&vp, &ViewportBase::updateDatasetOptionsWidget, &window->widgetContainer.datasetOptionsWidget, &DatasetOptionsWidget::update);
+        QObject::connect(&vp, &ViewportBase::updateZoomWidget, &window->widgetContainer.zoomWidget, &ZoomWidget::update);
     });
     // end viewport signals
 }
