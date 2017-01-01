@@ -100,7 +100,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
             const auto lhsIt = lhs.second->properties.find(property);
             const auto rhsIt = rhs.second->properties.find(property);
             const auto lhsValue = lhsIt != std::end(lhs.second->properties) ? lhsIt->toDouble() : 0.0;
-            const auto rhsValue = rhsIt != std::end(rhs.second->properties) ? lhsIt->toDouble() : 0.0;
+            const auto rhsValue = rhsIt != std::end(rhs.second->properties) ? rhsIt->toDouble() : 0.0;
             return lhsValue < rhsValue;
         });
         propertyMinSpin.setValue(minmax.first->second->properties[property].toDouble());
