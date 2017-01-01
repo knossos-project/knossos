@@ -29,6 +29,10 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+PropertyModel::PropertyModel() {
+    recreate({});
+}
+
 int PropertyModel::rowCount(const QModelIndex &) const {
     return properties.size();
 }
@@ -56,7 +60,6 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     overrideNodeRadiusSpin.setSingleStep(0.1);
     overrideNodeRadiusSpin.setSuffix(" px");
     edgeNodeRatioSpin.setSingleStep(0.1);
-    propertyModel.recreate({});
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
     propertyRadiusScaleSpin.setSingleStep(0.5);

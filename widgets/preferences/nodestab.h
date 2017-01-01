@@ -42,6 +42,7 @@ class PropertyModel : public QAbstractListModel {
     friend class NodesTab;
     std::vector<QString> properties;
 public:
+    PropertyModel();
     virtual int rowCount(const QModelIndex &) const override;
     virtual QVariant data(const QModelIndex & index, int role) const override;
     void recreate(const QSet<QString> & numberProperties);
