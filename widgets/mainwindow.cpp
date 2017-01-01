@@ -226,8 +226,8 @@ void MainWindow::createToolbars() {
     basicToolbar.setFloatable(false);
     basicToolbar.setIconSize(QSize(24, 24));
 
-    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open annotation", this, SLOT(openSlot()));
-    basicToolbar.addAction(QIcon(":/resources/icons/save-annotation.png"), "Save annotation", this, SLOT(saveSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/save-annotation.png"), "Save Annotation", this, SLOT(saveSlot()));
     basicToolbar.addSeparator();
     workModeModel.recreate(workModes);
     modeCombo.setModel(&workModeModel);
@@ -468,42 +468,42 @@ void MainWindow::updateRecentFile(const QString & fileName) {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/open-dataset.png"), tr("Choose dataset…"), &widgetContainer.datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/toolbar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, SLOT(show()));
     fileMenu.addSeparator();
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/annotation.png"), tr("Create new annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/open-annotation.png"), tr("Load annotation…"), this, &MainWindow::openSlot, QKeySequence::Open);
-    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/document-open-recent.png"), tr("Recent annotation file(s)"));
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/create-annotation.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/open-annotation.png"), tr("Open Annotation …"), this, &MainWindow::openSlot, QKeySequence::Open);
+    auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/toolbar/open-recent.png"), tr("Recent Annotation File(s)"));
     int i = 0;
     for (auto & elem : historyEntryActions) {
-        elem = recentfileMenu.addAction(QIcon(":/resources/icons/document-open-recent.png"), "");
+        elem = recentfileMenu.addAction(QIcon(":/resources/icons/toolbar/open-recent.png"), "");
         elem->setVisible(false);
         QObject::connect(elem, &QAction::triggered, [this, i](){
             openFileDispatch({skeletonFileHistory.at(i)});
         });
         ++i;
     }
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/save-annotation.png"), tr("Save annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/document-save-as.png"), tr("Save annotation as…"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/save-annotation.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/save-annotation-as.png"), tr("Save Annotation as …"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
     fileMenu.addSeparator();
     fileMenu.addAction(tr("Export to nml..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/system-shutdown.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/quit.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     //advanced skeleton
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
-    newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
+    newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     //skeleton
-    pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push branch node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
-    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop branch node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
+    pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
+    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     actionMenu.addSeparator();
 
-    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create synapse"), this, [this]() {
+    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             if (state->skeletonState->activeNode != nullptr) {
                 if(state->viewer->window->synapseState == SynapseState::Off) {
                     state->viewer->window->toggleSynapseState(); //update statusbar
-                    createSynapse->setText(tr("Finish synapse"));
+                    createSynapse->setText(tr("Finish Synapse"));
                     createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
                     createSynapse->setShortcut(Qt::Key_C);
                     Skeletonizer::singleton().continueSynapse();
@@ -520,33 +520,33 @@ void MainWindow::createMenus() {
         }
     }, Qt::ShiftModifier + Qt::Key_C);
 
-    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse synapse direction"),
+    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse Synapse Direction"),
                                                 this, [this](){ widgetContainer.annotationWidget.skeletonTab.reverseSynapseDirection(); },
                                                 Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
 
     actionMenu.addSeparator();
-    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear skeleton", this, SLOT(clearSkeletonSlot()));
+    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/toolbar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     actionMenu.addSeparator();
     //segmentation
     auto setOverlayOpacity = [this](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
-    increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase overlay opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
-    decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease overlay opacity"), this, [&]() { setOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
-    enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase brush size (Shift + scroll)"), &Segmentation::singleton(),
+    increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
+    decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Overlay Opacity"), this, [&]() { setOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
+    enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
                                                  []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1); }, Qt::SHIFT + Qt::Key_Plus);
-    shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease brush size (Shift + scroll)"), &Segmentation::singleton(),
+    shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
                                                 []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1); }, Qt::SHIFT + Qt::Key_Minus);
 
     actionMenu.addSeparator();
-    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/user-trash.png"), "Clear merge list", &Segmentation::singleton(), SLOT(clear()));
+    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/toolbar/trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
     //proof reading mode
     modeSwitchSeparator = actionMenu.addSeparator();
-    setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
-    setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
+    setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
+    setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
 
     compressionToggleSeparator = actionMenu.addSeparator();
-    compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle dataset compression: none"), this, [this]() {
+    compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
         static uint originalCompressionRatio;
         if (state->compressionRatio != 0) {
             originalCompressionRatio = state->compressionRatio;
@@ -561,7 +561,7 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to active node"), &Skeletonizer::singleton(), [this]() {
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
         auto pointcloudPriority = !viewport3D->pointCloudLastClickCurrentlyVisited || !state->skeletonState->activeNode;
         if (viewport3D->pointCloudLastClickInformation && pointcloudPriority) {
             state->viewer->setPosition(viewport3D->pointCloudLastClickInformation.get().coord);
@@ -571,12 +571,12 @@ void MainWindow::createMenus() {
             viewport3D->pointCloudLastClickCurrentlyVisited = false;
         }
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Next node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous node in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Next tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous tree in table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Next Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Next Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
 
     viewMenu->addSeparator();
 
@@ -603,29 +603,29 @@ void MainWindow::createMenus() {
     });
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
-    preferenceMenu->addAction(tr("Load custom preferences"), this, SLOT(loadCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Save custom preferences"), this, SLOT(saveCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Reset to default preferences"), this, SLOT(defaultPreferencesSlot()));
+    preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
+    preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
+    preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(QIcon(":/resources/icons/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/toolbar/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
 
     auto windowMenu = menuBar()->addMenu("&Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/snapshot.png"), tr("Take a snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/toolbar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/toolbar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/toolbar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/toolbar/snapshot.png"), tr("Take a Snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
     scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
     scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
-    scriptingMenu->addAction(QIcon(":/resources/icons/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
+    scriptingMenu->addAction(QIcon(":/resources/icons/toolbar/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
     refreshPluginMenu();
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
     addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
-    helpMenu.addAction(QIcon(":/resources/icons/knossos.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
+    helpMenu.addAction(QIcon(":/resources/icons/toolbar/about.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

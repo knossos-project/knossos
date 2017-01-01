@@ -1,25 +1,3 @@
-<!--
-    This file is a part of KNOSSOS.
-
-    (C) Copyright 2007-2016
-    Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
-
-    KNOSSOS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License version 2 of
-    the License as published by the Free Software Foundation.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-    For further information, visit https://knossostool.org
-    or contact knossos-team@mpimf-heidelberg.mpg.de
--->
-
 <RCC>
     <qresource prefix="/">
         <file>resources/splash.png</file>
@@ -32,9 +10,6 @@
         <file>resources/icons/configure-toolbars.png</file>
         <file>resources/icons/dialog-ok.png</file>
         <file>resources/icons/document-open.png</file>
-        <file>resources/icons/document-open-recent.png</file>
-        <file>resources/icons/save-annotation.png</file>
-        <file>resources/icons/document-save-as.png</file>
         <file>resources/icons/edit-copy.png</file>
         <file>resources/icons/edit-paste.png</file>
         <file>resources/icons/annotation.png</file>
@@ -44,14 +19,11 @@
         <file>resources/icons/network-connect.png</file>
         <file>resources/icons/network-disconnect.png</file>
         <file>resources/icons/open-annotation.png</file>
-        <file>resources/icons/open-dataset.png</file>
         <file>resources/icons/python.png</file>
         <file>resources/icons/resize.gif</file>
         <file>resources/icons/system-shutdown.png</file>
         <file>resources/icons/tasks-management.png</file>
         <file>resources/icons/text-x-readme.png</file>
-        <file>resources/icons/user-trash.png</file>
-        <file>resources/icons/user-trash-full.png</file>
         <file>resources/icons/preferences.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
@@ -59,6 +31,22 @@
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/plugins/pluginMgr.py</file>
         <file>resources/splash@2x.png</file>
+        <file>resources/icons/toolbar/save-annotation.png</file>
+        <file>resources/icons/toolbar/save-annotation-as.png</file>
+        <file>resources/icons/toolbar/open-recent.png</file>
+        <file>resources/icons/toolbar/choose-dataset.png</file>
+        <file>resources/icons/toolbar/create-annotation.png</file>
+        <file>resources/icons/toolbar/open-annotation.png</file>
+        <file>resources/icons/toolbar/trash.png</file>
+        <file>resources/icons/toolbar/annotation.png</file>
+        <file>resources/icons/toolbar/snapshot.png</file>
+        <file>resources/icons/toolbar/tasks-management.png</file>
+        <file>resources/icons/toolbar/zoom.png</file>
+        <file>resources/icons/toolbar/about.png</file>
+        <file>resources/icons/toolbar/python.png</file>
+        <file>resources/icons/toolbar/quit.png</file>
+        <file>resources/icons/toolbar/preferences.png</file>
+        <file>resources/icons/save-annotation.png</file>
         <file>resources/icons/zoom.png</file>
     </qresource>
 </RCC>
