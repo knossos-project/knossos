@@ -489,6 +489,18 @@ void MainWindow::createMenus() {
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/toolbar/quit.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
+    compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
+        static uint originalCompressionRatio;
+        if (state->compressionRatio != 0) {
+            originalCompressionRatio = state->compressionRatio;
+            state->compressionRatio = 0;
+        } else {
+            state->compressionRatio = originalCompressionRatio;
+        }
+        state->viewer->updateDatasetMag();
+        updateCompressionRatioDisplay();
+    }, Qt::Key_F4);
+    compressionToggleSeparator = actionMenu.addSeparator();
     //advanced skeleton
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
@@ -545,18 +557,6 @@ void MainWindow::createMenus() {
     setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
     setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
 
-    compressionToggleSeparator = actionMenu.addSeparator();
-    compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
-        static uint originalCompressionRatio;
-        if (state->compressionRatio != 0) {
-            originalCompressionRatio = state->compressionRatio;
-            state->compressionRatio = 0;
-        } else {
-            state->compressionRatio = originalCompressionRatio;
-        }
-        state->viewer->updateDatasetMag();
-        updateCompressionRatioDisplay();
-    }, Qt::Key_F4);
     menuBar()->addMenu(&actionMenu);
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
