@@ -580,7 +580,7 @@ void MainWindow::createMenus() {
 
     viewMenu->addSeparator();
 
-    viewMenu->addAction("Navigation Settings", [this](){
+    viewMenu->addAction(QIcon(":/resources/icons/menubar/preferences.png"), "Navigation Settings", [this](){
         widgetContainer.preferencesWidget.setVisible(true);
         widgetContainer.preferencesWidget.tabs.setCurrentIndex(5);
 
@@ -597,7 +597,7 @@ void MainWindow::createMenus() {
     }
 
     commentsMenu->addSeparator();
-    commentsMenu->addAction("Comment Settings", [this](){
+    commentsMenu->addAction(QIcon(":/resources/icons/menubar/preferences.png"), "Comment Settings", [this](){
         widgetContainer.annotationWidget.setVisible(true);
         widgetContainer.annotationWidget.tabs.setCurrentIndex(2);
     });
