@@ -155,10 +155,10 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
         overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
     });
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](){ propertyMinMaxButton.setEnabled(true); });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){ propertyMinMaxButton.setEnabled(true); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
 }
 
 void NodesTab::updateProperties(const QSet<QString> & numberProperties) {
