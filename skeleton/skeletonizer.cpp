@@ -1854,7 +1854,7 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
     } else {
         throw std::runtime_error("LoadPointCloud: parsing failed, file too short");
     }
-    if (version == "5.0") {
+    if (version == "v0") {
         // read number of vertices
         unsigned int numVertices = 0;
         bool validHead = true;
