@@ -81,14 +81,36 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             QuaZipFile file(&archive);
             Segmentation::singleton().jobLoad(file);
         }
-        if (archive.setCurrentFile("hull_points.xyz")) {
-            QuaZipFile file(&archive);
-            Skeletonizer::singleton().loadHullPoints(file);
-        }
-        //load skeleton last as it may depend on a loaded segmentation
+        //load skeleton after mergelist as it may depend on a loaded segmentation
+        std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
         if (archive.setCurrentFile("annotation.xml")) {
             QuaZipFile file(&archive);
-            state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+        }
+        for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
+            const QRegularExpression pointCloudRegEx(R"regex([0-9]*.xyz)regex");
+            auto fileName = archive.getCurrentFileName();
+            const auto matchPointCloud = pointCloudRegEx.match(fileName);
+            if (matchPointCloud.hasMatch()) {
+                QuaZipFile file(&archive);
+                auto nameWithoutExtension = fileName;
+                nameWithoutExtension.chop(4);
+                bool validId = false;
+                auto treeId = boost::make_optional<std::uint64_t>(nameWithoutExtension.toULongLong(&validId));
+                if (!validId) {
+                    qDebug() << "Filename not of the form <tree id>.xyz, so loading as new tree:" << fileName;
+                    treeId = boost::none;
+                } else if (state->skeletonState->mergeOnLoadFlag) {
+                    const auto iter = treeMap.find(treeId.get());
+                    if (iter != std::end(treeMap)) {
+                        treeId = iter->second.get().treeID;
+                    } else {
+                        qDebug() << "Tree not found for this point cloud, loading as new tree:" << fileName;
+                        treeId = boost::none;
+                    }
+                }
+                Skeletonizer::singleton().loadPointCloud(file, treeId);
+            }
         }
         state->viewer->loader_notify();
     } else {

@@ -224,10 +224,6 @@ public:
     template<typename T>
     void setComment(T & elem, const QString & newContent);
 
-    void loadHullPoints(QIODevice &);
-    static std::unique_ptr<std::vector<QVector3D>> tmp_hull_points;
-    static std::unique_ptr<std::vector<QVector3D>> tmp_hull_normals;
-
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const decltype(treeListElement::treeID) treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
     void selectNodes(QSet<nodeListElement *> nodes);
@@ -259,7 +255,7 @@ public:
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(decltype(treeListElement::treeID) treeID);
 
-    void loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
     void saveXmlSkeleton(QIODevice &file) const;
 
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
@@ -289,7 +285,8 @@ public:
     const QSet<QString> getTextProperties() const { return textProperties; }
     void convertToNumberProperty(const QString & property);
 
-    void addPointCloudToTree(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode = 0, bool swap_xy = false);
+    void loadPointCloud(QIODevice &, const boost::optional<decltype(treeListElement::treeID)> treeID);
+    void addPointCloudToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode = 0, bool swap_xy = false);
     void deletePointcloudOfTree(std::uint64_t tree_id);
 signals:
     void guiModeLoaded();

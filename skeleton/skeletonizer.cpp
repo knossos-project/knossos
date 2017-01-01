@@ -85,49 +85,6 @@ Skeletonizer::Skeletonizer() {
     QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
 }
 
-#include <QVector3D> // tmp
-std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_points = nullptr;
-std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_normals = nullptr;
-
-void Skeletonizer::loadHullPoints(QIODevice & file) {
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::runtime_error("loadHullPoints open failed");
-    }
-    QTextStream stream(&file);
-    QString line;
-
-    std::vector<QVector3D> point_data_verts;
-    std::vector<QVector3D> point_data_normals;
-
-    while (!(line = stream.readLine()).isNull()) {
-        std::istringstream lineStream(line.toStdString());
-
-        bool valid = true;
-        QVector3D current_point_data_verts;
-        QVector3D current_point_data_normals;
-        for(std::size_t i = 0; i < 3; ++i) {
-            valid = valid && (lineStream >> current_point_data_verts[i]);
-        }
-        for(std::size_t i = 0; i < 3; ++i) {
-            valid = valid && (lineStream >> current_point_data_normals[i]);
-        }
-
-        if(valid) {
-            point_data_verts.emplace_back(current_point_data_verts);
-            point_data_normals.emplace_back(current_point_data_normals);
-        } else {
-            qDebug() << "loadHullPoints loading a point failed";
-        }
-    }
-
-    for(auto& verty : point_data_verts) {
-        verty /= 16.0f;
-    }
-
-    tmp_hull_points = std::make_unique<std::vector<QVector3D>>(point_data_verts);
-    tmp_hull_normals = std::make_unique<std::vector<QVector3D>>(point_data_normals);
-}
-
 treeListElement* Skeletonizer::findTreeByTreeID(decltype(treeListElement::treeID) treeID) {
     const auto treeIt = state->skeletonState->treesByID.find(treeID);
     return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
@@ -381,7 +338,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndDocument();
 }
 
-void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
+std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("loadXmlSkeleton open failed");
     }
@@ -813,6 +770,7 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
         msgBox.setInformativeText(msg);
         msgBox.exec();
     }
+    return treeMap;
 }
 
 bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt) {
@@ -1881,8 +1839,91 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     });
 }
 
-void Skeletonizer::addPointCloudToTree(std::uint64_t treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
-    auto * tree = findTreeByTreeID(treeID);
+void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("loadPointCloud open failed");
+    }
+    QTextStream stream(&file);
+    QString line;
+
+    // read version
+    bool validVersion = true;
+    QString version;
+    if((validVersion = !(line = stream.readLine()).isNull())) {
+        version = line;
+    } else {
+        throw std::runtime_error("LoadPointCloud: parsing failed, file too short");
+    }
+    if (version == "5.0") {
+        // read number of vertices
+        unsigned int numVertices = 0;
+        bool validHead = true;
+        if((validHead = !(line = stream.readLine()).isNull())) {
+            numVertices = line.toUInt(&validHead);
+            validHead = validHead && numVertices % 3 == 0;
+        }
+        if (validHead == false) {
+            throw std::runtime_error("LoadPointCloud: parsing failed, illegal number of vertices");
+        }
+
+        // read vertices and colors
+        QVector<float> vertices;
+        QVector<float> colors;
+        for (std::size_t i = 0; i < numVertices; i++) {
+            if (!(line = stream.readLine()).isNull()) {
+                std::istringstream lineStream(line.toStdString());
+
+                QVector<float> vertex(3);
+                QVector<float> color(4);
+                bool validVertex = true;
+                for(std::size_t i = 0; i < 3; ++i) {
+                    validVertex = validVertex && (lineStream >> vertex[i]);
+                }
+                bool validColor = true;
+                for(std::size_t i = 0; i < 4; ++i) {
+                    validColor = validColor && (lineStream >> color[i]);
+                }
+                if(validVertex) {
+                    vertices.append(vertex);
+                } else {
+                    qDebug() << "loadPointCloud: loading a point failed";
+                }
+                if (validColor) {
+                    colors.append(color);
+                }
+            } else {
+               throw std::runtime_error("LoadPointCloud: parsing failed, file too short");
+            }
+        }
+        const auto correctSizeColors = vertices.size()/3 * 4;
+        if (colors.size() != correctSizeColors) {
+            qDebug() << tr("loadPointCloud: Incorrect number of colors (%1 instead of %2). Using tree color instead.").arg(colors.size()).arg(correctSizeColors);
+            colors.clear();
+        }
+
+        // read indices
+        QVector<unsigned int> indices;
+        bool validIndex = true;
+        while(!(line = stream.readLine()).isNull()) {
+            unsigned int index = line.toUInt(&validIndex);
+            if (validIndex) {
+                indices.append(index);
+            } else {
+                throw std::runtime_error("LoadPointCloud: parsing failed, invalid index");
+            }
+        }
+        if (indices.size() % 3 != 0) {
+            throw std::runtime_error("LoadPointCloud: parsing failed, invalid number of indices (must be multiple of 3)");
+        }
+        QVector<float> normals;
+        addPointCloudToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
+    } else {
+        throw std::runtime_error("LoadPointCloud: parsing failed, unrecognized version: " + version.toStdString());
+    }
+}
+
+void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
+    auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
         tree = &addTree(treeID);
     }
