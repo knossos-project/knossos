@@ -155,6 +155,11 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
         overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
     });
 
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, this, &NodesTab::updateProperties);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){
+        updateProperties(Skeletonizer::singleton().getNumberProperties());
+    });
+
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });

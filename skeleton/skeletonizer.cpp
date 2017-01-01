@@ -78,6 +78,13 @@ bool connectedComponent(T & node, Func func) {
 Synapse::State Synapse::state = Synapse::State::PreSynapse;
 Synapse Synapse::temporarySynapse = Synapse();
 
+Skeletonizer::Skeletonizer() {
+    state->skeletonState = &skeletonState;
+
+    QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
+    QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
+}
+
 #include <QVector3D> // tmp
 std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_points = nullptr;
 std::unique_ptr<std::vector<QVector3D>> Skeletonizer::tmp_hull_normals = nullptr;
@@ -756,9 +763,6 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
 
     blockSignals(blockState);
     emit resetData();
-    emit lockingChanged();
-    emit propertiesChanged(numberProperties);
-    emit guiModeLoaded();
 
     qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";
 

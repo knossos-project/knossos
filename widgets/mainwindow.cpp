@@ -93,7 +93,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, &widgetContainer.preferencesWidget.nodesTab, &NodesTab::updateProperties);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) {
         nodeLockingLabel.setText(tr("Locked to node %1").arg(nodeID));
@@ -738,8 +737,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
-    Skeletonizer::singleton().lockingChanged();
-    widgetContainer.preferencesWidget.nodesTab.updateProperties(Skeletonizer::singleton().getNumberProperties());
 
     Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
     if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…

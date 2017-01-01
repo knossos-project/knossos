@@ -199,9 +199,7 @@ public:
     void notifyChanged(nodeListElement & node);
 
     SkeletonState skeletonState;
-    Skeletonizer() {
-        state->skeletonState = &skeletonState;
-    }
+    Skeletonizer();
     static Skeletonizer & singleton() {
         static Skeletonizer skeletonizer;
         return skeletonizer;
