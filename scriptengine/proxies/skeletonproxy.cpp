@@ -93,8 +93,9 @@ void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts,
     if (indices.empty()) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: indices required").toStdString());
     }
-    if (!color.empty() && color.size() != verts.size() * 4) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(verts.size() * 4).arg(color.size()).toStdString());
+    const auto correctColorSize = verts.size()/3 * 4;
+    if (!color.empty() && color.size() != correctColorSize) {
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(correctColorSize).arg(color.size()).toStdString());
     }
     Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
 }
