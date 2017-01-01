@@ -672,7 +672,9 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
                                 } else if (name == "time") {
                                     ms = {value.toULongLong()};
                                 } else if (name != "comment") { // comments are added later in the comments section
-                                    properties.insert(name.toString(), value.toString());
+                                    const auto property = name.toString();
+                                    properties.insert(property, value.toString());
+                                    textProperties.insert(property);
                                 }
                             }
 
@@ -712,6 +714,11 @@ void Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMu
     xml.readNext();//</things>
     if(xml.hasError()) {
         throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
+    }
+
+
+    for (const auto & property : numberProperties) {
+        textProperties.remove(property);
     }
 
     auto getElem = [](const auto & map, const auto id, auto findByID){
@@ -1667,6 +1674,23 @@ float Skeletonizer::radius(const nodeListElement & node) const {
         }
     }
     return state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : node.radius;
+}
+
+void Skeletonizer::convertToNumberProperty(const QString & property) {
+    if (numberProperties.contains(property)) {
+        throw std::runtime_error("no conversion for number properties");
+    }
+    for (auto pair : skeletonState.nodesByNodeID) {
+        auto & node = *pair.second;
+        const auto it = node.properties.find(property);
+        if (it != std::end(node.properties)) {
+            node.properties[property] = it->toDouble();
+            emit nodeChangedSignal(node);
+        }
+    }
+    numberProperties.insert(property);
+    textProperties.remove(property);
+    emit propertiesChanged(numberProperties, textProperties);
 }
 
 void Skeletonizer::goToNode(const NodeGenerator::Direction direction) {

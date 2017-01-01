@@ -286,6 +286,8 @@ public:
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }
+    const QSet<QString> getTextProperties() const { return textProperties; }
+    void convertToNumberProperty(const QString & property);
 
     void addPointCloudToTree(std::uint64_t tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode = 0, bool swap_xy = false);
     void deletePointcloudOfTree(std::uint64_t tree_id);
@@ -300,7 +302,7 @@ signals:
     void nodeChangedSignal(const nodeListElement & node);
     void nodeRemovedSignal(const std::uint64_t nodeID);
     void jumpedToNodeSignal(const nodeListElement & node);
-    void propertiesChanged(const QSet<QString> & numberProperties);
+    void propertiesChanged(const QSet<QString> & numberProperties, const QSet<QString> & textProperties);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
     void treeRemovedSignal(const std::uint64_t treeID);
@@ -308,7 +310,6 @@ signals:
     void nodeSelectionChangedSignal();
     void treeSelectionChangedSignal();
     void resetData();
-
 };
 
 #endif // SKELETONIZER_H

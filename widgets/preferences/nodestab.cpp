@@ -30,7 +30,7 @@
 #include <QMessageBox>
 
 PropertyModel::PropertyModel() {
-    recreate({});
+    recreate({}, {});
 }
 
 int PropertyModel::rowCount(const QModelIndex &) const {
@@ -39,19 +39,24 @@ int PropertyModel::rowCount(const QModelIndex &) const {
 
 QVariant PropertyModel::data(const QModelIndex & index, int role) const {
     if (role == Qt::DisplayRole) {
-        return properties[index.row()];
+        return properties[index.row()] + (index.row() > numberPropertySize ? " (needs conversion)" : "");
     }
     return QVariant();
 }
 
-void PropertyModel::recreate(const QSet<QString> & numberProperties)  {
+void PropertyModel::recreate(const QSet<QString> & numberProperties, const QSet<QString> & textProperties)  {
     beginResetModel();
     properties.clear();
     for (const auto & property : numberProperties) {
         properties.emplace_back(property);
     }
     std::sort(std::begin(properties), std::end(properties));
+    for (const auto & property : textProperties) {
+        properties.emplace_back(property);
+    }
+    std::sort(std::next(std::begin(properties), numberProperties.size()), std::end(properties));
     properties.insert(std::begin(properties), "none (select property)");
+    numberPropertySize = numberProperties.size();
     endResetModel();
 }
 
@@ -122,21 +127,49 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
+    static auto propertyConversionCheck = [this](auto index, auto property){
+        if (index == Skeletonizer::singleton().getNumberProperties().size() + 1) {
+            QMessageBox msgBox{this};
+            msgBox.setIcon(QMessageBox::Question);
+            msgBox.setText(tr("Property »%1« is not registered as evaluateable. ").arg(property));
+            msgBox.setInformativeText("The conversion process will overwrite all values which cannot be interpreted as a number with 0. "
+                                      "\nThe property will be marked as all-number in the annotation file. ");
+            auto * doit = msgBox.addButton(tr("Convert Property"), QMessageBox::AcceptRole);
+            msgBox.addButton(QMessageBox::Cancel);
+            msgBox.setDefaultButton(doit);
+            msgBox.exec();
+            if (msgBox.clickedButton() == doit) {
+                Skeletonizer::singleton().convertToNumberProperty(property);
+                propertyColorCombo.setCurrentText(property);
+            } else {
+                propertyColorCombo.setCurrentIndex(0);
+                return false;
+            }
+        }
+        return true;
+    };
+
     QObject::connect(&propertyRadiusCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
-        state->viewerState->highlightedNodePropertyByRadius = (index > 0) ? propertyModel.properties[index] : "";
-        propertyRadiusScaleSpin.setEnabled(index > 0);
+        const auto property = (index > 0) ? propertyModel.properties[index] : "";
+        if (propertyConversionCheck(index, property)) {
+            state->viewerState->highlightedNodePropertyByColor = property;
+            propertyRadiusScaleSpin.setEnabled(index > 0);
+        }
     });
     QObject::connect(&propertyRadiusScaleSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->nodePropertyRadiusScale = value; });
     QObject::connect(&propertyColorCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
-        const auto property = state->viewerState->highlightedNodePropertyByColor = (index > 0) ? propertyModel.properties[index] : "";
-        propertyMinSpin.setEnabled(index > 0);
-        propertyMaxSpin.setEnabled(index > 0);
-        propertyMinMaxButton.setEnabled(index > 0);
-        propertyLUTButton.setEnabled(index > 0);
-        lutLabel.setEnabled(index > 0);
-        if (index > 0) {
-            findAndSetPropertyRange(property);
-            loadNodeLUTRequest(lutPath);
+        const auto property = (index > 0) ? propertyModel.properties[index] : "";
+        if (propertyConversionCheck(index, property)) {
+            state->viewerState->highlightedNodePropertyByColor = property;
+            propertyMinSpin.setEnabled(index > 0);
+            propertyMaxSpin.setEnabled(index > 0);
+            propertyMinMaxButton.setEnabled(index > 0);
+            propertyLUTButton.setEnabled(index > 0);
+            lutLabel.setEnabled(index > 0);
+            if (index > 0) {
+                findAndSetPropertyRange(state->viewerState->highlightedNodePropertyByColor);
+                loadNodeLUTRequest(lutPath);
+            }
         }
     });
     QObject::connect(&propertyMinSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value){
@@ -157,7 +190,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, this, &NodesTab::updateProperties);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){
-        updateProperties(Skeletonizer::singleton().getNumberProperties());
+        updateProperties(Skeletonizer::singleton().getNumberProperties(), Skeletonizer::singleton().getTextProperties());
     });
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
@@ -166,10 +199,10 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this](){ propertyMinMaxButton.setEnabled(propertyColorCombo.currentIndex() != 0); });
 }
 
-void NodesTab::updateProperties(const QSet<QString> & numberProperties) {
+void NodesTab::updateProperties(const QSet<QString> & numberProperties, const QSet<QString> & textProperties) {
     const auto radiusText = propertyRadiusCombo.currentText();
     const auto colorText = propertyColorCombo.currentText();
-    propertyModel.recreate(numberProperties);
+    propertyModel.recreate(numberProperties, textProperties);
     propertyRadiusCombo.setCurrentText(radiusText);
     propertyColorCombo.setCurrentText(colorText);
 }

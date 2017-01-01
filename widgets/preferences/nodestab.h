@@ -41,15 +41,15 @@ class PropertyModel : public QAbstractListModel {
     Q_OBJECT
     friend class NodesTab;
     std::vector<QString> properties;
+    int numberPropertySize{0};
 public:
     PropertyModel();
     virtual int rowCount(const QModelIndex &) const override;
     virtual QVariant data(const QModelIndex & index, int role) const override;
-    void recreate(const QSet<QString> & numberProperties);
+    void recreate(const QSet<QString> & numberProperties, const QSet<QString> & textProperties);
 };
 
-class NodesTab : public QWidget
-{
+class NodesTab : public QWidget {
     friend class PreferencesWidget;
     Q_OBJECT
     QVBoxLayout mainLayout;
@@ -81,10 +81,7 @@ class NodesTab : public QWidget
     void loadSettings(const QSettings &settings);
 public:
     explicit NodesTab(QWidget *parent = 0);
-    void updateProperties(const QSet<QString> & numberProperties);
-signals:
-
-public slots:
+    void updateProperties(const QSet<QString> & properties, const QSet<QString> & textProperties);
 };
 
 #endif // NODESTAB_H
