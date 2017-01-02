@@ -122,6 +122,8 @@ Q_OBJECT
     QLabel touchedObjectsLabel{"<strong>Objects containing subobject</strong>"};
     QTreeView touchedObjsTable;
     QTreeView objectsTable;
+    QMenu touchedObjsContextMenu{&touchedObjsTable};
+    QMenu objectsContextMenu{&objectsTable};
     int objSortSectionIndex;
     int touchedObjSortSectionIndex;
     QHBoxLayout bottomHLayout;
@@ -133,7 +135,6 @@ Q_OBJECT
 
     bool objectSelectionProtection = false;
     bool touchedObjectSelectionProtection = false;
-
 public:
     explicit SegmentationView(QWidget * const parent = nullptr);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
@@ -143,8 +144,6 @@ public:
     void updateLabels();
     uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
     uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
-
-    void contextMenu(const QTreeView & table, const QPoint & pos);
 public slots:
     void filter();
 };
