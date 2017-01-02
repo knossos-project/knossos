@@ -75,9 +75,6 @@ bool connectedComponent(T & node, Func func) {
     return false;
 }
 
-Synapse::State Synapse::state = Synapse::State::PreSynapse;
-Synapse Synapse::temporarySynapse = Synapse();
-
 Skeletonizer::Skeletonizer() {
     state->skeletonState = &skeletonState;
 
@@ -1447,15 +1444,15 @@ template void Skeletonizer::setComment(nodeListElement &, const QString & newCon
  * 3. Next node is a postsynapse
  */
 void Skeletonizer::continueSynapse() {
-    if(Synapse::state == Synapse::State::PreSynapse) { //set active Node as presynapse
+    if(skeletonState.synapseState == Synapse::State::PreSynapse) { //set active Node as presynapse
         if (skeletonState.activeNode != nullptr) {
-            Synapse::temporarySynapse.setPreSynapse(*skeletonState.activeNode);
+            skeletonState.temporarySynapse.setPreSynapse(*skeletonState.activeNode);
             auto & synapticCleft = addTree();
-            Synapse::temporarySynapse.setCleft(synapticCleft);
-            Synapse::state = Synapse::State::Cleft;
+            skeletonState.temporarySynapse.setCleft(synapticCleft);
+            skeletonState.synapseState = Synapse::State::Cleft;
         }
-    } else if(Synapse::state == Synapse::State::Cleft) {
-        Synapse::state = Synapse::State::PostSynapse;
+    } else if(skeletonState.synapseState == Synapse::State::Cleft) {
+        skeletonState.synapseState = Synapse::State::PostSynapse;
     }
 }
 

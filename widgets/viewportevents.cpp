@@ -229,14 +229,14 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
 
             clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, state->boundary);// Do not allow clicks outside the dataset
 
-            if(Synapse::state == Synapse::State::PostSynapse) {
+            if(state->skeletonState->synapseState == Synapse::State::PostSynapse) {
                 //The synapse workflow has been interrupted
                 //Reset the synapse
-                auto & tempSynapse = Synapse::temporarySynapse;
+                auto & tempSynapse = state->skeletonState->temporarySynapse;
                 if (tempSynapse.getPreSynapse()) { tempSynapse.getPreSynapse()->isSynapticNode = false; }
                 Skeletonizer::singleton().delTree(tempSynapse.getCleft()->treeID);
                 tempSynapse = Synapse(); //reset temporary class
-                Synapse::state = Synapse::State::PreSynapse;
+                state->skeletonState->synapseState = Synapse::State::PreSynapse;
                 state->viewer->window->setSynapseState(SynapseState::Off); //reset statusbar entry
             }
         }
@@ -260,13 +260,13 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         if (mainWin.segmentState == SegmentState::Off_Once) {
             mainWin.setSegmentState(SegmentState::On);
         }
-        if(Synapse::state == Synapse::State::PostSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
-            auto & tempSynapse = Synapse::temporarySynapse;
+        if(state->skeletonState->synapseState == Synapse::State::PostSynapse && state->skeletonState->activeTree->nodes.size() == 1) {
+            auto & tempSynapse = state->skeletonState->temporarySynapse;
             tempSynapse.setPostSynapse(*state->skeletonState->activeNode);
             if (tempSynapse.getCleft() && tempSynapse.getPreSynapse() && tempSynapse.getPostSynapse()) {
                 Skeletonizer::singleton().addFinishedSynapse(*tempSynapse.getCleft(), *tempSynapse.getPreSynapse(), *tempSynapse.getPostSynapse()); //move finished synapse to our synapse vector
             }
-            Synapse::state = Synapse::State::PreSynapse;
+            state->skeletonState->synapseState = Synapse::State::PreSynapse;
             tempSynapse = Synapse(); //reset temporary class
             state->viewer->window->toggleSynapseState(); //update statusbar
         }

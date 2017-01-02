@@ -1937,11 +1937,11 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
-    const bool synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
+    const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
     const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         // focus on synapses, darken rest of skeleton
-        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &Synapse::temporarySynapse)
+        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
                 || (activeSynapse && activeSynapse->getCleft() != &currentTree);
         const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
         const bool selectionFilter = onlySelected && !currentTree.selected;

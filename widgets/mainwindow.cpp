@@ -1242,7 +1242,7 @@ void MainWindow::resetViewports() {
 }
 
 void MainWindow::newTreeSlot() {
-    if(Synapse::state == Synapse::State::Cleft) {
+    if(state->skeletonState->synapseState == Synapse::State::Cleft) {
         Skeletonizer::singleton().continueSynapse(); //finish synaptic cleft
         state->viewer->window->toggleSynapseState(); //update statusbar
         createSynapse->setShortcutContext(Qt::ApplicationShortcut);

@@ -1249,11 +1249,11 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
     const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
-    const auto synapseBuilding = Synapse::state != Synapse::State::PreSynapse;
+    const auto synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
     auto partOfSynapse = [&node](const Synapse * synapse) {
         return node.correspondingSynapse == synapse || synapse->getCleft() == node.correspondingTree;
     };
-    if ((activeSynapse && !partOfSynapse(activeSynapse)) || (synapseBuilding && !partOfSynapse(&Synapse::temporarySynapse))) {
+    if ((activeSynapse && !partOfSynapse(activeSynapse)) || (synapseBuilding && !partOfSynapse(&state->skeletonState->temporarySynapse))) {
         color.setAlpha(Synapse::darkenedAlpha);
     }
 

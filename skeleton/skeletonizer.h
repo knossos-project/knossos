@@ -53,8 +53,6 @@ class Synapse {
 
 public:
     enum class State {PreSynapse, Cleft, PostSynapse};
-    static State state;
-    static Synapse temporarySynapse;
     static const int darkenedAlpha = 60;
 
     nodeListElement * getPreSynapse() const { return preSynapse; }
@@ -132,6 +130,9 @@ public:
 struct SkeletonState {
     treeListElement * activeTree{nullptr};
     nodeListElement * activeNode{nullptr};
+
+    Synapse temporarySynapse;
+    Synapse::State synapseState{Synapse::State::PreSynapse};
 
     std::list<treeListElement> trees;
     std::list<Synapse> synapses;
