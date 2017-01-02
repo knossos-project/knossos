@@ -93,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this]() { setSynapseState(SynapseState::Off); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) {
         nodeLockingLabel.setText(tr("Locked to node %1").arg(nodeID));
@@ -513,19 +514,8 @@ void MainWindow::createMenus() {
     createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             if (state->skeletonState->activeNode != nullptr) {
-                if(state->viewer->window->synapseState == SynapseState::Off) {
-                    state->viewer->window->toggleSynapseState(); //update statusbar
-                    createSynapse->setText(tr("Finish Synapse"));
-                    createSynapse->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-                    createSynapse->setShortcut(Qt::Key_C);
-                    Skeletonizer::singleton().continueSynapse();
-                } else if(state->viewer->window->synapseState == SynapseState::SynapticCleft) {
-                    state->viewer->window->toggleSynapseState(); //update statusbar
-                    createSynapse->setShortcutContext(Qt::ApplicationShortcut);
-                    createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
-                    Skeletonizer::singleton().continueSynapse();
-                    Skeletonizer::singleton().addTree();
-                }
+                state->viewer->window->toggleSynapseState(); //update statusbar
+                Skeletonizer::singleton().continueSynapse();
             }
         } else if(state->skeletonState->selectedNodes.size() == 2) {
             Skeletonizer::singleton().addSynapseFromNodes(state->skeletonState->selectedNodes);
@@ -976,6 +966,8 @@ void MainWindow::setSynapseState(const SynapseState newState) {
         synapseStateLabel.setText(tr("Synapse mode: <font color='blue'>set post synapse</font>"));
         break;
     }
+    newTreeAction->setText((synapseState == SynapseState::SynapticCleft) ? "New Tree / Finish Synapse" : "New Tree");
+    createSynapse->setEnabled(synapseState == SynapseState::Off); // Only allow new synapse if there is none active atm.
 }
 
 void MainWindow::toggleSynapseState() {
@@ -1245,9 +1237,6 @@ void MainWindow::newTreeSlot() {
     if(state->skeletonState->synapseState == Synapse::State::Cleft) {
         Skeletonizer::singleton().continueSynapse(); //finish synaptic cleft
         state->viewer->window->toggleSynapseState(); //update statusbar
-        createSynapse->setShortcutContext(Qt::ApplicationShortcut);
-        createSynapse->setShortcut(Qt::ShiftModifier + Qt::Key_C);
-        createSynapse->setText(tr("Create synapse"));
     }
     Skeletonizer::singleton().addTree();
 }
