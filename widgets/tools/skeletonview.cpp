@@ -311,7 +311,7 @@ void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args)
     QObject::connect(deleteAction, &QAction::triggered, args...);
     view.addAction(deleteAction);
     deleteAction->setShortcut(Qt::Key_Delete);
-    deleteAction->setShortcutContext(Qt::WidgetShortcut);
+    deleteAction->setShortcutContext(Qt::WidgetShortcut);// local to the table
 }
 
 SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
@@ -625,6 +625,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
+        treeContextMenu.actions().back()->setEnabled(true);// make deleteAction always available after ctx menu is closed
     });
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
@@ -641,6 +642,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
+        nodeContextMenu.actions().back()->setEnabled(true);// make deleteAction always available after ctx menu is closed
     });
 
 
