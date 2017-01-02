@@ -31,22 +31,22 @@
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/plugins/pluginMgr.py</file>
         <file>resources/splash@2x.png</file>
-        <file>resources/icons/toolbar/save-annotation.png</file>
-        <file>resources/icons/toolbar/save-annotation-as.png</file>
-        <file>resources/icons/toolbar/open-recent.png</file>
-        <file>resources/icons/toolbar/choose-dataset.png</file>
-        <file>resources/icons/toolbar/create-annotation.png</file>
-        <file>resources/icons/toolbar/open-annotation.png</file>
-        <file>resources/icons/toolbar/trash.png</file>
-        <file>resources/icons/toolbar/annotation.png</file>
-        <file>resources/icons/toolbar/snapshot.png</file>
-        <file>resources/icons/toolbar/tasks-management.png</file>
-        <file>resources/icons/toolbar/zoom.png</file>
-        <file>resources/icons/toolbar/about.png</file>
-        <file>resources/icons/toolbar/python.png</file>
-        <file>resources/icons/toolbar/quit.png</file>
-        <file>resources/icons/toolbar/preferences.png</file>
         <file>resources/icons/save-annotation.png</file>
         <file>resources/icons/zoom.png</file>
+        <file>resources/icons/menubar/zoom.png</file>
+        <file>resources/icons/menubar/trash.png</file>
+        <file>resources/icons/menubar/tasks-management.png</file>
+        <file>resources/icons/menubar/snapshot.png</file>
+        <file>resources/icons/menubar/save-annotation-as.png</file>
+        <file>resources/icons/menubar/save-annotation.png</file>
+        <file>resources/icons/menubar/quit.png</file>
+        <file>resources/icons/menubar/python.png</file>
+        <file>resources/icons/menubar/preferences.png</file>
+        <file>resources/icons/menubar/open-recent.png</file>
+        <file>resources/icons/menubar/open-annotation.png</file>
+        <file>resources/icons/menubar/create-annotation.png</file>
+        <file>resources/icons/menubar/choose-dataset.png</file>
+        <file>resources/icons/menubar/annotation.png</file>
+        <file>resources/icons/menubar/about.png</file>
     </qresource>
 </RCC>
