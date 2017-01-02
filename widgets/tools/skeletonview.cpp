@@ -307,7 +307,7 @@ auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
 
 template<typename... Args>
 void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args) {
-    auto * deleteAction = menu.addAction(QIcon(":/resources/icons/user-trash.png"), text);
+    auto * deleteAction = menu.addAction(QIcon(":/resources/icons/menubar/trash.png"), text);
     QObject::connect(deleteAction, &QAction::triggered, args...);
     view.addAction(deleteAction);
     deleteAction->setShortcut(Qt::Key_Delete);
