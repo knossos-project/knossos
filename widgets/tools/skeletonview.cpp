@@ -635,6 +635,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1
                                                       && selectedNodes.front()->isSynapticNode);//jump to corresponding cleft
+        nodeContextMenu.actions().at(i++)->setEnabled((selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode)
+                                                      || (selectedNodes.size() == 2 && selectedNodes.front()->isSynapticNode
+                                                          && selectedNodes.front()->correspondingSynapse == selectedNodes[1]->correspondingSynapse)); // reverse synapse direction
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
@@ -664,9 +667,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
     });
     QObject::connect(treeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, [this](){
-        const auto * tree = state->skeletonState->selectedTrees.front();
-        assert(tree->isSynapticCleft);
-        tree->correspondingSynapse->toggleDirection();
+        reverseSynapseDirection(this);
     });
     treeContextMenu.addSeparator();
     QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
@@ -755,6 +756,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
         Skeletonizer::singleton().jumpToNode(correspondingSynapse->getCleft()->nodes.front());
+    });
+    swapSynapseDirectionAction = nodeContextMenu.addAction("Reverse synapse direction");
+    swapSynapseDirectionAction->setShortcut(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_C);
+    swapSynapseDirectionAction->setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(swapSynapseDirectionAction, &QAction::triggered, [this]() {
+        reverseSynapseDirection(static_cast<QWidget *>(QObject::sender()));
     });
     QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
@@ -864,14 +871,20 @@ void SkeletonView::jumpToNextTree(bool forward) const {
     }
 }
 
-void SkeletonView::reverseSynapseDirection() const {
+void SkeletonView::reverseSynapseDirection(QWidget *parent) {
     const auto & selectedNodes = state->skeletonState->selectedNodes;
-    const auto * firstSynapse = selectedNodes.front()->correspondingSynapse;
-    if((selectedNodes.size() == 1 || selectedNodes.size() == 2) && selectedNodes.front()->isSynapticNode && firstSynapse != nullptr) {
-        if (selectedNodes.size() == 2 && (selectedNodes[1]->isSynapticNode == false || selectedNodes[1]->correspondingSynapse != firstSynapse)) {
-            // if two are selected, they should belong to the same synapse.
-            return;
-        }
+    const auto & selectedTrees = state->skeletonState->selectedTrees;
+    if((selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) ||
+       (selectedNodes.size() == 2 && selectedNodes.front()->isSynapticNode && selectedNodes[1]->correspondingSynapse == selectedNodes.front()->correspondingSynapse)) {
         selectedNodes.front()->correspondingSynapse->toggleDirection();
+    } else if (selectedTrees.size() == 1 && selectedTrees.front()->isSynapticCleft) {
+        selectedTrees.front()->correspondingSynapse->toggleDirection();
+    } else {
+        // if two are selected, they should belong to the same synapse.
+        QMessageBox info(parent);
+        info.setIcon(QMessageBox::Information);
+        info.setText("Select one or two corresponding synapse nodes first");
+        info.exec();
+        return;
     }
 }

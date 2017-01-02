@@ -155,6 +155,7 @@ class SkeletonView : public QWidget {
 
     QMenu treeContextMenu{&treeView};
     QMenu nodeContextMenu{&nodeView};
+    QAction *swapSynapseDirectionAction;
 
     Spoiler commandsBox{"Commands"};
     QGridLayout commandsLayout;
@@ -173,7 +174,7 @@ public:
     explicit SkeletonView(QWidget * const parent = nullptr);
     void jumpToNextNode(bool forward) const;
     void jumpToNextTree(bool forward) const;
-    void reverseSynapseDirection() const;
+    void reverseSynapseDirection(QWidget *parent);
 };
 
 #endif//SKELETONVIEW_H

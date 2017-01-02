@@ -523,7 +523,7 @@ void MainWindow::createMenus() {
     }, Qt::ShiftModifier + Qt::Key_C);
 
     swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse Synapse Direction"),
-                                                this, [this](){ widgetContainer.annotationWidget.skeletonTab.reverseSynapseDirection(); },
+                                                this, [this](){ widgetContainer.annotationWidget.skeletonTab.reverseSynapseDirection(this); },
                                                 Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
 
     actionMenu.addSeparator();
