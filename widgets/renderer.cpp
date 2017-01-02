@@ -1278,6 +1278,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
      // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -1710,27 +1711,29 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
-    glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
-    glBegin(GL_QUADS);
-        glNormal3i(vp.n.x, vp.n.y, vp.n.z);
-        glTexCoord2f(vp.texture.texLUx, vp.texture.texLUy);
-        glVertex3f(-dataPxX * vp.v1.x - dataPxY * vp.v2.x,
-                   -dataPxX * vp.v1.y - dataPxY * vp.v2.y,
-                   -dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-        glTexCoord2f(vp.texture.texRUx, vp.texture.texRUy);
-        glVertex3f( dataPxX * vp.v1.x - dataPxY * vp.v2.x,
-                    dataPxX * vp.v1.y - dataPxY * vp.v2.y,
-                    dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-        glTexCoord2f(vp.texture.texRLx, vp.texture.texRLy);
-        glVertex3f( dataPxX * vp.v1.x + dataPxY * vp.v2.x,
-                    dataPxX * vp.v1.y + dataPxY * vp.v2.y,
-                    dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-        glTexCoord2f(vp.texture.texLLx, vp.texture.texLLy);
-        glVertex3f(-dataPxX * vp.v1.x + dataPxY * vp.v2.x,
-                   -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
-                   -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-    glEnd();
-    glBindTexture (GL_TEXTURE_2D, 0);
+    for (auto texture : {vp.texture.texHandle, vp.texture.overlayHandle}) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBegin(GL_QUADS);
+            glNormal3i(vp.n.x, vp.n.y, vp.n.z);
+            glTexCoord2f(vp.texture.texLUx, vp.texture.texLUy);
+            glVertex3f(-dataPxX * vp.v1.x - dataPxY * vp.v2.x,
+                       -dataPxX * vp.v1.y - dataPxY * vp.v2.y,
+                       -dataPxX * vp.v1.z - dataPxY * vp.v2.z);
+            glTexCoord2f(vp.texture.texRUx, vp.texture.texRUy);
+            glVertex3f( dataPxX * vp.v1.x - dataPxY * vp.v2.x,
+                        dataPxX * vp.v1.y - dataPxY * vp.v2.y,
+                        dataPxX * vp.v1.z - dataPxY * vp.v2.z);
+            glTexCoord2f(vp.texture.texRLx, vp.texture.texRLy);
+            glVertex3f( dataPxX * vp.v1.x + dataPxY * vp.v2.x,
+                        dataPxX * vp.v1.y + dataPxY * vp.v2.y,
+                        dataPxX * vp.v1.z + dataPxY * vp.v2.z);
+            glTexCoord2f(vp.texture.texLLx, vp.texture.texLLy);
+            glVertex3f(-dataPxX * vp.v1.x + dataPxY * vp.v2.x,
+                       -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
+                       -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
+        glEnd();
+        glBindTexture (GL_TEXTURE_2D, 0);
+    }
 }
 
 boost::optional<nodeListElement &> ViewportBase::pickNode(int x, int y, int width) {
