@@ -866,7 +866,12 @@ void SkeletonView::jumpToNextTree(bool forward) const {
 
 void SkeletonView::reverseSynapseDirection() const {
     const auto & selectedNodes = state->skeletonState->selectedNodes;
-    if(selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) {
+    const auto * firstSynapse = selectedNodes.front()->correspondingSynapse;
+    if((selectedNodes.size() == 1 || selectedNodes.size() == 2) && selectedNodes.front()->isSynapticNode && firstSynapse != nullptr) {
+        if (selectedNodes.size() == 2 && (selectedNodes[1]->isSynapticNode == false || selectedNodes[1]->correspondingSynapse != firstSynapse)) {
+            // if two are selected, they should belong to the same synapse.
+            return;
+        }
         selectedNodes.front()->correspondingSynapse->toggleDirection();
     }
 }
