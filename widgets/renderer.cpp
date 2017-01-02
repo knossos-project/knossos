@@ -746,7 +746,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
         renderSkeleton(options);
@@ -755,9 +755,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
     if (!options.nodePicking) {
-        slice(texture.texHandle, n * -0.2);
+        slice(texture.texHandle, n);
         if (options.drawOverlay) {
-            slice(texture.overlayHandle, n * -0.1);
+            slice(texture.overlayHandle, n);
         }
     }
 
