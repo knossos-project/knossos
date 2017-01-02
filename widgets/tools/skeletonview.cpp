@@ -238,12 +238,14 @@ void NodeModel::recreate(const bool matchAll = true) {
 }
 
 void NodeView::mousePressEvent(QMouseEvent * event) {
-    const auto index = proxy.mapToSource(indexAt(event->pos()));
-    if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
-        const auto selected = source.cache[index.row()].get().selected && !event->modifiers().testFlag(Qt::ControlModifier) && !event->modifiers().testFlag(Qt::ShiftModifier);
-        setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
+        const auto index = proxy.mapToSource(indexAt(event->pos()));
+        if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
+            const auto selected = source.cache[index.row()].get().selected && !event->modifiers().testFlag(Qt::ControlModifier) && !event->modifiers().testFlag(Qt::ShiftModifier);
+            setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
+        }
+        QTreeView::mousePressEvent(event);
     }
-    QTreeView::mousePressEvent(event);
 }
 
 template<typename T, typename View, typename Model, typename Proxy>
@@ -600,17 +602,23 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                 break;
             }
         }
-
         const auto & selectedTrees = state->skeletonState->selectedTrees;
+        const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+        mergeAction->setVisible(tracingAdvanced);
+        moveNodesAction->setVisible(tracingAdvanced);
+
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1 && selectedTrees.front()->isSynapticCleft);//seperator
-        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+        treeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
+                                                      && selectedTrees.size() == 1
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("preSynapse")); //jump to preSynapse
-        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+        treeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
+                                                      && selectedTrees.size() == 1
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("postSynapse")); //jump to postSynapse
-        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+        treeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
+                                                      && selectedTrees.size() == 1
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("preSynapse")
                                                       && selectedTrees.front()->properties.contains("postSynapse")); //reverse synapse direction
@@ -621,7 +629,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
-        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0 && containsPointcloud);//remove pointclouds
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsPointcloud);//remove pointcloud
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
@@ -631,13 +639,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
         const auto & selectedNodes = state->skeletonState->selectedNodes;
+        const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+        const auto synapseNode = selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode;
+        extractComponentAction->setVisible(tracingAdvanced);
+        linkAction->setVisible(tracingAdvanced);
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//jump to node
+        nodeContextMenu.actions().at(i++)->setEnabled(true);//separator
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1
-                                                      && selectedNodes.front()->isSynapticNode);//jump to corresponding cleft
-        nodeContextMenu.actions().at(i++)->setEnabled((selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode)
-                                                      || (selectedNodes.size() == 2 && selectedNodes.front()->isSynapticNode
-                                                          && selectedNodes.front()->correspondingSynapse == selectedNodes[1]->correspondingSynapse)); // reverse synapse direction
+        nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);// synapse separator
+        nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);//jump to corresponding cleft
+        nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
+                                                      && (synapseNode || (selectedNodes.size() == 2 && selectedNodes.front()->isSynapticNode
+                                                                          && selectedNodes.front()->correspondingSynapse == selectedNodes[1]->correspondingSynapse))); // reverse synapse direction
+        nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);// synapse separator
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
@@ -670,12 +684,14 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         reverseSynapseDirection(this);
     });
     treeContextMenu.addSeparator();
-    QObject::connect(treeContextMenu.addAction("Move selected nodes to this tree"), &QAction::triggered, [this](){
+    moveNodesAction = treeContextMenu.addAction("Move selected nodes to this tree");
+    QObject::connect(moveNodesAction, &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(treeID);
         question(this, [treeID](){ Skeletonizer::singleton().moveSelectedNodesToTree(treeID); }, tr("Move"), text);
     });
-    QObject::connect(treeContextMenu.addAction("&Merge trees"), &QAction::triggered, [this](){
+    mergeAction = treeContextMenu.addAction("&Merge trees");
+    QObject::connect(mergeAction, &QAction::triggered, [this](){
         question(this, [](){
             auto initiallySelectedTrees = state->skeletonState->selectedTrees;//HACK mergeTrees clears the selection by setting the merge result active
             while (initiallySelectedTrees.size() >= 2) {//2 at a time
@@ -723,7 +739,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     });
-    QObject::connect(nodeContextMenu.addAction("&Jump to node with ID"), &QAction::triggered, [this](){
+    nodeContextMenu.addSeparator();
+    QObject::connect(nodeContextMenu.addAction("Jump to node with &ID"), &QAction::triggered, [this](){
         auto validatedInput = [](QWidget * parent, const QString && labelText, const QValidator && validator){
             QDialog dialog(parent);
             QFormLayout flayout;
@@ -753,6 +770,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(*node.get());
         }
     });
+    nodeContextMenu.addSeparator();
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
         Skeletonizer::singleton().jumpToNode(correspondingSynapse->getCleft()->nodes.front());
@@ -763,7 +781,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(swapSynapseDirectionAction, &QAction::triggered, [this]() {
         reverseSynapseDirection(static_cast<QWidget *>(QObject::sender()));
     });
-    QObject::connect(nodeContextMenu.addAction("&Extract connected component"), &QAction::triggered, [this](){
+    nodeContextMenu.addSeparator();
+    extractComponentAction = nodeContextMenu.addAction("&Extract connected component");
+    QObject::connect(extractComponentAction, &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;
         static bool askExtractConnectedComponent = true;
         if (askExtractConnectedComponent) {
@@ -795,7 +815,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         }
     });
-    QObject::connect(nodeContextMenu.addAction("&Link/Unlink nodes"), &QAction::triggered, [this](){
+    linkAction = nodeContextMenu.addAction("&Link/Unlink nodes");
+    QObject::connect(linkAction, &QAction::triggered, [this](){
         Skeletonizer::singleton().toggleConnectionOfFirstPairOfSelectedNodes(this);
     });
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){

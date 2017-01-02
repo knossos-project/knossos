@@ -155,7 +155,14 @@ class SkeletonView : public QWidget {
 
     QMenu treeContextMenu{&treeView};
     QMenu nodeContextMenu{&nodeView};
+
+    // advanced tree actions
+    QAction *moveNodesAction;
+    QAction *mergeAction;
+    // advanced node actions
     QAction *swapSynapseDirectionAction;
+    QAction *extractComponentAction;
+    QAction *linkAction;
 
     Spoiler commandsBox{"Commands"};
     QGridLayout commandsLayout;
