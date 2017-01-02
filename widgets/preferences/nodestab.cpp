@@ -131,9 +131,9 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
         if (index == Skeletonizer::singleton().getNumberProperties().size() + 1) {
             QMessageBox msgBox{this};
             msgBox.setIcon(QMessageBox::Question);
-            msgBox.setText(tr("Property »%1« is not registered as evaluateable. ").arg(property));
-            msgBox.setInformativeText("The conversion process will overwrite all values which cannot be interpreted as a number with 0. "
-                                      "\nThe property will be marked as all-number in the annotation file. ");
+            msgBox.setText(tr("Property »%1« is not registered as evaluable. ").arg(property));
+            msgBox.setInformativeText("The conversion process will overwrite all values with 0 which cannot be interpreted as number."
+                                      "\nThe property will be marked as pure number in the annotation file. ");
             auto * doit = msgBox.addButton(tr("Convert Property"), QMessageBox::AcceptRole);
             msgBox.addButton(QMessageBox::Cancel);
             msgBox.setDefaultButton(doit);

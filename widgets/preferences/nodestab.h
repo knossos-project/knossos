@@ -64,10 +64,10 @@ class NodesTab : public QWidget {
     QGroupBox propertiesGroup{tr("Property highlighting")};
     QGridLayout propertiesLayout;
     PropertyModel propertyModel;
-    QLabel propertyRadiusLabel{"Use scaled property as node radius:"};
+    QLabel propertyRadiusLabel{"Scale node radius with property value:"};
     QComboBox propertyRadiusCombo;
     QDoubleSpinBox propertyRadiusScaleSpin;
-    QLabel propertyColorLabel{"Map property to node color:"};
+    QLabel propertyColorLabel{"Map property value to node color:"};
     QComboBox propertyColorCombo;
     QDoubleSpinBox propertyMinSpin;
     QDoubleSpinBox propertyMaxSpin;
