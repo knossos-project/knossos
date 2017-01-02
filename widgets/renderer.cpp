@@ -1373,154 +1373,29 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         const auto isoCurPos = state->scale.componentMul(state->viewerState->currentPosition);
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-
+        // raw slice image
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
-        state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-            // Used for calculation of slice pane length inside the 3d view
-            const float dataPxX = orthoVP.displayedIsoPx;
-            const float dataPxY = orthoVP.displayedIsoPx;
-
-            switch(orthoVP.viewportType) {
-            case VIEWPORT_XY:
-                if (!state->viewerState->showXYplane) break;
-                glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glBegin(GL_QUADS);
-                    glNormal3i(0,0,1);
-                    glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
-                    glVertex3f(-dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRUx, orthoVP.texture.texRUy);
-                    glVertex3f( dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRLx, orthoVP.texture.texRLy);
-                    glVertex3f( dataPxX, -dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texLLx, orthoVP.texture.texLLy);
-                    glVertex3f(-dataPxX, -dataPxY, 0);
-                glEnd();
-                glBindTexture (GL_TEXTURE_2D, 0);
-                break;
-            case VIEWPORT_XZ:
-                if (!state->viewerState->showXZplane) break;
-                glPushMatrix();
-                glRotatef(90, 1, 0, 0);
-                glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glBegin(GL_QUADS);
-                    glNormal3i(0,0,1);
-                    glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
-                    glVertex3f(-dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRUx, orthoVP.texture.texRUy);
-                    glVertex3f( dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRLx, orthoVP.texture.texRLy);
-                    glVertex3f( dataPxX, -dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texLLx, orthoVP.texture.texLLy);
-                    glVertex3f(-dataPxX, -dataPxY, 0);
-                glEnd();
-                glBindTexture (GL_TEXTURE_2D, 0);
-                glPopMatrix();
-                break;
-            case VIEWPORT_ZY:
-                if (!state->viewerState->showZYplane) break;
-                glPushMatrix();
-                glRotatef(-90, 0, 1, 0);
-                glBindTexture(GL_TEXTURE_2D, orthoVP.texture.texHandle);
-                glBegin(GL_QUADS);
-                    glNormal3i(0,0,1);
-                    glTexCoord2f(orthoVP.texture.texLUx, orthoVP.texture.texLUy);
-                    glVertex3f(-dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRUx, orthoVP.texture.texRUy);
-                    glVertex3f( dataPxX,  dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texRLx, orthoVP.texture.texRLy);
-                    glVertex3f( dataPxX, -dataPxY, 0);
-                    glTexCoord2f(orthoVP.texture.texLLx, orthoVP.texture.texLLy);
-                    glVertex3f(-dataPxX, -dataPxY, 0);
-                glEnd();
-                glBindTexture (GL_TEXTURE_2D, 0);
-                glPopMatrix();
-                break;
-            case VIEWPORT_ARBITRARY:
-                if (!state->viewerState->enableArbVP || !state->viewerState->showArbplane) break;
-                renderArbitrarySlicePane(orthoVP);
-                break;
-            default:
-                throw std::runtime_error("Viewport3D::renderSkeletonVP unknown vp");
-            }
-        });
-
+        if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
+            renderArbitrarySlicePane(*state->viewer->window->viewportXY);
+        }
+        if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
+            renderArbitrarySlicePane(*state->viewer->window->viewportXZ);
+        }
+        if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
+            renderArbitrarySlicePane(*state->viewer->window->viewportZY);
+        }
+        if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
+            renderArbitrarySlicePane(*state->viewer->window->viewportArb);
+        }
+        // colored slice boundaries
         glDisable(GL_TEXTURE_2D);
-
         state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-            GLUquadricObj * gluCylObj;
-            const float dataPxX = orthoVP.displayedIsoPx;
-            const float dataPxY = orthoVP.displayedIsoPx;
-            switch(orthoVP.viewportType) {
-            case VIEWPORT_XY:
-                glColor4f(0.7, 0., 0., 1.);
-                glBegin(GL_LINE_LOOP);
-                    glVertex3f(-dataPxX, -dataPxY, 0.);
-                    glVertex3f(dataPxX, -dataPxY, 0.);
-                    glVertex3f(dataPxX, dataPxY, 0.);
-                    glVertex3f(-dataPxX, dataPxY, 0.);
-                glEnd();
-
-                if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
-                    glColor4f(0., 0., 0., 1.);
-                    glPushMatrix();
-                    glTranslatef(-dataPxX, 0., 0.);
-                    glRotatef(90., 0., 1., 0.);
-                    gluCylObj = gluNewQuadric();
-                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxX * 2, 5, 5);
-                    gluDeleteQuadric(gluCylObj);
-                    glPopMatrix();
-                }
-                if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
-                    glColor4f(0., 0., 0., 1.);
-                    glPushMatrix();
-                    glTranslatef(0., dataPxY, 0.);
-                    glRotatef(90., 1., 0., 0.);
-                    gluCylObj = gluNewQuadric();
-                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
-                    gluDeleteQuadric(gluCylObj);
-                    glPopMatrix();
-                }
-                break;
-            case VIEWPORT_XZ:
-                glColor4f(0., 0.7, 0., 1.);
-                glBegin(GL_LINE_LOOP);
-                    glVertex3f(-dataPxX, 0., -dataPxY);
-                    glVertex3f(dataPxX, 0., -dataPxY);
-                    glVertex3f(dataPxX, 0., dataPxY);
-                    glVertex3f(-dataPxX, 0., dataPxY);
-                glEnd();
-
-                if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
-                    glColor4f(0., 0., 0., 1.);
-                    glPushMatrix();
-                    glTranslatef(0., 0., -dataPxY);
-                    gluCylObj = gluNewQuadric();
-                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-                    gluCylinder(gluCylObj, 0.4, 0.4, dataPxY * 2, 5, 5);
-                    gluDeleteQuadric(gluCylObj);
-                    glPopMatrix();
-                }
-                break;
-            case VIEWPORT_ZY:
-                glColor4f(0., 0., 0.7, 1.);
-                glBegin(GL_LINE_LOOP);
-                    glVertex3f(0., -dataPxX, -dataPxY);
-                    glVertex3f(0., dataPxX, -dataPxY);
-                    glVertex3f(0., dataPxX, dataPxY);
-                    glVertex3f(0., -dataPxX, dataPxY);
-                glEnd();
-                break;
-            case VIEWPORT_ARBITRARY:
-                if (!state->viewerState->enableArbVP) break;
-                glColor4f(std::abs(orthoVP.n.z), std::abs(orthoVP.n.y), std::abs(orthoVP.n.x), 1.);
-
+            if (orthoVP.isVisible()) {
+                const float dataPxX = orthoVP.displayedIsoPx;
+                const float dataPxY = orthoVP.displayedIsoPx;
+                glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
                 glBegin(GL_LINE_LOOP);
                     glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
                                -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
@@ -1535,14 +1410,31 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                                -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
                                -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
                 glEnd();
-                break;
-            default:
-                throw std::runtime_error("Viewport3D::renderSkeletonVP unknown vp");
             }
         });
+        // intersection lines
+        const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+        glColor4f(0., 0., 0., 1.);
+        if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+            glBegin(GL_LINES);
+                glVertex3f(-size, 0, 0);
+                glVertex3f( size, 0, 0);
+            glEnd();
+        }
+        if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+            glBegin(GL_LINES);
+                glVertex3f(0, -size, 0);
+                glVertex3f(0,  size, 0);
+            glEnd();
+        }
+        if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+            glBegin(GL_LINES);
+                glVertex3f(0, 0, -size);
+                glVertex3f(0, 0,  size);
+            glEnd();
+        }
 
         glPopMatrix();
-        glEnable(GL_TEXTURE_2D);
     }
 
     if (options.drawBoundaryBox || options.drawBoundaryAxes) {
