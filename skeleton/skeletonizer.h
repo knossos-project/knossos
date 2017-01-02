@@ -287,6 +287,7 @@ public:
     void convertToNumberProperty(const QString & property);
 
     void loadPointCloud(QIODevice &, const boost::optional<decltype(treeListElement::treeID)> treeID);
+    void savePointCloud(QIODevice & file, const treeListElement & tree);
     void addPointCloudToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode = 0, bool swap_xy = false);
     void deletePointcloudOfTree(std::uint64_t tree_id);
 signals:

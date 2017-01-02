@@ -151,6 +151,15 @@ void annotationFileSave(const QString & filename) {
                 throw std::runtime_error((filename + ": saving segmentation job failed").toStdString());
             }
         }
+        for (const auto & tree : state->skeletonState->trees) {
+            if (tree.pointCloud != nullptr) {
+                QuaZipFile file_write(&archive_write);
+                const auto filename = QString::number(tree.treeID) + ".xyz";
+                if (zipCreateFile(file_write, filename, 1)) {
+                    Skeletonizer::singleton().savePointCloud(file_write, tree);
+                }
+            }
+        }
         QTime cubeTime;
         cubeTime.start();
         const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();

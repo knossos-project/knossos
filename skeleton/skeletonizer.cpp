@@ -1919,6 +1919,32 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
     }
 }
 
+void Skeletonizer::savePointCloud(QIODevice & file, const treeListElement & tree) {
+    QTextStream stream(&file);
+    stream << "v0\n";
+    stream << tree.pointCloud->vertex_count << "\n";
+    for (std::size_t i = 0; i < tree.pointCloud->vertex_count; i++) {
+        stream << tree.pointCloud->vertex_coords[i * 3 + 0] << " "
+               << tree.pointCloud->vertex_coords[i * 3 + 1] << " "
+               << tree.pointCloud->vertex_coords[i * 3 + 2];
+        if (tree.pointCloud->useTreeColor == false) {
+            stream << " "
+               << tree.pointCloud->colors[i * 4 + 0] << " "
+               << tree.pointCloud->colors[i * 4 + 1] << " "
+               << tree.pointCloud->colors[i * 4 + 2] << " "
+               << tree.pointCloud->colors[i * 4 + 3] << "\n";
+        } else {
+            stream << "\n";
+        }
+    }
+    for (const auto & index : tree.pointCloud->indices) {
+        stream << index << "\n";
+    }
+    if (stream.status() != QTextStream::Ok) {
+        qDebug() << "point cloud save failed for tree" << tree.treeID;
+    }
+}
+
 void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
     auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
@@ -1999,6 +2025,7 @@ void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement:
     tree->pointCloud->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     tree->pointCloud->index_buf.release();
     tree->pointCloud->vertex_coords = verts;
+    tree->pointCloud->colors = color;
     tree->pointCloud->indices = indices;
 
     Session::singleton().unsavedChanges = true;
