@@ -33,7 +33,7 @@
 #include <list>
 #include <memory>
 
-class PointCloud;
+class Mesh;
 class segmentListElement;
 
 class treeListElement : public PropertyQuery {
@@ -42,7 +42,7 @@ public:
     std::list<treeListElement>::iterator iterator;
 
     std::list<nodeListElement> nodes;
-    std::unique_ptr<PointCloud> pointCloud;
+    std::unique_ptr<Mesh> mesh;
 
     bool render{true};
     bool isSynapticCleft{false};

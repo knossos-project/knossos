@@ -25,7 +25,7 @@
 #include "functions.h"
 #include "GuiConstants.h"
 #include "profiler.h"
-#include "pointcloud/pointcloud.h"
+#include "mesh/mesh.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
@@ -49,27 +49,27 @@ RenderOptions::RenderOptions() : drawCrosshairs(state->viewerState->drawVPCrossh
 
 RenderOptions RenderOptions::nodePickingRenderOptions(RenderOptions::SelectionPass pass) {
     RenderOptions options;
-    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawPointcloud = false;
+    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawMesh = false;
     options.drawViewportPlanes = options.highlightActiveNode = options.highlightSelection = false;
     options.nodePicking = true;
     options.selectionPass = pass;
     return options;
 }
 
-RenderOptions RenderOptions::pointcloudPickingRenderOptions() {
+RenderOptions RenderOptions::meshPickingRenderOptions() {
     RenderOptions options;
     options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawSkeleton = options.drawViewportPlanes = false;
-    options.drawPointcloud = options.pointCloudPicking = true;
+    options.drawMesh = options.meshPicking = true;
     return options;
 }
 
-RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawPointcloud, const bool drawSkeleton, const bool drawViewportPlanes) {
+RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawMesh, const bool drawSkeleton, const bool drawViewportPlanes) {
     RenderOptions options;
     options.drawBoundaryAxes = drawBoundaryAxes;
     options.drawBoundaryBox = drawBoundaryBox;
     options.drawCrosshairs = false;
     options.drawOverlay = drawOverlay;
-    options.drawPointcloud = drawPointcloud;
+    options.drawMesh = drawMesh;
     options.drawSkeleton = drawSkeleton;
     options.drawViewportPlanes = drawViewportPlanes;
     options.enableLoddingAndLinesAndPoints = false;

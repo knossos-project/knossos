@@ -55,8 +55,8 @@ public slots:
     bool set_active_tree(quint64 tree_id);
     bool delete_tree(quint64 tree_id);
     bool merge_trees(quint64 tree_id, quint64 other_tree_id);
-    void add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode = 0, bool swap_xy = false);
-    void delete_tree_pointcloud(quint64 tree_id);
+    void add_tree_mesh(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode = 0, bool swap_xy = false);
+    void delete_tree_mesh(quint64 tree_id);
     void move_to_next_tree();
     void move_to_previous_tree();
 
@@ -79,7 +79,7 @@ public slots:
     bool delete_comment(quint64 node_id);
     bool set_comment(quint64 node_id, char *comment);
 
-    quint64 last_clicked_point_cloud_id();
+    quint64 last_clicked_mesh_id();
 
     void export_converter(const QString &path);
 

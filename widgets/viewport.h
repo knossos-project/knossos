@@ -24,7 +24,7 @@
 #define VIEWPORT_H
 
 #include "coordinate.h"
-#include "pointcloud/pointcloud.h"
+#include "mesh/mesh.h"
 #include "stateInfo.h"
 
 #include <QAction>
@@ -86,14 +86,14 @@ struct RenderOptions {
     enum class SelectionPass { NoSelection, NodeID0_24Bits, NodeID24_48Bits, NodeID48_64Bits };
     RenderOptions();
     static RenderOptions nodePickingRenderOptions(SelectionPass pass);
-    static RenderOptions pointcloudPickingRenderOptions();
-    static RenderOptions snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawPointcloud, const bool drawSkeleton, const bool drawViewportPlanes);
+    static RenderOptions meshPickingRenderOptions();
+    static RenderOptions snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawMesh, const bool drawSkeleton, const bool drawViewportPlanes);
 
     bool drawBoundaryAxes{true};
     bool drawBoundaryBox{true};
     bool drawCrosshairs{true};
     bool drawOverlay{true};
-    bool drawPointcloud{true};
+    bool drawMesh{true};
     bool drawSkeleton{true};
     bool drawViewportPlanes{true};
     bool enableLoddingAndLinesAndPoints{true};
@@ -101,7 +101,7 @@ struct RenderOptions {
     bool highlightActiveNode{true};
     bool highlightSelection{true};
     bool nodePicking{false};
-    bool pointCloudPicking{false};
+    bool meshPicking{false};
     SelectionPass selectionPass{SelectionPass::NoSelection};
 };
 
@@ -273,8 +273,8 @@ public slots:
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    QOpenGLShaderProgram pointcloudShader;
-    QOpenGLShaderProgram pointcloudIdShader;
+    QOpenGLShaderProgram meshShader;
+    QOpenGLShaderProgram meshIdShader;
     std::unordered_map<std::uint32_t, BufferSelection> selection_ids;
 
     void resetWiggle();
@@ -285,11 +285,11 @@ class Viewport3D : public ViewportBase {
     int wiggle{0};
     QTimer wiggletimer;
     void renderVolumeVP();
-    void renderPointCloud();
-    void renderPointCloudBuffer(PointCloud & buf);
-    void renderPointCloudBufferIds(PointCloud & buf);
-    void pickPointCloudIdAtPosition();
-    boost::optional<BufferSelection> pickPointCloud(const QPoint pos);
+    void renderMesh();
+    void renderMeshBuffer(Mesh & buf);
+    void renderMeshBufferIds(Mesh & buf);
+    void pickMeshIdAtPosition();
+    boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
@@ -305,8 +305,8 @@ class Viewport3D : public ViewportBase {
     virtual void focusOutEvent(QFocusEvent *event) override;
 public:
     double zoomFactor{1.0};
-    boost::optional<BufferSelection> pointCloudLastClickInformation;
-    bool pointCloudLastClickCurrentlyVisited{false};
+    boost::optional<BufferSelection> meshLastClickInformation;
+    bool meshLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     ~Viewport3D();
     virtual void showHideButtons(bool isShow) override;

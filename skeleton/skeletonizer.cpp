@@ -24,7 +24,7 @@
 
 #include "file_io.h"
 #include "functions.h"
-#include "pointcloud/pointcloud.h"
+#include "mesh/mesh.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/node.h"
@@ -1836,9 +1836,9 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     });
 }
 
-void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID) {
+void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID) {
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::runtime_error("loadPointCloud open failed");
+        throw std::runtime_error("loadMesh open failed");
     }
     QTextStream stream(&file);
     QString line;
@@ -1849,7 +1849,7 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
     if((validVersion = !(line = stream.readLine()).isNull())) {
         version = line;
     } else {
-        throw std::runtime_error("LoadPointCloud: parsing failed, file too short");
+        throw std::runtime_error("loadMesh: parsing failed, file too short");
     }
     if (version == "v0") {
         // read number of vertices
@@ -1860,7 +1860,7 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
             validHead = validHead && numVertices % 3 == 0;
         }
         if (validHead == false) {
-            throw std::runtime_error("LoadPointCloud: parsing failed, illegal number of vertices");
+            throw std::runtime_error("loadMesh: parsing failed, illegal number of vertices");
         }
 
         // read vertices and colors
@@ -1883,18 +1883,18 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
                 if(validVertex) {
                     vertices.append(vertex);
                 } else {
-                    qDebug() << "loadPointCloud: loading a point failed";
+                    qDebug() << "loadMesh: loading a point failed";
                 }
                 if (validColor) {
                     colors.append(color);
                 }
             } else {
-               throw std::runtime_error("LoadPointCloud: parsing failed, file too short");
+               throw std::runtime_error("loadMesh: parsing failed, file too short");
             }
         }
         const auto correctSizeColors = vertices.size()/3 * 4;
         if (colors.size() != correctSizeColors) {
-            qDebug() << tr("loadPointCloud: Incorrect number of colors (%1 instead of %2). Using tree color instead.").arg(colors.size()).arg(correctSizeColors);
+            qDebug() << tr("loadMesh: Incorrect number of colors (%1 instead of %2). Using tree color instead.").arg(colors.size()).arg(correctSizeColors);
             colors.clear();
         }
 
@@ -1906,46 +1906,46 @@ void Skeletonizer::loadPointCloud(QIODevice & file, const boost::optional<declty
             if (validIndex) {
                 indices.append(index);
             } else {
-                throw std::runtime_error("LoadPointCloud: parsing failed, invalid index");
+                throw std::runtime_error("loadMesh: parsing failed, invalid index");
             }
         }
         if (indices.size() % 3 != 0) {
-            throw std::runtime_error("LoadPointCloud: parsing failed, invalid number of indices (must be multiple of 3)");
+            throw std::runtime_error("loadMesh: parsing failed, invalid number of indices (must be multiple of 3)");
         }
         QVector<float> normals;
-        addPointCloudToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
+        addMeshToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
     } else {
-        throw std::runtime_error("LoadPointCloud: parsing failed, unrecognized version: " + version.toStdString());
+        throw std::runtime_error("loadMesh: parsing failed, unrecognized version: " + version.toStdString());
     }
 }
 
-void Skeletonizer::savePointCloud(QIODevice & file, const treeListElement & tree) {
+void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
     QTextStream stream(&file);
     stream << "v0\n";
-    stream << tree.pointCloud->vertex_count << "\n";
-    for (std::size_t i = 0; i < tree.pointCloud->vertex_count; i++) {
-        stream << tree.pointCloud->vertex_coords[i * 3 + 0] << " "
-               << tree.pointCloud->vertex_coords[i * 3 + 1] << " "
-               << tree.pointCloud->vertex_coords[i * 3 + 2];
-        if (tree.pointCloud->useTreeColor == false) {
+    stream << tree.mesh->vertex_count << "\n";
+    for (std::size_t i = 0; i < tree.mesh->vertex_count; i++) {
+        stream << tree.mesh->vertex_coords[i * 3 + 0] << " "
+               << tree.mesh->vertex_coords[i * 3 + 1] << " "
+               << tree.mesh->vertex_coords[i * 3 + 2];
+        if (tree.mesh->useTreeColor == false) {
             stream << " "
-               << tree.pointCloud->colors[i * 4 + 0] << " "
-               << tree.pointCloud->colors[i * 4 + 1] << " "
-               << tree.pointCloud->colors[i * 4 + 2] << " "
-               << tree.pointCloud->colors[i * 4 + 3] << "\n";
+               << tree.mesh->colors[i * 4 + 0] << " "
+               << tree.mesh->colors[i * 4 + 1] << " "
+               << tree.mesh->colors[i * 4 + 2] << " "
+               << tree.mesh->colors[i * 4 + 3] << "\n";
         } else {
             stream << "\n";
         }
     }
-    for (const auto & index : tree.pointCloud->indices) {
+    for (const auto & index : tree.mesh->indices) {
         stream << index << "\n";
     }
     if (stream.status() != QTextStream::Ok) {
-        qDebug() << "point cloud save failed for tree" << tree.treeID;
+        qDebug() << "mesh save failed for tree" << tree.treeID;
     }
 }
 
-void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
+void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
     auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
         tree = &addTree(treeID);
@@ -2001,16 +2001,16 @@ void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement:
     }
 
     state->viewer->mainWindow.viewport3D->makeCurrent();
-    tree->pointCloud.reset(new PointCloud(tree, color.size() == 0, static_cast<GLenum>(draw_mode)));
-    tree->pointCloud->vertex_count = verts.size() / 3;
-    tree->pointCloud->index_count = indices.size();
-    tree->pointCloud->position_buf.bind();
-    tree->pointCloud->position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
-    tree->pointCloud->position_buf.release();
-    tree->pointCloud->normal_buf.bind();
-    tree->pointCloud->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
-    tree->pointCloud->normal_buf.release();
-    tree->pointCloud->color_buf.bind();
+    tree->mesh.reset(new Mesh(tree, color.size() == 0, static_cast<GLenum>(draw_mode)));
+    tree->mesh->vertex_count = verts.size() / 3;
+    tree->mesh->index_count = indices.size();
+    tree->mesh->position_buf.bind();
+    tree->mesh->position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
+    tree->mesh->position_buf.release();
+    tree->mesh->normal_buf.bind();
+    tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
+    tree->mesh->normal_buf.release();
+    tree->mesh->color_buf.bind();
     if (color.empty()) {
         for (int i = 0; i < indices.size(); ++i) {
             color.push_back(1);
@@ -2019,21 +2019,21 @@ void Skeletonizer::addPointCloudToTree(boost::optional<decltype(treeListElement:
             color.push_back(1);
         }
     }
-    tree->pointCloud->color_buf.allocate(color.data(), color.size() * sizeof(GLfloat));
-    tree->pointCloud->color_buf.release();
-    tree->pointCloud->index_buf.bind();
-    tree->pointCloud->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
-    tree->pointCloud->index_buf.release();
-    tree->pointCloud->vertex_coords = verts;
-    tree->pointCloud->colors = color;
-    tree->pointCloud->indices = indices;
+    tree->mesh->color_buf.allocate(color.data(), color.size() * sizeof(GLfloat));
+    tree->mesh->color_buf.release();
+    tree->mesh->index_buf.bind();
+    tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
+    tree->mesh->index_buf.release();
+    tree->mesh->vertex_coords = verts;
+    tree->mesh->colors = color;
+    tree->mesh->indices = indices;
 
     Session::singleton().unsavedChanges = true;
 }
 
-void Skeletonizer::deletePointcloudOfTree(std::uint64_t tree_id) {
+void Skeletonizer::deleteMeshOfTree(std::uint64_t tree_id) {
     auto * tree = findTreeByTreeID(tree_id);
     if (tree != nullptr) {
-        tree->pointCloud.reset(new PointCloud(tree));
+        tree->mesh.reset(new Mesh(tree));
     }
 }

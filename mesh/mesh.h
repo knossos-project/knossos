@@ -1,5 +1,5 @@
-#ifndef POINTCLOUD_H
-#define POINTCLOUD_H
+#ifndef MESH_H
+#define MESH_H
 
 #include "coordinate.h"
 
@@ -12,12 +12,12 @@
 
 class treeListElement;
 struct BufferSelection;
-class PointCloud {
+class Mesh {
 public:
     boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
 
-    explicit PointCloud(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
-    ~PointCloud();
+    explicit Mesh(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
+    ~Mesh();
 
     treeListElement * correspondingTree{nullptr};
 
@@ -40,4 +40,4 @@ struct BufferSelection {
     floatCoordinate coord;
 };
 
-#endif // POINTCLOUD_H
+#endif// MESH_H

@@ -945,7 +945,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
+void Viewport3D::renderMeshBuffer(Mesh & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
@@ -956,10 +956,10 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     GLfloat projection_mat[4][4];
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
 
-    pointcloudShader.bind();
-    pointcloudShader.setUniformValue("modelview_matrix", modelview_mat);
-    pointcloudShader.setUniformValue("projection_matrix", projection_mat);
-    pointcloudShader.setUniformValue("use_tree_color", buf.useTreeColor);
+    meshShader.bind();
+    meshShader.setUniformValue("modelview_matrix", modelview_mat);
+    meshShader.setUniformValue("projection_matrix", projection_mat);
+    meshShader.setUniformValue("use_tree_color", buf.useTreeColor);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -968,27 +968,27 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     glEnableClientState(GL_COLOR_ARRAY);
 
     buf.position_buf.bind();
-    int vertexLocation = pointcloudShader.attributeLocation("vertex");
-    pointcloudShader.enableAttributeArray(vertexLocation);
-    pointcloudShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    int vertexLocation = meshShader.attributeLocation("vertex");
+    meshShader.enableAttributeArray(vertexLocation);
+    meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
 
     buf.normal_buf.bind();
-    int normalLocation = pointcloudShader.attributeLocation("normal");
-    pointcloudShader.enableAttributeArray(normalLocation);
-    pointcloudShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+    int normalLocation = meshShader.attributeLocation("normal");
+    meshShader.enableAttributeArray(normalLocation);
+    meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
     buf.normal_buf.release();
 
-    int colorLocation = pointcloudShader.attributeLocation("color");
+    int colorLocation = meshShader.attributeLocation("color");
     buf.color_buf.bind();
-    pointcloudShader.enableAttributeArray(colorLocation);
-    pointcloudShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+    meshShader.enableAttributeArray(colorLocation);
+    meshShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
     buf.color_buf.release();
     QColor color = buf.correspondingTree->color;
     if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
         color = Qt::red;
     }
-    pointcloudShader.setUniformValue("tree_color", color);
+    meshShader.setUniformValue("tree_color", color);
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
@@ -997,20 +997,20 @@ void Viewport3D::renderPointCloudBuffer(PointCloud & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-    pointcloudShader.disableAttributeArray(colorLocation);
-    pointcloudShader.disableAttributeArray(normalLocation);
-    pointcloudShader.disableAttributeArray(vertexLocation);
+    meshShader.disableAttributeArray(colorLocation);
+    meshShader.disableAttributeArray(normalLocation);
+    meshShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisable(GL_BLEND);
 
-    pointcloudShader.release();
+    meshShader.release();
     glPopMatrix();
 }
 
-void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
+void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     glDisable(GL_BLEND);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1022,23 +1022,23 @@ void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
     GLfloat projection_mat[4][4];
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
 
-    pointcloudIdShader.bind();
-    pointcloudIdShader.setUniformValue("modelview_matrix", modelview_mat);
-    pointcloudIdShader.setUniformValue("projection_matrix", projection_mat);
+    meshIdShader.bind();
+    meshIdShader.setUniformValue("modelview_matrix", modelview_mat);
+    meshIdShader.setUniformValue("projection_matrix", projection_mat);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
     buf.position_buf.bind();
-    int vertexLocation = pointcloudIdShader.attributeLocation("vertex");
-    pointcloudIdShader.enableAttributeArray(vertexLocation);
-    pointcloudIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    int vertexLocation = meshIdShader.attributeLocation("vertex");
+    meshIdShader.enableAttributeArray(vertexLocation);
+    meshIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
 
     buf.color_buf.bind();
-    int colorLocation = pointcloudIdShader.attributeLocation("color");
-    pointcloudIdShader.enableAttributeArray(colorLocation);
-    pointcloudIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+    int colorLocation = meshIdShader.attributeLocation("color");
+    meshIdShader.enableAttributeArray(colorLocation);
+    meshIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
     buf.color_buf.release();
 
     if(buf.index_count != 0) {
@@ -1049,20 +1049,20 @@ void Viewport3D::renderPointCloudBufferIds(PointCloud & buf) {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
 
-    pointcloudIdShader.disableAttributeArray(colorLocation);
-    pointcloudIdShader.disableAttributeArray(vertexLocation);
+    meshIdShader.disableAttributeArray(colorLocation);
+    meshIdShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    pointcloudIdShader.release();
+    meshIdShader.release();
     glPopMatrix();
 }
 
-void Viewport3D::renderPointCloud() {
-    static bool pointcloud_init = true;
-    if(pointcloud_init) {
-        pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+void Viewport3D::renderMesh() {
+    static bool mesh_init = true;
+    if(mesh_init) {
+        meshShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
             #version 110
             attribute vec3 vertex;
             attribute vec3 normal;
@@ -1083,7 +1083,7 @@ void Viewport3D::renderPointCloud() {
             }
         )shaderSource");
 
-        pointcloudShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        meshShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
             #version 110
 
             uniform mat4 modelview_matrix;
@@ -1129,8 +1129,8 @@ void Viewport3D::renderPointCloud() {
             }
         )shaderSource");
 
-        pointcloudShader.link();
-        pointcloud_init = false;
+        meshShader.link();
+        mesh_init = false;
     }
 
     screenPxXPerDataPx = edgeLength / (state->skeletonState->volBoundary / zoomFactor);
@@ -1138,42 +1138,42 @@ void Viewport3D::renderPointCloud() {
     glPointSize(point_size);
 
     for(auto & tree : state->skeletonState->trees) {
-        const bool validPointCloud = tree.pointCloud != nullptr && tree.pointCloud->vertex_count > 0;
+        const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
         const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
-        if (tree.render && selectionFilter && validPointCloud) {
-            renderPointCloudBuffer(*(tree.pointCloud));
+        if (tree.render && selectionFilter && validMesh) {
+            renderMeshBuffer(*(tree.mesh));
         }
     }
 }
 
-uint32_t pointcloudColorToId(const QColor & color) {
+uint32_t meshColorToId(const QColor & color) {
     return color.red() + (color.green() << 8) + (color.blue() << 16) + (color.alpha() << 24);
 }
 
-std::array<unsigned char, 4> pointcloudIdToColor(uint32_t id) {
+std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
     return {{static_cast<unsigned char>(id),
              static_cast<unsigned char>(id >> 8),
              static_cast<unsigned char>(id >> 16),
              static_cast<unsigned char>(id >> 24)}};
 }
 
-boost::optional<BufferSelection> Viewport3D::pickPointCloud(const QPoint pos) {
+boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     makeCurrent();
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderSkeletonVP(RenderOptions::pointcloudPickingRenderOptions());
+    renderSkeletonVP(RenderOptions::meshPickingRenderOptions());
     fbo.release();
     // read color and translate to id
-    const auto triangleID = pointcloudColorToId(fbo.toImage().pixelColor(pos));
+    const auto triangleID = meshColorToId(fbo.toImage().pixelColor(pos));
     auto it = selection_ids.find(triangleID);
     return (it != std::end(selection_ids)) ? boost::optional<BufferSelection>{it->second} : boost::none;
 }
 
-void Viewport3D::pickPointCloudIdAtPosition() {
-    static bool pointcloud_id_init = true;
-    if(pointcloud_id_init) {
-        pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+void Viewport3D::pickMeshIdAtPosition() {
+    static bool mesh_id_init = true;
+    if(mesh_id_init) {
+        meshIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
             #version 110
             attribute vec3 vertex;
             attribute vec4 color;
@@ -1191,7 +1191,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
             }
         )shaderSource");
 
-        pointcloudIdShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+        meshIdShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
             #version 110
 
             uniform mat4 modelview_matrix;
@@ -1205,8 +1205,8 @@ void Viewport3D::pickPointCloudIdAtPosition() {
             }
         )shaderSource");
 
-        pointcloudIdShader.link();
-        pointcloud_id_init = false;
+        meshIdShader.link();
+        mesh_id_init = false;
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
@@ -1215,32 +1215,32 @@ void Viewport3D::pickPointCloudIdAtPosition() {
     selection_ids.clear();
     std::uint32_t id_counter = 1;
     for(auto & tree : state->skeletonState->trees) {
-        const bool pickablePointCloud = tree.pointCloud != nullptr && tree.pointCloud->render_mode == GL_TRIANGLES && tree.pointCloud->index_count >= 3;
+        const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES && tree.mesh->index_count >= 3;
         const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
-        if (!tree.render || selectionFilter || !pickablePointCloud) {
+        if (!tree.render || selectionFilter || !pickableMesh) {
             continue;
         }
         std::vector<std::array<unsigned char, 4>> colors;
-        colors.resize(tree.pointCloud->vertex_count);
+        colors.resize(tree.mesh->vertex_count);
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        for(std::size_t i = 0; i < tree.pointCloud->index_count - 3; i += 3) { // for each face
-            auto id_color = pointcloudIdToColor(id_counter);
-            std::array<unsigned int, 3> v_ids{{tree.pointCloud->indices[i], tree.pointCloud->indices[i+1], tree.pointCloud->indices[i+2]}};
+        for(std::size_t i = 0; i < tree.mesh->index_count - 3; i += 3) { // for each face
+            auto id_color = meshIdToColor(id_counter);
+            std::array<unsigned int, 3> v_ids{{tree.mesh->indices[i], tree.mesh->indices[i+1], tree.mesh->indices[i+2]}};
             floatCoordinate centerOfMass;
             for(std::size_t j = 0; j < 3; ++j) {
                 flat_verts.emplace_back(std::array<float, 3>{{
-                    tree.pointCloud->vertex_coords[v_ids[j]*3],
-                    tree.pointCloud->vertex_coords[v_ids[j]*3+1],
-                    tree.pointCloud->vertex_coords[v_ids[j]*3+2]}});
+                    tree.mesh->vertex_coords[v_ids[j]*3],
+                    tree.mesh->vertex_coords[v_ids[j]*3+1],
+                    tree.mesh->vertex_coords[v_ids[j]*3+2]}});
                 centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
                 flat_colors.emplace_back(id_color);
             }
             selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
             ++id_counter;
         }
-        PointCloud id_buf{nullptr, false, GL_TRIANGLES};
+        Mesh id_buf{nullptr, false, GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
         id_buf.position_buf.bind();
         id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));
@@ -1248,7 +1248,7 @@ void Viewport3D::pickPointCloudIdAtPosition() {
         id_buf.color_buf.bind();
         id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * 4 * sizeof(GLubyte));
 
-        renderPointCloudBufferIds(id_buf);
+        renderMeshBufferIds(id_buf);
     }
 }
 
@@ -1554,10 +1554,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         // restore settings
         glDisable(GL_BLEND);
     }
-    if (options.pointCloudPicking) {
-        pickPointCloudIdAtPosition();
-    } else if (state->viewerState->pointCloudVisibilityOn && options.drawPointcloud) {
-        renderPointCloud();
+    if (options.meshPicking) {
+        pickMeshIdAtPosition();
+    } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+        renderMesh();
     }
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {

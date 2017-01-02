@@ -80,28 +80,28 @@ bool SkeletonProxy::merge_trees(quint64 tree_id, quint64 other_tree_id) {
     return true;
 }
 
-void SkeletonProxy::add_tree_pointcloud(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
+void SkeletonProxy::add_tree_mesh(quint64 tree_id, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, const QVector<float> & color, int draw_mode, bool swap_xy) {
     if (verts.size() % 3 != 0) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: vertex coordinates not divisible by 3, got %1 vert coords.").arg(verts.size()).toStdString());
     }
     if (draw_mode == GL_TRIANGLES && indices.size() % 3 != 0) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: triangles coordinates not divisible by 3, got %1 indices.").arg(indices.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: triangles coordinates not divisible by 3, got %1 indices.").arg(indices.size()).toStdString());
     }
     if (!normals.empty() && normals.size() != verts.size()) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: vertex to normal count mismatch (should be equal), got %1 vert coords, %2 normal coords.").arg(verts.size()).arg(normals.size()).toStdString());
     }
     if (indices.empty()) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: indices required").toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: indices required").toStdString());
     }
     const auto correctColorSize = verts.size()/3 * 4;
     if (!color.empty() && color.size() != correctColorSize) {
-        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_pointcloud failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(correctColorSize).arg(color.size()).toStdString());
+        throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(correctColorSize).arg(color.size()).toStdString());
     }
-    Skeletonizer::singleton().addPointCloudToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
+    Skeletonizer::singleton().addMeshToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
 }
 
-void SkeletonProxy::delete_tree_pointcloud(quint64 tree_id) {
-    Skeletonizer::singleton().deletePointcloudOfTree(tree_id);
+void SkeletonProxy::delete_tree_mesh(quint64 tree_id) {
+    Skeletonizer::singleton().deleteMeshOfTree(tree_id);
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
@@ -367,9 +367,9 @@ QString SkeletonProxy::help() {
                    "\n save_working_directory(path) : saves the working directory from the console");
 }
 
-quint64 SkeletonProxy::last_clicked_point_cloud_id() {
-    if (state->mainWindow->viewport3D->pointCloudLastClickInformation) {
-        return state->mainWindow->viewport3D->pointCloudLastClickInformation.get().it;
+quint64 SkeletonProxy::last_clicked_mesh_id() {
+    if (state->mainWindow->viewport3D->meshLastClickInformation) {
+        return state->mainWindow->viewport3D->meshLastClickInformation.get().it;
     } else {
         throw std::runtime_error{"none available"};
     }

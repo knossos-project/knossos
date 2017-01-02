@@ -93,8 +93,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         case 4: return tree.getComment();
         case 5:
             auto treeProperties = propertyStringWithoutComment(tree.properties);
-            if(tree.pointCloud != nullptr) {
-                treeProperties.prepend("PointCloud");
+            if(tree.mesh != nullptr) {
+                treeProperties.prepend("Mesh");
             }
             return treeProperties;
         }
@@ -595,10 +595,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0;
 
-        bool containsPointcloud{false};
+        bool containsMesh{false};
         for(const auto & selectedTree : state->skeletonState->selectedTrees) {
-            if(selectedTree->pointCloud != nullptr) {
-                containsPointcloud = true;
+            if(selectedTree->mesh != nullptr) {
+                containsMesh = true;
                 break;
             }
         }
@@ -629,7 +629,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
-        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsPointcloud);//remove pointcloud
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsMesh);//remove mesh
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
@@ -725,9 +725,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
         }
     });
-    QObject::connect(treeContextMenu.addAction("&Remove pointclouds"), &QAction::triggered, [](){
+    QObject::connect(treeContextMenu.addAction("&Remove mesh"), &QAction::triggered, [](){
         for (auto * tree : state->skeletonState->selectedTrees) {
-            if(tree->pointCloud) tree->pointCloud.reset();
+            if(tree->mesh) tree->mesh.reset();
         }
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){

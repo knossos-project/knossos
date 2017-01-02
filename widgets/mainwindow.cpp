@@ -552,13 +552,13 @@ void MainWindow::createMenus() {
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
-        auto pointcloudPriority = !viewport3D->pointCloudLastClickCurrentlyVisited || !state->skeletonState->activeNode;
-        if (viewport3D->pointCloudLastClickInformation && pointcloudPriority) {
-            state->viewer->setPosition(viewport3D->pointCloudLastClickInformation.get().coord);
-            viewport3D->pointCloudLastClickCurrentlyVisited = true;
+        auto meshPriority = !viewport3D->meshLastClickCurrentlyVisited || !state->skeletonState->activeNode;
+        if (viewport3D->meshLastClickInformation && meshPriority) {
+            state->viewer->setPosition(viewport3D->meshLastClickInformation.get().coord);
+            viewport3D->meshLastClickCurrentlyVisited = true;
         } else if (state->skeletonState->activeNode) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
-            viewport3D->pointCloudLastClickCurrentlyVisited = false;
+            viewport3D->meshLastClickCurrentlyVisited = false;
         }
     }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);

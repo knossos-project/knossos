@@ -88,10 +88,10 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
         }
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
-            const QRegularExpression pointCloudRegEx(R"regex([0-9]*.xyz)regex");
+            const QRegularExpression meshRegEx(R"regex([0-9]*.xyz)regex");
             auto fileName = archive.getCurrentFileName();
-            const auto matchPointCloud = pointCloudRegEx.match(fileName);
-            if (matchPointCloud.hasMatch()) {
+            const auto matchMesh = meshRegEx.match(fileName);
+            if (matchMesh .hasMatch()) {
                 QuaZipFile file(&archive);
                 auto nameWithoutExtension = fileName;
                 nameWithoutExtension.chop(4);
@@ -105,11 +105,11 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
                     if (iter != std::end(treeMap)) {
                         treeId = iter->second.get().treeID;
                     } else {
-                        qDebug() << "Tree not found for this point cloud, loading as new tree:" << fileName;
+                        qDebug() << "Tree not found for this mesh, loading as new tree:" << fileName;
                         treeId = boost::none;
                     }
                 }
-                Skeletonizer::singleton().loadPointCloud(file, treeId);
+                Skeletonizer::singleton().loadMesh(file, treeId);
             }
         }
         state->viewer->loader_notify();
@@ -152,11 +152,11 @@ void annotationFileSave(const QString & filename) {
             }
         }
         for (const auto & tree : state->skeletonState->trees) {
-            if (tree.pointCloud != nullptr) {
+            if (tree.mesh != nullptr) {
                 QuaZipFile file_write(&archive_write);
                 const auto filename = QString::number(tree.treeID) + ".xyz";
                 if (zipCreateFile(file_write, filename, 1)) {
-                    Skeletonizer::singleton().savePointCloud(file_write, tree);
+                    Skeletonizer::singleton().saveMesh(file_write, tree);
                 }
             }
         }
