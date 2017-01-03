@@ -33,7 +33,7 @@ PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisib
     setWindowTitle("Python Interpreter");
 
     setLayout(&mainLayout);
-    resize({500, 300});
+    resize({800, 480});
 }
 
 void PythonInterpreterWidget::saveSettings() {
