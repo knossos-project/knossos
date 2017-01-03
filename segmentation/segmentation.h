@@ -244,7 +244,7 @@ signals:
     void backgroundIdChanged(uint64_t backgroundId);
     void categoriesChanged();
     void todosLeftChanged();
-    void hoveredSubObjectChanged(const uint64_t subobject_id);
+    void hoveredSubObjectChanged(const uint64_t subobject_id, const std::vector<uint64_t> & overlapObjects);
 public slots:
     void clear();
     void deleteSelectedObjects();

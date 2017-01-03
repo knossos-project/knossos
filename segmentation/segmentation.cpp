@@ -342,7 +342,12 @@ uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmenta
 
 void Segmentation::hoverSubObject(const uint64_t subobject_id) {
     if (subobject_id != hovered_subobject_id) {
-        emit hoveredSubObjectChanged(hovered_subobject_id = subobject_id);
+        const auto & iter = Segmentation::singleton().subobjects.find(subobject_id);
+        std::vector<uint64_t> overlappingObjIndices;
+        if (iter != std::end(Segmentation::singleton().subobjects)) {
+            overlappingObjIndices = iter->second.objects;
+        }
+        emit hoveredSubObjectChanged(hovered_subobject_id = subobject_id, overlappingObjIndices);
     }
 }
 
