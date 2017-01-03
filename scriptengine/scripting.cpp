@@ -128,6 +128,7 @@ Scripting::Scripting() : _ctx{[](){
     executeResourceStartup();
     executeFromUserDirectory();
 
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, &state->viewer->window->widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 

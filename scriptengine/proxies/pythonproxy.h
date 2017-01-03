@@ -36,8 +36,13 @@ class PythonProxy : public QObject {
     Q_OBJECT
 signals:
     void echo(QString message);
+    void viewport_snapshot(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
 
 public slots:
+    ViewportType get_viewport_type(int i) {
+        return static_cast<ViewportType>(i);
+    }
+
     void annotationLoad(const QString & filename, const bool merge = false);
     void annotationSave(const QString & filename);
     int annotation_time();
