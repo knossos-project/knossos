@@ -1,18 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
-  <?define Version='4.2.1'?>
+  <?define Version='5.0'?>
+<!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
 
-  <!-- <Product Name='KNOSSOS $(var.Version)' Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
-    Id='b836aaf3-c2dd-4976-b28d-2836865657eb' 
-    UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
-    Language='1033' Codepage='1252' Version='$(var.Version)'>
-    <Package Id='*' Platform='x64' Keywords='Installer' Description='KNOSSOS $(var.Version) Installer for Windows x64'
-      Comments='Foobar is a registered trademark of Acme Ltd.' Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
-      InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252' /> -->
+<!-- Product ID should be Id='*' so it will be auto generated when creating a new installer
+otherwise you would get an error message "already installed".
+Upgrade Code should remain always the same! -->
 
   <Product Codepage='1252'
-    Id='b836aaf3-c2dd-4976-b28d-2836865657eb' 
+    Id='*' 
     Language='1033'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
     Name='KNOSSOS $(var.Version)'
@@ -28,7 +25,6 @@
       Languages='1033'
       Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
       Platform='x64' />
-
 
     <!-- <Condition Message="A later version of [ProductName] is already installed.">NOT NEWERVERSIONDETECTED</Condition> -->
     <!-- <MajorUpgrade AllowSameVersionUpgrades='yes' DowngradeErrorMessage='A newer version of [ProductName] is already installed.' /> -->
@@ -71,6 +67,11 @@
 
     <DirectoryRef Id='ApplicationProgramsFolder'>
       <Component Id='ApplicationShortcut' Win64='yes' Guid='a836aaf3-c2dd-4976-b28d-2836865657eb'>
+        <Shortcut Id="UninstallProduct"             
+          Name="Uninstall My Application"
+          Target="[System64Folder]msiexec.exe"
+          Arguments="/x [ProductCode]"
+          Description="Uninstalls My Application" />
         <RemoveFolder Id='ApplicationProgramsFolder' On='uninstall'/>
         <RegistryValue Root='HKCU' Key='Software\MPImF\KNOSSOS' Name='installed' Type='integer' Value='1' KeyPath='yes'/>
      </Component>
@@ -80,7 +81,8 @@
       <ComponentRef Id='MainExecutable' />
       <ComponentRef Id='ApplicationShortcut' />
     </Feature>
-
-    <Icon Id='knossos64.exe' SourceFile='logo_small.bmp' />
+    <Icon Id='knossos64.exe' SourceFile='logo.ico' />
+    <Property Id="ARPPRODUCTICON" Value="knossos64.exe" /> 
+    
   </Product>
 </Wix>
