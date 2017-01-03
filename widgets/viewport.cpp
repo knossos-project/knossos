@@ -882,7 +882,7 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     }
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
-    image.save(path);
+    qDebug() << tr("snapshot ") + (!image.save(path) ? "un" : "") + tr("successful.");
     glPopAttrib(); // restore viewport setting
     fbo.release();
 }
