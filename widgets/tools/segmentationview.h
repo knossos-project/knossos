@@ -41,6 +41,7 @@
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QMenu>
 
 #include <functional>
 
