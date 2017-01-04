@@ -102,6 +102,12 @@ int main(int argc, char *argv[]) {
     }) != end;
 #endif
     QApplication a(argc, argv);
+
+    QFile file(":resources/style.qss");
+    file.open(QFile::ReadOnly);
+    QString styleSheet = QLatin1String(file.readAll());
+    file.close();
+    a.setStyleSheet(QString(styleSheet));
 #ifdef Q_OS_OSX
     if (!styleOverwrite) {// default to Fusion style on OSX if nothing contrary was specified (because the default theme looks bad)
         QApplication::setStyle(QStyleFactory::create("Fusion"));

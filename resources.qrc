@@ -48,5 +48,6 @@
         <file>resources/icons/menubar/choose-dataset.png</file>
         <file>resources/icons/menubar/annotation.png</file>
         <file>resources/icons/menubar/about.png</file>
+        <file>resources/style.qss</file>
     </qresource>
 </RCC>

@@ -1,0 +1,16 @@
+QMainWindow {
+    background: #dddddd;
+}
+
+QStatusBar {
+    background: #404244;
+}
+
+QStatusBar QLabel {
+    color: #ffffff;
+    padding: 2px 4px;
+}
+
+QStatusBar::item {
+    background: #262829;
+}
