@@ -1101,9 +1101,9 @@ void Viewport3D::renderMesh() {
                 vec3 view_dir = vec3(0.0, 0.0, 1.0);
 
                 // diffuse lighting
-                vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, 1.0, 0.0, 0.0)).xyz);
+                vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, -1.0, 0.0, 0.0)).xyz);
                 float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
-                vec3 sub_light_dir = vec3(0.0, -1.0, 0.0);
+                vec3 sub_light_dir = vec3(0.0, 1.0, 0.0);
                 float sub_light_power = max(0.0, dot(-sub_light_dir, frag_normal));
 
                 // pseudo ambient lighting
