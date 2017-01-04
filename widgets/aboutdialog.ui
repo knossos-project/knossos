@@ -246,6 +246,16 @@ margin-top: 8px;
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="webLabel">
+           <property name="text">
+            <string>&lt;a href=&quot;https://knossostool.org&quot;&gt;https://knossostool.org&lt;/a&gt;</string>
+           </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="mpimrLinkLabel">
            <property name="text">
             <string>&lt;a href=&quot;https://www.mpimf-heidelberg.mpg.de/en&quot;&gt;https://www.mpimf-heidelberg.mpg.de&lt;/a&gt;</string>
@@ -282,8 +292,8 @@ margin-top: 8px;
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>726</width>
-              <height>342</height>
+              <width>711</width>
+              <height>396</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_8">
