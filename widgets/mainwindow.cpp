@@ -141,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->addWidget(&cursorPositionLabel);
     nodeLockingLabel.setVisible(false);
     statusBar()->addPermanentWidget(&nodeLockingLabel);
+    synapseStateLabel.setVisible(false);
     statusBar()->addPermanentWidget(&synapseStateLabel);
     hideClutterInfoLabel.setToolTip("Hold space to temporarily show only the raw data. Everything else is hidden.");
     statusBar()->addPermanentWidget(&hideClutterInfoLabel);
@@ -968,6 +969,7 @@ void MainWindow::setSynapseState(const SynapseState newState) {
     }
     newTreeAction->setText((synapseState == SynapseState::SynapticCleft) ? "New Tree / Finish Synapse" : "New Tree");
     createSynapse->setEnabled(synapseState == SynapseState::Off); // Only allow new synapse if there is none active atm.
+    synapseStateLabel.setHidden(synapseStateLabel.text().isEmpty());
 }
 
 void MainWindow::toggleSynapseState() {
