@@ -380,10 +380,10 @@ void MainWindow::updateTodosLeft() {
     auto & job = Segmentation::singleton().job;
 
     if(todosLeft > 0) {
-        todosLeftLabel.setText(QString("<font color='red'>  %1 more left</font>").arg(todosLeft));
+        todosLeftLabel.setText(QString("<font color='#FF573E'>  %1 more left</font>").arg(todosLeft));
     }
     else if(Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
-        todosLeftLabel.setText(QString("<font color='green'>  %1 more left</font>").arg(todosLeft));
+        todosLeftLabel.setText(QString("<font color='#00D36F'>  %1 more left</font>").arg(todosLeft));
         // submit work
         QRegExp regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b");
         if(regex.exactMatch(job.submitPath)) { // submission by email
@@ -422,9 +422,9 @@ void MainWindow::updateTitlebar() {
     unsavedChangesLabel.setToolTip("");
     if (session.unsavedChanges) {
         title.append("*");
-        auto autosave = tr("<font color='red'>(autosave: off)</font>");
+        auto autosave = tr("<font color='#FF573E'>(autosave: off)</font>");
         if (session.autoSaveTimer.isActive()) {
-            autosave = tr("<font color='green'>(autosave: on)</font>");
+            autosave = tr("<font color='#00D36F'>(autosave: on)</font>");
             const auto minutes = session.autoSaveTimer.remainingTime() / 1000 / 60;
             const auto seconds = session.autoSaveTimer.remainingTime() / 1000 % 60;
             unsavedChangesLabel.setToolTip(tr("Next autosave in %1:%2 min").arg(minutes).arg(seconds, 2, 10, QChar('0')));
@@ -921,7 +921,7 @@ void MainWindow::setSegmentState(const SegmentState newState) {
     QString nextState = "";
     switch(segmentState) {
     case SegmentState::On:
-        stateName = tr("<font color='green'>On</font>");
+        stateName = tr("<font color='#00D36F'>On</font>");
         nextState = tr("off once");
         Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
         break;
@@ -931,7 +931,7 @@ void MainWindow::setSegmentState(const SegmentState newState) {
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     case SegmentState::Off:
-        stateName = tr("<font color='blue'>Off</font>");
+        stateName = tr("<font color='#34A4FF'>Off</font>");
         nextState = tr("on");
         Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
@@ -961,10 +961,10 @@ void MainWindow::setSynapseState(const SynapseState newState) {
         synapseStateLabel.setText(tr(""));
         break;
     case SynapseState::SynapticCleft:
-        synapseStateLabel.setText(tr("Synapse mode: <font color='green'>trace cleft</font>"));
+        synapseStateLabel.setText(tr("Synapse mode: <font color='#00D36F'>trace cleft</font>"));
         break;
     case SynapseState::PostSynapse:
-        synapseStateLabel.setText(tr("Synapse mode: <font color='blue'>set post synapse</font>"));
+        synapseStateLabel.setText(tr("Synapse mode: <font color='#34A4FF'>set post synapse</font>"));
         break;
     }
     newTreeAction->setText((synapseState == SynapseState::SynapticCleft) ? "New Tree / Finish Synapse" : "New Tree");
