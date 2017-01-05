@@ -1117,9 +1117,9 @@ void Viewport3D::renderMesh() {
                 }
 
                 vec3 fcolor = use_tree_color ? tree_color.rgb : frag_color.rgb;
-                gl_FragColor = vec4((0.1 * fcolor                                 // ambient
-                            + 0.9 * fcolor * main_light_power                     // diffuse(main)
-                            + 0.4 * fcolor * sub_light_power         // diffuse(sub)
+                gl_FragColor = vec4((0.25 * fcolor                                 // ambient
+                            + 0.75 * fcolor * main_light_power                     // diffuse(main)
+                            + 0.25 * fcolor * sub_light_power         // diffuse(sub)
                             // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
                             // + specular_color * specular_power                  // specular
                             ) //* ambient_occlusion_power
