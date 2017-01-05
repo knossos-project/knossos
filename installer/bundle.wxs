@@ -2,16 +2,14 @@
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
   xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'
   xmlns:bal='http://schemas.microsoft.com/wix/BalExtension'>
-
   <?define Version='5.0'?>
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
-
   <Bundle Version='$(var.Version)' 
     UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
     IconSourceFile='logo.ico' 
     AboutUrl='https://knossostool.org'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
-    Copyright='Copyright (c) [Bundle/@Manufacturer]. All rights reserved.'
+    Copyright='Copyright © Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.. All rights reserved.'
     Name='KNOSSOS $(var.Version)'>
     <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLargeLicense'>
       <!-- TODO -->
@@ -20,27 +18,29 @@
         LicenseUrl='https://github.com/knossos-project/knossos/blob/master/LICENSE.txt'
         LogoFile='64x64.png'
         ShowVersion='yes'
-        LocalizationFile='HyperlinkTheme.wxl'
+        ThemeFile='HyperlinkTheme.xml'
         />
-
     </BootstrapperApplicationRef>
-
     <Variable Name='InstallFolder' Type='string' Value='[ProgramFilesFolder]'/>
-
+    <!--<Variable Name="CommandLineArg" bal:Overridable="yes" Value='NOT LocalDesktopShortcutCheckbox'/>-->
     <Chain>
       <PackageGroupRef Id='Python27' />
       <!-- Visible='no' so only the bundle appears in ARP and we uninstall the bundle and not only the .msi -->
       <MsiPackage Id='MainExecutable' SourceFile='knossos.msi' Visible='no'>
         <MsiProperty Name='INSTALLLOCATION' Value='[InstallFolder]' />
-        </MsiPackage>
+        <!--<MsiProperty Name='INSTALLSHORTCUT' Value='[CommandLineArg]' />-->
+      </MsiPackage>
     </Chain>
   </Bundle>
   
   <Fragment> 
     <!-- CHECK IF PYTHON IS INSTALLED -->
-    <!-- search for relevant regentry -->
-    <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Python\PythonCore\2.7\InstallPath' Result='exists' Win64='yes' Variable='Python27Version'/> 
-
+    <!-- search for relevant .dll -->
+    <Property Id="PYTHONVERSION">
+        <DirectorySearch Id="SystemFolderPythonVersion" Path="[SystemFolder]">
+            <FileSearch Name="python27.dll" MinVersion="2.7.0"/>
+        </DirectorySearch>
+    </Property>
     <PackageGroup Id='Python27'> 
      <MsiPackage 
         Cache='no' 
@@ -48,10 +48,11 @@
         Vital='yes'
         Visible='yes'
         ForcePerMachine='yes'
+        DisplayInternalUI='no'
         Name='python-2.7.13.amd64.msi' 
         SourceFile='python-2.7.13.amd64.msi'
-        EnableFeatureSelection='yes' 
-        InstallCondition='NOT Python27Version'/>
+        EnableFeatureSelection='yes'
+        InstallCondition='NOT PYTHONVERSION AND NOT LocalPythonCheckbox' />
     </PackageGroup> 
   </Fragment> 
 </Wix>
