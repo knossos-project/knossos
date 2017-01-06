@@ -39,6 +39,7 @@
 #include <QApplication>
 #include <QFileInfo>
 
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -89,6 +90,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     if (type == QtFatalMsg) {
         std::abort();
     }
+
 }
 
 int global_argc;
@@ -188,6 +190,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&remote, &Remote::rotationSignal, &viewer, &Viewer::setRotation);
 
     knossos->loadDefaultTreeLUT();
+
 
     if(datasetLoaded) {
         // don't start loader, when there is no dataset, yet.
@@ -355,6 +358,7 @@ bool Knossos::stripNewlines(char *string) {
 }
 
 bool Knossos::readConfigFile(const char *path) {
+
     QFile file(path);
     if(!file.open(QIODevice::ReadOnly)) {
         qDebug("Error reading config file at path:%s", path);
@@ -363,6 +367,7 @@ bool Knossos::readConfigFile(const char *path) {
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
+    state->hdf5 = "";
     QTextStream stream(&file);
     while(!stream.atEnd()) {
         QString line = stream.readLine();
@@ -423,15 +428,43 @@ bool Knossos::readConfigFile(const char *path) {
 
         } else if (token == "compression_ratio") {
             state->compressionRatio = tokenList.at(1).toInt();
+        }else if (token == "hdf5") {
+
+            token = tokenList.at(1);
+            QStringList experimentTokenList = token.split(
+                                             QRegExp("[\"]"),
+                                             QString::SkipEmptyParts);
+            QString experimentToken = experimentTokenList.at(0);
+            std::string stdString = experimentToken.toStdString();
+            state->hdf5 = stdString;
+
         } else {
             qDebug() << "Skipping unknown parameter";
         }
+
+
+    }
+    if(state->hdf5.empty()){
+        std::cout << "inside1" << std::endl;
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setWindowTitle("Failure to Load Hdf5");
+        prompt.setText("Meshing option available but hdf5 misssing");
+        prompt.addButton("Ok", QMessageBox::YesRole);
+        prompt.addButton("Cancel", QMessageBox::NoRole);
+        prompt.exec();
+        state->hdf5_found = false;
+
+    }
+    else{
+        state->hdf5_found = true;
     }
 
     return true;
 }
 
 bool Knossos::printConfigValues() {
+
     qDebug() << QString("Configuration:\n\tExperiment:\n\t\tPath: %0\n\t\tName: %1\n\t\tBoundary (x): %2\n\t\tBoundary (y): %3\n\t\tBoundary (z): %4\n\t\tScale (x): %5\n\t\tScale (y): %6\n\t\tScale (z): %7\n\n\tData:\n\t\tCube bytes: %8\n\t\tCube edge length: %9\n\t\tCube slice area: %10\n\t\tM (cube set edge length): %11\n\t\tCube set elements: %12\n\t\tCube set bytes: %13\n\t\tZ-first cube order: %14\n")
                .arg(state->path)
                .arg(state->name)
@@ -447,7 +480,8 @@ bool Knossos::printConfigValues() {
                .arg(state->M)
                .arg(state->cubeSetElements)
                .arg(state->cubeSetBytes)
-               .arg(state->boergens);
+               .arg(state->boergens)
+               .arg(state->hdf5.c_str());
     return true;
 }
 
@@ -539,6 +573,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             qDebug("KNOSSOS currently supports only datasets downsampled by a factor of %d.\
                    This can easily be changed in the source.", NUM_MAG_DATASETS);
         }
+
     }
     // no magstring found, take mag read from .conf file of dataset
     if(isMultiresCompatible == false) {
@@ -769,7 +804,7 @@ bool Knossos::readDataConfAndLocalConf() {
 
 bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
- #define NUM_PARAMS 14
+ #define NUM_PARAMS 15
 
  char *lval = NULL, *rval = NULL;
  char *equals = NULL;
@@ -789,6 +824,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                              "--config-file",     // 11
                              "--magnification",   // 12
                              "--overlay",         // 13
+                             "--hdf5",            // 14
                            };
 
  for(i = 1; i < argCount; i++) {
@@ -870,6 +906,10 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                  case 13:
                      state->overlay = std::stoi(rval);
                      break;
+                 case 14:
+                     state->hdf5  = rval;
+                     break;
+
              }
          }
      }

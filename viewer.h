@@ -36,6 +36,18 @@
 #include <QElapsedTimer>
 #include <QLineEdit>
 
+#include <VTK-7.0/vtkImageData.h>
+#include <VTK-7.0/vtkSmartPointer.h>
+#include <VTK-7.0/vtkPolyData.h>
+#include <VTK-7.0/vtkCellArray.h>
+#include <VTK-7.0/vtkPoints.h>
+#include <VTK-7.0/vtkRenderer.h>
+#include <VTK-7.0/vtkRenderWindow.h>
+#include <VTK-7.0/vtkRenderWindowInteractor.h>
+#include <VTK-7.0/QVTKWidget.h>
+
+
+
 #define SLOW 1000
 #define FAST 10
 #define RGB_LUTSIZE 768
@@ -148,6 +160,18 @@ struct viewerState {
     //In pennmode right and left click are switched
     bool penmode = false;
 
+    //**rutuja**//
+    std::unordered_map<uint64_t,uint64_t> flag_id;
+    bool flag_status;
+
+
+
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor=vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+    QVTKWidget *widget = new QVTKWidget;
+
+
     QString lockComment;
 };
 
@@ -185,6 +209,38 @@ public:
     QTimer *timer;
     int frames;
 
+    //**rutuja**//
+    unsigned char *value_labels = (unsigned char*)std::malloc(sizeof(unsigned char)*384*384);
+    class supervoxel{
+    public:
+        uint64_t seed;
+        uint64_t objid;
+        std::tuple<uint8_t,uint8_t,uint8_t,uint8_t> color;
+        bool show;
+
+        //supervoxel();
+       /* supervoxel(uint64_t seed_id, uint64_t obj_id, std::tuple<uint8_t,uint8_t,uint8_t,uint8_t> colour,bool showid)
+        {
+            seed = seed_id;
+            objid = obj_id;
+            color = colour;
+            show = showid;
+
+        }*/
+        //~supervoxel(){
+           // std::cout << "deletes" << std::endl;
+        //}
+
+    };
+
+
+    std::vector<supervoxel> supervoxel_info;
+    void point_shape(char* data, size_t dcOffset, vpConfig *vp);
+    int hdf5_read(std::vector<supervoxel>& supervoxel_info);
+    vtkPoints drawboundary();
+    void drawbuttons();
+
+//
     bool updateZoomCube();
 
     bool initialized;
@@ -237,3 +293,8 @@ protected:
 };
 
 #endif // VIEWER_H
+void CreateImage(vtkSmartPointer<vtkImageData> image,
+                 unsigned char* color1,
+                 unsigned char* color2);
+
+

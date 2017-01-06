@@ -35,9 +35,12 @@ class SegmentationObjectModel : public QAbstractListModel {
 Q_OBJECT
     friend class SegmentationTab;//selection
 protected:
-    const std::vector<QString> header{""/*color*/, "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
+
+
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
 public:
+    //rutuja
+    const std::vector<QString> header{"on/off","color", "Object ID", "lock", "category", "comment", "#", "subobject IDs"};
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
@@ -58,6 +61,7 @@ class TouchedObjectModel : public SegmentationObjectModel {
     Q_OBJECT
 public:
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
+    //std::vector<Segmentation::Object>objectCache;
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
@@ -96,17 +100,18 @@ Q_OBJECT
     QComboBox categoryFilter;
     QLineEdit commentFilter;
     QCheckBox regExCheckbox{"regex"};
+    QCheckBox switchbutton{"on/off"};
 
     SegmentationObjectModel objectModel;
     QSortFilterProxyModel objectProxyModelCategory;
     QSortFilterProxyModel objectProxyModelComment;
-    TouchedObjectModel touchedObjectModel;
+
 
     CategoryDelegate categoryDelegate;
 
-    QTreeView touchedObjsTable;
+
     QSplitter splitter;
-    QTreeView objectsTable;
+
     QHBoxLayout bottomHLayout;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
@@ -116,6 +121,13 @@ Q_OBJECT
     bool touchedObjectSelectionProtection = false;
 
 public:
+    //rutuja
+    TouchedObjectModel touchedObjectModel;
+    QTreeView touchedObjsTable;
+    //
+
+
+    QTreeView objectsTable;
     explicit SegmentationTab(QWidget * const parent = nullptr);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);

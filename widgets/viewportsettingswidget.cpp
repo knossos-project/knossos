@@ -183,6 +183,11 @@ void ViewportSettingsWidget::loadSettings() {
     slicePlaneViewportWidget->segmenationOverlaySlider.setValue(segmentationOverlayAlpha);
     slicePlaneViewportWidget->segmenationOverlaySlider.valueChanged(segmentationOverlayAlpha);
 
+    //**rutuja**//
+    const auto segmentationBorderAlpha = settings.value(SEGMENTATION_BORDER_ALPHA, 37).toInt();
+    slicePlaneViewportWidget->segmentationBorderSlider.setValue(segmentationBorderAlpha);
+    slicePlaneViewportWidget->segmentationBorderSlider.valueChanged(segmentationBorderAlpha);
+
     const auto drawVPCrosshairs = settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool();
     slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(drawVPCrosshairs);
     slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->clicked(drawVPCrosshairs);
@@ -250,6 +255,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(BIAS, slicePlaneViewportWidget->biasSpinBox->value());
     settings.setValue(RANGE_DELTA, slicePlaneViewportWidget->rangeDeltaSpinBox->value());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, slicePlaneViewportWidget->segmenationOverlaySlider.value());
+    settings.setValue(SEGMENTATION_BORDER_ALPHA, slicePlaneViewportWidget->segmentationBorderSlider.value());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->isChecked());
     settings.setValue(SHOW_VIEWPORT_SIZE, slicePlaneViewportWidget->showViewPortsSizeCheckBox->isChecked());
     settings.setValue(DATASET_LUT_FILE, slicePlaneViewportWidget->datasetLutFile->text());

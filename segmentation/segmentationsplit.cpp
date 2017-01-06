@@ -1,3 +1,4 @@
+#include <iostream>
 #include "segmentationsplit.h"
 
 #include "coordinate.h"
@@ -45,6 +46,7 @@ std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t 
 }
 
 void connectedComponent(const Coordinate & seed) {
+    std::cout << "12" << std::endl;
     auto subobjectId = readVoxel(seed);
     if (subobjectId != 0) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);
@@ -104,6 +106,7 @@ std::unordered_set<uint64_t> verticalSplittingPlane(const Coordinate & pos, cons
 }
 
 void verticalSplittingPlane(const Coordinate & seed) {
+    std::cout << "13" << std::endl;
     auto subobjectId = readVoxel(seed);
     if (subobjectId != 0) {
         auto & subobject = Segmentation::singleton().subobjectFromId(subobjectId, seed);

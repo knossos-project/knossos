@@ -58,7 +58,7 @@ void segmentation_work(QMouseEvent *event, const int vp) {
         merging(event, vp);
     } else {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
-            seg.createAndSelectObject(coord);
+            //seg.createAndSelectObject(coord);
         }
         uint64_t soid = 0;
         if (seg.selectedObjectsCount()) {
@@ -76,36 +76,62 @@ void merging(QMouseEvent *event, const int vp) {
     auto & seg = Segmentation::singleton();
     const auto subobjectIds = readVoxels(getCoordinateFromOrthogonalClick(event->x(), event->y(), vp), seg.brush);
     Coordinate clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), vp);
+
     for(const auto subobjectId : subobjectIds) {
-        if (seg.selectedObjectsCount() == 1) {
+        if (seg.activeObjectsCount() == 1) {//rutuja
+
             auto & subobject = seg.subobjectFromId(subobjectId, clickPos);
             const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
+
             // if clicked object is currently selected, an unmerge is requested
             if (seg.isSelected(subobject)) {
+
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         seg.selectObjectFromSubObject(subobject, clickPos);
                         seg.unmergeSelectedObjects(clickPos);
+
                     } else {
                         if(seg.isSelected(objectToMergeId)) { // if no other object to unmerge, just unmerge subobject
-                            seg.selectObjectFromSubObject(subobject, clickPos);
+                          seg.selectObjectFromSubObject(subobject, clickPos);
+
                         }
                         else {
                             seg.selectObject(objectToMergeId);
                         }
-                        seg.unmergeSelectedObjects(clickPos);
+
+
+                       seg.unmergeSelectedObjects(clickPos);
+
                     }
                 }
             } else { // object is not selected, so user wants to merge
                 if (!event->modifiers().testFlag(Qt::ShiftModifier)) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
+
                         seg.selectObjectFromSubObject(subobject, clickPos);
                     } else {
+
                         seg.selectObject(objectToMergeId);//select largest object
                     }
                 }
-                if (seg.selectedObjectsCount() >= 2) {
-                    seg.mergeSelectedObjects();
+                if (seg.activeObjectsCount() >= 2) {
+                   seg.mergeSelectedObjects();
+
+                }
+                if(state->hdf5_found)
+                {
+                    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color = seg.colorObjectFromId(subobjectId);
+                    auto objIndex = seg.largestObjectContainingSubobject(subobject);
+                    auto obj = seg.objects.at(objIndex);
+                    Viewer::supervoxel info;
+                    info.seed = subobjectId;
+                    info.objid = obj.id;
+                    info.color = color;
+                    info.show = true;
+                    state->viewer->supervoxel_info.push_back(info);
+                    state->viewer->hdf5_read(state->viewer->supervoxel_info);
                 }
             }
             seg.touchObjects(subobjectId);
@@ -557,21 +583,34 @@ void EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 }
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
+
     auto & segmentation = Segmentation::singleton();
     if (Session::singleton().annotationMode == SegmentationMode && segmentation.job.active == false && mouseEventAtValidDatasetPosition(event, VPfound)) { // in task mode the object should not be switched
         if(event->x() == mouseDownX && event->y() == mouseDownY) {
             const auto clickPos = getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound);
             const auto subobjectId = readVoxel(getCoordinateFromOrthogonalClick(event->x(), event->y(), VPfound));
-            if (subobjectId != 0) {// don’t select the unsegmented area as object
+
+
+
+            if (subobjectId != 0 && segmentation.createandselect) {// don’t select the unsegmented area as object
+
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
+
+                segmentation.createandselect = false;
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
-                    segmentation.clearObjectSelection();
+                    segmentation.clearActiveSelection();//rutuja
                     segmentation.selectObject(objIndex);
-                } else if (segmentation.isSelected(objIndex)) {// unselect if selected
-                    segmentation.unselectObject(objIndex);
-                } else { // select largest object
-                    segmentation.selectObject(objIndex);
+                    auto object = segmentation.objects.at(objIndex);
+                    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color = segmentation.colorObjectFromId(subobjectId);
+                    if(state->hdf5_found){
+                    Viewer::supervoxel info;
+                    info.seed = subobjectId;
+                    info.objid = object.id;
+                    info.color = color;
+                    info.show = true;
+                    state->viewer->supervoxel_info.push_back(info);
+                    state->viewer->hdf5_read(state->viewer->supervoxel_info);}
                 }
                 if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
                     segmentation.touchObjects(subobjectId);
@@ -579,7 +618,33 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     segmentation.untouchObjects();
                 }
             }
-        }
+            if (subobjectId != 0 && event->modifiers().testFlag(Qt::ControlModifier)) {// delete a subobject
+
+                auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
+                auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
+                if (segmentation.isSelected(objIndex)) {// unselect if selected
+
+                    auto & object = segmentation.objects.at(objIndex);
+                    segmentation.unselectObject(object);
+                    segmentation.remObject(subobjectId,object);
+                    segmentation.selectObject(object);
+                    if(state->hdf5_found)
+                    {
+                      segmentation.cell_delete();
+                    }
+                }
+                // i guess we  dont need this - rutuja
+                /*else { // select largest object
+                    segmentation.selectObject(objIndex);
+                }*/
+                /*if (segmentation.isSelected(subobject)) {//touch other objects containing this subobject
+                    segmentation.touchObjects(subobjectId);
+                } else {
+                    segmentation.untouchObjects();
+                }*/
+              }
+            }
+
         return;
     }
 
@@ -1046,8 +1111,15 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha += 10;
             }
+            if(Segmentation::singleton().alpha_border + 10 > 255) {
+                Segmentation::singleton().alpha_border = 255;
+            }
+            else {
+                Segmentation::singleton().alpha_border += 10;
+            }
             const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
             sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+            sliceVPSettings->segmentationBorderSlider.setValue(Segmentation::singleton().alpha_border);
         }
     } else if(event->key() == Qt::Key_Minus) {
         if(control) {
@@ -1061,16 +1133,25 @@ void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             else {
                 Segmentation::singleton().alpha -= 10;
             }
+            if(Segmentation::singleton().alpha_border - 10 < 0) {
+                Segmentation::singleton().alpha_border = 0;
+            }
+            else {
+                Segmentation::singleton().alpha_border -= 10;
+            }
             const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
             sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+            sliceVPSettings->segmentationBorderSlider.setValue(Segmentation::singleton().alpha_border);
         }
     } else if(event->key() == Qt::Key_Space) {
         state->overlay = false;
         state->viewer->oc_reslice_notify();
     } else if(event->key() == Qt::Key_Delete) {
+
         if(control) {
             if(state->skeletonState->activeTree) {
                 Skeletonizer::singleton().delTree(state->skeletonState->activeTree->treeID);
+
             }
         }
         else if(state->skeletonState->selectedNodes.size() > 0) {

@@ -98,6 +98,13 @@ protected:
     QSpinBox segmenationOverlaySpinBox;
     QSlider segmenationOverlaySlider{Qt::Horizontal};
     QHBoxLayout segmentationOverlayLayout;
+
+    /**change -rutuja **/
+    QLabel segmentationBorderGroupLabel{"Border Transparency"};
+    QLabel segmentationBorderLabel{"Border Opaqueness"};
+    QSpinBox segmentationBorderSpinBox;
+    QSlider segmentationBorderSlider{Qt::Horizontal};
+    QHBoxLayout segmentationBorderLayout;
 };
 
 #endif // VPSLICEPLANEVIEWPORTWIDGET_H

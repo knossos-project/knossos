@@ -16,6 +16,7 @@ uint64_t Segmentation::SubObject::highestId = 0;
 uint64_t Segmentation::Object::highestId = 0;
 uint64_t Segmentation::Object::highestIndex = -1;
 
+
 Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
     : id(++highestId), todo(false), immutable(false), location(Coordinate(0, 0, 0))
 {
@@ -160,12 +161,38 @@ Segmentation::Object & Segmentation::createObject(const uint64_t initialSubobjec
     return objects.back();
 }
 
+void Segmentation::remObject(uint64_t subobjectid, Segmentation::Object & sub)
+{
+    std::vector<std::reference_wrapper<SubObject>>tmp;
+    for (auto & elem : sub.subobjects) {
+        auto & subobject = elem.get();
+        if(subobject.id == subobjectid){
+          //unselectObject(sub);
+          decltype(sub.subobjects)j;
+          deleted_cell_id = subobjectid;
+          //flag_delete_cell = true;
+          tmp.push_back(subobject);
+          std::set_difference(std::begin(sub.subobjects), std::end(sub.subobjects), std::begin(tmp), std::end(tmp), std::back_inserter(j));
+          subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), sub.index), std::end(subobject.objects));
+          subobjects.erase(subobject.id);
+          std::swap(sub.subobjects,j);
+          emit changedRow(sub.index);
+
+
+        }
+
+    }
+
+}
+
 void Segmentation::removeObject(Object & object) {
+
     unselectObject(object);
     for (auto & elem : object.subobjects) {
         auto & subobject = elem.get();
         subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), object.index), std::end(subobject.objects));
         if (subobject.objects.empty()) {
+
             subobjects.erase(subobject.id);
         }
     }
@@ -176,6 +203,7 @@ void Segmentation::removeObject(Object & object) {
             auto & subobject = elem.get();
             std::replace(std::begin(subobject.objects), std::end(subobject.objects), objects.back().index, object.index);
         }
+
         //replace object index in selected objects
         selectedObjectIndices.replace(objects.back().index, object.index);
         std::swap(objects.back().index, object.index);
@@ -298,11 +326,13 @@ uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmenta
 }
 
 void Segmentation::touchObjects(const uint64_t subobject_id) {
+
     touched_subobject_id = subobject_id;
     emit resetTouchedObjects();
 }
 
 void Segmentation::untouchObjects() {
+
     touched_subobject_id = 0;
     emit resetTouchedObjects();
 }
@@ -332,38 +362,67 @@ bool Segmentation::isSubObjectIdSelected(const uint64_t & subobjectId) const {
 }
 
 void Segmentation::clearObjectSelection() {
+
     while (!selectedObjectIndices.empty()) {
         unselectObject(selectedObjectIndices.back());
     }
+
+}
+
+// rutuja
+void Segmentation::clearActiveSelection(){
+
+
+     while(!activeIndices.empty())
+    {
+       activeIndices.clear();
+    }
+
+
 }
 
 void Segmentation::selectObject(Object & object) {
+
     if (object.selected) {
         return;
     }
+
     object.selected = true;
     for (auto & subobj : object.subobjects) {
         ++subobj.get().selectedObjectsCount;
+        //rutuja
+        ++subobj.get().activeObjectsCount;
     }
+
     selectedObjectIndices.emplace_back(object.index);
+    activeIndices.emplace_back(object.index);
     emit changedRow(object.index);
+
 }
 
 void Segmentation::unselectObject(const uint64_t & objectIndex) {
+
     if (objectIndex < objects.size()) {
         unselectObject(objects[objectIndex]);
+
     }
 }
 
 void Segmentation::unselectObject(Object & object) {
+
+
     if (!object.selected) {
+
         return;
     }
+
     object.selected = false;
     for (auto & subobj : object.subobjects) {
         --subobj.get().selectedObjectsCount;
+        --subobj.get().activeObjectsCount;
     }
     selectedObjectIndices.erase(object.index);
+    activeIndices.erase(object.index);
     emit changedRow(object.index);
 }
 
@@ -379,6 +438,7 @@ void Segmentation::jumpToObject(const uint64_t & objectIndex) {
 }
 
 void Segmentation::selectNextTodoObject() {
+
     if(selectedObjectIndices.empty() == false) {
         lastTodoObject_id = selectedObjectIndices.front();
         auto & obj = objects[lastTodoObject_id];
@@ -429,6 +489,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist
 
 
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other, const Coordinate & position) {
+    std::cout << "9" << std::endl;
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
     if (!tmp.empty()) {//only unmerge if subobjects remain
@@ -444,14 +505,18 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
                 auto & objects = elem.get().objects;
                 objects.erase(std::remove(std::begin(objects), std::end(objects), object.index), std::end(objects));//remove parent
             }
+
             std::swap(object.subobjects, tmp);
             selectObject(object);
             emit changedRow(object.index);
+
         }
     }
 }
 
+
 void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject, const Coordinate & position) {
+
     const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
     , [&](const uint64_t elemId){
         const auto & elem = objects[elemId];
@@ -464,12 +529,15 @@ void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject
         auto & newObject = objects.back();
         selectObject(newObject);
     } else {
+
         selectObject(*other);
     }
 }
 
 void Segmentation::selectObject(const uint64_t & objectIndex) {
+
     if (objectIndex < objects.size()) {
+
         selectObject(objects[objectIndex]);
     }
 }
@@ -480,6 +548,11 @@ void Segmentation::updateLocationForFirstSelectedObject(const Coordinate & newLo
 
 std::size_t Segmentation::selectedObjectsCount() const {
     return selectedObjectIndices.size();
+}
+
+//rutuja
+std::size_t Segmentation::activeObjectsCount() const {
+    return activeIndices.size();
 }
 
 void Segmentation::mergelistSave(QIODevice & file) const {
@@ -515,6 +588,8 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         uint64_t initialVolume;
         QString category;
         QString comment;
+        std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color;
+
 
         bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
         bool valid1 = (coordLineStream >> location.x) && (coordLineStream >> location.y) && (coordLineStream >> location.z);
@@ -522,10 +597,20 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         bool valid3 = !(comment = stream.readLine()).isNull();
 
         if (valid0 && valid1 && valid2 && valid3) {
-            auto & obj = createObject(initialVolume, location, objId, todo, immutable);
+            auto & obj = createObject(initialVolume, location, objId, todo, immutable);  
             while (lineStream >> objId) {
                 newSubObject(obj, objId);
+                if(state->hdf5_found){
+                color = colorObjectFromId(objId);
+                Viewer::supervoxel info;
+                info.seed = objId;
+                info.objid = obj.id;
+                info.color = color;
+                info.show = true;
+                state->viewer->supervoxel_info.push_back(info);}
+
             }
+            selectObject(obj);
             std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
             changeCategory(obj, category);
             obj.comment = comment;
@@ -534,8 +619,14 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             break;
         }
     }
+
     blockSignals(false);
     emit resetData();
+    if(state->hdf5_found){
+
+      state->viewer->hdf5_read(state->viewer->supervoxel_info);
+    }
+
 }
 
 void Segmentation::jobLoad(QIODevice & file) {
@@ -565,24 +656,102 @@ void Segmentation::jobSave(QIODevice &file) const {
 
 void Segmentation::startJobMode() {
     alpha = 37;
+    alpha_border = 37;
     Segmentation::singleton().selectNextTodoObject();
     setRenderAllObjs(false);
 }
 
 void Segmentation::deleteSelectedObjects() {
-    while (!selectedObjectIndices.empty()) {
-        removeObject(objects[selectedObjectIndices.back()]);
+
+    //while (!selectedObjectIndices.empty()) {
+      while(!activeIndices.empty()){
+       //Object object = objects[selectedObjectIndices.back()];
+         Object Object = objects[activeIndices.back()];
+         deleted_id = Object.id;
+         removeObject(Object);
+         //removeObject(objects[selectedObjectIndices.back()]);
+
     }
+
+   if(!objects.empty())
+   {
+     auto & obj = objects.back();
+     activeIndices.emplace_back(obj.index);
+   }
+    Segmentation::flag_delete = true;
+
+}
+
+
+void Segmentation::branch_onoff() {
+    int size = state->viewer->supervoxel_info.size();
+
+    for(int i = 0; i < objects.size();i++)
+    {
+
+      Segmentation::Object temp_object = objects.at(i);
+      std::vector<Viewer::supervoxel>::iterator it = state->viewer->supervoxel_info.begin();
+      int k = 0;
+      while(k < size ){
+          if(it->objid == temp_object.id){
+
+             it->show = temp_object.on_off;
+
+          }
+          it++;
+          k++;
+      }
+
+    }
+   state->viewer->hdf5_read(state->viewer->supervoxel_info);
+
+}
+
+void Segmentation::branch_delete(){
+     auto & segment = Segmentation::singleton();
+     segment.flag_delete = false;
+     std::vector<Viewer::supervoxel>::iterator i = state->viewer->supervoxel_info.begin();
+     while(i != state->viewer->supervoxel_info.end()){
+          if(i->objid == segment.deleted_id){
+              i = state->viewer->supervoxel_info.erase(i);
+
+          }
+          else{
+              i++;
+          }
+
+
+     }
+
+     state->viewer->hdf5_read(state->viewer->supervoxel_info);
+}
+
+void Segmentation::cell_delete(){
+    auto & segment = Segmentation::singleton();
+    //segment.flag_delete_cell = false;
+    std::vector<Viewer::supervoxel>::iterator i = state->viewer->supervoxel_info.begin();
+    while(i != state->viewer->supervoxel_info.end()){
+         if(i->seed == segment.deleted_cell_id){
+           i = state->viewer->supervoxel_info.erase(i);
+           break;
+         }
+        i++;
+    }
+   state->viewer->hdf5_read(state->viewer->supervoxel_info);
 }
 
 void Segmentation::mergeSelectedObjects() {
-    while (selectedObjectIndices.size() > 1) {
-        auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
-        auto & secondObj = objects[selectedObjectIndices.back()];
+    while (activeIndices.size() > 1) {
+    //while(selectedObjectIndices.size() > 1){
+        //auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
+        auto & firstObj = objects[activeIndices.front()];
+        auto & secondObj = objects[activeIndices.back()];
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = false;
             selectedObjectIndices.erase(object.index);
+            //rutuja
+            activeIndices.erase(object.index);
             emit changedRow(object.index);//deselect
         };
         //4 (im)mutability possibilities
@@ -594,8 +763,11 @@ void Segmentation::mergeSelectedObjects() {
             secondObj.todo = false;
 
             selectedObjectIndices.emplace_back(newid);
+            activeIndices.emplace_back(newid);
             //move new index to front, so it gets the new merge origin
             swap(selectedObjectIndices.back(), selectedObjectIndices.front());
+            //rutuja
+            swap(activeIndices.back(), activeIndices.front());
             //delay deselection after we swapped new with first
             flat_deselect(firstObj);
         } else if (secondObj.immutable) {
@@ -620,6 +792,7 @@ void Segmentation::mergeSelectedObjects() {
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
+    std::cout << "7" << std::endl;
     while (selectedObjectIndices.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);

@@ -23,6 +23,15 @@
  */
 #include "viewer.h"
 
+#include <H5Cpp.h>
+#include <hdf5.h>
+#include <Qlist>
+#include <QtGui>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
@@ -49,6 +58,43 @@
 #else
 #define WINAPI
 #endif
+
+#include <VTK-7.0/vtkImageImport.h>
+#include <VTK-7.0/vtkProperty.h>
+#include <VTK-7.0/vtkPolyDataMapper.h>
+#include <VTK-7.0/vtkActor.h>
+
+#include <VTK-7.0/vtkColorTransferFunction.h>
+#include <VTK-7.0/vtkVolume.h>
+#include <VTK-7.0/vtkVolumeProperty.h>
+#include <VTK-7.0/vtkPiecewiseFunction.h>
+#include <VTK-7.0/vtkSmartVolumeMapper.h>
+
+#include <VTK-7.0/vtkPointData.h>
+#include <VTK-7.0/vtkActor2D.h>
+#include <VTK-7.0/vtkImageMapper.h>
+#include <VTK-7.0/vtkCellData.h>
+
+#include <VTK-7.0/vtkMarchingCubes.h>
+#include <VTK-7.0/vtkPolyData.h>
+#include <VTK-7.0/vtkOutlineFilter.h>
+#include <VTK-7.0/vtkAppendPolyData.h>
+#include <VTK-7.0/vtkCubeAxesActor.h>
+#include <VTK-7.0/vtkCamera.h>
+#include <VTK-7.0/vtkStructuredGridOutlineFilter.h>
+#include <VTK-7.0/vtkLine.h>
+#include <VTK-7.0/vtkCellArray.h>
+#include <VTK-7.0/vtkDoubleArray.h>
+#include <VTK-7.0/vtkTextActor.h>
+#include <VTK-7.0/vtkTextProperty.h>
+#include <VTK-7.0/vtkLabeledDataMapper.h>
+#include <VTK-7.0/vtkIntArray.h>
+#include <VTK-7.0/vtkTexturedButtonRepresentation2D.h>
+#include <VTK-7.0/vtkButtonWidget.h>
+#include <VTK-7.0/vtkSphereSource.h>
+#include <VTK-7.0/QVTKWidget.h>
+
+#include <VTK-7.0/vtkInteractorStyleTrackballCamera.h>
 
 #include <fstream>
 
@@ -319,6 +365,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     std::size_t counter = 0;//slice position
     int offsetX = 0, offsetY = 0; // current texel's horizontal and vertical dataset pixel offset inside cube
     int pixelsPerLine = state->cubeEdgeLength*state->magnification;
+
     for (std::size_t y = 0; y < outerLoopBoundary; ++y) {
         for (std::size_t x = 0; x < innerLoopBoundary; ++x) {
             bool hide = false;
@@ -328,12 +375,14 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                     // vertically out of movement area
                     slice[3] = 0;
                     hide = true;
+                    //std::cout << "a" << std::endl;
                 }
                 else if(((vpConfig->type == SLICE_XY || vpConfig->type == SLICE_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
                         (vpConfig->type == SLICE_YZ && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
                     slice[3] = 0;
                     hide = true;
+                  //  std::cout << "b" << std::endl;
                 }
             }
 
@@ -341,12 +390,52 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 uint64_t subobjectId = *reinterpret_cast<uint64_t*>(datacube);
 
                 auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromId(subobjectId);
+
                 slice[0] = std::get<0>(color);
                 slice[1] = std::get<1>(color);
                 slice[2] = std::get<2>(color);
                 slice[3] = std::get<3>(color);
 
                 const bool selected = (subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId);
+                if(selected)
+                {
+                   std::unordered_map<uint64_t, Segmentation::SubObject>::iterator it = seg.subobjects.find(subobjectId);
+                   const auto & sub = it->second;
+                   uint64_t id = seg.largestObjectContainingSubobject(sub);
+                   const auto & obj = seg.objects.at(id);
+                   if(!obj.on_off)
+                   {
+                       reinterpret_cast<uint8_t*>(slice)[0] = 0;
+                       reinterpret_cast<uint8_t*>(slice)[1] = 0;
+                       reinterpret_cast<uint8_t*>(slice)[2] = 0;
+                       reinterpret_cast<uint8_t*>(slice)[3] = 0;
+
+                   }
+
+                }
+                if(!selected)
+                {
+
+                    if(subobjectId == 0)
+                    {
+                        reinterpret_cast<uint8_t*>(slice)[0] = 255;
+                        reinterpret_cast<uint8_t*>(slice)[1] = 0;
+                        reinterpret_cast<uint8_t*>(slice)[2] = 0;
+                        reinterpret_cast<uint8_t*>(slice)[3] = Segmentation::singleton().alpha_border;
+
+                    }
+                    else
+                    {
+                        reinterpret_cast<uint8_t*>(slice)[0] = 0;
+                        reinterpret_cast<uint8_t*>(slice)[1] = 0;
+                        reinterpret_cast<uint8_t*>(slice)[2] = 0;
+                        reinterpret_cast<uint8_t*>(slice)[3] = 0;
+
+                    }
+
+
+                }
+
                 const bool isPastFirstRow = counter >= min;
                 const bool isBeforeLastRow = counter < max;
                 const bool isNotFirstColumn = counter % state->cubeEdgeLength != 0;
@@ -410,7 +499,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
 
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
-
+    state->viewerState->flag_status = true;
     char *datacube = NULL, *overlayCube = NULL;
     int dcOffset = 0, index = 0;
 
@@ -439,7 +528,6 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         }
         dc_reslice = dc_xy_changed;
         oc_reslice = oc_xy_changed;
-
         dc_xy_changed = false;
         oc_xy_changed = false;
         break;
@@ -447,9 +535,11 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
         dcOffset = state->cubeEdgeLength
                    * (currPosTrans.y  - state->cubeEdgeLength
                    * currentPosition_dc.y);
+
         if(!dc_xz_changed && !oc_xz_changed) {
             return true;
         }
+
         dc_reslice = dc_xz_changed;
         oc_reslice = oc_xz_changed;
 
@@ -474,6 +564,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
     }
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
+    //std::cout << currentVp.texture.usedTexLengthDc << std::endl;
     for(int x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
         for(int y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
             const int x_px = x_dc * state->cubeEdgeLength;
@@ -504,12 +595,13 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
             overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
-
             // Take care of the data textures.
 
             Coordinate cubePosInAbsPx = {currentDc.x * state->magnification * state->cubeEdgeLength,
                                          currentDc.y * state->magnification * state->cubeEdgeLength,
                                          currentDc.z * state->magnification * state->cubeEdgeLength};
+
+
             if (dc_reslice) {
                 glBindTexture(GL_TEXTURE_2D,
                               currentVp.texture.texHandle);
@@ -517,6 +609,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                 // This is used to index into the texture. overlayData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
+
 
                 if(datacube == nullptr) {
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -535,6 +628,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                    dcOffset,
                                    &currentVp,
                                    state->viewerState->datasetAdjustmentOn);
+
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
@@ -564,11 +658,15 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                     GL_UNSIGNED_BYTE,
                                     state->viewerState->defaultOverlayData);
                 } else {
+
                     ocSliceExtract(overlayCube,
                                    cubePosInAbsPx,
                                    state->viewerState->overlayData + index,
                                    dcOffset * OBJID_BYTES,
                                    &currentVp);
+
+
+
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -581,9 +679,18 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp) {
                                     state->viewerState->overlayData + index);
                 }
             }
+            /* if(state->overlay && oc_reslice && overlayCube != nullptr){
+                 if(state->hdf5_found){
+
+                           point_shape(overlayCube,
+                            dcOffset * OBJID_BYTES,
+                            &currentVp);
+            }
+          }*/
         }
     }
     glBindTexture(GL_TEXTURE_2D, 0);
+
     return true;
 }
 
@@ -1869,3 +1976,649 @@ void Viewer::resetRotation() {
     state->viewerState->vpConfigs[VP_UPPERRIGHT].v2 = v2;
     state->viewerState->vpConfigs[VP_UPPERRIGHT].n = v1;
 }
+
+/**********Function to select a block of labelled data*****
+ *
+ *  Author - Rutuja
+ *  This function creates a data cube of the highlighted
+ *  region within the viewport
+ *
+ * *******************************************************/
+
+void Viewer::point_shape(char* data,size_t dcOffset, vpConfig *vp)
+{
+
+      data += dcOffset;
+      const std::size_t voxelIncrement = vp->type == SLICE_YZ ? state->cubeEdgeLength * OBJID_BYTES : OBJID_BYTES;
+      const std::size_t sliceIncrement = vp->type == SLICE_XY ? state->cubeEdgeLength * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
+      const std::size_t sliceSubLineIncrement = sliceIncrement - state->cubeEdgeLength * OBJID_BYTES;
+
+      auto & seg = Segmentation::singleton();
+      uint64_t objId = 0;
+      bool selectCache = false;
+      int offsetX = 0, offsetY = 0; // current texel's horizontal and vertical dataset pixel offset inside cube
+      int pixelsPerLine = state->cubeEdgeLength*state->magnification;
+
+      for(int y = 0;y < state->cubeEdgeLength;y++){
+          for(int z = 0;z < state->cubeEdgeLength;z++){
+
+              bool hide = false;
+              if(hide==false){
+              uint64_t subobjId = *reinterpret_cast<uint64_t*>(data);
+              bool select = (objId == subobjId) ? selectCache : seg.isSubObjectIdSelected(subobjId);
+              std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> color = seg.colorObjectFromId(subobjId);
+
+              // the selected seed gets added to a list of seed ids.
+              if(select){
+
+                /* bool found = (state->viewerState->flag_id.find(subobjId) != state->viewerState->flag_id.end());
+                  if(!found)
+                  {
+                   //std::cout << "inside" << std::endl;
+                   state->viewerState->flag_id.insert({subobjId,seg.objects.size()});
+
+
+                  }*/
+                  // change of color when merged or unmerged
+                  //else{
+                   /* if(!supervoxel_info.empty()){
+
+                      std::vector<supervoxel>::iterator i = supervoxel_info.begin();
+                      while(i->seed != subobjId)
+                     {
+                        std::cout << "i" << std::endl;
+                        i++;
+                     }
+                     if(i->color != color && std::get<3>(i->color) == std::get<3>(color)){
+
+                      auto & subobject = seg.subobjects.at(subobjId);
+                      auto objIndex = seg.largestObjectContainingSubobject(subobject);
+                      auto obj = seg.objects.at(objIndex);
+                      i->objid = obj.id;
+                      i->color = color;
+                      hdf5_read(supervoxel_info);
+
+                    }
+                    //show cells that are selected but not showing
+                    if(!i->show)
+                    {
+
+                        i->show = true;
+                        hdf5_read(supervoxel_info);
+                    }
+
+                }*/
+
+                //state->viewer->value_labels[((x_idx)*384*384) + (y + (y_idx*state->cubeEdgeLength))*384 + z + (z_idx*state->cubeEdgeLength)] = 255;
+
+              }
+
+             objId = subobjId;
+             selectCache = select;
+
+           }
+
+           data += voxelIncrement;
+           offsetX = (offsetX + state->magnification) % pixelsPerLine;
+
+           offsetY += (offsetX == 0)? state->magnification : 0;
+
+         }
+
+       }
+
+       data += sliceSubLineIncrement;
+
+ }
+
+
+
+/*********Function to read and render pre-meshed meshes*********
+ *
+ *  This function reads the points(coordinates) and the
+ *  polygons from the hdf5 file and the renders the polygon in
+ *  a 3D context.
+ *
+ **************************************************************/
+
+int Viewer::hdf5_read(std::vector<supervoxel>& supervoxel_info)
+{
+
+    hid_t file_id, dataspace_vertices, dataspace_faces,group_id,dataset_vertices, dataset_faces,
+            memspace_vertices, memspace_faces,attr_id, attr_scale, attr_scaleinfo;
+    herr_t status;
+
+    hsize_t dims_vertices[2];
+    hsize_t dims_faces[2];
+
+    //Open the HDF5 file and group
+
+    file_id = H5Fopen(state->hdf5.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    //std::cout << state->hdf5 << std::endl;
+    group_id = H5Gopen(file_id, "/meshes",H5P_DEFAULT);
+
+    int number_of_zeros = 8;
+    int a,b,c;
+    int buf[3];
+    int number[1];
+    std::string label_0 = "00000000/faces";
+
+    vtkSmartPointer<vtkPolyData> boundary_data = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> boundary_points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkUnsignedCharArray> boundary_color = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    boundary_color->SetNumberOfComponents(3);
+    unsigned char black[3] ={ 0, 0, 0 };
+
+    vtkSmartPointer<vtkIntArray> weights =
+        vtkSmartPointer<vtkIntArray>::New();
+      weights->SetNumberOfValues(24);
+      weights->SetNumberOfComponents(3);
+
+
+    int numi = state->boundary.x*state->scale.x;
+    int numj = state->boundary.y*state->scale.y;
+    int numk = state->boundary.z*state->scale.z;
+
+    double points[8][3] = {{ 0, 0, 0},{ numi, 0, 0 }, { 0, numj, 0 },  { numi, numj, 0 },
+                       { 0, 0, numk},{ 0, numj, numk}, { numi, 0, numk},{ numi, numj, numk}};
+
+    for(int i =0;i < 8;i++)
+    {
+      double* ptr = points[i];
+      boundary_points->InsertNextPoint(ptr);
+      weights->SetTuple3(i,ptr[0]/state->scale.x,ptr[1]/state->scale.y,ptr[2]/state->scale.z);
+
+    }
+
+
+    boundary_data->SetPoints(boundary_points);
+    boundary_data->GetPointData()->SetScalars(weights);
+
+    vtkSmartPointer<vtkLine> line0 =
+       vtkSmartPointer<vtkLine>::New();
+     line0->GetPointIds()->SetId(0, 0); // the second 0 is the index of the Origin in linesPolyData's points
+     line0->GetPointIds()->SetId(1, 1); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line1 =
+        vtkSmartPointer<vtkLine>::New();
+      line1->GetPointIds()->SetId(0, 0); // the second 0 is the index of the Origin in linesPolyData's points
+      line1->GetPointIds()->SetId(1, 2); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line2 =
+         vtkSmartPointer<vtkLine>::New();
+       line2->GetPointIds()->SetId(0, 2); // the second 0 is the index of the Origin in linesPolyData's points
+       line2->GetPointIds()->SetId(1, 3); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line3 =
+          vtkSmartPointer<vtkLine>::New();
+        line3->GetPointIds()->SetId(0, 1); // the second 0 is the index of the Origin in linesPolyData's points
+        line3->GetPointIds()->SetId(1, 3); // the second 1 is the index of P0 in linesPolyData's points
+
+
+     vtkSmartPointer<vtkLine> line4 =
+           vtkSmartPointer<vtkLine>::New();
+        line4->GetPointIds()->SetId(0, 4); // the second 0 is the index of the Origin in linesPolyData's points
+        line4->GetPointIds()->SetId(1, 5); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line5 =
+            vtkSmartPointer<vtkLine>::New();
+        line5->GetPointIds()->SetId(0, 4); // the second 0 is the index of the Origin in linesPolyData's points
+        line5->GetPointIds()->SetId(1, 6); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line6 =
+             vtkSmartPointer<vtkLine>::New();
+        line6->GetPointIds()->SetId(0, 5); // the second 0 is the index of the Origin in linesPolyData's points
+        line6->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line7 =
+              vtkSmartPointer<vtkLine>::New();
+        line7->GetPointIds()->SetId(0, 6); // the second 0 is the index of the Origin in linesPolyData's points
+        line7->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line8 =
+              vtkSmartPointer<vtkLine>::New();
+           line8->GetPointIds()->SetId(0, 2); // the second 0 is the index of the Origin in linesPolyData's points
+           line8->GetPointIds()->SetId(1, 5); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line9 =
+               vtkSmartPointer<vtkLine>::New();
+           line9->GetPointIds()->SetId(0, 1); // the second 0 is the index of the Origin in linesPolyData's points
+           line9->GetPointIds()->SetId(1, 6); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line10 =
+                vtkSmartPointer<vtkLine>::New();
+           line10->GetPointIds()->SetId(0, 0); // the second 0 is the index of the Origin in linesPolyData's points
+           line10->GetPointIds()->SetId(1, 4); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line11 =
+                 vtkSmartPointer<vtkLine>::New();
+           line11->GetPointIds()->SetId(0, 3); // the second 0 is the index of the Origin in linesPolyData's points
+           line11->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+     vtkSmartPointer<vtkCellArray> lines =
+         vtkSmartPointer<vtkCellArray>::New();
+       lines->InsertNextCell(line0);
+       lines->InsertNextCell(line1);
+       lines->InsertNextCell(line2);
+       lines->InsertNextCell(line3);
+       lines->InsertNextCell(line4);
+       lines->InsertNextCell(line5);
+       lines->InsertNextCell(line6);
+       lines->InsertNextCell(line7);
+       lines->InsertNextCell(line8);
+       lines->InsertNextCell(line9);
+       lines->InsertNextCell(line10);
+       lines->InsertNextCell(line11);
+
+
+
+     boundary_data->SetLines(lines);
+     for(int i =0;i < 12;i++)
+     {
+         boundary_color->InsertNextTupleValue(black);
+     }
+     boundary_data->GetCellData()->SetScalars(boundary_color);
+
+
+    vtkSmartPointer<vtkAppendPolyData> appendFilter = vtkSmartPointer<vtkAppendPolyData>::New();
+
+    for (auto& x: supervoxel_info){
+      //auto & x = supervoxel_info.back();
+      if(x.show){
+
+         std::ostringstream oss;
+         oss << x.seed;
+
+      //Convert the seed to %08d pattern style
+         std::string ver_data = std::string(number_of_zeros - oss.str().length(), '0') + oss.str() + "/vertices";
+         std::string face_data = std::string(number_of_zeros - oss.str().length(), '0') + oss.str() + "/faces";
+         //std::cout << ver_data << std::endl;
+      // Obtain the points and polys for the seed from the dataset
+         dataset_vertices = H5Dopen(group_id, ver_data.c_str(), H5P_DEFAULT);
+         dataset_faces = H5Dopen(group_id, face_data.c_str(),  H5P_DEFAULT);
+         attr_scale = H5Dopen(group_id, label_0.c_str(),H5P_DEFAULT);
+
+      // Obtain attribute of dataset
+         attr_id = H5Aopen(dataset_vertices,"bounds_beg",H5Dget_access_plist(dataset_vertices));
+         attr_scaleinfo = H5Aopen(attr_scale,"nlabels",H5Dget_access_plist(attr_scale));
+
+         status = H5Aread(attr_id,H5T_NATIVE_INT,buf);
+         status = H5Aread(attr_scaleinfo,H5T_NATIVE_INT,number);
+         //std::cout << number[0] << std::endl;
+      // Obtain the dimensions of the points and the polys
+         dataspace_vertices = H5Dget_space(dataset_vertices);
+         dataspace_faces = H5Dget_space(dataset_faces);
+
+         int rank_vertices = H5Sget_simple_extent_ndims(dataspace_vertices);
+         int rank_faces = H5Sget_simple_extent_ndims(dataspace_faces);
+         status = H5Sget_simple_extent_dims(dataspace_vertices, dims_vertices, NULL);
+
+         status = H5Sget_simple_extent_dims(dataspace_faces, dims_faces, NULL);
+         memspace_vertices = H5Screate_simple(rank_vertices,dims_vertices,NULL);
+         memspace_faces = H5Screate_simple(rank_faces,dims_faces,NULL);
+
+      // Allocate memory for the reading the points and the polygons
+         int *data_vertices = (int*)std::malloc(sizeof(int)*dims_vertices[1]*dims_vertices[0]);
+
+         uint32_t *data_faces = (uint32_t*)std::malloc(sizeof(uint32_t)*dims_faces[1]*dims_faces[0]);
+
+      //Read the points and the polygons of the vtkPolyData
+         status = H5Dread(dataset_vertices, H5T_NATIVE_INT, memspace_vertices, dataspace_vertices,
+                     H5P_DEFAULT, data_vertices);
+
+         status = H5Dread(dataset_faces, H5T_NATIVE_INT, memspace_faces, dataspace_faces,
+                     H5P_DEFAULT, data_faces);
+
+      // Add the current list of vertices to the mesh
+         vtkSmartPointer<vtkPolyData> data = vtkSmartPointer<vtkPolyData>::New();
+         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+         vtkSmartPointer<vtkCellArray> polys = vtkSmartPointer<vtkCellArray>::New();
+         vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+
+         points->SetNumberOfPoints(dims_vertices[0]);
+         colors->SetNumberOfComponents(3);
+         uint8_t supervoxel[3] = {std::get<0>(x.color),std::get<1>(x.color),std::get<2>(x.color)};
+
+         for(vtkIdType h = 0; h < dims_vertices[0];h++){
+
+           a = (data_vertices[h*dims_vertices[1]]+ buf[0]);
+           b = (data_vertices[h*dims_vertices[1]+1] + buf[1]);
+           c = (data_vertices[h*dims_vertices[1]+2] + buf[2]);
+
+           points->SetPoint(h,a,b,c);
+
+         }
+
+      // Add the list of faces to the mesh
+         for(vtkIdType k = 0; k < dims_faces[0];k++){
+
+          polys->InsertNextCell(3);
+          polys->InsertCellPoint(data_faces[k*dims_faces[1]]);
+          polys->InsertCellPoint(data_faces[k*dims_faces[1]+1]);
+          polys->InsertCellPoint(data_faces[k*dims_faces[1]+2]);
+          colors->InsertNextTupleValue(supervoxel);
+         }
+
+       //Add the points and the polys to the polydata
+       //Each polydata(polygonal mesh) has to be a different vtkDataObject
+         data->SetPoints(points);
+         data->SetPolys(polys);
+         data->GetCellData()->SetScalars(colors);
+
+
+         double bounds[6];
+         data->GetBounds(bounds);
+
+       //Append the polydata to a AppendPolyDataFilter
+
+        appendFilter->AddInputData(data);
+
+       }
+
+    }
+
+
+     vtkSmartPointer<vtkLabeledDataMapper> label = vtkSmartPointer<vtkLabeledDataMapper>::New();
+
+     label->SetInputData(boundary_data);
+     label->SetLabelMode(1);
+     label->GetLabelTextProperty()->SetColor(0,0,0);
+     appendFilter->AddInputData(boundary_data);
+
+     appendFilter->Update();
+     H5Fclose(file_id);
+
+     //Add the polydata to the vtkPipeline to Render
+     vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+     mapper->SetInputConnection(appendFilter->GetOutputPort());
+
+
+     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+     actor->SetMapper(mapper);
+
+     //
+     vtkSmartPointer<vtkActor2D> label_actor = vtkSmartPointer<vtkActor2D>::New();
+     label_actor->SetMapper(label);
+
+     state->viewerState->renderWindow->AddRenderer(state->viewerState->renderer);
+     state->viewerState->renderWindowInteractor->SetRenderWindow(state->viewerState->renderWindow);
+
+     state->viewerState->renderer->RemoveAllViewProps();
+     //drawbuttons();
+     state->viewerState->renderer->AddActor(actor);
+     state->viewerState->renderer->AddActor(label_actor);
+     state->viewerState->renderer->SetBackground(1, 1, 1); // Background color white
+
+     /*state->viewerState->widget->resize(500,500);
+     state->viewerState->widget->setAutoFillBackground(true);
+     QHBoxLayout *verticallayout = new QHBoxLayout(state->viewerState->widget);
+
+     verticallayout->setAlignment(Qt::AlignRight);*/
+     //QHBoxLayout *horizontalLayout = new QHBoxLayout;
+     //horizontalLayout->setAlignment(Qt::AlignTop);
+
+    /* QFrame *frame = new QFrame;
+     QPushButton *cancelBtn= new QPushButton(state->viewerState->widget);
+     cancelBtn->setText("&Cancel");
+     QHBoxLayout * frameLayout = new QHBoxLayout;
+     frameLayout->addWidget(cancelBtn);
+     frame->setLayout(frameLayout);
+
+     verticallayout->addWidget(frame);*/
+     //QWidget *wid = new QWidget(state->viewerState->widget);
+     //wid->setWindowFlags(Qt::Window);
+     //connect(cancelBtn, SIGNAL(clicked()), wid, SLOT(show()));
+     //state->viewerState->widget->setLayout(verticallayout);
+     //QPushButton *okBtn = new QPushButton("&OK", wdg);
+     //QPushButton *defaultBtn= new QPushButton("&Default", wdg);
+     //horizontalLayout->addWidget(defaultBtn);
+     //verticallayout->addWidget(cancelBtn);
+     //horizontalLayout->addWidget(okBtn);
+     //verticallayout->addLayout(horizontalLayout);
+
+     //state->viewerState->widget->SetRenderWindow(state->viewerState->renderWindow);
+     //cancelBtn->show();
+     //state->viewerState->widget->show();
+     state->viewerState->renderWindow->Render();
+     //state->viewerState->widget->GetRenderWindow()->SetInteractor(state->viewerState->renderWindowInteractor);
+     vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
+         vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+
+     state->viewerState->renderWindowInteractor->SetInteractorStyle(style);
+
+
+     state->viewerState->renderWindowInteractor->Start();
+
+
+     return 0;
+}
+
+vtkSmartPointer<vtkPolyData> drawboundary(){
+
+    vtkSmartPointer<vtkPolyData> boundary_data = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> boundary_points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkUnsignedCharArray> boundary_color = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    boundary_color->SetNumberOfComponents(3);
+
+
+    unsigned char black[3] ={ 0, 0, 0 };
+    double numi = state->boundary.x*state->scale.x;
+    double numj = state->boundary.y*state->scale.y;
+    double numk = state->boundary.z*state->scale.z;
+
+    double points[8][3] = {{ 0.0, 0.0, 0.0 },{ numi, 0.0, 0.0 }, { 0.0, numj, 0.0 },  { numi, numj, 0.0 },
+                       { 0.0, 0.0, numk},{ 0.0, numj, numk}, { numi, 0.0, numk},{ numi, numj, numk}};
+
+    for(int i =0;i < 8;i++)
+    {
+      double* ptr = points[i];
+      boundary_points->InsertNextPoint(ptr);
+
+    }
+    boundary_data->SetPoints(boundary_points);
+
+    vtkSmartPointer<vtkLine> line0 =
+       vtkSmartPointer<vtkLine>::New();
+     line0->GetPointIds()->SetId(0, 0); // the second 0 is the index of the Origin in linesPolyData's points
+     line0->GetPointIds()->SetId(1, 1); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line1 =
+        vtkSmartPointer<vtkLine>::New();
+      line1->GetPointIds()->SetId(0,0); // the second 0 is the index of the Origin in linesPolyData's points
+      line1->GetPointIds()->SetId(1, 2); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line2 =
+         vtkSmartPointer<vtkLine>::New();
+       line2->GetPointIds()->SetId(0, 2); // the second 0 is the index of the Origin in linesPolyData's points
+       line2->GetPointIds()->SetId(1, 3); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line3 =
+          vtkSmartPointer<vtkLine>::New();
+        line3->GetPointIds()->SetId(0, 1); // the second 0 is the index of the Origin in linesPolyData's points
+        line3->GetPointIds()->SetId(1, 3); // the second 1 is the index of P0 in linesPolyData's points
+
+
+     vtkSmartPointer<vtkLine> line4 =
+           vtkSmartPointer<vtkLine>::New();
+        line4->GetPointIds()->SetId(0, 4); // the second 0 is the index of the Origin in linesPolyData's points
+        line4->GetPointIds()->SetId(1, 5); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line5 =
+            vtkSmartPointer<vtkLine>::New();
+        line5->GetPointIds()->SetId(0, 4); // the second 0 is the index of the Origin in linesPolyData's points
+        line5->GetPointIds()->SetId(1, 6); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line6 =
+             vtkSmartPointer<vtkLine>::New();
+        line6->GetPointIds()->SetId(0, 5); // the second 0 is the index of the Origin in linesPolyData's points
+        line6->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line7 =
+              vtkSmartPointer<vtkLine>::New();
+        line7->GetPointIds()->SetId(0, 6); // the second 0 is the index of the Origin in linesPolyData's points
+        line7->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line8 =
+              vtkSmartPointer<vtkLine>::New();
+           line8->GetPointIds()->SetId(0, 2); // the second 0 is the index of the Origin in linesPolyData's points
+           line8->GetPointIds()->SetId(1, 5); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line9 =
+               vtkSmartPointer<vtkLine>::New();
+           line9->GetPointIds()->SetId(0, 1); // the second 0 is the index of the Origin in linesPolyData's points
+           line9->GetPointIds()->SetId(1, 6); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line10 =
+                vtkSmartPointer<vtkLine>::New();
+           line10->GetPointIds()->SetId(0, 0); // the second 0 is the index of the Origin in linesPolyData's points
+           line10->GetPointIds()->SetId(1, 4); // the second 1 is the index of P0 in linesPolyData's points
+
+     vtkSmartPointer<vtkLine> line11 =
+                 vtkSmartPointer<vtkLine>::New();
+           line11->GetPointIds()->SetId(0, 3); // the second 0 is the index of the Origin in linesPolyData's points
+           line11->GetPointIds()->SetId(1, 7); // the second 1 is the index of P0 in linesPolyData's points
+     vtkSmartPointer<vtkCellArray> lines =
+         vtkSmartPointer<vtkCellArray>::New();
+       lines->InsertNextCell(line0);
+       lines->InsertNextCell(line1);
+       lines->InsertNextCell(line2);
+       lines->InsertNextCell(line3);
+       lines->InsertNextCell(line4);
+       lines->InsertNextCell(line5);
+       lines->InsertNextCell(line6);
+       lines->InsertNextCell(line7);
+       lines->InsertNextCell(line8);
+       lines->InsertNextCell(line9);
+       lines->InsertNextCell(line10);
+       lines->InsertNextCell(line11);
+
+
+
+     boundary_data->SetLines(lines);
+
+     for(int i =0;i < 12;i++)
+     {
+         boundary_color->InsertNextTupleValue(black);
+     }
+     boundary_data->GetCellData()->SetScalars(boundary_color);
+
+
+
+   return boundary_data;
+}
+
+void Viewer::drawbuttons()
+{
+
+    vtkSmartPointer<vtkSphereSource> sphereSource =
+        vtkSmartPointer<vtkSphereSource>::New();
+      sphereSource->Update();
+
+      vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+      mapper->SetInputConnection(sphereSource->GetOutputPort());
+
+      vtkSmartPointer<vtkActor> actor =
+        vtkSmartPointer<vtkActor>::New();
+      actor->SetMapper(mapper);
+
+      // A renderer and render window
+      vtkSmartPointer<vtkRenderer> renderer =
+        vtkSmartPointer<vtkRenderer>::New();
+      vtkSmartPointer<vtkRenderWindow> renderWindow =
+        vtkSmartPointer<vtkRenderWindow>::New();
+      renderWindow->AddRenderer(renderer);
+
+      // An interactor
+      vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+        vtkSmartPointer<vtkRenderWindowInteractor>::New();
+      renderWindowInteractor->SetRenderWindow(renderWindow);
+
+
+    vtkSmartPointer<vtkImageData> image1 =
+       vtkSmartPointer<vtkImageData>::New();
+     vtkSmartPointer<vtkImageData> image2 =
+       vtkSmartPointer<vtkImageData>::New();
+     unsigned char banana[3] = { 227, 207, 87 };
+     unsigned char tomato[3] = { 255, 99, 71 };
+     CreateImage(image1, banana, tomato);
+     CreateImage(image2, tomato, banana);
+
+    vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation =
+        vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
+      buttonRepresentation->SetNumberOfStates(2);
+      buttonRepresentation->SetButtonTexture(0, image1);
+      buttonRepresentation->SetButtonTexture(1, image2);
+
+      vtkSmartPointer<vtkButtonWidget> buttonWidget =
+        vtkSmartPointer<vtkButtonWidget>::New();
+      buttonWidget->SetInteractor(renderWindowInteractor);
+      buttonWidget->SetRepresentation(buttonRepresentation);
+
+
+      renderer->AddActor(actor);
+        renderer->SetBackground(.1, .2, .5);
+
+        renderWindow->SetSize(640, 480);
+        renderWindow->Render();
+      vtkSmartPointer<vtkCoordinate> upperRight =
+          vtkSmartPointer<vtkCoordinate>::New();
+        upperRight->SetCoordinateSystemToNormalizedDisplay();
+        upperRight->SetValue(1.0, 1.0);
+
+        double bds[6];
+        double sz = 50.0;
+        bds[0] = upperRight->GetComputedDisplayValue(renderer)[0] - sz;
+        bds[1] = bds[0] + sz;
+        bds[2] = upperRight->GetComputedDisplayValue(renderer)[1] - sz;
+        bds[3] = bds[2] + sz;
+        bds[4] = bds[5] = 0.0;
+
+        // Scale to 1, default is .5
+
+        buttonRepresentation->PlaceWidget(bds);
+
+
+      buttonWidget->On();
+      renderWindowInteractor->Start();
+
+
+}
+
+void CreateImage(vtkSmartPointer<vtkImageData> image,
+                 unsigned char* color1,
+                 unsigned char* color2)
+{
+
+  // Specify the size of the image data
+  image->SetDimensions(100, 100, 1);
+#if VTK_MAJOR_VERSION <= 5
+  image->SetNumberOfScalarComponents(3);
+  image->SetScalarTypeToUnsignedChar();
+#else
+  image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+#endif
+  int* dims = image->GetDimensions();
+
+  // Fill the image with
+  for (int y = 0; y < dims[1]; y++)
+  {
+    for (int x = 0; x < dims[0]; x++)
+    {
+      unsigned char* pixel =
+        static_cast<unsigned char*>(image->GetScalarPointer(x, y, 0));
+      if (x < 50)
+      {
+        pixel[0] = color1[0];
+        pixel[1] = color1[1];
+        pixel[2] = color1[2];
+      }
+      else
+      {
+        pixel[0] = color2[0];
+        pixel[1] = color2[1];
+        pixel[2] = color2[2];
+      }
+    }
+  }
+}
+

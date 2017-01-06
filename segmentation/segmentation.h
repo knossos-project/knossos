@@ -26,7 +26,8 @@ Q_OBJECT
     friend class CategoryDelegate;
     friend class CategoryModel;
     friend class SegmentationTab;
-
+//making class public by rutuja//
+public:
     class Object;
     class SubObject {
         friend void connectedComponent(const Coordinate & seed);
@@ -36,6 +37,7 @@ Q_OBJECT
         static uint64_t highestId;
         std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
+        std::size_t activeObjectsCount = 0;
     public:
         const uint64_t id;
         explicit SubObject(const uint64_t & id) : id(id) {
@@ -55,6 +57,9 @@ Q_OBJECT
         return lhs.get().id == rhs.get().id;
     }
 
+
+
+
     class Object {
         friend void connectedComponent(const Coordinate & seed);
         friend void verticalSplittingPlane(const Coordinate & seed);
@@ -64,10 +69,10 @@ Q_OBJECT
         friend class Segmentation;
 
         static uint64_t highestId;
-        static uint64_t highestIndex;
+
 
         //see http://coliru.stacked-crooked.com/a/aba85777991b4425
-        std::vector<std::reference_wrapper<SubObject>> subobjects;
+      //  std::vector<std::reference_wrapper<SubObject>> subobjects;
     public:
         uint64_t id;
         uint64_t index = ++highestIndex;
@@ -77,6 +82,12 @@ Q_OBJECT
         QString category;
         QString comment;
         bool selected = false;
+        //rutuja//
+        bool on_off = true;
+
+        //they were originally private-rutuja//
+        std::vector<std::reference_wrapper<SubObject>> subobjects;
+        static uint64_t highestIndex;
 
         explicit Object(SubObject & initialVolume);
         explicit Object(const uint64_t & id, const bool & todo, const bool & immutable, const Coordinate & location, SubObject & initialVolume);
@@ -88,8 +99,9 @@ Q_OBJECT
     };
 
     std::unordered_map<uint64_t, SubObject> subobjects;
-    std::vector<Object> objects;
+    //std::vector<Object> objects;
     hash_list<uint64_t> selectedObjectIndices;
+    hash_list<uint64_t> activeIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
     // Selection via subobjects touches all objects containing the subobject.
@@ -135,6 +147,7 @@ Q_OBJECT
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location);
     Object & createObject(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t & id, const bool & todo = false, const bool & immutable = false);
     void removeObject(Object &);
+    void remObject(uint64_t subobjectid, Segmentation::Object & sub);
     void changeCategory(Object & obj, const QString & category);
     void changeComment(Object & obj, const QString & comment);
     void newSubObject(Object & obj, uint64_t subObjID);
@@ -143,7 +156,7 @@ Q_OBJECT
 
     Object & const_merge(Object & one, Object & other);
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
-public:
+
     class Job {
     public:
         bool active = false;
@@ -163,10 +176,25 @@ public:
 
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     uint8_t alpha;
+    //**rutuja**//
+    uint8_t alpha_border;
+    //
     brush_t brush;
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
     bool hoverVersion;
     uint64_t mouseFocusedObjectId;
+
+    //**rutuja**//
+    std::vector<Object> objects;
+    bool flag_delete = false;
+    uint64_t deleted_id = 0;
+    bool createandselect = false;
+    //bool flag_delete_cell = false;
+    uint64_t deleted_cell_id =0;
+
+    void branch_onoff();
+    void branch_delete();
+    void cell_delete();
 
     static Segmentation & singleton();
     Segmentation();
@@ -198,6 +226,7 @@ public:
     bool isSelected(const uint64_t &objectIndex) const;
     bool isSubObjectIdSelected(const uint64_t & subobjectId) const;
     std::size_t selectedObjectsCount() const;
+    std::size_t activeObjectsCount() const;
     //selection modification
     void selectObject(const uint64_t & objectIndex);
     void selectObject(Object & object);
@@ -205,6 +234,7 @@ public:
     void unselectObject(const uint64_t & objectIndex);
     void unselectObject(Object & object);
     void clearObjectSelection();
+    void clearActiveSelection();
 
     void placeCommentForSelectedObject(const QString comment);
     void jumpToObject(const uint64_t & objectIndex);

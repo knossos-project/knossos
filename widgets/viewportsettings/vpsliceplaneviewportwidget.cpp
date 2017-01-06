@@ -92,6 +92,15 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     segmentationOverlayLayout.addWidget(&segmenationOverlaySlider);
     segmentationOverlayLayout.addWidget(&segmenationOverlaySpinBox);
 
+    /** change -rutuja **/
+    segmentationBorderSpinBox.setMaximum(255);
+    segmentationBorderSpinBox.setSingleStep(1);
+    segmentationBorderSlider.setMaximum(255);
+    segmentationBorderSlider.setSingleStep(1);
+    segmentationBorderLayout.addWidget(&segmentationBorderLabel);
+    segmentationBorderLayout.addWidget(&segmentationBorderSlider);
+    segmentationBorderLayout.addWidget(&segmentationBorderSpinBox);
+
     drawIntersectionsCrossHairCheckBox = new QCheckBox("Draw Intersections Crosshairs");
     showViewPortsSizeCheckBox = new QCheckBox("Show Viewport Size");
 
@@ -119,6 +128,11 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     line6->setFrameShape(QFrame::HLine);
     line6->setFrameShadow(QFrame::Sunken);
 
+    //*rutuja*//
+    QFrame *line7 = new QFrame();
+    line7->setFrameShape(QFrame::HLine);
+    line7->setFrameShadow(QFrame::Sunken);
+
     gridLayout->addWidget(&arbitraryModeCheckBox, 0, 0);
     gridLayout->addWidget(skeletonOverlayLabel, 1, 0);
     gridLayout->addWidget(voxelFilteringLabel, 1, 3, 1, 3);
@@ -144,10 +158,22 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(rangeDeltaSlider, 11, 4);
     gridLayout->addWidget(rangeDeltaSpinBox, 11, 5);
     gridLayout->addWidget(&segmenationOverlayGroupLabel, 12, 0);
+
+    //rutuja//
+    gridLayout->addWidget(&segmentationBorderGroupLabel,15,0);
+
     gridLayout->addWidget(viewportObjectsLabel, 12, 3);
     gridLayout->addWidget(line5, 13, 0, 1, 2);
     gridLayout->addWidget(line6, 13, 3, 1, 3);
+
+    //rutuja//
+    gridLayout->addWidget(line7,16,0,1,2);
+
     gridLayout->addLayout(&segmentationOverlayLayout, 14, 0, 1, 2);
+
+    //**rutuja**//
+    gridLayout->addLayout(&segmentationBorderLayout, 17,0,1,2);
+
     gridLayout->addWidget(drawIntersectionsCrossHairCheckBox, 14, 3, 1, 2);
     gridLayout->addWidget(showViewPortsSizeCheckBox, 15, 3, 1, 2);
 
@@ -182,6 +208,19 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify();
     });
+
+    /**change - rutuja **/
+    QObject::connect(&segmentationBorderSlider, &QSlider::valueChanged, [&](int value){
+        segmentationBorderSpinBox.setValue(value);
+        Segmentation::singleton().alpha_border = value;
+        state->viewer->oc_reslice_notify();
+    });
+    QObject::connect(&segmentationBorderSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+        segmentationBorderSlider.setValue(value);
+        Segmentation::singleton().alpha_border = value;
+        state->viewer->oc_reslice_notify();
+    });
+
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }

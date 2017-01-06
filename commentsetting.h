@@ -2,6 +2,7 @@
 #define COMMENTSETTING_H
 
 #include <QColor>
+#include <vector>
 
 class CommentSetting {
     friend class CommentsModel;

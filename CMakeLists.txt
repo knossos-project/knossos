@@ -38,6 +38,11 @@ find_package(Snappy REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Help Network OpenGL Sql Widgets Xml)
 find_package(QuaZip 0.6.2 REQUIRED)
+find_package(vtk 7.0 REQUIRED)
+find_package(szip REQUIRED)
+find_package(hdf5 1.8 REQUIRED)
+
+include(${VTK_USE_FILE})
 
 #platform dependent resources
 if(WIN32)
@@ -122,12 +127,16 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     #${GLUT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIR}
+    ${VTK_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
+    ${VTK_LIBRARIES}
     ${Boost_LIBRARIES}
     ${CURL_LIBRARIES}
     ${GLUT_LIBRARIES}
     ${OPENGL_LIBRARIES}
+    ${SZIP_LIBRARIES}
+    ${HDF5_LIBRARIES}
     #configs add includes and other settings automatically
     TurboJPEG::TurboJPEG#turbojpeg is partly included in QtGui, multiple definition if you try to link it afterwards
     Qt5::Core

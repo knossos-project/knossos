@@ -45,6 +45,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
             if (fileInside == "mergelist.txt") {
                 Segmentation::singleton().mergelistLoad(file);
                 mergelistSuccess = true;
+
             }
             if (fileInside == "microworker.txt") {
                 Segmentation::singleton().jobLoad(file);
@@ -65,6 +66,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
     if (NULL != isSuccess) {
         *isSuccess = mergelistSuccess || annotationSuccess;
     }
+
 }
 
 void annotationFileSave(const QString & filename, bool *isSuccess) {

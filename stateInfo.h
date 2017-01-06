@@ -7,6 +7,7 @@
 #include <QElapsedTimer>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QString>
 
 class stateInfo;
 extern stateInfo * state;
@@ -69,7 +70,7 @@ public:
     Coordinate loaderUserMoveViewportDirection;
     int loaderDecompThreadsNumber;
 
-    bool quitSignal;
+    bool quitSignal; 
 
     // If loadSignal is true and breakLoaderSignal is true, make the
     // loading loop break. If quitSignal is also true, the loader thread
@@ -86,6 +87,10 @@ public:
     bool boergens;
 
     // Path to the current cube files for the viewer and loader.
+      //**rutuja**//
+    bool hdf5_found = false;
+    std::string hdf5 = "";
+
     char path[1024];
     char loaderPath[1024];
     // Paths to all available datasets of the 3-D image pyramid

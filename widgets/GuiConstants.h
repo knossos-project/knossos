@@ -70,6 +70,7 @@ const QString SHOW_NODE_COMMENTS = "show_node_comments";
 const QString BIAS = "bias";
 const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
+const QString SEGMENTATION_BORDER_ALPHA = "segmentation_border_alpha";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
 const QString SHOW_VIEWPORT_SIZE = "draw_viewport_size";
 const QString TREE_LUT_FILE = "tree_lut_file";

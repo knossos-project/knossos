@@ -746,6 +746,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         annotationFileLoad(filename, treeCmtOnMultiLoad);
         updateRecentFile(filename);
         state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+
     }
 
     state->skeletonState->unsavedChanges = mergeSkeleton || mergeSegmentation;//merge implies changes
@@ -760,6 +761,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames) {
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
+
+
     return success;
 }
 
