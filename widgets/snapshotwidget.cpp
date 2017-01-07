@@ -46,19 +46,20 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     sizeCombo.addItem("1024 x 1024");
     sizeCombo.setCurrentIndex(2); // 2048x2048 default
 
+
+    vpArbRadio.setHidden(true);
     auto viewportChoiceLayout = new QVBoxLayout();
-    auto vpGroup = new QButtonGroup(this);
-    vpGroup->addButton(&vpXYRadio);
-    vpGroup->addButton(&vpXZRadio);
-    vpGroup->addButton(&vpZYRadio);
-    vpGroup->addButton(&vpArbRadio);
-    vpGroup->addButton(&vp3dRadio);
+    vpGroup.addButton(&vpXYRadio, VIEWPORT_XY);
+    vpGroup.addButton(&vpXZRadio, VIEWPORT_XZ);
+    vpGroup.addButton(&vpZYRadio, VIEWPORT_ZY);
+    vpGroup.addButton(&vpArbRadio, VIEWPORT_ARBITRARY);
+    vpGroup.addButton(&vp3dRadio, VIEWPORT_SKELETON);
     viewportChoiceLayout->addWidget(&vpXYRadio);
     viewportChoiceLayout->addWidget(&vpXZRadio);
     viewportChoiceLayout->addWidget(&vpZYRadio);
     viewportChoiceLayout->addWidget(&vpArbRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
-    QObject::connect(vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
+    QObject::connect(&vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
 
     auto imageOptionsLayout = new QVBoxLayout();
     imageOptionsLayout->addWidget(&withAxesCheck);
@@ -87,36 +88,49 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         if(path.isEmpty() == false) {
             QFileInfo info(path);
             saveDir = info.absolutePath() + "/";
-            const auto vp = vpXYRadio.isChecked() ? VIEWPORT_XY :
-                            vpXZRadio.isChecked() ? VIEWPORT_XZ :
-                            vpZYRadio.isChecked() ? VIEWPORT_ZY :
-                            vpArbRadio.isChecked() ? VIEWPORT_ARBITRARY :
-                                                    VIEWPORT_SKELETON;
-
-            emit snapshotRequest(path, vp, 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
+            emit snapshotRequest(path, static_cast<ViewportType>(vpGroup.checkedId()), 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
         }
+    });
+
+    QObject::connect(state->viewer, &Viewer::enabledArbVP, [this](const bool on) {
+        vpArbRadio.setVisible(on);
+        if (vpArbRadio.isChecked() && vpArbRadio.isHidden()) {
+            for (auto * button : vpGroup.buttons()) {
+                if (button->isVisible()) {
+                    button->setChecked(true);
+                }
+            }
+        }
+    });
+    QObject::connect(state->viewer, &Viewer::changedDefaultVPSizeAndPos, [this]() {
+        const auto xy = state->viewer->window->viewportXY.get()->isVisibleTo(state->viewer->window);
+        const auto xz = state->viewer->window->viewportXZ.get()->isVisibleTo(state->viewer->window);
+        const auto zy = state->viewer->window->viewportZY.get()->isVisibleTo(state->viewer->window);
+        const auto arb = state->viewer->window->viewportArb.get()->isVisibleTo(state->viewer->window);
+        const auto skel = state->viewer->window->viewport3D.get()->isVisibleTo(state->viewer->window);
+        vpXYRadio.setVisible(xy);
+        vpXZRadio.setVisible(xz);
+        vpZYRadio.setVisible(zy);
+        vpArbRadio.setVisible(arb);
+        vp3dRadio.setVisible(skel);
+        if (vpGroup.checkedButton() && vpGroup.checkedButton()->isHidden()) {
+            for (auto * button : vpGroup.buttons()) {
+                if (button->isVisible()) {
+                    button->setChecked(true);
+                }
+            }
+        }
+        snapshotButton.setEnabled(xy || xz || zy || arb || skel);
     });
     setLayout(&mainLayout);
 }
 
 void SnapshotWidget::openForVP(const ViewportType type) {
-    vpXYRadio.setChecked(type == VIEWPORT_XY);
-    vpXZRadio.setChecked(type == VIEWPORT_XZ);
-    vpZYRadio.setChecked(type == VIEWPORT_ZY);
-    vpArbRadio.setChecked(type == VIEWPORT_ARBITRARY);
-    vp3dRadio.setChecked(type == VIEWPORT_SKELETON);
+    vpGroup.button(type)->setChecked(true);
     updateOptionVisibility();
     show();
     activateWindow();
     raise();
-}
-
-uint SnapshotWidget::getCheckedViewport() const {
-    return vpXYRadio.isChecked() ? VIEWPORT_XY :
-           vpXZRadio.isChecked() ? VIEWPORT_XZ :
-           vpZYRadio.isChecked() ? VIEWPORT_ZY :
-           vpArbRadio.isChecked() ? VIEWPORT_ARBITRARY :
-                                   VIEWPORT_SKELETON;
 }
 
 void SnapshotWidget::updateOptionVisibility() {
@@ -146,7 +160,7 @@ void SnapshotWidget::saveSettings() {
     settings.beginGroup(SNAPSHOT_WIDGET);
     settings.setValue(VISIBLE, isVisible());
 
-    settings.setValue(VIEWPORT, getCheckedViewport());
+    settings.setValue(VIEWPORT, vpGroup.checkedId());
     settings.setValue(WITH_AXES, withAxesCheck.isChecked());
     settings.setValue(WITH_BOX, withBoxCheck.isChecked());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
@@ -164,13 +178,7 @@ void SnapshotWidget::loadSettings() {
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
-    switch(vp) {
-        case VIEWPORT_XY: vpXYRadio.setChecked(true); break;
-        case VIEWPORT_XZ: vpXZRadio.setChecked(true); break;
-        case VIEWPORT_ZY: vpZYRadio.setChecked(true); break;
-        case VIEWPORT_ARBITRARY: vpArbRadio.setChecked(true); break;
-        default: vp3dRadio.setChecked(true); break;
-    }
+    vpGroup.button(vp)->setChecked(true);
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
     withBoxCheck.setChecked(settings.value(WITH_BOX, false).toBool());
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());

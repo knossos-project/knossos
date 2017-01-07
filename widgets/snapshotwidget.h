@@ -26,6 +26,7 @@
 #include "viewport.h"
 #include "widgets/DialogVisibilityNotify.h"
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
@@ -34,14 +35,15 @@
 #include <QVBoxLayout>
 
 class SnapshotWidget : public DialogVisibilityNotify {
+    friend struct WidgetContainer;
     Q_OBJECT
     QString saveDir;
     QComboBox sizeCombo;
+    QButtonGroup vpGroup;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpZYRadio{"ZY viewport"}, vpArbRadio{"Arb viewport"}, vp3dRadio{"3D viewport"};
     QCheckBox withAxesCheck{"Dataset axes"}, withBoxCheck{"Dataset box"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
     QVBoxLayout mainLayout;
-    uint getCheckedViewport() const;
     QString defaultFilename() const;
 public:
     explicit SnapshotWidget(QWidget *parent = 0);

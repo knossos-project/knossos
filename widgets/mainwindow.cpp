@@ -1232,7 +1232,7 @@ void MainWindow::resetViewports() {
         });
     }
     resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
-    state->viewerState->defaultVPSizeAndPos = true;
+    state->viewer->setDefaultVPSizeAndPos(true);
 }
 
 void MainWindow::newTreeSlot() {

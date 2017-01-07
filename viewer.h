@@ -207,11 +207,15 @@ public:
     QTimer timer;
 
     void arbCubes(ViewportArb & vp);
+    void setEnableArbVP(const bool on);
+    void setDefaultVPSizeAndPos(const bool on);
     void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     QColor getNodeColor(const nodeListElement & node) const;
 signals:
+    void enabledArbVP(const bool on);
+    void changedDefaultVPSizeAndPos();
     void coordinateChangedSignal(const Coordinate & pos);
     void zoomChanged();
     void movementAreaFactorChangedSignal();

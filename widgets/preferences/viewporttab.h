@@ -38,6 +38,7 @@ class ViewportTab : public QWidget {
     friend class PreferencesWidget;
     friend class ViewportBase;
     friend class MainWindow;
+    friend struct WidgetContainer;
     Q_OBJECT
     QHBoxLayout mainLayout;
     QGroupBox generalBox{tr("General")};

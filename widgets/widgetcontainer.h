@@ -46,6 +46,7 @@ struct WidgetContainer {
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &zoomWidget, &ZoomWidget::zoomDefaultsClicked);
         QObject::connect(&preferencesWidget.datasetAndSegmentationTab, &DatasetAndSegmentationTab::volumeRenderToggled, &snapshotWidget, &SnapshotWidget::updateOptionVisibility);
+        QObject::connect(&preferencesWidget.viewportTab.addArbVPCheckBox, &QCheckBox::toggled, [this](const bool on) { snapshotWidget.vpArbRadio.setVisible(on); });
     }
 
     AboutDialog aboutDialog;

@@ -161,16 +161,7 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
             }
         }
     });
-    QObject::connect(&hideAction, &QAction::triggered, [this]() {
-        if (isDocked) {
-            hide();
-        } else {
-            floatParent.hide();
-            setParent(dockParent);
-            hide();
-        }
-        state->viewerState->defaultVPSizeAndPos = false;
-    });
+    QObject::connect(&hideAction, &QAction::triggered, this, &ViewportBase::hideVP);
     menuButton.setText("…");
     menuButton.setCursor(Qt::ArrowCursor);
     menuButton.setMinimumSize(35, 20);
@@ -189,7 +180,7 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
         //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
         const auto desiredSize = mapFromGlobal(globalPos);
         sizeAdapt(desiredSize);
-        state->viewerState->defaultVPSizeAndPos = false;
+        state->viewer->setDefaultVPSizeAndPos(false);
     });
 
     vpLayout.setMargin(0);//attach buttons to vp border
@@ -217,7 +208,7 @@ void ViewportBase::setDock(bool isDock) {
         move(dockPos);
         resize(dockSize);
     } else {
-        state->viewerState->defaultVPSizeAndPos = false;
+        state->viewer->setDefaultVPSizeAndPos(false);
         if (floatParent.nonMaximizedPos == boost::none) {
             floatParent.nonMaximizedSize = { size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN };
             floatParent.nonMaximizedPos = mapToGlobal(QPoint(0, 0));
@@ -248,7 +239,18 @@ void ViewportBase::moveVP(const QPoint & globalPos) {
     const auto desiredX = x() + position.x() - mouseDown.x();
     const auto desiredY = y() + position.y() - mouseDown.y();
     posAdapt({desiredX, desiredY});
-    state->viewerState->defaultVPSizeAndPos = false;
+    state->viewer->setDefaultVPSizeAndPos(false);
+}
+
+void ViewportBase::hideVP() {
+    if (isDocked) {
+        hide();
+    } else {
+        floatParent.hide();
+        setParent(dockParent);
+        hide();
+    }
+    state->viewer->setDefaultVPSizeAndPos(false);
 }
 
 void ViewportBase::moveEvent(QMoveEvent *event) {
@@ -864,6 +866,22 @@ void Viewport3D::updateVolumeTexture() {
 }
 
 void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
+    if (isHidden()) {
+        QMessageBox prompt;
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText(tr("Please enable the viewport for taking a snapshot of it."));
+        const auto *accept = prompt.addButton("Activate && take snapshot", QMessageBox::AcceptRole);
+        prompt.addButton("Cancel", QMessageBox::RejectRole);
+        prompt.exec();
+        if (prompt.clickedButton() == accept) {
+            if (viewportType == VIEWPORT_ARBITRARY) {
+                state->viewer->setEnableArbVP(true);
+            }
+            setVisible(true);
+        } else {
+            return;
+        }
+    }
     makeCurrent();
     glEnable(GL_MULTISAMPLE);
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
@@ -923,6 +941,10 @@ void ViewportArb::paintGL() {
     ViewportOrtho::paintGL();
 }
 
+void ViewportArb::hideVP() {
+    ViewportBase::hideVP();
+    state->viewer->setEnableArbVP(false);
+}
 void ViewportArb::showHideButtons(bool isShow) {
     ViewportBase::showHideButtons(isShow);
 }

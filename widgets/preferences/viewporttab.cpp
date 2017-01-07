@@ -71,6 +71,11 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
         state->viewerState->enableArbVP = on;
         state->viewer->viewportArb->setVisible(on);
     });
+    QObject::connect(state->viewer, &Viewer::enabledArbVP, [this] (const bool on) {
+        addArbVPCheckBox.setChecked(on);
+        addArbVPCheckBox.clicked(on);
+    });
+
     // 3D viewport
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXYplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXZplane = checked; });

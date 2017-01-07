@@ -163,6 +163,7 @@ protected:
     virtual float zoomStep() const = 0;
     // rendering
     virtual void initializeGL() override;
+    virtual void hideVP();
     void setFrontFacePerspective();
     void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
@@ -390,7 +391,7 @@ class ViewportArb : public ViewportOrtho {
 
 protected:
     virtual void paintGL() override;
-
+    virtual void hideVP() override;
 public:
     floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);

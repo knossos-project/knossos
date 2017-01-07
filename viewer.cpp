@@ -121,6 +121,7 @@ void Viewer::loadSettings() {
             }
         });
     }
+    emit changedDefaultVPSizeAndPos();
     for (const auto & i : settings.value(VP_ORDER).toList()) {
         mainWindow.viewport(static_cast<ViewportType>(i.toInt()))->raise();
     }
@@ -656,6 +657,16 @@ void Viewer::arbCubes(ViewportArb & vp) {
             }
         }
     }
+}
+
+void Viewer::setEnableArbVP(const bool on) {
+    viewerState.enableArbVP = on;
+    emit enabledArbVP(on);
+}
+
+void Viewer::setDefaultVPSizeAndPos(const bool on) {
+    state->viewerState->defaultVPSizeAndPos = on;
+    emit changedDefaultVPSizeAndPos();
 }
 
 void Viewer::vpGenerateTexture(ViewportArb &vp) {
