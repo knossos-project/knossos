@@ -30,6 +30,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
+#include "tinyply/tinyply.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/viewport.h"
@@ -1836,111 +1837,55 @@ bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElemen
     });
 }
 
-void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID) {
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {
+    if (!file.open(QIODevice::ReadOnly)) {
         throw std::runtime_error("loadMesh open failed");
     }
-    QTextStream stream(&file);
-    QString line;
-
-    // read version
-    bool validVersion = true;
-    QString version;
-    if((validVersion = !(line = stream.readLine()).isNull())) {
-        version = line;
+    tinyply::PlyFile ply(file);
+    QVector<float> vertices;
+    QVector<float> colors;
+    QVector<unsigned int> indices;
+    QVector<float> normals;
+    int missingCoords = 0, missingColors = 0, missingIndices = 0;
+    const auto vertexCount = ply.request_properties_from_element("vertex", {"x", "y", "z"}, vertices, missingCoords);
+    const auto colorCount = ply.request_properties_from_element("color", {"r", "g", "b", "a"}, colors, missingColors);
+    const auto faceCount = ply.request_properties_from_element("face", {"v1", "v2", "v3"}, indices, missingIndices);
+    QString warning = tr("");
+    if (vertexCount == 0 || faceCount == 0 || missingCoords > 0 || (missingColors > 0 && missingColors != 4) || missingIndices > 0) {
+        warning = tr("Malformed ply file.\n"
+                     "Expected elements:\n"
+                     "• “vertex”: x, y, z\n"
+                     "• (optional) “color”: r, g, b, a\n"
+                     "• “face”: v1, v2, v3");
     } else {
-        throw std::runtime_error("loadMesh: parsing failed, file too short");
+        try {
+            QElapsedTimer t;
+            t.start();
+            ply.read(file);
+            qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, #colors: %3, #triangles: %4.").arg(t.elapsed()).arg(vertexCount).arg(colorCount).arg(faceCount);
+            addMeshToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
+        } catch (const std::invalid_argument & e) {
+            warning = e.what();
+        }
     }
-    if (version == "v0") {
-        // read number of vertices
-        unsigned int numVertices = 0;
-        bool validHead = true;
-        if((validHead = !(line = stream.readLine()).isNull())) {
-            numVertices = line.toUInt(&validHead);
-            validHead = validHead && numVertices % 3 == 0;
-        }
-        if (validHead == false) {
-            throw std::runtime_error("loadMesh: parsing failed, illegal number of vertices");
-        }
-
-        // read vertices and colors
-        QVector<float> vertices;
-        QVector<float> colors;
-        for (std::size_t i = 0; i < numVertices; i++) {
-            if (!(line = stream.readLine()).isNull()) {
-                std::istringstream lineStream(line.toStdString());
-
-                QVector<float> vertex(3);
-                QVector<float> color(4);
-                bool validVertex = true;
-                for(std::size_t i = 0; i < 3; ++i) {
-                    validVertex = validVertex && (lineStream >> vertex[i]);
-                }
-                bool validColor = true;
-                for(std::size_t i = 0; i < 4; ++i) {
-                    validColor = validColor && (lineStream >> color[i]);
-                }
-                if(validVertex) {
-                    vertices.append(vertex);
-                } else {
-                    qDebug() << "loadMesh: loading a point failed";
-                }
-                if (validColor) {
-                    colors.append(color);
-                }
-            } else {
-               throw std::runtime_error("loadMesh: parsing failed, file too short");
-            }
-        }
-        const auto correctSizeColors = vertices.size()/3 * 4;
-        if (colors.size() != correctSizeColors) {
-            qDebug() << tr("loadMesh: Incorrect number of colors (%1 instead of %2). Using tree color instead.").arg(colors.size()).arg(correctSizeColors);
-            colors.clear();
-        }
-
-        // read indices
-        QVector<unsigned int> indices;
-        bool validIndex = true;
-        while(!(line = stream.readLine()).isNull()) {
-            unsigned int index = line.toUInt(&validIndex);
-            if (validIndex) {
-                indices.append(index);
-            } else {
-                throw std::runtime_error("loadMesh: parsing failed, invalid index");
-            }
-        }
-        if (indices.size() % 3 != 0) {
-            throw std::runtime_error("loadMesh: parsing failed, invalid number of indices (must be multiple of 3)");
-        }
-        QVector<float> normals;
-        addMeshToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
-    } else {
-        throw std::runtime_error("loadMesh: parsing failed, unrecognized version: " + version.toStdString());
+    if (warning.isEmpty() == false) {
+        QMessageBox msgBox(state->viewer->window);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Failed to load mesh for ") + filename);
+        msgBox.setInformativeText(warning);
+        msgBox.exec();
     }
 }
 
 void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
-    QTextStream stream(&file);
-    stream << "v0\n";
-    stream << tree.mesh->vertex_count << "\n";
-    for (std::size_t i = 0; i < tree.mesh->vertex_count; i++) {
-        stream << tree.mesh->vertex_coords[i * 3 + 0] << " "
-               << tree.mesh->vertex_coords[i * 3 + 1] << " "
-               << tree.mesh->vertex_coords[i * 3 + 2];
-        if (tree.mesh->useTreeColor == false) {
-            stream << " "
-               << tree.mesh->colors[i * 4 + 0] << " "
-               << tree.mesh->colors[i * 4 + 1] << " "
-               << tree.mesh->colors[i * 4 + 2] << " "
-               << tree.mesh->colors[i * 4 + 3] << "\n";
-        } else {
-            stream << "\n";
-        }
+    tinyply::PlyFile ply;
+    ply.add_properties_to_element("vertex", {"x", "y", "z"}, tree.mesh->vertex_coords);
+    if (tree.mesh->useTreeColor == false) {
+        ply.add_properties_to_element("color", {"r", "g", "b", "a"}, tree.mesh->colors);
     }
-    for (const auto & index : tree.mesh->indices) {
-        stream << index << "\n";
-    }
-    if (stream.status() != QTextStream::Ok) {
+    ply.add_properties_to_element("face", {"v1", "v2", "v3"}, tree.mesh->indices);
+
+    if(ply.write(file, Session::singleton().savePlyAsBinary) == false) {
         qDebug() << "mesh save failed for tree" << tree.treeID;
     }
 }

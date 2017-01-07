@@ -51,8 +51,17 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
     formLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
     autosaveGroup.setLayout(&formLayout);
 
+    plySaveAsBinRadio.setChecked(true);
+    plySaveButtonGroup.addButton(&plySaveAsBinRadio, true);
+    plySaveButtonGroup.addButton(&plySaveAsTxtRadio, false);
+    plyLayout.addWidget(&plySaveAsBinRadio);
+    plyLayout.addWidget(&plySaveAsTxtRadio);
+    plyLayout.setAlignment(Qt::AlignLeft);
+    plyGroupBox.setLayout(&plyLayout);
+
     mainLayout.addWidget(&generalGroup);
     mainLayout.addWidget(&autosaveGroup);
+    mainLayout.addWidget(&plyGroupBox);
     mainLayout.addStretch();
     setLayout(&mainLayout);
 
@@ -75,16 +84,23 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
     QObject::connect(&revealButton, &QPushButton::clicked, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(autosaveLocationEdit.text()));
     });
+    QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [this](auto id) {
+        Session::singleton().savePlyAsBinary = static_cast<bool>(id);
+    });
 }
 
 void SaveTab::loadSettings(const QSettings & settings) {
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autosaveGroup.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
+    const auto buttonId = static_cast<int>(settings.value(PLY_SAVE_AS_BIN, true).toBool());
+    plySaveButtonGroup.button(buttonId)->setChecked(true);
+    plySaveButtonGroup.buttonClicked(buttonId);
 }
 
 void SaveTab::saveSettings(QSettings & settings) {
     settings.setValue(AUTO_SAVING, autosaveGroup.isChecked());
     settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());
+    settings.setValue(PLY_SAVE_AS_BIN, plySaveAsBinRadio.isChecked());
 }

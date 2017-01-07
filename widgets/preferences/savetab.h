@@ -23,6 +23,7 @@
 #ifndef AUTOSAVETAB_H
 #define AUTOSAVETAB_H
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -30,6 +31,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QRadioButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -49,6 +51,12 @@ class SaveTab : public QWidget {
     QGroupBox autosaveGroup{"Auto saving (triggered by changes)"};
     QFormLayout formLayout;
     QSpinBox autosaveIntervalSpinBox;
+
+    QGroupBox plyGroupBox{tr("Save meshes as…")};
+    QHBoxLayout plyLayout;
+    QButtonGroup plySaveButtonGroup;
+    QRadioButton plySaveAsBinRadio{tr("binary files")};
+    QRadioButton plySaveAsTxtRadio{tr("text files")};
 public:
     explicit SaveTab(QWidget * parent = nullptr);
     void loadSettings(const QSettings &settings);

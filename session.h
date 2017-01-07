@@ -71,6 +71,7 @@ class Session : public QObject {
 public:
     QTimer autoSaveTimer;
     bool autoFilenameIncrementBool = true;
+    bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 
     QPair<QString, QString> task;
