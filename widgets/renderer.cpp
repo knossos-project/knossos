@@ -1223,7 +1223,7 @@ void Viewport3D::pickMeshIdAtPosition() {
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
-        for(std::size_t i = 0; i < tree.mesh->index_count - 3; i += 3) { // for each face
+        for(std::size_t i = 0; i < tree.mesh->index_count - 2; i += 3) { // for each face
             auto id_color = meshIdToColor(id_counter);
             std::array<unsigned int, 3> v_ids{{tree.mesh->indices[i], tree.mesh->indices[i+1], tree.mesh->indices[i+2]}};
             floatCoordinate centerOfMass;
