@@ -56,7 +56,16 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
+#include <QtConcurrentRun>
+
+auto doit = [](auto buffer, auto treeId, auto fileName){
+    QBuffer device(&buffer);
+    return Skeletonizer::singleton().loadMesh(device, treeId, fileName);
+};
+
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
+    QElapsedTimer timer;
+    timer.start();
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
@@ -88,11 +97,16 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             QuaZipFile file(&archive);
             treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
         }
+        int counter{0};
+        std::vector<QFuture<Skeletonizer::MeshResult>> futures;
+        QThreadPool pool;
+        pool.setMaxThreadCount(2);
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
             const QRegularExpression meshRegEx(R"regex([0-9]*.ply)regex");
             auto fileName = archive.getCurrentFileName();
             const auto matchMesh = meshRegEx.match(fileName);
             if (matchMesh .hasMatch()) {
+                qDebug() << ++counter;
                 QuaZipFile file(&archive);
                 auto nameWithoutExtension = fileName;
                 nameWithoutExtension.chop(4);
@@ -110,13 +124,35 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                         treeId = boost::none;
                     }
                 }
-                Skeletonizer::singleton().loadMesh(file, treeId, fileName);
+                if (!file.open(QIODevice::ReadOnly)) {
+                    throw std::runtime_error("loadMesh open failed");
+                }
+                auto buffer = file.readAll();
+
+                // works
+//                QBuffer device(const_cast<QByteArray *>(&buffer));
+//                auto mesh = Skeletonizer::singleton().loadMesh(device, treeId, fileName);
+//                Skeletonizer::singleton().addMeshToTree(std::get<0>(mesh), std::get<1>(mesh), std::get<2>(mesh), std::get<3>(mesh), std::get<4>(mesh), GL_TRIANGLES);
+
+                // doesn’t work
+                futures.emplace_back(QtConcurrent::run(&pool, [buffer, treeId, fileName](){
+                    QBuffer device(const_cast<QByteArray *>(&buffer));
+                    return Skeletonizer::singleton().loadMesh(device, treeId, fileName);
+                }));
+//                futures.emplace_back(QtConcurrent::run(&pool, std::bind(doit, buffer, treeId, filename)));
             }
+        }
+        int counter2{0};
+        for (auto future : futures) {
+            auto mesh = future.result();
+            qDebug() << "" << ++counter2 << future.isFinished() << std::get<0>(mesh).get() << std::get<1>(mesh).size()/3 << std::get<2>(mesh).size()/4 << std::get<3>(mesh).size()/3;
+            Skeletonizer::singleton().addMeshToTree(std::get<0>(mesh), std::get<1>(mesh), std::get<2>(mesh), std::get<3>(mesh), std::get<4>(mesh), GL_TRIANGLES);
         }
         state->viewer->loader_notify();
     } else {
         throw std::runtime_error(QObject::tr("opening %1 for reading failed").arg(filename).toStdString());
     }
+    qDebug() << timer.elapsed();
 }
 
 void annotationFileSave(const QString & filename) {
