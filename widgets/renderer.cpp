@@ -1220,8 +1220,6 @@ void Viewport3D::pickMeshIdAtPosition() {
         if (!tree.render || selectionFilter || !pickableMesh) {
             continue;
         }
-        std::vector<std::array<unsigned char, 4>> colors;
-        colors.resize(tree.mesh->vertex_count);
         std::vector<std::array<float, 3>> flat_verts;
         std::vector<std::array<GLubyte, 4>> flat_colors;
 
