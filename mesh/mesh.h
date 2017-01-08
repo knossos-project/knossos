@@ -35,7 +35,7 @@ public:
     GLenum render_mode{GL_POINTS};
 
     boost::optional<std::size_t> pickingIdOffset;
-    std::unique_ptr<Mesh> pickingMesh;
+    QOpenGLBuffer picking_color_buf{QOpenGLBuffer::VertexBuffer};
 };
 
 struct BufferSelection {

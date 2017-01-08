@@ -5,6 +5,7 @@ Mesh::Mesh(treeListElement * tree, bool useTreeColor, GLenum render_mode) : corr
     normal_buf.create();
     color_buf.create();
     index_buf.create();
+    picking_color_buf.create();
 }
 
 Mesh::~Mesh() {
@@ -12,4 +13,5 @@ Mesh::~Mesh() {
     normal_buf.destroy();
     color_buf.destroy();
     index_buf.destroy();
+    picking_color_buf.destroy();
 }

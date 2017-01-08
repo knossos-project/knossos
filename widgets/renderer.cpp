@@ -1035,11 +1035,11 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
 
-    buf.color_buf.bind();
+    buf.picking_color_buf.bind();
     int colorLocation = meshIdShader.attributeLocation("color");
     meshIdShader.enableAttributeArray(colorLocation);
     meshIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-    buf.color_buf.release();
+    buf.picking_color_buf.release();
 
     if(buf.index_count != 0) {
         buf.index_buf.bind();
@@ -1175,13 +1175,15 @@ void Viewport3D::pickMeshIdAtPosition() {
     if(mesh_id_init) {
         meshIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
             #version 110
+            #extension GL_EXT_gpu_shader4 : require
+
             attribute vec3 vertex;
             attribute vec4 color;
 
             uniform mat4 modelview_matrix;
             uniform mat4 projection_matrix;
 
-            varying vec4 frag_color;
+            flat varying vec4 frag_color;
             varying mat4 mvp_matrix;
 
             void main() {
@@ -1193,11 +1195,12 @@ void Viewport3D::pickMeshIdAtPosition() {
 
         meshIdShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
             #version 110
+            #extension GL_EXT_gpu_shader4 : require
 
             uniform mat4 modelview_matrix;
             uniform mat4 projection_matrix;
 
-            varying vec4 frag_color;
+            flat varying vec4 frag_color;
             varying mat4 mvp_matrix;
 
             void main() {
@@ -1219,45 +1222,25 @@ void Viewport3D::pickMeshIdAtPosition() {
         if (!tree.render || selectionFilter || !pickableMesh) {
             continue;
         }
-        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->pickingMesh;
+        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->picking_color_buf.size() != 0;
         if (pickingMeshValid) {
-            tree.mesh->pickingMesh->position_buf.bind();
-            tree.mesh->pickingMesh->color_buf.bind();
-            id_counter += tree.mesh->indices.size() != 0 ? tree.mesh->index_count / 3 : tree.mesh->vertex_count / 3;
+            tree.mesh->picking_color_buf.bind();
+            id_counter += tree.mesh->vertex_count;
         } else {
             tree.mesh->pickingIdOffset = id_counter;
-            tree.mesh->pickingMesh = std::make_unique<Mesh>(nullptr, false, GL_TRIANGLES);
 
-            std::vector<std::array<float, 3>> flat_verts;
-            std::vector<std::array<GLubyte, 4>> flat_colors;
-            const auto end = tree.mesh->indices.size() == 0 ? tree.mesh->vertex_count - 2 : tree.mesh->index_count - 2;
-            for (std::size_t i = 0; i < end; i += 3) { // for each face
-                auto id_color = meshIdToColor(id_counter);
-                std::array<std::size_t, 3> v_ids{{i, i + 1, i + 2}};
-                if (tree.mesh->indices.size() != 0) {
-                    v_ids = {{tree.mesh->indices[i], tree.mesh->indices[i+1], tree.mesh->indices[i+2]}};
-                }
-                floatCoordinate centerOfMass;
-                for (std::size_t j = 0; j < 3; ++j) {
-                    flat_verts.emplace_back(std::array<float, 3>{{
-                        tree.mesh->vertex_coords[v_ids[j]*3],
-                        tree.mesh->vertex_coords[v_ids[j]*3+1],
-                        tree.mesh->vertex_coords[v_ids[j]*3+2]}});
-                    centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
-                    flat_colors.emplace_back(id_color);
-                }
-                selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
+            std::vector<std::array<GLubyte, 4>> picking_colors;
+            for (int i{0}; i < tree.mesh->vertex_coords.size() - 2; i += 3) { // for each vertex
+                const floatCoordinate vertex{tree.mesh->vertex_coords[i], tree.mesh->vertex_coords[i+1], tree.mesh->vertex_coords[i+2]};
+                picking_colors.emplace_back(meshIdToColor(id_counter));
+                selection_ids.emplace(id_counter, BufferSelection{tree.treeID, vertex / state->scale});// save in dataset coordinates
                 ++id_counter;
             }
 
-            tree.mesh->pickingMesh->vertex_count = flat_verts.size();
-            tree.mesh->pickingMesh->position_buf.bind();
-            tree.mesh->pickingMesh->position_buf.allocate(flat_verts.data(), flat_verts.size() * sizeof(flat_verts[0]));
-
-            tree.mesh->pickingMesh->color_buf.bind();
-            tree.mesh->pickingMesh->color_buf.allocate(flat_colors.data(), flat_colors.size() * sizeof(flat_colors[0]));
+            tree.mesh->picking_color_buf.bind();
+            tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
         }
-        renderMeshBufferIds(*tree.mesh->pickingMesh);
+        renderMeshBufferIds(*tree.mesh);
     }
 }
 
