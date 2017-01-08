@@ -1212,44 +1212,54 @@ void Viewport3D::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
 
     // create id map
-    selection_ids.clear();
     std::uint32_t id_counter = 1;
-    for(auto & tree : state->skeletonState->trees) {
-        const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES && tree.mesh->index_count >= 3;
+    for (auto & tree : state->skeletonState->trees) {
+        const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
         const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
         if (!tree.render || selectionFilter || !pickableMesh) {
             continue;
         }
-        std::vector<std::array<float, 3>> flat_verts;
-        std::vector<std::array<GLubyte, 4>> flat_colors;
+        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->pickingMesh;
+        if (pickingMeshValid) {
+            tree.mesh->pickingMesh->position_buf.bind();
+            tree.mesh->pickingMesh->color_buf.bind();
+            id_counter += tree.mesh->indices.size() != 0 ? tree.mesh->index_count / 3 : tree.mesh->vertex_count / 3;
+        } else {
+            tree.mesh->pickingIdOffset = id_counter;
+            tree.mesh->pickingMesh = std::make_unique<Mesh>(nullptr, false, GL_TRIANGLES);
 
-        for(std::size_t i = 0; i < tree.mesh->index_count - 2; i += 3) { // for each face
-            auto id_color = meshIdToColor(id_counter);
-            std::array<unsigned int, 3> v_ids{{tree.mesh->indices[i], tree.mesh->indices[i+1], tree.mesh->indices[i+2]}};
-            floatCoordinate centerOfMass;
-            for(std::size_t j = 0; j < 3; ++j) {
-                flat_verts.emplace_back(std::array<float, 3>{{
-                    tree.mesh->vertex_coords[v_ids[j]*3],
-                    tree.mesh->vertex_coords[v_ids[j]*3+1],
-                    tree.mesh->vertex_coords[v_ids[j]*3+2]}});
-                centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
-                flat_colors.emplace_back(id_color);
+            std::vector<std::array<float, 3>> flat_verts;
+            std::vector<std::array<GLubyte, 4>> flat_colors;
+            const auto end = tree.mesh->indices.size() == 0 ? tree.mesh->vertex_count - 2 : tree.mesh->index_count - 2;
+            for (std::size_t i = 0; i < end; i += 3) { // for each face
+                auto id_color = meshIdToColor(id_counter);
+                std::array<std::size_t, 3> v_ids{{i, i + 1, i + 2}};
+                if (tree.mesh->indices.size() != 0) {
+                    v_ids = {{tree.mesh->indices[i], tree.mesh->indices[i+1], tree.mesh->indices[i+2]}};
+                }
+                floatCoordinate centerOfMass;
+                for (std::size_t j = 0; j < 3; ++j) {
+                    flat_verts.emplace_back(std::array<float, 3>{{
+                        tree.mesh->vertex_coords[v_ids[j]*3],
+                        tree.mesh->vertex_coords[v_ids[j]*3+1],
+                        tree.mesh->vertex_coords[v_ids[j]*3+2]}});
+                    centerOfMass += floatCoordinate{flat_verts.back()[0], flat_verts.back()[1], flat_verts.back()[2]};
+                    flat_colors.emplace_back(id_color);
+                }
+                selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
+                ++id_counter;
             }
-            selection_ids.emplace(id_counter, BufferSelection{tree.treeID, centerOfMass / 3 / state->scale});// save in dataset coordinates
-            ++id_counter;
+
+            tree.mesh->pickingMesh->vertex_count = flat_verts.size();
+            tree.mesh->pickingMesh->position_buf.bind();
+            tree.mesh->pickingMesh->position_buf.allocate(flat_verts.data(), flat_verts.size() * sizeof(flat_verts[0]));
+
+            tree.mesh->pickingMesh->color_buf.bind();
+            tree.mesh->pickingMesh->color_buf.allocate(flat_colors.data(), flat_colors.size() * sizeof(flat_colors[0]));
         }
-        Mesh id_buf{nullptr, false, GL_TRIANGLES};
-        id_buf.vertex_count = flat_verts.size();
-        id_buf.position_buf.bind();
-        id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * sizeof(flat_verts[0]));
-
-        id_buf.color_buf.bind();
-        id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * sizeof(flat_colors[0]));
-
-        renderMeshBufferIds(id_buf);
+        renderMeshBufferIds(*tree.mesh->pickingMesh);
     }
 }
-
 
 void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);

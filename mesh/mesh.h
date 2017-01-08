@@ -33,6 +33,9 @@ public:
     QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
     GLenum render_mode{GL_POINTS};
+
+    boost::optional<std::size_t> pickingIdOffset;
+    std::unique_ptr<Mesh> pickingMesh;
 };
 
 struct BufferSelection {
