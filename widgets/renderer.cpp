@@ -1241,10 +1241,10 @@ void Viewport3D::pickMeshIdAtPosition() {
         Mesh id_buf{nullptr, false, GL_TRIANGLES};
         id_buf.vertex_count = flat_verts.size();
         id_buf.position_buf.bind();
-        id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * 3 * sizeof(GLfloat));
+        id_buf.position_buf.allocate(flat_verts.data(), flat_verts.size() * sizeof(flat_verts[0]));
 
         id_buf.color_buf.bind();
-        id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * 4 * sizeof(GLubyte));
+        id_buf.color_buf.allocate(flat_colors.data(), flat_colors.size() * sizeof(flat_colors[0]));
 
         renderMeshBufferIds(id_buf);
     }
