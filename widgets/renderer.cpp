@@ -1166,8 +1166,20 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     fbo.release();
     // read color and translate to id
     const auto triangleID = meshColorToId(fbo.toImage().pixelColor(pos));
-    auto it = selection_ids.find(triangleID);
-    return (it != std::end(selection_ids)) ? boost::optional<BufferSelection>{it->second} : boost::none;
+    boost::optional<treeListElement&> treeIt;
+    for (auto & tree : state->skeletonState->trees) {// find the with appropriate triangle range
+        if (tree.mesh && tree.mesh->pickingIdOffset.get() + tree.mesh->vertex_count > triangleID) {
+            treeIt = tree;
+            break;
+        }
+    }
+    floatCoordinate coord;
+    if (treeIt) {
+        const auto index = triangleID - treeIt->mesh->pickingIdOffset.get();
+        coord = floatCoordinate{treeIt->mesh->vertex_coords[3 * index], treeIt->mesh->vertex_coords[3 * index + 1], treeIt->mesh->vertex_coords[3 * index + 2]};
+        coord  /= state->scale;
+    }
+    return treeIt ? boost::optional<BufferSelection>{{treeIt->treeID, coord}} : boost::none;
 }
 
 void Viewport3D::pickMeshIdAtPosition() {
@@ -1224,19 +1236,14 @@ void Viewport3D::pickMeshIdAtPosition() {
         }
         const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->picking_color_buf.size() != 0;
         if (pickingMeshValid) {
-            tree.mesh->picking_color_buf.bind();
             id_counter += tree.mesh->vertex_count;
         } else {
             tree.mesh->pickingIdOffset = id_counter;
 
             std::vector<std::array<GLubyte, 4>> picking_colors;
-            for (int i{0}; i < tree.mesh->vertex_coords.size() - 2; i += 3) { // for each vertex
-                const floatCoordinate vertex{tree.mesh->vertex_coords[i], tree.mesh->vertex_coords[i+1], tree.mesh->vertex_coords[i+2]};
-                picking_colors.emplace_back(meshIdToColor(id_counter));
-                selection_ids.emplace(id_counter, BufferSelection{tree.treeID, vertex / state->scale});// save in dataset coordinates
-                ++id_counter;
+            for (std::size_t i{0}; i < tree.mesh->vertex_count; ++i) {// for each vertex
+                picking_colors.emplace_back(meshIdToColor(id_counter++));
             }
-
             tree.mesh->picking_color_buf.bind();
             tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
         }

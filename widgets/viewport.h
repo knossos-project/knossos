@@ -276,7 +276,6 @@ class Viewport3D : public ViewportBase {
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshIdShader;
-    std::unordered_map<std::uint32_t, BufferSelection> selection_ids;
 
     void resetWiggle();
     virtual void zoom(const float zoomStep) override;
