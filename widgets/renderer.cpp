@@ -956,10 +956,14 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     GLfloat projection_mat[4][4];
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
 
+    auto & meshShader = buf.useTreeColor ? meshTreeColorShader : this->meshShader;
+
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
-    meshShader.setUniformValue("use_tree_color", buf.useTreeColor);
+    if (buf.useTreeColor) {
+        meshShader.setUniformValue("use_tree_color", buf.useTreeColor);
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -980,10 +984,12 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     buf.normal_buf.release();
 
     int colorLocation = meshShader.attributeLocation("color");
-    buf.color_buf.bind();
-    meshShader.enableAttributeArray(colorLocation);
-    meshShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
-    buf.color_buf.release();
+    if (buf.useTreeColor) {
+        buf.color_buf.bind();
+        meshShader.enableAttributeArray(colorLocation);
+        meshShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+        buf.color_buf.release();
+    }
     QColor color = buf.correspondingTree->color;
     if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
         color = Qt::red;
@@ -997,7 +1003,9 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-    meshShader.disableAttributeArray(colorLocation);
+    if (!buf.useTreeColor) {
+        meshShader.disableAttributeArray(colorLocation);
+    }
     meshShader.disableAttributeArray(normalLocation);
     meshShader.disableAttributeArray(vertexLocation);
 
@@ -1082,13 +1090,11 @@ void Viewport3D::renderMesh() {
                 frag_normal = normal;
             }
         )shaderSource");
-
         meshShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
             #version 110
 
             uniform mat4 modelview_matrix;
             uniform mat4 projection_matrix;
-            uniform bool use_tree_color;
             uniform vec4 tree_color;
 
             varying vec4 frag_color;
@@ -1116,20 +1122,70 @@ void Viewport3D::renderMesh() {
                     specular_power = pow(max(0.0, dot(reflect(-main_light_dir, frag_normal), view_dir)), specular_exp);
                 }
 
-                vec3 fcolor = use_tree_color ? tree_color.rgb : frag_color.rgb;
+                vec3 fcolor = frag_color.rgb;
                 gl_FragColor = vec4((0.25 * fcolor                                 // ambient
                             + 0.75 * fcolor * main_light_power                     // diffuse(main)
                             + 0.25 * fcolor * sub_light_power         // diffuse(sub)
                             // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
                             // + specular_color * specular_power                  // specular
                             ) //* ambient_occlusion_power
-                            , use_tree_color ? tree_color.a : frag_color.a);
+                            , frag_color.a);
 
                 // gl_FragColor = //vec4((frag_normal+1.0)/2.0, 1.0); // display normals
             }
         )shaderSource");
-
         meshShader.link();
+
+        meshTreeColorShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+            #version 110
+            attribute vec3 vertex;
+            attribute vec3 normal;
+            attribute vec4 color;
+
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
+
+            varying vec3 frag_normal;
+            varying mat4 mvp_matrix;
+
+            void main() {
+                mvp_matrix = projection_matrix * modelview_matrix;
+                gl_Position = mvp_matrix * vec4(vertex, 1.0);
+                frag_normal = normal;
+            }
+        )shaderSource");
+        meshTreeColorShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+            #version 110
+
+            uniform mat4 modelview_matrix;
+            uniform mat4 projection_matrix;
+            uniform vec4 tree_color;
+
+            varying vec4 frag_color;
+            varying vec3 frag_normal;
+            varying mat4 mvp_matrix;
+
+            void main() {
+                vec3 specular_color = vec3(1.0, 1.0, 1.0);
+                float specular_exp = 3.0;
+                vec3 view_dir = vec3(0.0, 0.0, 1.0);
+
+                // diffuse lighting
+                vec3 main_light_dir = normalize((/*modelview_matrix **/ vec4(0.0, -1.0, 0.0, 0.0)).xyz);
+                float main_light_power = max(0.0, dot(-main_light_dir, frag_normal));
+                vec3 sub_light_dir = vec3(0.0, 1.0, 0.0);
+                float sub_light_power = max(0.0, dot(-sub_light_dir, frag_normal));
+
+                vec3 fcolor = tree_color.rgb;
+                gl_FragColor = vec4((0.25 * fcolor             // ambient
+                            + 0.75 * fcolor * main_light_power // diffuse(main)
+                            + 0.25 * fcolor * sub_light_power  // diffuse(sub)
+                            )
+                            , tree_color.a);
+            }
+        )shaderSource");
+        meshTreeColorShader.link();
+
         mesh_init = false;
     }
 

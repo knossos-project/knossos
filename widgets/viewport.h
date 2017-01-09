@@ -275,6 +275,7 @@ class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
     QOpenGLShaderProgram meshShader;
+    QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
 
     void resetWiggle();

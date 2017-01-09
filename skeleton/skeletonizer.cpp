@@ -1890,7 +1890,7 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
     }
 }
 
-void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> color, int draw_mode, bool swap_xy) {
+void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> colors, int draw_mode, bool swap_xy) {
     auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
         tree = &addTree(treeID);
@@ -1946,7 +1946,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     }
 
     state->viewer->mainWindow.viewport3D->makeCurrent();
-    tree->mesh.reset(new Mesh(tree, color.size() == 0, static_cast<GLenum>(draw_mode)));
+    tree->mesh.reset(new Mesh(tree, colors.empty(), static_cast<GLenum>(draw_mode)));
     tree->mesh->vertex_count = verts.size() / 3;
     tree->mesh->index_count = indices.size();
     tree->mesh->position_buf.bind();
@@ -1956,21 +1956,13 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
     tree->mesh->normal_buf.release();
     tree->mesh->color_buf.bind();
-    if (color.empty()) {
-        for (int i = 0; i < indices.size(); ++i) {
-            color.push_back(1);
-            color.push_back(0);
-            color.push_back(0);
-            color.push_back(1);
-        }
-    }
-    tree->mesh->color_buf.allocate(color.data(), color.size() * sizeof(GLfloat));
+    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof(GLfloat));
     tree->mesh->color_buf.release();
     tree->mesh->index_buf.bind();
     tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     tree->mesh->index_buf.release();
     tree->mesh->vertex_coords = verts;
-    tree->mesh->colors = color;
+    tree->mesh->colors = colors;
     tree->mesh->indices = indices;
 
     Session::singleton().unsavedChanges = true;
