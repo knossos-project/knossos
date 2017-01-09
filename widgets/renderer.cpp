@@ -984,7 +984,7 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     buf.normal_buf.release();
 
     int colorLocation = meshShader.attributeLocation("color");
-    if (buf.useTreeColor) {
+    if (buf.useTreeColor == false) {
         buf.color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
         meshShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
