@@ -371,7 +371,7 @@ void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
         meshLastClickInformation = pickMesh(event->pos());
         meshLastClickCurrentlyVisited = false;
         if (meshLastClickInformation) {
-            Skeletonizer::singleton().setActiveTreeByID(meshLastClickInformation.get().it.get());
+            Skeletonizer::singleton().setActiveTreeByID(meshLastClickInformation.get().treeId);
         }
     }
     ViewportBase::handleMouseReleaseLeft(event);
