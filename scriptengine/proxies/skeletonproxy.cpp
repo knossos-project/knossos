@@ -97,7 +97,11 @@ void SkeletonProxy::add_tree_mesh(quint64 tree_id, QVector<float> & verts, QVect
     if (!color.empty() && color.size() != correctColorSize) {
         throw std::runtime_error(QObject::tr("SkeletonProxy::add_tree_mesh failed: number of color components not 0 or 4 × vertices (%1), got %2 color components.").arg(correctColorSize).arg(color.size()).toStdString());
     }
-    Skeletonizer::singleton().addMeshToTree(tree_id, verts, normals, indices, color, draw_mode, swap_xy);
+    QVector<std::uint8_t> uintColors(color.size());
+    for (std::size_t i = 0 ; i < color.size(); ++i) {
+        uintColors[i] = color[i] * 255;
+    }
+    Skeletonizer::singleton().addMeshToTree(tree_id, verts, normals, indices, uintColors, draw_mode, swap_xy);
 }
 
 void SkeletonProxy::delete_tree_mesh(quint64 tree_id) {

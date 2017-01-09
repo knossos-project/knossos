@@ -1843,20 +1843,29 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
     }
     tinyply::PlyFile ply(file);
     QVector<float> vertices;
-    QVector<float> colors;
+    QVector<std::uint8_t> colors;
     QVector<unsigned int> indices;
     QVector<float> normals;
     int missingCoords = 0, missingColors = 0, missingIndices = 0;
     const auto vertexCount = ply.request_properties_from_element("vertex", {"x", "y", "z"}, vertices, missingCoords);
-    const auto colorCount = ply.request_properties_from_element("color", {"r", "g", "b", "a"}, colors, missingColors);
-    const auto faceCount = ply.request_properties_from_element("face", {"v1", "v2", "v3"}, indices, missingIndices);
+    const auto colorCount = ply.request_properties_from_element("vertex", {"red", "green", "blue", "alpha"}, colors, missingColors);
+    const auto faceCount = ply.request_properties_from_element("face", {"vertex_indices"}, indices, missingIndices, 3);
     QString warning = tr("");
     if (vertexCount == 0 || faceCount == 0 || missingCoords > 0 || (missingColors > 0 && missingColors != 4) || missingIndices > 0) {
-        warning = tr("Malformed ply file.\n"
-                     "Expected elements:\n"
-                     "• “vertex”: x, y, z\n"
-                     "• (optional) “color”: r, g, b, a\n"
-                     "• “face”: v1, v2, v3");
+        warning = tr("Malformed ply file. KNOSSOS expects following header format (colors are optional):\n"
+                     "ply\n"
+                     "format [binary_little_endian|binary_big_endian|ascii] 1.0\n"
+                     "element vertex #vertices\n"
+                     "property float x\n"
+                     "property float y\n"
+                     "property float z\n"
+                     "property uint8 red\n"
+                     "property uint8 green\n"
+                     "property uint8 blue\n"
+                     "property uint8 alpha\n"
+                     "element face #faces\n"
+                     "property list uint8 uint vertex_indices\n"
+                     "end_header");
     } else {
         try {
             QElapsedTimer t;
@@ -1879,7 +1888,7 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
 
 void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
     QVector<GLfloat> vertex_components(tree.mesh->vertex_count * 3);
-    QVector<GLfloat> colors(tree.mesh->vertex_count * 4);
+    QVector<std::uint8_t> colors(tree.mesh->vertex_count * 4);
     QVector<GLuint> indices(tree.mesh->index_count);
     tree.mesh->position_buf.bind();
     tree.mesh->position_buf.read(0, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
@@ -1894,16 +1903,15 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
     tinyply::PlyFile ply;
     ply.add_properties_to_element("vertex", {"x", "y", "z"}, vertex_components);
     if (tree.mesh->useTreeColor == false) {
-        ply.add_properties_to_element("color", {"r", "g", "b", "a"}, colors);
+        ply.add_properties_to_element("vertex", {"red", "green", "blue", "alpha"}, colors);
     }
-    ply.add_properties_to_element("face", {"v1", "v2", "v3"}, indices);
-
+    ply.add_properties_to_element("face", {"vertex_indices"}, indices, 3, tinyply::PlyProperty::Type::UINT8);
     if(ply.write(file, Session::singleton().savePlyAsBinary) == false) {
         qDebug() << "mesh save failed for tree" << tree.treeID;
     }
 }
 
-void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<float> colors, int draw_mode, bool swap_xy) {
+void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode, bool swap_xy) {
     auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
         tree = &addTree(treeID);
@@ -1969,7 +1977,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
     tree->mesh->normal_buf.release();
     tree->mesh->color_buf.bind();
-    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof(GLfloat));
+    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof(GLubyte));
     tree->mesh->color_buf.release();
     tree->mesh->index_buf.bind();
     tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));

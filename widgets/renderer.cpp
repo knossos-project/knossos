@@ -987,7 +987,7 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     if (buf.useTreeColor == false) {
         buf.color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
-        meshShader.setAttributeBuffer(colorLocation, GL_FLOAT, 0, 4);
+        meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
         buf.color_buf.release();
     }
     QColor color = buf.correspondingTree->color;
