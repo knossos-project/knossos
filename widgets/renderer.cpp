@@ -1232,7 +1232,13 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     floatCoordinate coord;
     if (treeIt) {
         const auto index = triangleID - treeIt->mesh->pickingIdOffset.get();
-        coord = floatCoordinate{treeIt->mesh->vertex_coords[3 * index], treeIt->mesh->vertex_coords[3 * index + 1], treeIt->mesh->vertex_coords[3 * index + 2]};
+
+        std::array<GLfloat, 3> vertex_components;
+        treeIt->mesh->position_buf.bind();
+        treeIt->mesh->position_buf.read(index * sizeof(vertex_components), vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+        treeIt->mesh->position_buf.release();
+
+        coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
         coord  /= state->scale;
     }
     return treeIt ? boost::optional<BufferSelection>{{treeIt->treeID, coord}} : boost::none;

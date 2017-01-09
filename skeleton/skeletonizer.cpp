@@ -1878,12 +1878,25 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
 }
 
 void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
+    QVector<GLfloat> vertex_components(tree.mesh->vertex_count * 3);
+    QVector<GLfloat> colors(tree.mesh->vertex_count * 4);
+    QVector<GLuint> indices(tree.mesh->index_count);
+    tree.mesh->position_buf.bind();
+    tree.mesh->position_buf.read(0, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+    tree.mesh->position_buf.release();
+    tree.mesh->color_buf.bind();
+    tree.mesh->color_buf.read(0, colors.data(), colors.size() * sizeof(colors[0]));
+    tree.mesh->color_buf.release();
+    tree.mesh->index_buf.bind();
+    tree.mesh->index_buf.read(0, indices.data(), indices.size() * sizeof(indices[0]));
+    tree.mesh->index_buf.release();
+
     tinyply::PlyFile ply;
-    ply.add_properties_to_element("vertex", {"x", "y", "z"}, tree.mesh->vertex_coords);
+    ply.add_properties_to_element("vertex", {"x", "y", "z"}, vertex_components);
     if (tree.mesh->useTreeColor == false) {
-        ply.add_properties_to_element("color", {"r", "g", "b", "a"}, tree.mesh->colors);
+        ply.add_properties_to_element("color", {"r", "g", "b", "a"}, colors);
     }
-    ply.add_properties_to_element("face", {"v1", "v2", "v3"}, tree.mesh->indices);
+    ply.add_properties_to_element("face", {"v1", "v2", "v3"}, indices);
 
     if(ply.write(file, Session::singleton().savePlyAsBinary) == false) {
         qDebug() << "mesh save failed for tree" << tree.treeID;
@@ -1961,9 +1974,6 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     tree->mesh->index_buf.bind();
     tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
     tree->mesh->index_buf.release();
-    tree->mesh->vertex_coords = verts;
-    tree->mesh->colors = colors;
-    tree->mesh->indices = indices;
 
     Session::singleton().unsavedChanges = true;
 }

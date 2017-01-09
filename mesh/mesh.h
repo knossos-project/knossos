@@ -21,9 +21,6 @@ public:
 
     treeListElement * correspondingTree{nullptr};
 
-    QVector<float> vertex_coords;
-    QVector<float> colors;
-    QVector<unsigned int> indices;
     bool useTreeColor{true};
 
     std::size_t vertex_count{0};
