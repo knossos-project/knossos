@@ -6,7 +6,7 @@
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
   <Bundle Version='$(var.Version)' 
     UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
-    IconSourceFile='logo.ico' 
+    IconSourceFile='../logo.ico' 
     AboutUrl='https://knossostool.org'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
     Copyright='Copyright © Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.. All rights reserved.'
@@ -14,7 +14,7 @@
     <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLargeLicense'>
       <bal:WixStandardBootstrapperApplication
         LicenseUrl='https://github.com/knossos-project/knossos/blob/master/LICENSE.txt'
-        LogoFile='64x64.png'
+        LogoFile='../64x64.png'
         ShowVersion='yes'
         ThemeFile='HyperlinkTheme.xml'
         />

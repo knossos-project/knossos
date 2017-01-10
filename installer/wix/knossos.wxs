@@ -77,7 +77,7 @@ Upgrade Code should remain always the same! -->
       <ComponentRef Id='MainExecutable' />
       <ComponentRef Id='AppShortcut' />
     </Feature>
-    <Icon Id='knossos64.exe' SourceFile='logo.ico' />
+    <Icon Id='knossos64.exe' SourceFile='../logo.ico' />
     <Property Id="ARPPRODUCTICON" Value="knossos64.exe" /> 
   </Product>
 </Wix>
