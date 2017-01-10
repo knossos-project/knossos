@@ -138,16 +138,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->setSizeGripEnabled(false);
     GUIModeLabel.setVisible(false);
     statusBar()->addWidget(&GUIModeLabel);
+    cursorPositionLabel.setVisible(false);
     statusBar()->addWidget(&cursorPositionLabel);
     nodeLockingLabel.setVisible(false);
     statusBar()->addPermanentWidget(&nodeLockingLabel);
     synapseStateLabel.setVisible(false);
     statusBar()->addPermanentWidget(&synapseStateLabel);
-    hideClutterInfoLabel.setToolTip("Hold space to temporarily show only the raw data. Everything else is hidden.");
-    statusBar()->addPermanentWidget(&hideClutterInfoLabel);
+    segmentStateLabel.setToolTip("Press [a] once: Next placed node will not be connected to the previous one.\n"
+                                 "Press [a] twice: Segments are disabled entirely.\n"
+                                 "Press [a] thrice: Segments are turned back on.");
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
+    hideClutterInfoLabel.setToolTip("Hold space to temporarily show only the raw data. Everything else is hidden.");
+    statusBar()->addPermanentWidget(&hideClutterInfoLabel);
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
