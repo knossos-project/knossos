@@ -44,6 +44,21 @@ Upgrade Code should remain always the same! -->
       <Directory Id='DesktopFolder' />
     </Directory>
 
+    <DirectoryRef Id='ApplicationProgramsFolder'>
+      <Component Id='AppShortcut' Win64='yes' Guid='08c32753-d431-4755-ab2f-807064fc4159'>
+        <Condition>NOT DONTINSTALLSHORTCUT</Condition>
+        <RegistryValue Root='HKCU' Key='Software\MPImF\KNOSSOS' Name='shortcut' Type='integer' Value='1' KeyPath='yes'/>
+            <Shortcut Id='desktopKNOSSOS'
+            Directory='DesktopFolder'
+            Name='KNOSSOS'
+            WorkingDirectory='INSTALLDIR'
+            Icon='knossos64.exe'
+            Target='[INSTALLDIR]knossos.exe'
+            IconIndex='0'
+            Advertise='no' />
+      </Component>
+    </DirectoryRef>
+
     <DirectoryRef Id='INSTALLDIR'>
       <Component Id='MainExecutable' Win64='yes' Guid='b836aaf3-c2dd-4976-b28d-2836865657eb'>
         <File Id='knossos.exe' Name='knossos.exe' Source='knossos64.exe' KeyPath='yes'>
@@ -54,35 +69,15 @@ Upgrade Code should remain always the same! -->
             WorkingDirectory='INSTALLDIR'
             Icon='knossos64.exe' 
             Advertise='yes' />
-          <Shortcut Id='desktopKNOSSOS'
-            Directory='DesktopFolder'
-            Name='KNOSSOS'
-            WorkingDirectory='INSTALLDIR'
-            Icon='knossos64.exe'
-            IconIndex='0'
-            Advertise='yes' />
         </File>
       </Component>
     </DirectoryRef>
 
-    <DirectoryRef Id='ApplicationProgramsFolder'>
-      <Component Id='ApplicationShortcut' Win64='yes' Guid='a836aaf3-c2dd-4976-b28d-2836865657eb'>
-        <Shortcut Id="UninstallProduct"             
-          Name="Uninstall My Application"
-          Target="[System64Folder]msiexec.exe"
-          Arguments="/x [ProductCode]"
-          Description="Uninstalls My Application" />
-        <RemoveFolder Id='ApplicationProgramsFolder' On='uninstall'/>
-        <RegistryValue Root='HKCU' Key='Software\MPImF\KNOSSOS' Name='installed' Type='integer' Value='1' KeyPath='yes'/>
-     </Component>
-    </DirectoryRef>
-
     <Feature Id='Complete' Level='1'>
       <ComponentRef Id='MainExecutable' />
-      <ComponentRef Id='ApplicationShortcut' />
+      <ComponentRef Id='AppShortcut' />
     </Feature>
     <Icon Id='knossos64.exe' SourceFile='logo.ico' />
     <Property Id="ARPPRODUCTICON" Value="knossos64.exe" /> 
-    
   </Product>
 </Wix>

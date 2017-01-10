@@ -32,7 +32,7 @@
         <Button Name="BrowseButton" X="-11" Y="142" Width="75" Height="23" TabStop="yes" FontId="3">#(loc.OptionsBrowseButton)</Button>
 
         <Checkbox Name="LocalPythonCheckbox" X="11" Y="170" Width="260" Height="17" TabStop="yes" FontId="3">Don't install Python 2.7.13</Checkbox> 
-        <!--<Checkbox Name="LocalDesktopShortcutCheckbox" X="11" Y="193" Width="260" Height="17" TabStop="yes" FontId="3">Don't create Desktop Shortcut</Checkbox>-->
+        <Checkbox Name="LocalDesktopShortcutCheckbox" X="11" Y="193" Width="260" Height="17" TabStop="yes" FontId="3">Don't create Desktop Shortcut</Checkbox>
 
         <Button Name="OptionsOkButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.OptionsOkButton)</Button>
         <Button Name="OptionsCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.OptionsCancelButton)</Button>
