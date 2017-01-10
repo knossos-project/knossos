@@ -158,6 +158,8 @@ void annotationFileSave(const QString & filename) {
                 if (zipCreateFile(file_write, filename, 1)) {
                     Skeletonizer::singleton().saveMesh(file_write, tree);
                 }
+            } else {
+                throw std::runtime_error((filename + ": saving mesh failed").toStdString());
             }
         }
         QTime cubeTime;
