@@ -1221,7 +1221,9 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     renderSkeletonVP(RenderOptions::meshPickingRenderOptions());
     fbo.release();
     // read color and translate to id
-    const auto triangleID = meshColorToId(fbo.toImage().pixelColor(pos));
+    QImage fboImage(fbo.toImage());
+    QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_ARGB32);
+    const auto triangleID = meshColorToId(image.pixelColor(pos));
     boost::optional<treeListElement&> treeIt;
     for (auto & tree : state->skeletonState->trees) {// find the with appropriate triangle range
         if (tree.mesh && tree.mesh->pickingIdOffset.get() + tree.mesh->vertex_count > triangleID) {
