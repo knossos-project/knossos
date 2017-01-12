@@ -210,7 +210,7 @@ void ViewportBase::setDock(bool isDock) {
     } else {
         state->viewer->setDefaultVPSizeAndPos(false);
         if (floatParent.nonMaximizedPos == boost::none) {
-            floatParent.nonMaximizedSize = { size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN };
+            floatParent.nonMaximizedSize = QSize( size().width() + 2 * DEFAULT_VP_MARGIN, size().height() + 2 * DEFAULT_VP_MARGIN );
             floatParent.nonMaximizedPos = mapToGlobal(QPoint(0, 0));
         }
         setParent(&floatParent);
