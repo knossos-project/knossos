@@ -157,9 +157,9 @@ void annotationFileSave(const QString & filename) {
                 const auto filename = QString::number(tree.treeID) + ".ply";
                 if (zipCreateFile(file_write, filename, 1)) {
                     Skeletonizer::singleton().saveMesh(file_write, tree);
+                } else {
+                    throw std::runtime_error((filename + ": saving mesh failed").toStdString());
                 }
-            } else {
-                throw std::runtime_error((filename + ": saving mesh failed").toStdString());
             }
         }
         QTime cubeTime;
