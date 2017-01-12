@@ -611,7 +611,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 const auto & name = attribute.name();
                                 const auto & value = attribute.value();
                                 if (name == "id") {
-                                    nodeID = {value.toULongLong()};
+                                    nodeID = value.toULongLong();
                                 } else if (name == "radius") {
                                     radius = {value.toFloat()};
                                 } else if (name == "x") {
