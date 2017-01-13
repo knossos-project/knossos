@@ -1105,7 +1105,7 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     const auto triangleID = meshColorToId(image.pixelColor(pos));
     boost::optional<treeListElement&> treeIt;
     for (auto & tree : state->skeletonState->trees) {// find the with appropriate triangle range
-        if (tree.mesh && tree.mesh->pickingIdOffset.get() + tree.mesh->vertex_count > triangleID) {
+        if (tree.mesh && tree.mesh->pickingIdOffset && tree.mesh->pickingIdOffset.get() + tree.mesh->vertex_count > triangleID) {
             treeIt = tree;
             break;
         }
@@ -1133,13 +1133,13 @@ void Viewport3D::pickMeshIdAtPosition() {
     for (auto & tree : state->skeletonState->trees) {
         const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
         const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
-        if (!tree.render || selectionFilter || !pickableMesh) {
+        if (selectionFilter || !pickableMesh) {
             continue;
         }
         const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->picking_color_buf.size() != 0;
-        if (pickingMeshValid) {
+        if (pickingMeshValid || !tree.render) {// increment
             id_counter += tree.mesh->vertex_count;
-        } else {
+        } else {// create picking color buf and increment
             tree.mesh->pickingIdOffset = id_counter;
 
             std::vector<std::array<GLubyte, 4>> picking_colors;
@@ -1149,7 +1149,9 @@ void Viewport3D::pickMeshIdAtPosition() {
             tree.mesh->picking_color_buf.bind();
             tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
         }
-        renderMeshBufferIds(*tree.mesh);
+        if (tree.render) {
+            renderMeshBufferIds(*tree.mesh);
+        }
     }
 }
 
