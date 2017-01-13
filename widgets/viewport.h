@@ -159,6 +159,10 @@ private:
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
+    QOpenGLShaderProgram meshShader;
+    QOpenGLShaderProgram meshTreeColorShader;
+    QOpenGLShaderProgram meshIdShader;
+
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
     // rendering
@@ -274,9 +278,6 @@ public slots:
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    QOpenGLShaderProgram meshShader;
-    QOpenGLShaderProgram meshTreeColorShader;
-    QOpenGLShaderProgram meshIdShader;
 
     void resetWiggle();
     virtual void zoom(const float zoomStep) override;
