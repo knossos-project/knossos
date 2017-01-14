@@ -128,12 +128,12 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
     static auto propertyConversionCheck = [this](auto index, auto property){
-        if (index == Skeletonizer::singleton().getNumberProperties().size() + 1) {
+        if (index > Skeletonizer::singleton().getNumberProperties().size()) {
             QMessageBox msgBox{this};
             msgBox.setIcon(QMessageBox::Question);
             msgBox.setText(tr("Property »%1« is not registered as evaluable. ").arg(property));
             msgBox.setInformativeText("The conversion process will overwrite all values with 0 which cannot be interpreted as number."
-                                      "\nThe property will be marked as pure number in the annotation file. ");
+                                      "\nThe property will be marked as pure number in the annotation file.");
             auto * doit = msgBox.addButton(tr("Convert Property"), QMessageBox::AcceptRole);
             msgBox.addButton(QMessageBox::Cancel);
             msgBox.setDefaultButton(doit);
