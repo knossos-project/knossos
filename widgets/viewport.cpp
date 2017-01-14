@@ -83,8 +83,7 @@ void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
 
-QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportBase *vp) : QWidget(parent), vp(vp) {
-    setWindowFlags(Qt::Window);
+QViewportFloatWidget::QViewportFloatWidget(QWidget *parent, ViewportBase *vp) : QDialog(parent), vp(vp) {
     const std::array<const char * const, ViewportBase::numberViewports> VP_TITLES{{"XY", "XZ", "ZY", "Arbitrary", "3D"}};
     setWindowTitle(VP_TITLES[vp->viewportType]);
     new QVBoxLayout(this);

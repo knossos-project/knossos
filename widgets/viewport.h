@@ -29,6 +29,7 @@
 
 #include <QAction>
 #include <QDebug>
+#include <QDialog>
 #include <QDockWidget>
 #include <QFont>
 #include <QMouseEvent>
@@ -116,7 +117,7 @@ signals:
 };
 
 
-class QViewportFloatWidget : public QWidget {
+class QViewportFloatWidget : public QDialog {
     ViewportBase *vp;
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
