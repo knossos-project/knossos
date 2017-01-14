@@ -540,17 +540,16 @@ void ViewportBase::initializeGL() {
     meshTreeColorShader.link();
 
     meshIdShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
-        #version 110
-        #extension GL_EXT_gpu_shader4 : require
+        #version 130
 
-        attribute vec3 vertex;
-        attribute vec4 color;
+        in vec3 vertex;
+        in vec4 color;
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
 
-        flat varying vec4 frag_color;
-        varying mat4 mvp_matrix;
+        flat out vec4 frag_color;
+        out mat4 mvp_matrix;
 
         void main() {
             mvp_matrix = projection_matrix * modelview_matrix;
@@ -560,17 +559,18 @@ void ViewportBase::initializeGL() {
     )shaderSource");
 
     meshIdShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
-        #version 110
-        #extension GL_EXT_gpu_shader4 : require
+        #version 130
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
 
-        flat varying vec4 frag_color;
-        varying mat4 mvp_matrix;
+        flat in vec4 frag_color;
+        in mat4 mvp_matrix;
+
+        out vec4 fragColorOut;
 
         void main() {
-            gl_FragColor = frag_color;
+            fragColorOut = frag_color;
         }
     )shaderSource");
 
