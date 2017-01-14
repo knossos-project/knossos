@@ -575,6 +575,11 @@ void ViewportBase::initializeGL() {
     )shaderSource");
 
     meshIdShader.link();
+    for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
+        if (!shader->log().isEmpty()) {
+            qDebug() << shader->log();
+        }
+    }
 }
 
 void ViewportOrtho::initializeGL() {
