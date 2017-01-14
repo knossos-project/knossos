@@ -127,7 +127,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
-    static auto propertyConversionCheck = [this](auto index, auto property){
+    static auto propertyConversionCheck = [this](auto index, auto property, auto & combo){
         if (index > Skeletonizer::singleton().getNumberProperties().size()) {
             QMessageBox msgBox{this};
             msgBox.setIcon(QMessageBox::Question);
@@ -140,9 +140,9 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
             msgBox.exec();
             if (msgBox.clickedButton() == doit) {
                 Skeletonizer::singleton().convertToNumberProperty(property);
-                propertyColorCombo.setCurrentText(property);
+                combo.setCurrentText(property);
             } else {
-                propertyColorCombo.setCurrentIndex(0);
+                combo.setCurrentIndex(0);
                 return false;
             }
         }
@@ -151,15 +151,15 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
 
     QObject::connect(&propertyRadiusCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
         const auto property = (index > 0) ? propertyModel.properties[index] : "";
-        if (propertyConversionCheck(index, property)) {
-            state->viewerState->highlightedNodePropertyByColor = property;
+        if (propertyConversionCheck(index, property, propertyRadiusCombo)) {
+            state->viewerState->highlightedNodePropertyByRadius = property;
             propertyRadiusScaleSpin.setEnabled(index > 0);
         }
     });
     QObject::connect(&propertyRadiusScaleSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->nodePropertyRadiusScale = value; });
     QObject::connect(&propertyColorCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
         const auto property = (index > 0) ? propertyModel.properties[index] : "";
-        if (propertyConversionCheck(index, property)) {
+        if (propertyConversionCheck(index, property, propertyColorCombo)) {
             state->viewerState->highlightedNodePropertyByColor = property;
             propertyMinSpin.setEnabled(index > 0);
             propertyMaxSpin.setEnabled(index > 0);
