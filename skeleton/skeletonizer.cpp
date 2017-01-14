@@ -1641,12 +1641,11 @@ void Skeletonizer::convertToNumberProperty(const QString & property) {
         const auto it = node.properties.find(property);
         if (it != std::end(node.properties)) {
             node.properties[property] = it->toDouble();
-            emit nodeChangedSignal(node);
         }
     }
     numberProperties.insert(property);
     textProperties.remove(property);
-    emit propertiesChanged(numberProperties, textProperties);
+    emit resetData();
 }
 
 void Skeletonizer::goToNode(const NodeGenerator::Direction direction) {
