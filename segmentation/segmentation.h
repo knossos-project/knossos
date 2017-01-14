@@ -251,7 +251,7 @@ public slots:
     void mergeSelectedObjects();
     void unmergeSelectedObjects(const Coordinate & clickPos);
     void jumpToSelectedObject();
-    void placeCommentForSelectedObject(const QString & comment);
+    bool placeCommentForSelectedObject(const QString & comment);
     void restoreDefaultColorForSelectedObjects();
 };
 

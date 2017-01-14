@@ -35,6 +35,7 @@
 #include <QList>
 #include <QMenu>
 #include <QMainWindow>
+#include <QParallelAnimationGroup>
 #include <QToolBar>
 
 #include <array>
@@ -157,7 +158,7 @@ class MainWindow : public QMainWindow {
     QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
     void updateTodosLeft();
 
-    void placeComment(const int index);
+    bool placeComment(const int index);
     void toggleSegments();
 
     virtual bool event(QEvent *event) override;
@@ -204,6 +205,9 @@ public:
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
+    QTimer activityTimer;
+    QParallelAnimationGroup activityAnimation;
+    QLabel activityLabel;
 
     void createViewports();
 

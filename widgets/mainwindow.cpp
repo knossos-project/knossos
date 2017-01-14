@@ -140,6 +140,29 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->addWidget(&GUIModeLabel);
     cursorPositionLabel.setVisible(false);
     statusBar()->addWidget(&cursorPositionLabel);
+
+    activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "minimumHeight"));
+    activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "maximumHeight"));
+    for (int i = 0; i < activityAnimation.animationCount(); ++i) {
+        QPropertyAnimation * animation = static_cast<QPropertyAnimation *>(activityAnimation.animationAt(i));
+        animation->setDuration(500);
+        animation->setStartValue(0);
+        animation->setEndValue(activityLabel.sizeHint().height());
+    }
+
+    QObject::connect(&activityTimer, &QTimer::timeout, [this]() { activityAnimation.start(); });
+    QObject::connect(&activityAnimation, &QParallelAnimationGroup::finished, [this]() {
+        if (activityAnimation.direction() == QAbstractAnimation::Forward) {
+            activityAnimation.setDirection(QAbstractAnimation::Backward);
+            activityTimer.setSingleShot(true);
+            activityTimer.start(1000);
+        } else {
+            activityLabel.setVisible(false);
+        }
+    });
+    activityLabel.setVisible(false);
+    statusBar()->addWidget(&activityLabel);
+
     nodeLockingLabel.setVisible(false);
     statusBar()->addPermanentWidget(&nodeLockingLabel);
     synapseStateLabel.setVisible(false);
@@ -583,7 +606,14 @@ void MainWindow::createMenus() {
 
     auto commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
     auto addCommentShortcut = [&](const int number, const QKeySequence key){
-        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), "", this, [this, number](){placeComment(number-1);}, key);
+        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), "", this, [this, number](){
+            if (placeComment(number-1)) {
+                activityLabel.setText(tr("Added comment: ") + CommentSetting::comments[number - 1].text);
+                activityLabel.setVisible(true);
+                activityAnimation.setDirection(QAbstractAnimation::Forward);
+                activityAnimation.start();
+            }
+        }, key);
         commentActions.push_back(&action);
         action.setEnabled(false);
     };
@@ -1262,7 +1292,7 @@ void MainWindow::updateCommentShortcut(const int index, const QString & comment)
     commentActions[index]->setDisabled(comment.isEmpty());
 }
 
-void MainWindow::placeComment(const int index) {
+bool MainWindow::placeComment(const int index) {
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && state->skeletonState->activeNode != nullptr) {
         CommentSetting comment = CommentSetting::comments[index];
         if (!comment.text.isEmpty()) {
@@ -1274,9 +1304,10 @@ void MainWindow::placeComment(const int index) {
                 }
             }
             Skeletonizer::singleton().setComment(*state->skeletonState->activeNode, comment.text);
+            return true;
         }
     } else {
-        Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
+        return Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
     }
 }
 
