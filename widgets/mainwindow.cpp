@@ -1306,6 +1306,7 @@ bool MainWindow::placeComment(const int index) {
             Skeletonizer::singleton().setComment(*state->skeletonState->activeNode, comment.text);
             return true;
         }
+        return false;
     } else {
         return Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
     }
