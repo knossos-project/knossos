@@ -317,9 +317,9 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
             intPoint.z = tempVec3.z + sSp_local.z;
 
             //Check wether the intersection point lies outside the current zoom cube
-            if(abs((int)intPoint.x - isoCurPos.x) <= distToCurrPos
-                && abs((int)intPoint.y - isoCurPos.y) <= distToCurrPos
-                && abs((int)intPoint.z - isoCurPos.z) <= distToCurrPos) {
+            if(std::abs((int)intPoint.x - isoCurPos.x) <= distToCurrPos
+                && std::abs((int)intPoint.y - isoCurPos.y) <= distToCurrPos
+                && std::abs((int)intPoint.z - isoCurPos.z) <= distToCurrPos) {
 
                 //Render a cylinder to highlight the intersection
                 glPushMatrix();
