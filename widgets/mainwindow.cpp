@@ -1189,6 +1189,7 @@ void MainWindow::loadSettings() {
     widgetContainer.snapshotWidget.loadSettings();
 
     show();
+    activateWindow();
     forEachVPDo([](ViewportBase & vp) { // show undocked vps after mainwindow
         if (vp.isDocked == false) {
             vp.setDock(false);

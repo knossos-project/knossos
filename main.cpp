@@ -44,25 +44,10 @@
 //Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 //#endif
 
-class Splash {
-    QSplashScreen screen;
-    QTimer timer;
+class Splash : public QSplashScreen {
 public:
-    Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename)) {
-        screen.show();
-        //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
-        timer.start(timeout_msec);
-        QObject::connect(&timer, &QTimer::timeout, [this](){
-            if (state->mainWindow != nullptr && state->mainWindow->isVisible()) {
-                screen.close();
-                timer.stop();
-                if (state->mainWindow != nullptr) {
-                    state->mainWindow->activateWindow();
-                }
-            } else {
-                timer.start(10);
-            }
-        });
+    Splash(const QString & img_filename) : QSplashScreen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+        show();
     }
 };
 
@@ -119,7 +104,7 @@ int main(int argc, char *argv[]) {
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
 #ifdef NDEBUG
-    Splash splash(((QGuiApplication *)QApplication::instance())->primaryScreen()->devicePixelRatio() == 1 ? ":resources/splash.png" : ":resources/splash@2x.png", 1500);
+    Splash splash(((QGuiApplication *)QApplication::instance())->primaryScreen()->devicePixelRatio() == 1 ? ":resources/splash.png" : ":resources/splash@2x.png");
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
@@ -144,5 +129,6 @@ int main(int argc, char *argv[]) {
     state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
     state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
     viewer.run();
+    splash.finish(state.mainWindow);
     return a.exec();
 }
