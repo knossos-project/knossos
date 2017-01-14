@@ -97,6 +97,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertiesLayout.addWidget(&propertyMaxSpin, row, 2);
     propertiesLayout.addWidget(&propertyMinMaxButton, row, 3);
     propertiesLayout.addWidget(&propertyLUTButton, ++row, 0);
+    lutLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     propertiesLayout.addWidget(&lutLabel, row, 1, 1, 3, Qt::AlignRight);
     propertiesGroup.setLayout(&propertiesLayout);
     mainLayout.addWidget(&generalGroup);
