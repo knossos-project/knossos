@@ -1,55 +1,64 @@
 language: cpp
 
-dist:
-  - trusty #ubuntu 14.04
-
-compiler:
-  #- clang
-  - gcc
-
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      compiler: gcc
+    #- os: linux
+    #  dist: trusty
+    #  sudo: required
+    #  compiler: clang
+    - os: osx
+      osx_image: xcode7.3      
 git:
   submodules: false
 
 before_install:
-  - sudo add-apt-repository -y ppa:kojoley/boost # boost 1.58
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test # gcc6
-  #- wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - # add gpg.key for upcoming llvm repo
-  #- sudo apt-add-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main" # clang 3.8
-  - sudo add-apt-repository -y ppa:beineri/opt-qt571-trusty # Qt 5.7.1
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:kojoley/boost; fi # boost 1.58
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi # gcc6
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -; fi # add gpg.key for upcoming llvm repo
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo apt-add-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main"; fi # clang 3.8
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:beineri/opt-qt571-trusty; fi # Qt 5.7.1
   #- sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
-  - sudo apt-get update -qq
-  - sudo apt-get -qq install cmake
-  - sudo apt-get -qq install freeglut3-dev
-  - sudo apt-get -qq install gcc-6 g++-6
-  #- sudo apt-get -qq install clang-3.8
-  - sudo apt-get -qq install libboost1.58-dev
-  - sudo apt-get -qq install libcurl4-openssl-dev
-  - sudo apt-get -qq install libjpeg-turbo8-dev
-  - sudo apt-get -qq install libxmu-dev libxi-dev
-  - sudo apt-get -qq install libsnappy-dev
-  - sudo apt-get -qq install ninja-build
-  - sudo apt-get -qq install qt57base qt573d qtquick1-5-dev qtdeclarative5-dev qt57svg qt57tools qt57multimedia qtbase5-private-dev
-  #- sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.8 100
-  #- sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.8 100
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100
-  #- sudo update-alternatives --config clang
-  #- sudo update-alternatives --config clang++
-  - sudo update-alternatives --config gcc
-  - sudo update-alternatives --config g++
-  - source /opt/qt57/bin/qt57-env.sh
-  - export CXXFLAGS="-std=c++11 -fPIC"
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo apt-get -qq install gcc-6 g++-6; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq install cmake freeglut3-dev libboost1.58-dev; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo apt-get -qq install clang-3.8 libc++-dev; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq install libsnappy-dev ninja-build libxmu-dev libxi-dev libjpeg-turbo8-dev libcurl4-openssl-dev; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq install qt57base qt573d qtquick1-5-dev qtdeclarative5-dev qt57svg qt57tools qt57multimedia qtbase5-private-dev; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.8 100; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.8 100; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CC" == "gcc" ]; then sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CC" == "clang" ]; then sudo update-alternatives --config clang; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo update-alternatives --config clang++; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CC" == "gcc" ]; then sudo update-alternatives --config gcc; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo update-alternatives --config g++; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source /opt/qt57/bin/qt57-env.sh; fi
+  #OSX
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install qt5 snappy quazip ninja; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then export CXXFLAGS="-stdlib=libc++ -std=c++11 -fPIC"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then export CXXFLAGS="-std=c++11 -fPIC"; fi
+  
 before_script:
-  - wget https://downloads.sourceforge.net/project/quazip/quazip/0.7.2/quazip-0.7.2.tar.gz
-  - tar -xzf quazip-0.7.2.tar.gz
-  - mkdir quazip-build && cd quazip-build
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7.2"
-  - sudo ninja install -j1
-  - cd ..
-  - wget https://github.com/al3xst/PythonQt/releases/download/nightly/pythonqt.tar.gz
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget https://downloads.sourceforge.net/project/quazip/quazip/0.7.2/quazip-0.7.2.tar.gz; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then tar -xzf quazip-0.7.2.tar.gz; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then mkdir quazip-build && cd quazip-build; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7.2"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo ninja install -j1; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cd ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget https://github.com/al3xst/PythonQt/releases/download/nightly/pythonqt.tar.gz; fi
+  #OSX
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then wget https://github.com/al3xst/PythonQt/releases/download/nightly-mac/pythonqt.tar.gz; fi
   - tar -xvf pythonqt.tar.gz
   - mkdir knossos_build && cd knossos_build
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/knossos-project/knossos/PythonQt-install/lib/cmake/" ..
-
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/knossos-project/knossos/PythonQt-install/lib/cmake/" ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/knossos-project/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/5.7.1_1/lib/cmake/" ..; fi
+  
 script:
   - ninja -j1
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then mv knossos.app KNOSSOS.app; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then /usr/local/Cellar/qt5/5.7.1_1/bin/macdeployqt KNOSSOS.app; fi
