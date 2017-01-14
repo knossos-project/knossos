@@ -4,7 +4,7 @@ dist:
   - trusty #ubuntu 14.04
 
 compiler:
-#  - clang
+  #- clang
   - gcc
 
 git:
@@ -13,14 +13,15 @@ git:
 before_install:
   - sudo add-apt-repository -y ppa:kojoley/boost # boost 1.58
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test # gcc6
-#  - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - # add gpg.key for upcoming llvm repo
-#  - sudo apt-add-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main" # clang 3.8
+  #- wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - # add gpg.key for upcoming llvm repo
+  #- sudo apt-add-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main" # clang 3.8
   - sudo add-apt-repository -y ppa:beineri/opt-qt571-trusty # Qt 5.7.1
+  #- sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
   - sudo apt-get update -qq
   - sudo apt-get -qq install cmake
   - sudo apt-get -qq install freeglut3-dev
   - sudo apt-get -qq install gcc-6 g++-6
-#  - sudo apt-get -qq install clang-3.8
+  #- sudo apt-get -qq install clang-3.8
   - sudo apt-get -qq install libboost1.58-dev
   - sudo apt-get -qq install libcurl4-openssl-dev
   - sudo apt-get -qq install libjpeg-turbo8-dev
@@ -28,38 +29,27 @@ before_install:
   - sudo apt-get -qq install libsnappy-dev
   - sudo apt-get -qq install ninja-build
   - sudo apt-get -qq install qt57base qt573d qtquick1-5-dev qtdeclarative5-dev qt57svg qt57tools qt57multimedia qtbase5-private-dev
-#  - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.8 100
-#  - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.8 100
+  #- sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.8 100
+  #- sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.8 100
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100
-#  - sudo update-alternatives --config clang
-#  - sudo update-alternatives --config clang++
+  #- sudo update-alternatives --config clang
+  #- sudo update-alternatives --config clang++
   - sudo update-alternatives --config gcc
   - sudo update-alternatives --config g++
   - source /opt/qt57/bin/qt57-env.sh
-  - export CXXFLAGS="-fPIC"
+  - export CXXFLAGS="-std=c++11 -fPIC"
 before_script:
   - wget https://downloads.sourceforge.net/project/quazip/quazip/0.7.2/quazip-0.7.2.tar.gz
   - tar -xzf quazip-0.7.2.tar.gz
-  - mkdir quazip-build
-  - cd quazip-build
+  - mkdir quazip-build && cd quazip-build
   - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE "../quazip-0.7.2"
   - sudo ninja install -j1
   - cd ..
-  - git clone https://github.com/knossos-project/PythonQt.git
-  - mkdir PythonQt/src/private
-  - cp /opt/qt57/include/QtCore/5.7.1/QtCore/private/qmetaobjectbuilder_p.h PythonQt/src/private
-  - mkdir PythonQt-build
-  - cd PythonQt-build
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DPythonQt_Python3=FALSE -DPythonQt_Qt5=TRUE ../PythonQt
-  - sudo ninja install -j1
-  - cd ..
-  - mkdir build_release
-  - cd build_release
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE ..
-  - cd ..
+  - wget https://github.com/al3xst/PythonQt/releases/download/nightly/pythonqt.tar.gz
+  - tar -xvf pythonqt.tar.gz
+  - mkdir knossos_build && cd knossos_build
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/al3xst/knossos/PythonQt-install/lib/cmake/" ..
 
 script:
-  - cd build_release
   - ninja -j1
-  - cd ..
