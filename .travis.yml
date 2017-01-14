@@ -49,7 +49,7 @@ before_script:
   - wget https://github.com/al3xst/PythonQt/releases/download/nightly/pythonqt.tar.gz
   - tar -xvf pythonqt.tar.gz
   - mkdir knossos_build && cd knossos_build
-  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/al3xst/knossos/PythonQt-install/lib/cmake/" ..
+  - cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/knossos-project/knossos/PythonQt-install/lib/cmake/" ..
 
 script:
   - ninja -j1
