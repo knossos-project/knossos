@@ -6,7 +6,7 @@
 
 AboutDialog::AboutDialog(QWidget * parent) : QDialog(parent), ui(new Ui::AboutDialog) {
     ui->setupUi(this);
-    ui->versionLabel->setText(KVERSION);
+    ui->knossosLabel->setText(tr("KNOSSOS %1").arg(KVERSION));
     ui->revisionLabelValue->setText(KREVISION);
     ui->revisionDateLabelValue->setText(KREVISIONDATE);
     ui->qtVersionLabelValue->setText(tr("using %1 (built with %2)").arg(qVersion()).arg(QT_VERSION_STR));

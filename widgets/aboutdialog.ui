@@ -72,19 +72,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="versionLabel">
-       <property name="text">
-        <string>Version</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-       </property>
-      </widget>
-     </item>
-     <item>
       <layout class="QFormLayout" name="formLayout">
        <property name="fieldGrowthPolicy">
         <enum>QFormLayout::FieldsStayAtSizeHint</enum>
@@ -692,7 +679,7 @@ POSSIBILITY OF SUCH DAMAGES.
               <x>0</x>
               <y>0</y>
               <width>726</width>
-              <height>318</height>
+              <height>342</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_5">
