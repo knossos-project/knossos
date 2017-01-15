@@ -749,7 +749,13 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDepthFunc(GL_LEQUAL);
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
+        glPushMatrix();
+        if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
+            const auto halfPixelOffset = 0.5 * (v1 - v2) * state->scale;
+            glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
+        }
         renderSkeleton(options);
+        glPopMatrix();
     }
 
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
@@ -766,14 +772,22 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPushMatrix();
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         glLineWidth(1);
+        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * state->scale;
+        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * state->scale;
         glBegin(GL_LINES);
             glColor4f(std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3);
-            glVertex3f(-dataPxX * v1.x, -dataPxX * v1.y, -dataPxX * v1.z);
-            glVertex3f( dataPxX * v1.x,  dataPxX * v1.y,  dataPxX * v1.z);
+            const auto halfLength = dataPxX * v1;
+            const auto left = -halfLength - vOffset;
+            const auto right = halfLength - vOffset;
+            glVertex3f(left.x(), left.y(), left.z());
+            glVertex3f(right.x(), right.y(), right.z());
 
             glColor4f(std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3);
-            glVertex3f(-dataPxY * v2.x, -dataPxY * v2.y, -dataPxY * v2.z);
-            glVertex3f( dataPxY * v2.x,  dataPxY * v2.y,  dataPxY * v2.z);
+            const auto halfHeight = dataPxX * v2;
+            const auto top = -halfHeight + hOffset;
+            const auto bottom = halfHeight + hOffset;
+            glVertex3f(top.x(), top.y(), top.z());
+            glVertex3f(bottom.x(), bottom.y(), bottom.z());
         glEnd();
         glPopMatrix();
     }
