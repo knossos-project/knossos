@@ -117,6 +117,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${OPENGL_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIR}
 )
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
+    message(STATUS "using gold linker")
+    set(LINUXLINKER -fuse-ld=gold)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
     ${OPENGL_LIBRARIES}
@@ -130,7 +136,7 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
-    $<$<PLATFORM_ID:Linux>:-fuse-ld=gold>
+    ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
 find_program(LSBRELEASE lsb_release)
