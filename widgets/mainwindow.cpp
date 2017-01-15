@@ -618,7 +618,7 @@ void MainWindow::createMenus() {
         action.setEnabled(false);
     };
     for (int number = 1; number < 11; ++number) {
-        addCommentShortcut(number, QKeySequence(QString("%1").arg(number%10)));
+        addCommentShortcut(number, QKeySequence(QString("Ctrl+%1").arg(number%10)));
     }
 
     commentsMenu->addSeparator();
