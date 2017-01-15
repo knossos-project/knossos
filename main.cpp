@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     Splash splash(((QGuiApplication *)QApplication::instance())->primaryScreen()->devicePixelRatio() == 1 ? ":resources/splash.png" : ":resources/splash@2x.png");
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
-    QCoreApplication::setOrganizationName("MPIMF");
+    QCoreApplication::setOrganizationName("MPIN");
     QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
