@@ -6,27 +6,29 @@
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
   <Bundle Version='$(var.Version)' 
     UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
-    IconSourceFile='../logo.ico' 
+    IconSourceFile='logo.ico' 
     AboutUrl='https://knossostool.org'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
     Copyright='Copyright © Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.. All rights reserved.'
     Name='KNOSSOS $(var.Version)'>
     <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLargeLicense'>
       <bal:WixStandardBootstrapperApplication
-        LicenseUrl='https://github.com/knossos-project/knossos/blob/master/LICENSE.txt'
-        LogoFile='../64x64.png'
+        LicenseUrl='https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt'
+        LogoFile='64x64.png'
         ShowVersion='yes'
         ThemeFile='HyperlinkTheme.xml'
         />
     </BootstrapperApplicationRef>
-    <Variable Name='InstallFolder' Type='string' Value='[ProgramFilesFolder]'/>
+    <Variable Name='InstallFolder' Type='string' Value='[ProgramFiles64Folder]MPIN\KNOSSOS 5.0'/>
+    <Variable Name="LocalPythonCheckbox" Value="1"/>
+    <Variable Name="LocalDesktopShortcutCheckbox" Value="1"/>
 
     <Chain>
       <PackageGroupRef Id='Python27' />
       <!-- Visible='no' so only the bundle appears in ARP and we uninstall the bundle and not only the .msi  -->
       <MsiPackage Id='MainExecutable' SourceFile='knossos.msi' Visible='no'>
-        <MsiProperty Name='INSTALLLOCATION' Value='[InstallFolder]' />
-        <MsiProperty Name='DONTINSTALLSHORTCUT' Value='[LocalDesktopShortcutCheckbox]' />
+        <MsiProperty Name='INSTALLDIR' Value='[InstallFolder]' />
+        <MsiProperty Name='INSTALLSHORTCUT' Value='[LocalDesktopShortcutCheckbox]' />
       </MsiPackage>
 
     </Chain>
@@ -51,7 +53,7 @@
         Name='python-2.7.13.amd64.msi' 
         SourceFile='python-2.7.13.amd64.msi'
         EnableFeatureSelection='yes'
-        InstallCondition='NOT PYTHONVERSION AND NOT LocalPythonCheckbox' />
+        InstallCondition='NOT PYTHONVERSION AND LocalPythonCheckbox = "1"' />
     </PackageGroup> 
   </Fragment> 
 

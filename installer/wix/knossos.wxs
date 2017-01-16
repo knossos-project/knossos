@@ -33,9 +33,7 @@ Upgrade Code should remain always the same! -->
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='ProgramFiles64Folder'>
-        <Directory Id='mpi' Name='MPImF'>
-          <Directory Id='INSTALLDIR' Name='KNOSSOS $(var.Version)'>
-          </Directory>
+        <Directory Id='INSTALLDIR' Name='KNOSSOS $(var.Version)'>
         </Directory>
         <Directory Id='ProgramMenuFolder'>
           <Directory Id='ApplicationProgramsFolder' Name='KNOSSOS'/>
@@ -46,7 +44,7 @@ Upgrade Code should remain always the same! -->
 
     <DirectoryRef Id='ApplicationProgramsFolder'>
       <Component Id='AppShortcut' Win64='yes' Guid='08c32753-d431-4755-ab2f-807064fc4159'>
-        <Condition>NOT DONTINSTALLSHORTCUT</Condition>
+        <Condition>INSTALLSHORTCUT = "1"</Condition>
         <RegistryValue Root='HKCU' Key='Software\MPImF\KNOSSOS' Name='shortcut' Type='integer' Value='1' KeyPath='yes'/>
             <Shortcut Id='desktopKNOSSOS'
             Directory='DesktopFolder'
@@ -61,7 +59,7 @@ Upgrade Code should remain always the same! -->
 
     <DirectoryRef Id='INSTALLDIR'>
       <Component Id='MainExecutable' Win64='yes' Guid='b836aaf3-c2dd-4976-b28d-2836865657eb'>
-        <File Id='knossos.exe' Name='knossos.exe' Source='knossos64.exe' KeyPath='yes'>
+        <File Id='knossos.exe' Name='knossos.exe' Source='win64-standalone-KNSOSSOS.5.0.exe' KeyPath='yes'>
           <Shortcut Id='ApplicationStartMenuShortcut'
             Directory='ApplicationProgramsFolder'
             Name='KNOSSOS' 
@@ -70,14 +68,24 @@ Upgrade Code should remain always the same! -->
             Icon='knossos64.exe' 
             Advertise='yes' />
         </File>
+        <RegistryValue Root='HKLM' Key='Software\MPIN\KNOSSOS' Name='InstallLocation' Type='string' Value='[INSTALLDIR]' />
+        <RemoveFolder Id='INSTALLDIR' On='uninstall'/>
       </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id='ApplicationProgramsFolder'>
+      <Component Id='ApplicationShortcut' Win64='yes' Guid='a836aaf3-c2dd-4976-b28d-2836865657eb'>
+        <RemoveFolder Id='ApplicationProgramsFolder' On='uninstall'/>
+        <RegistryValue Root='HKCU' Key='Software\MPIN\KNOSSOS' Name='installed' Type='integer' Value='1' KeyPath='yes'/>
+     </Component>
     </DirectoryRef>
 
     <Feature Id='Complete' Level='1'>
       <ComponentRef Id='MainExecutable' />
       <ComponentRef Id='AppShortcut' />
+      <ComponentRef Id='ApplicationShortcut' />
     </Feature>
-    <Icon Id='knossos64.exe' SourceFile='../logo.ico' />
-    <Property Id="ARPPRODUCTICON" Value="knossos64.exe" /> 
+    <Icon Id='knossos64.exe' SourceFile='logo.ico' />
+    <Property Id="ARPPRODUCTICON" Value="knossos64.exe" />
   </Product>
 </Wix>
