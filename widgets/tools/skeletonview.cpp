@@ -244,8 +244,8 @@ void NodeView::mousePressEvent(QMouseEvent * event) {
             const auto selected = source.cache[index.row()].get().selected && !event->modifiers().testFlag(Qt::ControlModifier) && !event->modifiers().testFlag(Qt::ShiftModifier);
             setDragDropMode(selected ? QAbstractItemView::DragOnly : QAbstractItemView::NoDragDrop);
         }
-        QTreeView::mousePressEvent(event);
     }
+    QTreeView::mousePressEvent(event);
 }
 
 template<typename T, typename View, typename Model, typename Proxy>
@@ -254,7 +254,7 @@ auto selectElems(View & view, Model & model, Proxy & proxy) {
         if (!model.selectionProtection) {
             const auto & proxySelected = proxy.mapSelectionToSource(selected);
             const auto & proxyDeselected = proxy.mapSelectionToSource(deselected);
-            auto collectNodes = [&model](auto && indices){
+            auto collectElems = [&model](auto && indices){
                 QSet<T*> elems;
                 for (const auto & modelIndex : indices) {
                     if (modelIndex.column() == 0) {
@@ -267,11 +267,11 @@ auto selectElems(View & view, Model & model, Proxy & proxy) {
             const auto onlyOneNodeSelectedPreviously = state->skeletonState->selectedNodes.size() == 1;
             const auto firstSelectionInTable = !selected.empty() && (view.selectionModel()->selection() == selected);
             if (onlyOneNodeSelectedPreviously && firstSelectionInTable) {
-                Skeletonizer::singleton().select(collectNodes(proxySelected.indexes()));
+                Skeletonizer::singleton().select(collectElems(proxySelected.indexes()));
             } else {
                 auto indices = proxySelected.indexes();
                 indices.append(proxyDeselected.indexes());
-                Skeletonizer::singleton().toggleSelection(collectNodes(indices));
+                Skeletonizer::singleton().toggleSelection(collectElems(indices));
             }
         }
     };
