@@ -67,7 +67,7 @@ struct viewportTexture {
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     floatCoordinate leftUpperPxInAbsPx;
-    std::size_t size;
+    GLsizei size;
 
     //These variables specifiy the lengths inside the texture that are currently displayed.
     //Their values depend on the zoom level and the data voxel dimensions (because of aspect
