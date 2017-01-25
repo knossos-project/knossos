@@ -51,7 +51,12 @@ public:
     }
 };
 
-void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
+void debugMessageHandler(QtMsgType type, const QMessageLogContext &
+#ifdef QT_MESSAGELOGCONTEXT
+    context
+#endif
+    , const QString & msg)
+{
     QString intro;
     switch (type) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
@@ -62,12 +67,15 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, con
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
     }
-    QString txt = QString("[%1:%2] \t%4%5").arg(QFileInfo(context.file).fileName()).arg(context.line).arg(intro).arg(msg);
-    //open the file once
+    QString txt = QString("%4%5").arg(intro).arg(msg);
+#ifdef QT_MESSAGELOGCONTEXT
+    txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
+#endif
+    // open the file once
     static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
     static int64_t file_debug_output_limit = 5000;
     if (type != QtDebugMsg || --file_debug_output_limit > 0) {
-        outFile   << txt.toStdString() << std::endl;
+        outFile << txt.toStdString() << std::endl;
     }
     std::cout << txt.toStdString() << std::endl;
 
