@@ -329,7 +329,6 @@ class ViewportOrtho : public ViewportBase {
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override { return 0.75; }
 
-    void createOverlayTextures();
     void renderViewportFast();
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;

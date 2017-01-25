@@ -584,6 +584,7 @@ void ViewportBase::initializeGL() {
 
 void ViewportOrtho::initializeGL() {
     ViewportBase::initializeGL();
+    // data texture
     glGenTextures(1, &texture.texHandle);
 
     glBindTexture(GL_TEXTURE_2D, texture.texHandle);
@@ -595,22 +596,19 @@ void ViewportOrtho::initializeGL() {
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    // loads an empty texture into video memory - during user movement, this
-    // texture is updated via glTexSubImage2D in vpGenerateTexture
-    // We need GL_RGB as texture internal format to color the textures
+    // overlay texture
+    glGenTextures(1, &texture.overlayHandle);
 
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
-    glTexImage2D(GL_TEXTURE_2D,
-                0,
-                GL_RGB,
-                texture.size,
-                texture.size,
-                0,
-                GL_RGB,
-                GL_UNSIGNED_BYTE,
-                texData.data());
+    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
 
-    createOverlayTextures();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    resetTexture();// allocates textures
 
     if (state->gpuSlicer) {
         if (viewportType == ViewportType::VIEWPORT_XY) {
@@ -672,24 +670,6 @@ void ViewportOrtho::initializeGL() {
 
         glDisable(GL_TEXTURE_3D);
     }
-}
-
-void ViewportOrtho::createOverlayTextures() {
-    glGenTextures(1, &texture.overlayHandle);
-
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-
-    //Set the parameters for the texture.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    const auto size = texture.size;
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
 }
 
 void ViewportBase::resizeGL(int width, int height) {
