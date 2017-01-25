@@ -1987,9 +1987,6 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     Session::singleton().unsavedChanges = true;
 }
 
-void Skeletonizer::deleteMeshOfTree(std::uint64_t tree_id) {
-    auto * tree = findTreeByTreeID(tree_id);
-    if (tree != nullptr) {
-        tree->mesh.reset();
-    }
+void Skeletonizer::deleteMeshOfTree(treeListElement & tree) {
+    tree.mesh.reset();
 }

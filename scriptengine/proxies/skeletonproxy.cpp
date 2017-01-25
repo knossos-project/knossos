@@ -34,6 +34,15 @@
 #include <QDir>
 #include <QFile>
 
+treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
+    if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
+        return *tree;
+    }
+    const auto errorText = QObject::tr("skeletonproxy treeFromId: not tree with id %1").arg(treeId);
+    qWarning() << errorText;
+    throw std::runtime_error(errorText.toStdString());
+}
+
 treeListElement *SkeletonProxy::tree_with_previous_id(quint64 tree_id) {
     treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithPrevID(tree);
@@ -105,7 +114,7 @@ void SkeletonProxy::add_tree_mesh(quint64 tree_id, QVector<float> & verts, QVect
 }
 
 void SkeletonProxy::delete_tree_mesh(quint64 tree_id) {
-    Skeletonizer::singleton().deleteMeshOfTree(tree_id);
+    Skeletonizer::singleton().deleteMeshOfTree(treeFromId(tree_id));
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
@@ -257,15 +266,6 @@ treeListElement * SkeletonProxy::add_tree(const QVariantHash & properties) {
 }
 treeListElement * SkeletonProxy::add_tree(quint64 tree_id, const QVariantHash &properties) {
     return &Skeletonizer::singleton().addTree(tree_id, boost::none, properties);
-}
-
-treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
-    if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
-        return *tree;
-    }
-    const auto errorText = QObject::tr("skeletonproxy treeFromId: not tree with id %1").arg(treeId);
-    qWarning() << errorText;
-    throw std::runtime_error(errorText.toStdString());
 }
 
 void SkeletonProxy::set_tree_comment(quint64 tree_id, const QString & comment) {

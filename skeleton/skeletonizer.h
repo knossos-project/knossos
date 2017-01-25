@@ -289,7 +289,7 @@ public:
     void loadMesh(QIODevice &, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename);
     void saveMesh(QIODevice & file, const treeListElement & tree);
     void addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode = 0, bool swap_xy = false);
-    void deleteMeshOfTree(std::uint64_t tree_id);
+    void deleteMeshOfTree(treeListElement & tree);
 signals:
     void guiModeLoaded();
     void branchPoppedSignal();
