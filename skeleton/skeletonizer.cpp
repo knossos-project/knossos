@@ -1966,21 +1966,23 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     }
 
     state->viewer->mainWindow.viewport3D->makeCurrent();
-    tree->mesh.reset(new Mesh(tree, colors.empty(), static_cast<GLenum>(draw_mode)));
-    tree->mesh->vertex_count = verts.size() / 3;
-    tree->mesh->index_count = indices.size();
-    tree->mesh->position_buf.bind();
-    tree->mesh->position_buf.allocate(verts.data(), verts.size() * sizeof (verts.front()));
-    tree->mesh->position_buf.release();
-    tree->mesh->normal_buf.bind();
-    tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof (normals.front()));
-    tree->mesh->normal_buf.release();
-    tree->mesh->color_buf.bind();
-    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof (colors.front()));
-    tree->mesh->color_buf.release();
-    tree->mesh->index_buf.bind();
-    tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof (indices.front()));
-    tree->mesh->index_buf.release();
+    auto mesh = std::make_unique<Mesh>(tree, colors.empty(), static_cast<GLenum>(draw_mode));
+    mesh->vertex_count = verts.size() / 3;
+    mesh->index_count = indices.size();
+    mesh->position_buf.bind();
+    mesh->position_buf.allocate(verts.data(), verts.size() * sizeof (verts.front()));
+    mesh->position_buf.release();
+    mesh->normal_buf.bind();
+    mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof (normals.front()));
+    mesh->normal_buf.release();
+    mesh->color_buf.bind();
+    mesh->color_buf.allocate(colors.data(), colors.size() * sizeof (colors.front()));
+    mesh->color_buf.release();
+    mesh->index_buf.bind();
+    mesh->index_buf.allocate(indices.data(), indices.size() * sizeof (indices.front()));
+    mesh->index_buf.release();
+
+    std::swap(tree->mesh, mesh);
 
     Session::singleton().unsavedChanges = true;
 }
