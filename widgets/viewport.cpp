@@ -313,14 +313,15 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
 }
 
 void ViewportOrtho::resetTexture() {
-    const auto size = texture.size;
     if (texture.texHandle != 0) {
         glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        std::vector<char> texData(static_cast<std::size_t>(3 * std::pow(texture.size, 2)));// RGB
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.size, texture.size, 0, GL_RGB, GL_UNSIGNED_BYTE, texData.data());
     }
     if (texture.overlayHandle != 0) {
         glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        std::vector<char> texData(static_cast<std::size_t>(4 * std::pow(texture.size, 2)));// RGBA
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.size, texture.size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     }
 }
 
