@@ -1213,16 +1213,18 @@ void Viewer::resetRotation() {
 
 void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge) {
     int newTexEdgeLength = 512;
-    while(newTexEdgeLength < cubeEdge * superCubeEdge) {
+    while (newTexEdgeLength < cubeEdge * superCubeEdge) {
         newTexEdgeLength *= 2;
     }
-    qDebug() << "cubeEdge: " << cubeEdge << ", sCubeEdge: " << superCubeEdge << ", newTex: " << newTexEdgeLength << "(" << state->viewerState->texEdgeLength << ")";
-    viewerState.texEdgeLength = newTexEdgeLength;
-    window->resetTextureProperties();
-    window->forEachOrthoVPDo([](ViewportOrtho & vp) {
-        vp.resetTexture();
-    });
-    recalcTextureOffsets();
+    if (newTexEdgeLength != state->viewerState->texEdgeLength) {
+        qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4)").arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength).toStdString().c_str();
+        viewerState.texEdgeLength = newTexEdgeLength;
+        window->resetTextureProperties();
+        window->forEachOrthoVPDo([](ViewportOrtho & vp) {
+            vp.resetTexture();
+        });
+        recalcTextureOffsets();
+    }
 }
 
 void Viewer::loadNodeLUT(const QString & path) {
