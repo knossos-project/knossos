@@ -1970,16 +1970,16 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     tree->mesh->vertex_count = verts.size() / 3;
     tree->mesh->index_count = indices.size();
     tree->mesh->position_buf.bind();
-    tree->mesh->position_buf.allocate(verts.data(), verts.size() * sizeof(GLfloat));
+    tree->mesh->position_buf.allocate(verts.data(), verts.size() * sizeof (verts.front()));
     tree->mesh->position_buf.release();
     tree->mesh->normal_buf.bind();
-    tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof(GLfloat));
+    tree->mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof (normals.front()));
     tree->mesh->normal_buf.release();
     tree->mesh->color_buf.bind();
-    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof(GLubyte));
+    tree->mesh->color_buf.allocate(colors.data(), colors.size() * sizeof (colors.front()));
     tree->mesh->color_buf.release();
     tree->mesh->index_buf.bind();
-    tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof(GLuint));
+    tree->mesh->index_buf.allocate(indices.data(), indices.size() * sizeof (indices.front()));
     tree->mesh->index_buf.release();
 
     Session::singleton().unsavedChanges = true;
