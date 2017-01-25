@@ -207,7 +207,7 @@ Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
 void Dataset::checkMagnifications() {
     //iterate over all possible mags and test their availability
     std::tie(lowestAvailableMag, highestAvailableMag) = Network::singleton().checkOnlineMags(url);
-    qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag);
+    qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag).toUtf8().constData();
 }
 
 void Dataset::applyToState() const {
