@@ -725,7 +725,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
         }
     });
-    QObject::connect(treeContextMenu.addAction("&Remove mesh"), &QAction::triggered, [](){
+    QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
         for (auto * tree : state->skeletonState->selectedTrees) {
             if(tree->mesh) tree->mesh.reset();
         }
