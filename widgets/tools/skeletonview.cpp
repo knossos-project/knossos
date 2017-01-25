@@ -727,7 +727,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
         for (auto * tree : state->skeletonState->selectedTrees) {
-            if(tree->mesh) tree->mesh.reset();
+            if(tree->mesh) {
+                Skeletonizer::singleton().deleteMeshOfTree(*tree);
+            }
         }
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){

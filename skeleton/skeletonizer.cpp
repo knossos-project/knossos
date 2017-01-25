@@ -1989,4 +1989,5 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
 
 void Skeletonizer::deleteMeshOfTree(treeListElement & tree) {
     tree.mesh.reset();
+    emit treeChangedSignal(tree);
 }
