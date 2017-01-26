@@ -60,8 +60,8 @@ before_script:
   - tar -xvf pythonqt.tar.gz
   - mkdir knossos_build && cd knossos_build
   #CMAKE
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/al3xst/knossos/PythonQt-install/lib/cmake/" ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/al3xst/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/${OSXQT}/lib/cmake/;/usr/local/opt/qt5/lib/" ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/knossos-project/knossos/PythonQt-install/lib/cmake/" ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/knossos-project/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/${OSXQT}/lib/cmake/;/usr/local/opt/qt5/lib/" ..; fi
   
 script:
   - ninja -j1
