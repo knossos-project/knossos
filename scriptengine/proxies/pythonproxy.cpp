@@ -227,6 +227,10 @@ int PythonProxy::loaderLoadingNr() {
     return Loader::Controller::singleton().loadingNr;
 }
 
+bool PythonProxy::loaderFinished() {
+    return Loader::Controller::singleton().isFinished();
+}
+
 void PythonProxy::setMagnificationLock(const bool locked) {
     state->viewer->setMagnificationLock(locked);
 }

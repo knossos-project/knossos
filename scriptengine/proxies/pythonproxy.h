@@ -75,6 +75,7 @@ public slots:
     float getMovementAreaFactor();
     void oc_reslice_notify_all(QList<int> coord);
     int loaderLoadingNr();
+    bool loaderFinished();
     bool loadStyleSheet(const QString &path);
     void setMagnificationLock(const bool locked);
 };
