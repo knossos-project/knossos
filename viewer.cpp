@@ -936,14 +936,11 @@ void Viewer::setPosition(const floatCoordinate & pos, UserMoveType userMoveType,
 }
 
 void Viewer::setPositionWithRecentering(const Coordinate &pos) {
-    remote.rotate = false;
     remote.process(pos);
 }
 
-void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const ViewportType vpType) {
-    remote.rotate = true;
-    remote.activeVP = vpType;
-    remote.process(pos);
+void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal) {
+    remote.process(pos, normal);
 }
 
 void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {

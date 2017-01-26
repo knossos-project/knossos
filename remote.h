@@ -24,28 +24,30 @@
 #define REMOTE_H
 
 #include "coordinate.h"
-#include "widgets/viewport.h"
+
 #include <QElapsedTimer>
 #include <QTimer>
+
+#include <boost/optional.hpp>
 
 #include <deque>
 
 class Remote {
-public:
     Coordinate targetPos;
     floatCoordinate recenteringOffset;
     bool rotate{false};
-    ViewportType activeVP{VIEWPORT_UNDEFINED};
+    floatCoordinate normal;
     QTimer timer;
     QElapsedTimer elapsed;
     static const qint64 ms;
     static const float goodEnough;
 
-    Remote();
-
-    void process(const Coordinate & pos);
     std::deque<floatCoordinate> getLastNodes();
     void remoteWalk();
+
+public:
+    Remote();
+    void process(const Coordinate & pos, boost::optional<floatCoordinate> normal = boost::none);
 };
 
 #endif // REMOTE_H
