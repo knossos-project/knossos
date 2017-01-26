@@ -6,22 +6,24 @@ matrix:
       dist: trusty
       sudo: required
       compiler: gcc
+      env: OSXQT=5.8.0
     #- os: linux
     #  dist: trusty
     #  sudo: required
     #  compiler: clang
     - os: osx
-      osx_image: xcode7.3      
+      osx_image: xcode7.3
+      env: OSXQT=5.8.0
 git:
   submodules: false
 
 before_install:
+
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:kojoley/boost; fi # boost 1.58
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi # gcc6
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -; fi # add gpg.key for upcoming llvm repo
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then sudo apt-add-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main"; fi # clang 3.8
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:beineri/opt-qt571-trusty; fi # Qt 5.7.1
-  #- sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo apt-get -qq install gcc-6 g++-6; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq install cmake freeglut3-dev libboost1.58-dev; fi
@@ -37,11 +39,12 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CC" == "gcc" ]; then sudo update-alternatives --config gcc; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then sudo update-alternatives --config g++; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source /opt/qt57/bin/qt57-env.sh; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then export CXXFLAGS="-stdlib=libc++ -std=c++11 -fPIC"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then export CXXFLAGS="-std=c++11 -fPIC"; fi
   #OSX
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install qt5 snappy quazip ninja; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "clang++" ]; then export CXXFLAGS="-stdlib=libc++ -std=c++11 -fPIC"; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then export CXXFLAGS="-std=c++11 -fPIC"; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export CXXFLAGS="-I/usr/local/opt/qt5/include"; fi #qt5.8.0 is keg-only
   
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget https://downloads.sourceforge.net/project/quazip/quazip/0.7.2/quazip-0.7.2.tar.gz; fi
@@ -53,12 +56,14 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget https://github.com/al3xst/PythonQt/releases/download/nightly/pythonqt.tar.gz; fi
   #OSX
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then wget https://github.com/al3xst/PythonQt/releases/download/nightly-mac/pythonqt.tar.gz; fi
+  #ALL
   - tar -xvf pythonqt.tar.gz
   - mkdir knossos_build && cd knossos_build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/knossos-project/knossos/PythonQt-install/lib/cmake/" ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/knossos-project/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/5.7.1_1/lib/cmake/" ..; fi
+  #CMAKE
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/home/travis/build/al3xst/knossos/PythonQt-install/lib/cmake/" ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/al3xst/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/${OSXQT}/lib/cmake/;/usr/local/opt/qt5/lib/" ..; fi
   
 script:
   - ninja -j1
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then mv knossos.app KNOSSOS.app; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then /usr/local/Cellar/qt5/5.7.1_1/bin/macdeployqt KNOSSOS.app; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then /usr/local/Cellar/qt5/${OSXQT}/bin/macdeployqt KNOSSOS.app; fi
