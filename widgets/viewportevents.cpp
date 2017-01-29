@@ -468,11 +468,44 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
         } else {
             const QPointF mouseRel{(event->x() - 0.5 * width()), (event->y() - 0.5 * height())};
             const auto oldZoom = zoomFactor;
-            if (event->delta() > 0) {
-                zoomIn();
-            } else {
-                zoomOut();
+
+            QPoint scrollPixels = event->pixelDelta();
+            QPoint scrollAngle = event->angleDelta() / 8;
+            QPoint scrollSteps{0, 0};
+            static float remainder = 0.0f;
+            if (!scrollPixels.isNull()) {
+                scrollSteps = scrollPixels / 15;
+                remainder += std::fmod(scrollPixels.y() / 15.0f, 1.0f);
+                // qDebug() << "scrolling(pixel): " << scrollSteps << ", remainder: " << remainder;
+            } else if (!scrollAngle.isNull()) {
+                scrollSteps = scrollAngle / 15;
+                remainder += std::fmod(scrollAngle.y() / 15.0f, 1.0f);
+                // qDebug() << "scrolling(angle): " << scrollSteps << ", remainder: " << remainder;
+            } else { // fallback legacy mode zoom
+                if (event->delta() > 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
             }
+            if(remainder >= 1.0f) {
+                scrollSteps += QPoint(0, 1.0f);
+                remainder -= 1.0f;
+            }
+            if(remainder <= -1.0f) {
+                scrollSteps -= QPoint(0, 1.0f);
+                remainder += 1.0f;
+            }
+            if(!scrollSteps.isNull()) {
+                for(std::size_t y = 0; y < std::abs(scrollSteps.y()); ++y) {
+                    if(scrollSteps.y() > 0) {
+                        zoomIn();
+                    } else {
+                        zoomOut();
+                    }
+                }
+            }
+
             const auto oldFactor = state->skeletonState->volBoundary / oldZoom;
             const auto newFactor = state->skeletonState->volBoundary / zoomFactor;
             state->skeletonState->translateX += mouseRel.x() * (oldFactor - newFactor) / width();
