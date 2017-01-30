@@ -40,7 +40,7 @@
 #include <fstream>
 #include <cmath>
 
-Viewer::Viewer() {
+Viewer::Viewer() : layerVisibility(2, true) {
     state->viewer = this;
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();

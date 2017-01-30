@@ -78,6 +78,8 @@ public slots:
     bool loaderFinished();
     bool loadStyleSheet(const QString &path);
     void setMagnificationLock(const bool locked);
+
+    void set_layer_visibility(int layer, bool visibilty);
 };
 
 #endif // PYTHONPROXY_H

@@ -39,6 +39,8 @@
 #include <QQuaternion>
 #include <QTimer>
 
+#include <vector>
+
 #define SLOW 1000
 #define FAST 10
 
@@ -189,6 +191,7 @@ private:
 
     Remote remote;
 public:
+    std::vector<bool> layerVisibility;
     Viewer();
     void saveSettings();
     void loadSettings();
