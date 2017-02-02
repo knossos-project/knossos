@@ -1003,7 +1003,17 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void ViewportBase::takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes) {
+void ViewportBase::takeSnapshotVpSize(SnapshotOptions & o) {
+    o.size = width();
+    takeSnapshot(o);
+}
+
+void ViewportBase::takeSnapshotDatasetSize(SnapshotOptions & o) {
+    o.size = width() / screenPxXPerDataPx;
+    takeSnapshot(o);
+}
+
+void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     if (isHidden()) {
         QMessageBox prompt;
         prompt.setIcon(QMessageBox::Question);
@@ -1023,22 +1033,22 @@ void ViewportBase::takeSnapshot(const QString & path, const int size, const bool
     makeCurrent();
     glEnable(GL_MULTISAMPLE);
     glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
-    glViewport(0, 0, size, size);
+    glViewport(0, 0, o.size, o.size);
     QOpenGLFramebufferObjectFormat format;
     format.setSamples(state->viewerState->sampleBuffers);
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    QOpenGLFramebufferObject fbo(size, size, format);
-    const auto options = RenderOptions::snapshotRenderOptions(withAxes, withBox, withOverlay, true, withSkeleton, withVpPlanes);
+    QOpenGLFramebufferObject fbo(o.size, o.size, format);
+    const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, true, o.withSkeleton, o.withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);
-    if(withScale) {
+    if(o.withScale) {
         setFrontFacePerspective();
         renderScaleBar();
     }
     QImage fboImage(fbo.toImage());
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
-    qDebug() << tr("snapshot ") + (!image.save(path) ? "un" : "") + tr("successful.");
+    qDebug() << tr("snapshot ") + (!image.save(o.path) ? "un" : "") + tr("successful.");
     glPopAttrib(); // restore viewport setting
     fbo.release();
 }

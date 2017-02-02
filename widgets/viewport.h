@@ -106,6 +106,19 @@ struct RenderOptions {
     SelectionPass selectionPass{SelectionPass::NoSelection};
 };
 
+struct SnapshotOptions {
+    QString path{""};
+    ViewportType vp{VIEWPORT_UNDEFINED};
+    int size{0};
+    bool withAxes{true};
+    bool withBox{true};
+    bool withOverlay{true};
+    bool withSkeleton{true};
+    bool withScale{true};
+    bool withVpPlanes{true};
+};
+Q_DECLARE_METATYPE(SnapshotOptions)
+
 class ViewportBase;
 class ResizeButton : public QPushButton {
     Q_OBJECT
@@ -273,7 +286,9 @@ signals:
     void updateZoomWidget();
     void snapshotTriggered(const ViewportType type);
 public slots:
-    void takeSnapshot(const QString & path, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void takeSnapshotVpSize(SnapshotOptions & o);
+    void takeSnapshotDatasetSize(SnapshotOptions & o);
+    void takeSnapshot(const SnapshotOptions & o);
 };
 
 class Viewport3D : public ViewportBase {

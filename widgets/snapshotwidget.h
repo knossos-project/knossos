@@ -53,7 +53,9 @@ public slots:
     void openForVP(const ViewportType type);
     void updateOptionVisibility();
 signals:
-    void snapshotRequest(const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const bool withVpPlanes);
+    void snapshotVpSizeRequest(SnapshotOptions & options);
+    void snapshotDatasetSizeRequest(SnapshotOptions & options);
+    void snapshotRequest(const SnapshotOptions & options);
 };
 
 #endif // SNAPSHOTWIDGET_H

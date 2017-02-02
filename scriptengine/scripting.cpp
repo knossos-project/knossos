@@ -127,8 +127,10 @@ Scripting::Scripting() : _ctx{[](){
     changeWorkingDirectory();
     executeResourceStartup();
     executeFromUserDirectory();
-
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, &state->viewer->window->widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest);
+    const auto * snapshotWidget = &state->viewer->window->widgetContainer.snapshotWidget;
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_vp_size, snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest);
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_dataset_size, snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest);
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, snapshotWidget, &SnapshotWidget::snapshotRequest);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 

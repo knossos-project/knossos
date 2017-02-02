@@ -27,8 +27,6 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-#include <math.h>
-
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QDir>
@@ -36,15 +34,19 @@
 #include <QHBoxLayout>
 #include <QSettings>
 
+#include <math.h>
+
 SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent), saveDir(QDir::homePath()) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/snapshot.png"));
     setWindowTitle("Snapshot Tool");
-    sizeCombo.addItem("8192 x 8192");
-    sizeCombo.addItem("4096 x 4096");
-    sizeCombo.addItem("2048 x 2048");
+    sizeCombo.addItem("Viewport Size");
+    sizeCombo.addItem("Original Dataset Size");
     sizeCombo.addItem("1024 x 1024");
-    sizeCombo.setCurrentIndex(2); // 2048x2048 default
+    sizeCombo.addItem("2048 x 2048");
+    sizeCombo.addItem("4096 x 4096");
+    sizeCombo.addItem("8192 x 8192");
+    sizeCombo.setCurrentIndex(4); // 2048x2048 default
 
 
     vpArbRadio.setHidden(true);
@@ -88,7 +90,16 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         if(path.isEmpty() == false) {
             QFileInfo info(path);
             saveDir = info.absolutePath() + "/";
-            emit snapshotRequest(path, static_cast<ViewportType>(vpGroup.checkedId()), 8192/pow(2, sizeCombo.currentIndex()), withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked());
+            const auto vp = static_cast<ViewportType>(vpGroup.checkedId());
+            SnapshotOptions options{path, vp, 0, withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked()};
+            if (sizeCombo.currentIndex() == 0) {
+                emit snapshotVpSizeRequest(options);
+            } else if (sizeCombo.currentIndex() == 1) {
+                emit snapshotDatasetSizeRequest(options);
+            } else {
+                options.size = std::pow(2, 10 + sizeCombo.currentIndex() - 2); // offset of 2 for special cases
+                emit snapshotRequest(options);
+            }
         }
     });
 

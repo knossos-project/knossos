@@ -125,6 +125,7 @@ int main(int argc, char *argv[]) {
 
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
+    qRegisterMetaType<SnapshotOptions>();
 
     stateInfo state;
     ::state = &state;

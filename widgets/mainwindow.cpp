@@ -117,10 +117,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
-    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest,
-        [this](const QString & path, const ViewportType vpType, const int size, const bool withAxes, const bool withBox, const bool withOverlay, const bool withSkeleton, const bool withScale, const  bool withVpPlanes) {
-            viewport(vpType)->takeSnapshot(path, size, withAxes, withBox, withOverlay, withSkeleton, withScale, withVpPlanes);
-        });
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotDatasetSize(o); });
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest, [this](const SnapshotOptions & o) { viewport(o.vp)->takeSnapshot(o); });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
