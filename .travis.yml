@@ -9,7 +9,6 @@ matrix:
       services: docker
     - os: osx
       osx_image: xcode7.3
-      env: OSXQT=5.8.0
 git:
   submodules: false
 
@@ -18,6 +17,7 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install qt5 snappy quazip ninja; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export CXXFLAGS="-I/usr/local/opt/qt5/include"; fi #qt5.8.0 is keg-only
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then OSXQT=`ls /usr/local/Cellar/qt5/`; fi #find current version (dir) of installed qt
   
 before_script:
   #OSX
