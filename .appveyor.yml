@@ -32,7 +32,7 @@ install:
   # Build Knossos
   ####
   - bash -lc "mkdir knossos-build"
-  - bash -lc "cd knossos-build && cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH='/home/appveyor/mingw64/qt5-static/lib/cmake' /c/projects/knossos"
-  
+  - bash -lc "PROJECTPATH=`ls /c/projects/`; cd knossos-build && cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH='/home/appveyor/mingw64/qt5-static/lib/cmake' /c/projects/${PROJECTPATH}"
+
 build_script:
   - bash -lc "cd knossos-build && ninja -j2"
