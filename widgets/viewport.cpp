@@ -1003,12 +1003,12 @@ void Viewport3D::updateVolumeTexture() {
     // qDebug() << "---------------------------------------------";
 }
 
-void ViewportBase::takeSnapshotVpSize(SnapshotOptions & o) {
+void ViewportBase::takeSnapshotVpSize(SnapshotOptions o) {
     o.size = width();
     takeSnapshot(o);
 }
 
-void ViewportBase::takeSnapshotDatasetSize(SnapshotOptions & o) {
+void ViewportBase::takeSnapshotDatasetSize(SnapshotOptions o) {
     o.size = width() / screenPxXPerDataPx;
     takeSnapshot(o);
 }

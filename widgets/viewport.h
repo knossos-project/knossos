@@ -286,8 +286,8 @@ signals:
     void updateZoomWidget();
     void snapshotTriggered(const ViewportType type);
 public slots:
-    void takeSnapshotVpSize(SnapshotOptions & o);
-    void takeSnapshotDatasetSize(SnapshotOptions & o);
+    void takeSnapshotVpSize(SnapshotOptions o);
+    void takeSnapshotDatasetSize(SnapshotOptions o);
     void takeSnapshot(const SnapshotOptions & o);
 };
 
