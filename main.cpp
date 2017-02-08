@@ -123,9 +123,9 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<CoordOfCube>();
     qRegisterMetaType<floatCoordinate>();
 
+    qRegisterMetaType<SnapshotOptions>();
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
-    qRegisterMetaType<SnapshotOptions>();
 
     stateInfo state;
     ::state = &state;
