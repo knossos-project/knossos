@@ -25,7 +25,7 @@ install:
   ####
   # Download and install PythonQt
   ####
-  - bash -lc "curl -L https://doc-0s-74-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/73db5g840m3bs8bgjn4bpu19mkofplbj/1486382400000/18428009403027643723/*/0B1vZJx8YIElmcTJpNjFWWFlvQVE?e=download > pythonqt.tar.xz"
+  - bash -lc "curl -L https://al3xst.de/stuff/pythonqt.tar.xz > pythonqt.tar.xz"
   - bash -lc "tar xvf pythonqt.tar.xz"
 
   ####
