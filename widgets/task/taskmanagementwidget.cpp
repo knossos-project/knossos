@@ -85,11 +85,11 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
     });
 }
 
-void TaskManagementWidget::showOrLoginOrHide(bool enable) {
+void TaskManagementWidget::setVisible(bool enable) {// showOrLoginOrHide
     if (enable) {
         updateAndRefreshWidget();
     } else {
-        hide();
+        DialogVisibilityNotify::setVisible(false);
     }
 }
 
@@ -143,7 +143,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         submitCommentEdit.setEnabled(hasTask);
         submitButton.setEnabled(hasTask);
         submitFinalButton.setEnabled(hasTask);
-        show();
+        DialogVisibilityNotify::setVisible(true);
     } else {
         emit visibilityChanged(false);
         taskLoginWidget.setResponse("Please login.");
