@@ -358,7 +358,6 @@ class ViewportOrtho : public ViewportBase {
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
 
-    bool mouseEventAtValidDatasetPosition(const QMouseEvent *event);
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleMouseHover(const QMouseEvent *event) override;
     virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;

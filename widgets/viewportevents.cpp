@@ -170,11 +170,10 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         return;
     }
 
-    if (!mouseEventAtValidDatasetPosition(event)) { //don’t place nodes outside movement area
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
+    if (Session::singleton().outsideMovementArea(clickedCoordinate)) {
         return;
     }
-
-    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
     const quint64 subobjectId = readVoxel(clickedCoordinate);
     const bool background = subobjectId == Segmentation::singleton().getBackgroundId();
     if (annotationMode.testFlag(AnnotationMode::Mode_MergeTracing) && background && !event->modifiers().testFlag(Qt::ControlModifier)) {
@@ -379,9 +378,9 @@ void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
 
 void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & segmentation = Segmentation::singleton();
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection) && mouseEventAtValidDatasetPosition(event)) { // in task mode the object should not be switched
+    const auto clickPos = getCoordinateFromOrthogonalClick(event->pos(), *this);
+    if (!Session::singleton().outsideMovementArea(clickPos) && Session::singleton().annotationMode.testFlag(AnnotationMode::ObjectSelection)) { // in task mode the object should not be switched
         if (event->pos() == mouseDown) {// mouse click
-            const auto clickPos = getCoordinateFromOrthogonalClick(event->pos(), *this);
             const auto subobjectId = readVoxel(clickPos);
             if (subobjectId != segmentation.getBackgroundId()) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
@@ -417,8 +416,8 @@ void ViewportOrtho::handleMouseReleaseRight(const QMouseEvent *event) {
 }
 
 void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
-    if (mouseEventAtValidDatasetPosition(event)) {
-        Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
+    Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
+    if (!Session::singleton().outsideMovementArea(clickedCoordinate)) {
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, viewportType, event);
         auto & seg = Segmentation::singleton();
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
@@ -697,24 +696,6 @@ void Viewport3D::focusOutEvent(QFocusEvent * event) {
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp) {
     const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerDataPx - vp.v2 * vp.edgeLength / vp.screenPxYPerDataPx) * 0.5;
     return leftUpper + static_cast<float>((pos.x() / vp.screenPxXPerDataPx)) * vp.v1 - static_cast<float>((pos.y() / vp.screenPxYPerDataPx)) * vp.v2;
-}
-
-bool ViewportOrtho::mouseEventAtValidDatasetPosition(const QMouseEvent *event) {
-    if(event->x() < 0 || event->x() > (int)edgeLength ||
-       event->y() < 0 || event->y() > (int)edgeLength) {
-            return false;
-    }
-
-    Coordinate pos = getCoordinateFromOrthogonalClick(event->pos(), *this);
-    const auto min = Session::singleton().movementAreaMin;
-    const auto max = Session::singleton().movementAreaMax;
-    //check if coordinates are in range
-    if((pos.x < min.x) || (pos.x > max.x)
-        ||(pos.y < min.y) || (pos.y > max.y)
-        ||(pos.z < min.z) || (pos.z > max.z)) {
-        return false;
-    }
-    return true;
 }
 
 QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
