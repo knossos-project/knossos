@@ -558,7 +558,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if (ctrl && event->key() == Qt::Key_0) {
         state->viewer->zoomReset();
-    } else if(event->key() == Qt::Key_Plus && ctrl) {
+    } else if( (event->key() == Qt::Key_Plus || event->key() == Qt::Key_Equal) && ctrl) {
         zoomIn();
     } else if(event->key() == Qt::Key_Minus && ctrl) {
         zoomOut();
