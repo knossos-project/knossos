@@ -361,7 +361,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
-    Coordinate loadedPosition;
+    boost::optional<Coordinate> loadedPosition;
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> edgeVector;
@@ -436,15 +436,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "segmentation") {
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
                 } else if(xml.name() == "editPosition") {
-                    QStringRef attribute = attributes.value("x");
-                    if(attribute.isNull() == false)
-                        loadedPosition.x = attribute.toLocal8Bit().toInt();
-                    attribute = attributes.value("y");
-                    if(attribute.isNull() == false)
-                        loadedPosition.y = attribute.toLocal8Bit().toInt();
-                    attribute = attributes.value("z");
-                    if(attribute.isNull() == false)
-                        loadedPosition.z = attribute.toLocal8Bit().toInt();
+                    loadedPosition = Coordinate{attributes.value("x").toInt(), attributes.value("y").toInt(), attributes.value("z").toInt()};
                 } else if(xml.name() == "skeletonVPState") {
                     if (!merge) {
                         for (int j = 0; j < 16; ++j) {
@@ -729,14 +721,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";
 
     if (!merge) {
-        auto * node = Skeletonizer::singleton().findNodeByNodeID(activeNodeID);
-        setActiveNode(node);
-
-        if((loadedPosition.x != 0) &&
-           (loadedPosition.y != 0) &&
-           (loadedPosition.z != 0)) {
-            Coordinate jump = loadedPosition - 1 - state->viewerState->currentPosition;
-            state->viewer->userMove(jump, USERMOVE_NEUTRAL);
+        setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
+        if (loadedPosition.is_initialized()) {
+            state->viewer->setPosition(loadedPosition.get() - 1);
         }
     }
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
