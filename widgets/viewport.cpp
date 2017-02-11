@@ -1055,8 +1055,7 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
 
 void ViewportOrtho::sendCursorPosition() {
     if (hasCursor) {
-        const auto cursorPos = mapFromGlobal(QCursor::pos());
-        emit cursorPositionChanged(getCoordinateFromOrthogonalClick(cursorPos.x(), cursorPos.y(), *this), viewportType);
+        emit cursorPositionChanged(getCoordinateFromOrthogonalClick(mapFromGlobal(QCursor::pos()), *this), viewportType);
     }
 }
 

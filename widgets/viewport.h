@@ -149,7 +149,7 @@ class nodeListElement;
 class segmentListElement;
 class mesh;
 class ViewportOrtho;
-Coordinate getCoordinateFromOrthogonalClick(const int x_dist, const int y_dist, ViewportOrtho & vp);
+Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
 protected:
