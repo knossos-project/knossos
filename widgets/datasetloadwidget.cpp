@@ -255,18 +255,20 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         return false;
     }
 
+    bool keepAnnotation = silent;
     if (!silent && (!Session::singleton().annotationFilename.isEmpty() || Session::singleton().unsavedChanges)) {
         QMessageBox question(this);
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
         question.setInformativeText(tr("It only makes sense to keep the annotation if the new dataset matches it."));
-        question.addButton(tr("Yes, &keep"), QMessageBox::YesRole);
+        const auto * const keepButton = question.addButton(tr("Yes, &keep"), QMessageBox::YesRole);
         const auto * const clearButton = question.addButton(tr("No, start &new one"), QMessageBox::NoRole);
         const auto * const cancelButton = question.addButton(QMessageBox::Cancel);
         question.exec();
         if (question.clickedButton() == cancelButton || (question.clickedButton() == clearButton && !state->viewer->window->newAnnotationSlot())) {// clear skeleton, mergelist and snappy cubes
             return false;
         }
+        keepAnnotation = question.clickedButton() == keepButton;
     }
 
     Dataset info;
@@ -292,6 +294,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
+    const bool changedBoundaryOrScale = info.boundary != state->boundary || info.scale != state->scale;
     info.applyToState();
     raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
             : info.compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6 : Dataset::CubeType::RAW_J2K;
@@ -308,22 +311,25 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     applyGeometrySettings();
 
-    emit datasetSwitchZoomDefaults();
-
-    // reset skeleton viewport
-    if (state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+    if (changedBoundaryOrScale || !keepAnnotation) {
+        emit datasetSwitchZoomDefaults();
+        // reset skeleton viewport
+        if (state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+        }
     }
 
     Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 
-    Session::singleton().updateMovementArea({0, 0, 0}, state->boundary);
-    // ...beginning with loading the middle of dataset
-    state->viewerState->currentPosition = {state->boundary / 2};
-    state->viewer->updateDatasetMag();
-    state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
+    if (changedBoundaryOrScale || !keepAnnotation) {
+        Session::singleton().updateMovementArea({0, 0, 0}, state->boundary);
+        // ...beginning with loading the middle of dataset
+        state->viewerState->currentPosition = {state->boundary / 2};
+        state->viewer->updateDatasetMag();
+        state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
+    }
     emit datasetChanged(segmentationOverlayCheckbox.isChecked());
 
     return true;
