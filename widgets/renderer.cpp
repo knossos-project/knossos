@@ -699,9 +699,16 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     const auto isoCurPos = state->scale.componentMul(state->viewerState->currentPosition);
     auto view = [&](){
         glLoadIdentity();
-        gluLookAt(isoCurPos.x + n.x, isoCurPos.y + n.y, isoCurPos.z + n.z
-                , isoCurPos.x, isoCurPos.y, isoCurPos.z
-                , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
+        // place eye at the center so the depth cutoff is applied correctly
+        const auto eye = Coord<double>(isoCurPos);
+        // offset center with n at the same magnitude as the current position
+        // gluLookAt only uses it to calculate the focal direction via center - camera
+        // which suffers heavy loss of precision if the magnitudes differ substantially
+        const auto center = Coord<double>(isoCurPos) - Coord<double>(n) * std::pow(10, std::log10(isoCurPos.length()));
+        const auto v2 = Coord<double>(this->v2);
+        gluLookAt(eye.x, eye.y, eye.z
+                  , center.x, center.y, center.z
+                  , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
     auto slice = [&](auto texhandle, floatCoordinate offset = {}){
         if (!options.nodePicking) {
