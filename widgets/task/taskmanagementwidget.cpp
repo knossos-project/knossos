@@ -166,6 +166,11 @@ void TaskManagementWidget::loginButtonClicked(const QString & host, const QStrin
 }
 
 void TaskManagementWidget::logoutButtonClicked() {
+    updateAndRefreshWidget();
+    if (!isVisible()) {// quit if session got invalidated
+        return;
+    }
+
     const auto url = taskLoginWidget.host + api + "/logout/";
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(url);
