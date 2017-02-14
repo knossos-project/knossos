@@ -721,16 +721,16 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             tree->render = false;
         }});
     QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, [](){
-        for (auto * tree : state->skeletonState->selectedTrees) {
+        Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
             Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
-        }
+        });
     });
     QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
-        for (auto * tree : state->skeletonState->selectedTrees) {
+        Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
             if(tree->mesh) {
                 Skeletonizer::singleton().deleteMeshOfTree(*tree);
             }
-        }
+        });
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
         if (!state->skeletonState->selectedTrees.empty()) {
@@ -824,22 +824,22 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");
-        auto comment = QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
+        const auto comment = QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
-            for (auto node : state->skeletonState->selectedNodes) {
-                Skeletonizer::singleton().setComment(*node,comment);
-            }
+            Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [comment](auto & node){
+                Skeletonizer::singleton().setComment(*node, comment);
+            });
             prevComment = comment;// save for the next time the dialog is opened
         }
     });
     QObject::connect(nodeContextMenu.addAction("Set &radius for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevRadius = Skeletonizer::singleton().skeletonState.defaultNodeRadius;
-        auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, 100000, 1, &applied);
+        const auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, 100000, 1, &applied);
         if (applied) {
-            for (auto * node : state->skeletonState->selectedNodes) {
+            Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [radius](auto & node){
                 Skeletonizer::singleton().editNode(0, node, radius, node->position, node->createdInMag);
-            }
+            });
             prevRadius = radius;// save for the next time the dialog is opened
         }
     });

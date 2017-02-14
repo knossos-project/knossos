@@ -186,6 +186,15 @@ class Skeletonizer : public QObject {
     QSet<QString> textProperties;
     QSet<QString> numberProperties;
 public:
+    template<typename T, typename Func>
+    void bulkOperation(T & elems, Func func) {
+        const auto blockState = blockSignals(elems.size() > 100);
+        for (auto * elem : elems) {
+            func(elem);
+        }
+        blockSignals(blockState);
+        emit resetData();
+    }
     template<typename T>
     T * active();
     template<typename T>
