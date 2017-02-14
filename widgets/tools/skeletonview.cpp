@@ -504,8 +504,17 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeRecreate();
     });
 
+    static const auto treeIndex = [this](const auto & tree){
+        const auto it = std::find_if(std::cbegin(treeModel.cache), std::cend(treeModel.cache), [&tree](const auto & elem){
+            return elem.get().treeID == tree.treeID;
+        });
+        return static_cast<int>(std::distance(std::cbegin(treeModel.cache), it));
+    };
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, allRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, treeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, [this](const auto & tree){
+        const auto index = treeIndex(tree);
+        treeModel.dataChanged(treeModel.index(index, 0), treeModel.index(index, treeModel.columnCount() - 1));
+    });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, allRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, treeRecreate);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, [this](){
@@ -531,15 +540,20 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeModel.selectionFromModel = false;
     });
 
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, nodeRecreate);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::jumpedToNodeSignal, [this](const nodeListElement & node){
-        const auto it = std::find_if(std::cbegin(nodeModel.cache), std::cend(nodeModel.cache), [node](const std::reference_wrapper<nodeListElement> & elem){
+    static const auto nodeIndex = [this](const auto & node){
+        const auto it = std::find_if(std::cbegin(nodeModel.cache), std::cend(nodeModel.cache), [&node](const auto & elem){
             return elem.get().nodeID == node.nodeID;
         });
-        const auto index = std::distance(std::cbegin(nodeModel.cache), it);
-        const auto modelIndex = nodeSortAndCommentFilterProxy.mapFromSource(nodeModel.index(index, 0));
+        return static_cast<int>(std::distance(std::cbegin(nodeModel.cache), it));
+    };
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, [this](const auto & node){
+        const auto index = nodeIndex(node);
+        nodeModel.dataChanged(nodeModel.index(index, 0), nodeModel.index(index, nodeModel.columnCount() - 1));
+    });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, nodeRecreate);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::jumpedToNodeSignal, [this](const auto & node){
+        const auto modelIndex = nodeSortAndCommentFilterProxy.mapFromSource(nodeModel.index(nodeIndex(node), 0));
         if (modelIndex.isValid()) {
             nodeView.scrollTo(modelIndex);
         }
