@@ -540,7 +540,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         if(state->skeletonState->activeNode && state->skeletonState->activeNode->isSynapticNode) {
             state->skeletonState->activeNode->correspondingSynapse->toggleDirection();
         }
-    } else if (shift) {
+    } else if (event->key() == Qt::Key_Shift) {
         if (!event->isAutoRepeat() && state->viewerState->keyRepeat) {// if ctrl was pressed initially don’t apply it again
             state->viewerState->repeatDirection *= 10;// increase movement speed
         }
