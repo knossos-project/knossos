@@ -555,12 +555,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             state->viewer->addRotation(QQuaternion::fromAxisAndAngle(state->viewer->viewportArb->v2, angle));
             break;
         }
-    } else if (ctrl && event->key() == Qt::Key_0) {
-        state->viewer->zoomReset();
-    } else if( (event->key() == Qt::Key_Plus || event->key() == Qt::Key_Equal) && ctrl) {
-        zoomIn();
-    } else if(event->key() == Qt::Key_Minus && ctrl) {
-        zoomOut();
     } else if(event->key() == Qt::Key_V) {
         if(ctrl) {
             emit pasteCoordinateSignal();

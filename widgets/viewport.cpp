@@ -165,15 +165,28 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
     menuButton.setCursor(Qt::ArrowCursor);
     menuButton.setMinimumSize(35, 20);
     menuButton.setMaximumSize(menuButton.minimumSize());
-    menuButton.addAction(&snapshotAction);
-    menuButton.addAction(&floatingWindowAction);
-    menuButton.addAction(&fullscreenAction);
-    menuButton.addAction(&hideAction);
+    menuButton.setMenu(new QMenu());
+    zoomInAction.setShortcuts(QKeySequence::ZoomIn);
+    zoomOutAction.setShortcuts(QKeySequence::ZoomOut);
+    addAction(&zoomInAction);
+    addAction(&zoomOutAction);
+    zoomInAction.setShortcutContext(Qt::WidgetShortcut);
+    zoomOutAction.setShortcutContext(Qt::WidgetShortcut);
+    menuButton.menu()->addAction(&snapshotAction);
+    menuButton.menu()->addAction(&floatingWindowAction);
+    menuButton.menu()->addAction(&fullscreenAction);
+    menuButton.menu()->addAction(&zoomInAction);
+    menuButton.menu()->addAction(&zoomOutAction);
+    zoomEndSeparator = menuButton.menu()->addSeparator();
+    menuButton.menu()->addAction(&hideAction);
     menuButton.setPopupMode(QToolButton::InstantPopup);
     resizeButton.setCursor(Qt::SizeFDiagCursor);
     resizeButton.setIcon(QIcon(":/resources/icons/resize.gif"));
     resizeButton.setMinimumSize(20, 20);
     resizeButton.setMaximumSize(resizeButton.minimumSize());
+    QObject::connect(&zoomInAction, &QAction::triggered, this, &ViewportBase::zoomIn);
+    QObject::connect(&zoomOutAction, &QAction::triggered, this, &ViewportBase::zoomOut);
+
     QObject::connect(&resizeButton, &ResizeButton::vpResize, [this](const QPoint & globalPos) {
         raise();//we come from the resize button
         //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
@@ -289,6 +302,12 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
     default:
         throw std::runtime_error("ViewportOrtho::ViewportOrtho unknown vp");
     }
+
+    zoomResetAction.setShortcut(QKeySequence("Ctrl+0"));
+    zoomResetAction.setShortcutContext(Qt::WidgetShortcut);
+    QObject::connect(&zoomResetAction, &QAction::triggered, state->viewer, &Viewer::zoomReset);
+    menuButton.menu()->insertAction(zoomEndSeparator, &zoomResetAction);
+    addAction(&zoomResetAction);
 }
 
 ViewportOrtho::~ViewportOrtho() {
@@ -336,6 +355,11 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     r90Button.setMinimumSize(35, 20);
     r180Button.setMinimumSize(40, 20);
     resetButton.setMinimumSize(45, 20);
+    resetButton.setToolTip("Ctrl+0");
+    resetAction.setShortcut(QKeySequence("Ctrl+0"));
+    resetAction.setShortcutContext(Qt::WidgetShortcut);
+    QObject::connect(&resetAction, &QAction::triggered, &resetButton, &QPushButton::clicked);
+    addAction(&resetAction);
 
     for (auto * button : {&resetButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton, &wiggleButton}) {
         button->setMaximumSize(button->minimumSize());
@@ -1072,7 +1096,7 @@ float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) con
 
 
 ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
-    menuButton.addAction(&resetAction);
+    menuButton.menu()->addAction(&resetAction);
     connect(&resetAction, &QAction::triggered, [this]() {
         state->viewer->resetRotation();
     });

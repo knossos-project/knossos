@@ -156,12 +156,16 @@ protected:
     QVBoxLayout vpLayout;
     QHBoxLayout vpHeadLayout;
     QToolButton menuButton;
+
+    QAction *zoomEndSeparator;
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;
     QAction snapshotAction{tr("Snapshot"), &menuButton};
     QAction floatingWindowAction{tr("Undock viewport"), &menuButton};
     QAction fullscreenAction{tr("Fullscreen (F11)"), &menuButton};
+    QAction zoomInAction{tr("Zoom in"), &menuButton};
+    QAction zoomOutAction{tr("Zoom out"), &menuButton};
     QAction hideAction{tr("Hide viewport"), &menuButton};
     ResizeButton resizeButton;
     bool resizeButtonHold = false;
@@ -274,9 +278,6 @@ public:
     float screenPxXPerDataPx;
     float displayedlengthInNmX;
 
-    virtual void zoomIn() {}
-    virtual void zoomOut() {}
-
     uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
 
     float frustum[6][4]; // Stores the current view frustum planes
@@ -289,12 +290,15 @@ public slots:
     void takeSnapshotVpSize(SnapshotOptions o);
     void takeSnapshotDatasetSize(SnapshotOptions o);
     void takeSnapshot(const SnapshotOptions & o);
+
+    virtual void zoomIn() {};
+    virtual void zoomOut() {};
 };
 
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-
+    QAction resetAction;
     void resetWiggle();
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
@@ -331,14 +335,17 @@ public:
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 
+public slots:
     void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1.0/zoomStep()); }
+    void zoomOut() override { zoom(1.f/zoomStep()); }
 };
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
+
+    QAction zoomResetAction{tr("Reset zoom"), &menuButton};
 
     floatCoordinate handleMovement(const QPoint & pos);
     virtual void zoom(const float zoomStep) override;
@@ -391,12 +398,14 @@ public:
     float screenPxYPerDataPx;
     float displayedlengthInNmY;
 
-    void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1./zoomStep()); }
     char * viewPortData;
     viewportTexture texture;
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
+
+public slots:
+    void zoomIn() override { zoom(zoomStep()); }
+    void zoomOut() override { zoom(1.f/zoomStep()); }
 };
 
 class ViewportArb : public ViewportOrtho {
