@@ -27,8 +27,6 @@
 #include "viewer.h"
 
 #include <QLineEdit>
-#include <QDoubleSpinBox>
-#include <QSpinBox>
 #include <QCheckBox>
 #include <QSettings>
 #include <QHBoxLayout>
