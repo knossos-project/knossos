@@ -62,11 +62,13 @@ void PropertyModel::recreate(const QSet<QString> & numberProperties, const QSet<
 
 NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     idCombo.addItems({"None", "Active node", "All nodes"});
+    overrideNodeRadiusSpin.setMaximum(nodeListElement::MAX_RADIUS_SETTING);
     overrideNodeRadiusSpin.setSingleStep(0.1);
     overrideNodeRadiusSpin.setSuffix(" px");
     edgeNodeRatioSpin.setSingleStep(0.1);
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
+    propertyRadiusScaleSpin.setMaximum(nodeListElement::MAX_RADIUS_SETTING);
     propertyRadiusScaleSpin.setSingleStep(0.5);
     propertyRadiusScaleSpin.setPrefix("×");
 

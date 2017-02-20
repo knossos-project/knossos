@@ -36,6 +36,8 @@ class Synapse;
 
 class nodeListElement : public PropertyQuery {
 public:
+
+    static constexpr double MAX_RADIUS_SETTING = 1000000;
     std::uint64_t nodeID;
     float radius;
     Coordinate position;

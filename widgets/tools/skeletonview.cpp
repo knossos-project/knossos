@@ -397,7 +397,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);//size policy of QTreeView is also Expanding
 
-    defaultRadiusSpin.setRange(0.01, 100000);
+    defaultRadiusSpin.setMaximum(nodeListElement::MAX_RADIUS_SETTING);
     defaultRadiusSpin.setValue(Skeletonizer::singleton().skeletonState.defaultNodeRadius);
     defaultRadiusSpin.setSuffix("px");
     lockingRadiusSpin.setMaximum(100000);
@@ -849,7 +849,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &radius for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevRadius = Skeletonizer::singleton().skeletonState.defaultNodeRadius;
-        const auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, 100000, 1, &applied);
+        const auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, nodeListElement::MAX_RADIUS_SETTING, 1, &applied);
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [radius](auto & node){
                 Skeletonizer::singleton().editNode(0, node, radius, node->position, node->createdInMag);
