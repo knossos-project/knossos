@@ -1913,6 +1913,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
+    glLineWidth(2.f);
 
     glPointSize(std::max(minSize, pointDiameter));
     /* Render point geometry batch if it contains data */
@@ -1930,7 +1931,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
     }
     glPointSize(1.f);
-
     glPopMatrix(); // Restore modelview matrix
 }
 
