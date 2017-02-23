@@ -1421,6 +1421,27 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             glPopMatrix();
         }
 
+        if(options.drawBoundaryBox) {
+            glPushMatrix();
+            glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
+
+            glColor4f(0.85, 0.85, 0.85, 1.0);
+
+            glLineWidth(1.0f);
+            glBegin(GL_LINES);
+                glNormal3i(0, 0, 1);// high z
+                for(std::size_t i = 0; i < 16; ++i) {
+                    glVertex3f(i / 16.0f, 0, 1);
+                    glVertex3f(i / 16.0f, 1, 1);
+
+                    glVertex3f(0, i / 16.0f, 1);
+                    glVertex3f(1, i / 16.0f, 1);
+                }
+            glEnd();
+
+            glPopMatrix();
+        }
+
         // draw axes
         auto renderAxis = [this, options](const floatCoordinate & targetView, const QString label) {
             glPushMatrix();
