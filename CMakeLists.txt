@@ -30,10 +30,6 @@ message(STATUS "${CMAKE_BUILD_TYPE}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
-option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
-if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
-endif()
 option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
@@ -57,24 +53,33 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+find_package(Qt5 5.1 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets)
+
+get_target_property(QtCoreLibraryType Qt5::Core TYPE)
+if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
+    message(STATUS "static Qt found, disabling BUILD_SHARED_LIBS")
+    set(BUILD_SHARED_LIBS OFF) # changing this later wont affect already cached libraries
+endif()
+# only introduce option (with default value) after testing if it was set initially
+option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
+if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
+    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
+endif()
+if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries from here on if BUILD_SHARED_LIBS was disabled
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES}) # prefer static (*.a) over import (*.dll.a) libraries
+endif()
+
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
-find_package(Qt5 5.1 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 if(NOT AUTOGEN)
     qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
     qt5_add_resources(SRC_LIST resources.qrc)
 endif()
-
-get_target_property(QtCoreLibraryType Qt5::Core TYPE)
-if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
-    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
-endif()
-
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")# add windows icon and manifest
