@@ -139,6 +139,13 @@ target_link_libraries(${PROJECT_NAME}
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
+# remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
+get_target_property(qtmultimedia_static_plugins Qt5::Multimedia STATIC_PLUGINS)
+if(qtmultimedia_static_plugins)
+    string(REGEX REPLACE [;]*DSServicePlugin[;]* ";" qtmultimedia_static_plugins_new "${qtmultimedia_static_plugins}")
+    set_target_properties(Qt5::Multimedia PROPERTIES STATIC_PLUGINS "${qtmultimedia_static_plugins_new}")
+endif()
+
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
     execute_process(COMMAND ${LSBRELEASE} -is
