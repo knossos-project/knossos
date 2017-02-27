@@ -58,6 +58,7 @@
 #include <QMimeData>
 #include <QRegExp>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QStatusBar>
@@ -724,10 +725,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
     state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
 
-    const auto skeletonSignalBlockState = Skeletonizer::singleton().blockSignals(true);
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
     try {
+        QSignalBlocker blocker{Skeletonizer::singleton()};
         for (const auto & filename : nmls) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
             QFile file(filename);
@@ -751,7 +752,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             fileErrorBox.exec();
         }
 
-        Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
         Session::singleton().unsavedChanges = false;// meh, don’t ask
         newAnnotationSlot();
         if (silent) {
@@ -759,7 +759,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         }
         return false;
     }
-    Skeletonizer::singleton().blockSignals(skeletonSignalBlockState);
     Skeletonizer::singleton().resetData();
 
     Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes

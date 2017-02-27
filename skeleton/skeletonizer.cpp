@@ -39,6 +39,7 @@
 #include <QDataStream>
 #include <QElapsedTimer>
 #include <QMessageBox>
+#include <QSignalBlocker>
 #include <QXmlStreamAttributes>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -373,8 +374,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     QSet<QString> skippedElements;
 
     bench.start();
-    const auto blockState = this->signalsBlocked();
-    blockSignals(true);
+    {
+    QSignalBlocker blocker(this);
     if (!xml.readNextStartElement() || xml.name() != "things") {
         throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
     }
@@ -714,8 +715,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
             }
         }
     }
-
-    blockSignals(blockState);
+    }
     emit resetData();
 
     qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";

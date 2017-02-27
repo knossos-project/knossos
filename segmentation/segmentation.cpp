@@ -28,6 +28,7 @@
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 
+#include <QSignalBlocker>
 #include <QTextStream>
 
 #include <algorithm>
@@ -564,7 +565,8 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     }
     QTextStream stream(&file);
     QString line;
-    const auto blockState = blockSignals(true);
+    {
+    QSignalBlocker blocker(this);
     while (!(line = stream.readLine()).isNull()) {
         std::istringstream lineStream(line.toStdString());
         std::istringstream coordColorLineStream(stream.readLine().toStdString());
@@ -597,12 +599,11 @@ void Segmentation::mergelistLoad(QIODevice & file) {
             }
             obj.comment = comment;
         } else {
-            blockSignals(blockState);
             Segmentation::clear();
             throw std::runtime_error("mergelistLoad parsing failed");
         }
     }
-    blockSignals(blockState);
+    }
     emit resetData();
 }
 
