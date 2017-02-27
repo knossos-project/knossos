@@ -447,8 +447,9 @@ void MainWindow::updateTitlebar() {
         title.append("no annotation file");
     }
     unsavedChangesLabel.setToolTip("");
+    title.append(" [*]");// setWindowModified needs this
+    setWindowModified(session.unsavedChanges);
     if (session.unsavedChanges) {
-        title.append("*");
         auto autosave = tr("<font color='#FF573E'>(autosave: off)</font>");
         if (session.autoSaveTimer.isActive()) {
             autosave = tr("<font color='#00D36F'>(autosave: on)</font>");
