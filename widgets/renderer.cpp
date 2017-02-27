@@ -469,16 +469,31 @@ void Viewport3D::renderViewportFrontFace() {
 }
 
 void ViewportBase::renderScaleBar() {
-    const auto vp_edgelen_um = 0.001 * displayedlengthInNmX;
-    auto rounded_scalebar_len_um = std::round(vp_edgelen_um/3 * 2) / 2; // round to next 0.5
-    auto sizeLabel = QString("%1 µm").arg(rounded_scalebar_len_um);
-    auto divisor = vp_edgelen_um / rounded_scalebar_len_um; // for scalebar size in pixels
-
-    if(rounded_scalebar_len_um == 0) {
-        const auto rounded_scalebar_len_nm = std::round(displayedlengthInNmX/3/5)*5; // switch to nanometers rounded to next multiple of 5
-        sizeLabel = QString("%1 nm").arg(rounded_scalebar_len_nm);
-        divisor = displayedlengthInNmX/rounded_scalebar_len_nm;
+    auto vpLen = displayedlengthInNmX;
+    auto scalebarLen = vpLen/3.;
+    int powerOf10 = std::log10(scalebarLen);
+    QString sizeLabel;
+    if (powerOf10 <= 2) {
+        sizeLabel = "nm";
+    } else if (powerOf10 <= 5) {
+        sizeLabel = "μm";
+        vpLen /= 1e3;
+        scalebarLen /= 1e3;
+    } else if (powerOf10 == 6) {
+        sizeLabel = "mm";
+        vpLen /= 1e6;
+        scalebarLen /= 1e6;
+    } else {
+        sizeLabel = "cm";
+        vpLen /= 1e7;
+        scalebarLen /= 1e7;
     }
+    powerOf10 = std::log10(scalebarLen);
+    float roundStep = 5. * std::pow(10, powerOf10 - 1);
+    scalebarLen = std::round(scalebarLen / roundStep) * roundStep;
+    sizeLabel = QString::number(scalebarLen) + " " + sizeLabel;
+    auto divisor = vpLen / scalebarLen; // for scalebar size in pixels
+
     const int margin =  0.02 * edgeLength;
     const int height = 0.007 * edgeLength;
     Coordinate min(margin,  edgeLength - margin - height, -1);
