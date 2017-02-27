@@ -1898,18 +1898,13 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
 }
 
 void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode, bool swap_xy) {
-    auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
-    if (tree == nullptr) {
-        tree = &addTree(treeID);
-    }
-
     std::vector<int> vertex_face_count(verts.size() / 3);
-    for(int i = 0; i < indices.size(); ++i) {
-        ++vertex_face_count[indices[i]];
-        // check index validity (can be removed if it’s causing performance issues)
-        if (indices[i] > static_cast<std::size_t>(verts.size())) {
-            throw std::runtime_error(tr("index wrong: %1 (should be less than %2)").arg(indices[i]).arg(verts.size()).toStdString());
+    try {
+        for(int i = 0; i < indices.size(); ++i) {
+            ++vertex_face_count.at(indices[i]); // use at() to be able to throw out_of_range exception
         }
+    } catch (const std::out_of_range & ex) {
+        throw std::runtime_error(tr("Ply file contains triangle index greater than number of vertices: %1").arg(ex.what()).toStdString());
     }
 
     // generate normals of indexed vertices
@@ -1952,6 +1947,10 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
         }
     }
 
+    auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
+    if (tree == nullptr) {
+        tree = &addTree(treeID);
+    }
     state->viewer->mainWindow.viewport3D->makeCurrent();
     auto mesh = std::make_unique<Mesh>(tree, colors.empty(), static_cast<GLenum>(draw_mode));
     mesh->vertex_count = verts.size() / 3;
