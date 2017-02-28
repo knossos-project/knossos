@@ -10,21 +10,26 @@ pacman -S mingw-w64-x86_64-snappy --noconfirm
 pacman -S mingw-w64-x86_64-jasper --noconfirm #jpeg-2000
 pacman -S mingw-w64-x86_64-cmake --noconfirm #cmake
 
-#download curl
+####
+# Download and unpack PythonQt
+####
 curl -L https://al3xst.de/stuff/pythonqt.tar.xz > pythonqt.tar.xz
 tar xvf pythonqt.tar.xz
 
+####
 ### apply *** TEMP workaround *** for PythonQt
+####
 PROJECTPATH=`ls /c/projects/`
 echo 'get_target_property(gui_static_plugins Qt5::Gui STATIC_PLUGINS)' >> /c/projects/${PROJECTPATH}/CMakeLists.txt
 echo 'if(gui_static_plugins)' >> /c/projects/${PROJECTPATH}/CMakeLists.txt
 echo 'string(REGEX REPLACE [;]*QVirtualKeyboardPlugin[;]* ";" gui_static_plugins_new "${gui_static_plugins}")' >> /c/projects/${PROJECTPATH}/CMakeLists.txt
 echo 'set_target_properties(Qt5::Gui PROPERTIES STATIC_PLUGINS "${gui_static_plugins_new}")' >> /c/projects/${PROJECTPATH}/CMakeLists.txt
 echo 'endif()' >> /c/projects/${PROJECTPATH}/CMakeLists.txt
+
 ###
-# append "nightly" suffic in version file
+# append "-nightly" suffix in version file
 ###
-KVER=`cat /c/projects/${PROJECTPATH}/version.h | grep KVERSION | cut -d'"' -f2` #get version name aja 5.0
+KVER=`cat /c/projects/${PROJECTPATH}/version.h | grep KVERSION | cut -d'"' -f2` #get version name aka 5.0
 sed -i "s/KVERSION \""${KVER}"\"/KVERSION \"${KVER}-nightly\"/g" /c/projects/${PROJECTPATH}/version.h #append -nightly, so version is 5.0-nightly
 
 ####
@@ -32,8 +37,6 @@ sed -i "s/KVERSION \""${KVER}"\"/KVERSION \"${KVER}-nightly\"/g" /c/projects/${P
 ####
 curl -L https://al3xst.de/stuff/mingw-w64-x86_64-quazip-static-0.7-1-any.pkg.tar.xz > quazip-static.tar.xz
 pacman -U quazip-static.tar.xz --noconfirm
-pwd
-du -h
 
 ####
 # Run cmake
