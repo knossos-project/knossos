@@ -10,29 +10,33 @@ environment:
     MSYS2_DIR: msys64
     MSYSTEM: MINGW64
     BIT: 64
-  
+
+artifacts:
+  - path: win64.standalone.KNOSSOS.nightly.exe
+    name: knossos
+    
 install:
-  - set PATH=C:\%MSYS2_DIR%\%MSYSTEM%\bin;C:\%MSYS2_DIR%\usr\bin;%PATH% #msys2
-  - bash -lc "pacman -Syu --noconfirm"
-  - bash -lc "pacman --sync --noconfirm mingw-w64-x86_64-toolchain" # msys64-only
-  - bash -lc "pacman -S mingw-w64-x86_64-boost --noconfirm"
-  - bash -lc "pacman -S mingw-w64-x86_64-python2 --noconfirm"
-  - bash -lc "pacman -S mingw-w64-x86_64-qt5 --noconfirm"
-  - bash -lc "pacman -S mingw-w64-x86_64-ninja --noconfirm"
-  - bash -lc "pacman -S mingw-w64-x86_64-quazip --noconfirm"
-  - bash -lc "pacman -S mingw-w64-x86_64-snappy --noconfirm"
+  - set PATH=C:\%MSYS2_DIR%\%MSYSTEM%\bin;C:\%MSYS2_DIR%\usr\bin;%PATH%
+  - set APPVEYOR_REPO_TAG=TRUE
+  - set APPVEYOR_REPO_NAME=nightly
   
-  ####
-  # Download and install PythonQt
-  ####
-  - bash -lc "curl -L https://al3xst.de/stuff/pythonqt.tar.xz > pythonqt.tar.xz"
-  - bash -lc "tar xvf pythonqt.tar.xz"
-
-  ####
-  # Build Knossos
-  ####
-  - bash -lc "mkdir knossos-build"
-  - bash -lc "PROJECTPATH=`ls /c/projects/`; cd knossos-build && cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH='/home/appveyor/mingw64/qt5-static/lib/cmake' /c/projects/${PROJECTPATH}"
-
 build_script:
-  - bash -lc "cd knossos-build && ninja -j2"
+  - bash -lc "PROJECTPATH=`ls /c/projects/`; cd /c/projects/${PROJECTPATH}; chmod +x .appveyor_build.sh; ./.appveyor_build.sh"
+
+####
+# Release knossos.exe
+###
+deploy:
+  tag: nightly
+  release: nightly
+  description: 'Nightly build from the latest successful commit'
+  provider: GitHub
+  auth_token:
+    secure: 662Gozhe3fmtaVUptOYmok9ayZxuk9PDVS6pN8QfZPwP+P102GV5SnSpHcDR1o77 # your encrypted token from GitHub
+  artifact: win64.standalone.KNOSSOS.nightly.exe           # artifact to release
+  prerelease: true
+  force_update: true
+  on:
+    branch: master                 # release from master branch only
+    appveyor_repo_tag: true        # deploy on tag push only
+    appveyor_repo_name: nightly
