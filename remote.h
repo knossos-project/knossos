@@ -39,6 +39,10 @@ class Remote {
     floatCoordinate normal;
     QTimer timer;
     QElapsedTimer elapsed;
+    bool customTimeout;
+    QElapsedTimer totalElapsed;
+    int timeoutNs;
+
     static const qint64 ms;
     static const float goodEnough;
 
@@ -47,7 +51,7 @@ class Remote {
 
 public:
     Remote();
-    void process(const Coordinate & pos, boost::optional<floatCoordinate> normal = boost::none);
+    void process(const Coordinate & pos, boost::optional<floatCoordinate> normal = boost::none, boost::optional<int> recenterinTimems = boost::none);
 };
 
 #endif // REMOTE_H

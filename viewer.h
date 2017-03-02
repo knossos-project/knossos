@@ -227,7 +227,7 @@ public slots:
     void updateCurrentPosition();
     bool updateDatasetMag(const uint mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
-    void setPositionWithRecentering(const Coordinate &pos);
+    void setPositionWithRecentering(const Coordinate &pos, boost::optional<int> time = state->viewerState->movementSpeed);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal);
     void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal);
     void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});

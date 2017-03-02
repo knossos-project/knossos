@@ -935,8 +935,8 @@ void Viewer::setPosition(const floatCoordinate & pos, UserMoveType userMoveType,
     userMove(deltaPos, userMoveType, viewportNormal);
 }
 
-void Viewer::setPositionWithRecentering(const Coordinate &pos) {
-    remote.process(pos);
+void Viewer::setPositionWithRecentering(const Coordinate &pos, boost::optional<int> recenteringTimems) {
+    remote.process(pos, boost::none, recenteringTimems);
 }
 
 void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal) {

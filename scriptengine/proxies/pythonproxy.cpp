@@ -200,7 +200,11 @@ bool PythonProxy::writeOverlayVoxel(QList<int> coord, quint64 val) {
 }
 
 void PythonProxy::setPosition(QList<int> coord) {
-    state->viewer->setPosition({static_cast<float>(coord[0]), static_cast<float>(coord[1]), static_cast<float>(coord[2])});
+    state->viewer->setPosition(Coordinate{coord});
+}
+
+void PythonProxy::setPositionWithRecentering(QList<int> coord, int recenteringTimems) {
+    state->viewer->setPositionWithRecentering(Coordinate{coord}, recenteringTimems);
 }
 
 void PythonProxy::resetMovementArea() {

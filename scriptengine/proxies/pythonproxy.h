@@ -59,6 +59,7 @@ public slots:
     QList<int> getPosition();
     QList<float> getScale();
     void setPosition(QList<int> coord);
+    void setPositionWithRecentering(QList<int> coord, int recenteringTimems);
     quint64 readOverlayVoxel(QList<int> coord);
     bool writeOverlayVoxel(QList<int> coord, quint64 val);
     char *addrDcOc2Pointer(QList<int> coord, bool isOc);

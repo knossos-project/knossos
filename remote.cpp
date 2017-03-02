@@ -40,7 +40,7 @@ Remote::Remote() {
     QObject::connect(&timer, &QTimer::timeout, [this](){remoteWalk();});
 }
 
-void Remote::process(const Coordinate & pos, boost::optional<floatCoordinate> normal) {
+void Remote::process(const Coordinate & pos, boost::optional<floatCoordinate> normal, boost::optional<int> recenterinTimems) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
     const float jumpThreshold = 0.5f * state->cubeEdgeLength * state->M * state->magnification;//approximately inside sc
@@ -52,6 +52,7 @@ void Remote::process(const Coordinate & pos, boost::optional<floatCoordinate> no
         targetPos = pos;
         recenteringOffset = pos - state->viewerState->currentPosition;
         elapsed.restart();
+        totalElapsed.restart();
         timer.start(ms);
         state->viewer->userMoveClear();
         remoteWalk();
@@ -136,7 +137,7 @@ void Remote::remoteWalk() {
         }
     }
 
-    const auto seconds = recenteringOffset.length() / (state->viewerState->movementSpeed * state->magnification);
+    const auto seconds = customTimeout ? totalElapsed.nsecsElapsed() : recenteringOffset.length() / (state->viewerState->movementSpeed * state->magnification);
     const auto pixelCount = std::max({std::abs(recenteringOffset.x), std::abs(recenteringOffset.y), std::abs(recenteringOffset.z)});
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
     floatCoordinate singleMove;
