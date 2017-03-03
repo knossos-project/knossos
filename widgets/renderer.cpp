@@ -1436,7 +1436,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             glPopMatrix();
         }
 
+        // draw ground grid
         if(options.drawBoundaryBox) {
+            static float grid_max_x = 1.6f;
+            static float grid_spacing_x = 0.1f;
+            static float grid_max_y = 1.6f;
+            static float grid_spacing_y = 0.1f;
             glPushMatrix();
             glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
 
@@ -1445,12 +1450,14 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             glLineWidth(1.0f);
             glBegin(GL_LINES);
                 glNormal3i(0, 0, 1);// high z
-                for(std::size_t i = 0; i < 16; ++i) {
-                    glVertex3f(i / 16.0f, 0, 1);
-                    glVertex3f(i / 16.0f, 1, 1);
+                for(float i = 0; i < grid_max_x; i += grid_spacing_x) {
+                    glVertex3f(i / grid_max_x, 0, 1);
+                    glVertex3f(i / grid_max_x, 1, 1);
+                }
 
-                    glVertex3f(0, i / 16.0f, 1);
-                    glVertex3f(1, i / 16.0f, 1);
+                for(float i = 0; i < grid_max_y; i += grid_spacing_y) {
+                    glVertex3f(0, i / grid_max_y, 1);
+                    glVertex3f(1, i / grid_max_y, 1);
                 }
             glEnd();
 
