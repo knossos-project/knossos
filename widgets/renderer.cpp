@@ -763,7 +763,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
-    if (!options.nodePicking && state->viewer->layerVisibility[0]) {
+    if (!options.nodePicking && state->viewerState->layerVisibility[0]) {
         slice(texture.texHandle);
     }
 
@@ -783,10 +783,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
     if (!options.nodePicking) {
-        if (state->viewer->layerVisibility[0]) {
+        if (state->viewerState->layerVisibility[0]) {
             slice(texture.texHandle, n);
         }
-        if (options.drawOverlay && state->viewer->layerVisibility[1]) {
+        if (options.drawOverlay && state->viewerState->layerVisibility[1]) {
             slice(texture.overlayHandle, n);
         }
     }
@@ -1679,7 +1679,7 @@ void Viewport3D::renderArbitrarySlicePane(const ViewportOrtho & vp) {
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
-    for (auto layer : {std::make_pair(static_cast<bool>(state->viewer->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewer->layerVisibility[1] && Segmentation::enabled, vp.texture.overlayHandle)}) {
+    for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && Segmentation::enabled, vp.texture.overlayHandle)}) {
         if (layer.first) {
             glBindTexture(GL_TEXTURE_2D, layer.second);
             glBegin(GL_QUADS);

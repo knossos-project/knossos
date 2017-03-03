@@ -131,6 +131,7 @@ Scripting::Scripting() : _ctx{[](){
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_vp_size, snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest);
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_dataset_size, snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest);
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, snapshotWidget, &SnapshotWidget::snapshotRequest);
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_layer_visibility, state->viewer, &Viewer::setLayerVisibility);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 

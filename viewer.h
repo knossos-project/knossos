@@ -153,6 +153,7 @@ struct ViewerState {
         std::vector<floatCoordinate> vertices;
         std::vector<std::array<float, 4>> colors;
     } lineVertBuffer, pointVertBuffer;
+    std::vector<bool> layerVisibility;
 };
 
 /**
@@ -191,7 +192,6 @@ private:
 
     Remote remote;
 public:
-    std::vector<bool> layerVisibility;
     Viewer();
     void saveSettings();
     void loadSettings();
@@ -223,6 +223,7 @@ signals:
     void zoomChanged();
     void movementAreaFactorChangedSignal();
     void magnificationLockChanged(bool);
+    void layerVisibilityChanged(const int);
 public slots:
     void updateCurrentPosition();
     bool updateDatasetMag(const uint mag = 0);
@@ -256,6 +257,7 @@ public slots:
     float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
     uint calcMag(const float screenPxXPerDataPx);
     void setMagnificationLock(const bool locked);
+    void setLayerVisibility(const int index, const bool enabled);
 };
 
 #endif // VIEWER_H

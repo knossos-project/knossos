@@ -257,7 +257,3 @@ bool PythonProxy::loadStyleSheet(const QString &filename) {
     file.close();
     return true;
 }
-
-void PythonProxy::set_layer_visibility(int layer, bool visibility) {
-    state->viewer->layerVisibility.at(layer) = visibility;;
-}

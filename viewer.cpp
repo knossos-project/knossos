@@ -40,8 +40,9 @@
 #include <fstream>
 #include <cmath>
 
-Viewer::Viewer() : layerVisibility(2, true) {
+Viewer::Viewer() {
     state->viewer = this;
+    viewerState.layerVisibility = std::vector<bool>(2, true);
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
 
@@ -1268,4 +1269,9 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
     }
 
     return color;
+}
+
+void Viewer::setLayerVisibility(const int index, const bool enabled) {
+    viewerState.layerVisibility.at(index) = enabled;
+    emit layerVisibilityChanged(index);
 }

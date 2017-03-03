@@ -37,6 +37,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     rangeDeltaSlider.setRange(1, 255);
     rangeDeltaSpinBox.setRange(1, 255);
 
+    overlayGroup.setCheckable(true);
     segmentationOverlaySpinBox.setRange(0, 255);
     segmentationOverlaySlider.setRange(0, 255);
 
@@ -53,8 +54,12 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     datasetLayout.setAlignment(Qt::AlignTop);
     datasetGroup.setLayout(&datasetLayout);
     // segmentation
+    overlayLayout.addWidget(&segmentationOverlayLabel);
+    overlayLayout.addWidget(&segmentationOverlaySlider);
+    overlayLayout.addWidget(&segmentationOverlaySpinBox);
+    overlayGroup.setLayout(&overlayLayout);
     row = 0;
-    segmentationLayout.addWidget(&segmentationOverlayLabel, row, 0); segmentationLayout.addWidget(&segmentationOverlaySlider, row, 1); segmentationLayout.addWidget(&segmentationOverlaySpinBox, row++, 2);
+    segmentationLayout.addWidget(&overlayGroup, row++, 0, 1, 3);
     segmentationLayout.addWidget(&volumeRenderCheckBox, row++, 0, 1, 2);
     segmentationLayout.addWidget(&volumeOpaquenessLabel, row, 0); segmentationLayout.addWidget(&volumeOpaquenessSlider, row, 1); segmentationLayout.addWidget(&volumeOpaquenessSpinBox, row++, 2);
     segmentationLayout.addWidget(&volumeColorLabel, row, 0); segmentationLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
@@ -99,6 +104,13 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         rangeDeltaSlider.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });
+
+    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this](const int index) {
+        if (index == 1) {
+            overlayGroup.setChecked(state->viewerState->layerVisibility.at(1));
+        }
+    });
+    QObject::connect(&overlayGroup, &QGroupBox::clicked, [this](const bool checked) { state->viewerState->layerVisibility.at(1) = checked; });
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;

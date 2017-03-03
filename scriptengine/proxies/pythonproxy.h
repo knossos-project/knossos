@@ -39,6 +39,7 @@ signals:
     void viewport_snapshot_vp_size(SnapshotOptions & options);
     void viewport_snapshot_dataset_size(SnapshotOptions & options);
     void viewport_snapshot(const SnapshotOptions & options);
+    void set_layer_visibility(int layer, bool visibilty);
 
 public slots:
     ViewportType get_viewport_type(int i) {
@@ -83,8 +84,6 @@ public slots:
     bool loaderFinished();
     bool loadStyleSheet(const QString &path);
     void setMagnificationLock(const bool locked);
-
-    void set_layer_visibility(int layer, bool visibilty);
 };
 
 #endif // PYTHONPROXY_H

@@ -54,7 +54,9 @@ class DatasetAndSegmentationTab : public QWidget
     // segmentation overlay
     QGroupBox segmentationGroup{tr("Segmentation")};
     QGridLayout segmentationLayout;
-    QLabel segmentationOverlayLabel{"Overlay opacity"};
+    QGroupBox overlayGroup{tr("Overlay")};
+    QHBoxLayout overlayLayout;
+    QLabel segmentationOverlayLabel{tr("Opacity")};
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
     // segmentation volume
