@@ -1232,11 +1232,11 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
     auto rotateMe = [this, scaledBoundary](auto x, auto y){
-        floatCoordinate rotationCenter{scaledBoundary / 2};
+        floatCoordinate rotationCenter{state->scale.componentMul(state->viewerState->currentPosition)};
         if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
             rotationCenter = state->scale.componentMul(state->skeletonState->activeNode->position);
-        } else if (state->viewerState->rotationCenter == RotationCenter::CurrentPosition) {
-            rotationCenter = state->scale.componentMul(state->viewerState->currentPosition);
+        } else if (state->viewerState->rotationCenter == RotationCenter::DatasetCenter) {
+            rotationCenter = scaledBoundary / 2;
         }
         // calculate inverted rotation
         const auto rotation = QMatrix4x4{state->skeletonState->rotationState};
