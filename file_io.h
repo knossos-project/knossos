@@ -30,7 +30,7 @@
 
 QString annotationFileDefaultName();
 QString annotationFileDefaultPath();
-void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad = "");
+void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad = "");
 void annotationFileSave(const QString & filename);
 void nmlExport(const QString & filename);
 QString updatedFileName(QString fileName);

@@ -176,9 +176,6 @@ struct SkeletonState {
 
     QString skeletonCreatedInVersion{KVERSION};
     QString skeletonLastSavedInVersion;
-
-    //If true, loadSkeleton merges the current skeleton with the provided
-    bool mergeOnLoadFlag;
 };
 
 class Skeletonizer : public QObject {
@@ -265,7 +262,7 @@ public:
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(decltype(treeListElement::treeID) treeID);
 
-    std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const QString & treeCmtOnMultiLoad = "");
+    std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const bool merge, const QString & treeCmtOnMultiLoad = "");
     void saveXmlSkeleton(QIODevice &file) const;
 
     nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);

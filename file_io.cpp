@@ -55,7 +55,7 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-void annotationFileLoad(const QString & filename, const QString & treeCmtOnMultiLoad) {
+void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
@@ -85,7 +85,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
         std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
         if (archive.setCurrentFile("annotation.xml")) {
             QuaZipFile file(&archive);
-            treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
         }
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
             const QRegularExpression meshRegEx(R"regex([0-9]*.ply)regex");
@@ -100,7 +100,7 @@ void annotationFileLoad(const QString & filename, const QString & treeCmtOnMulti
                 if (!validId) {
                     qDebug() << "Filename not of the form <tree id>.ply, so loading as new tree:" << fileName;
                     treeId = boost::none;
-                } else if (state->skeletonState->mergeOnLoadFlag) {
+                } else if (mergeSkeleton) {
                     const auto iter = treeMap.find(treeId.get());
                     if (iter != std::end(treeMap)) {
                         treeId = iter->second.get().treeID;

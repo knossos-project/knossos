@@ -337,12 +337,10 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndDocument();
 }
 
-std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QIODevice & file, const QString & treeCmtOnMultiLoad) {
+std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QIODevice & file, const bool merge, const QString & treeCmtOnMultiLoad) {
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("loadXmlSkeleton open failed");
     }
-
-    const bool merge = state->skeletonState->mergeOnLoadFlag;
 
     // If "createdin"-node does not exist, skeleton was created in a version before 3.2
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";

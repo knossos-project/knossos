@@ -725,8 +725,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         return QFileInfo(elem).suffix() == "nml";
     });
 
-    state->skeletonState->mergeOnLoadFlag = mergeSkeleton;
-
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
     try {
@@ -734,15 +732,15 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         for (const auto & filename : nmls) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
             QFile file(filename);
-            state->viewer->skeletonizer->loadXmlSkeleton(file, treeCmtOnMultiLoad);
+            state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
-            state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+            mergeSkeleton = true;//multiple files have to be merged
         }
         for (const auto & filename : zips) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
-            annotationFileLoad(filename, treeCmtOnMultiLoad);
+            annotationFileLoad(filename, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
-            state->skeletonState->mergeOnLoadFlag = true;//multiple files have to be merged
+            mergeSkeleton = true;//multiple files have to be merged
         }
     } catch (std::runtime_error & error) {
         if (!silent) {
