@@ -343,13 +343,6 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     }
 
     const bool merge = state->skeletonState->mergeOnLoadFlag;
-    if (!merge) {
-        clearSkeleton();
-        // Default for annotations created in very old versions that don't have an annotationTime.
-        // It is okay to set it to 0 in newer versions, because the time will be
-        // read from file anyway in case of no merge.
-        Session::singleton().setAnnotationTime(0);
-    }
 
     // If "createdin"-node does not exist, skeleton was created in a version before 3.2
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";

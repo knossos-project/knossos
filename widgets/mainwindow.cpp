@@ -696,6 +696,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         if (button == 0) {
             mergeSkeleton = true;
         } else if(button == 1) {//clear skeleton
+            Skeletonizer::singleton().clearSkeleton();
             mergeSkeleton = false;
         } else {
             return false;
