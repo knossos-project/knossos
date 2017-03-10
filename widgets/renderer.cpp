@@ -1446,6 +1446,9 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         // draw ground grid
         if(options.drawBoundaryBox) {
             auto scalebarLen = getScaleBarLengthInNm(displayedlengthInNmX);
+            if(scalebarLen == 0) {
+                scalebarLen = state->boundary.x * state->scale.x / 10;
+            }
             float grid_max_x = state->boundary.x * state->scale.x;
             float grid_spacing_x = scalebarLen;
             float grid_max_y = state->boundary.y * state->scale.y;
