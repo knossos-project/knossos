@@ -468,6 +468,13 @@ void Viewport3D::renderViewportFrontFace() {
     }
 }
 
+int getScaleBarLengthInNm(float vpLenInNm) {
+    auto scalebarLen = vpLenInNm / 3.;
+    int powerOf10 = std::log10(scalebarLen);
+    float roundStep = 5. * std::pow(10, powerOf10 - 1);
+    return std::round(scalebarLen / roundStep) * roundStep;
+}
+
 void ViewportBase::renderScaleBar() {
     auto vpLen = displayedlengthInNmX;
     auto scalebarLen = vpLen/3.;
@@ -1438,10 +1445,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         // draw ground grid
         if(options.drawBoundaryBox) {
-            static float grid_max_x = 1.6f;
-            static float grid_spacing_x = 0.1f;
-            static float grid_max_y = 1.6f;
-            static float grid_spacing_y = 0.1f;
+            auto scalebarLen = getScaleBarLengthInNm(displayedlengthInNmX);
+            float grid_max_x = state->boundary.x * state->scale.x;
+            float grid_spacing_x = scalebarLen;
+            float grid_max_y = state->boundary.y * state->scale.y;
+            float grid_spacing_y = scalebarLen;
+
             glPushMatrix();
             glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
 
