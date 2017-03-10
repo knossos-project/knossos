@@ -477,12 +477,10 @@ int getScaleBarLengthInNm(float vpLenInNm) {
 
 void ViewportBase::renderScaleBar() {
     auto vpLen = displayedlengthInNmX;
-    auto scalebarLen = vpLen/3.;
+    auto scalebarLen = getScaleBarLengthInNm(vpLen);
     int powerOf10 = std::log10(scalebarLen);
-    QString sizeLabel;
-    if (powerOf10 <= 2) {
-        sizeLabel = "nm";
-    } else if (powerOf10 <= 5) {
+    QString sizeLabel{"nm"};
+    if (powerOf10 >= 3) {
         sizeLabel = "μm";
         vpLen /= 1e3;
         scalebarLen /= 1e3;
@@ -490,14 +488,11 @@ void ViewportBase::renderScaleBar() {
         sizeLabel = "mm";
         vpLen /= 1e6;
         scalebarLen /= 1e6;
-    } else {
+    } else if (powerOf10 > 6) {
         sizeLabel = "cm";
         vpLen /= 1e7;
         scalebarLen /= 1e7;
     }
-    powerOf10 = std::log10(scalebarLen);
-    float roundStep = 5. * std::pow(10, powerOf10 - 1);
-    scalebarLen = std::round(scalebarLen / roundStep) * roundStep;
     sizeLabel = QString::number(scalebarLen) + " " + sizeLabel;
     auto divisor = vpLen / scalebarLen; // for scalebar size in pixels
 
