@@ -387,11 +387,12 @@ bool Segmentation::isSubObjectIdSelected(const uint64_t & subobjectId) const {
 }
 
 void Segmentation::clearObjectSelection() {
-    const auto blockState = blockSignals(true);
-    while (!selectedObjectIndices.empty()) {
-        unselectObject(selectedObjectIndices.back());
+    {
+        QSignalBlocker blocker{this};
+        while (!selectedObjectIndices.empty()) {
+            unselectObject(selectedObjectIndices.back());
+        }
     }
-    blockSignals(blockState);
     emit resetSelection();
 }
 
@@ -566,44 +567,44 @@ void Segmentation::mergelistLoad(QIODevice & file) {
     QTextStream stream(&file);
     QString line;
     {
-    QSignalBlocker blocker(this);
-    while (!(line = stream.readLine()).isNull()) {
-        std::istringstream lineStream(line.toStdString());
-        std::istringstream coordColorLineStream(stream.readLine().toStdString());
+        QSignalBlocker blocker{this};
+        while (!(line = stream.readLine()).isNull()) {
+            std::istringstream lineStream(line.toStdString());
+            std::istringstream coordColorLineStream(stream.readLine().toStdString());
 
-        uint64_t objId;
-        bool todo;
-        bool immutable;
-        Coordinate location;
-        uint r; uint g; uint b;
-        uint64_t initialVolume;
-        QString category;
-        QString comment;
+            uint64_t objId;
+            bool todo;
+            bool immutable;
+            Coordinate location;
+            uint r; uint g; uint b;
+            uint64_t initialVolume;
+            QString category;
+            QString comment;
 
-        bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
-        bool valid1 = (coordColorLineStream >> location.x) && (coordColorLineStream >> location.y) && (coordColorLineStream >> location.z);
-        bool customColorValid = (coordColorLineStream >> r) && (coordColorLineStream >> g) && (coordColorLineStream >> b);
-        bool valid2 = !(category = stream.readLine()).isNull();
-        bool valid3 = !(comment = stream.readLine()).isNull();
+            bool valid0 = (lineStream >> objId) && (lineStream >> todo) && (lineStream >> immutable) && (lineStream >> initialVolume);
+            bool valid1 = (coordColorLineStream >> location.x) && (coordColorLineStream >> location.y) && (coordColorLineStream >> location.z);
+            bool customColorValid = (coordColorLineStream >> r) && (coordColorLineStream >> g) && (coordColorLineStream >> b);
+            bool valid2 = !(category = stream.readLine()).isNull();
+            bool valid3 = !(comment = stream.readLine()).isNull();
 
-        if (valid0 && valid1 && valid2 && valid3) {
-            auto & obj = createObjectFromSubobjectId(initialVolume, location, objId, todo, immutable);
-            uint64_t subObjId;
-            while (lineStream >> subObjId) {
-                newSubObject(obj, subObjId);
+            if (valid0 && valid1 && valid2 && valid3) {
+                auto & obj = createObjectFromSubobjectId(initialVolume, location, objId, todo, immutable);
+                uint64_t subObjId;
+                while (lineStream >> subObjId) {
+                    newSubObject(obj, subObjId);
+                }
+                std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
+                changeCategory(obj, category);
+                if (customColorValid) {
+                    changeColor(obj, std::make_tuple(r, g, b));
+                }
+                obj.comment = comment;
+            } else {
+                Segmentation::clear();
+                throw std::runtime_error("mergelistLoad parsing failed");
             }
-            std::sort(std::begin(obj.subobjects), std::end(obj.subobjects));
-            changeCategory(obj, category);
-            if (customColorValid) {
-                changeColor(obj, std::make_tuple(r, g, b));
-            }
-            obj.comment = comment;
-        } else {
-            Segmentation::clear();
-            throw std::runtime_error("mergelistLoad parsing failed");
         }
-    }
-    }
+    }// QSignalBlocker
     emit resetData();
 }
 
@@ -643,11 +644,12 @@ void Segmentation::startJobMode() {
 }
 
 void Segmentation::deleteSelectedObjects() {
-    const auto blockState = blockSignals(true);
-    while (!selectedObjectIndices.empty()) {
-        removeObject(objects[selectedObjectIndices.back()]);
+    {
+        QSignalBlocker blocker{this};
+        while (!selectedObjectIndices.empty()) {
+            removeObject(objects[selectedObjectIndices.back()]);
+        }
     }
-    blockSignals(blockState);
     emit resetData();
 }
 

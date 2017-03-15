@@ -41,6 +41,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QVBoxLayout>
 
 #include <stdexcept>
@@ -143,15 +144,11 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
 
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {
     if (col == 0 && row == tableWidget.rowCount() - 1 && tableWidget.item(row, 0)->text() != "") {
+        QSignalBlocker blocker{tableWidget};// changing an item would land here again
         const auto dataset = tableWidget.item(row, 0)->text();
-        const auto blockState = tableWidget.signalsBlocked();
-        tableWidget.blockSignals(true);//changing an item would land here again
-
         tableWidget.item(row, 0)->setText("");//clear edit row
         insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
         tableWidget.selectRow(row);//select new item
-
-        tableWidget.blockSignals(blockState);
     }
     updateDatasetInfo();
 }
@@ -385,25 +382,24 @@ void DatasetLoadWidget::loadSettings() {
         }
     };
 
-    tableWidget.blockSignals(true);
-
-    //add datasets from file
-    for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
-        appendRowSelectIfLU(transitionedDataset(dataset).toString());
-    }
-    //add public datasets
-    auto datasetsDir = QDir(":/resources/datasets");
-    for (const auto & dataset : datasetsDir.entryInfoList()) {
-        const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
-        if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
-            appendRowSelectIfLU(url);
+    {
+        QSignalBlocker blocker{tableWidget};// we don’t want to process these in datasetCellChanged
+        // add datasets from file
+        for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
+            appendRowSelectIfLU(transitionedDataset(dataset).toString());
         }
-    }
-    //add Empty row at the end
-    appendRowSelectIfLU("");
-    tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
-
-    tableWidget.blockSignals(false);
+        // add public datasets
+        auto datasetsDir = QDir(":/resources/datasets");
+        for (const auto & dataset : datasetsDir.entryInfoList()) {
+            const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
+            if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
+                appendRowSelectIfLU(url);
+            }
+        }
+        // add Empty row at the end
+        appendRowSelectIfLU("");
+        tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
+    }// QSignalBlocker
     updateDatasetInfo();
 
     state->cubeEdgeLength = settings.value(DATASET_CUBE_EDGE, 128).toInt();

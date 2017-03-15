@@ -30,8 +30,8 @@
 
 #include <QObject>
 #include <QSet>
+#include <QSignalBlocker>
 #include <QVariantHash>
-#include <QVector3D> // tmp
 
 #include <boost/optional.hpp>
 
@@ -185,12 +185,19 @@ class Skeletonizer : public QObject {
 public:
     template<typename T, typename Func>
     void bulkOperation(T & elems, Func func) {
-        const auto blockState = blockSignals(elems.size() > 100);
-        for (auto * elem : elems) {
-            func(*elem);
+        const auto bigEnough = elems.size() > 100;
+        {
+            QSignalBlocker blocker{this};
+            if (!bigEnough) {// don’t block for small number of elements
+                blocker.unblock();
+            }
+            for (auto * elem : elems) {
+                func(*elem);
+            }
         }
-        blockSignals(blockState);
-        emit resetData();
+        if (bigEnough) {// only needed if signals were indeed blocked
+            emit resetData();// is also blocked if it was blocked initially
+        }
     }
     template<typename T>
     T * active();

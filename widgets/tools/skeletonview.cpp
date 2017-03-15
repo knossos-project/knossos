@@ -34,6 +34,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QRegExpValidator>
+#include <QSignalBlocker>
 
 template<typename Func>
 void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
@@ -814,8 +815,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             msgBox.addButton(QMessageBox::Cancel);
             msgBox.setDefaultButton(QMessageBox::Cancel);
             QCheckBox dontShowCheckBox(tr("Hide message until restart"));
-            dontShowCheckBox.blockSignals(true);
-            msgBox.addButton(&dontShowCheckBox, QMessageBox::ResetRole);
+            msgBox.addButton(&dontShowCheckBox, QMessageBox::ActionRole);
+            QSignalBlocker blocker{dontShowCheckBox};// even ActionRole doesn’t seem to prevent the msg box from closing
             res = static_cast<QMessageBox::StandardButton>(msgBox.exec());
             askExtractConnectedComponent = dontShowCheckBox.checkState() == Qt::Unchecked;
         }

@@ -34,6 +34,7 @@
 #include <QDesktopWidget>
 #include <QPainter>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSpacerItem>
 #include <QStyle>
 
@@ -166,9 +167,8 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
             orthoVP.texture.FOV = newFOV;
         });
         state->viewer->recalcTextureOffsets();
-        orthoZoomSpinBox.blockSignals(true);
+        QSignalBlocker blocker{orthoZoomSpinBox};
         orthoZoomSpinBox.setValue(100 * (newScreenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx(false)));
-        orthoZoomSpinBox.blockSignals(false);
         updateOrthogonalZoomSlider();
     });
 
@@ -227,9 +227,8 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         state->viewer->setMagnificationLock(on);
     });
     connect(state->viewer, &Viewer::magnificationLockChanged, [this](const bool locked){
-        const auto signalsBlocked = lockDatasetCheckBox.blockSignals(true);
+        QSignalBlocker blocker{lockDatasetCheckBox};
         lockDatasetCheckBox.setChecked(locked);
-        lockDatasetCheckBox.blockSignals(signalsBlocked);
         reinitializeOrthoZoomWidgets();
     });
     connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &ZoomWidget::reinitializeOrthoZoomWidgets);
@@ -264,31 +263,27 @@ void ZoomWidget::reinitializeOrthoZoomWidgets() {
     int max_value = std::ceil(std::log(state->viewer->highestScreenPxXPerDataPx() / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep));
     orthoZoomSlider.numTicks = mags > 1 ? mags : 0;
     orthoZoomSlider.highestMag = state->viewer->highestMag();
-    const auto orthoZoomSliderBlock = orthoZoomSlider.blockSignals(true);
+    QSignalBlocker blockerSlider{orthoZoomSlider};
     orthoZoomSlider.setRange(0, max_value);
     orthoZoomSlider.setTickInterval(interval);
     updateOrthogonalZoomSlider();
-    orthoZoomSlider.blockSignals(orthoZoomSliderBlock);
 
-    const auto orthoZoomSpinBoxBlock = orthoZoomSpinBox.blockSignals(true);
+    QSignalBlocker blockerSpin{orthoZoomSpinBox};
     orthoZoomSpinBox.setMinimum(100 * (state->viewer->lowestScreenPxXPerDataPx(false) / state->viewer->lowestScreenPxXPerDataPx(false)));
     orthoZoomSpinBox.setMaximum(100 * (state->viewer->highestScreenPxXPerDataPx(false) / state->viewer->lowestScreenPxXPerDataPx(false)));
     updateOrthogonalZoomSpinBox();
-    orthoZoomSlider.blockSignals(orthoZoomSpinBoxBlock);
 }
 
 void ZoomWidget::updateOrthogonalZoomSpinBox() {
-    orthoZoomSpinBox.blockSignals(true);
+    QSignalBlocker blocker{orthoZoomSpinBox};
     const double newValue = state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx(false);
     orthoZoomSpinBox.setValue(newValue * 100);
-    orthoZoomSpinBox.blockSignals(false);
 }
 
 void ZoomWidget::updateOrthogonalZoomSlider() {
-    orthoZoomSlider.blockSignals(true);
+    QSignalBlocker blocker{orthoZoomSlider};
     const int newValue = std::ceil(std::log(state->viewer->viewportXY->screenPxXPerDataPx / state->viewer->lowestScreenPxXPerDataPx()) / std::log(zoomStep));
     orthoZoomSlider.setValue(newValue);
-    orthoZoomSlider.blockSignals(false);
 }
 
 void ZoomWidget::zoomDefaultsClicked() {

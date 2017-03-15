@@ -30,6 +30,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSpacerItem>
 
 NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
@@ -123,16 +124,14 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     });
 
     QObject::connect(&outVisibilitySlider, &QSlider::valueChanged, [this](const int value) {
-        outVisibilitySpin.blockSignals(true);
+        QSignalBlocker blocker{outVisibilitySpin};
         outVisibilitySpin.setValue(value);
-        outVisibilitySpin.blockSignals(false);
         state->viewer->setMovementAreaFactor(value);
     });
 
     QObject::connect(&outVisibilitySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
-        outVisibilitySlider.blockSignals(true);
+        QSignalBlocker blocker{outVisibilitySlider};
         outVisibilitySlider.setValue(value);
-        outVisibilitySlider.blockSignals(false);
         state->viewer->setMovementAreaFactor(value);
     });
 

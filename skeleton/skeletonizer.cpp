@@ -366,7 +366,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     bench.start();
     {
-    QSignalBlocker blocker(this);
+    QSignalBlocker blocker{this};
     if (!xml.readNextStartElement() || xml.name() != "things") {
         throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
     }
@@ -706,7 +706,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
             }
         }
     }
-    }
+    }// QSignalBlocker
     emit resetData();
 
     qDebug() << "loading skeleton: "<< bench.nsecsElapsed() / 1e9 << "s";
@@ -851,8 +851,6 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
         return false;
     }
 
-    const auto blockState = blockSignals(true);//chunk operation
-
     if(treeToDel->isSynapticCleft) { //if we delete a synapsticCleft, remove tree from synapses and unset the synaptic nodes
         for(auto it = std::begin(state->skeletonState->synapses); it != std::end(state->skeletonState->synapses);) {
             if(treeToDel == it->getCleft()) {
@@ -864,11 +862,12 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
             }
         }
     }
-
-    for (auto nodeIt = std::begin(treeToDel->nodes); nodeIt != std::end(treeToDel->nodes); nodeIt = std::begin(treeToDel->nodes)) {
-        delNode(0, &*nodeIt);
+    {
+        QSignalBlocker blocker{this};// bulk operation
+        for (auto nodeIt = std::begin(treeToDel->nodes); nodeIt != std::end(treeToDel->nodes); nodeIt = std::begin(treeToDel->nodes)) {
+            delNode(0, &*nodeIt);
+        }
     }
-    blockSignals(blockState);
 
 
     if (treeToDel->selected) {
@@ -1103,8 +1102,6 @@ void Skeletonizer::toggleLink(nodeListElement & lhs, nodeListElement & rhs) {
 }
 
 void Skeletonizer::clearSkeleton() {
-    const auto blockState = blockSignals(true);
-    blockSignals(blockState);
     skeletonState = SkeletonState{};
     numberProperties = textProperties = {};
     emit resetData();
@@ -1218,9 +1215,8 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
     state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
 
     if (!color) {// set default tree color
-        const auto blockState = blockSignals(true);
+        QSignalBlocker blocker{this};// don’t emit treeChanged before treeAdded later
         restoreDefaultTreeColor(newTree);
-        blockSignals(blockState);
     } else {
         newTree.color = color.get();
         newTree.colorSetManually = true;
