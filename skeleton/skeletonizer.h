@@ -187,7 +187,7 @@ public:
     void bulkOperation(T & elems, Func func) {
         const auto blockState = blockSignals(elems.size() > 100);
         for (auto * elem : elems) {
-            func(elem);
+            func(*elem);
         }
         blockSignals(blockState);
         emit resetData();

@@ -736,13 +736,13 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }});
     QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
-            Skeletonizer::singleton().restoreDefaultTreeColor(*tree);
+            Skeletonizer::singleton().restoreDefaultTreeColor(tree);
         });
     });
     QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
-            if(tree->mesh) {
-                Skeletonizer::singleton().deleteMeshOfTree(*tree);
+            if(tree.mesh) {
+                Skeletonizer::singleton().deleteMeshOfTree(tree);
             }
         });
     });
@@ -841,7 +841,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto comment = QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [comment](auto & node){
-                Skeletonizer::singleton().setComment(*node, comment);
+                Skeletonizer::singleton().setComment(node, comment);
             });
             prevComment = comment;// save for the next time the dialog is opened
         }
@@ -852,7 +852,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, nodeListElement::MAX_RADIUS_SETTING, 1, &applied);
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [radius](auto & node){
-                Skeletonizer::singleton().editNode(0, node, radius, node->position, node->createdInMag);
+                Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);
             });
             prevRadius = radius;// save for the next time the dialog is opened
         }
