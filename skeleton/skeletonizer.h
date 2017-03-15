@@ -244,7 +244,6 @@ public:
     void clearSkeleton();
     boost::optional<nodeListElement &> UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node);
-    void setCommentOfSelectedTrees(const QString & comment);
     void setColor(treeListElement & tree, const QColor &color);
     void continueSynapse();
     void addFinishedSynapse(treeListElement & cleft, nodeListElement & pre, nodeListElement & post);

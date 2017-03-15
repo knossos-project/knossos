@@ -722,7 +722,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         auto comment = QInputDialog::getText(this, "Edit tree comment", "New tree comment", QLineEdit::Normal, prevComment, &applied);
         if (applied) {
             prevComment = comment;
-            Skeletonizer::singleton().setCommentOfSelectedTrees(comment);
+            Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [comment](auto & tree){
+                Skeletonizer::singleton().setComment(tree, comment);
+            });
         }
     });
     QObject::connect(treeContextMenu.addAction("Show selected trees"), &QAction::triggered, [](){

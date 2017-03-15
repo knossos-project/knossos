@@ -1280,15 +1280,6 @@ treeListElement * Skeletonizer::getTreeWithNextID(treeListElement * currentTree)
     return getTreeWithRelationalID(currentTree, std::greater<decltype(treeListElement::treeID)>{});
 }
 
-void Skeletonizer::setCommentOfSelectedTrees(const QString & comment) {
-    const auto blockState = blockSignals(true);
-    for (const auto &tree : state->skeletonState->selectedTrees) {
-        setComment(*tree, comment);
-    }
-    blockSignals(blockState);
-    emit resetData();
-}
-
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     tree.color = color;
     tree.colorSetManually = true;
