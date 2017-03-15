@@ -738,13 +738,13 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             QFile file(filename);
             state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
-            mergeSkeleton = true;//multiple files have to be merged
+            mergeSkeleton = multipleFiles; //multiple files have to be merged
         }
         for (const auto & filename : zips) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
             annotationFileLoad(filename, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
-            mergeSkeleton = true;//multiple files have to be merged
+            mergeSkeleton = multipleFiles; //multiple files have to be merged
         }
     } catch (std::runtime_error & error) {
         if (!silent) {
