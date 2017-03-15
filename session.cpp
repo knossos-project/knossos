@@ -20,7 +20,9 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "segmentation/segmentation.h"
 #include "session.h"
+#include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 
 #include <QApplication>
@@ -53,6 +55,15 @@ Session::Session() : annotationMode(AnnotationMode::Mode_Tracing) {
            emit autoSaveSignal();
        }
     });
+}
+
+void Session::clearAnnotation() {
+    Skeletonizer::singleton().clearSkeleton();
+    Segmentation::singleton().clear();
+    resetMovementArea();
+    setAnnotationTime(0);
+    annotationFilename = "";
+    unsavedChanges = false;
 }
 
 bool Session::outsideMovementArea(const Coordinate & pos) {

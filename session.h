@@ -91,6 +91,7 @@ public:
         static Session session;
         return session;
     }
+    void clearAnnotation();
     decltype(annotationTimeMilliseconds) getAnnotationTime() const;
     void setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms);
     decltype(annotationTimeMilliseconds) currentTimeSliceMs() const;

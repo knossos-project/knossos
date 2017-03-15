@@ -1106,8 +1106,6 @@ void Skeletonizer::clearSkeleton() {
     const auto blockState = blockSignals(true);
     blockSignals(blockState);
     skeletonState = SkeletonState{};
-    Session::singleton().resetMovementArea();
-    Session::singleton().setAnnotationTime(0);
     numberProperties = textProperties = {};
     emit resetData();
 }

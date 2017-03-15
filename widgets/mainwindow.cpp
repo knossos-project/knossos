@@ -710,11 +710,16 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         }
         mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
         mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
-        if (!mergeSegmentation) {
-            Segmentation::singleton().clear();
-        }
-        if (!mergeSkeleton) {
-            Skeletonizer::singleton().clearSkeleton();
+        if (prompt.clickedButton() == overrideAllButton) {
+            Session::singleton().clearAnnotation();
+            updateTitlebar();
+        } else {
+            if (!mergeSegmentation) {
+                Segmentation::singleton().clear();
+            }
+            if (!mergeSkeleton) {
+                Skeletonizer::singleton().clearSkeleton();
+            }
         }
     }
 
@@ -791,10 +796,7 @@ bool MainWindow::newAnnotationSlot() {
             return false;
         }
     }
-    Skeletonizer::singleton().clearSkeleton();
-    Segmentation::singleton().clear();
-    Session::singleton().unsavedChanges = false;
-    Session::singleton().annotationFilename = "";
+    Session::singleton().clearAnnotation();
     updateTitlebar();
     return true;
 }
@@ -1028,7 +1030,6 @@ void MainWindow::clearSkeletonSlot() {
         question.exec();
         if (question.clickedButton() == ok) {
             Skeletonizer::singleton().clearSkeleton();
-            updateTitlebar();
         }
     }
 }
