@@ -684,38 +684,37 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         return false;
     }
 
-    bool mergeSkeleton = mergeAll;
     bool mergeSegmentation = mergeAll;
-    if (!mergeAll && !state->skeletonState->trees.empty()) {
-        const auto text = tr("Which action would you like to choose?<ul>")
-            + tr("<li>Merge the new skeleton into the current one</li>")
-            + tr("<li>Override the current skeleton</li>")
-            + tr("</ul>");
-        const auto button = QMessageBox::question(this, tr("Existing skeleton"), text, tr("Merge"), tr("Override"), tr("Cancel"), 0, 2);
-
-        if (button == 0) {
-            mergeSkeleton = true;
-        } else if(button == 1) {//clear skeleton
-            Skeletonizer::singleton().clearSkeleton();
-            mergeSkeleton = false;
-        } else {
+    bool mergeSkeleton = mergeAll;
+    bool existingSegmentation = Segmentation::singleton().hasObjects();
+    bool existingSkeleton = !state->skeletonState->trees.empty();
+    bool existingBoth = existingSegmentation && existingSkeleton;
+    if (!mergeAll && (existingSegmentation || existingSkeleton)) {
+        QMessageBox prompt(this);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText(QObject::tr("Which action would you like to choose?"));
+        QString text = tr("There is existing: <ul>")
+            + (existingSegmentation ? tr("<li>Segmentation data</li>") : tr(""))
+            + (existingSkeleton ? tr("<li>Skeleton data</li>") : tr(""))
+            + tr("</ul>")
+            + tr("which can be merged or overwritten.");
+        prompt.setInformativeText(text);
+        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(existingBoth ? " Both" : ""), QMessageBox::AcceptRole);
+        const auto * keepAllButton = existingBoth ? prompt.addButton(QObject::tr("&Keep Both"), QMessageBox::AcceptRole) : nullptr;
+        const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&menation").arg(existingBoth ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(existingBoth ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const auto * cancelButton = prompt.addButton(QMessageBox::Cancel);
+        prompt.exec();
+        if (prompt.clickedButton() == cancelButton) {
             return false;
         }
-    }
-    if (!mergeAll && Segmentation::singleton().hasObjects()) {
-        const auto text = tr("Which action would you like to choose?<ul>")
-            + tr("<li>Merge the new merge list into the current one?</li>")
-            + tr("<li>Override the current segmentation</li>")
-            + tr("</ul>");
-        const auto button = QMessageBox::question(this, tr("Existing merge list"), text, tr("Merge"), tr("Clear and load"), tr("Cancel"), 0, 2);
-
-        if (button == 0) {
-            mergeSegmentation = true;
-        } else if (button == 1) {//clear segmentation
+        mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
+        mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
+        if (!mergeSegmentation) {
             Segmentation::singleton().clear();
-            mergeSegmentation = false;
-        } else if (button == 2) {
-            return false;
+        }
+        if (!mergeSkeleton) {
+            Skeletonizer::singleton().clearSkeleton();
         }
     }
 
