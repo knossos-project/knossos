@@ -1760,27 +1760,19 @@ void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
 }
 
 void Skeletonizer::deleteSelectedTrees() {
-    //make a copy because the selected objects can change
+    // make a copy because the selected objects can change
     const auto treesToDelete = state->skeletonState->selectedTrees;
-    const auto blockstate = signalsBlocked();
-    blockSignals(true);
-    for (const auto & elem : treesToDelete) {
-        delTree(elem->treeID);
-    }
-    blockSignals(blockstate);
-    emit resetData();
+    bulkOperation(treesToDelete, [this](auto & tree){
+        delTree(tree.treeID);
+    });
 }
 
 void Skeletonizer::deleteSelectedNodes() {
-    //make a copy because the selected objects can change
+    // make a copy because the selected objects can change
     const auto nodesToDelete = state->skeletonState->selectedNodes;
-    const auto blockstate = signalsBlocked();
-    blockSignals(true);
-    for (auto & elem : nodesToDelete) {
-        delNode(0, elem);
-    }
-    blockSignals(blockstate);
-    emit resetData();
+    bulkOperation(nodesToDelete, [this](auto & node){
+        delNode(0, &node);
+    });
 }
 
 void Skeletonizer::toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent) {
