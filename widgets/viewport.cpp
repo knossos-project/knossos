@@ -135,8 +135,8 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
         if (isDocked) {
             // Currently docked and normal
             // Undock and go fullscreen from docked
-            setDock(false);
             floatParent.setWindowState(Qt::WindowFullScreen);
+            setDock(false);
             floatParent.fullscreen = true;
             isFullOrigDocked = true;
         }
