@@ -431,14 +431,12 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     loadedPosition = Coordinate{attributes.value("x").toInt(), attributes.value("y").toInt(), attributes.value("z").toInt()};
                 } else if(xml.name() == "skeletonVPState") {
                     if (!merge) {
-                        for (int j = 0; j < 16; ++j) {
-                            state->skeletonState->skeletonVpModelView[j] = attributes.value(QString("E%1").arg(j)).toFloat();
-                        }
-                        glMatrixMode(GL_MODELVIEW);
-                        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-
-                        state->skeletonState->translateX = attributes.value("translateX").toFloat();
-                        state->skeletonState->translateY = attributes.value("translateY").toFloat();
+                          // non-working code for skelvp rotation and translation restoration
+//                        for (int j = 0; j < 16; ++j) {
+//                            state->skeletonState->skeletonVpModelView[j] = attributes.value(QString("E%1").arg(j)).toFloat();
+//                        }
+//                        state->skeletonState->translateX = attributes.value("translateX").toFloat();
+//                        state->skeletonState->translateY = attributes.value("translateY").toFloat();
                     }
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
@@ -453,9 +451,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     if(attribute.isNull() == false) {
                         state->viewer->window->viewportZY.get()->texture.FOV = attribute.toString().toFloat();
                     }
-                    attribute = attributes.value("SkelVP");
-                    if(attribute.isNull() == false) {
-                        state->mainWindow->viewport3D->zoomFactor = 0.5 / (0.5 - attribute.toFloat());// legacy zoom: 0 → 0.5
+                    if (!attributes.value("SkelVP").isEmpty()) {
+                        // zoom can only be applied meaningfully with working rotation and translation
                     }
                 } else if(xml.name() == "RadiusLocking") {
                     QStringRef attribute = attributes.value("enableCommentLocking");
