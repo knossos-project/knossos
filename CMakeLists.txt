@@ -193,5 +193,6 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE_UPPER_CASE
 endif()
 
 if(COMMAND cotire)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)# recurring https://github.com/Alexpux/MINGW-packages/issues/923
     cotire(${PROJECT_NAME})
 endif()
