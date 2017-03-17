@@ -1071,6 +1071,8 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
         renderScaleBar();
     }
     QImage fboImage(fbo.toImage());
+    // Need to specify image format with no premultiplied alpha.
+    // Otherwise the image is automatically unpremultiplied on save even though it was never premultiplied in the first place. See https://doc.qt.io/qt-5/qopenglframebufferobject.html#toImage
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
     qDebug() << tr("snapshot ") + (!image.save(o.path) ? "un" : "") + tr("successful.");
     glPopAttrib(); // restore viewport setting
