@@ -62,10 +62,10 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     movementAreaLayout.addWidget(&outVisibilitySpin, row++, 2);
     movementAreaGroup.setLayout(&movementAreaLayout);
 
-    movementSpeedSpinBox.setRange(1, 1000);
+    movementSpeedSpinBox.setRange(1, 10000);
     movementSpeedSpinBox.setSuffix(" Slices/s");
-    jumpFramesSpinBox.setMaximum(1000);
-    walkFramesSpinBox.setMaximum(1000);
+    jumpFramesSpinBox.setRange(1, 1000);
+    walkFramesSpinBox.setRange(2, 1000);
     keyboardMovementLayout.addRow("Movement Speed", &movementSpeedSpinBox);
     keyboardMovementLayout.addRow("Jump Frames (D, F)", &jumpFramesSpinBox);
     keyboardMovementLayout.addRow("Walk Frames (E, R)", &walkFramesSpinBox);
