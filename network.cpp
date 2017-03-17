@@ -114,17 +114,11 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
         pause.exit();
     });
-
-    QProgressDialog progress("Network Operation…", "Abort", 0, 100, state->mainWindow);
-    progress.setModal(true);
-    QObject::connect(&progress, &QProgressDialog::canceled, &reply, &QNetworkReply::abort);
-    auto processProgress = [&progress](qint64 bytesReceived, qint64 bytesTotal){
-        progress.setRange(0, bytesTotal);
-        progress.setValue(bytesReceived);
+    auto processProgress = [](qint64 bytesReceived, qint64 bytesTotal){
+        qDebug() << bytesReceived << bytesTotal << bytesReceived / std::max(1.0, static_cast<double>(bytesTotal));
     };
     QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
-    QTimer::singleShot(400, &progress, &QProgressDialog::show);
 
     pause.exec();
 

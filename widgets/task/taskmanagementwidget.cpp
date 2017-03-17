@@ -237,7 +237,9 @@ bool TaskManagementWidget::submit(const bool final) {
 
     const auto url = taskLoginWidget.host + api + "/submit/";
     setCursor(Qt::BusyCursor);
+    setEnabled(false);// disable until upload has finished
     auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
+    setEnabled(true);
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res, "Task successfully submitted!")) {
