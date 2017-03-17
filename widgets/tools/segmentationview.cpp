@@ -420,13 +420,11 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     static auto setColor = [this](QTreeView & table, const QModelIndex & index) {
         if (index.column() == 0) {
             colorDialog.setCurrentColor(table.model()->data(index, Qt::BackgroundRole).value<QColor>());
-            state->viewerState->renderInterval = SLOW;
-            if (colorDialog.exec() == QColorDialog::Accepted) {
+            if (state->viewer->suspend([this]{ return colorDialog.exec(); }) == QColorDialog::Accepted) {
                 auto & obj = (&table == &objectsTable) ? Segmentation::singleton().objects[index.row()] : touchedObjectModel.objectCache[index.row()].get();
                 auto color = colorDialog.currentColor();
                 Segmentation::singleton().changeColor(obj, std::make_tuple(color.red(), color.green(), color.blue()));
             }
-            state->viewerState->renderInterval = FAST;
         }
     };
 

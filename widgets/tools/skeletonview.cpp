@@ -27,7 +27,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
-#include "viewer.h"//state->viewerState->renderInterval
+#include "viewer.h"// Viewer::suspend
 
 #include <QFormLayout>
 #include <QHeaderView>
@@ -598,11 +598,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index){
         if (index.column() == 1) {
             colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
-            state->viewerState->renderInterval = SLOW;
-            if (colorDialog.exec() == QColorDialog::Accepted) {
+            if (state->viewer->suspend([this]{ return colorDialog.exec(); }) == QColorDialog::Accepted) {
                 treeView.model()->setData(index, colorDialog.currentColor());
             }
-            state->viewerState->renderInterval = FAST;
         }
     });
 

@@ -107,9 +107,9 @@ Qt::ItemFlags CommentsModel::flags(const QModelIndex & index) const {
 void CommentsTab::itemDoubleClicked(const QModelIndex &index) {
     auto & comment = CommentSetting::comments[index.row()];
     if (index.column() == 2) {
-        state->viewerState->renderInterval = SLOW;
-        auto color = QColorDialog::getColor(comment.color, this, "Select comment color", QColorDialog::ShowAlphaChannel);
-        state->viewerState->renderInterval = FAST;
+        const auto color = state->viewer->suspend([this, &comment]{
+            return QColorDialog::getColor(comment.color, this, "Select comment color", QColorDialog::ShowAlphaChannel);
+        });
         if (color.isValid() == QColorDialog::Accepted) {
             comment.color = color;
         }

@@ -136,9 +136,9 @@ void TreesTab::updateTreeDisplay() {
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
-        state->viewerState->renderInterval = SLOW;
-        path = QFileDialog::getOpenFileName(this, tr("Load Tree Color Lookup Table"), QDir::homePath(), tr("LUT file (*.lut *.json)"));
-        state->viewerState->renderInterval = FAST;
+        path = state->viewer->suspend([this]{
+            return QFileDialog::getOpenFileName(this, tr("Load Tree Color Lookup Table"), QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        });
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {

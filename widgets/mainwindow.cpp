@@ -813,9 +813,9 @@ void MainWindow::openSlot() {
 #else
     QString choices = "KNOSSOS annotation file(s) (*.k.zip *.nml)";
 #endif
-    state->viewerState->renderInterval = SLOW;
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open annotation file(s)", openFileDirectory, choices);
-    state->viewerState->renderInterval = FAST;
+    const QStringList fileNames = state->viewer->suspend([this, &choices]{
+        return QFileDialog::getOpenFileNames(this, "Open annotation file(s)", openFileDirectory, choices);
+    });
     if (fileNames.empty() == false) {
         openFileDirectory = QFileInfo(fileNames.front()).absolutePath();
         openFileDispatch(fileNames);
@@ -834,13 +834,13 @@ void MainWindow::saveSlot() {
 void MainWindow::saveAsSlot() {
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
-    state->viewerState->renderInterval = SLOW;
+    QString fileName = state->viewer->suspend([this, suggestedFile]{
 #ifdef Q_OS_MAC
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
+        return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
 #else
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile, "KNOSSOS annotation file (*.k.zip)");
+        return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile, "KNOSSOS annotation file (*.k.zip)");
 #endif
-    state->viewerState->renderInterval = FAST;
+    });
 
     if (!fileName.isEmpty()) {
         const auto prevFilename = fileName;
@@ -903,9 +903,9 @@ void MainWindow::exportToNml() {
     defaultpath.chop(6);
     defaultpath += ".nml";
     const auto & suggestedFilepath = Session::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
-    state->viewerState->renderInterval = SLOW;
-    auto filename = QFileDialog::getSaveFileName(this, "Export to skeleton file", suggestedFilepath, "KNOSSOS skeleton file (*.nml)");
-    state->viewerState->renderInterval = FAST;
+    auto filename = state->viewer->suspend([this, &suggestedFilepath]{
+        return QFileDialog::getSaveFileName(this, "Export to skeleton file", suggestedFilepath, "KNOSSOS skeleton file (*.nml)");
+    });
     if(filename.isEmpty() == false) {
         if(filename.endsWith(".nml") == false) {
             filename += ".nml";
@@ -1334,9 +1334,9 @@ void MainWindow::pythonPropertiesSlot() {
 }
 
 void MainWindow::pythonFileSlot() {
-    state->viewerState->renderInterval = SLOW;
-    QString pyFileName = QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
-    state->viewerState->renderInterval = FAST;
+    const QString pyFileName = state->viewer->suspend([this]{
+        return QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
+    });
     state->scripting->runFile(pyFileName);
 }
 

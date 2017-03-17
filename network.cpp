@@ -25,6 +25,7 @@
 #include "loader.h"
 #include "stateInfo.h"
 #include "version.h"
+#include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
 
@@ -100,7 +101,9 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
         QObject::connect(&progress, &QProgressDialog::canceled, replyPtr, &QNetworkReply::abort);
     }
 
-    pause.exec();
+    state->viewer->suspend([&pause](){
+        return pause.exec();
+    });
 
     if (lowestAvailableMag > highestAvailableMag) {
         throw std::runtime_error{"no mags detected"};
@@ -120,7 +123,9 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
 
-    pause.exec();
+    state->viewer->suspend([&pause](){
+        return pause.exec();
+    });
 
     if (reply.error() != QNetworkReply::NoError) {
         qDebug() << reply.errorString();

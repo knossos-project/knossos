@@ -84,9 +84,9 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     mainLayout.addWidget(&snapshotButton);
 
     QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
-        state->viewerState->renderInterval = SLOW;
-        const auto path = QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
-        state->viewerState->renderInterval = FAST;
+        const auto path = state->viewer->suspend([this]{
+            return QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
+        });
         if(path.isEmpty() == false) {
             QFileInfo info(path);
             saveDir = info.absolutePath() + "/";

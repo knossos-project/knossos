@@ -212,9 +212,9 @@ void NodesTab::updateProperties(const QSet<QString> & numberProperties, const QS
 
 void NodesTab::loadNodeLUTRequest(QString path) {
     if (path.isEmpty()) {
-        state->viewerState->renderInterval = SLOW;
-        path = QFileDialog::getOpenFileName(this, "Load node color lookup table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
-        state->viewerState->renderInterval = FAST;
+        path = state->viewer->suspend([this]{
+            return QFileDialog::getOpenFileName(this, "Load node color lookup table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        });
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {

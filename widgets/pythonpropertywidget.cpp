@@ -73,9 +73,9 @@ void PythonPropertyWidget::closeEvent(QCloseEvent *) {
 }
 
 void PythonPropertyWidget::autoStartFolderButtonClicked() {
-     state->viewerState->renderInterval = SLOW;
-     QString selection = QFileDialog::getExistingDirectory(this, "select the autostart folder", QDir::homePath());
-     state->viewerState->renderInterval = FAST;
+     const QString selection = state->viewer->suspend([this]{
+         return QFileDialog::getExistingDirectory(this, "select the autostart folder", QDir::homePath());
+     });
      if(!selection.isEmpty()) {
          autoStartFolderEdit->setText(selection);
      }
@@ -106,18 +106,18 @@ void PythonPropertyWidget::loadSettings() {
 }
 
 void PythonPropertyWidget::workingDirectoryButtonClicked() {
-     state->viewerState->renderInterval = SLOW;
-     QString selection = QFileDialog::getExistingDirectory(this, "select a working directory", QDir::homePath());
-     state->viewerState->renderInterval = FAST;
+     const QString selection = state->viewer->suspend([this]{
+         return QFileDialog::getExistingDirectory(this, "select a working directory", QDir::homePath());
+     });
      if(!selection.isEmpty()) {
          workingDirectoryEdit->setText(selection);
      }
 }
 
 void PythonPropertyWidget::appendCustomPathButtonClicked() {
-     state->viewerState->renderInterval = SLOW;
-     QString selection = QFileDialog::getExistingDirectory(this, "select custom path directory", QDir::homePath());
-     state->viewerState->renderInterval = FAST;
+     const QString selection = state->viewer->suspend([this]{
+         return QFileDialog::getExistingDirectory(this, "select custom path directory", QDir::homePath());
+     });
      if(!selection.isEmpty()) {
          customPathsEdit->append(selection);
      }

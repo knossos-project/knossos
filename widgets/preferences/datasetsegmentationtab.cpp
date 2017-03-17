@@ -131,9 +131,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         emit volumeRenderToggled();
     });
     QObject::connect(&volumeColorButton, &QPushButton::clicked, [this]() {
-        state->viewerState->renderInterval = SLOW;
-        auto color = QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
-        state->viewerState->renderInterval = FAST;
+        const auto color = state->viewer->suspend([this]{
+            return QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");
+        });
         if (color.isValid() == QColorDialog::Accepted) {
             Segmentation::singleton().volume_background_color = color;
             volumeColorButton.setStyleSheet("background-color: " + color.name() + ";");

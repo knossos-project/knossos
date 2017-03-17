@@ -119,9 +119,9 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     QPushButton *addDatasetButton = new QPushButton("…");
     addDatasetButton->setToolTip(tr("Select a dataset from file…"));
     QObject::connect(addDatasetButton, &QPushButton::clicked, [this, rowFromCell, addDatasetButton](){
-        state->viewerState->renderInterval = SLOW;
-        const auto selectedFile = QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
-        state->viewerState->renderInterval = FAST;
+        const auto selectedFile = state->viewer->suspend([this]{
+            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
+        });
         if (!selectedFile.isEmpty()) {
             QTableWidgetItem * const datasetPathItem = new QTableWidgetItem(selectedFile);
             const int row = rowFromCell(1, addDatasetButton);

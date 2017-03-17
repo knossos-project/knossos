@@ -41,9 +41,6 @@
 
 #include <vector>
 
-#define SLOW 1000
-#define FAST 10
-
 enum class SkeletonDisplay {
     OnlySelected = 0x1,
     ShowIn3DVP = 0x2,
@@ -101,10 +98,6 @@ struct ViewerState {
     float cumDistRenderThres{7.f};
 
     bool defaultVPSizeAndPos{true};
-    //there’s a problem (intel drivers on linux only?)
-    //rendering knossos at full speed and displaying a file dialog
-    //so we reduce the rendering speed during display of said dialog
-    uint renderInterval{FAST};
 
     //In pennmode right and left click are switched
     bool penmode = false;
@@ -193,6 +186,16 @@ private:
     Remote remote;
 public:
     Viewer();
+    // there’s a problem (mesa only?)
+    // rendering knossos at full speed and displaying a i.e. file dialog or uploading a file
+    // so we stop the rendering during display of said dialog
+    template<typename F, typename... Args>
+    auto suspend(F func, Args... args) {
+        timer.stop();
+        auto && res = func(args...);
+        timer.start();
+        return res;
+    }
     void saveSettings();
     void loadSettings();
     Skeletonizer *skeletonizer;

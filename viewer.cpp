@@ -50,8 +50,7 @@ Viewer::Viewer() {
 
     rewire();
 
-    timer.setSingleShot(true);
-    QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run); // timer is started in Viewer::run.
+    QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run);// timer is started in main
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
@@ -855,9 +854,11 @@ void Viewer::run() {
         return;
     }
 
-    //start the timer before the rendering, else render interval and actual rendering time would accumulate
-    timer.stop();
-    timer.start(QApplication::activeWindow() != nullptr ? state->viewerState->renderInterval : SLOW);
+    // start the timer before the rendering, else render interval and actual rendering time would accumulate
+    if (timer.isActive()) {
+        timer.stop();
+        timer.start(QApplication::activeWindow() != nullptr ? 10 : 1000);// only update once per second if K isn’t the active application
+    }
 
     if (viewerState.keyRepeat) {
         const double interval = 1000.0 / viewerState.movementSpeed;
