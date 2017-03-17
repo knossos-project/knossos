@@ -27,9 +27,12 @@
 
 #include <QNetworkCookieJar>
 #include <QNetworkAccessManager>
+#include <QObject>
 #include <QThread>
 
-class Network {
+class Network : public QObject {
+    Q_OBJECT
+
     QNetworkAccessManager manager;
     QNetworkCookieJar cookieJar;
 
@@ -50,6 +53,11 @@ public:
     QPair<bool, QString> submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final);
     void submitSegmentationJob(const QString &filename);
     std::pair<int, int> checkOnlineMags(const QUrl & url);
+
+signals:
+    void startedNetworkRequest(QNetworkReply & reply);
+    void progressChanged(const qint64 value, const qint64 maxValue);
+    void finishedNetworkRequest();
 };
 
 #endif // NETWORK_H

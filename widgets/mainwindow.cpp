@@ -138,7 +138,26 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     statusBar()->setSizeGripEnabled(false);
     GUIModeLabel.setVisible(false);
     statusBar()->addWidget(&GUIModeLabel);
+    networkProgressBar.setVisible(false);
+    networkProgressAbortButton.setVisible(false);
     cursorPositionLabel.setVisible(false);
+    QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply & reply) {
+        networkProgressBar.setVisible(true);
+    #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
+        networkProgressAbortButton.setVisible(true);
+        QObject::connect(&networkProgressAbortButton, &QPushButton::clicked, &reply, &QNetworkReply::abort);
+    #endif
+    });
+    QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, [this]() {
+        networkProgressBar.setHidden(true);
+        networkProgressAbortButton.setHidden(true);
+    });
+    QObject::connect(&Network::singleton(), &Network::progressChanged, [this](int bytesFinished, int bytesTotal) {
+        networkProgressBar.setValue(bytesFinished);
+        networkProgressBar.setMaximum(bytesTotal);
+    });
+    statusBar()->addWidget(&networkProgressBar);
+    statusBar()->addWidget(&networkProgressAbortButton);
     statusBar()->addWidget(&cursorPositionLabel);
 
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "minimumHeight"));

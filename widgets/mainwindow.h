@@ -36,6 +36,7 @@
 #include <QMenu>
 #include <QMainWindow>
 #include <QParallelAnimationGroup>
+#include <QProgressBar>
 #include <QToolBar>
 
 #include <array>
@@ -149,6 +150,9 @@ class MainWindow : public QMainWindow {
     QString saveFileDirectory;
 
     std::vector<QAction*> commentActions;
+
+    QProgressBar networkProgressBar;
+    QPushButton networkProgressAbortButton{"Abort"};
 
     int loaderLastProgress;
     QLabel *loaderProgress;

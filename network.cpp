@@ -117,11 +117,9 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
         pause.exit();
     });
-    auto processProgress = [](qint64 bytesReceived, qint64 bytesTotal){
-        qDebug() << bytesReceived << bytesTotal << bytesReceived / std::max(1.0, static_cast<double>(bytesTotal));
-    };
-    QObject::connect(&reply, &QNetworkReply::downloadProgress, processProgress);
-    QObject::connect(&reply, &QNetworkReply::uploadProgress, processProgress);
+    emit Network::singleton().startedNetworkRequest(reply);
+    QObject::connect(&reply, &QNetworkReply::downloadProgress, &Network::singleton(), &Network::progressChanged);
+    QObject::connect(&reply, &QNetworkReply::uploadProgress, &Network::singleton(), &Network::progressChanged);
 
     state->viewer->suspend([&pause](){
         return pause.exec();
@@ -130,6 +128,7 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     if (reply.error() != QNetworkReply::NoError) {
         qDebug() << reply.errorString();
     }
+    emit Network::singleton().finishedNetworkRequest();
     reply.deleteLater();
     return {reply.error() == QNetworkReply::NoError, reply.readAll()};
 }
