@@ -1198,42 +1198,8 @@ void Viewport3D::pickMeshIdAtPosition() {
 }
 
 void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     glEnable(GL_MULTISAMPLE);
-    const auto zoomedHalfBoundary = 0.5 * state->skeletonState->volBoundary / zoomFactor;
     const auto scaledBoundary = state->scale.componentMul(state->boundary);
-
-    const auto left = state->skeletonState->translateX - zoomedHalfBoundary;
-    const auto right = state->skeletonState->translateX + zoomedHalfBoundary;
-    const auto bottom = state->skeletonState->translateY + zoomedHalfBoundary;
-    const auto top = state->skeletonState->translateY - zoomedHalfBoundary;
-    const auto nears = -state->skeletonState->volBoundary;
-    const auto fars = state->skeletonState->volBoundary;
-    const auto nearVal = -nears;
-    const auto farVal = -fars;
-    glOrtho(left, right, bottom, top, nearVal, farVal);
-
-    std::array<GLint, 4> vp;
-    glGetIntegerv(GL_VIEWPORT, vp.data());
-    edgeLength = vp[2];// retrieve adjusted size for snapshot
-    screenPxXPerDataPx = edgeLength / (2.0 * zoomedHalfBoundary);
-    displayedlengthInNmX = edgeLength / screenPxXPerDataPx;
-
-     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    if (!options.nodePicking) {
-        // Now we draw the  background of our skeleton VP
-        glClearColor(1, 1, 1, 1);// white
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    // load model view matrix that stores rotation state!
-    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
     auto rotateMe = [this, scaledBoundary](auto x, auto y){
         floatCoordinate rotationCenter{state->scale.componentMul(state->viewerState->currentPosition)};
@@ -1311,6 +1277,39 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->viewerState->rotationCenter = previousRotationCenter;
         state->skeletonState->translateX = 0.5 * scaledBoundary.x;
         state->skeletonState->translateY = 0.5 * scaledBoundary.y;
+    }
+
+    const auto zoomedHalfBoundary = 0.5 * state->skeletonState->volBoundary / zoomFactor;
+
+    std::array<GLint, 4> vp;
+    glGetIntegerv(GL_VIEWPORT, vp.data());
+    edgeLength = vp[2];// retrieve adjusted size for snapshot
+    screenPxXPerDataPx = edgeLength / (2.0 * zoomedHalfBoundary);
+    displayedlengthInNmX = edgeLength / screenPxXPerDataPx;
+
+    const auto left = state->skeletonState->translateX - zoomedHalfBoundary;
+    const auto right = state->skeletonState->translateX + zoomedHalfBoundary;
+    const auto bottom = state->skeletonState->translateY + zoomedHalfBoundary;
+    const auto top = state->skeletonState->translateY - zoomedHalfBoundary;
+    const auto nears = -state->skeletonState->volBoundary;
+    const auto fars = state->skeletonState->volBoundary;
+    const auto nearVal = -nears;
+    const auto farVal = -fars;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(left, right, bottom, top, nearVal, farVal);
+
+    // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    // load model view matrix that stores rotation state!
+    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+    if (!options.nodePicking) {
+        // Now we draw the  background of our skeleton VP
+        glClearColor(1, 1, 1, 1);// white
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
