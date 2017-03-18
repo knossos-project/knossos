@@ -399,6 +399,9 @@ void Loader::Worker::abortDownloadsFinishDecompression(Func keep) {
 }
 
 std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Dataset::CubeType type, coord2bytep_map_t & cubeHash, const Coordinate globalCoord, const int magnification) {
+    if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
+        return {false, currentSlot};
+    }
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
 
@@ -440,7 +443,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
             }
             archive.close();
         }
-    }  else {
+    } else {
         qDebug() << "unsupported format";
     }
 
