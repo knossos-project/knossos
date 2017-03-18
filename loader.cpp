@@ -598,11 +598,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 auto * currentSlot = freeSlots.front();
                 freeSlots.pop_front();
                 if (reply->error() == QNetworkReply::NoError) {
-
+                    downloads.erase(globalCoord);
                     auto future = QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(*reply), type, std::ref(cubeHash), globalCoord, state->magnification));
 
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {
                             auto result = watcher->result();
 
@@ -614,9 +614,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                             qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
                             freeSlots.emplace_back(currentSlot);
                         }
-
-                        downloads[globalCoord]->deleteLater();
-                        downloads.erase(globalCoord);
+                        reply->deleteLater();
                         decompressions.erase(globalCoord);
                         broadcastProgress();
                     });
