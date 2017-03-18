@@ -2,11 +2,11 @@
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
   xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'
   xmlns:bal='http://schemas.microsoft.com/wix/BalExtension'>
-  <?define Version='5.0'?>
+  <?define Version='5.0.1'?>
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
   <Bundle Version='$(var.Version)' 
     UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
-    IconSourceFile='logo.ico' 
+    IconSourceFile='../logo.ico' 
     AboutUrl='https://knossostool.org'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
     Copyright='Copyright © Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.. All rights reserved.'
@@ -14,12 +14,12 @@
     <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLargeLicense'>
       <bal:WixStandardBootstrapperApplication
         LicenseUrl='https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt'
-        LogoFile='64x64.png'
+        LogoFile='../64x64.png'
         ShowVersion='yes'
         ThemeFile='HyperlinkTheme.xml'
         />
     </BootstrapperApplicationRef>
-    <Variable Name='InstallFolder' Type='string' Value='[ProgramFiles64Folder]MPIN\KNOSSOS 5.0'/>
+    <Variable Name='InstallFolder' Type='string' Value='[ProgramFiles64Folder]MPIN\KNOSSOS $(var.Version)'/>
     <Variable Name="LocalPythonCheckbox" Value="1"/>
     <Variable Name="LocalDesktopShortcutCheckbox" Value="1"/>
 
@@ -56,5 +56,4 @@
         InstallCondition='NOT PYTHONVERSION AND LocalPythonCheckbox = "1"' />
     </PackageGroup> 
   </Fragment> 
-
 </Wix>
