@@ -139,8 +139,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
     GUIModeLabel.setVisible(false);
     statusBar()->addWidget(&GUIModeLabel);
     networkProgressBar.setVisible(false);
+    networkProgressBar.setToolTip("Network progress");
     networkProgressBar.setTextVisible(false); // under windows percentage is shown next to progress bar (instead of on top of it) and is not visible on the dark status bar.
     networkProgressAbortButton.setVisible(false);
+    networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
     QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply & reply) {
         networkProgressBar.setVisible(true);
