@@ -21,10 +21,11 @@
  */
 
 #include "datasetsegmentationtab.h"
+#include "segmentation/segmentation.h"
+#include "stateInfo.h"
+#include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
-#include "segmentation/segmentation.h"
-#include "viewer.h"
 
 #include <QColorDialog>
 #include <QFileDialog>

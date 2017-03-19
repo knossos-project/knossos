@@ -26,7 +26,6 @@
 #include "session.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
-#include "stateInfo.h"
 #include "version.h"
 #include "widgets/viewport.h"
 
@@ -130,6 +129,7 @@ public:
 };
 
 struct SkeletonState {
+    SkeletonState();
     treeListElement * activeTree{nullptr};
     nodeListElement * activeNode{nullptr};
 
@@ -174,7 +174,7 @@ struct SkeletonState {
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
     //boundary of the visualized volume in the skeleton viewport
-    int volBoundary = 2 * std::max({state->scale.x * state->boundary.x, state->scale.y * state->boundary.y, state->scale.z * state->boundary.z});
+    int volBoundary;
 
     QString skeletonCreatedInVersion{KVERSION};
     QString skeletonLastSavedInVersion;

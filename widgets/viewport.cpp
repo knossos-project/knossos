@@ -30,6 +30,7 @@
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <QApplication>

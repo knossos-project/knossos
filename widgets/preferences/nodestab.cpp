@@ -21,9 +21,12 @@
  */
 
 #include "nodestab.h"
+
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 
 #include <QFileDialog>
@@ -186,7 +189,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&propertyMinMaxButton, &QPushButton::clicked, [this]() { findAndSetPropertyRange(state->viewerState->highlightedNodePropertyByColor); });
     QObject::connect(&propertyLUTButton, &QPushButton::clicked, [this]() { loadNodeLUTRequest(); });
 
-    createGlobalAction(Qt::CTRL + Qt::Key_R, [this](){// R for radius
+    createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_R, [this](){// R for radius
         overrideNodeRadiusCheck.toggle();
         overrideNodeRadiusCheck.clicked(overrideNodeRadiusCheck.isChecked());
     });

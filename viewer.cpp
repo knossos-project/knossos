@@ -28,6 +28,7 @@
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
@@ -40,8 +41,11 @@
 #include <fstream>
 #include <cmath>
 
-Viewer::Viewer() {
-    state->viewer = this;
+ViewerState::ViewerState() {
+    state->viewerState = this;
+}
+
+Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     viewerState.layerVisibility = std::vector<bool>(2, true);
     skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();

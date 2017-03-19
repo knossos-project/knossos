@@ -25,13 +25,14 @@
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
+#include "scriptengine/scripting.h"
 #include "skeleton/node.h"
 #include "skeleton/skeleton_dfs.h"
+#include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"
 #include "viewport.h"
-#include "scriptengine/scripting.h"
-#include "skeleton/skeletonizer.h"
 #include "widgetcontainer.h"
 
 #include <PythonQt/PythonQt.h>
@@ -66,7 +67,6 @@
 #include <QStringList>
 #include <QThread>
 #include <QToolButton>
-#include <QQueue>
 
 class CoordinateSpin : public QSpinBox {
 public:
@@ -90,7 +90,7 @@ QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString 
     return action;
 }
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(this) {
+MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](){ state->mainWindow = this; return true; }()}, widgetContainer{this} {// make state->mainWindow available to widgets
     updateTitlebar();
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
@@ -201,7 +201,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), widgetContainer(t
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
-    createGlobalAction(Qt::Key_F7, [](){
+    createGlobalAction(state->mainWindow, Qt::Key_F7, [](){
         state->viewer->gpuRendering = !state->viewer->gpuRendering;
     });
 }

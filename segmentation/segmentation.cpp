@@ -26,6 +26,7 @@
 #include "loader.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <QSignalBlocker>

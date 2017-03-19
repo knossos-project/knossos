@@ -24,7 +24,6 @@
 
 #include "network.h"
 #include "session.h"
-#include "stateInfo.h"
 #include "widgets/GuiConstants.h"
 
 #include <QDir>

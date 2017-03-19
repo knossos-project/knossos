@@ -20,9 +20,10 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "stateInfo.h"
 #include "viewporttab.h"
-#include "widgets/GuiConstants.h"
 #include "viewer.h"
+#include "widgets/GuiConstants.h"
 #include "widgets/viewport.h"
 
 ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {

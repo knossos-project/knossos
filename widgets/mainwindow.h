@@ -25,7 +25,6 @@
 
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
-#include "stateInfo.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 
@@ -103,10 +102,7 @@ public:
 };
 
 class MainWindow : public QMainWindow {
-    const bool evilHack = [this](){
-        state->mainWindow = this;// make state->mainWindow available to widgets
-        return true;
-    }();
+    const bool evilHack;
     Q_OBJECT
     friend class TaskManagementWidget;
     friend class SkeletonProxy;
@@ -300,12 +296,12 @@ public slots:
     void updateCompressionRatioDisplay();
 };
 
-auto createGlobalAction = [](auto key, auto todo){
-    auto & action = *new QAction(state->mainWindow);
+auto createGlobalAction = [](auto parent, auto key, auto todo){
+    auto & action = *new QAction(parent);
     action.setShortcut(key);
     action.setShortcutContext(Qt::ApplicationShortcut);
     QObject::connect(&action, &QAction::triggered, todo);
-    state->mainWindow->addAction(&action);
+    parent->addAction(&action);
 };
 
 #endif // MAINWINDOW_H

@@ -29,6 +29,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <QMatrix4x4>

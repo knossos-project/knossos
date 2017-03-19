@@ -21,8 +21,11 @@
  */
 
 #include "treestab.h"
-#include "widgets/GuiConstants.h"
+
+#include "stateInfo.h"
 #include "viewer.h"
+#include "widgets/GuiConstants.h"
+#include "widgets/mainwindow.h"
 
 #include <QFileDialog>
 #include <QHBoxLayout>
@@ -110,7 +113,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
     QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
 
-    createGlobalAction(Qt::CTRL + Qt::Key_T, [this](){// T for trees
+    createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_T, [this](){// T for trees
         if (wholeSkeletonRadio.isChecked()) {
             selectedTreesRadio.setChecked(true);
         } else {

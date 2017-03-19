@@ -30,6 +30,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
 #include "tinyply/tinyply.h"
 #include "version.h"
 #include "viewer.h"
@@ -49,6 +50,8 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+
+SkeletonState::SkeletonState() : volBoundary(2 * std::max({state->scale.x * state->boundary.x, state->scale.y * state->boundary.y, state->scale.z * state->boundary.z})) {}
 
 template<typename T, typename Func>
 bool connectedComponent(T & node, Func func) {

@@ -1,5 +1,7 @@
 #include "skeleton/skeleton_dfs.h"
+
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 
 NodeGenerator::NodeGenerator(nodeListElement & node, const Direction direction) : direction(direction), reachedEnd{false} {
     queuedNodes.emplace(&node);

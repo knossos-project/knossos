@@ -26,7 +26,6 @@
 #include "proxies/pythonproxy.h"
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
-#include "stateInfo.h"
 #include "widgets/viewport.h"
 
 #include <PythonQt/PythonQtObjectPtr.h>
@@ -82,7 +81,7 @@ class SignalRelay : public QObject
 {
     Q_OBJECT
 public:
-    explicit SignalRelay() {state->signalRelay = this;}
+    explicit SignalRelay();
 signals:
     void Signal_EventModel_handleMouseHover(EmitOnCtorDtor*,Coordinate,quint64,int, const QMouseEvent*);
     void Signal_Viewort_mouseReleaseEvent(EmitOnCtorDtor*,class ViewportBase*, const QMouseEvent*);

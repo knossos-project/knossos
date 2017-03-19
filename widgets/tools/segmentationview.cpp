@@ -23,6 +23,7 @@
 #include "segmentationview.h"
 
 #include "model_helper.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <QApplication>

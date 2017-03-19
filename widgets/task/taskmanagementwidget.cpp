@@ -23,6 +23,7 @@
 #include "taskmanagementwidget.h"
 
 #include "network.h"
+#include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 

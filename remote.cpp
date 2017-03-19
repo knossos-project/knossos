@@ -24,6 +24,7 @@
 
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <QQuaternion>

@@ -23,6 +23,7 @@
 #include "coordinate.h"
 #include "dataset.h"
 #include "scriptengine/scripting.h"
+#include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"

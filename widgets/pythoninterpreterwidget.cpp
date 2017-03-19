@@ -24,6 +24,7 @@
 
 #include "GuiConstants.h"
 #include "scriptengine/scripting.h"
+#include "stateInfo.h"
 #include "viewer.h"
 
 #include <PythonQt/gui/PythonQtScriptingConsole.h>

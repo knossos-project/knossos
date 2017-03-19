@@ -23,9 +23,10 @@
 #include "savetab.h"
 
 #include "file_io.h"
+#include "stateInfo.h"
+#include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
-#include "viewer.h"
 
 #include <QDesktopServices>
 #include <QDir>

@@ -31,6 +31,7 @@
 #include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"

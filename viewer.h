@@ -26,7 +26,6 @@
 #include "functions.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
-#include "stateInfo.h"
 #include "usermove.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
@@ -62,9 +61,7 @@ enum class RotationCenter {
 };
 
 struct ViewerState {
-    ViewerState() {
-        state->viewerState = this;
-    }
+    ViewerState();
 
     int texEdgeLength = 512;
     // don't jump between mags on zooming
@@ -163,10 +160,7 @@ struct ViewerState {
 class Skeletonizer;
 class ViewportBase;
 class Viewer : public QObject {
-    const bool evilHack = [this](){
-        state->viewer = this;// make state->viewer available to widgets
-        return true;
-    }();
+    const bool evilHack;
     Q_OBJECT
 private:
     QElapsedTimer keyRepeatTimer;
