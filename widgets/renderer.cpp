@@ -32,22 +32,16 @@
 #include "viewer.h"
 
 #include <QMatrix4x4>
+#include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
 #include <QOpenGLTimeMonitor>
 #include <QPainter>
 #include <QQuaternion>
 #include <QVector3D>
-#include <QOpenGLBuffer>
-#include <QOpenGLFramebufferObject>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
-#endif
-#ifdef Q_OS_LINUX
-    #include <GL/gl.h>
-    #include <GL/glu.h>
-#endif
-#ifdef Q_OS_WIN32
+#else
     #include <GL/glu.h>
 #endif
 

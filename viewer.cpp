@@ -34,7 +34,6 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDesktopWidget>
-#include <qopengl.h>
 #include <QVector3D>
 
 #include <fstream>

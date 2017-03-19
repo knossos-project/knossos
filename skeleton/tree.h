@@ -23,6 +23,7 @@
 #ifndef TREE_H
 #define TREE_H
 
+#include "mesh/mesh.h"
 #include "node.h"
 #include "property_query.h"
 
@@ -33,7 +34,6 @@
 #include <list>
 #include <memory>
 
-class Mesh;
 class segmentListElement;
 
 class treeListElement : public PropertyQuery {

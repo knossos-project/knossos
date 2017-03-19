@@ -35,9 +35,4 @@ public:
     QOpenGLBuffer picking_color_buf{QOpenGLBuffer::VertexBuffer};
 };
 
-struct BufferSelection {
-    std::uint64_t treeId;
-    floatCoordinate coord;
-};
-
 #endif// MESH_H

@@ -24,8 +24,6 @@
 #define VIEWPORT_H
 
 #include "coordinate.h"
-#include "mesh/mesh.h"
-#include "stateInfo.h"
 
 #include <QAction>
 #include <QDebug>
@@ -35,7 +33,6 @@
 #include <QMouseEvent>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_2_0>
-#include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
@@ -295,6 +292,11 @@ public slots:
     virtual void zoomOut() {};
 };
 
+struct BufferSelection {
+    std::uint64_t treeId;
+    floatCoordinate coord;
+};
+class Mesh;
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
