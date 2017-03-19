@@ -50,12 +50,13 @@ SignalRelay::SignalRelay() {
      state->signalRelay = this;
 }
 
-void PythonQtInit() {
+auto PythonQtInit = []() {
     PythonQt::init(PythonQt::RedirectStdOut);
 #ifdef QtAll
     PythonQt_QtAll::init();
 #endif
-}
+    return PythonQt::self()->getMainModule();
+};
 
 QVariant Scripting::evalScript(const QString& script, int start) {
     return _ctx.evalScript(script, start);
@@ -66,10 +67,7 @@ const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
 const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
 
-Scripting::Scripting() : _ctx{[](){
-        PythonQtInit();
-        return PythonQt::self()->getMainModule();
-    }()} {
+Scripting::Scripting() : _ctx{PythonQtInit()} {
     state->scripting = this;
 
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
