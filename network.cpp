@@ -22,7 +22,6 @@
 
 #include "network.h"
 
-#include "loader.h"
 #include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"

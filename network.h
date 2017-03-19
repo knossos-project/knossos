@@ -23,8 +23,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include "loader.h"
-
 #include <QNetworkCookieJar>
 #include <QNetworkAccessManager>
 #include <QObject>

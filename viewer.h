@@ -26,6 +26,8 @@
 #include "functions.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
+#include "stateInfo.h"
+#include "usermove.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
@@ -233,15 +235,15 @@ public slots:
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal);
-    void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const Coordinate & viewportNormal);
-    void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
-    void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
+    void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const floatCoordinate & viewportNormal);
+    void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & viewportNormal = {0, 0, 0});
+    void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & viewportNormal = {0, 0, 0});
     void userMoveClear();
     void recalcTextureOffsets();
     void calcDisplayedEdgeLength();
     void applyTextureFilterSetting(const GLint texFiltering);
     void run();
-    void loader_notify();
+    void loader_notify(const UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & direction = {0, 0, 0});
     void defaultDatasetLUT();
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();

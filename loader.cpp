@@ -27,6 +27,7 @@
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
+#include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
@@ -103,7 +104,7 @@ bool Loader::Controller::isFinished() {
     return worker != nullptr ? worker->isFinished.load() : true;//no loader == done?
 }
 
-void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
+void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics) {
     const auto INNER_MULT_VECTOR = [](const floatCoordinate v) {
         return v.x * v.y * v.z;
     };
@@ -122,13 +123,13 @@ void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMe
 
     distance_from_origin = CALC_VECTOR_NORM(currentMetricPos);
 
-    switch (state->loaderUserMoveType) {
+    switch (userMoveType) {
     case USERMOVE_HORIZONTAL:
     case USERMOVE_DRILL:
         distance_from_plane = CALC_POINT_DISTANCE_FROM_PLANE(currentMetricPos, direction);
         dot_product = CALC_DOT_PRODUCT(currentMetricPos, direction);
 
-        if (USERMOVE_HORIZONTAL == state->loaderUserMoveType) {
+        if (USERMOVE_HORIZONTAL == userMoveType) {
             metrics[i++] = (0 == distance_from_plane ? -1.0 : 1.0);
             metrics[i++] = (0 == INNER_MULT_VECTOR(currentMetricPos) ? -1.0 : 1.0);
         }
@@ -159,10 +160,9 @@ struct LO_Element {
     float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) {
+std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     const float floatHalfSc = state->M / 2.;
     const int halfSc = std::floor(floatHalfSc);
-    const floatCoordinate direction = state->loaderUserMoveViewportDirection;
     const int cubeElemCount = state->cubeSetElements;
     const auto currentOrigin = center.cube(state->cubeEdgeLength, state->magnification);
 
@@ -175,15 +175,11 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center) 
                 DcArray[i].coordinate = {currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z};
                 DcArray[i].offset = {x, y, z};
                 floatCoordinate currentMetricPos(x, y, z);
-                CalcLoadOrderMetric(floatHalfSc, currentMetricPos, direction, &DcArray[i].loadOrderMetrics[0]);
+                CalcLoadOrderMetric(floatHalfSc, currentMetricPos, userMoveType, direction, &DcArray[i].loadOrderMetrics[0]);
                 ++i;
             }
         }
     }
-
-    // Metrics are done, reset user-move variables
-    state->loaderUserMoveType = USERMOVE_NEUTRAL;
-    state->loaderUserMoveViewportDirection = {0, 0, 0};
 
     std::sort(std::begin(DcArray), std::begin(DcArray) + cubeElemCount, [&](const LO_Element & elem_a, const LO_Element & elem_b){
         for (int metric_index = 0; metric_index < currentMaxMetric; ++metric_index) {
@@ -475,10 +471,10 @@ void Loader::Worker::cleanup(const Coordinate center) {
     state->protectCube2Pointer.unlock();
 }
 
-void Loader::Controller::startLoading(const Coordinate & center) {
+void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     if (worker != nullptr) {
         worker->isFinished = false;
-        emit loadSignal(++loadingNr, center);
+        emit loadSignal(++loadingNr, center, userMoveType, direction);
     }
 }
 
@@ -488,14 +484,14 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center) {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     QTime time;
     time.start();
 
     cleanup(center);
     loaderMagnification = std::log2(state->magnification);
 
-    const auto Dcoi = DcoiFromPos(center);//datacubes of interest prioritized around the current position
+    const auto Dcoi = DcoiFromPos(center, userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
     std::vector<Coordinate> allCubes;
     std::vector<Coordinate> visibleCubes;

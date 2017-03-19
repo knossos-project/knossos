@@ -26,6 +26,8 @@
 #include "session.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
+#include "stateInfo.h"
+#include "version.h"
 #include "widgets/viewport.h"
 
 #include <QObject>
@@ -35,9 +37,9 @@
 
 #include <boost/optional.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <unordered_map>
-#include <version.h>
 
 class nodeListElement;
 class segmentListElement;

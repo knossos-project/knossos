@@ -24,6 +24,7 @@
 
 #include "file_io.h"
 #include "functions.h"
+#include "loader.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
@@ -944,7 +945,7 @@ void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const 
     remote.process(pos, normal);
 }
 
-void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const floatCoordinate & viewportNormal) {
     auto & viewerState = *state->viewerState;
     if (step.z != 0) {
         viewportXY->dcResliceNecessary = viewportXY->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
@@ -977,11 +978,12 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     if (newPosition_dc != lastPosition_dc) {
         dc_reslice_notify_visible();
         oc_reslice_notify_visible();
-
-        state->loaderUserMoveType = userMoveType;
-        Coordinate direction = (userMoveType == USERMOVE_DRILL)? step : (userMoveType == USERMOVE_HORIZONTAL)? viewportNormal : Coordinate(0, 0, 0);
-        state->loaderUserMoveViewportDirection = direction;
-        loader_notify();
+        // userMoveType How user movement was generated
+        // Direction of user movement in case of drilling,
+        // or normal to viewport plane in case of horizontal movement.
+        // Left unset in neutral movement.
+        const auto direction = (userMoveType == USERMOVE_DRILL) ? floatCoordinate{step} : (userMoveType == USERMOVE_HORIZONTAL) ? viewportNormal : floatCoordinate{};
+        loader_notify(userMoveType, direction);
     }
 
     if (state->gpuSlicer && newPosition_gpudc != lastPosition_gpudc) {
@@ -1006,14 +1008,14 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     emit coordinateChangedSignal(viewerState.currentPosition);
 }
 
-void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const floatCoordinate & viewportNormal) {
     moveCache += floatStep;
     const Coordinate step(moveCache);
     moveCache -= step;
     userMoveVoxels(step, userMoveType, viewportNormal);
 }
 
-void Viewer::userMoveRound(UserMoveType userMoveType, const Coordinate & viewportNormal) {
+void Viewer::userMoveRound(UserMoveType userMoveType, const floatCoordinate & viewportNormal) {
     const Coordinate rounded(std::lround(moveCache.x), std::lround(moveCache.y), std::lround(moveCache.z));
     Viewer::userMoveClear();
     userMoveVoxels(rounded, userMoveType, viewportNormal);
@@ -1122,8 +1124,8 @@ void Viewer::recalcTextureOffsets() {
     });
 }
 
-void Viewer::loader_notify() {
-    Loader::Controller::singleton().startLoading(state->viewerState->currentPosition);
+void Viewer::loader_notify(const UserMoveType userMoveType, const floatCoordinate & direction) {
+    Loader::Controller::singleton().startLoading(state->viewerState->currentPosition, userMoveType, direction);
 }
 
 void Viewer::defaultDatasetLUT() {

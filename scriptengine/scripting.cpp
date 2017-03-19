@@ -27,6 +27,7 @@
 #include "decorators/nodelistdecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
+#include "loader.h"
 #include "skeleton/skeletonizer.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"

@@ -23,9 +23,11 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include "coordinate.h"
 #include "dataset.h"
 #include "hashtable.h"
 #include "segmentation/segmentation.h"
+#include "usermove.h"
 
 #include <QCoreApplication>
 #include <QFutureWatcher>
@@ -90,9 +92,9 @@ private:
 
     std::atomic_bool isFinished{false};
     uint loaderMagnification = 0;
-    void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
+    void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
-    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center);
+    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center, const UserMoveType userMoveType, const floatCoordinate & direction);
     uint loadCubes();
     void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();
@@ -128,7 +130,7 @@ signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction);
 };
 
 class Controller : public QObject {
@@ -172,7 +174,7 @@ public:
         QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
     }
-    void startLoading(const Coordinate &center);
+    void startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate &direction);
     template<typename... Args>
     void snappyCacheSupplySnappy(Args&&... args) {
         emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
@@ -185,7 +187,7 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
 };

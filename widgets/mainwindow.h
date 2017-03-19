@@ -25,6 +25,7 @@
 
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
+#include "stateInfo.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 

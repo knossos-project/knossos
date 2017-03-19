@@ -39,10 +39,6 @@ extern stateInfo * state;
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
 
-// UserMove type
-enum UserMoveType {USERMOVE_DRILL, USERMOVE_HORIZONTAL, USERMOVE_NEUTRAL};
-Q_DECLARE_METATYPE(UserMoveType)
-
 //custom tail recursive constexpr log implementation
 //required for the following array declarations/accesses: (because std::log2 isn’t required to be constexpr yet)
 //  magPaths, magNames, magBoundaries, Dc2Pointer, Oc2Pointer
@@ -63,12 +59,6 @@ class stateInfo {
 public:
     //  Info about the data
     bool gpuSlicer = false;
-    // How user movement was generated
-    UserMoveType loaderUserMoveType{USERMOVE_NEUTRAL};
-    // Direction of user movement in case of drilling,
-    // or normal to viewport plane in case of horizontal movement.
-    // Left unset in neutral movement.
-    Coordinate loaderUserMoveViewportDirection{};
 
     bool quitSignal{false};
 

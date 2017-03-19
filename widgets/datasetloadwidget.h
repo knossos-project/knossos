@@ -24,7 +24,6 @@
 #define DATASETLOADWIDGET_H
 
 #include "coordinate.h"
-#include "loader.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/UserOrientableSplitter.h"
 #include "widgets/viewport.h"

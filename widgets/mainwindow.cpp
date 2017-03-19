@@ -22,6 +22,7 @@
 
 #include "file_io.h"
 #include "GuiConstants.h"
+#include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "skeleton/node.h"
