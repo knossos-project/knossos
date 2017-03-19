@@ -34,9 +34,6 @@
 class stateInfo;
 extern stateInfo * state;
 
-//used to be MAX_PATH but conflicted with the official one
-#define CSTRING_SIZE 250
-
 #define NUM_MAG_DATASETS 65536
 
 // Bytes for an object ID.

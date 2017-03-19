@@ -50,8 +50,6 @@
 #include <unordered_set>
 #include <vector>
 
-#define CATCH_RADIUS 10
-
 template<typename T, typename Func>
 bool connectedComponent(T & node, Func func) {
     std::queue<T*> queue;
