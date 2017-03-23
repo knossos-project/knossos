@@ -33,7 +33,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
 
 include(CustomLibraryLocations.cmake)#prefill variables
-include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
@@ -198,6 +197,7 @@ elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE_UPPER_CASE
     target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
 endif()
 
+include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)
     set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)# recurring https://github.com/Alexpux/MINGW-packages/issues/923
     cotire(${PROJECT_NAME})
