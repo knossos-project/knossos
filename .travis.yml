@@ -49,4 +49,4 @@ deploy:
   overwrite: true
   on:
     repo: knossos-project/knossos
-    condition: $TRAVIS_OS_NAME = osx
+    condition: $TRAVIS_OS_NAME = linux
