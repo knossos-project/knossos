@@ -160,14 +160,14 @@ struct SkeletonState {
     Coordinate lockedPosition;
     long unsigned int lockRadius{100};
 
-    float rotdx;
-    float rotdy;
-    int rotationcounter;
+    float rotdx{0};
+    float rotdy{0};
+    int rotationcounter{0};
     // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
 
-    float translateX;
-    float translateY;
+    float translateX{0};
+    float translateY{0};
 
     int definedSkeletonVpView{SKELVP_RESET};
 
