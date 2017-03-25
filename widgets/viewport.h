@@ -329,6 +329,7 @@ class Viewport3D : public ViewportBase {
     virtual void focusOutEvent(QFocusEvent *event) override;
 public:
     double zoomFactor{1.0};
+    QMatrix4x4 rotation;
     boost::optional<BufferSelection> meshLastClickInformation;
     bool meshLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);

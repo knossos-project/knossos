@@ -48,6 +48,7 @@
 
 #include <boost/math/constants/constants.hpp>
 
+#include <array>
 #include <cmath>
 
 enum GLNames {
@@ -1204,21 +1205,21 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             rotationCenter = scaledBoundary / 2;
         }
         // calculate inverted rotation
-        const auto rotation = QMatrix4x4{state->skeletonState->rotationState};
-        float inverseRotation[16];
-        rotation.inverted().copyDataTo(inverseRotation);
+        std::array<float, 16> inverseRotation;
+        rotation.inverted().copyDataTo(inverseRotation.data());
         // invert rotation
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixf(state->skeletonState->skeletonVpModelView);
         glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
-        glMultMatrixf(inverseRotation);
+        glMultMatrixf(inverseRotation.data());
         // add new rotation
         QMatrix4x4 singleRotation;
         singleRotation.rotate(y, {0, 1, 0});
         singleRotation.rotate(x, {1, 0, 0});
-        (rotation * singleRotation).copyDataTo(state->skeletonState->rotationState);
+        std::array<float, 16> rotationState;
+        (rotation *= singleRotation).copyDataTo(rotationState.data());
         // apply complete rotation
-        glMultMatrixf(state->skeletonState->rotationState);
+        glMultMatrixf(rotationState.data());
         glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
@@ -1236,7 +1237,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (xy || xz || zy) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
 
-        QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
+        rotation.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotation = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::CurrentPosition;
@@ -1262,7 +1263,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         zoomFactor = 1;
         emit updateZoomWidget();
 
-        QMatrix4x4{}.copyDataTo(state->skeletonState->rotationState);
+        rotation.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotationCenter = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::DatasetCenter;

@@ -163,8 +163,6 @@ struct SkeletonState {
     float rotdx{0};
     float rotdy{0};
     int rotationcounter{0};
-    // Stores the angles of the cube in the SkeletonVP
-    float rotationState[16];
 
     float translateX{0};
     float translateY{0};
