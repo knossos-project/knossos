@@ -544,10 +544,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         state->viewer->oc_reslice_notify_all(globalCoord);
                     } else {
                         freeSlots.emplace_back(currentSlot);
-                        qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "snappy extract" << snappyIt->second.size() << "failed";
+                        qCritical() << globalCoord << "snappy extract failed" << snappyIt->second.size();
                     }
                 } else {
-                    qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "no slots";
+                    qCritical() << globalCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
                 }
                 return;
             }
@@ -585,8 +585,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             broadcastProgress(true);
             QObject::connect(reply, &QNetworkReply::finished, [this, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
-                    qCritical() << "no slots" << static_cast<int>(type) << cubeHash.size() << freeSlots.size();
-                    downloads[globalCoord]->deleteLater();
+                    qCritical() << globalCoord << static_cast<int>(type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
+                    reply->deleteLater();
                     downloads.erase(globalCoord);
                     broadcastProgress();
                     return;
@@ -600,11 +600,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                             auto result = watcher->result();
 
                             if (!result.first) {//decompression unsuccessful
-                                qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "decompression" << static_cast<int>(type) << "failed → no fill";
+                                qCritical() << globalCoord << static_cast<int>(type) << "decompression failed → no fill";
                                 freeSlots.emplace_back(result.second);
                             }
                         } else {
-                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << "future canceled";
+                            qCritical() << globalCoord << static_cast<int>(type) << "future canceled";
                             freeSlots.emplace_back(currentSlot);
                         }
                         reply->deleteLater();
@@ -629,10 +629,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         }
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
-                            qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString() << reply->readAll();
+                            qCritical() << globalCoord << static_cast<int>(type) << reply->errorString() << reply->readAll();
                         }
                     }
-                    downloads[globalCoord]->deleteLater();
+                    reply->deleteLater();
                     downloads.erase(globalCoord);
                     broadcastProgress();
                 }
