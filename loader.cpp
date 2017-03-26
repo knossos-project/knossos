@@ -591,9 +591,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     broadcastProgress();
                     return;
                 }
-                auto * currentSlot = freeSlots.front();
-                freeSlots.pop_front();
                 if (reply->error() == QNetworkReply::NoError) {
+                    auto * currentSlot = freeSlots.front();
+                    freeSlots.pop_front();
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
                     QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {
@@ -616,6 +616,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     watcher->setFuture(QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(*reply), type, std::ref(cubeHash), globalCoord, state->magnification)));
                 } else {
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
+                        auto * currentSlot = freeSlots.front();
+                        freeSlots.pop_front();
                         std::fill(currentSlot, currentSlot + state->cubeBytes * (Dataset::isOverlay(type) ? OBJID_BYTES : 1), 0);
                         state->protectCube2Pointer.lock();
                         cubeHash[globalCoord.cube(state->cubeEdgeLength, state->magnification)] = currentSlot;
@@ -629,9 +631,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord.x << globalCoord.y << globalCoord.z << reply->errorString() << reply->readAll();
                         }
-                        state->protectCube2Pointer.lock();
-                        freeSlots.emplace_back(currentSlot);
-                        state->protectCube2Pointer.unlock();
                     }
                     downloads[globalCoord]->deleteLater();
                     downloads.erase(globalCoord);
