@@ -1004,7 +1004,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
-    floatCoordinate normal = {0, 0, -1};
+    floatCoordinate normal = {0, 0, 0};
     if (viewportType != VIEWPORT_SKELETON) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
