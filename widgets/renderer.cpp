@@ -711,7 +711,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     const auto nears = state->scale.x * state->viewerState->depthCutOff;
     const auto fars = -state->scale.x * state->viewerState->depthCutOff;
     const auto nearVal = 0;//-nears;
-    const auto farVal = /*-fars * */1000;//*/;
+    const auto farVal = /*-fars * */100000;//*/;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
@@ -822,8 +822,43 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (options.drawMesh && !state->skeletonState->trees.empty() && state->skeletonState->trees.front().mesh) {
+    } else if (options.drawMesh) {
+        QOpenGLFramebufferObjectFormat format;
+        format.setSamples(0);//state->viewerState->sampleBuffers
+        format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+        QOpenGLFramebufferObject fbo(width(), height(), format);
+        fbo.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
         renderMesh();
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+
+        fbo.release();
+
+        std::vector<floatCoordinate> vertices{
+                isoCurPos - dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 + dataPxY * v2,
+                isoCurPos - dataPxX * v1 + dataPxY * v2
+        };
+        std::vector<float> texCoordComponents{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+
+        glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glBindTexture(GL_TEXTURE_2D, fbo.texture());
+        glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+        glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
+
+        glDrawArrays(GL_QUADS, 0, 4);
+
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisable(GL_TEXTURE_2D);
     }
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
         glPushMatrix();
@@ -1008,7 +1043,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     if (viewportType != VIEWPORT_SKELETON) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
-    meshShader.setUniformValue("vp_normal", abs(normal.x), abs(normal.y), abs(normal.z));
+    meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
