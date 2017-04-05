@@ -252,6 +252,7 @@ void MainWindow::createViewports() {
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
         QObject::connect(&vp, &ViewportBase::snapshotTriggered, &this->widgetContainer.snapshotWidget, &SnapshotWidget::openForVP);
+        QObject::connect(&vp, &ViewportBase::snapshotFinished, &widgetContainer.snapshotWidget, &SnapshotWidget::showViewer);
     });
 }
 

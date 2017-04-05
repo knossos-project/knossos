@@ -29,14 +29,57 @@
 
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QDir>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QSettings>
 
+#include <boost/optional.hpp>
 #include <math.h>
 
-SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent), saveDir(QDir::homePath()) {
+SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const QString & saveDir, const QString &defaultFilename, QWidget *parent) : QDialog(parent), saveDir(saveDir) {
+    setWindowTitle("Snapshot Preview");
+    infoLabel.setText(info);
+    imageLabel.setPixmap(QPixmap::fromImage(image));
+    imageLabel.setScaledContents(true);
+    imageLabel.resize(400, 400);
+    imageArea.setWidget(&imageLabel);
+    int row = 0;
+    mainLayout.addWidget(&infoLabel, row++, 0, 1, 3);
+    mainLayout.addWidget(&imageArea, row++, 0, 1, 3);
+    mainLayout.addWidget(&cancelButton, row, 0, Qt::AlignLeft);
+    mainLayout.addWidget(&copyButton, row, 1);
+    mainLayout.addWidget(&saveButton, row, 2);
+    mainLayout.setSizeConstraint(QLayout::SetFixedSize);
+    setLayout(&mainLayout);
+
+    QObject::connect(&copyButton, &QPushButton::clicked, [this]() {
+        QApplication::clipboard()->setPixmap(*imageLabel.pixmap(), QClipboard::Clipboard);
+    });
+    QObject::connect(&cancelButton, &QPushButton::clicked, [this]() {
+        close();
+    });
+    QObject::connect(&saveButton, &QPushButton::clicked, [&defaultFilename, this]() {
+        const auto path = state->viewer->suspend([&defaultFilename, this]{
+            return QFileDialog::getSaveFileName(this, tr("Save path"), this->saveDir + defaultFilename, tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
+        });
+        if (path.isEmpty() == false) {
+            QFileInfo info(path);
+            this->saveDir = info.absolutePath() + "/";
+            setCursor(Qt::BusyCursor);
+            if (!imageLabel.pixmap()->save(path)) {
+                QMessageBox errorMsg(this);
+                errorMsg.setIcon(QMessageBox::Critical);
+                errorMsg.setText(tr("Saving snapshot has failed, probably because of missing write permission for path %1").arg(this->saveDir));
+                errorMsg.exec();
+            } else {
+                close();
+            }
+        }
+        setCursor(Qt::ArrowCursor);
+    });
+}
+
+SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent) {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/snapshot.png"));
     setWindowTitle("Snapshot Tool");
@@ -84,22 +127,15 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     mainLayout.addWidget(&snapshotButton);
 
     QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
-        const auto path = state->viewer->suspend([this]{
-            return QFileDialog::getSaveFileName(this, tr("Save path"), saveDir + defaultFilename(), tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
-        });
-        if(path.isEmpty() == false) {
-            QFileInfo info(path);
-            saveDir = info.absolutePath() + "/";
-            const auto vp = static_cast<ViewportType>(vpGroup.checkedId());
-            SnapshotOptions options{path, vp, 0, withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked()};
-            if (sizeCombo.currentIndex() == 0) {
-                emit snapshotVpSizeRequest(options);
-            } else if (sizeCombo.currentIndex() == 1) {
-                emit snapshotDatasetSizeRequest(options);
-            } else {
-                options.size = std::pow(2, 10 + sizeCombo.currentIndex() - 2); // offset of 2 for special cases
-                emit snapshotRequest(options);
-            }
+        const auto vp = static_cast<ViewportType>(vpGroup.checkedId());
+        SnapshotOptions options{boost::none, vp, 0, withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked()};
+        if (sizeCombo.currentIndex() == 0) {
+            emit snapshotVpSizeRequest(options);
+        } else if (sizeCombo.currentIndex() == 1) {
+            emit snapshotDatasetSizeRequest(options);
+        } else {
+            options.size = std::pow(2, 10 + sizeCombo.currentIndex() - 2); // offset of 2 for special cases
+            emit snapshotRequest(options);
         }
     });
 
@@ -153,7 +189,7 @@ void SnapshotWidget::updateOptionVisibility() {
     withVpPlanes.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
 }
 
-QString SnapshotWidget::defaultFilename() const {
+void SnapshotWidget::showViewer(const QImage & image) {
     const QString vp = vpXYRadio.isChecked() ? "XY" :
                    vpXZRadio.isChecked() ? "XZ" :
                    vpZYRadio.isChecked() ? "ZY" :
@@ -163,7 +199,11 @@ QString SnapshotWidget::defaultFilename() const {
     auto annotationName = Session::singleton().annotationFilename;
     annotationName.remove(0, annotationName.lastIndexOf("/") + 1); // remove directory structure from name
     annotationName.chop(annotationName.endsWith(".k.zip") ? 6 : /* .nml */ 4); // remove file type
-    return QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? state->name : annotationName);
+    const auto info = tr("%1 Viewport (%2)").arg(vp).arg(sizeCombo.currentText());
+    const auto defaultFilename = QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? state->name : annotationName);
+    SnapshotViewer previewer(image, info, saveDir, defaultFilename, this);
+    previewer.exec();
+    saveDir = previewer.getSaveDir();
 }
 
 void SnapshotWidget::saveSettings() {

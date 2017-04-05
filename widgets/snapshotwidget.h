@@ -30,21 +30,42 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
+#include <QDir>
+#include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QScrollArea>
 #include <QVBoxLayout>
+
+class SnapshotViewer : public QDialog {
+    QGridLayout mainLayout;
+
+    QLabel infoLabel;
+    QScrollArea imageArea;
+    QLabel imageLabel;
+    QPushButton saveButton{tr("Save…")};
+    QPushButton copyButton{tr("Copy to clipboard")};
+    QPushButton cancelButton{tr("Cancel")};
+
+    QString saveDir;
+
+public:
+    explicit SnapshotViewer(const QImage & image, const QString & info, const QString & saveDir, const QString & defaultFilename, QWidget * parent = 0);
+    QString getSaveDir() const { return saveDir; }
+};
 
 class SnapshotWidget : public DialogVisibilityNotify {
     friend struct WidgetContainer;
     Q_OBJECT
-    QString saveDir;
+
+    QVBoxLayout mainLayout;
     QComboBox sizeCombo;
     QButtonGroup vpGroup;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpZYRadio{"ZY viewport"}, vpArbRadio{"Arb viewport"}, vp3dRadio{"3D viewport"};
     QCheckBox withAxesCheck{"Dataset axes"}, withBoxCheck{"Dataset box"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
-    QVBoxLayout mainLayout;
-    QString defaultFilename() const;
+
+    QString saveDir{QDir::homePath()};
 public:
     explicit SnapshotWidget(QWidget *parent = 0);
     void saveSettings();
@@ -52,6 +73,7 @@ public:
 public slots:
     void openForVP(const ViewportType type);
     void updateOptionVisibility();
+    void showViewer(const QImage & image);
 signals:
     void snapshotVpSizeRequest(SnapshotOptions & options);
     void snapshotDatasetSizeRequest(SnapshotOptions & options);

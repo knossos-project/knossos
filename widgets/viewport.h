@@ -104,7 +104,7 @@ struct RenderOptions {
 };
 
 struct SnapshotOptions {
-    QString path{""};
+    boost::optional<QString> path{""};
     ViewportType vp{VIEWPORT_UNDEFINED};
     int size{0};
     bool withAxes{true};
@@ -283,6 +283,7 @@ signals:
     void pasteCoordinateSignal();
     void updateZoomWidget();
     void snapshotTriggered(const ViewportType type);
+    void snapshotFinished(const QImage & image);
 public slots:
     void takeSnapshotVpSize(SnapshotOptions o);
     void takeSnapshotDatasetSize(SnapshotOptions o);
