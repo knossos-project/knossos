@@ -346,14 +346,16 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         QSet<nodeListElement*> selectedNodes;
         int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
         int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
+        const auto boundedX = std::max(0, std::min(width(), event->pos().x()));
+        const auto boundedY = std::max(0, std::min(height(), event->pos().y()));
         if ((diffX < 5 && diffY < 5) || (event->pos() - mouseDown).manhattanLength() < 5) { // interpreted as click instead of drag
             // mouse released on same spot on which it was pressed down: single node selection
-            auto selectedNode = pickNode(event->pos().x(), event->pos().y(), 10);
+            auto selectedNode = pickNode(boundedX, boundedY, 10);
             if (selectedNode) {
                 selectedNodes = {&selectedNode.get()};
             }
         } else if (state->viewerState->nodeSelectSquareData.first != -1) {
-            selectedNodes = nodeSelection(event->pos().x(), event->pos().y());
+            selectedNodes = nodeSelection(boundedX, boundedY);
         }
         if (state->viewerState->nodeSelectSquareData.first != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
             if (state->viewerState->nodeSelectSquareData.second == Qt::ControlModifier) {
