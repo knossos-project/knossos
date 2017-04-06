@@ -11,8 +11,8 @@ matrix:
       sudo: required
       compiler: gcc
       services: docker
-    - os: osx
-      osx_image: xcode7.3
+#    - os: osx
+#      osx_image: xcode7.3
 
 git:
   submodules: false
