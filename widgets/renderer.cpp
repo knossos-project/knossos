@@ -1539,7 +1539,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.meshPicking) {
         pickMeshIdAtPosition();
     } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         renderMesh();
+        glDisable(GL_CULL_FACE);
     }
 
     // Reset previously changed OGL parameters
