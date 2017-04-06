@@ -1527,11 +1527,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         // restore settings
         glDisable(GL_BLEND);
     }
-    if (options.meshPicking) {
-        pickMeshIdAtPosition();
-    } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
-        renderMesh();
-    }
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();
@@ -1539,6 +1534,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
         glPopMatrix();
+    }
+
+    if (options.meshPicking) {
+        pickMeshIdAtPosition();
+    } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+        renderMesh();
     }
 
     // Reset previously changed OGL parameters
