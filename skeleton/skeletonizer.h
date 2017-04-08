@@ -286,6 +286,7 @@ public:
 
     bool extractConnectedComponent(std::uint64_t nodeID);
     bool mergeTrees(decltype(treeListElement::treeID) treeID1, decltype(treeListElement::treeID) treeID2);
+    void mergeMeshes(Mesh & mesh1, Mesh & mesh2);
     void updateTreeColors();
     static std::list<segmentListElement>::iterator findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode);
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);

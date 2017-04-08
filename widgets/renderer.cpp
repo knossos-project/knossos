@@ -1174,7 +1174,8 @@ void Viewport3D::pickMeshIdAtPosition() {
         if (selectionFilter || !pickableMesh) {
             continue;
         }
-        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && tree.mesh->picking_color_buf.size() != 0;
+        const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == tree.mesh->vertex_count * 4 * sizeof(GLubyte); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
+        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && pickingBufferFilled;
         if (pickingMeshValid || !tree.render) {// increment
             id_counter += tree.mesh->vertex_count;
         } else {// create picking color buf and increment

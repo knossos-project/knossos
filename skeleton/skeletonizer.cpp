@@ -1123,10 +1123,67 @@ bool Skeletonizer::mergeTrees(decltype(treeListElement::treeID) treeID1, decltyp
         node.correspondingTree = tree1;
     }
     tree1->nodes.splice(std::end(tree1->nodes), tree2->nodes);
+    if (tree2->mesh) {
+        if (tree1->mesh == nullptr) {
+            std::swap(tree1->mesh, tree2->mesh);
+            tree1->mesh->correspondingTree = tree1;
+        } else {
+            mergeMeshes(*tree1->mesh.get(), *tree2->mesh.get());
+        }
+    }
     delTree(tree2->treeID);
     setActiveTreeByID(tree1->treeID);
     emit treesMerged(treeID1, treeID2);//update nodes
     return true;
+}
+
+template<typename T>
+auto mergeBuffers = [](QOpenGLBuffer & buf1, QOpenGLBuffer & buf2, boost::optional<T> offset = boost::none) {
+    buf1.bind();
+    auto size1 = buf1.size() / sizeof(T);
+    buf2.bind();
+    auto size2 = buf2.size() / sizeof(T);
+    std::vector<T> mergedData(size1 + size2);
+    buf2.read(0, mergedData.data() + size1, size2 * sizeof(T));
+    buf1.bind();
+    buf1.read(0, mergedData.data(), size1 * sizeof(T));
+    if (offset) {
+        std::for_each(std::begin(mergedData) + size1, std::end(mergedData), [&offset](T & value) { value += offset.get(); });
+    }
+    buf1.allocate(mergedData.data(), mergedData.size() * sizeof(T));
+    buf1.release();
+    buf2.release();
+};
+
+void Skeletonizer::mergeMeshes(Mesh & mesh1, Mesh & mesh2) {
+    mergeBuffers<float>(mesh1.position_buf, mesh2.position_buf);
+    mergeBuffers<float>(mesh1.normal_buf, mesh2.normal_buf);
+    mergeBuffers<unsigned int>(mesh1.index_buf, mesh2.index_buf, mesh1.vertex_count);
+
+    std::vector<std::array<std::uint8_t, 4>> colors(mesh1.vertex_count + mesh2.vertex_count);
+    const auto copyMesh = [&colors](auto & mesh, const auto meshOffset) {
+        if (mesh.useTreeColor) {
+            const auto & treeCol = mesh.correspondingTree->color.rgba64();
+            const decltype(colors)::value_type treeColor{{treeCol.red8(), treeCol.green8(), treeCol.blue8(), treeCol.alpha8()}};
+            std::fill_n(std::begin(colors) + meshOffset, mesh.vertex_count, treeColor);
+        } else {
+            mesh.color_buf.bind();
+            mesh.color_buf.read(0, colors.data() + meshOffset, mesh.color_buf.size());
+            mesh.color_buf.release();
+        }
+    };
+    const auto atLeastOneTreeHasPerVertexColors = !mesh1.useTreeColor || !mesh2.useTreeColor;
+    if (atLeastOneTreeHasPerVertexColors) {
+        copyMesh(mesh1, 0);
+        copyMesh(mesh2, mesh1.vertex_count);
+        mesh1.color_buf.bind();
+        mesh1.color_buf.allocate(colors.data(), colors.size() * sizeof(colors[0]));
+        mesh1.color_buf.release();
+    }
+
+    mesh1.useTreeColor = !atLeastOneTreeHasPerVertexColors;
+    mesh1.vertex_count += mesh2.vertex_count;
+    mesh1.index_count += mesh2.index_count;
 }
 
 template<typename Func>
