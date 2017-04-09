@@ -1108,12 +1108,20 @@ void Viewport3D::renderMesh() {
     float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
     glPointSize(point_size);
 
-    for(auto & tree : state->skeletonState->trees) {
+    std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
+    for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
         const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
         if (tree.render && selectionFilter && validMesh) {
-            renderMeshBuffer(*(tree.mesh));
+            if (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) {
+                translucentMeshes.emplace_back(*(tree.mesh));
+            } else {
+                renderMeshBuffer(*(tree.mesh));
+            }
         }
+    }
+    for (const auto & mesh : translucentMeshes) {// render translucent after opaque meshes
+        renderMeshBuffer(mesh);
     }
 }
 
