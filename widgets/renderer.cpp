@@ -1174,6 +1174,7 @@ void Viewport3D::pickMeshIdAtPosition() {
         if (selectionFilter || !pickableMesh) {
             continue;
         }
+        tree.mesh->picking_color_buf.bind();
         const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == tree.mesh->vertex_count * 4 * sizeof(GLubyte); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
         const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && pickingBufferFilled;
         if (pickingMeshValid || !tree.render) {// increment
@@ -1185,9 +1186,9 @@ void Viewport3D::pickMeshIdAtPosition() {
             for (std::size_t i{0}; i < tree.mesh->vertex_count; ++i) {// for each vertex
                 picking_colors.emplace_back(meshIdToColor(id_counter++));
             }
-            tree.mesh->picking_color_buf.bind();
             tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
         }
+        tree.mesh->picking_color_buf.release();
         if (tree.render) {
             renderMeshBufferIds(*tree.mesh);
         }
