@@ -1120,9 +1120,12 @@ void Viewport3D::renderMesh() {
             }
         }
     }
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     for (const auto & mesh : translucentMeshes) {// render translucent after opaque meshes
         renderMeshBuffer(mesh);
     }
+    glDisable(GL_CULL_FACE);
 }
 
 uint32_t meshColorToId(const QColor & color) {
@@ -1549,10 +1552,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.meshPicking) {
         pickMeshIdAtPosition();
     } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
         renderMesh();
-        glDisable(GL_CULL_FACE);
     }
 
     // Reset previously changed OGL parameters
