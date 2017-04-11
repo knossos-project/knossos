@@ -380,8 +380,6 @@ void ViewportBase::renderViewportFrontFace() {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         glLineWidth(1.);
         glBegin(GL_QUADS);
         glColor4f(0, 1., 0, 0.2);
@@ -397,7 +395,6 @@ void ViewportBase::renderViewportFrontFace() {
             glVertex3f(rightLower.x, rightLower.y, 0.f);
             glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
-        glDisable(GL_BLEND);
     }
 }
 
@@ -605,8 +602,6 @@ void ViewportOrtho::renderViewportFast() {
     overlay_data_shader.setUniformValue("textureLUT", 1);
     overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_TEXTURE_3D);
 
     for (auto & layer : state->viewer->layers) {
@@ -694,8 +689,6 @@ void ViewportOrtho::renderViewportFast() {
 }
 
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_MULTISAMPLE);
 
     float dataPxX = displayedIsoPx;
@@ -819,8 +812,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         renderBrush(getMouseCoordinate());
         glPopMatrix();
     }
-
-    glDisable(GL_BLEND);
 }
 
 void Viewport3D::renderVolumeVP() {
@@ -920,8 +911,6 @@ void Viewport3D::renderVolumeVP() {
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_TEXTURE_3D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glBindTexture(GL_TEXTURE_3D, volTexId);
         float volume_opacity = seg.volume_opacity / 255.0f;
@@ -947,7 +936,6 @@ void Viewport3D::renderVolumeVP() {
         // Reset previously changed OGL parameters
         glDisable(GL_TEXTURE_3D);
         glEnable(GL_TEXTURE_2D);
-        glDisable(GL_BLEND);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDisable(GL_LIGHTING);
         glDisable(GL_DEPTH_TEST);
@@ -1001,8 +989,6 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
         meshShader.setUniformValue("use_tree_color", buf.useTreeColor);
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -1048,7 +1034,6 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisable(GL_BLEND);
 
     meshShader.release();
     glPopMatrix();
@@ -1101,6 +1086,7 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
 
     meshIdShader.release();
     glPopMatrix();
+    glEnable(GL_BLEND);
 }
 
 void Viewport3D::renderMesh() {
@@ -1402,8 +1388,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     if (options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
-        glEnable(GL_BLEND);
-
         if(options.drawBoundaryBox) {
             glPushMatrix();
             glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
@@ -1547,13 +1531,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 px").arg(state->boundary.z + 1));
             }
         }
-        // restore settings
-        glDisable(GL_BLEND);
     }
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
         glPushMatrix();
-        glEnable(GL_BLEND);
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
         glPopMatrix();
@@ -1820,9 +1801,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glPushMatrix();
 
     const auto * activeTree = state->skeletonState->activeTree;
@@ -2002,6 +1980,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
     }
     glPointSize(1.f);
+
     glPopMatrix(); // Restore modelview matrix
 }
 

@@ -711,12 +711,16 @@ void ViewportBase::resizeGL(int width, int height) {
 
 void Viewport3D::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     renderViewport();
     renderViewportFrontFace();
 }
 
 void ViewportOrtho::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
@@ -1111,7 +1115,6 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
 }
 
 void ViewportArb::paintGL() {
-    glClear(GL_DEPTH_BUFFER_BIT);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         state->viewer->arbCubes(*this);
     } else if (Segmentation::enabled && state->viewerState->showOnlyRawData == false) {
