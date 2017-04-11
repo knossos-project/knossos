@@ -22,6 +22,7 @@
 
 #include "skeletonview.h"
 
+#include "action_helper.h"
 #include "model_helper.h"
 #include "session.h"
 #include "skeleton/node.h"
@@ -84,11 +85,11 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
     const auto & tree = cache[index.row()].get();
     if (&tree == state->skeletonState->activeTree && index.column() == 0 && role == Qt::DecorationRole) {
         return QPixmap(":/resources/icons/active-arrow.png").scaled(QSize(8, 8), Qt::KeepAspectRatio);
-    } else if (index.column() == 1 && (role == Qt::BackgroundRole || role == Qt::DecorationRole)) { // background role not visible for selected row under gnome…
+    } else if (index.column() == 1 && (role == Qt::BackgroundRole || role == Qt::DecorationRole || role == Qt::UserRole)) { // background role not visible for selected row under gnome…
         return tree.color;
-    } else if (index.column() == 2 && role == Qt::CheckStateRole) {
+    } else if (index.column() == 2 && (role == Qt::CheckStateRole || role == Qt::UserRole)) {
         return tree.render ? Qt::Checked : Qt::Unchecked;
-    } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
+    } else if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::UserRole) {
         switch (index.column()) {
         case 0: return static_cast<quint64>(tree.treeID);
         case 3: return static_cast<quint64>(tree.nodes.size());
@@ -132,7 +133,7 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     if (&node == state->skeletonState->activeNode && index.column() == 0 && role == Qt::DecorationRole) {
         return QPixmap(":/resources/icons/active-arrow.png").scaled(QSize(8, 8), Qt::KeepAspectRatio);
     }
-    if (role == Qt::DisplayRole || role == Qt::EditRole) {
+    if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::UserRole) {
         switch (index.column()) {
         case 0: return static_cast<quint64>(node.nodeID);
         case 1: return node.position.x + 1;
@@ -307,15 +308,6 @@ auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
     if (!selectedIndices.indexes().isEmpty()) {// scroll to first selected entry
         view.scrollTo(selectedIndices.indexes().front());
     }
-}
-
-template<typename... Args>
-void deleteAction(QMenu & menu, QTreeView & view, QString text, Args &&... args) {
-    auto * deleteAction = menu.addAction(QIcon(":/resources/icons/menubar/trash.png"), text);
-    QObject::connect(deleteAction, &QAction::triggered, args...);
-    view.addAction(deleteAction);
-    deleteAction->setShortcut(Qt::Key_Delete);
-    deleteAction->setShortcutContext(Qt::WidgetShortcut);// local to the table
 }
 
 SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
@@ -607,7 +599,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     treeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&treeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
-        int i = 0;
+        int i = 0, copyActionIndex, deleteActionIndex;
 
         bool containsMesh{false};
         for(const auto & selectedTree : state->skeletonState->selectedTrees) {
@@ -636,7 +628,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                                                       && selectedTrees.front()->isSynapticCleft
                                                       && selectedTrees.front()->properties.contains("preSynapse")
                                                       && selectedTrees.front()->properties.contains("postSynapse")); //reverse synapse direction
-        treeContextMenu.actions().at(i++)->setVisible(true); //seperator
+        ++i;// separator
+        treeContextMenu.actions().at(copyActionIndex = i++)->setEnabled(selectedTrees.size() > 0);//copy selected contents
+        ++i;// separator
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() >= 2);//merge trees action
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//set comment
@@ -644,36 +638,41 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsMesh);//remove mesh
-        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//delete
+        treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
-        treeContextMenu.actions().back()->setEnabled(true);// make deleteAction always available after ctx menu is closed
+        // make some actions always available when ctx menu isn’t shown
+        treeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
+        treeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
     });
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
-        int i = 0;
+        int i = 0, copyActionIndex, deleteActionIndex;
         const auto & selectedNodes = state->skeletonState->selectedNodes;
         const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
         const auto synapseNode = selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode;
         extractComponentAction->setVisible(tracingAdvanced);
         linkAction->setVisible(tracingAdvanced);
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//jump to node
-        nodeContextMenu.actions().at(i++)->setEnabled(true);//separator
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);// synapse separator
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);//jump to corresponding cleft
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
                                                       && (synapseNode || (selectedNodes.size() == 2 && selectedNodes.front()->isSynapticNode
                                                                           && selectedNodes.front()->correspondingSynapse == selectedNodes[1]->correspondingSynapse))); // reverse synapse direction
-        nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);// synapse separator
+        ++i;// separator
+        nodeContextMenu.actions().at(copyActionIndex = i++)->setEnabled(selectedNodes.size() > 0);//copy selected contents
+        ++i;// separator
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set radius
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//delete
+        nodeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
-        nodeContextMenu.actions().back()->setEnabled(true);// make deleteAction always available after ctx menu is closed
+        // make some actions always available when ctx menu isn’t shown
+        nodeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
+        nodeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
     });
 
 
@@ -683,7 +682,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
     });
-    treeContextMenu.addSeparator();
+    addDisabledSeparator(treeContextMenu);
     QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [this](){
         const auto * tree = state->skeletonState->selectedTrees.front();
         assert(tree->properties.contains("preSynapse"));
@@ -697,7 +696,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(treeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, [this](){
         reverseSynapseDirection(this);
     });
-    treeContextMenu.addSeparator();
+    addDisabledSeparator(treeContextMenu);
+    copyAction(treeContextMenu, treeView);
+    addDisabledSeparator(treeContextMenu);
     moveNodesAction = treeContextMenu.addAction("Move selected nodes to this tree");
     QObject::connect(moveNodesAction, &QAction::triggered, [this](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
@@ -757,7 +758,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     });
-    nodeContextMenu.addSeparator();
     QObject::connect(nodeContextMenu.addAction("Jump to node with &ID"), &QAction::triggered, [this](){
         auto validatedInput = [](QWidget * parent, const QString && labelText, const QValidator && validator){
             QDialog dialog(parent);
@@ -788,7 +788,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(*node.get());
         }
     });
-    nodeContextMenu.addSeparator();
+    addDisabledSeparator(nodeContextMenu);
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
         Skeletonizer::singleton().jumpToNode(correspondingSynapse->getCleft()->nodes.front());
@@ -799,7 +799,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(swapSynapseDirectionAction, &QAction::triggered, [this]() {
         reverseSynapseDirection(static_cast<QWidget *>(QObject::sender()));
     });
-    nodeContextMenu.addSeparator();
+    addDisabledSeparator(nodeContextMenu);
+    copyAction(nodeContextMenu, nodeView);
+    addDisabledSeparator(nodeContextMenu);
     extractComponentAction = nodeContextMenu.addAction("&Extract connected component");
     QObject::connect(extractComponentAction, &QAction::triggered, [this](){
         auto res = QMessageBox::Ok;

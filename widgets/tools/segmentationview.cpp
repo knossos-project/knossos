@@ -22,6 +22,7 @@
 
 #include "segmentationview.h"
 
+#include "action_helper.h"
 #include "model_helper.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -94,12 +95,12 @@ QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orient
 }
 
 QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, const QModelIndex & index, int role) const {
-    if (index.column() == 0 && (role == Qt::BackgroundRole || role == Qt::DecorationRole)) {
+    if (index.column() == 0 && (role == Qt::BackgroundRole || role == Qt::DecorationRole || role == Qt::UserRole)) {
         const auto color = Segmentation::singleton().colorObjectFromIndex(obj.index);
         return QColor(std::get<0>(color), std::get<1>(color), std::get<2>(color));
-    } else if (index.column() == 2 && role == Qt::CheckStateRole) {
+    } else if (index.column() == 2 && (role == Qt::CheckStateRole || role == Qt::UserRole)) {
         return (obj.immutable ? Qt::Checked : Qt::Unchecked);
-    } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
+    } else if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::UserRole) {
         switch (index.column()) {
         case 1: return static_cast<quint64>(obj.id);
         case 3: return obj.category;
@@ -107,14 +108,15 @@ QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, con
         case 5: return static_cast<quint64>(obj.subobjects.size());
         case 6: {
             QString output;
-            const auto elemCount = std::min(MAX_SHOWN_SUBOBJECTS, obj.subobjects.size());
+            const auto limit = role != Qt::UserRole && obj.subobjects.size() > MAX_SHOWN_SUBOBJECTS;
+            const auto elemCount = limit ? MAX_SHOWN_SUBOBJECTS : obj.subobjects.size();
             auto subobjectIt = std::begin(obj.subobjects);
             for (std::size_t i = 0; i < elemCount; ++i) {
                 output += QString::number(subobjectIt->get().id) + ", ";
                 subobjectIt = std::next(subobjectIt);
             }
             output.chop(2);
-            output += (obj.subobjects.size() > MAX_SHOWN_SUBOBJECTS) ? "…" : "";;
+            output += limit ? "…" : "";
             return output;
         }
         }
@@ -449,30 +451,37 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         }
     });
     static auto createContextMenu = [](QMenu & contextMenu, QTreeView & table){
-        QAction * jumpAction{nullptr}, * deleteAction{nullptr};
-        QObject::connect(jumpAction = contextMenu.addAction("Jump to object"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::jumpToSelectedObject);
+        QObject::connect(contextMenu.addAction("Jump to object"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::jumpToSelectedObject);
+        addDisabledSeparator(contextMenu);
+        copyAction(contextMenu, table);
+        addDisabledSeparator(contextMenu);
         QObject::connect(contextMenu.addAction("Merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
-        QObject::connect(deleteAction = contextMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Delete"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
-        deleteAction->setShortcut(Qt::Key_Delete);
-        deleteAction->setShortcutContext(Qt::WidgetShortcut);// local to the table
-        table.addAction(deleteAction);
-        contextMenu.setDefaultAction(jumpAction);
+        deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
+        contextMenu.setDefaultAction(contextMenu.actions().front());
     };
     createContextMenu(objectsContextMenu, objectsTable);
     {
-        objectsContextMenu.addSeparator();
+        addDisabledSeparator(objectsContextMenu);
         auto & newAction = *objectsContextMenu.addAction("Create new object");
         QObject::connect(&newAction, &QAction::triggered, []() { Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition); });
     }
     createContextMenu(touchedObjsContextMenu, touchedObjsTable);
     static auto showContextMenu = [](auto & contextMenu, const QTreeView & table, const QPoint & pos){
-        contextMenu.actions()[0]->setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);// jumpAction
-        contextMenu.actions()[1]->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
-        contextMenu.actions()[2]->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
-        contextMenu.actions()[3]->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
+        int i = 0, copyActionIndex, deleteActionIndex;
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);// jumpAction
+        ++i;// separator
+        contextMenu.actions().at(copyActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// copy selected contents
+        ++i;// separator
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
+        contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
+        ++i;// separator
+        contextMenu.actions().at(i++)->setEnabled(true);// create new object
         contextMenu.exec(table.viewport()->mapToGlobal(pos));
-        contextMenu.actions()[3]->setEnabled(true);// make deleteAction always available after ctx menu is closed
+        // make some actions always available when ctx menu isn’t shown
+        contextMenu.actions().at(copyActionIndex)->setEnabled(true);
+        contextMenu.actions().at(deleteActionIndex)->setEnabled(true);
     };
     QObject::connect(&objectsTable, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         showContextMenu(objectsContextMenu, objectsTable, pos);
