@@ -59,6 +59,8 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     tableWidget.horizontalHeader()->resizeSection(1, 25);
     tableWidget.horizontalHeader()->resizeSection(2, 20);
     tableWidget.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    infoLabel.setOpenExternalLinks(true);
+    infoLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
     splitter.setOrientation(Qt::Vertical);
     splitter.addWidget(&tableWidget);
@@ -179,7 +181,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
 
     QString infotext = tr("<b>%1 Dataset</b><br />%2");
     if (datasetinfo.remote) {
-        infotext = infotext.arg("Remote").arg("URL: %1<br />").arg(datasetinfo.url.toString());
+        infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
     } else {
         infotext = infotext.arg("Local").arg("");
     }
