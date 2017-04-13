@@ -36,15 +36,15 @@
 SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
     autosaveIntervalSpinBox.setMinimum(1);
     autosaveIntervalSpinBox.setSuffix(" min");
-    autosaveLocationEdit.setText(QFileInfo(annotationFileDefaultPath()).dir().absolutePath());
-    autosaveLocationEdit.setWordWrap(true);
-    autosaveLocationEdit.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+    const auto filePath = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
+    autosaveLocationLabel.setOpenExternalLinks(true);
+    autosaveLocationLabel.setText(QObject::tr("<a href=\"%1\">%2</a>").arg(QUrl::fromLocalFile(filePath).toString()).arg(filePath));
+    autosaveLocationLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
+    autosaveLocationLabel.setWordWrap(true);
 
-    revealButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     generalLayout.addWidget(&autoincrementFileNameButton);
-    locationFormLayout.addRow("Default location: ", &autosaveLocationEdit);
+    locationFormLayout.addRow("Default location: ", &autosaveLocationLabel);
     generalLayout.addLayout(&locationFormLayout);
-    generalLayout.addWidget(&revealButton);
     generalGroup.setLayout(&generalLayout);
 
     autosaveGroup.setCheckable(true);
@@ -81,9 +81,6 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
             Session::singleton().autoSaveTimer.stop();
         }
         state->viewer->window->updateTitlebar();
-    });
-    QObject::connect(&revealButton, &QPushButton::clicked, [this]() {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(autosaveLocationEdit.text()));
     });
     QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [this](auto id) {
         Session::singleton().savePlyAsBinary = static_cast<bool>(id);

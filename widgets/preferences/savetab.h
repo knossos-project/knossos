@@ -45,8 +45,7 @@ class SaveTab : public QWidget {
     QCheckBox autoincrementFileNameButton{"Auto increment filename on every save"};
 
     QFormLayout locationFormLayout;
-    QLabel autosaveLocationEdit;
-    QPushButton revealButton{"Reveal"};
+    QLabel autosaveLocationLabel;
 
     QGroupBox autosaveGroup{"Auto saving (triggered by changes)"};
     QFormLayout formLayout;
