@@ -1113,7 +1113,17 @@ void Viewport3D::renderMesh() {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
         const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
         if (tree.render && selectionFilter && validMesh) {
-            if (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) {
+            const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
+                mesh.color_buf.bind();
+                if (mesh.color_buf.size() < 4) {
+                    throw std::runtime_error("non tree color mesh has no colors");
+                }
+                std::uint8_t buffer;
+                mesh.color_buf.read(3, &buffer, sizeof (buffer));
+                mesh.color_buf.release();
+                return buffer < 255;
+            };
+            if ((tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
                 translucentMeshes.emplace_back(*(tree.mesh));
             } else {
                 renderMeshBuffer(*(tree.mesh));
