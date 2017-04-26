@@ -435,7 +435,12 @@ void ViewportBase::initializeGL() {
         printed = true;
     }
     if (!initializeOpenGLFunctions()) {
-        qDebug() << "initializeOpenGLFunctions failed";
+        QMessageBox msgBox(this); //use property based api
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 2.1");
+        msgBox.setInformativeText("Please update drivers, or graphics hardware.");
+        msgBox.exec();
+        throw std::runtime_error("initializeOpenGLFunctions failed");
     }
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){
         if (msg.type() == QOpenGLDebugMessage::ErrorType) {
