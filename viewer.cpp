@@ -817,18 +817,17 @@ void Viewer::zoomReset() {
 }
 
 bool Viewer::updateDatasetMag(const uint mag) {
-    if ((0 < mag) && ((mag & (mag - 1)) == 0)) { // mag is power of 2
-        if (state->lowestAvailableMag <= mag && mag <= state->highestAvailableMag) {
-            state->magnification = mag;
-            window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
-                orthoVP.texture.texUnitsPerDataPx = 1. / state->viewerState->texEdgeLength / mag;
-            });
-        }
-        else {
+    Loader::Controller::singleton().unloadCurrentMagnification(); //unload all the cubes
+    if (mag != 0) {// change global mag after unloading
+        const bool powerOf2 = mag > 0 && (mag & (mag - 1)) == 0;
+        if (!powerOf2 || mag < state->lowestAvailableMag || mag > state->highestAvailableMag) {
             return false;
         }
+        state->magnification = mag;
+        window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
+            orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
+        });
     }
-    Loader::Controller::singleton().unloadCurrentMagnification(); //unload all the cubes
     //clear the viewports
     dc_reslice_notify_visible();
     oc_reslice_notify_visible();
