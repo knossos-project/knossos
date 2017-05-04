@@ -25,6 +25,7 @@
 #include "GuiConstants.h"
 #include "gui_wrapper.h"
 #include "htmlmacros.h"
+#include "layerdialog.h"
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
@@ -374,6 +375,9 @@ void MainWindow::createToolbars() {
     loaderProgress->setFixedWidth(25);
     loaderProgress->setAlignment(Qt::AlignCenter);
     QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::progress, this, &MainWindow::updateLoaderProgress);
+
+    LayerDialogWidget* layerDialogWidget = new LayerDialogWidget(this);
+    createToolToggleButton(*layerDialogWidget, ":/resources/icons/preferences.png", "Layers");
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
