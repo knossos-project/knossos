@@ -45,8 +45,11 @@ bool ViewportBase::oglDebug = false;
 bool Viewport3D::showBoundariesInUm = false;
 bool ViewportOrtho::showNodeComments = false;
 
-RenderOptions::RenderOptions() : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false),
-                                 drawOverlay(Segmentation::enabled && state->viewerState->showOnlyRawData == false) {}
+RenderOptions::RenderOptions()
+    : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false)
+        , drawOverlay(Segmentation::enabled && state->viewerState->showOnlyRawData == false)
+        , highlightActiveNode(state->viewerState->cumDistRenderThres <= 19.f)// no active node halo in lines and points mode
+{}
 
 RenderOptions RenderOptions::nodePickingRenderOptions(RenderOptions::SelectionPass pass) {
     RenderOptions options;

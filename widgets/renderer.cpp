@@ -114,6 +114,7 @@ void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QCol
     /* Render only a point if the sphere wouldn't be visible anyway */
     if (options.enableLoddingAndLinesAndPoints && (((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
         state->viewerState->pointVertBuffer.vertices.emplace_back(isoPos);
+        color4f[3] = 1.0f;// opaque selection color
         state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
     } else {
         glColor4fv(color4f.data());
