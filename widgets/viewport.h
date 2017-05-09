@@ -24,6 +24,7 @@
 #define VIEWPORT_H
 
 #include "coordinate.h"
+#include "hash_list.h"
 
 #include <QAction>
 #include <QDebug>
@@ -194,7 +195,7 @@ protected:
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions());
     bool updateFrustumClippingPlanes();
     virtual void renderViewportFrontFace();
-    QSet<nodeListElement *> pickNodes(int centerX, int centerY, int width, int height);
+    hash_list<nodeListElement *> pickNodes(int centerX, int centerY, int width, int height);
     boost::optional<nodeListElement &> pickNode(int x, int y, int width);
     void handleLinkToggle(const QMouseEvent & event);
 

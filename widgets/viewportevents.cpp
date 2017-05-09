@@ -711,7 +711,12 @@ QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
     const auto height = std::abs(maxY - minY);
     const auto centerX = minX + width / 2;
     const auto centerY = minY + height / 2;
-    return pickNodes(centerX, centerY, width, height);
+    const auto selectedNodes = pickNodes(centerX, centerY, width, height);
+    QSet<nodeListElement*> selectedSet;
+    for (const auto & elem : selectedNodes) {
+        selectedSet.insert(elem);
+    }
+    return selectedSet;
 }
 
 Coordinate ViewportOrtho::getMouseCoordinate() {

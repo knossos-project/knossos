@@ -1724,7 +1724,7 @@ boost::optional<nodeListElement &> ViewportBase::pickNode(int x, int y, int widt
     return boost::none;
 }
 
-QSet<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int width, int height) {
+hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int width, int height) {
     makeCurrent();
     QOpenGLFramebufferObject fbo(this->width(), this->height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
@@ -1738,24 +1738,26 @@ QSet<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int wi
     auto image64 = pickingPass(RenderOptions::SelectionPass::NodeID48_64Bits);
     fbo.release();
 
-    QSet<nodeListElement *> foundNodes;
-    const auto minx = std::max(0, centerX - width/2);
-    const auto miny = std::max(0, centerY - height/2);
-    const auto maxx = std::min(image24.width(), minx + width);
-    const auto maxy = std::min(image24.height(), miny + height);
-    for (int x = minx; x < maxx; ++x)
-    for (int y = miny; y < maxy; ++y) {
-        const auto color24 = image24.pixelColor(x, y);
-        const auto color48 = image48.pixelColor(x, y);
-        const auto color64 = image64.pixelColor(x, y);
-        std::array<int, 8> bytes{{color24.red(), color24.green(), color24.blue(), color48.red(), color48.green(), color48.blue(), color64.red(), color64.green()}};
-        std::uint64_t name{};
-        for (std::size_t i = 0; i < bytes.size(); ++i) {
-            name |= static_cast<std::uint64_t>(bytes[i]) << (8 * i);
-        }
-        nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
-        if (foundNode != nullptr) {
-            foundNodes.insert(foundNode);
+    hash_list<nodeListElement *> foundNodes;
+    for (int d = 1; d <= std::max(height, width); d += 2) {
+        const auto minx = std::max(0, centerX - std::min(d/2, width/2));
+        const auto miny = std::max(0, centerY - std::min(d/2, height/2));
+        const auto maxx = std::min(image24.width(), minx + std::min(d, width));
+        const auto maxy = std::min(image24.height(), miny + std::min(d, height));
+        for (int y = miny; y < maxy; y += 1)
+        for (int x = minx; x < maxx; x += (y == miny || y == maxy - 1) ? 1 : d - 1) {
+            const auto color24 = image24.pixelColor(x, y);
+            const auto color48 = image48.pixelColor(x, y);
+            const auto color64 = image64.pixelColor(x, y);
+            std::array<int, 8> bytes{{color24.red(), color24.green(), color24.blue(), color48.red(), color48.green(), color48.blue(), color64.red(), color64.green()}};
+            std::uint64_t name{};
+            for (std::size_t i = 0; i < bytes.size(); ++i) {
+                name |= static_cast<std::uint64_t>(bytes[i]) << (8 * i);
+            }
+            nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
+            if (foundNode != nullptr) {
+                foundNodes.emplace_back(foundNode);
+            }
         }
     }
     return foundNodes;
