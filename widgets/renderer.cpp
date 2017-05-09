@@ -1739,10 +1739,12 @@ QSet<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int wi
     fbo.release();
 
     QSet<nodeListElement *> foundNodes;
-    auto minx = centerX - width/2;
-    auto miny = centerY - height/2;
-    for (int x = minx; x < minx + width; ++x)
-    for (int y = miny; y < miny + height; ++y) {
+    const auto minx = std::max(0, centerX - width/2);
+    const auto miny = std::max(0, centerY - height/2);
+    const auto maxx = std::min(image24.width(), minx + width);
+    const auto maxy = std::min(image24.height(), miny + height);
+    for (int x = minx; x < maxx; ++x)
+    for (int y = miny; y < maxy; ++y) {
         const auto color24 = image24.pixelColor(x, y);
         const auto color48 = image48.pixelColor(x, y);
         const auto color64 = image64.pixelColor(x, y);
