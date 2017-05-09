@@ -83,6 +83,14 @@ RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, 
     return options;
 }
 
+bool RenderOptions::useLinesAndPoints(const float radius, const float smallestVisibleSize) const {
+    const auto nodesVisible = radius * 2 >= smallestVisibleSize;
+    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && enableLoddingAndLinesAndPoints;
+    const auto switchDynamically = !alwaysLinesAndPoints && enableLoddingAndLinesAndPoints;
+    const auto dynamicLinesAndPoints = switchDynamically && !nodesVisible;
+    return alwaysLinesAndPoints || dynamicLinesAndPoints;
+}
+
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }

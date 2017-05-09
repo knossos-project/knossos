@@ -57,17 +57,30 @@ enum GLNames {
     NodeOffset
 };
 
+auto uniformPointDiameter(const float nanometerPerPixel) {
+    return nanometerPerPixel * state->scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
+}
+
+auto smallestVisibleNodeSize() {
+    return state->viewerState->sampleBuffers == 0 ? 1 : 1.0f/state->viewerState->sampleBuffers;
+}
+
+auto pointSize(const float nanometerPerPixel) {
+    return std::max(smallestVisibleNodeSize(), uniformPointDiameter(nanometerPerPixel));
+}
+
+auto lineSize(const float nanometerPerPixel) {
+    return std::max(smallestVisibleNodeSize(), state->viewerState->segRadiusToNodeRadius * uniformPointDiameter(nanometerPerPixel));
+}
+
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     const auto isoBase = state->scale.componentMul(base);
     const auto isoTop = state->scale.componentMul(top);
     baseRadius *= state->scale.x;
     topRadius *= state->scale.x;
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
-    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
-    const auto switchDynamically =  !alwaysLinesAndPoints && options.enableLoddingAndLinesAndPoints;
-    const auto dynamicLinesAndPoints = switchDynamically && screenPxXPerDataPx * baseRadius < 1.0f && screenPxXPerDataPx * topRadius < 1.0f;
-    const auto linesAndPoints = alwaysLinesAndPoints || dynamicLinesAndPoints;
-    if (linesAndPoints) {
+
+    if (options.useLinesAndPoints(std::max(baseRadius, topRadius) * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         state->viewerState->lineVertBuffer.vertices.emplace_back(isoBase);
         state->viewerState->lineVertBuffer.vertices.emplace_back(isoTop);
 
@@ -108,11 +121,11 @@ void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, con
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QColor & color, const RenderOptions & options) {
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
     const auto isoPos = state->scale.componentMul(pos);
     radius *= state->scale.x;
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
-    /* Render only a point if the sphere wouldn't be visible anyway */
-    if (options.enableLoddingAndLinesAndPoints && (((screenPxXPerDataPx * radius > 0.0f) && (screenPxXPerDataPx * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f))) {
+
+    if (options.useLinesAndPoints(radius * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         state->viewerState->pointVertBuffer.vertices.emplace_back(isoPos);
         color4f[3] = 1.0f;// opaque selection color
         state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
@@ -1948,11 +1961,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     // lighting isn’t really applicable to lines and points
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
-
-    const auto nanometerPerPixel = width() / displayedlengthInNmX;
-    const auto pointDiameter = nanometerPerPixel * state->scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
-    const auto minSize = state->viewerState->sampleBuffers == 0 ? 1 : 1.0f/state->viewerState->sampleBuffers;
-    glLineWidth(std::max(minSize, state->viewerState->segRadiusToNodeRadius * pointDiameter));
+    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
+    // higher render qualities only use lines and points if node < smallestVisibleSize
+    glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
     if (!options.nodePicking && !state->viewerState->lineVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -1969,7 +1980,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     }
     glLineWidth(2.f);
 
-    glPointSize(std::max(minSize, pointDiameter));
+    glPointSize(alwaysLinesAndPoints ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render point geometry batch if it contains data */
     if (!state->viewerState->pointVertBuffer.vertices.empty()) {
         glEnableClientState(GL_VERTEX_ARRAY);
