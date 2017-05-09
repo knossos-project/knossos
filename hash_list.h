@@ -59,6 +59,9 @@ public:
     const_iterator cbegin() const {
         return data.cbegin();
     }
+    const_iterator begin() const {
+        return data.cbegin();
+    }
     iterator begin() {
         return iterator(*this, std::begin(data));
     }
@@ -82,6 +85,9 @@ public:
         return data.empty();
     }
     const_iterator cend() const {
+        return data.cend();
+    }
+    const_iterator end() const {
         return data.cend();
     }
     iterator end() {
