@@ -440,7 +440,7 @@ void ViewportBase::initializeGL() {
     if (!initializeOpenGLFunctions()) {
         QMessageBox msgBox(QApplication::activeWindow()); //use property based api
         msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 2.1");
+        msgBox.setText("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 1.3");
         msgBox.setInformativeText("Please update drivers, or graphics hardware.");
         msgBox.setWindowFlags(msgBox.windowFlags() | Qt::WindowStaysOnTopHint);
         msgBox.exec();

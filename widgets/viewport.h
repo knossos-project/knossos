@@ -32,7 +32,7 @@
 #include <QFont>
 #include <QMouseEvent>
 #include <QOpenGLDebugLogger>
-#include <QOpenGLFunctions_2_0>
+#include <QOpenGLFunctions_1_3>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
@@ -147,7 +147,7 @@ class segmentListElement;
 class mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
-class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
+class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_3 {
     Q_OBJECT
 protected:
     QVBoxLayout vpLayout;
