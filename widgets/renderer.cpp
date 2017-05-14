@@ -1151,11 +1151,14 @@ std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
 
 boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
     makeCurrent();
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, this->width(), this->height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderSkeletonVP(RenderOptions::meshPickingRenderOptions());
     fbo.release();
+    glPopAttrib();
     // read color and translate to id
     QImage fboImage(fbo.toImage());
     // Need to specify image format with no premultiplied alpha.
@@ -1739,6 +1742,8 @@ boost::optional<nodeListElement &> ViewportBase::pickNode(int x, int y, int widt
 
 hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, int width, int height) {
     makeCurrent();
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, this->width(), this->height());
     QOpenGLFramebufferObject fbo(this->width(), this->height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     auto pickingPass = [this, &fbo](auto flag){
@@ -1750,6 +1755,7 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
     auto image48 = pickingPass(RenderOptions::SelectionPass::NodeID24_48Bits);
     auto image64 = pickingPass(RenderOptions::SelectionPass::NodeID48_64Bits);
     fbo.release();
+    glPopAttrib();
 
     hash_list<nodeListElement *> foundNodes;
     for (int d = 1; d <= std::max(height, width); d += 2) {
