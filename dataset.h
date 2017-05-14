@@ -50,7 +50,7 @@ struct Dataset {
     API api;
     Coordinate boundary{0,0,0};
     floatCoordinate scale{0,0,0};
-    int magnification{0};
+    int magnification{1};
     int lowestAvailableMag{0};
     int highestAvailableMag{0};
     int cubeEdgeLength{128};
