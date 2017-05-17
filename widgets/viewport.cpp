@@ -615,8 +615,8 @@ void ViewportBase::initializeGL() {
             fragColorOut = frag_color;
         }
     )shaderSource");
+    state->viewerState->MeshPickingEnabled = meshIdShader.link();
 
-    meshIdShader.link();
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
         if (!shader->log().isEmpty()) {
             qDebug() << shader->log();

@@ -1218,6 +1218,13 @@ void MainWindow::loadSettings() {
         }
     });
     widgetContainer.applyVisibility();
+    if (state->viewerState->MeshPickingEnabled == false) {
+        QMessageBox msgBox(QApplication::activeWindow());
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Mesh selection is disabled, because it requires an OpenGL version ≥ 3.0.\nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
+        msgBox.setWindowFlags(msgBox.windowFlags() | Qt::WindowStaysOnTopHint);
+        msgBox.exec();
+    }
 }
 
 void MainWindow::clearSettings() {

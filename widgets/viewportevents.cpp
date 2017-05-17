@@ -369,7 +369,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
 }
 
 void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    if (mouseDown == event->pos()) {// mouse click
+    if (mouseDown == event->pos() && state->viewerState->MeshPickingEnabled) {// mouse click
         meshLastClickInformation = pickMesh(event->pos());
         meshLastClickCurrentlyVisited = false;
         if (meshLastClickInformation) {
