@@ -532,33 +532,39 @@ void ViewportBase::initializeGL() {
     meshShader.link();
 
     meshTreeColorShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
-        #version 110
-        attribute vec3 vertex;
-        attribute vec3 normal;
-        attribute vec4 color;
+        #version 140
+        in vec3 vertex;
+        in vec3 normal;
+        in vec4 color;
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
 
-        varying vec3 frag_normal;
-        varying mat4 mvp_matrix;
+        out mat4 mvp_matrix;
+        out vec3 frag_normal;
+        out float frag_depth;
 
         void main() {
             mvp_matrix = projection_matrix * modelview_matrix;
             gl_Position = mvp_matrix * vec4(vertex, 1.0);
             frag_normal = normal;
+            frag_depth = gl_Position.z;
         }
     )shaderSource");
     meshTreeColorShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
-        #version 110
+        #version 140
+        #extension GL_ARB_explicit_attrib_location : enable
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
         uniform vec4 tree_color;
 
-        varying vec4 frag_color;
-        varying vec3 frag_normal;
-        varying mat4 mvp_matrix;
+        in mat4 mvp_matrix;
+        in vec3 frag_normal;
+        in float frag_depth;
+
+        layout(location = 0) out vec4 color;
+        layout(location = 1) out vec4 depth;
 
         void main() {
             vec3 specular_color = vec3(1.0, 1.0, 1.0);
@@ -572,11 +578,12 @@ void ViewportBase::initializeGL() {
             float sub_light_power = max(0.0, dot(-sub_light_dir, frag_normal));
 
             vec3 fcolor = tree_color.rgb;
-            gl_FragColor = vec4((0.25 * fcolor             // ambient
+            color = vec4((0.25 * fcolor             // ambient
                         + 0.75 * fcolor * main_light_power // diffuse(main)
                         + 0.25 * fcolor * sub_light_power  // diffuse(sub)
                         )
                         , tree_color.a);
+            depth = vec4(vec3(0.0f), frag_depth);
         }
     )shaderSource");
     meshTreeColorShader.link();

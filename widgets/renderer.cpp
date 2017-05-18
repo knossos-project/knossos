@@ -1557,7 +1557,102 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.meshPicking) {
         pickMeshIdAtPosition();
     } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+        static QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::Depth);
+        static QOpenGLShaderProgram meshDeferredShader;
+        static bool justonce = true;
+        if(justonce) {
+        	fbo.addColorAttachment(width(), height(), GL_RGBA);
+        	GLenum bufs[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        	glDrawBuffers(2, bufs);
+
+            meshDeferredShader.addShaderFromSourceCode(QOpenGLShader::Vertex, R"shaderSource(
+                #version 140
+                in vec3 vertex;
+
+                uniform mat4 gl_ModelViewMatrix;
+                uniform mat4 gl_ProjectionMatrix;
+
+                out vec2 frag_uv;
+
+                void main() {
+                    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * vec4(vertex, 1.0);
+                    frag_uv = (vertex.xy + vec2(1.0)) * 0.5; // (-1,1)quad to (0,1)uv coords
+                }
+            )shaderSource");
+            meshDeferredShader.addShaderFromSourceCode(QOpenGLShader::Fragment, R"shaderSource(
+                #version 140
+
+                in vec2 frag_uv;
+
+                uniform vec2 buf_size;
+                uniform sampler2D tex_color;
+                uniform sampler2D tex_depth;
+
+                out vec4 color;
+
+                void main() {
+                    vec2 pix = 1.0 / buf_size;
+                    vec4 depth = texture(tex_depth, frag_uv);
+                    color = texture(tex_color, frag_uv);
+                    if(depth.a == 0.0 &&
+                        (texture(tex_depth, frag_uv + vec2( pix.x, 0.0)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(-pix.x, 0.0)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(0.0,  pix.y)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(0.0, -pix.y)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(pix.x,  pix.y)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(pix.x, -pix.y)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(-pix.x, -pix.y)).a != 0.0 ||
+                        texture(tex_depth, frag_uv + vec2(-pix.x, pix.y)).a != 0.0)) {
+                        color = vec4(0.0f, 1.0f, 1.0f, 1.0f);
+                    }
+                }
+            )shaderSource");
+            meshDeferredShader.link();
+            justonce = false;
+        }
+
+        fbo.bind();
+        glEnable(GL_BLEND);
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
         renderMesh();
+        fbo.release();
+
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        meshDeferredShader.bind();
+        meshDeferredShader.setUniformValue("buf_size", width(), height());
+        meshDeferredShader.setUniformValue("tex_color", 0);
+        meshDeferredShader.setUniformValue("tex_depth", 1);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, fbo.textures()[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, fbo.textures()[1]);
+
+        glBegin(GL_QUADS);
+            glNormal3i(0,0,1);
+            glVertex3f(-1, 1, 0);
+            glVertex3f(-1,-1, 0);
+            glVertex3f( 1,-1, 0);
+            glVertex3f( 1, 1, 0);
+        glEnd();
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
     }
 
     // Reset previously changed OGL parameters
