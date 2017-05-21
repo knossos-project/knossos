@@ -372,8 +372,8 @@ QString SkeletonProxy::help() {
 }
 
 quint64 SkeletonProxy::last_clicked_mesh_id() {
-    if (state->mainWindow->viewport3D->meshLastClickInformation) {
-        return state->mainWindow->viewport3D->meshLastClickInformation.get().treeId;
+    if (state->skeletonState->meshLastClickInformation) {
+        return state->skeletonState->meshLastClickInformation.get().treeId;
     } else {
         throw std::runtime_error{"none available"};
     }

@@ -820,8 +820,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glEnd();
         glPopMatrix();
     }
-    if (options.drawMesh && !state->skeletonState->trees.empty() && state->skeletonState->trees.front().mesh) {
-        state->mainWindow->viewport3D->renderMesh();
+    if (options.meshPicking) {
+        pickMeshIdAtPosition();
+    } else if (options.drawMesh && !state->skeletonState->trees.empty() && state->skeletonState->trees.front().mesh) {
+        renderMesh();
     }
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
         glPushMatrix();
@@ -986,7 +988,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void Viewport3D::renderMeshBuffer(Mesh & buf) {
+void ViewportBase::renderMeshBuffer(Mesh & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
@@ -1002,7 +1004,11 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
-    meshShader.setUniformValue("vp_normal", state->mainWindow->viewportXY->n.x, state->mainWindow->viewportXY->n.y, -state->mainWindow->viewportXY->n.z);
+    floatCoordinate normal = {0, 0, -1};
+    if (viewportType != VIEWPORT_SKELETON) {
+        normal = state->mainWindow->viewportOrtho(viewportType)->n;
+    }
+    meshShader.setUniformValue("vp_normal", abs(normal.x), abs(normal.y), abs(normal.z));
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1054,7 +1060,7 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     glPopMatrix();
 }
 
-void Viewport3D::renderMeshBufferIds(Mesh & buf) {
+void ViewportBase::renderMeshBufferIds(Mesh & buf) {
     glDisable(GL_BLEND);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1104,11 +1110,7 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     glEnable(GL_BLEND);
 }
 
-void Viewport3D::renderMesh() {
-    screenPxXPerDataPx = edgeLength / (state->skeletonState->volBoundary / zoomFactor);
-    float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
-    glPointSize(point_size);
-
+void ViewportBase::renderMesh() {
     std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
@@ -1150,14 +1152,14 @@ std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
              static_cast<unsigned char>(id >> 24)}};
 }
 
-boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
+boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT);
     glViewport(0, 0, this->width(), this->height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderSkeletonVP(RenderOptions::meshPickingRenderOptions());
+    renderViewport(RenderOptions::meshPickingRenderOptions());
     fbo.release();
     glPopAttrib();
     // read color and translate to id
@@ -1184,11 +1186,18 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
 
         coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
         coord  /= state->scale;
+        if (viewportType != VIEWPORT_SKELETON) {
+            // project point onto ortho plane. Necessary, because in reality user clicks a triangle behind the plane.
+            auto * vp = state->mainWindow->viewportOrtho(viewportType);
+            auto distVec = coord - state->viewerState->currentPosition;
+            auto dist = distVec.dot(vp->n);
+            coord = coord - dist * vp->n;
+        }
     }
     return treeIt ? boost::optional<BufferSelection>{{treeIt->treeID, coord}} : boost::none;
 }
 
-void Viewport3D::pickMeshIdAtPosition() {
+void ViewportBase::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
 
     // create id map

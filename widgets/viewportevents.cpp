@@ -342,6 +342,15 @@ void ViewportOrtho::handleMouseMotionMiddleHold(const QMouseEvent *event) {
 }
 
 void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
+    auto & skeleton = *state->skeletonState;
+    if (mouseDown == event->pos()) { // mouse click
+        skeleton.meshLastClickInformation = pickMesh(event->pos());
+        skeleton.meshLastClickCurrentlyVisited = false;
+        if (skeleton.meshLastClickInformation) {
+            Skeletonizer::singleton().setActiveTreeByID(skeleton.meshLastClickInformation.get().treeId);
+        }
+    }
+
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
         QSet<nodeListElement*> selectedNodes;
         int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
@@ -366,17 +375,6 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         }
         state->viewerState->nodeSelectSquareData = std::make_pair(-1, Qt::NoModifier);//disable node selection square
     }
-}
-
-void Viewport3D::handleMouseReleaseLeft(const QMouseEvent *event) {
-    if (mouseDown == event->pos() && state->viewerState->MeshPickingEnabled) {// mouse click
-        meshLastClickInformation = pickMesh(event->pos());
-        meshLastClickCurrentlyVisited = false;
-        if (meshLastClickInformation) {
-            Skeletonizer::singleton().setActiveTreeByID(meshLastClickInformation.get().treeId);
-        }
-    }
-    ViewportBase::handleMouseReleaseLeft(event);
 }
 
 void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {

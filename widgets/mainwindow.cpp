@@ -605,13 +605,13 @@ void MainWindow::createMenus() {
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
-        auto meshPriority = !viewport3D->meshLastClickCurrentlyVisited || !state->skeletonState->activeNode;
-        if (viewport3D->meshLastClickInformation && meshPriority) {
-            state->viewer->setPosition(viewport3D->meshLastClickInformation.get().coord);
-            viewport3D->meshLastClickCurrentlyVisited = true;
+        auto meshPriority = !state->skeletonState->meshLastClickCurrentlyVisited || !state->skeletonState->activeNode;
+        if (state->skeletonState->meshLastClickInformation && meshPriority) {
+            state->viewer->setPosition(state->skeletonState->meshLastClickInformation.get().coord);
+            state->skeletonState->meshLastClickCurrentlyVisited = true;
         } else if (state->skeletonState->activeNode) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
-            viewport3D->meshLastClickCurrentlyVisited = false;
+            state->skeletonState->meshLastClickCurrentlyVisited = false;
         }
     }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
