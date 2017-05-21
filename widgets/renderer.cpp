@@ -710,8 +710,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     const auto nears = state->scale.x * state->viewerState->depthCutOff;
     const auto fars = -state->scale.x * state->viewerState->depthCutOff;
-    const auto nearVal = 0;//-nears;
-    const auto farVal = /*-fars * */100000;//*/;
+    const auto nearVal = -nears;
+    const auto farVal = -fars;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
@@ -830,12 +830,21 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         fbo.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
 
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary));
+        glMatrixMode(GL_MODELVIEW);
+
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
         renderMesh();
         glEnable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
 
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
         fbo.release();
 
         std::vector<floatCoordinate> vertices{
