@@ -775,7 +775,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
         glPushMatrix();
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
             const auto halfPixelOffset = 0.5 * (v1 - v2) * state->scale;
@@ -822,7 +822,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (options.drawMesh) {
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -1158,7 +1158,7 @@ void ViewportBase::renderMesh() {
     std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
-        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
+        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) || tree.selected;
         if (tree.render && selectionFilter && validMesh) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
                 mesh.color_buf.bind();
@@ -1248,7 +1248,7 @@ void ViewportBase::pickMeshIdAtPosition() {
     std::uint32_t id_counter = 1;
     for (auto & tree : state->skeletonState->trees) {
         const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
-        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
+        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) && !tree.selected;
         if (selectionFilter || !pickableMesh) {
             continue;
         }
@@ -1604,7 +1604,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
     }
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowIn3DVP)) {
         glPushMatrix();
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
@@ -1613,7 +1613,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
         renderMesh();
     }
 
@@ -1887,7 +1887,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
     const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
+    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         // focus on synapses, darken rest of skeleton
         const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
@@ -1997,7 +1997,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             if (synapseCreated) {
                 const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
+                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
                     segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
                     QColor color = Qt::black;
                     if (synapseSelected == false) {
