@@ -842,7 +842,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevComment = QString("");
-        const auto comment = QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
+        const auto comment = state->viewer->suspend([this, &applied]{
+            return QInputDialog::getText(this, "Edit node comment", "New node comment", QLineEdit::Normal, prevComment, &applied);
+        });
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [comment](auto & node){
                 Skeletonizer::singleton().setComment(node, comment);
@@ -853,7 +855,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Set &radius for nodes"), &QAction::triggered, [this](){
         bool applied = false;
         static auto prevRadius = Skeletonizer::singleton().skeletonState.defaultNodeRadius;
-        const auto radius = QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, nodeListElement::MAX_RADIUS_SETTING, 1, &applied);
+        const auto radius = state->viewer->suspend([this, &applied]{
+            return QInputDialog::getDouble(this, "Edit node radii", "New node radius", prevRadius, 0, nodeListElement::MAX_RADIUS_SETTING, 1, &applied);
+        });
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [radius](auto & node){
                 Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);

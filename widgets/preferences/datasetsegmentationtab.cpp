@@ -156,7 +156,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
 
 void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
     if (path.isEmpty()) {
-        path = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        path = state->viewer->suspend([this]{
+            return QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
+        });
     }
     if (!path.isEmpty()) {//load LUT and apply
         try {

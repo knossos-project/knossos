@@ -1059,9 +1059,10 @@ void MainWindow::clearSkeletonSlot() {
 }
 
 /* preference menu functionality */
-void MainWindow::loadCustomPreferencesSlot()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, "Open custom preferences file", QDir::homePath(), "KNOSOS GUI preferences file (*.ini)");
+void MainWindow::loadCustomPreferencesSlot() {
+    const QString fileName = state->viewer->suspend([this]{
+        return QFileDialog::getOpenFileName(this, "Open custom preferences file", QDir::homePath(), "KNOSOS GUI preferences file (*.ini)");
+    });
     if(!fileName.isEmpty()) {
         QSettings settings;
 
@@ -1075,13 +1076,14 @@ void MainWindow::loadCustomPreferencesSlot()
     }
 }
 
-void MainWindow::saveCustomPreferencesSlot()
-{
+void MainWindow::saveCustomPreferencesSlot() {
     saveSettings();
     QSettings settings;
     QString originSettings = settings.fileName();
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save custom preferences file as", QDir::homePath(), "KNOSSOS GUI preferences file (*.ini)");
+    const QString fileName = state->viewer->suspend([this]{
+        return QFileDialog::getSaveFileName(this, "Save custom preferences file as", QDir::homePath(), "KNOSSOS GUI preferences file (*.ini)");
+    });
     if(!fileName.isEmpty()) {
         QFile file;
         file.setFileName(originSettings);
