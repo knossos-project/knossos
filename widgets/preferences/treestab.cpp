@@ -114,12 +114,12 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     });
 
     // tree visibility
-    QObject::connect(&allTreesRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
-    QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, this, &TreesTab::updateTreeDisplay);
-    QObject::connect(&meshInOrthoVPsCheck, &QCheckBox::clicked, this, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
-    QObject::connect(&meshIn3DVPCheck, &QCheckBox::clicked, this, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
-    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
-    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, this, &TreesTab::updateTreeDisplay);
+    QObject::connect(&allTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, !checked); });
+    QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, checked); });
+    QObject::connect(&meshInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
+    QObject::connect(&meshIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
+    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
+    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
 
     createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_T, [this](){// T for trees
         if (allTreesRadio.isChecked()) {
@@ -130,19 +130,6 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
         allTreesRadio.clicked(allTreesRadio.isChecked());
         selectedTreesRadio.clicked(selectedTreesRadio.isChecked());
     });
-}
-
-void TreesTab::updateTreeDisplay() {
-    state->viewerState->skeletonDisplay = 0x0;
-    if (selectedTreesRadio.isChecked()) {
-        state->viewerState->skeletonDisplay |= TreeDisplay::OnlySelected;
-    }
-    if (skeletonIn3DVPCheck.isChecked()) {
-        state->viewerState->skeletonDisplay |= TreeDisplay::ShowIn3DVP;
-    }
-    if (skeletonInOrthoVPsCheck.isChecked()) {
-        state->viewerState->skeletonDisplay |= TreeDisplay::ShowInOrthoVPs;
-    }
 }
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {

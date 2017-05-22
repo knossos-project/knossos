@@ -92,7 +92,6 @@ class TreesTab : public QWidget
     QCheckBox skeletonInOrthoVPsCheck{tr("Orthogonal viewports")};
     QCheckBox skeletonIn3DVPCheck{tr("3D viewport")};
 
-    void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);
