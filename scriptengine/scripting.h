@@ -26,7 +26,7 @@
 #include "proxies/pythonproxy.h"
 #include "proxies/segmentationproxy.h"
 #include "proxies/skeletonproxy.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <PythonQt/PythonQtObjectPtr.h>
 

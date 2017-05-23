@@ -23,7 +23,7 @@
 #ifndef SNAPSHOTWIDGET_H
 #define SNAPSHOTWIDGET_H
 
-#include "viewports/viewport.h"
+#include "viewports/viewportbase.h"
 #include "widgets/DialogVisibilityNotify.h"
 
 #include <QButtonGroup>

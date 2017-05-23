@@ -27,7 +27,7 @@
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <QApplication>
 #include <QDebug>

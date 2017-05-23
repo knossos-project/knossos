@@ -20,18 +20,14 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef VIEWPORT_H
-#define VIEWPORT_H
+#ifndef VIEWPORTBASE_H
+#define VIEWPORTBASE_H
 
 #include "coordinate.h"
 #include "hash_list.h"
 
 #include <QAction>
-#include <QDebug>
 #include <QDialog>
-#include <QDockWidget>
-#include <QFont>
-#include <QMouseEvent>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_1_3>
 #include <QOpenGLShaderProgram>
@@ -40,10 +36,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QTimer>
 
-#include <atomic>
-#include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 
 enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_ZY, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
@@ -304,135 +297,8 @@ public slots:
     void takeSnapshotDatasetSize(SnapshotOptions o);
     void takeSnapshot(const SnapshotOptions & o);
 
-    virtual void zoomIn() {};
-    virtual void zoomOut() {};
+    virtual void zoomIn() = 0;
+    virtual void zoomOut() = 0;
 };
 
-class Viewport3D : public ViewportBase {
-    Q_OBJECT
-    QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
-    QAction resetAction{nullptr};
-    void resetWiggle();
-    virtual void zoom(const float zoomStep) override;
-    virtual float zoomStep() const override;
-    virtual void paintGL() override;
-    bool wiggleDirection{true};
-    int wiggle{0};
-    QTimer wiggletimer;
-    void renderVolumeVP();
-    void renderSkeletonVP(const RenderOptions & options = RenderOptions());
-    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    void renderArbitrarySlicePane(const ViewportOrtho & vp);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
-    virtual void renderViewportFrontFace() override;
-
-    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    virtual void handleWheelEvent(const QWheelEvent *event) override;
-    virtual void handleKeyPress(const QKeyEvent *event) override;
-    virtual void handleKeyRelease(const QKeyEvent *event) override;
-    virtual void focusOutEvent(QFocusEvent *event) override;
-
-protected:
-    virtual void renderMeshBufferIds(Mesh &buf) override;
-
-public:
-    double zoomFactor{1.0};
-    QMatrix4x4 rotation;
-    explicit Viewport3D(QWidget *parent, ViewportType viewportType);
-    ~Viewport3D();
-    virtual void showHideButtons(bool isShow) override;
-    void updateVolumeTexture();
-    static bool showBoundariesInUm;
-
-public slots:
-    void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1.f/zoomStep()); }
-};
-
-class ViewportOrtho : public ViewportBase {
-    Q_OBJECT
-    QOpenGLShaderProgram raw_data_shader;
-    QOpenGLShaderProgram overlay_data_shader;
-
-    QAction zoomResetAction{tr("Reset zoom"), &menuButton};
-
-    floatCoordinate handleMovement(const QPoint & pos);
-    virtual void zoom(const float zoomStep) override;
-    virtual float zoomStep() const override { return 0.75; }
-
-    void renderViewportFast();
-    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
-    void renderSegPlaneIntersection(const segmentListElement & segment);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
-    void renderBrush(const Coordinate coord);
-    virtual void renderViewportFrontFace() override;
-
-    floatCoordinate arbNodeDragCache = {};
-    class nodeListElement *draggedNode = nullptr;
-
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
-
-    virtual void handleKeyPress(const QKeyEvent *event) override;
-    virtual void handleMouseHover(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
-    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    virtual void handleMouseButtonRight(const QMouseEvent *event) override;
-    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseRight(const QMouseEvent *event) override;
-    virtual void handleMouseButtonMiddle(const QMouseEvent *event) override;
-    virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
-    virtual void handleWheelEvent(const QWheelEvent *event) override;
-
-protected:
-    virtual void initializeGL() override;
-    virtual void paintGL() override;
-
-    virtual void renderMeshBufferIds(Mesh &buf) override;
-public:
-    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
-    ~ViewportOrtho();
-    void resetTexture();
-    static bool showNodeComments;
-
-    void sendCursorPosition();
-    Coordinate getMouseCoordinate();
-    // vp vectors relative to the first cartesian octant
-    floatCoordinate v1;// vector in x direction
-    floatCoordinate v2;// vector in y direction
-    floatCoordinate  n;// faces away from the vp plane towards the camera
-    std::atomic_bool dcResliceNecessary{true};
-    std::atomic_bool ocResliceNecessary{true};
-    float displayedIsoPx;
-    float screenPxYPerDataPx;
-    float displayedlengthInNmY;
-
-    char * viewPortData;
-    viewportTexture texture;
-    float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
-
-public slots:
-    void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1.f/zoomStep()); }
-};
-
-class ViewportArb : public ViewportOrtho {
-    Q_OBJECT
-    QAction resetAction{"Reset rotation", &menuButton};
-    void updateOverlayTexture();
-
-protected:
-    virtual void paintGL() override;
-    virtual void hideVP() override;
-public:
-    floatCoordinate leftUpperPxInAbsPx_float;
-    ViewportArb(QWidget *parent, ViewportType viewportType);
-    virtual void showHideButtons(bool isShow) override;
-
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
-};
-#endif // VIEWPORT_H
+#endif // VIEWPORTBASE_H

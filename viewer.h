@@ -29,7 +29,7 @@
 #include "usermove.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <QColor>
 #include <QCursor>

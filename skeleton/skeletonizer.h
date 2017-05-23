@@ -27,7 +27,7 @@
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
 #include "version.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <QObject>
 #include <QSet>

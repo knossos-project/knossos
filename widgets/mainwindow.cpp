@@ -32,7 +32,7 @@
 #include "stateInfo.h"
 #include "version.h"
 #include "viewer.h"
-#include "viewports/viewport.h"
+#include "viewports/viewportbase.h"
 #include "widgetcontainer.h"
 
 #include <PythonQt/PythonQt.h>

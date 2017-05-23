@@ -25,7 +25,10 @@
 
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
-#include "viewports/viewport.h"
+#include "viewports/viewportarb.h"
+#include "viewports/viewportbase.h"
+#include "viewports/viewportortho.h"
+#include "viewports/viewport3d.h"
 #include "widgetcontainer.h"
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10

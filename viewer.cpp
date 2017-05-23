@@ -30,7 +30,7 @@
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "widgets/mainwindow.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 #include "widgets/widgetcontainer.h"
 
 #include <QApplication>

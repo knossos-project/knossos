@@ -1,0 +1,103 @@
+/*
+ *  This file is a part of KNOSSOS.
+ *
+ *  (C) Copyright 2007-2016
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
+ *
+ *  KNOSSOS is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 of
+ *  the License as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *  For further information, visit https://knossostool.org
+ *  or contact knossos-team@mpimf-heidelberg.mpg.de
+ */
+
+#ifndef VIEWPORTORTHO_H
+#define VIEWPORTORTHO_H
+
+#include "coordinate.h"
+#include "mesh/mesh.h"
+#include "skeleton/node.h"
+#include "viewportbase.h"
+
+#include <atomic>
+
+class ViewportOrtho : public ViewportBase {
+    Q_OBJECT
+    QOpenGLShaderProgram raw_data_shader;
+    QOpenGLShaderProgram overlay_data_shader;
+
+    QAction zoomResetAction{tr("Reset zoom"), &menuButton};
+
+    floatCoordinate handleMovement(const QPoint & pos);
+    virtual void zoom(const float zoomStep) override;
+    virtual float zoomStep() const override { return 0.75; }
+
+    void renderViewportFast();
+    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
+    void renderSegPlaneIntersection(const segmentListElement & segment);
+    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
+    void renderBrush(const Coordinate coord);
+    virtual void renderViewportFrontFace() override;
+
+    floatCoordinate arbNodeDragCache = {};
+    class nodeListElement *draggedNode = nullptr;
+
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+
+    virtual void handleKeyPress(const QKeyEvent *event) override;
+    virtual void handleMouseHover(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
+    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
+    virtual void handleMouseButtonRight(const QMouseEvent *event) override;
+    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseRight(const QMouseEvent *event) override;
+    virtual void handleMouseButtonMiddle(const QMouseEvent *event) override;
+    virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
+    virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
+    virtual void handleWheelEvent(const QWheelEvent *event) override;
+
+protected:
+    virtual void initializeGL() override;
+    virtual void paintGL() override;
+
+    virtual void renderMeshBufferIds(Mesh &buf) override;
+public:
+    explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
+    ~ViewportOrtho();
+    void resetTexture();
+    static bool showNodeComments;
+
+    void sendCursorPosition();
+    Coordinate getMouseCoordinate();
+    // vp vectors relative to the first cartesian octant
+    floatCoordinate v1;// vector in x direction
+    floatCoordinate v2;// vector in y direction
+    floatCoordinate  n;// faces away from the vp plane towards the camera
+    std::atomic_bool dcResliceNecessary{true};
+    std::atomic_bool ocResliceNecessary{true};
+    float displayedIsoPx;
+    float screenPxYPerDataPx;
+    float displayedlengthInNmY;
+
+    char * viewPortData;
+    viewportTexture texture;
+    float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
+
+public slots:
+    void zoomIn() override { zoom(zoomStep()); }
+    void zoomOut() override { zoom(1.f/zoomStep()); }
+};
+
+#endif // VIEWPORTORTHO_H

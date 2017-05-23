@@ -26,7 +26,7 @@
 #include "coordinate.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/UserOrientableSplitter.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <QCheckBox>
 #include <QFormLayout>

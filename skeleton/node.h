@@ -24,7 +24,7 @@
 #define NODE_H
 
 #include "property_query.h"
-#include "widgets/viewports/viewport.h"
+#include "widgets/viewports/viewportbase.h"
 
 #include <QVariantHash>
 
