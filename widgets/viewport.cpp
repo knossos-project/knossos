@@ -491,6 +491,7 @@ void ViewportBase::initializeGL() {
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
         uniform vec4 tree_color;
+        uniform vec3 vp_normal;
 
         varying vec4 frag_color;
         varying vec3 frag_normal;
@@ -518,14 +519,20 @@ void ViewportBase::initializeGL() {
             }
 
             vec3 fcolor = frag_color.rgb;
-            gl_FragColor = vec4((0.25 * fcolor                                 // ambient
-                        + 0.75 * fcolor * main_light_power                     // diffuse(main)
-                        + 0.25 * fcolor * sub_light_power         // diffuse(sub)
-                        // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
-                        // + specular_color * specular_power                  // specular
-                        ) //* ambient_occlusion_power
-                        , frag_color.a);
-
+            if (length(vp_normal) > 0.0) {
+                float dot_value = dot(frag_normal, vp_normal);
+                if (dot_value < 0.0) {// vp_normal faces towards the camera
+                    gl_FragColor = vec4(fcolor.rgb, 0.5);// show
+                } else {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut
+                }
+            } else {
+                 gl_FragColor = vec4((0.25 * fcolor             // ambient
+                 + 0.75 * fcolor * main_light_power // diffuse(main)
+                 + 0.25 * fcolor * sub_light_power  // diffuse(sub)
+                 )
+                 , frag_color.a);
+            }
             // gl_FragColor = //vec4((frag_normal+1.0)/2.0, 1.0); // display normals
         }
     )shaderSource");
