@@ -34,7 +34,7 @@
 #include "tinyply/tinyply.h"
 #include "version.h"
 #include "viewer.h"
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 #include "widgets/mainwindow.h"
 
 #include <QDataStream>

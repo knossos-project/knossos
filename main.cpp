@@ -27,7 +27,7 @@
 #include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 
 #include <QApplication>
 #include <QFileInfo>

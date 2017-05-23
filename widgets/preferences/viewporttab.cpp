@@ -24,7 +24,7 @@
 #include "viewporttab.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 
 ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     boundaryGroup.addButton(&boundariesPixelRadioBtn);

@@ -27,7 +27,7 @@
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 
 #include <QFileDialog>
 #include <QMessageBox>

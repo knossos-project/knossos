@@ -23,7 +23,7 @@
 #include "viewport.h"
 
 #include "functions.h"
-#include "GuiConstants.h"
+#include "widgets/GuiConstants.h"
 #include "profiler.h"
 #include "mesh/mesh.h"
 #include "scriptengine/scripting.h"

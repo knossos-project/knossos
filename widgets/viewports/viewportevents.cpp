@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 
 #include "functions.h"
 #include "gui_wrapper.h"

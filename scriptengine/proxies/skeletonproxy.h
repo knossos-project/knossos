@@ -25,7 +25,7 @@
 
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
-#include "widgets/viewport.h"
+#include "widgets/viewports/viewport.h"
 
 #include <QList>
 #include <QObject>
