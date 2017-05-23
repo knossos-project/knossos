@@ -48,6 +48,15 @@
         <file>resources/icons/menubar/choose-dataset.png</file>
         <file>resources/icons/menubar/annotation.png</file>
         <file>resources/icons/menubar/about.png</file>
+        <file>resources/shaders/mesh/meshshader.vert</file>
+        <file>resources/shaders/mesh/meshshader.frag</file>
+        <file>resources/shaders/mesh/meshidshader.vert</file>
+        <file>resources/shaders/mesh/meshidshader.frag</file>
+        <file>resources/shaders/mesh/meshtreecolorshader.frag</file>
+        <file>resources/shaders/mesh/meshtreecolorshader.vert</file>
+        <file>resources/shaders/overlaydatashader.frag</file>
+        <file>resources/shaders/rawdatashader.frag</file>
+        <file>resources/shaders/rawdatashader.vert</file>
         <file>resources/style.qss</file>
     </qresource>
 </RCC>
