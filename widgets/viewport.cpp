@@ -602,18 +602,21 @@ void ViewportBase::initializeGL() {
         #version 130
 
         in vec3 vertex;
+        in vec3 normal;
         in vec4 color;
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
 
         flat out vec4 frag_color;
+        out vec3 frag_normal;
         out mat4 mvp_matrix;
 
         void main() {
             mvp_matrix = projection_matrix * modelview_matrix;
             gl_Position = mvp_matrix * vec4(vertex, 1.0);
             frag_color = color;
+            frag_normal = normal;
         }
     )shaderSource");
 
@@ -622,14 +625,25 @@ void ViewportBase::initializeGL() {
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
+        uniform vec3 vp_normal;
 
         flat in vec4 frag_color;
+        in vec3 frag_normal;
         in mat4 mvp_matrix;
 
         out vec4 fragColorOut;
 
         void main() {
-            fragColorOut = frag_color;
+            if (length(vp_normal) > 0.0) {
+                float dot_value = dot(frag_normal, vp_normal);
+                if (dot_value < 0.0) {// vp_normal faces towards the camera
+                    fragColorOut = frag_color;// show
+                } else {
+                    fragColorOut = vec4(1.0, 1.0, 1.0, 1.0);// cut
+                }
+            } else {
+                fragColorOut = frag_color;
+            }
         }
     )shaderSource");
     state->viewerState->MeshPickingEnabled = meshIdShader.link();

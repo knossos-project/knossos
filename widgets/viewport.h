@@ -182,7 +182,6 @@ private:
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
     void renderMeshBuffer(Mesh & buf);
-    void renderMeshBufferIds(Mesh & buf);
 
 protected:
     QOpenGLShaderProgram meshShader;
@@ -190,6 +189,7 @@ protected:
     QOpenGLShaderProgram meshIdShader;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
+    virtual void renderMeshBufferIds(Mesh & buf);
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
@@ -332,6 +332,10 @@ class Viewport3D : public ViewportBase {
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;
     virtual void focusOutEvent(QFocusEvent *event) override;
+
+protected:
+    virtual void renderMeshBufferIds(Mesh &buf) override;
+
 public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
@@ -386,6 +390,8 @@ class ViewportOrtho : public ViewportBase {
 protected:
     virtual void initializeGL() override;
     virtual void paintGL() override;
+
+    virtual void renderMeshBufferIds(Mesh &buf) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     ~ViewportOrtho();

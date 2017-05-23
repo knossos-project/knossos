@@ -1103,13 +1103,32 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     meshShader.release();
     glPopMatrix();
 }
-
-void ViewportBase::renderMeshBufferIds(Mesh & buf) {
-    glDisable(GL_BLEND);
+void Viewport3D::renderMeshBufferIds(Mesh &buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
+    ViewportBase::renderMeshBufferIds(buf);
+    glPopMatrix();
+}
 
+void ViewportOrtho::renderMeshBufferIds(Mesh &buf) {
+    glDisable(GL_BLEND);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary));
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    ViewportBase::renderMeshBufferIds(buf);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_BLEND);
+}
+
+void ViewportBase::renderMeshBufferIds(Mesh & buf) {
+    glDisable(GL_BLEND);
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
     glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
@@ -1119,8 +1138,14 @@ void ViewportBase::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.bind();
     meshIdShader.setUniformValue("modelview_matrix", modelview_mat);
     meshIdShader.setUniformValue("projection_matrix", projection_mat);
+    floatCoordinate normal = {0, 0, 0};
+    if (viewportType != VIEWPORT_SKELETON) {
+        normal = state->mainWindow->viewportOrtho(viewportType)->n;
+    }
+    meshIdShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
 
     glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
     buf.position_buf.bind();
@@ -1128,6 +1153,12 @@ void ViewportBase::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.enableAttributeArray(vertexLocation);
     meshIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
+
+    buf.normal_buf.bind();
+    int normalLocation = meshIdShader.attributeLocation("normal");
+    meshIdShader.enableAttributeArray(normalLocation);
+    meshIdShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+    buf.normal_buf.release();
 
     buf.picking_color_buf.bind();
     int colorLocation = meshIdShader.attributeLocation("color");
@@ -1147,10 +1178,10 @@ void ViewportBase::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 
     meshIdShader.release();
-    glPopMatrix();
     glEnable(GL_BLEND);
 }
 
@@ -1202,9 +1233,12 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
     glViewport(0, 0, this->width(), this->height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
+    glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(RenderOptions::meshPickingRenderOptions());
     fbo.release();
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
     glPopAttrib();
     // read color and translate to id
     QImage fboImage(fbo.toImage());
