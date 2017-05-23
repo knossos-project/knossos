@@ -81,13 +81,17 @@ class TreesTab : public QWidget
     // tree visibility
     QGroupBox visibilityGroup{tr("Visibility")};
     QVBoxLayout visibilityLayout;
-    QRadioButton wholeSkeletonRadio{tr("Show whole skeleton")};
+    QRadioButton allTreesRadio{tr("Show all trees")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
-    QCheckBox meshCheck{tr("Show meshes")};
-    QCheckBox skeletonInOrthoVPsCheck{tr("Show skeleton in ortho VPs")};
-    QCheckBox skeletonIn3DVPCheck{tr("Show skeleton in 3D VP")};
+    QGroupBox meshGroup{tr("Show meshes in")};
+    QVBoxLayout meshGroupLayout;
+    QCheckBox meshInOrthoVPsCheck{tr("Orthogonal viewports")};
+    QCheckBox meshIn3DVPCheck{tr("3D viewport")};
+    QGroupBox skeletonGroup{tr("Show skeleton in")};
+    QVBoxLayout skelGroupLayout;
+    QCheckBox skeletonInOrthoVPsCheck{tr("Orthogonal viewports")};
+    QCheckBox skeletonIn3DVPCheck{tr("3D viewport")};
 
-    void updateTreeDisplay();
     void loadTreeLUTButtonClicked(QString path = "");
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);

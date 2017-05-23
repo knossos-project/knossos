@@ -77,8 +77,9 @@ const QString RENDERING_QUALITY = "rendering_quality";
 const QString WHOLE_SKELETON = "whole_skeleton";
 const QString ONLY_SELECTED_TREES = "only_selected_trees";
 const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
-const QString SHOW_SKELETON_SKELVP = "Show_skeleton_skelvp";
-const QString SHOW_MESH = "show_mesh";
+const QString SHOW_SKELETON_3DVP = "Show_skeleton_3dvp";
+const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";
+const QString SHOW_MESH_3DVP = "show_mesh_3dvp";
 
 // Preferences Nodes Tab
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";

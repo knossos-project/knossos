@@ -144,10 +144,15 @@ public:
     explicit QViewportFloatWidget(QWidget *parent, ViewportBase *vp);
 };
 
+struct BufferSelection {
+    std::uint64_t treeId;
+    floatCoordinate coord;
+};
+
 constexpr int defaultFontSize = 10;
 class nodeListElement;
 class segmentListElement;
-class mesh;
+class Mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_3 {
@@ -176,10 +181,15 @@ private:
     virtual void resizeGL(int width, int height) override;
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
+    void renderMeshBuffer(Mesh & buf);
+
 protected:
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
+    boost::optional<BufferSelection> pickMesh(const QPoint pos);
+    void pickMeshIdAtPosition();
+    virtual void renderMeshBufferIds(Mesh & buf);
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
@@ -281,6 +291,8 @@ public:
     uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
 
     float frustum[6][4]; // Stores the current view frustum planes
+
+    void renderMesh();
 signals:
     void cursorPositionChanged(const Coordinate & position, const ViewportType vpType);
     void pasteCoordinateSignal();
@@ -296,11 +308,6 @@ public slots:
     virtual void zoomOut() {};
 };
 
-struct BufferSelection {
-    std::uint64_t treeId;
-    floatCoordinate coord;
-};
-class Mesh;
 class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
@@ -313,11 +320,6 @@ class Viewport3D : public ViewportBase {
     int wiggle{0};
     QTimer wiggletimer;
     void renderVolumeVP();
-    void renderMesh();
-    void renderMeshBuffer(Mesh & buf);
-    void renderMeshBufferIds(Mesh & buf);
-    void pickMeshIdAtPosition();
-    boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(const ViewportOrtho & vp);
@@ -326,16 +328,17 @@ class Viewport3D : public ViewportBase {
 
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;
     virtual void focusOutEvent(QFocusEvent *event) override;
+
+protected:
+    virtual void renderMeshBufferIds(Mesh &buf) override;
+
 public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
-    boost::optional<BufferSelection> meshLastClickInformation;
-    bool meshLastClickCurrentlyVisited{false};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     ~Viewport3D();
     virtual void showHideButtons(bool isShow) override;
@@ -387,6 +390,8 @@ class ViewportOrtho : public ViewportBase {
 protected:
     virtual void initializeGL() override;
     virtual void paintGL() override;
+
+    virtual void renderMeshBufferIds(Mesh &buf) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     ~ViewportOrtho();

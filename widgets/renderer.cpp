@@ -775,7 +775,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
         glPushMatrix();
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
             const auto halfPixelOffset = 0.5 * (v1 - v2) * state->scale;
@@ -819,6 +819,55 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glVertex3f(bottom.x(), bottom.y(), bottom.z());
         glEnd();
         glPopMatrix();
+    }
+    if (options.meshPicking) {
+        pickMeshIdAtPosition();
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+        QOpenGLFramebufferObjectFormat format;
+        format.setSamples(0);//state->viewerState->sampleBuffers
+        format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+        QOpenGLFramebufferObject fbo(width(), height(), format);
+        fbo.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
+
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary));
+        glMatrixMode(GL_MODELVIEW);
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        renderMesh();
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        fbo.release();
+
+        std::vector<floatCoordinate> vertices{
+                isoCurPos - dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 + dataPxY * v2,
+                isoCurPos - dataPxX * v1 + dataPxY * v2
+        };
+        std::vector<float> texCoordComponents{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+
+        glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glBindTexture(GL_TEXTURE_2D, fbo.texture());
+        glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+        glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
+
+        glDrawArrays(GL_QUADS, 0, 4);
+
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisable(GL_TEXTURE_2D);
     }
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
         glPushMatrix();
@@ -983,7 +1032,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void Viewport3D::renderMeshBuffer(Mesh & buf) {
+void ViewportBase::renderMeshBuffer(Mesh & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
@@ -999,9 +1048,11 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
-    if (buf.useTreeColor) {
-        meshShader.setUniformValue("use_tree_color", buf.useTreeColor);
+    floatCoordinate normal = {0, 0, 0};
+    if (viewportType != VIEWPORT_SKELETON) {
+        normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
+    meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1052,13 +1103,32 @@ void Viewport3D::renderMeshBuffer(Mesh & buf) {
     meshShader.release();
     glPopMatrix();
 }
-
-void Viewport3D::renderMeshBufferIds(Mesh & buf) {
-    glDisable(GL_BLEND);
+void Viewport3D::renderMeshBufferIds(Mesh &buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
+    ViewportBase::renderMeshBufferIds(buf);
+    glPopMatrix();
+}
 
+void ViewportOrtho::renderMeshBufferIds(Mesh &buf) {
+    glDisable(GL_BLEND);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary));
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    ViewportBase::renderMeshBufferIds(buf);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_BLEND);
+}
+
+void ViewportBase::renderMeshBufferIds(Mesh & buf) {
+    glDisable(GL_BLEND);
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
     glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
@@ -1068,8 +1138,14 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.bind();
     meshIdShader.setUniformValue("modelview_matrix", modelview_mat);
     meshIdShader.setUniformValue("projection_matrix", projection_mat);
+    floatCoordinate normal = {0, 0, 0};
+    if (viewportType != VIEWPORT_SKELETON) {
+        normal = state->mainWindow->viewportOrtho(viewportType)->n;
+    }
+    meshIdShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
 
     glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
     buf.position_buf.bind();
@@ -1077,6 +1153,12 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.enableAttributeArray(vertexLocation);
     meshIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
+
+    buf.normal_buf.bind();
+    int normalLocation = meshIdShader.attributeLocation("normal");
+    meshIdShader.enableAttributeArray(normalLocation);
+    meshIdShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+    buf.normal_buf.release();
 
     buf.picking_color_buf.bind();
     int colorLocation = meshIdShader.attributeLocation("color");
@@ -1096,22 +1178,18 @@ void Viewport3D::renderMeshBufferIds(Mesh & buf) {
     meshIdShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 
     meshIdShader.release();
-    glPopMatrix();
     glEnable(GL_BLEND);
 }
 
-void Viewport3D::renderMesh() {
-    screenPxXPerDataPx = edgeLength / (state->skeletonState->volBoundary / zoomFactor);
-    float point_size = std::max(screenPxXPerDataPx * 100.0f, 1.0f);
-    glPointSize(point_size);
-
+void ViewportBase::renderMesh() {
     std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
-        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) || tree.selected;
+        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) || tree.selected;
         if (tree.render && selectionFilter && validMesh) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
                 mesh.color_buf.bind();
@@ -1149,15 +1227,18 @@ std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
              static_cast<unsigned char>(id >> 24)}};
 }
 
-boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
+boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
     makeCurrent();
     glPushAttrib(GL_VIEWPORT_BIT);
     glViewport(0, 0, this->width(), this->height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
+    glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderSkeletonVP(RenderOptions::meshPickingRenderOptions());
+    renderViewport(RenderOptions::meshPickingRenderOptions());
     fbo.release();
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
     glPopAttrib();
     // read color and translate to id
     QImage fboImage(fbo.toImage());
@@ -1183,18 +1264,25 @@ boost::optional<BufferSelection> Viewport3D::pickMesh(const QPoint pos) {
 
         coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
         coord  /= state->scale;
+        if (viewportType != VIEWPORT_SKELETON) {
+            // project point onto ortho plane. Necessary, because in reality user clicks a triangle behind the plane.
+            auto * vp = state->mainWindow->viewportOrtho(viewportType);
+            auto distVec = coord - state->viewerState->currentPosition;
+            auto dist = distVec.dot(vp->n);
+            coord = coord - dist * vp->n;
+        }
     }
     return treeIt ? boost::optional<BufferSelection>{{treeIt->treeID, coord}} : boost::none;
 }
 
-void Viewport3D::pickMeshIdAtPosition() {
+void ViewportBase::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
 
     // create id map
     std::uint32_t id_counter = 1;
     for (auto & tree : state->skeletonState->trees) {
         const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
-        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) && !tree.selected;
+        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) && !tree.selected;
         if (selectionFilter || !pickableMesh) {
             continue;
         }
@@ -1550,7 +1638,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
     }
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::ShowIn3DVP)) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowIn3DVP)) {
         glPushMatrix();
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
@@ -1559,7 +1647,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (state->viewerState->meshVisibilityOn && options.drawMesh) {
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
         renderMesh();
     }
 
@@ -1833,7 +1921,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
     const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected);
+    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         // focus on synapses, darken rest of skeleton
         const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
@@ -1943,7 +2031,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             if (synapseCreated) {
                 const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(SkeletonDisplay::OnlySelected) == false || synapseSelected)) {
+                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
                     segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
                     QColor color = Qt::black;
                     if (synapseSelected == false) {

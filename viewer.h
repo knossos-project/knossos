@@ -42,7 +42,7 @@
 
 #include <vector>
 
-enum class SkeletonDisplay {
+enum TreeDisplay {
     OnlySelected = 0x1,
     ShowIn3DVP = 0x2,
     ShowInOrthoVPs = 0x4
@@ -113,7 +113,8 @@ struct ViewerState {
     bool datasetAdjustmentOn{false};
     // skeleton rendering options
     float depthCutOff{5.f};
-    QFlags<SkeletonDisplay> skeletonDisplay{SkeletonDisplay::ShowIn3DVP, SkeletonDisplay::ShowInOrthoVPs};
+    QFlags<TreeDisplay> skeletonDisplay{TreeDisplay::ShowIn3DVP, TreeDisplay::ShowInOrthoVPs};
+    QFlags<TreeDisplay> meshDisplay{TreeDisplay::ShowIn3DVP, TreeDisplay::ShowInOrthoVPs};
     QFlags<IdDisplay> idDisplay{IdDisplay::None};
     int highlightActiveTree{true};
     float segRadiusToNodeRadius{.5f};
@@ -139,7 +140,6 @@ struct ViewerState {
     bool showZYplane{true};
     bool showArbplane{true};
     bool showVpDecorations{true};
-    bool meshVisibilityOn{true};
     // temporary vertex buffers that are available for rendering, get cleared every frame
     struct {
         std::vector<floatCoordinate> vertices;

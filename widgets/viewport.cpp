@@ -491,6 +491,7 @@ void ViewportBase::initializeGL() {
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
         uniform vec4 tree_color;
+        uniform vec3 vp_normal;
 
         varying vec4 frag_color;
         varying vec3 frag_normal;
@@ -518,14 +519,20 @@ void ViewportBase::initializeGL() {
             }
 
             vec3 fcolor = frag_color.rgb;
-            gl_FragColor = vec4((0.25 * fcolor                                 // ambient
-                        + 0.75 * fcolor * main_light_power                     // diffuse(main)
-                        + 0.25 * fcolor * sub_light_power         // diffuse(sub)
-                        // + 0.3 * vec3(1.0, 1.0, 1.0) * pseudo_ambient_power // pseudo ambient lighting
-                        // + specular_color * specular_power                  // specular
-                        ) //* ambient_occlusion_power
-                        , frag_color.a);
-
+            if (length(vp_normal) > 0.0) {
+                float dot_value = dot(frag_normal, vp_normal);
+                if (dot_value < 0.0) {// vp_normal faces towards the camera
+                    gl_FragColor = vec4(fcolor.rgb, 0.5);// show
+                } else {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut
+                }
+            } else {
+                 gl_FragColor = vec4((0.25 * fcolor             // ambient
+                 + 0.75 * fcolor * main_light_power // diffuse(main)
+                 + 0.25 * fcolor * sub_light_power  // diffuse(sub)
+                 )
+                 , frag_color.a);
+            }
             // gl_FragColor = //vec4((frag_normal+1.0)/2.0, 1.0); // display normals
         }
     )shaderSource");
@@ -535,7 +542,6 @@ void ViewportBase::initializeGL() {
         #version 110
         attribute vec3 vertex;
         attribute vec3 normal;
-        attribute vec4 color;
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
@@ -555,6 +561,7 @@ void ViewportBase::initializeGL() {
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
         uniform vec4 tree_color;
+        uniform vec3 vp_normal;
 
         varying vec4 frag_color;
         varying vec3 frag_normal;
@@ -572,11 +579,28 @@ void ViewportBase::initializeGL() {
             float sub_light_power = max(0.0, dot(-sub_light_dir, frag_normal));
 
             vec3 fcolor = tree_color.rgb;
-            gl_FragColor = vec4((0.25 * fcolor             // ambient
-                        + 0.75 * fcolor * main_light_power // diffuse(main)
-                        + 0.25 * fcolor * sub_light_power  // diffuse(sub)
-                        )
-                        , tree_color.a);
+//            gl_FragColor = vec4(0.5 + (0.5 * frag_normal), 1);
+//            if (frag_normal.y <= 0.0) {
+//                gl_FragColor = vec4(0, frag_normal.y, 0, 1);
+//            } else {
+//                gl_FragColor = vec4(frag_normal.y, 0, 0, 1);
+//            }
+            if (length(vp_normal) > 0.0) {
+                float dot_value = dot(frag_normal, vp_normal);
+                if (dot_value < 0.0) {// vp_normal faces towards the camera
+                    gl_FragColor = vec4(tree_color.rgb, 0.5);// show
+//                    gl_FragColor = vec4(0, dot_value, 0, 1);
+                } else {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut
+//                    gl_FragColor = vec4(1 + dot_value, 0, 0, 1);
+                }
+            } else {
+                 gl_FragColor = vec4((0.25 * fcolor             // ambient
+                 + 0.75 * fcolor * main_light_power // diffuse(main)
+                 + 0.25 * fcolor * sub_light_power  // diffuse(sub)
+                 )
+                 , tree_color.a);
+            }
         }
     )shaderSource");
     meshTreeColorShader.link();
@@ -585,18 +609,21 @@ void ViewportBase::initializeGL() {
         #version 130
 
         in vec3 vertex;
+        in vec3 normal;
         in vec4 color;
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
 
         flat out vec4 frag_color;
+        out vec3 frag_normal;
         out mat4 mvp_matrix;
 
         void main() {
             mvp_matrix = projection_matrix * modelview_matrix;
             gl_Position = mvp_matrix * vec4(vertex, 1.0);
             frag_color = color;
+            frag_normal = normal;
         }
     )shaderSource");
 
@@ -605,14 +632,25 @@ void ViewportBase::initializeGL() {
 
         uniform mat4 modelview_matrix;
         uniform mat4 projection_matrix;
+        uniform vec3 vp_normal;
 
         flat in vec4 frag_color;
+        in vec3 frag_normal;
         in mat4 mvp_matrix;
 
         out vec4 fragColorOut;
 
         void main() {
-            fragColorOut = frag_color;
+            if (length(vp_normal) > 0.0) {
+                float dot_value = dot(frag_normal, vp_normal);
+                if (dot_value < 0.0) {// vp_normal faces towards the camera
+                    fragColorOut = frag_color;// show
+                } else {
+                    fragColorOut = vec4(1.0, 1.0, 1.0, 1.0);// cut
+                }
+            } else {
+                fragColorOut = frag_color;
+            }
         }
     )shaderSource");
     state->viewerState->MeshPickingEnabled = meshIdShader.link();

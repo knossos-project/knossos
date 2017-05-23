@@ -150,6 +150,9 @@ struct SkeletonState {
     std::vector<std::uint64_t> branchStack;
     bool branchpointUnresolved{false};
 
+    boost::optional<BufferSelection> meshLastClickInformation;
+    bool meshLastClickCurrentlyVisited{false};
+
     QString treeCommentFilter;
 
     float defaultNodeRadius{1.5f};
