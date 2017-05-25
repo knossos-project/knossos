@@ -53,14 +53,15 @@ class DatasetAndSegmentationTab : public QWidget
     QSlider biasSlider{Qt::Horizontal}, rangeDeltaSlider{Qt::Horizontal};
     // segmentation overlay
     QGroupBox segmentationGroup{tr("Segmentation")};
-    QGridLayout segmentationLayout;
+    QVBoxLayout segmentationLayout;
     QGroupBox overlayGroup{tr("Overlay")};
     QHBoxLayout overlayLayout;
     QLabel segmentationOverlayLabel{tr("Opacity")};
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
     // segmentation volume
-    QCheckBox volumeRenderCheckBox{"Show volume in 3D viewport"};
+    QGroupBox volumeGroup{"Show volume in 3D viewport"};
+    QGridLayout volumeLayout;
     QLabel volumeOpaquenessLabel{"Volume opacity"};
     QSpinBox volumeOpaquenessSpinBox;
     QSlider volumeOpaquenessSlider{Qt::Horizontal};

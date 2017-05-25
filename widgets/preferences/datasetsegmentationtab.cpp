@@ -41,6 +41,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     overlayGroup.setCheckable(true);
     segmentationOverlaySpinBox.setRange(0, 255);
     segmentationOverlaySlider.setRange(0, 255);
+    volumeGroup.setCheckable(true);
 
     volumeColorButton.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
     volumeOpaquenessSpinBox.setRange(0, 255);
@@ -60,11 +61,12 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     overlayLayout.addWidget(&segmentationOverlaySpinBox);
     overlayGroup.setLayout(&overlayLayout);
     row = 0;
-    segmentationLayout.addWidget(&overlayGroup, row++, 0, 1, 3);
-    segmentationLayout.addWidget(&volumeRenderCheckBox, row++, 0, 1, 2);
-    segmentationLayout.addWidget(&volumeOpaquenessLabel, row, 0); segmentationLayout.addWidget(&volumeOpaquenessSlider, row, 1); segmentationLayout.addWidget(&volumeOpaquenessSpinBox, row++, 2);
-    segmentationLayout.addWidget(&volumeColorLabel, row, 0); segmentationLayout.addWidget(&volumeColorButton, row++, 1, Qt::AlignLeft);
-    segmentationLayout.setAlignment(Qt::AlignTop);
+    volumeLayout.addWidget(&volumeOpaquenessLabel, row, 0); volumeLayout.addWidget(&volumeOpaquenessSlider, row, 1); volumeLayout.addWidget(&volumeOpaquenessSpinBox, row, 2);
+    volumeLayout.addWidget(&volumeColorLabel, ++row, 0); volumeLayout.addWidget(&volumeColorButton, row, 1, Qt::AlignLeft);
+    volumeGroup.setLayout(&volumeLayout);
+
+    segmentationLayout.addWidget(&overlayGroup);
+    segmentationLayout.addWidget(&volumeGroup);
     segmentationGroup.setLayout(&segmentationLayout);
     mainLayout.addWidget(&datasetGroup);
     mainLayout.addWidget(&segmentationGroup);
@@ -122,13 +124,8 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
     });
-    QObject::connect(&volumeRenderCheckBox, &QCheckBox::clicked, [this](bool checked){
+    QObject::connect(&volumeGroup, &QGroupBox::clicked, [this](bool checked){
         Segmentation::singleton().volume_render_toggle = checked;
-        volumeOpaquenessLabel.setEnabled(checked);
-        volumeOpaquenessSlider.setEnabled(checked);
-        volumeOpaquenessSpinBox.setEnabled(checked);
-        volumeColorLabel.setEnabled(checked);
-        volumeColorButton.setEnabled(checked);
         emit volumeRenderToggled();
     });
     QObject::connect(&volumeColorButton, &QPushButton::clicked, [this]() {
@@ -185,7 +182,7 @@ void DatasetAndSegmentationTab::saveSettings() const {
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, segmentationOverlaySlider.value());
     settings.setValue(DATASET_LUT_FILE, lutFilePath);
     settings.setValue(DATASET_LUT_FILE_USED, useOwnDatasetColorsCheckBox.isChecked());
-    settings.setValue(RENDER_VOLUME, volumeRenderCheckBox.isChecked());
+    settings.setValue(RENDER_VOLUME, volumeGroup.isChecked());
     settings.setValue(VOLUME_ALPHA, volumeOpaquenessSpinBox.value());
     settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color);
 }
@@ -205,8 +202,8 @@ void DatasetAndSegmentationTab::loadSettings() {
     rangeDeltaSpinBox.valueChanged(rangeDeltaSpinBox.value());
     segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
     segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
-    volumeRenderCheckBox.setChecked(settings.value(RENDER_VOLUME, false).toBool());
-    volumeRenderCheckBox.clicked(volumeRenderCheckBox.isChecked());
+    volumeGroup.setChecked(settings.value(RENDER_VOLUME, false).toBool());
+    volumeGroup.clicked(volumeGroup.isChecked());
     volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
     volumeOpaquenessSpinBox.valueChanged(volumeOpaquenessSpinBox.value());
     Segmentation::singleton().volume_background_color = settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).value<QColor>();
