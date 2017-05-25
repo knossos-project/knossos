@@ -153,12 +153,13 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     #endif
     });
     QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, [this]() {
+        networkProgressBar.setValue(0);// prevent (visible) resets when a new max is set
         networkProgressBar.setHidden(true);
         networkProgressAbortButton.setHidden(true);
     });
     QObject::connect(&Network::singleton(), &Network::progressChanged, [this](int bytesFinished, int bytesTotal) {
-        networkProgressBar.setValue(bytesFinished);
         networkProgressBar.setMaximum(bytesTotal);
+        networkProgressBar.setValue(bytesFinished);
     });
     statusBar()->addWidget(&networkProgressBar);
     statusBar()->addWidget(&networkProgressAbortButton);
