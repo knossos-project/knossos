@@ -1,63 +1,63 @@
 <RCC>
     <qresource prefix="/">
-        <file>resources/splash.png</file>
+        <file>resources/color_palette/default.json</file>
+        <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/datasets/e2006.k.conf</file>
         <file>resources/datasets/ek0563.k.conf</file>
         <file>resources/icons/active-arrow.png</file>
+        <file>resources/icons/annotation.png</file>
         <file>resources/icons/application-exit.png</file>
         <file>resources/icons/appointment.png</file>
-        <file>resources/icons/snapshot.png</file>
         <file>resources/icons/configure-toolbars.png</file>
         <file>resources/icons/dialog-ok.png</file>
         <file>resources/icons/document-open.png</file>
         <file>resources/icons/edit-copy.png</file>
         <file>resources/icons/edit-paste.png</file>
-        <file>resources/icons/annotation.png</file>
         <file>resources/icons/insert-text.png</file>
         <file>resources/icons/knossos.png</file>
         <file>resources/icons/logo.ico</file>
+        <file>resources/icons/menubar/about.png</file>
+        <file>resources/icons/menubar/annotation.png</file>
+        <file>resources/icons/menubar/choose-dataset.png</file>
+        <file>resources/icons/menubar/create-annotation.png</file>
+        <file>resources/icons/menubar/open-annotation.png</file>
+        <file>resources/icons/menubar/open-recent.png</file>
+        <file>resources/icons/menubar/preferences.png</file>
+        <file>resources/icons/menubar/python.png</file>
+        <file>resources/icons/menubar/quit.png</file>
+        <file>resources/icons/menubar/save-annotation-as.png</file>
+        <file>resources/icons/menubar/save-annotation.png</file>
+        <file>resources/icons/menubar/snapshot.png</file>
+        <file>resources/icons/menubar/tasks-management.png</file>
+        <file>resources/icons/menubar/trash.png</file>
+        <file>resources/icons/menubar/zoom.png</file>
         <file>resources/icons/network-connect.png</file>
         <file>resources/icons/network-disconnect.png</file>
         <file>resources/icons/open-annotation.png</file>
+        <file>resources/icons/preferences.png</file>
         <file>resources/icons/python.png</file>
         <file>resources/icons/resize.gif</file>
+        <file>resources/icons/save-annotation.png</file>
+        <file>resources/icons/snapshot.png</file>
         <file>resources/icons/system-shutdown.png</file>
         <file>resources/icons/tasks-management.png</file>
         <file>resources/icons/text-x-readme.png</file>
-        <file>resources/icons/preferences.png</file>
+        <file>resources/icons/warning_disabled_features.png</file>
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
-        <file>resources/color_palette/default.json</file>
-        <file>resources/color_palette/linear_kry_5-98_c75.json</file>
-        <file>resources/plugins/pluginMgr.py</file>
-        <file>resources/splash@2x.png</file>
-        <file>resources/icons/save-annotation.png</file>
         <file>resources/icons/zoom.png</file>
-        <file>resources/icons/menubar/zoom.png</file>
-        <file>resources/icons/menubar/trash.png</file>
-        <file>resources/icons/menubar/tasks-management.png</file>
-        <file>resources/icons/menubar/snapshot.png</file>
-        <file>resources/icons/menubar/save-annotation-as.png</file>
-        <file>resources/icons/menubar/save-annotation.png</file>
-        <file>resources/icons/menubar/quit.png</file>
-        <file>resources/icons/menubar/python.png</file>
-        <file>resources/icons/menubar/preferences.png</file>
-        <file>resources/icons/menubar/open-recent.png</file>
-        <file>resources/icons/menubar/open-annotation.png</file>
-        <file>resources/icons/menubar/create-annotation.png</file>
-        <file>resources/icons/menubar/choose-dataset.png</file>
-        <file>resources/icons/menubar/annotation.png</file>
-        <file>resources/icons/menubar/about.png</file>
-        <file>resources/icons/warning_disabled_features.png</file>
-        <file>resources/shaders/mesh/meshshader.vert</file>
-        <file>resources/shaders/mesh/meshshader.frag</file>
-        <file>resources/shaders/mesh/meshidshader.vert</file>
+        <file>resources/plugins/pluginMgr.py</file>
         <file>resources/shaders/mesh/meshidshader.frag</file>
+        <file>resources/shaders/mesh/meshidshader.vert</file>
+        <file>resources/shaders/mesh/meshshader.frag</file>
+        <file>resources/shaders/mesh/meshshader.vert</file>
         <file>resources/shaders/mesh/meshtreecolorshader.frag</file>
         <file>resources/shaders/mesh/meshtreecolorshader.vert</file>
         <file>resources/shaders/overlaydatashader.frag</file>
         <file>resources/shaders/rawdatashader.frag</file>
         <file>resources/shaders/rawdatashader.vert</file>
+        <file>resources/splash@2x.png</file>
+        <file>resources/splash.png</file>
         <file>resources/style.qss</file>
     </qresource>
 </RCC>
