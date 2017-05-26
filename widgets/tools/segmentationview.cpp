@@ -424,7 +424,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         if (index.column() == 0) {
             colorDialog.setCurrentColor(table.model()->data(index, Qt::BackgroundRole).value<QColor>());
             if (state->viewer->suspend([this]{ return colorDialog.exec(); }) == QColorDialog::Accepted) {
-                auto & obj = (&table == &objectsTable) ? Segmentation::singleton().objects[index.row()] : touchedObjectModel.objectCache[index.row()].get();
+                const auto & proxyIndex = objectProxyModelCategory.mapToSource(objectProxyModelComment.mapToSource(index));
+                auto & obj = (&table == &objectsTable) ? Segmentation::singleton().objects[proxyIndex.row()] : touchedObjectModel.objectCache[index.row()].get();
                 auto color = colorDialog.currentColor();
                 Segmentation::singleton().changeColor(obj, std::make_tuple(color.red(), color.green(), color.blue()));
             }
