@@ -270,7 +270,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     commentFilter.setPlaceholderText("Filter for comment...");
     showOnlySelectedChck.setChecked(Segmentation::singleton().renderOnlySelectedObjs);
 
-    auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
+    auto setupTable = [this](auto & table, auto & model){
         table.setModel(&model);
         table.setAllColumnsShowFocus(true);
         table.setContextMenuPolicy(Qt::CustomContextMenu);
@@ -278,11 +278,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         table.setRootIsDecorated(false);//remove padding to the left of each cell’s content
         table.setSelectionMode(QAbstractItemView::ExtendedSelection);
         table.setItemDelegateForColumn(3, &categoryDelegate);
-        table.setSortingEnabled(true);
-        table.sortByColumn(sortIndex = 1, Qt::SortOrder::AscendingOrder);
     };
 
-    setupTable(touchedObjsTable, touchedObjectModel, touchedObjSortSectionIndex);
+    setupTable(touchedObjsTable, touchedObjectModel);
     touchedLayoutWidget.hide();
 
     //proxy model chaining, so we can filter twice
@@ -290,7 +288,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     objectProxyModelComment.setSourceModel(&objectProxyModelCategory);
     objectProxyModelCategory.setFilterKeyColumn(3);
     objectProxyModelComment.setFilterKeyColumn(4);
-    setupTable(objectsTable, objectProxyModelComment, objSortSectionIndex);
+    setupTable(objectsTable, objectProxyModelComment);
+    objectsTable.setSortingEnabled(true);
+    objectsTable.sortByColumn(objSortSectionIndex = 1, Qt::SortOrder::AscendingOrder);
 
     filterLayout.addWidget(&categoryFilter);
     filterLayout.addWidget(&commentFilter);
