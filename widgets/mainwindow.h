@@ -122,18 +122,25 @@ class MainWindow : public QMainWindow {
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
-    QAction *toggleSegmentsAction;
-    QAction *newTreeAction;
-    QAction *pushBranchAction;
-    QAction *popBranchAction;
-    QAction *createSynapse;
-    QAction *swapSynapticNodes;
+    QAction *clearMergelistAction;
     QAction *clearSkeletonAction;
-    QAction *increaseOpacityAction;
+    QAction *compressionToggleAction;
+    QAction *createSynapse;
+    std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
+    QAction *newTreeAction;
+    QAction *popBranchAction;
+    QAction *pushBranchAction;
+    QAction *swapSynapticNodes;
+    QAction *toggleSegmentsAction;
+
     QAction *decreaseOpacityAction;
+    QAction *increaseOpacityAction;
     QAction *enlargeBrushAction;
     QAction *shrinkBrushAction;
-    QAction *clearMergelistAction;
+    // convenience mode switch actions for proof reading mode
+    QAction *modeSwitchSeparator{nullptr};
+    QAction *setMergeModeAction{nullptr};
+    QAction *setPaintModeAction{nullptr};
 
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
@@ -142,12 +149,11 @@ class MainWindow : public QMainWindow {
 
     QSpinBox *xField, *yField, *zField;
     QMenu fileMenu{"&File"};
-    QMenu *segEditMenu;
-    QMenu *skelEditMenu;
     QMenu actionMenu{"&Action"};
     QMenu *pluginMenu;
     QString openFileDirectory;
     QString saveFileDirectory;
+    QList<QString> skeletonFileHistory;
 
     std::vector<QAction*> commentActions;
 
@@ -161,6 +167,26 @@ class MainWindow : public QMainWindow {
     QToolBar segJobModeToolbar{"Job Navigation"};
     QLabel todosLeftLabel{"<font color='green'>  0 more left</font>"};
     void updateTodosLeft();
+
+    // status bar
+    QLabel annotationTimeLabel;
+    QLabel cursorPositionLabel;
+    QLabel GUIModeLabel{""};
+    QLabel hideClutterInfoLabel{"Hold [space] to show only raw data"};
+    QLabel nodeLockingLabel;
+    QLabel segmentStateLabel;
+    QLabel synapseStateLabel;
+    QLabel unsavedChangesLabel;
+    QLabel warningDisabledFeaturesLabel;
+    QPixmap warnPixmap{":resources/icons/warning_disabled_features.png"};
+
+    QTimer activityTimer;
+    QParallelAnimationGroup activityAnimation;
+    QLabel activityLabel;
+
+    // for creating action, menus and the toolbar
+    void createMenus();
+    void createToolbars();
 
     bool placeComment(const int index);
     void toggleSegments();
@@ -178,49 +204,9 @@ public:
     // contains all widgets
     WidgetContainer widgetContainer;
 
-    std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
-
-    // convenience mode switch actions for proof reading mode
-    QAction *modeSwitchSeparator{nullptr};
-    QAction *setMergeModeAction{nullptr};
-    QAction *setPaintModeAction{nullptr};
-
-    QAction *segEditSegModeAction;
-    QAction *segEditSkelModeAction;
-    QAction *skelEditSegModeAction;
-    QAction *skelEditSkelModeAction;
-    QAction *addNodeAction;
-    QAction *linkWithActiveNodeAction;
-    QAction *dropNodesAction;
-
-    QAction *compressionToggleSeparator;
-    QAction *compressionToggleAction;
-
-    QList<QString> skeletonFileHistory;
-    QFile *loadedFile;
-
     SkeletonProxy *skeletonProxy;
 
-    QLabel GUIModeLabel{""};
-    QLabel cursorPositionLabel;
-    QLabel hideClutterInfoLabel{"Hold [space] to show only raw data"};
-    QLabel nodeLockingLabel;
-    QLabel synapseStateLabel;
-    QLabel segmentStateLabel;
-    QLabel unsavedChangesLabel;
-    QLabel annotationTimeLabel;
-    QLabel warningDisabledFeaturesLabel;
-    QPixmap warnPixmap{":resources/icons/warning_disabled_features.png"};
-    QTimer activityTimer;
-    QParallelAnimationGroup activityAnimation;
-    QLabel activityLabel;
-
     void createViewports();
-
-    // for creating action, menus and the toolbar
-    void createMenus();
-    void createToolbars();
-
     // for save, load and clear settings
     void saveSettings();
     void loadSettings();

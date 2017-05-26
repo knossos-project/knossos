@@ -555,7 +555,7 @@ void MainWindow::createMenus() {
         state->viewer->updateDatasetMag();
         updateCompressionRatioDisplay();
     }, Qt::Key_F4);
-    compressionToggleSeparator = actionMenu.addSeparator();
+    actionMenu.addSeparator();
     //advanced skeleton
     const QString segStateString = segmentState == SegmentState::On ? tr("On") : tr("Off");
     toggleSegmentsAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Segments: ") + segStateString, this, &MainWindow::toggleSegments, Qt::Key_A);
