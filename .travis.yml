@@ -36,7 +36,7 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then ninja -j1; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then mv knossos.app KNOSSOS.app; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then /usr/local/Cellar/qt5/${OSXQT}/bin/macdeployqt KNOSSOS.app; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/; ./build_and_pack.sh'; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/; ./build_and_pack.sh'; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/${RELEASE_PKG_FILE} .; fi
 
 deploy:
