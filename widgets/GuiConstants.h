@@ -80,6 +80,7 @@ const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
 const QString SHOW_SKELETON_3DVP = "Show_skeleton_3dvp";
 const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";
 const QString SHOW_MESH_3DVP = "show_mesh_3dvp";
+const QString WARN_DISABLED_MESH_PICKING = "warn_disabled_mesh_picking_on_startup";
 
 // Preferences Nodes Tab
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";

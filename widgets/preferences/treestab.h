@@ -63,6 +63,7 @@ public:
 
 class TreesTab : public QWidget
 {
+    friend class MainWindow;
     friend class PreferencesWidget;
     Q_OBJECT
     QHBoxLayout mainLayout;
@@ -84,6 +85,8 @@ class TreesTab : public QWidget
     QRadioButton allTreesRadio{tr("Show all trees")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
     QGroupBox meshGroup{tr("Show meshes in")};
+    QFrame meshSeparator;
+    QCheckBox warnDisabledPickingCheck{tr("Warn on startup if picking is disabled.")};
     QVBoxLayout meshGroupLayout;
     QCheckBox meshInOrthoVPsCheck{tr("Orthogonal viewports")};
     QCheckBox meshIn3DVPCheck{tr("3D viewport")};

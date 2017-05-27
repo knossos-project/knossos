@@ -209,6 +209,8 @@ public:
     QLabel segmentStateLabel;
     QLabel unsavedChangesLabel;
     QLabel annotationTimeLabel;
+    QLabel warningDisabledFeaturesLabel;
+    QPixmap warnPixmap{":resources/icons/warning_disabled_features.png"};
     QTimer activityTimer;
     QParallelAnimationGroup activityAnimation;
     QLabel activityLabel;

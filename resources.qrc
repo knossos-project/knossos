@@ -48,6 +48,7 @@
         <file>resources/icons/menubar/choose-dataset.png</file>
         <file>resources/icons/menubar/annotation.png</file>
         <file>resources/icons/menubar/about.png</file>
+        <file>resources/icons/warning_disabled_features.png</file>
         <file>resources/shaders/mesh/meshshader.vert</file>
         <file>resources/shaders/mesh/meshshader.frag</file>
         <file>resources/shaders/mesh/meshidshader.vert</file>
