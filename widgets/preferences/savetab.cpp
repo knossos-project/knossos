@@ -42,6 +42,8 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
     autosaveLocationLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
     autosaveLocationLabel.setWordWrap(true);
 
+    autoincrementFileNameButton.setTristate(false);
+
     generalLayout.addWidget(&autoincrementFileNameButton);
     locationFormLayout.addRow("Default location: ", &autosaveLocationLabel);
     generalLayout.addLayout(&locationFormLayout);
@@ -90,6 +92,7 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
 void SaveTab::loadSettings(const QSettings & settings) {
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
+    autoincrementFileNameButton.stateChanged(settings.value(AUTOINC_FILENAME, true).toBool());
     autosaveGroup.setChecked(settings.value(AUTO_SAVING, true).toBool()); // load this checkbox's state last to use loaded autosave settings in its slot
     const auto buttonId = static_cast<int>(settings.value(PLY_SAVE_AS_BIN, true).toBool());
     plySaveButtonGroup.button(buttonId)->setChecked(true);
