@@ -318,9 +318,9 @@ void ViewportBase::initializeGL() {
     meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":resources/shaders/mesh/meshtreecolorshader.frag");
     meshTreeColorShader.link();
 
-    meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":resources/shaders/mesh/meshidshader.vert");
-    meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":resources/shaders/mesh/meshidshader.frag");
-    state->viewerState->MeshPickingEnabled = meshIdShader.link();
+    auto enabled = meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":resources/shaders/mesh/meshidshader.vert");
+    enabled = enabled && meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":resources/shaders/mesh/meshidshader.frag");
+    state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
 
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
         if (!shader->log().isEmpty()) {
