@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
-    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, [this](){ save(); });
+    //QObject::connect(&Session::singleton(), &Session::autoSaveSignal, [this](){ save(); });
 
     createToolbars();
     createMenus();
@@ -1247,14 +1247,6 @@ void MainWindow::resizeEvent(QResizeEvent *) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
-    QStringList files;
-    for (auto && url : event->mimeData()->urls()) {
-        files.append(url.toLocalFile());
-    }
-    QTimer::singleShot(0, [this, files](){
-        openFileDispatch(files);
-    });
-    event->accept();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
