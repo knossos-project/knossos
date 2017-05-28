@@ -386,24 +386,17 @@ void MainWindow::setProofReadingUI(const bool on) {
         } else {
             setWorkMode(AnnotationMode::Mode_Merge);
         }
+        state->viewer->saveSettings();
+        resetViewports();
     } else {
         workModeModel.recreate(workModes);
         setWorkMode(currentMode);
+        state->viewer->loadSettings();
     }
 
     modeSwitchSeparator->setVisible(on);
     setMergeModeAction->setVisible(on);
     setPaintModeAction->setVisible(on);
-
-    viewportXZ->setHidden(on);
-    viewportZY->setHidden(on);
-    viewportArb->setHidden(on || !state->viewerState->enableArbVP);
-    viewport3D->setHidden(on);
-    if (on) {
-        // don’t reset viewports when switching to non-proof-reading mode, user can reset himself
-        // otherwise this function resets viewport positions and sizes on file and settings load
-        resetViewports();
-    }
     GUIModeLabel.setText(on ? "Proof Reading Mode" : "");
     GUIModeLabel.setVisible(on);
 }
@@ -797,7 +790,6 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     updateTitlebar();
 
-    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
     if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
@@ -1185,8 +1177,6 @@ void MainWindow::loadSettings() {
     }
     restoreState(settings.value(STATE).toByteArray());
 
-    state->viewer->loadSettings();
-
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
     QDir().mkpath(autosaveLocation);
 
@@ -1203,7 +1193,6 @@ void MainWindow::loadSettings() {
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
     Session::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
-    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
 
     settings.endGroup();
 
@@ -1216,7 +1205,9 @@ void MainWindow::loadSettings() {
     widgetContainer.snapshotWidget.loadSettings();
 
     show();
-    activateWindow();
+    activateWindow();// prevent mainwin in background in gnome when other widgets are also visible
+    state->viewer->loadSettings();// size vps after show() for proper maximized space
+    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
     forEachVPDo([](ViewportBase & vp) { // show undocked vps after mainwindow
         if (vp.isDocked == false) {
             vp.setDock(false);
@@ -1302,6 +1293,10 @@ void MainWindow::resetViewports() {
     if (Session::singleton().guiMode == GUIMode::ProofReading) {
         viewportXY.get()->setDock(true);
         viewportXY.get()->show();
+        viewportXZ->setHidden(true);
+        viewportZY->setHidden(true);
+        viewportArb->setHidden(true);
+        viewport3D->setHidden(true);
     } else {
         forEachVPDo([](ViewportBase & vp) {
             vp.setDock(true);
