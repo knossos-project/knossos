@@ -26,6 +26,7 @@
 #include "coordinate.h"
 
 #include <QElapsedTimer>
+#include <QHash>
 #include <QObject>
 #include <QPair>
 #include <QString>
@@ -85,6 +86,8 @@ public:
     void resetMovementArea();
 
     QString annotationFilename;
+
+    QHash<QString, QByteArray> extraFiles;
 
     Session();
     static Session & singleton() {

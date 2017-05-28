@@ -51,6 +51,7 @@ public slots:
 
     void annotationLoad(const QString & filename, const bool merge = false);
     void annotationSave(const QString & filename);
+    void annotation_add_file(const QString & name, const QByteArray & content);
     int annotation_time();
     void set_annotation_time(int ms);
     QString getKnossosVersion();
@@ -60,6 +61,7 @@ public slots:
     QList<int> getPosition();
     QList<float> getScale();
     void setPosition(QList<int> coord);
+
     quint64 readOverlayVoxel(QList<int> coord);
     bool writeOverlayVoxel(QList<int> coord, quint64 val);
     char *addrDcOc2Pointer(QList<int> coord, bool isOc);

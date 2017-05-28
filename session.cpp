@@ -63,6 +63,7 @@ void Session::clearAnnotation() {
     resetMovementArea();
     setAnnotationTime(0);
     annotationFilename = "";
+    extraFiles.clear();
     unsavedChanges = false;
 }
 
