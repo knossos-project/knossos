@@ -49,4 +49,9 @@ cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX
 # build knossos
 ####
 ninja -j2
-cp knossos.exe /c/projects/${PROJECTPATH}/win64.standalone.KNOSSOS.nightly.exe
+
+if [ $APPVEYOR_REPO_BRANCH=="master" ]; then
+	cp knossos.exe /c/projects/${PROJECTPATH}/win64.standalone.KNOSSOS.nightly.exe
+else
+	cp knossos.exe /c/projects/${PROJECTPATH}/win64.standalone.KNOSSOS.${APPVEYOR_REPO_BRANCH}-nightly.exe
+fi
