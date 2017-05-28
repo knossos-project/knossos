@@ -23,6 +23,7 @@
 #include "file_io.h"
 
 #include "loader.h"
+#include "widgets/mainwindow.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
@@ -37,6 +38,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QTemporaryFile>
 
 #include <ctime>
 
@@ -83,6 +85,19 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                 func(file);
             }
         };
+        getSpecificFile("settings.ini", [&archive](auto & file){
+            QString fileName;
+            {
+                QTemporaryFile tempFile;
+                if (tempFile.open()) {
+                    tempFile.write(Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
+                    fileName = tempFile.fileName();
+                } else {
+                    throw std::runtime_error("couldn’t store custom settings from annotation file to a temporary file");
+                }
+            }
+            state->mainWindow->loadCustomPreferences(fileName);
+        });
         getSpecificFile("mergelist.txt", [&archive](auto & file){
             Segmentation::singleton().mergelistLoad(file);
         });

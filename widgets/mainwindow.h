@@ -236,6 +236,8 @@ public:
     void setSynapseState(const SynapseState newState);
     void toggleSynapseState();
 
+    void loadCustomPreferences(const QString & fileName);
+
 signals:
     void overlayOpacityChanged();
 public slots:

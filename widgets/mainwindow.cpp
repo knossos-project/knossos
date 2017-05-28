@@ -1059,21 +1059,22 @@ void MainWindow::clearSkeletonSlot() {
     }
 }
 
+void MainWindow::loadCustomPreferences(const QString & fileName) {
+    QSettings globalSettings;
+    QSettings settingsToLoad(fileName, QSettings::IniFormat);
+    for (auto && key : settingsToLoad.allKeys()) {
+        globalSettings.setValue(key, settingsToLoad.value(key));
+    }
+    loadSettings();
+}
+
 /* preference menu functionality */
 void MainWindow::loadCustomPreferencesSlot() {
     const QString fileName = state->viewer->suspend([this]{
-        return QFileDialog::getOpenFileName(this, "Open custom preferences file", QDir::homePath(), "KNOSOS GUI preferences file (*.ini)");
+        return QFileDialog::getOpenFileName(this, "Open custom preferences file", QDir::homePath(), "KNOSSOS GUI preferences file (*.ini)");
     });
-    if(!fileName.isEmpty()) {
-        QSettings settings;
-
-        QSettings settingsToLoad(fileName, QSettings::IniFormat);
-        QStringList keys = settingsToLoad.allKeys();
-        for(int i = 0; i < keys.size(); i++) {
-            settings.setValue(keys.at(i), settingsToLoad.value(keys.at(i)));
-        }
-
-        loadSettings();
+    if (!fileName.isNull()) {
+        loadCustomPreferences(fileName);
     }
 }
 
