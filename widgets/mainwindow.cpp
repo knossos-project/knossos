@@ -1180,8 +1180,9 @@ void MainWindow::saveSettings() {
 void MainWindow::loadSettings() {
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
-    resize(1024, 768);// initial default size
-    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    if (!restoreGeometry(settings.value(GEOMETRY).toByteArray())) {
+        resize(1024, 768);// initial default size
+    }
     restoreState(settings.value(STATE).toByteArray());
 
     state->viewer->loadSettings();
