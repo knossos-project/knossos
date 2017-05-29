@@ -496,22 +496,6 @@ void MainWindow::updateTitlebar() {
 }
 
 void MainWindow::updateRecentFile(const QString & fileName) {
-    int pos = skeletonFileHistory.indexOf(fileName);
-    if (pos != -1) {//move to front if already existing
-        skeletonFileHistory.move(pos, 0);
-    } else {
-        if (skeletonFileHistory.size() == FILE_DIALOG_HISTORY_MAX_ENTRIES) {//shrink if necessary
-           skeletonFileHistory.pop_back();
-        }
-        skeletonFileHistory.push_front(fileName);
-    }
-    //update the menu
-    int i = 0;
-    for (const auto & path : skeletonFileHistory) {
-        historyEntryActions[i]->setText(path);
-        historyEntryActions[i]->setVisible(!path.isEmpty());
-        ++i;
-    }
 }
 
 void MainWindow::createMenus() {
