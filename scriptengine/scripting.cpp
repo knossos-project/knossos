@@ -55,6 +55,9 @@ auto PythonQtInit = []() {
 #ifdef QtAll
     PythonQt_QtAll::init();
 #endif
+    const auto redirect = [](const QString & outMsg){ qDebug() << outMsg; };
+    QObject::connect(PythonQt::self(), &PythonQt::pythonStdOut, redirect);
+    QObject::connect(PythonQt::self(), &PythonQt::pythonStdErr, redirect);
     return PythonQt::self()->getMainModule();
 };
 

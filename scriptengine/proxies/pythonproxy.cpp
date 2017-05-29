@@ -47,6 +47,11 @@ void PythonProxy::annotationSave(const QString & filename) {
     state->mainWindow->save(filename, true);
 }
 
+void PythonProxy::annotation_add_file(const QString & name, const QByteArray & content) {
+    Session::singleton().extraFiles[name] = content;
+    Session::singleton().unsavedChanges = true;
+}
+
 QString PythonProxy::getKnossosVersion() {
     return KVERSION;
 }

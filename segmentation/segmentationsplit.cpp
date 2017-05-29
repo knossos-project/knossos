@@ -29,7 +29,7 @@
 
 #include <unordered_set>
 
-void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush) {
+void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax) {
     std::vector<Coordinate> work = {seed};
     std::unordered_set<Coordinate> visitedVoxels;
 
@@ -49,17 +49,20 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 }
             };
 
+            Coordinate posDec = Coordinate::max(pos - 1, areaMin);
+            Coordinate posInc = Coordinate::min(pos + 1, areaMax);
+
             if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
-                walk({pos.x + 1, pos.y, pos.z});
-                walk({pos.x - 1, pos.y, pos.z});
+                walk({posInc.x, pos.y, pos.z});
+                walk({posDec.x, pos.y, pos.z});
             }
             if (brush.view != brush_t::view_t::xz || brush.mode == brush_t::mode_t::three_dim) {
-                walk({pos.x, pos.y + 1, pos.z});
-                walk({pos.x, pos.y - 1, pos.z});
+                walk({pos.x, posInc.y, pos.z});
+                walk({pos.x, posDec.y, pos.z});
             }
             if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
-                walk({pos.x, pos.y, pos.z + 1});
-                walk({pos.x, pos.y, pos.z - 1});
+                walk({pos.x, pos.y, posInc.z});
+                walk({pos.x, pos.y, posDec.z});
             }
         }
     }

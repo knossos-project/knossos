@@ -14,12 +14,12 @@ environment:
 artifacts:
   - path: win64.standalone.KNOSSOS.nightly.exe
     name: knossos
-    
+
 install:
   - set PATH=C:\%MSYS2_DIR%\%MSYSTEM%\bin;C:\%MSYS2_DIR%\usr\bin;%PATH%
   - set APPVEYOR_REPO_TAG=TRUE
   - set APPVEYOR_REPO_NAME=nightly
-  
+
 build_script:
   - bash -lc "PROJECTPATH=`ls /c/projects/`; cd /c/projects/${PROJECTPATH}; chmod +x .appveyor_build.sh; ./.appveyor_build.sh"
 
@@ -33,10 +33,10 @@ deploy:
   provider: GitHub
   auth_token:
     secure: 662Gozhe3fmtaVUptOYmok9ayZxuk9PDVS6pN8QfZPwP+P102GV5SnSpHcDR1o77 # your encrypted token from GitHub
-  artifact: win64.standalone.KNOSSOS.nightly.exe           # artifact to release
+    artifact: /.*\.exe/          # artifact to release
   prerelease: true
   force_update: true
   on:
-    branch: master                 # release from master branch only
+    branch: /.*/                 # release from any branch
     appveyor_repo_tag: true        # deploy on tag push only
     appveyor_repo_name: nightly

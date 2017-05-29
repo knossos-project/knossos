@@ -23,7 +23,9 @@
 #include "file_io.h"
 
 #include "loader.h"
+#include "widgets/mainwindow.h"
 #include "segmentation/segmentation.h"
+#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -36,6 +38,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QTemporaryFile>
 
 #include <ctime>
 
@@ -57,42 +60,61 @@ QString annotationFileDefaultPath() {
 }
 
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
+    QSet<QString> nonExtraFiles;
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
-            QuaZipFile file(&archive);
-            const auto & fileInside = archive.getCurrentFileName();
-            const auto match = cubeRegEx.match(fileInside);
+            const auto match = cubeRegEx.match(archive.getCurrentFileName());
             if (match.hasMatch()) {
                 if (!Segmentation::enabled) {
                     Segmentation::enabled = true;
                     Loader::Controller::singleton().enableOverlay();
                 }
+                nonExtraFiles.insert(archive.getCurrentFileName());
+                QuaZipFile file(&archive);
                 file.open(QIODevice::ReadOnly);
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
                 Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, match.captured("mag").toInt(), file.readAll().toStdString());
             }
         }
-        if (archive.setCurrentFile("mergelist.txt")) {
-            QuaZipFile file(&archive);
+        const auto getSpecificFile = [&archive, &nonExtraFiles](const QString & filename, auto func){
+            if (archive.setCurrentFile(filename)) {
+                nonExtraFiles.insert(archive.getCurrentFileName());
+                QuaZipFile file(&archive);
+                func(file);
+            }
+        };
+        getSpecificFile("settings.ini", [&archive](auto & file){
+            QString fileName;
+            {
+                QTemporaryFile tempFile;
+                if (tempFile.open()) {
+                    tempFile.write(Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
+                    fileName = tempFile.fileName();
+                } else {
+                    throw std::runtime_error("couldn’t store custom settings from annotation file to a temporary file");
+                }
+            }
+            state->mainWindow->loadCustomPreferences(fileName);
+        });
+        getSpecificFile("mergelist.txt", [&archive](auto & file){
             Segmentation::singleton().mergelistLoad(file);
-        }
-        if (archive.setCurrentFile("microworker.txt")) {
-            QuaZipFile file(&archive);
+        });
+        getSpecificFile("microworker.txt", [&archive](auto & file){
             Segmentation::singleton().jobLoad(file);
-        }
+        });
         //load skeleton after mergelist as it may depend on a loaded segmentation
         std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
-        if (archive.setCurrentFile("annotation.xml")) {
-            QuaZipFile file(&archive);
+        getSpecificFile("annotation.xml", [&archive, &treeMap, mergeSkeleton, treeCmtOnMultiLoad](auto & file){
             treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
-        }
+        });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
             const QRegularExpression meshRegEx(R"regex([0-9]*.ply)regex");
             auto fileName = archive.getCurrentFileName();
             const auto matchMesh = meshRegEx.match(fileName);
             if (matchMesh .hasMatch()) {
+                nonExtraFiles.insert(archive.getCurrentFileName());
                 QuaZipFile file(&archive);
                 auto nameWithoutExtension = fileName;
                 nameWithoutExtension.chop(4);
@@ -114,6 +136,13 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             }
         }
         state->viewer->loader_notify();
+        for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
+            if (!nonExtraFiles.contains(archive.getCurrentFileName())) {
+                QuaZipFile file(&archive);
+                file.open(QIODevice::ReadOnly);
+                Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll();
+            }
+        }
     } else {
         throw std::runtime_error(QObject::tr("opening %1 for reading failed").arg(filename).toStdString());
     }
@@ -130,6 +159,14 @@ void annotationFileSave(const QString & filename) {
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
             return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, level);
         };
+        for (auto it = std::cbegin(Session::singleton().extraFiles); it != std::cend(Session::singleton().extraFiles); ++it) {
+            QuaZipFile file_write(&archive_write);
+            if (zipCreateFile(file_write, it.key(), 1)) {
+                file_write.write(it.value());
+            } else {
+                throw std::runtime_error((filename + ": saving extra file %1 failed").arg(it.key()).toStdString());
+            }
+        }
         QuaZipFile file_write(&archive_write);
         if (zipCreateFile(file_write, "annotation.xml", 1)) {
             state->viewer->skeletonizer->saveXmlSkeleton(file_write);
