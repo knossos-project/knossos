@@ -155,6 +155,14 @@ public:
         };
     }
 
+    static constexpr CoordinateDerived min(const CoordinateDerived & c1, const CoordinateDerived & c2) {
+        return CoordinateDerived{std::min(c1.x, c2.x), std::min(c1.y, c2.y), std::min(c1.z, c2.z)};
+    }
+
+    static constexpr CoordinateDerived max(const CoordinateDerived & c1, const CoordinateDerived & c2) {
+        return CoordinateDerived{std::max(c1.x, c2.x), std::max(c1.y, c2.y), std::max(c1.z, c2.z)};
+    }
+
     constexpr CoordinateDerived toWorldFrom(const CoordinateDerived & v1, const CoordinateDerived & v2, const CoordinateDerived & n) const {
         return x * v1 + y * v2 + z * n;
     }

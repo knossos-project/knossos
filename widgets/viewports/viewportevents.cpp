@@ -429,7 +429,15 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             uint64_t soid = brush_copy.inverse ? seg.getBackgroundId() : seg.subobjectIdOfFirstSelectedObject(clickedCoordinate);
             brush_copy.shape = brush_t::shape_t::angular;
             brush_copy.radius = displayedlengthInNmX / 2;//set brush to fill visible area
-            subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy);
+
+            auto halfWidth = width()/2 * 1/screenPxXPerDataPx;
+            auto halfHeight = height()/2 * 1/screenPxYPerDataPx;
+            Coordinate areaMin = state->viewerState->currentPosition - v1.abs() * halfWidth - v2.abs() * halfHeight;
+            Coordinate areaMax = state->viewerState->currentPosition + v1.abs() * halfWidth + v2.abs() * halfHeight;
+            areaMin = Coordinate::max(areaMin, Session::singleton().movementAreaMin);
+            areaMax = Coordinate::min(areaMax, Session::singleton().movementAreaMax);
+
+            subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy, areaMin, areaMax);
         }
     }
     //finish node drag

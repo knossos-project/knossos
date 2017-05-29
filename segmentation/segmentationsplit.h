@@ -101,7 +101,7 @@ signals:
     void shapeChanged(const shape_t);
 };
 
-void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush);
+void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax);
 void connectedComponent(const Coordinate & seed);
 void verticalSplittingPlane(const Coordinate & seed);
 
