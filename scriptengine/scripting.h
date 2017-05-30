@@ -89,6 +89,8 @@ signals:
     void Signal_MainWindow_closeEvent(EmitOnCtorDtor*,QCloseEvent*);
 };
 
+const QString PROOFREADING_PLUGIN_NAME = "proofreading";
+
 const QString PLUGIN_MGR_NAME = "pluginMgr";
 const QString PLUGIN_SETTINGS_PREFIX = "Plugin_";
 const QString PLUGIN_DIR_VAL_NAME = "PluginDir";

@@ -284,6 +284,7 @@ public slots:
     void pythonPropertiesSlot();
     void pythonFileSlot();
     void pythonInterpreterSlot();
+    void pythonProofreadingSlot();
     void pythonPluginMgrSlot();
     // dataset load widget
     void updateCompressionRatioDisplay();

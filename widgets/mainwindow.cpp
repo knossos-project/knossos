@@ -629,7 +629,7 @@ void MainWindow::createMenus() {
     auto scriptingMenu = menuBar()->addMenu("&Scripting");
     scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
     scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
-    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    scriptingMenu->addAction("Proofreading", this, SLOT(pythonProofreadingSlot()));
     scriptingMenu->addAction(QIcon(":/resources/icons/menubar/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
     pluginMenu = scriptingMenu->addMenu("Plugins");
     refreshPluginMenu();
@@ -1378,6 +1378,32 @@ void MainWindow::refreshPluginMenu() {
 void MainWindow::pythonInterpreterSlot() {
     widgetContainer.pythonInterpreterWidget.show();
     widgetContainer.pythonInterpreterWidget.activateWindow();
+}
+
+void MainWindow::pythonProofreadingSlot() {
+    auto showError = [this](const QString &errorStr) {
+        QMessageBox errorBox(QMessageBox::Warning, "Proofreading Plugin: Error", errorStr, QMessageBox::Ok, this);
+        errorBox.exec();
+        return;
+    };
+    auto pluginDir = state->scripting->getPluginDir();
+    auto proofreadingFn = PROOFREADING_PLUGIN_NAME + ".py";
+    auto proofreadingPath = QString("%1/%2").arg(pluginDir).arg(proofreadingFn);
+    auto existed = QFile(proofreadingPath).exists();
+    if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(proofreadingFn), proofreadingPath)) {
+        return showError(QString("Cannot temporarily place default Proofreading plugin in plugin directory:\n%1").arg(proofreadingPath));
+    }
+    state->scripting->importPlugin(PROOFREADING_PLUGIN_NAME, false);
+    if (!existed) {
+        QFile proofreadingFile(proofreadingPath);
+        if (!proofreadingFile.setPermissions(QFile::WriteOther)) {
+            return showError(QString("Cannot set write permissions for temporarily placed proofreading plugin in plugin directory:\n%1").arg(proofreadingPath));
+        }
+        if (!proofreadingFile.remove()) {
+            return showError(QString("Cannot remove temporarily placed proofreading plugin from plugin directory:\n%1").arg(proofreadingPath));
+        }
+    }
+    //state->scripting->openPlugin(PROOFREADING_PLUGIN_NAME, false);
 }
 
 void MainWindow::pythonPluginMgrSlot() {
