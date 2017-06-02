@@ -35,6 +35,13 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    if(index.isValid()) {
+        // set data
+    }
+    return true;
+}
+
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
         Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | Qt::ItemIsEditable;
