@@ -12,7 +12,7 @@ environment:
     BIT: 64
 
 artifacts:
-  - path: win64.standalone.KNOSSOS.nightly.exe
+  - path: '*nightly.exe'
     name: knossos
 
 install:
@@ -33,7 +33,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: 662Gozhe3fmtaVUptOYmok9ayZxuk9PDVS6pN8QfZPwP+P102GV5SnSpHcDR1o77 # your encrypted token from GitHub
-    artifact: /.*\.exe/          # artifact to release
+    artifact: /.*\nightly.exe/          # artifact to release
   prerelease: true
   force_update: true
   on:
