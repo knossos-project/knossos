@@ -21,7 +21,7 @@
 ]]
 
 project(knossos)
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
@@ -70,7 +70,7 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
-find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED) # GLU
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -127,7 +127,7 @@ endif()
 
 target_link_libraries(${PROJECT_NAME}
     Boost::boost
-    ${OPENGL_LIBRARIES}
+    OpenGL::GLU
     #configs add includes and other settings automatically
     Qt5::Concurrent
     Qt5::Core
