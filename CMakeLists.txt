@@ -52,7 +52,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-find_package(Qt5 5.1 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets)
+find_package(Qt5 5.7 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets) # QFlags::setFlag
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
