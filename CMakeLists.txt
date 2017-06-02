@@ -21,7 +21,7 @@
 ]]
 
 project(knossos)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
@@ -69,7 +69,7 @@ if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries from here o
 endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
-find_package(Boost 1.50 REQUIRED)
+find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
 find_package(OpenGL REQUIRED)
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
@@ -117,7 +117,6 @@ endif()
 #on static build, need to make sure the root include of a dynamic Qt is not added i.e. /mingw64/include
 #or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
 target_include_directories(${PROJECT_NAME} PRIVATE
-    #${Boost_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR}
 )
 
@@ -127,7 +126,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-    ${Boost_LIBRARIES}
+    Boost::boost
     ${OPENGL_LIBRARIES}
     #configs add includes and other settings automatically
     Qt5::Concurrent
