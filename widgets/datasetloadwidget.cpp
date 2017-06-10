@@ -240,7 +240,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
-    path.setPath(path.path() + (!path.isLocalFile() ? "/" : ""));// add slash to avoid redirects
+    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {

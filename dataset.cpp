@@ -82,7 +82,7 @@ Dataset Dataset::parseOpenConnectomeJson(const QUrl & infoUrl, const QString & j
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
-    info.url.setPath(info.url.path().replace("/info", "/image/jpeg/"));
+    info.url.setPath(info.url.path().replace(QRegularExpression{"\\/info\\/?"}, "/image/jpeg/"));
     const auto dataset = QJsonDocument::fromJson(json_raw.toUtf8()).object()["dataset"].toObject();
     const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
     info.boundary = {
@@ -284,7 +284,7 @@ QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const i
     auto query = QUrlQuery(base);
     auto path = base.path();
 
-    path += "/" + QString::number(scale);// >= 0
+    path += (!path.endsWith('/') ? "/" : "") + QString::number(scale);// >= 0
     coord.x /= std::pow(2, scale);
     coord.y /= std::pow(2, scale);
     coord.z += 1;//offset
