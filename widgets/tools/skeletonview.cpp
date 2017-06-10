@@ -775,7 +775,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             edit.setFocus();
             QObject::connect(&edit, &QLineEdit::textChanged, [&warningText, &buttonBox](const QString & text){
                 const bool nodeExists{Skeletonizer::singleton().findNodeByNodeID(text.toLongLong()) != nullptr};
-                warningText.setText(!nodeExists ? "<font color='red'>The node with the specified ID does not exist.</color>" : "");
+                warningText.setText(!nodeExists ? "<font color='red'>The node with the specified ID does not exist.</font>" : "");
                 buttonBox.button(QDialogButtonBox::Ok)->setEnabled(nodeExists);
             });
             QObject::connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
