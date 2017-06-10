@@ -31,8 +31,6 @@
 #include "viewports/viewport3d.h"
 #include "widgetcontainer.h"
 
-#define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
-
 #include <QComboBox>
 #include <QDropEvent>
 #include <QList>
@@ -117,6 +115,7 @@ class MainWindow : public QMainWindow {
     QAction *clearSkeletonAction;
     QAction *compressionToggleAction;
     QAction *createSynapse;
+    static constexpr int FILE_DIALOG_HISTORY_MAX_ENTRIES = 10;
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
     QAction *newTreeAction;
     QAction *popBranchAction;
