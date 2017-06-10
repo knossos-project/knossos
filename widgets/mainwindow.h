@@ -45,15 +45,6 @@
 #include <array>
 #include <memory>
 
-class QLabel;
-class QToolButton;
-class QPushButton;
-class QSpinBox;
-class QCheckBox;
-class QMessageBox;
-class QGridLayout;
-class QFile;
-
 enum class SynapseState {
     Off, SynapticCleft, PostSynapse
 };
