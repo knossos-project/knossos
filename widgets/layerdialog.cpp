@@ -2,8 +2,31 @@
 
 #include <QHeaderView>
 
+// TODO: temporary!
+struct LayerGuiElement {
+    // data
+    int id; // or something else
+    float rangeDelta;
+    float bias;
+    bool linearFiltering;
+
+    // gui
+    float opacity;
+    bool visible;
+    QString name;
+    QString type; // should be ID
+};
+
+static std::vector<LayerGuiElement> guiData {
+    {0, 0.0f, 0.0f, false, 0.0f, false, "", ""},
+    {1, 0.2f, 0.2f, false, 0.225f, false, "a", "b"},
+    {2, 0.5f, 0.5f,  true, 0.5f,  true, "something", "else"},
+    {3, 1.0f, 1.0f,  true, 1.0f,  true, "more", "things"},
+    {4, 0.7f, 0.7f, false, 0.75f, false, "layername", "layertype"},
+};
+
 int LayerItemModel::rowCount(const QModelIndex &) const {
-    return 3; // tmp
+    return guiData.size();
 }
 
 int LayerItemModel::columnCount(const QModelIndex &) const {
@@ -22,13 +45,13 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
-            case 1: return QString("0%");
-            case 2: return QString("unnamed");
-            case 3: return QString("untyped");
+            case 1: return QString::number(guiData[index.row()].opacity * 100.0f) + "%";
+            case 2: return guiData[index.row()].name;
+            case 3: return guiData[index.row()].type;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                return Qt::Checked;
+                return guiData[index.row()].visible ? Qt::Checked : Qt::Unchecked;
             }
         }
     }
