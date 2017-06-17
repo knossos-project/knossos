@@ -30,7 +30,7 @@ message(STATUS "${CMAKE_BUILD_TYPE}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
-option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
+option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources" ON)
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
