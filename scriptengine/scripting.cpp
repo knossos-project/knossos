@@ -96,16 +96,6 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     addObject("knossos_global_segmentation", &Segmentation::singleton());
     addObject("knossos_global_loader", &Loader::Controller::singleton());
-    addVariable("GL_POINTS", GL_POINTS);
-    addVariable("GL_LINES", GL_LINES);
-    addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
-    addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
-    addVariable("GL_TRIANGLES", GL_TRIANGLES);
-    addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
-    addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
-    addVariable("GL_QUADS", GL_QUADS);
-    addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
-    addVariable("GL_POLYGON", GL_POLYGON);
     addWidgets();
 
     auto makeDecorator = [](QObject * decorator, const char * typeName){
