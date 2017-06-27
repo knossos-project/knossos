@@ -689,6 +689,7 @@ void MainWindow::createMenus() {
     refreshPluginMenu();
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
+    helpMenu.addAction(QIcon(), tr("Cheatsheet"), this, [this]() { cheatsheet.setVisible(true); cheatsheet.raise(); });
     addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
     helpMenu.addAction(QIcon(":/resources/icons/menubar/about.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
 }
