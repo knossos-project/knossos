@@ -20,7 +20,7 @@
 				<th>Shortcut</th><th>Action</th>
 			</tr>
 		</thead>
-		<tr><td><span class="sh">Left click</span></td><td>Select Object / Node</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select Object / Node</td></tr>
 	</table>
 	</p>
 	

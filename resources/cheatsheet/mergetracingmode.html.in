@@ -18,12 +18,12 @@
 		<thead>
 			<tr><th>Mouse Shortcut</th><th>Action</th></tr>
 		</thead>
-		<tr><td><span class="sh">Left click on node</span></td><td>Select node</td></tr>
-		<tr><td><span class="sh">Shift + Left mouse hold</span></td><td>Draw selection square</td></tr>
-		<tr><td><span class="sh">Right click</span></td><td>Place node</td></tr>
-		<tr><td><span class="sh">Shift + Middle click on node</span></td><td>remove link to active node</td></tr>
-		<tr><td><span class="sh">Shift + Middle mouse hold on node</span></td><td>Move node</td></tr>
-		<tr><td><span class="sh">Shift + Scroll</span></td><td>Change node size</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/> on node</span></td><td>Select node</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/> hold</span></td><td>Draw selection square</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Place node</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click on node</span></td><td>remove link to active node</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> hold on node</span></td><td>Move node</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change node size</td></tr>
 	</table>
 	</p>
 	<p>
@@ -45,7 +45,7 @@
 		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
 	</table>
 	</p>
-	
+
 	<p>
 	In Merge Tracing you perform a regular skeletonization, but each tree is attached to a designated Segmentation Object. As nodes are placed, the Objects beneath them are merged into the tree’s Object.
 	</p>

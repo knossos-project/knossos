@@ -20,17 +20,17 @@
 				<th>Shortcut</th><th>Action</th>
 			</tr>
 		</thead>
-		<tr><td><span class="sh">Left click</span></td><td>Select object</td></tr>
-		<tr><td><span class="sh">Right mouse hold</span></td><td>Draw</td></tr>
-		<tr><td><span class="sh">Shift + Right mouse hold</span></td><td>Erase</td></tr>
-		<tr><td><span class="sh">Shift + Scroll</span></td><td>Change brush size</td></tr>
-		<tr><td><span class="sh">Middle click</span></td><td>Bucket fill</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> hold</span></td><td>Draw</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> hold</span></td><td>Erase</td></tr>
+		<tr><td><span class="sh">Shift +  <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change brush size</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click</span></td><td>Bucket fill</td></tr>
 		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
 		<tr><td><span class="sh">+</span></td><td>Increase overlay opacity</td></tr>
 		<tr><td><span class="sh">-</span></td><td>Decrease overlay opacity</td></tr>
 	</table>
 	</p>
-	
+
 	<p>
 	Painting is a slower form of segmentation but enables you to perform fine-grained corrections by selecting an Object and bringing it into shape with painting and erasing.
 	</p>
