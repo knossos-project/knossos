@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>resources/cheatsheet/cheatsheet.css</file>
         <file>resources/color_palette/default.json</file>
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
         <file>resources/datasets/e2006.k.conf</file>

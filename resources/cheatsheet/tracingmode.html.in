@@ -1,0 +1,47 @@
+#include "htmlmacros.h"
+
+<html>
+<head>
+	<meta content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href=":/resources/cheatsheet/cheatsheet.css" type="text/css" />
+</head>
+
+<body>
+	<h1>Tracing</h1>
+
+	<p><a href=ANNOTATION_SKEL>Skeleton table view</a></p>
+	<p><a href=PREF_NODE>Node preferences</a> | <a href=PREF_TREE>Tree preferences</a></p>
+	<p><a href=NAVIGATION>Navigation preferences</a></p>
+
+	<p>
+	<table>
+		<thead>
+			<tr><th>Mouse Shortcut</th><th>Action</th></tr>
+		</thead>
+		<tr><td><span class="sh">Left click on node</span></td><td>Select node</td></tr>
+		<tr><td><span class="sh">Shift + Left mouse hold</span></td><td>Draw selection square</td></tr>
+		<tr><td><span class="sh">Right click</span></td><td>Place node</td></tr>
+		<tr><td><span class="sh">Shift + Scroll</span></td><td>Change node size</td></tr>
+	</table>
+	</p>
+	<p>
+	<table>
+		<thead>
+			<tr><th>Keyboard Shortcut</th><th>Action</th></tr>
+		</thead>
+		<tr><td><span class="sh">B</span></td><td>Mark node as branch point</td></tr>
+		<tr><td><span class="sh">Del</span></td><td>Delete selected nodes</td></tr>
+		<tr><td><span class="sh">J</span></td><td>Jump to last branch point and remove marking</td></tr>
+		<tr><td><span class="sh">N</span></td><td>Move to next node in table</td></tr>
+		<tr><td><span class="sh">P</span></td><td>Move to previous node in table</td></tr>
+		<tr><td><span class="sh">S</span></td><td>Jump to active node</td></tr>
+		<tr><td><span class="sh">(Shift +) X</span></td><td>(Backward/)Forward-traverse tree</td></tr>
+		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
+	</table>
+	</p>
+	
+	<p>
+	Tracing mode is a simple skeletonization method in which you work on a single tree with connected nodes.
+	</p>
+</body>
+</html>

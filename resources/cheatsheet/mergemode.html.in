@@ -1,0 +1,37 @@
+#include "htmlmacros.h"
+
+<html>
+<head>
+	<meta content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href=":/resources/cheatsheet/cheatsheet.css" type="text/css" />
+</head>
+
+<body>
+	<h1>Segmentation Merge</h1>
+
+	<p>
+	<a href=ANNOTATION_SEG>Segmentation table view</a> | <a href=PREF_SEG>Visibility preferences</a> | <a href=NAVIGATION>Navigation preferences</a>
+	</p>
+	
+	<p>
+	<table>
+		<thead>
+			<tr>
+				<th>Shortcut</th><th>Action</th>
+			</tr>
+		</thead>
+		<tr><td><span class="sh">Left click</span></td><td>Select object</td></tr>
+		<tr><td><span class="sh">Right click (+ hold)</span></td><td>Merge</td></tr>
+		<tr><td><span class="sh">Shift + Right click (+ hold)</span></td><td>Unmerge</td></tr>
+		<tr><td><span class="sh">Shift + Scroll</span></td><td>Change brush size</td></tr>
+		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
+		<tr><td><span class="sh">+</span></td><td>Increase overlay opacity</td></tr>
+		<tr><td><span class="sh">-</span></td><td>Decrease overlay opacity</td></tr>
+	</table>
+	</p>
+	
+	<p>
+	Merging is a segmentation method suitable for working on a machine-generated over-segmentation, i.e. the task consists of merging incorrectly splitted objects back together. 
+	</p>
+</body>
+</html>

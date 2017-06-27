@@ -42,12 +42,15 @@ file(GLOB_RECURSE headers2 ./mesh/*.h ./scriptengine/*.h ./segmentation/*.h ./sl
 
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2} ${uis})
 
+set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
+list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
+
 set(CMAKE_CXX_STANDARD 14)
 if(NOT COMMAND cotire)#https://github.com/sakra/cotire/issues/99
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 set(CMAKE_AUTOMOC ${AUTOGEN})
-set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
+set(CMAKE_AUTORCC ${AUTOGEN})#resource files
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -78,6 +81,7 @@ find_package(QuaZip 0.6.2 REQUIRED)
 if(NOT AUTOGEN)
     qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
     qt5_add_resources(SRC_LIST resources.qrc)
+    qt5_add_resources(SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc OPTIONS "--root;/cheatsheet")
 endif()
 #platform dependent resources
 if(WIN32)
@@ -102,8 +106,40 @@ add_custom_command(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
 
+# rcc  --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
+add_custom_command(OUTPUT ${cheatsheet_dir}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${cheatsheet_dir}
+    COMMENT "Creating directory: cheatsheet"
+)
+
+file(GLOB cheatsheet_pages resources/cheatsheet/*.html.in)
+add_custom_target(cheatsheet_html)
+foreach(page ${cheatsheet_pages})
+    get_filename_component(page_name ${page} NAME_WE) #name without path or extension
+    add_custom_command(OUTPUT ${cheatsheet_dir}/${page_name}.html
+        COMMAND "${CMAKE_CXX_COMPILER}" -E -x c++ -P -C ${page} -I ${CMAKE_CURRENT_SOURCE_DIR} -o ${cheatsheet_dir}/${page_name}.html
+        COMMENT "Preprocessing ${page}"
+        DEPENDS ${cheatsheet_dir}
+    )
+    add_custom_target(cheatsheet${page_name} DEPENDS ${cheatsheet_dir}/${page_name}.html) # extra add_custom_command prevents infinite loop when running cmake --build
+    add_dependencies(cheatsheet_html cheatsheet${page_name})
+endforeach()
+
+add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
+    COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
+    COMMAND rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
+    WORKING_DIRECTORY ${cheatsheet_dir}
+    COMMENT "Creating cheatsheet.qrc"
+    DEPENDS ${cheatsheet_dir} cheatsheet_html
+)
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
+set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
+    GENERATED ON
+    AUTORCC_OPTIONS "--root;/cheatsheet"
+)
+
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo

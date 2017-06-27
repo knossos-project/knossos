@@ -22,6 +22,7 @@
 
 #include "file_io.h"
 #include "GuiConstants.h"
+#include "htmlmacros.h"
 #include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
@@ -204,6 +205,26 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
     createGlobalAction(state->mainWindow, Qt::Key_F7, [](){
         state->viewer->gpuRendering = !state->viewer->gpuRendering;
+    });
+
+    addDockWidget(Qt::RightDockWidgetArea, &cheatsheet);
+    QObject::connect(&cheatsheet, &Cheatsheet::anchorClicked, [this](const QUrl & link) {
+        auto anchor = link.toString();
+        auto & annoWidget = widgetContainer.annotationWidget;
+        auto & prefWidget = widgetContainer.preferencesWidget;
+        if(anchor.endsWith(ANNOTATION_SEG)) {
+            annoWidget.tabs.setCurrentIndex(1); annoWidget.show(); annoWidget.raise();
+        } else if (anchor.endsWith(ANNOTATION_SKEL)) {
+            annoWidget.tabs.setCurrentIndex(0); annoWidget.show(); annoWidget.raise();
+        } else if(anchor.endsWith(PREF_NODE)) {
+            prefWidget.tabs.setCurrentIndex(1); prefWidget.show(); prefWidget.raise();
+        } else if(anchor.endsWith(PREF_SEG)) {
+            prefWidget.tabs.setCurrentIndex(2); prefWidget.show(); prefWidget.raise();
+        } else if(anchor.endsWith(PREF_TREE)) {
+            prefWidget.tabs.setCurrentIndex(0); prefWidget.show(); prefWidget.raise();
+        } else if(anchor.endsWith(NAVIGATION)) {
+            prefWidget.tabs.setCurrentIndex(5); prefWidget.show(); prefWidget.raise();
+        }
     });
 }
 
@@ -963,6 +984,8 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
         Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
     }
+
+    cheatsheet.load(workMode);
 }
 
 void MainWindow::setSegmentState(const SegmentState newState) {

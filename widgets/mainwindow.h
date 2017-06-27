@@ -23,6 +23,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "cheatsheet.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
 #include "viewports/viewportarb.h"
@@ -182,6 +183,8 @@ class MainWindow : public QMainWindow {
     void toggleSegments();
 
     virtual bool event(QEvent *event) override;
+
+    Cheatsheet cheatsheet;
 public:
     static constexpr auto docUrl = "https://knossostool.org/documentation/KNOSSOS_full_doc.html";
 
