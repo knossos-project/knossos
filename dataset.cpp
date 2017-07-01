@@ -174,12 +174,19 @@ Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
             info.cubeEdgeLength = tokenList.at(1).toInt();
         } else if (token == "ftp_mode") {
             info.remote = true;
-            info.url.setScheme("http");
-            info.url.setUserName(tokenList.at(3));
-            info.url.setPassword(tokenList.at(4));
-            info.url.setHost(tokenList.at(1));
-            info.url.setPath(tokenList.at(2));
-            //discarding ftpFileTimeout parameter
+            auto maybeUrl = tokenList.at(1);
+            if (QUrl{maybeUrl}.scheme().isEmpty()) {
+                maybeUrl.prepend("http://");
+            }
+            info.url = maybeUrl;
+            if (tokenList.size() >= 3 && !tokenList.at(2).isEmpty()) {
+                info.url.setPath(tokenList.at(2));
+            }
+            if (tokenList.size() >= 5) {
+                info.url.setUserName(tokenList.at(3));
+                info.url.setPassword(tokenList.at(4));
+            }
+            // discarding ftpFileTimeout parameter
         } else if (token == "compression_ratio") {
             info.compressionRatio = tokenList.at(1).toInt();
         } else {
