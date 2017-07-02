@@ -23,6 +23,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "cheatsheet.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "session.h"
 #include "viewports/viewportarb.h"
@@ -30,8 +31,6 @@
 #include "viewports/viewportortho.h"
 #include "viewports/viewport3d.h"
 #include "widgetcontainer.h"
-
-#define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 
 #include <QComboBox>
 #include <QDropEvent>
@@ -44,15 +43,6 @@
 
 #include <array>
 #include <memory>
-
-class QLabel;
-class QToolButton;
-class QPushButton;
-class QSpinBox;
-class QCheckBox;
-class QMessageBox;
-class QGridLayout;
-class QFile;
 
 enum class SynapseState {
     Off, SynapticCleft, PostSynapse
@@ -126,6 +116,7 @@ class MainWindow : public QMainWindow {
     QAction *clearSkeletonAction;
     QAction *compressionToggleAction;
     QAction *createSynapse;
+    static constexpr int FILE_DIALOG_HISTORY_MAX_ENTRIES = 10;
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
     QAction *newTreeAction;
     QAction *popBranchAction;
@@ -192,6 +183,8 @@ class MainWindow : public QMainWindow {
     void toggleSegments();
 
     virtual bool event(QEvent *event) override;
+
+    Cheatsheet cheatsheet;
 public:
     static constexpr auto docUrl = "https://knossostool.org/documentation/KNOSSOS_full_doc.html";
 

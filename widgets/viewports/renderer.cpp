@@ -825,7 +825,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh && !state->viewerState->showOnlyRawData) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);

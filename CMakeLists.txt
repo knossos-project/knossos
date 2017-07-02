@@ -21,7 +21,7 @@
 ]]
 
 project(knossos)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
@@ -30,7 +30,7 @@ message(STATUS "${CMAKE_BUILD_TYPE}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
-option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources (less cpu usage, worse parallelizability, worse turnaround times)" OFF)
+option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources" ON)
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
@@ -42,17 +42,20 @@ file(GLOB_RECURSE headers2 ./mesh/*.h ./scriptengine/*.h ./segmentation/*.h ./sl
 
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2} ${uis})
 
+set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
+list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
+
 set(CMAKE_CXX_STANDARD 14)
 if(NOT COMMAND cotire)#https://github.com/sakra/cotire/issues/99
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 set(CMAKE_AUTOMOC ${AUTOGEN})
-set(CMAKE_AUTORCC ${AUTOGEN})#resources.qrc
+set(CMAKE_AUTORCC ${AUTOGEN})#resource files
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-find_package(Qt5 5.1 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets)
+find_package(Qt5 5.7 REQUIRED COMPONENTS Concurrent Core Gui Help Network Widgets) # QFlags::setFlag
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
@@ -69,8 +72,8 @@ if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries from here o
 endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
-find_package(Boost 1.50 REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(OpenGL REQUIRED) # GLU
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -78,6 +81,7 @@ find_package(QuaZip 0.6.2 REQUIRED)
 if(NOT AUTOGEN)
     qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
     qt5_add_resources(SRC_LIST resources.qrc)
+    qt5_add_resources(SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc OPTIONS "--root;/cheatsheet")
 endif()
 #platform dependent resources
 if(WIN32)
@@ -102,8 +106,40 @@ add_custom_command(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
 
+# rcc  --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
+add_custom_command(OUTPUT ${cheatsheet_dir}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${cheatsheet_dir}
+    COMMENT "Creating directory: cheatsheet"
+)
+
+file(GLOB cheatsheet_pages resources/cheatsheet/*.html.in)
+add_custom_target(cheatsheet_html)
+foreach(page ${cheatsheet_pages})
+    get_filename_component(page_name ${page} NAME_WE) #name without path or extension
+    add_custom_command(OUTPUT ${cheatsheet_dir}/${page_name}.html
+        COMMAND "${CMAKE_CXX_COMPILER}" -E -x c++ -P -C ${page} -I ${CMAKE_CURRENT_SOURCE_DIR} -o ${cheatsheet_dir}/${page_name}.html
+        COMMENT "Preprocessing ${page}"
+        DEPENDS ${cheatsheet_dir}
+    )
+    add_custom_target(cheatsheet${page_name} DEPENDS ${cheatsheet_dir}/${page_name}.html) # extra add_custom_command prevents infinite loop when running cmake --build
+    add_dependencies(cheatsheet_html cheatsheet${page_name})
+endforeach()
+
+add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
+    COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
+    COMMAND rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
+    WORKING_DIRECTORY ${cheatsheet_dir}
+    COMMENT "Creating cheatsheet.qrc"
+    DEPENDS ${cheatsheet_dir} cheatsheet_html
+)
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
+set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
+    GENERATED ON
+    AUTORCC_OPTIONS "--root;/cheatsheet"
+)
+
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
@@ -117,9 +153,7 @@ endif()
 #on static build, need to make sure the root include of a dynamic Qt is not added i.e. /mingw64/include
 #or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
 target_include_directories(${PROJECT_NAME} PRIVATE
-    #${Boost_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR}
-    ${PYTHON_INCLUDE_DIR}
 )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
@@ -128,8 +162,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-    ${Boost_LIBRARIES}
-    ${OPENGL_LIBRARIES}
+    Boost::boost
+    OpenGL::GLU
     #configs add includes and other settings automatically
     Qt5::Concurrent
     Qt5::Core
