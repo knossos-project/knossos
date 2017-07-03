@@ -127,7 +127,7 @@ endforeach()
 
 add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
-    COMMAND rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
+    COMMAND Qt5::rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
     COMMAND ${CMAKE_COMMAND} -E rename ../cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
     WORKING_DIRECTORY ${cheatsheet_dir}
     COMMENT "Creating cheatsheet.qrc"
