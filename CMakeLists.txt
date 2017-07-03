@@ -150,11 +150,6 @@ if(PythonQt_QtAll)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
     target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
 endif()
-#on static build, need to make sure the root include of a dynamic Qt is not added i.e. /mingw64/include
-#or some headers files of the static Qt are resolved through the wrong Qt installation (i.e. QtCore/qglobal.h which defines QT_STATIC)
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${OPENGL_INCLUDE_DIR}
-)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
     message(STATUS "using gold linker")
