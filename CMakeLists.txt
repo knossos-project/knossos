@@ -106,7 +106,7 @@ add_custom_command(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
 
-# rcc  --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
+# rcc --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
 add_custom_command(OUTPUT ${cheatsheet_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${cheatsheet_dir}
     COMMENT "Creating directory: cheatsheet"
@@ -128,10 +128,10 @@ endforeach()
 add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
     COMMAND rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
-    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
+    COMMAND ${CMAKE_COMMAND} -E rename ../cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
     WORKING_DIRECTORY ${cheatsheet_dir}
     COMMENT "Creating cheatsheet.qrc"
-    DEPENDS ${cheatsheet_dir} cheatsheet_html
+    DEPENDS cheatsheet_html
 )
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
@@ -139,6 +139,7 @@ set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
     GENERATED ON
     AUTORCC_OPTIONS "--root;/cheatsheet"
 )
+set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS ${cheatsheet_dir}/cheatsheet.qrc)
 
 set_target_properties(${PROJECT_NAME}
     PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist)
