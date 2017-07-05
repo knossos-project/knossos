@@ -46,9 +46,8 @@ set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
 list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
 
 set(CMAKE_CXX_STANDARD 14)
-if(NOT COMMAND cotire)#https://github.com/sakra/cotire/issues/99
-    set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resource files
 set(CMAKE_AUTOUIC ON)
@@ -160,7 +159,6 @@ endif()
 target_link_libraries(${PROJECT_NAME}
     Boost::boost
     OpenGL::GLU
-    #configs add includes and other settings automatically
     Qt5::Concurrent
     Qt5::Core
     Qt5::Gui
@@ -179,7 +177,7 @@ if(qtmultimedia_static_plugins)
     string(REGEX REPLACE [;]*DSServicePlugin[;]* ";" qtmultimedia_static_plugins_new "${qtmultimedia_static_plugins}")
     set_target_properties(Qt5::Multimedia PROPERTIES STATIC_PLUGINS "${qtmultimedia_static_plugins_new}")
 endif()
-# remove the static QVirtualKeyboardPlugin because it’s QtQuick plugin dependencies currently aren’t properly setup’d for CMake
+# remove the static QVirtualKeyboardPlugin because its QtQuick plugin dependencies currently aren’t properly setup’d for CMake
 get_target_property(gui_static_plugins Qt5::Gui STATIC_PLUGINS)
 if(gui_static_plugins)
     string(REGEX REPLACE [;]*QVirtualKeyboardPlugin[;]* ";" gui_static_plugins_new "${gui_static_plugins}")
@@ -202,7 +200,6 @@ else(APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
 endif(APPLE)
 
-#uncomment if you are to lazy to do »ninja install« to get the RPATH
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
