@@ -47,6 +47,8 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     volumeOpaquenessSpinBox.setRange(0, 255);
     volumeOpaquenessSlider.setRange(0, 255);
 
+    segmentationBorderHighlight.setCheckable(true);
+
     // dataset
     int row = 0;
     datasetLayout.addWidget(&datasetLinearFilteringCheckBox, row++, 0, 1, 2);
@@ -56,9 +58,11 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     datasetLayout.setAlignment(Qt::AlignTop);
     datasetGroup.setLayout(&datasetLayout);
     // segmentation
-    overlayLayout.addWidget(&segmentationOverlayLabel);
-    overlayLayout.addWidget(&segmentationOverlaySlider);
-    overlayLayout.addWidget(&segmentationOverlaySpinBox);
+    row = 0;
+    overlayLayout.addWidget(&segmentationOverlayLabel, row, 0);
+    overlayLayout.addWidget(&segmentationOverlaySlider, row, 1);
+    overlayLayout.addWidget(&segmentationOverlaySpinBox, row, 2);
+    overlayLayout.addWidget(&segmentationBorderHighlight, ++row, 0);
     overlayGroup.setLayout(&overlayLayout);
     row = 0;
     volumeLayout.addWidget(&volumeOpaquenessLabel, row, 0); volumeLayout.addWidget(&volumeOpaquenessSlider, row, 1); volumeLayout.addWidget(&volumeOpaquenessSpinBox, row, 2);
@@ -124,6 +128,10 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().alpha = value;
         state->viewer->oc_reslice_notify_visible();
     });
+    QObject::connect(&segmentationBorderHighlight, &QCheckBox::clicked, [this](const bool checked) {
+        Segmentation::singleton().highlightBorder = checked;
+        state->viewer->oc_reslice_notify_visible();
+    });
     QObject::connect(&volumeGroup, &QGroupBox::clicked, [this](bool checked){
         Segmentation::singleton().volume_render_toggle = checked;
         emit volumeRenderToggled();
@@ -180,6 +188,7 @@ void DatasetAndSegmentationTab::saveSettings() const {
     settings.setValue(BIAS, biasSpinBox.value());
     settings.setValue(RANGE_DELTA, rangeDeltaSpinBox.value());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, segmentationOverlaySlider.value());
+    settings.setValue(SEGMENTATITION_HIGHLIGHT_BORDER, segmentationBorderHighlight.isChecked());
     settings.setValue(DATASET_LUT_FILE, lutFilePath);
     settings.setValue(DATASET_LUT_FILE_USED, useOwnDatasetColorsCheckBox.isChecked());
     settings.setValue(RENDER_VOLUME, volumeGroup.isChecked());
@@ -202,6 +211,8 @@ void DatasetAndSegmentationTab::loadSettings() {
     rangeDeltaSpinBox.valueChanged(rangeDeltaSpinBox.value());
     segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
     segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
+    segmentationBorderHighlight.setChecked(settings.value(SEGMENTATITION_HIGHLIGHT_BORDER, true).toBool());
+    segmentationBorderHighlight.clicked(segmentationBorderHighlight.isChecked());
     volumeGroup.setChecked(settings.value(RENDER_VOLUME, false).toBool());
     volumeGroup.clicked(volumeGroup.isChecked());
     volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());

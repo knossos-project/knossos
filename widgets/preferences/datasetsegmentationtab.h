@@ -55,10 +55,11 @@ class DatasetAndSegmentationTab : public QWidget
     QGroupBox segmentationGroup{tr("Segmentation")};
     QVBoxLayout segmentationLayout;
     QGroupBox overlayGroup{tr("Overlay")};
-    QHBoxLayout overlayLayout;
+    QGridLayout overlayLayout;
     QLabel segmentationOverlayLabel{tr("Opacity")};
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
+    QCheckBox segmentationBorderHighlight{"Highlight borders"};
     // segmentation volume
     QGroupBox volumeGroup{"Show volume in 3D viewport"};
     QGridLayout volumeLayout;

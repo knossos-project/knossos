@@ -378,29 +378,31 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 const bool isNotLastColumn = (counter + 1) % state->cubeEdgeLength != 0;
 
                 // highlight edges where needed
-                if(seg.hoverVersion) {
-                    uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
-                    if (selected && seg.mouseFocusedObjectId == objectId) {
-                        if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                            const uint64_t left = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
-                            const uint64_t right = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
-                            const uint64_t top = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
-                            const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
-                            //enhance alpha of this voxel if any of the surrounding voxels belong to another object
-                            if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
-                                reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                if(seg.highlightBorder) {
+                    if(seg.hoverVersion) {
+                        uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
+                        if (selected && seg.mouseFocusedObjectId == objectId) {
+                            if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                                const uint64_t left = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
+                                const uint64_t right = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
+                                const uint64_t top = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
+                                const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
+                                //enhance alpha of this voxel if any of the surrounding voxels belong to another object
+                                if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
+                                    reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                                }
                             }
                         }
                     }
-                }
-                else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                    const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
-                    const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
-                    const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
-                    const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
-                    //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
-                    if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
-                        reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                    else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                        const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
+                        const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
+                        const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
+                        const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
+                        //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
+                        if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
+                            reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                        }
                     }
                 }
 
