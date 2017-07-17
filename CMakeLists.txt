@@ -110,6 +110,7 @@ add_custom_command(OUTPUT ${cheatsheet_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${cheatsheet_dir}
     COMMENT "Creating directory: cheatsheet"
 )
+add_custom_target(cheatsheet_dir_target DEPENDS ${cheatsheet_dir}) # output is used as input several times
 
 file(GLOB cheatsheet_pages resources/cheatsheet/*.html.in)
 add_custom_target(cheatsheet_html)
@@ -118,7 +119,7 @@ foreach(page ${cheatsheet_pages})
     add_custom_command(OUTPUT ${cheatsheet_dir}/${page_name}.html
         COMMAND "${CMAKE_CXX_COMPILER}" -E -x c++ -P -C ${page} -I ${CMAKE_CURRENT_SOURCE_DIR} -o ${cheatsheet_dir}/${page_name}.html
         COMMENT "Preprocessing ${page}"
-        DEPENDS ${cheatsheet_dir}
+        DEPENDS cheatsheet_dir_target
     )
     add_custom_target(cheatsheet${page_name} DEPENDS ${cheatsheet_dir}/${page_name}.html) # extra add_custom_command prevents infinite loop when running cmake --build
     add_dependencies(cheatsheet_html cheatsheet${page_name})
