@@ -22,27 +22,7 @@
 
 #specify extraordinary locations for convenience here (forward slashes essential)
 #cmake searches for headers and libraries both directly and inside include/lib folders below
-set(CMAKE_PREFIX_PATH
-    "${CMAKE_PREFIX_PATH}"#append
-
+list(APPEND CMAKE_PREFIX_PATH
 # For Mac development: required to find packages from Homebrew
     "/usr/local/opt/qt5/bin"
 )
-
-# find static qt libs (default msys2 location), MINGW_PREFIX is /mingw??
-if(WIN32 AND DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(STATUS "x64 static build")
-        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        message(STATUS "x32 static build")
-        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
-    endif()
-endif()
-
-# find system python dll
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{SystemRoot}/System32")
-elseif(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4)
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{SystemRoot}/SysWOW64")
-endif()

@@ -32,6 +32,24 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
 option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources" ON)
 
+# find static qt libs (default msys2 location), MINGW_PREFIX is /mingw??
+if(WIN32 AND DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(STATUS "x64 static build")
+        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
+    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+        message(STATUS "x32 static build")
+        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
+    endif()
+endif()
+
+# find system python dll
+if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{SystemRoot}/System32")
+elseif(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{SystemRoot}/SysWOW64")
+endif()
+
 include(CustomLibraryLocations.cmake)#prefill variables
 
 file(GLOB sources *.cpp resources.qrc version.h.in)
