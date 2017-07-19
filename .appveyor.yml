@@ -21,6 +21,7 @@ install:
   - set APPVEYOR_REPO_NAME=nightly
 
 build_script:
+  - pacman -Syuu --noconfirm
   - bash -lc "PROJECTPATH=`ls /c/projects/`; cd /c/projects/${PROJECTPATH}; chmod +x .appveyor_build.sh; ./.appveyor_build.sh"
 
 ####
