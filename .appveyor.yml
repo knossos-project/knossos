@@ -1,43 +1,24 @@
-version: 1.0.{build}
+version: 5.0.1-{branch}+{build}
 
 image: Visual Studio 2015
 
 environment:
   matrix:
-  - COMPILER: msys2
-    PLATFORM: x64
-    MSYS2_ARCH: x86_64
-    MSYS2_DIR: msys64
-    MSYSTEM: MINGW64
-    BIT: 64
+  - MSYSTEM: MINGW64
 
 artifacts:
   - path: '*nightly.exe'
-    name: knossos
-
-install:
-  - set PATH=C:\%MSYS2_DIR%\%MSYSTEM%\bin;C:\%MSYS2_DIR%\usr\bin;%PATH%
-  - set APPVEYOR_REPO_TAG=TRUE
-  - set APPVEYOR_REPO_NAME=nightly
 
 build_script:
-  - pacman -Syuu --noconfirm
-  - bash -lc "PROJECTPATH=`ls /c/projects/`; cd /c/projects/${PROJECTPATH}; chmod +x .appveyor_build.sh; ./.appveyor_build.sh"
+  - C:\msys64\usr\bin\pacman -Syuu --noconfirm
+  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.appveyor_build.sh"
 
-####
-# Release knossos.exe
-###
 deploy:
   tag: nightly
-  release: nightly
   description: 'Nightly build from the latest successful commit'
   provider: GitHub
   auth_token:
     secure: 662Gozhe3fmtaVUptOYmok9ayZxuk9PDVS6pN8QfZPwP+P102GV5SnSpHcDR1o77 # your encrypted token from GitHub
-    artifact: /.*\nightly.exe/          # artifact to release
+    artifact: /.*\nightly.exe/ # artifact to release
   prerelease: true
   force_update: true
-  on:
-    branch: /.*/                 # release from any branch
-    appveyor_repo_tag: true        # deploy on tag push only
-    appveyor_repo_name: nightly
