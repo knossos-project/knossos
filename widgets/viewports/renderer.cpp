@@ -872,7 +872,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisable(GL_TEXTURE_2D);
     }
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
         glPushMatrix();
         view();
         renderBrush(getMouseCoordinate());
