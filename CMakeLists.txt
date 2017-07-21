@@ -34,13 +34,8 @@ option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cp
 
 # find static qt libs (default msys2 location), MINGW_PREFIX is /mingw??
 if(WIN32 AND DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(STATUS "x64 static build")
-        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        message(STATUS "x32 static build")
-        list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
-    endif()
+    message(STATUS "$ENV{MINGW_PREFIX} static build")
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{MINGW_PREFIX}/qt5-static/")
 endif()
 
 # find system python dll
