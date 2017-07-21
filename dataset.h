@@ -36,9 +36,11 @@ struct Dataset {
         RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED, SEGMENTATION_SZ_ZIP
     };
 
+    static bool isNeuroDataStore(const QUrl & url);
+
     static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
-    static Dataset parseOpenConnectomeJson(const QUrl & infoUrl, const QString & json_raw);
+    static Dataset parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
     static Dataset fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();

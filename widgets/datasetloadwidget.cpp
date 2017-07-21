@@ -168,8 +168,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
         return;
     }
 
-    const auto ocp = url.toString().contains("/ocp/ca/");
-    const auto datasetinfo = ocp ? Dataset::parseOpenConnectomeJson(url, download.second) : Dataset::fromLegacyConf(url, download.second);
+    const auto datasetinfo = Dataset::isNeuroDataStore(url) ? Dataset::parseNeuroDataStoreJson(url, download.second) : Dataset::fromLegacyConf(url, download.second);
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -273,8 +272,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     Dataset info;
     Dataset::CubeType raw_compression;
-    if (path.toString().contains("/ocp/ca/")) {
-        info = Dataset::parseOpenConnectomeJson(path, download.second);
+    if (Dataset::isNeuroDataStore(path)) {
+        info = Dataset::parseNeuroDataStoreJson(path, download.second);
     } else {
         info = Dataset::fromLegacyConf(path, download.second);
         try {

@@ -37,6 +37,10 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
+bool Dataset::isNeuroDataStore(const QUrl & url) {
+    return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
+}
+
 Dataset Dataset::dummyDataset() {
     Dataset info;
     info.api = API::Heidelbrain;
@@ -78,7 +82,7 @@ Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     return info;
 }
 
-Dataset Dataset::parseOpenConnectomeJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
@@ -302,6 +306,7 @@ QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const i
     base.setPath(path + "/");
     base.setQuery(query);
     //(string: server_name)/ocp/ca/(string: token_name)/(string: channel_name)/jpeg/(int: resolution)/(int: min_x),(int: max_x)/(int: min_y),(int: max_y)/(int: min_z),(int: max_z)/
+    //(string: server_name)/nd/sd/(string: token_name)/(string: channel_name)/jpeg/(int: resolution)/(int: min_x),(int: max_x)/(int: min_y),(int: max_y)/(int: min_z),(int: max_z)/
     return base;
 }
 
