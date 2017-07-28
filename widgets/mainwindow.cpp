@@ -146,7 +146,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressAbortButton.setVisible(false);
     networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
-    QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply & reply) {
+    QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply &
+                 #ifndef Q_OS_UNIX
+                     reply
+                 #endif
+                     ) {
         networkProgressBar.setVisible(true);
     #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
         networkProgressAbortButton.setVisible(true);
