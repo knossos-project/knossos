@@ -130,7 +130,7 @@ add_custom_target(cheatsheet_html)
 foreach(page ${cheatsheet_pages})
     get_filename_component(page_name ${page} NAME_WE) #name without path or extension
     add_custom_command(OUTPUT ${cheatsheet_dir}/${page_name}.html
-        COMMAND "${CMAKE_CXX_COMPILER}" -E -x c++ -P -C ${page} -I ${CMAKE_CURRENT_SOURCE_DIR} -o ${cheatsheet_dir}/${page_name}.html
+        COMMAND "${CMAKE_CXX_COMPILER}" -E -x c++ -P ${page} -I ${CMAKE_CURRENT_SOURCE_DIR} -o ${cheatsheet_dir}/${page_name}.html # -E: only preprocess, -x: language, -P: omit linemarkers
         COMMENT "Preprocessing ${page}"
         DEPENDS cheatsheet_dir_target
     )
