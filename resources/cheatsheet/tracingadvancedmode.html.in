@@ -14,6 +14,10 @@
 	<p><a href=NAVIGATION>Navigation preferences</a></p>
 
 	<p>
+	Tracing Advanced offers more functionality than Tracing mode: Unlinked nodes and new trees can be created. This also enables you to make synapse annotations.
+	</p>
+
+	<p>
 	<table>
 		<thead>
 			<tr><th>Mouse Shortcut</th><th>Action</th></tr>
@@ -44,10 +48,6 @@
 		<tr><td><span class="sh">(Shift +) X</span></td><td>(Backward/)Forward-traverse tree</td></tr>
 		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
 	</table>
-	</p>
-
-	<p>
-	Tracing Advanced offers more functionality than Tracing mode: Unlinked nodes and new trees can be created. This also enables you to make synapse annotations.
 	</p>
 </body>
 </html>

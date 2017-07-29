@@ -14,6 +14,10 @@
 	</p>
 
 	<p>
+	Painting is a slower form of segmentation but enables you to perform fine-grained corrections by selecting an Object and bringing it into shape with painting and erasing.
+	</p>
+
+	<p>
 	<table>
 		<thead>
 			<tr>
@@ -29,10 +33,6 @@
 		<tr><td><span class="sh">+</span></td><td>Increase overlay opacity</td></tr>
 		<tr><td><span class="sh">-</span></td><td>Decrease overlay opacity</td></tr>
 	</table>
-	</p>
-
-	<p>
-	Painting is a slower form of segmentation but enables you to perform fine-grained corrections by selecting an Object and bringing it into shape with painting and erasing.
 	</p>
 </body>
 </html>
