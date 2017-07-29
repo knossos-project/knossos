@@ -163,7 +163,6 @@ class MainWindow : public QMainWindow {
     QLabel annotationTimeLabel;
     QLabel cursorPositionLabel;
     QLabel GUIModeLabel{""};
-    QLabel hideClutterInfoLabel{"Hold [space] to show only raw data"};
     QLabel nodeLockingLabel;
     QLabel segmentStateLabel;
     QLabel synapseStateLabel;

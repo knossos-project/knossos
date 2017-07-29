@@ -202,8 +202,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     statusBar()->addPermanentWidget(&segmentStateLabel);
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
-    hideClutterInfoLabel.setToolTip("Hold space to temporarily show only the raw data. Everything else is hidden.");
-    statusBar()->addPermanentWidget(&hideClutterInfoLabel);
 
     QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
