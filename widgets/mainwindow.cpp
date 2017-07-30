@@ -691,7 +691,12 @@ void MainWindow::createMenus() {
     refreshPluginMenu();
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
-    helpMenu.addAction(QIcon(), tr("Cheatsheet"), this, [this]() { cheatsheet.setVisible(true); cheatsheet.raise(); });
+
+    cheatsheetAction = helpMenu.addAction(QIcon(), tr("Cheatsheet"));
+    cheatsheetAction->setCheckable(true);
+    QObject::connect(cheatsheetAction, &QAction::triggered, [this](const bool checked) { cheatsheet.setVisible(checked); } );
+    QObject::connect(&cheatsheet, &QDockWidget::visibilityChanged, [this](const bool visible) { cheatsheetAction->setChecked(visible); });
+
     addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
     helpMenu.addAction(QIcon(":/resources/icons/menubar/about.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
 }
@@ -1202,6 +1207,7 @@ void MainWindow::loadSettings() {
         resize(1024, 768);// initial default size
     }
     restoreState(settings.value(STATE).toByteArray());
+    cheatsheetAction->setChecked(cheatsheet.isVisibleTo(this));
 
     auto autosaveLocation = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
     QDir().mkpath(autosaveLocation);

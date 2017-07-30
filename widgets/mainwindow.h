@@ -112,6 +112,7 @@ class MainWindow : public QMainWindow {
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
+    QAction *cheatsheetAction;
     QAction *clearMergelistAction;
     QAction *clearSkeletonAction;
     QAction *compressionToggleAction;
