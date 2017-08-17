@@ -231,8 +231,16 @@ void DatasetLoadWidget::processButtonClicked() {
 #include <o2requestor.h>
 
 #include <QDesktopServices>
+#include <QProcess>
 
 O2 * o2global;
+
+#include "googleapis/client/transport/http_transport.h"
+#include "googleapis/client/transport/curl_http_transport.h"
+#include "googleapis/client/auth/credential_store.h"
+#include "googleapis/client/auth/oauth2_authorization.h"
+#include "googleapis/client/auth/oauth2_service_authorization.h"
+#include "googleapis/client/util/status.h"
 
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
@@ -282,7 +290,42 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     Dataset::CubeType raw_compression;
     if (Dataset::isNeuroDataStore(path)) {
         info = Dataset::parseNeuroDataStoreJson(path, download.second);
-    } else if (path.toString().contains("google")) {
+    } else if (path.toString().contains("brainmaps")) {
+        namespace gutil = googleapis::util;
+        namespace gclient = googleapis::client;
+
+        auto o2config = std::make_unique<gclient::HttpTransportLayerConfig>();
+        o2config->ResetDefaultTransportFactory(new gclient::CurlHttpTransportFactory(o2config.get()));
+        QProcess process;
+        process.start("cygpath", QStringList() << "--mixed" << "/mingw64");
+        process.waitForFinished();
+        auto output = process.readAllStandardOutput();
+        output.chop(1); // remove newline
+        qDebug() << output;
+        o2config->mutable_default_transport_options()->set_cacerts_path(output.toStdString() + "/ssl/cert.pem");
+
+        gutil::Status gstatus;
+        std::unique_ptr<gclient::OAuth2AuthorizationFlow> flow(gclient::OAuth2AuthorizationFlow::MakeFlowFromClientSecretsPath(
+                    "service_account.json"
+//                    "/home/mobile/Downloads/Songbird-API-d4d43b08f0ec.json"
+                    , o2config->NewDefaultTransportOrDie(), &gstatus));
+
+        qDebug() << gstatus.ToString().c_str();
+        if (!gstatus.ok()) {
+            throw std::runtime_error(gstatus.ToString().c_str());
+        }
+
+        flow->set_default_scopes("https://www.googleapis.com/auth/brainmaps");
+        gclient::OAuth2Credential credential;
+//        auto status = flow->RefreshCredentialWithOptions(gclient::OAuth2RequestOptions{}, &credential);
+        auto status = flow->PerformRefreshToken(gclient::OAuth2RequestOptions{}, &credential);
+
+        qDebug() << status.ToString().c_str() << credential.access_token().as_string().c_str();
+
+        if (!status.ok()) {
+            return false;
+        }
+
         static QEventLoop pause;
         QEventLoop & pauseRef = pause;
         static O2 & o2 = [&pauseRef]() -> O2 & {
@@ -292,7 +335,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             o2.setClientId("417200973162-ivhe0mcenpc2pcf9ogtk9dd9lgfhuufj.apps.googleusercontent.com");
             o2.setClientSecret("jvyyGrJH8Hy4-OzmqIrhTrLt");
             o2.setRequestUrl("https://accounts.google.com/o/oauth2/v2/auth");//https://accounts.google.com/o/oauth2/auth
-            o2.setTokenUrl("https://www.googleapis.com/oauth2/v4/token");//https://www.googleapis.com/oauth2/v4/token
+//            o2.setTokenUrl("https://www.googleapis.com/oauth2/v4/token");
+            o2.setTokenUrl("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
             o2.setRefreshTokenUrl("https://www.googleapis.com/oauth2/v4/token");// ?approval_prompt=force
             o2.setScope("https://www.googleapis.com/auth/brainmaps");
 
@@ -313,16 +357,23 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
             return o2;
         }();
-        o2.unlink();
-        o2.link();
-        pause.exec();
+        o2.setToken(credential.access_token().as_string().c_str());
+        o2.setRefreshToken(credential.refresh_token().as_string().c_str());
+        o2.setLinked(true);
 
-        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata"};
+//        o2.unlink();
+//        o2.link();
+//        pause.exec();
+
+        qDebug() << "token" << o2.token();
+
+//        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata"};
+//        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/611024335609:j0126:rawdata"};
 
         O2Requestor o2proxy(&Network::singleton().manager, o2global);
-        const auto datasets = blockDownloadExtractData(*o2proxy.get(QNetworkRequest(QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
-        qDebug() << datasets.second;
-        auto & reply = *o2proxy.get(QNetworkRequest(url));
+//        const auto datasets = blockDownloadExtractData(*o2proxy.get(QNetworkRequest(QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
+//        qDebug() << datasets.second;
+        auto & reply = *o2proxy.get(QNetworkRequest(path));
         const auto config = blockDownloadExtractData(reply);
 
         if (config.first) {
@@ -331,7 +382,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             qDebug() << "download failed";
             return false;
         }
-        info.url = url;
+        info.url = path;
+        auto foo = info.url.path();
+        foo.chop(1);
+        info.url.setPath(foo);
     } else {
         info = Dataset::fromLegacyConf(path, download.second);
         try {
@@ -454,11 +508,6 @@ void DatasetLoadWidget::loadSettings() {
             const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
             if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
                 appendRowSelectIfLU(url);
-            }
-        }
-        for (const auto & dataset : {"google", "webknossos"}) {
-            if (tableWidget.findItems(dataset, Qt::MatchExactly).empty()) {
-                appendRowSelectIfLU(dataset);
             }
         }
         // add Empty row at the end

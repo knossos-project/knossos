@@ -46,7 +46,10 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-add_subdirectory(o2-master ${CMAKE_BINARY_DIR}/o2-build)
+#function(add_o2)
+#    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(o2 ${CMAKE_BINARY_DIR}/o2-build)
+#endfunction()
 
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
@@ -60,6 +63,7 @@ set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
 list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_AUTOMOC ${AUTOGEN})
@@ -86,6 +90,7 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(glog REQUIRED)
 find_package(OpenGL REQUIRED) # GLU
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
@@ -170,7 +175,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
     message(STATUS "using gold linker")
     set(LINUXLINKER -fuse-ld=gold)
 endif()
-target_include_directories(${PROJECT_NAME} PRIVATE o2-master/src)
+target_compile_definitions(${PROJECT_NAME} PRIVATE "-D_WIN32_WINNT=0x0600") # gapi MsvcCondVar InitializeConditionVariable
+target_include_directories(${PROJECT_NAME} PRIVATE "google-api-cpp-client/build/include")
+set(GAPI_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/google-api-cpp-client/build/lib")
 target_link_libraries(${PROJECT_NAME}
     Boost::boost
     OpenGL::GLU
@@ -184,8 +191,19 @@ target_link_libraries(${PROJECT_NAME}
     QuaZip::QuaZip
     Snappy::Snappy
     o2
+    ${GAPI_LIB_DIR}/libgoogleapis_http.a
+    ${GAPI_LIB_DIR}/libgoogleapis_curl_http.a
+    curl
+    ${GAPI_LIB_DIR}/libgoogleapis_oauth2.a
+    crypto
+    ${GAPI_LIB_DIR}/libgoogleapis_internal.a
+    ${GAPI_LIB_DIR}/libgoogleapis_utils.a
+    ${GAPI_LIB_DIR}/libgoogleapis_http.a
+    jsoncpp
+    glog::glog
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
+    -Wl,--allow-multiple-definition
 )
 # remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
 get_target_property(qtmultimedia_static_plugins Qt5::Multimedia STATIC_PLUGINS)
