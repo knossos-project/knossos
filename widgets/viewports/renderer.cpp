@@ -478,38 +478,39 @@ void Viewport3D::renderViewportFrontFace() {
     }
 }
 
-int getScaleBarLengthInNm(float vpLenInNm) {
-    auto scalebarLen = vpLenInNm / 3.;
-    int powerOf10 = std::log10(scalebarLen);
-    float roundStep = 5. * std::pow(10, powerOf10 - 1);
-    return std::round(scalebarLen / roundStep) * roundStep;
+auto getScaleBarLabelNmAndPx(double vpLenNm, int edgeLength) {
+    auto scalebarLenNm = vpLenNm / 3.0;
+    const auto powerOf10 = std::trunc(std::log10(scalebarLenNm));
+    const auto roundStep = 5.0 * std::pow(10, powerOf10 - 1);
+    scalebarLenNm = std::round(scalebarLenNm / roundStep) * roundStep;
+    const auto scalebarLenPx = edgeLength * scalebarLenNm / vpLenNm;
+
+    QString sizeLabel{"nm"};
+    auto scalebarLen = scalebarLenNm;
+    if (powerOf10 > 6.0) {
+        sizeLabel = "cm";
+        scalebarLen /= 1e7;
+    } else if (powerOf10 == 6.0) {
+        sizeLabel = "mm";
+        scalebarLen /= 1e6;
+    } else if (powerOf10 >= 3.0) {
+        sizeLabel = "μm";
+        scalebarLen /= 1e3;
+    }
+    sizeLabel = QString::number(scalebarLen) + " " + sizeLabel;
+
+    return std::make_tuple(sizeLabel, scalebarLenNm, scalebarLenPx);
 }
 
 void ViewportBase::renderScaleBar() {
-    auto vpLen = displayedlengthInNmX;
-    auto scalebarLen = getScaleBarLengthInNm(vpLen);
-    int powerOf10 = std::log10(scalebarLen);
-    QString sizeLabel{"nm"};
-    if (powerOf10 >= 3) {
-        sizeLabel = "μm";
-        vpLen /= 1e3;
-        scalebarLen /= 1e3;
-    } else if (powerOf10 == 6) {
-        sizeLabel = "mm";
-        vpLen /= 1e6;
-        scalebarLen /= 1e6;
-    } else if (powerOf10 > 6) {
-        sizeLabel = "cm";
-        vpLen /= 1e7;
-        scalebarLen /= 1e7;
-    }
-    sizeLabel = QString::number(scalebarLen) + " " + sizeLabel;
-    auto divisor = vpLen / scalebarLen; // for scalebar size in pixels
+    QString sizeLabel;
+    int scalebarLenPx{};
+    std::tie(sizeLabel, std::ignore, scalebarLenPx) = getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength);
 
     const int margin =  0.02 * edgeLength;
     const int height = 0.007 * edgeLength;
     Coordinate min(margin,  edgeLength - margin - height, -1);
-    Coordinate max(min.x + edgeLength / divisor, min.y + height, -1);
+    Coordinate max(min.x + scalebarLenPx, min.y + height, -1);
     glColor3f(0., 0., 0.);
     glBegin(GL_POLYGON);
     glVertex3d(min.x, min.y, min.z);
@@ -518,7 +519,7 @@ void ViewportBase::renderScaleBar() {
     glVertex3d(min.x, max.y, min.z);
     glEnd();
 
-    renderText(Coordinate(min.x + edgeLength / divisor / 2, min.y, min.z), sizeLabel, true, true);
+    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y, min.z), sizeLabel, true, true);
 }
 
 void ViewportOrtho::renderViewportFast() {
@@ -1552,19 +1553,19 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
         // draw ground grid
         if(options.drawBoundaryBox) {
-            auto scalebarLen = getScaleBarLengthInNm(displayedlengthInNmX);
-            if(scalebarLen == 0) {
-                scalebarLen = state->boundary.x * state->scale.x / 10;
+            auto scalebarLenNm = std::get<1>(getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength));
+            if (scalebarLenNm == 0.0) {
+                scalebarLenNm = state->boundary.x * state->scale.x / 10.0;
             }
-            float grid_max_x = state->boundary.x * state->scale.x;
-            float grid_spacing_x = scalebarLen;
-            float grid_max_y = state->boundary.y * state->scale.y;
-            float grid_spacing_y = scalebarLen;
+            const auto grid_max_x = state->boundary.x * state->scale.x;
+            const auto grid_spacing_x = scalebarLenNm;
+            const auto grid_max_y = state->boundary.y * state->scale.y;
+            const auto grid_spacing_y = scalebarLenNm;
 
             glPushMatrix();
             glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
 
-            glColor4f(0.85, 0.85, 0.85, 1.0);
+            glColor4d(0.85, 0.85, 0.85, 1.0);
 
             glLineWidth(1.0f);
             glBegin(GL_LINES);
