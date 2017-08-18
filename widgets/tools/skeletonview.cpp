@@ -214,25 +214,23 @@ void NodeModel::recreate(const bool matchAll = true) {
 
     if(mode.testFlag(FilterMode::All) == false) {
         decltype(cache) hits;
-        if (matchAll == false) {
-            for (auto && node : cache) {
-                if ((mode.testFlag(FilterMode::Selected) && node.get().selected)
-                        || (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected)
-                        || (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode)
-                        || (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false)
-                        || (mode.testFlag(FilterMode::Synapse) && node.get().isSynapticNode)) {
-                    hits.emplace_back(node);
-                }
-            }
-        } else {
-            for (auto && node : cache) { // show node if for all criteria: either criterion not demanded or fulfilled.
-                if ((!mode.testFlag(FilterMode::Selected) || node.get().selected)
-                        && (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected)
-                        && (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode)
-                        && (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false)
-                        && (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode)) {
-                    hits.emplace_back(node);
-                }
+        for (auto && node : cache) {// show node if for all criteria: either criterion not demanded or fulfilled
+            const auto oneMatched = (mode.testFlag(FilterMode::Selected) && node.get().selected)
+                    || (mode.testFlag(FilterMode::InSelectedTree) && node.get().correspondingTree->selected)
+                    || (mode.testFlag(FilterMode::Branch) && node.get().isBranchNode)
+                    || (mode.testFlag(FilterMode::Comment) && node.get().getComment().isEmpty() == false)
+                    || (mode.testFlag(FilterMode::Synapse) && node.get().isSynapticNode);
+            const auto allMatched = (!mode.testFlag(FilterMode::Selected) || node.get().selected)
+                    && (!mode.testFlag(FilterMode::InSelectedTree) || node.get().correspondingTree->selected)
+                    && (!mode.testFlag(FilterMode::Branch) || node.get().isBranchNode)
+                    && (!mode.testFlag(FilterMode::Comment) || node.get().getComment().isEmpty() == false)
+                    && (!mode.testFlag(FilterMode::Synapse) || node.get().isSynapticNode);
+            if ((!matchAll && oneMatched) || (matchAll && allMatched)) {
+                hits.emplace_back(node);
+            } else if (matchAll && mode.testFlag(FilterMode::Selected) && node.get().selected) {
+                selectionFromModel = true;
+                Skeletonizer::singleton().toggleNodeSelection({&node.get()});
+                selectionFromModel = false;
             }
         }
         cache = hits;
