@@ -111,17 +111,29 @@ Dataset Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & j
     return info;
 }
 
-Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
+Dataset Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
+    info.url = infoUrl;
+    info.url.setPath(info.url.path().replace("/api/", "/data/"));
+
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
-    const auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
-    info.boundary = {
-        boundary_json["width"].toInt(),
-        boundary_json["height"].toInt(),
-        boundary_json["depth"].toInt(),
-    };
+    for (auto && layer : jmap["dataSource"].toObject()["dataLayers"].toArray()) {
+        const auto layerString = layer.toObject()["name"].toString();
+        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/dataToken/generate?dataSetName=%1&dataLayerName=%2").arg(infoUrl.path().split("/").back()).arg(layerString));
+        if (download.first) {
+            Dataset::webKnossosToken[layerString] = QJsonDocument::fromJson(download.second.toUtf8()).object()["token"].toString();
+        }
+        if (layerString == "color" || layerString == "color_1") {// use bboxBig from color because its bigger :X
+            const auto boundary_json = layer.toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject();
+            info.boundary = {
+                boundary_json["width"].toInt(),
+                boundary_json["height"].toInt(),
+                boundary_json["depth"].toInt(),
+            };
+        }
+    }
 
     const auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
     info.scale = {
@@ -130,7 +142,10 @@ Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
         static_cast<float>(scale_json[2].toDouble()),
     };
 
-    const auto mags = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
+    auto mags = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray().toVariantList();
+    std::sort(std::begin(mags), std::end(mags), [](auto lhs, auto rhs){
+        return lhs.toInt() < rhs.toInt();
+    });
 
     info.lowestAvailableMag = mags[0].toInt();
     info.magnification = info.lowestAvailableMag;
@@ -310,22 +325,17 @@ QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const i
     return base;
 }
 
-QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Dataset::CubeType type) {
-    auto query = QUrlQuery(base);
-    query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
+QHash<QString, QString> Dataset::webKnossosToken;
 
+QUrl webKnossosCubeUrl(QUrl base, const Dataset::CubeType type) {
     QString layer;
     if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         layer = "color";
     } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
-        layer = "volume";
+        layer = "segmentation";
     }
-
-    auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    path = path.arg(unknownScale).arg(coord.x / state->cubeEdgeLength).arg(coord.y / state->cubeEdgeLength).arg(coord.z / state->cubeEdgeLength);
-    base.setPath(path);
-    base.setQuery(query);
-
+    base.setPath(base.path() + "/layers/" + layer + "/data");
+    base.setQuery(base.query().append("token=" + Dataset::webKnossosToken[layer]));
     return base;
 }
 
@@ -338,7 +348,7 @@ QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate gl
     case API::OpenConnectome:
         return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
     case API::WebKnossos:
-        return webKnossosCubeUrl(baseUrl, globalCoord, scale + 1, cubeedgelength, type);
+        return webKnossosCubeUrl(baseUrl, type);
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }

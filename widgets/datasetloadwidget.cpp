@@ -161,14 +161,16 @@ void DatasetLoadWidget::updateDatasetInfo() {
     QString dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    const QUrl url{dataset + (!QUrl{dataset}.isLocalFile() ? "/" : "")};// add slash to avoid redirects
+    const QUrl url{dataset + (!QUrl{dataset}.isLocalFile() && !dataset.contains("webknossos") ? "/" : "")};// add slash to avoid redirects
     bad = bad || !(download = Network::singleton().refresh(url)).first;
     if (bad) {
         infoLabel.setText("");
         return;
     }
 
-    const auto datasetinfo = Dataset::isNeuroDataStore(url) ? Dataset::parseNeuroDataStoreJson(url, download.second) : Dataset::fromLegacyConf(url, download.second);
+    const auto datasetinfo = url.host().contains("webknossos") ? Dataset::parseWebKnossosJson(url, download.second)
+                                                                : Dataset::isNeuroDataStore(url) ? Dataset::parseNeuroDataStoreJson(url, download.second)
+                                                                                                 : Dataset::fromLegacyConf(url, download.second);
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -239,7 +241,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
-    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") ? "/" : ""));// add slash to avoid redirects
+    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") && !path.host().contains("webknossos") ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {
@@ -274,6 +276,16 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     Dataset::CubeType raw_compression;
     if (Dataset::isNeuroDataStore(path)) {
         info = Dataset::parseNeuroDataStoreJson(path, download.second);
+    } else if (path.host().contains("webknossos")) {
+        info = Dataset::parseWebKnossosJson(path, download.second);
+        //? url = "https://webknossos.brain.mpg.de/data/datasets/e2006?token=ade34gt45423a";
+        //? url = "http://oxalis:cloverleaf@dev.oxalis.at/data/datasets/e2198?datasetToken=c724ooefft5rn4mhqaoi3d8d78";
+        //        url = "http://dev.oxalis.at/data/datasets/e2006?datasetToken=ade34gt45423a";
+
+        //        qDebug() << qUncompress(static_cast<uchar*>("?hEdEàD?hElEàD?lE`EàD"), 60);
+        //https://webknossos.brain.mpg.de/data/datasets/e2006/layers/color/data?cubeSize=32&token=l55spq8ni2085gusumfqvku7ba
+
+        //https://demo.webknossos.org/api/datasets/e2006?token=p0m4ptuaj2n1jcu23fl7hmice3
     } else {
         info = Dataset::fromLegacyConf(path, download.second);
         try {
@@ -291,6 +303,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             return false;
         }
     }
+
     datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     const bool changedBoundaryOrScale = info.boundary != state->boundary || info.scale != state->scale;
@@ -318,7 +331,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
+    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Dataset::CubeType::SEGMENTATION_UNCOMPRESSED, info.experimentname);
 
     emit updateDatasetCompression();
 

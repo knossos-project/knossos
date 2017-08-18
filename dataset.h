@@ -25,6 +25,7 @@
 
 #include "coordinate.h"
 
+#include <QHash>
 #include <QString>
 #include <QUrl>
 
@@ -41,7 +42,7 @@ struct Dataset {
     static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
     static Dataset parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
-    static Dataset parseWebKnossosJson(const QString & json_raw);
+    static Dataset parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
     static Dataset fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
     void applyToState() const;
@@ -61,6 +62,8 @@ struct Dataset {
     bool overlay{false};
     QString experimentname{};
     QUrl url;
+
+    static QHash<QString, QString> webKnossosToken;
 };
 
 #endif//DATASET_H

@@ -417,9 +417,11 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
             success = true;
         }
     } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
-        const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
+        const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES / 4;
         if (availableSize == expectedSize) {
-            std::copy(std::begin(data), std::end(data), currentSlot);
+            boost::multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<uint16_t *>(data.data()), boost::extents[std::pow(state->cubeEdgeLength, 3)]);
+            boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[std::pow(state->cubeEdgeLength, 3)]);
+            std::copy(std::begin(dataRef), std::end(dataRef), std::begin(slotRef));
             success = true;
         }
     } else if (type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
@@ -483,6 +485,8 @@ void Loader::Worker::broadcastProgress(bool startup) {
     isFinished = count == 0;
     emit progress(startup, count);
 }
+
+#include <QHttpPart>
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     QTime time;
@@ -569,6 +573,27 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
 
             auto request = QNetworkRequest(dcUrl);
 
+            auto request2 = QNetworkRequest(dcUrl);
+//            request2.setRawHeader("Content-Type", "application/octet-stream");
+            const auto cubeCord = globalCoord.cube(32, state->magnification);
+            const auto shift = loaderMagnification + 5;
+            std::array<float, 5> array{{static_cast<float>(loaderMagnification), 0.f, static_cast<float>(cubeCord.x << shift), static_cast<float>(cubeCord.y << shift), static_cast<float>(cubeCord.z << shift)}};
+
+            QByteArray data(reinterpret_cast<char*>(&array), array.size() * sizeof(array[0]));
+
+            QHttpMultiPart & multipart = *new QHttpMultiPart(QHttpMultiPart::FormDataType);
+            QByteArray boundary(24, '\0');
+            static std::mt19937 rng{std::random_device{}()};
+            static std::uniform_int_distribution<int> dist(0, 16);
+            for (auto && elem : boundary) {
+                elem = QString::number(dist(rng), 16)[0].toLatin1();
+            }
+            multipart.setBoundary(boundary);
+            QHttpPart part;
+            part.setRawHeader("X-Bucket", QString{R"json({"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false})json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(loaderMagnification).arg(state->cubeEdgeLength).toUtf8());
+            multipart.append(part);
+            request2.setRawHeader("Content-Type", QString("multipart/mixed; boundary=%1").arg(QString(multipart.boundary())).toUtf8());
+
             if (originalQuery.hasQueryItem("access_token")) {
                 const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
                 request.setRawHeader("Authorization", authorization.toUtf8());
@@ -579,7 +604,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
             }
-            auto * reply = qnam.get(request);
+            auto * reply = api == Dataset::API::WebKnossos ? qnam.post(request2, &multipart) : qnam.get(request);
+
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);
