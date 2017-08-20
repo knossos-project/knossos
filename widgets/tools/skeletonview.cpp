@@ -894,31 +894,32 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
 }
 
-void SkeletonView::jumpToNextNode(bool forward) const {
-    auto current = nodeView.currentIndex();
-    auto next = forward ? nodeView.indexBelow(current) : nodeView.indexAbove(current);
+auto jumoTo = [](const auto & view, const auto & model, const auto & proxy, const bool forward, auto func) {
+    auto current = view.currentIndex();
+    auto next = forward ? view.indexBelow(current) : view.indexAbove(current);
     next = !next.isValid() ? current : next;// cap over- and underflow
+    const auto firstOrLast = (forward ? view.model()->index(0, 0) : view.model()->index(view.model()->rowCount() - 1, 0));
+    next = !next.isValid() ? firstOrLast : next;// jump into table
     if (next.isValid()) {// no current index will fail here
-        // mapping to source always succeeds
-        auto & node = nodeModel.cache[nodeSortAndCommentFilterProxy.mapToSource(next).row()].get();
-        Skeletonizer::singleton().setActiveNode(&node);
-        Skeletonizer::singleton().jumpToNode(node);
+        auto & elem = model.cache[static_cast<std::size_t>(proxy.mapToSource(next).row())].get();// mapping to source always succeeds
+        Skeletonizer::singleton().setActive(elem);
+        func(elem);
     }
+};
+
+void SkeletonView::jumpToNextNode(const bool forward) const {
+    jumoTo(nodeView, nodeModel, nodeSortAndCommentFilterProxy, forward, [](auto && elem){
+        Skeletonizer::singleton().jumpToNode(elem);
+    });
 }
 
-void SkeletonView::jumpToNextTree(bool forward) const {
-    auto current = treeView.currentIndex();
-    auto next = forward ? treeView.indexBelow(current) : treeView.indexAbove(current);
-    next = !next.isValid() ? current : next;// cap over- and underflow
-    if (next.isValid()) {// no current index will fail here
-        // mapping to source always succeeds
-        auto & tree = treeModel.cache[treeSortAndCommentFilterProxy.mapToSource(next).row()].get();
-        Skeletonizer::singleton().setActiveTreeByID(tree.treeID);
-        if (tree.nodes.size() > 0) {
-            Skeletonizer::singleton().setActiveNode(&tree.nodes.front());
-            Skeletonizer::singleton().jumpToNode(tree.nodes.front());
+void SkeletonView::jumpToNextTree(const bool forward) const {
+    jumoTo(treeView, treeModel, treeSortAndCommentFilterProxy, forward, [](auto && elem){
+        if (elem.nodes.size() > 0) {
+            Skeletonizer::singleton().setActive(elem.nodes.front());
+            Skeletonizer::singleton().jumpToNode(elem.nodes.front());
         }
-    }
+    });
 }
 
 void SkeletonView::reverseSynapseDirection(QWidget *parent) {
