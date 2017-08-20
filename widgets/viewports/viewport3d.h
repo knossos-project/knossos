@@ -42,7 +42,7 @@ class Viewport3D : public ViewportBase {
     void renderVolumeVP();
     void renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    void renderArbitrarySlicePane(const ViewportOrtho & vp);
+    void renderArbitrarySlicePane(ViewportOrtho & vp);
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     virtual void renderViewportFrontFace() override;
 
