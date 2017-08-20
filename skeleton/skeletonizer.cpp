@@ -1808,6 +1808,14 @@ void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
     select(treeSet);
 }
 
+void Skeletonizer::inferTreeSelectionFromNodeSelection() {
+    QSet<treeListElement*> treeSet;
+    for (const auto & elem : skeletonState.selectedNodes) {
+        treeSet.insert(elem->correspondingTree);
+    }
+    select(treeSet);
+}
+
 void Skeletonizer::deleteSelectedTrees() {
     // make a copy because the selected objects can change
     const auto treesToDelete = state->skeletonState->selectedTrees;

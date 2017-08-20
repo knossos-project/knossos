@@ -246,6 +246,7 @@ public:
     void selectNodes(QSet<nodeListElement *> nodes);
     void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
     void selectTrees(const std::vector<treeListElement*> & trees);
+    void inferTreeSelectionFromNodeSelection();
     void deleteSelectedTrees();
     void deleteSelectedNodes();
     void toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent);

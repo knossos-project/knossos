@@ -116,11 +116,13 @@ class SkeletonView : public QWidget {
 
     QWidget treeDummyWidget;
     QVBoxLayout treeLayout;
+    QHBoxLayout treeOptionsLayout;
+    QComboBox treeFilterCombo;
+    QPushButton treeSelectionFromNodeSelection{"Infer tree selection"};
     // tree comment filter
     QHBoxLayout treeCommentLayout;
     QLineEdit treeCommentFilter;
     QCheckBox treeRegex{"Regex"};
-    QComboBox treeFilterCombo;
 
     TreeModel treeModel;
     QSortFilterProxyModel treeSortAndCommentFilterProxy;

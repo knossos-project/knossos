@@ -320,14 +320,15 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         table.sortByColumn(sortIndex = 0, Qt::SortOrder::AscendingOrder);
     };
 
+    treeFilterCombo.addItems({tr("Hide synapses"), tr("Show synapses"), tr("Show only synapses")});
+    treeFilterCombo.setMinimumWidth(170);
+    treeFilterCombo.setMaximumWidth(treeFilterCombo.minimumWidth());
+    treeSelectionFromNodeSelection.setToolTip("Select all trees which contain at least one of the selected nodes.");
+
     treeCommentFilter.setPlaceholderText("Tree comment");
     treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     treeSortAndCommentFilterProxy.setFilterKeyColumn(4);
     treeSortAndCommentFilterProxy.setSourceModel(&treeModel);
-
-    treeFilterCombo.addItems({tr("Hide synapses"), tr("Show synapses"), tr("Show only synapses")});
-    treeFilterCombo.setMinimumWidth(170);
-    treeFilterCombo.setMaximumWidth(treeFilterCombo.minimumWidth());
 
     setupTable(treeView, treeSortAndCommentFilterProxy, treeSortSectionIndex);
     treeView.setDragDropMode(QAbstractItemView::DropOnly);
@@ -366,9 +367,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     colorDialog.setOption(QColorDialog::ShowAlphaChannel);
 
+    treeOptionsLayout.addWidget(&treeFilterCombo);
+    treeOptionsLayout.addWidget(&treeSelectionFromNodeSelection);
+    treeOptionsLayout.addStretch();
+    treeLayout.addLayout(&treeOptionsLayout);
     treeCommentLayout.addWidget(&treeCommentFilter);
     treeCommentLayout.addWidget(&treeRegex);
-    treeLayout.addWidget(&treeFilterCombo);
     treeLayout.addLayout(&treeCommentLayout);
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
@@ -476,6 +480,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&treeFilterCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
         treeModel.mode = static_cast<TreeModel::SynapseDisplayModes>(index);
         treeRecreate();
+    });
+    QObject::connect(&treeSelectionFromNodeSelection, &QPushButton::clicked, []() {
+        Skeletonizer::singleton().inferTreeSelectionFromNodeSelection();
     });
 
     QObject::connect(&nodeFilterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
