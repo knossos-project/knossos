@@ -124,7 +124,7 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     });
 
     if (reply.error() != QNetworkReply::NoError) {
-        qDebug() << reply.errorString();
+        qDebug() << reply.attribute(QNetworkRequest::HttpStatusCodeAttribute) << static_cast<int>(reply.error()) << reply.error() << reply.errorString();
     }
     emit Network::singleton().finishedNetworkRequest();
     reply.deleteLater();

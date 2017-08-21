@@ -639,11 +639,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord << static_cast<int>(type) << reply->errorString() << reply->readAll();
-                        } else if (api == Dataset::API::GoogleBrainmaps && reply->error() == QNetworkReply::AuthenticationRequiredError) {
-                            qDebug() << "got errored" << reply->error();
-                            auto pair = getBrainmapsToken();
-                            if (pair.first) {
-                                o2global->setToken(pair.second);
+                        } else {
+                            if (api == Dataset::API::GoogleBrainmaps) {
+                                qDebug() << "got errored" << reply->error();
+                                if (reply->error() == QNetworkReply::ContentAccessDenied || reply->error() == QNetworkReply::AuthenticationRequiredError) {
+                                    auto pair = getBrainmapsToken();
+                                    if (pair.first) {
+                                        o2global->setToken(pair.second);
+                                    }
+                                }
                             }
                         }
                     }
