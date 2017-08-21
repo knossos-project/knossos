@@ -45,7 +45,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
-            case 1: return QString::number(guiData[index.row()].opacity * 100.0f) + "%";
+            case 1: return QString::number(guiData[index.row()].opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
             case 2: return guiData[index.row()].name;
             case 3: return guiData[index.row()].type;
             }
