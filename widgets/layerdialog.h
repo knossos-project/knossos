@@ -26,6 +26,8 @@ public:
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+    void addItem();
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {

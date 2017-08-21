@@ -11,10 +11,10 @@ struct LayerGuiElement {
     bool linearFiltering;
 
     // gui
-    float opacity;
-    bool visible;
-    QString name;
-    QString type; // should be ID
+    float opacity = 1.0f;
+    bool visible = true;
+    QString name = "unnamed";
+    QString type = "untyped"; // should be ID
 };
 
 static std::vector<LayerGuiElement> guiData {
@@ -81,12 +81,22 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
     return true;
 }
 
+void LayerItemModel::addItem() {
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    guiData.emplace_back(LayerGuiElement{});
+    endInsertRows();
+}
+
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
-        Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | Qt::ItemIsEditable;
+        Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
         switch(index.column()) {
         case 0:
-            flags |= Qt::ItemIsUserCheckable;
+            flags |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
+            break;
+        case 1:
+        case 2:
+            flags |= Qt::ItemIsEditable;
             break;
         }
         return flags;
@@ -102,8 +112,10 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     optionsLayout.addWidget(&opacitySliderLabel, row, 0);
     optionsLayout.addWidget(&opacitySlider, row, 1);
     optionsLayout.addWidget(&linearFilteringCheckBox, row, 2);
+
     optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, 0);
     optionsLayout.addWidget(&rangeDeltaSlider, row, 1);
+
     optionsLayout.addWidget(&biasSliderLabel, ++row, 0);
     optionsLayout.addWidget(&biasSlider, row, 1);
     optionsSpoiler.setContentLayout(optionsLayout);
@@ -128,8 +140,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     mainLayout.addWidget(&optionsSpoiler);
     mainLayout.addWidget(&treeView);
     mainLayout.addLayout(&controlButtonLayout);
-
     setLayout(&mainLayout);
+
+    QObject::connect(&addLayerButton, &QToolButton::clicked, [this](){
+        itemModel.addItem();
+    });
 
     resize(700, 600);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
