@@ -46,11 +46,6 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-#function(add_o2)
-#    set(BUILD_SHARED_LIBS OFF)
-    add_subdirectory(o2 ${CMAKE_BINARY_DIR}/o2-build)
-#endfunction()
-
 file(GLOB sources *.cpp resources.qrc version.h.in)
 file(GLOB headers *.h)
 file(GLOB uis widgets/*.ui)
@@ -191,7 +186,6 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
-    o2
     ${GAPI_LIB_DIR}/libgoogleapis_oauth2.a
     crypto
     ${GAPI_LIB_DIR}/libgoogleapis_http.a

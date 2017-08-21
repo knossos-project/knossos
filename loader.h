@@ -29,9 +29,6 @@
 #include "segmentation/segmentation.h"
 #include "usermove.h"
 
-#include <o2requestor.h>
-extern O2 * o2global;
-
 #include <QCoreApplication>
 #include <QFutureWatcher>
 #include <QMutex>
@@ -78,7 +75,6 @@ class Worker : public QObject {
 private:
     QThreadPool decompressionPool;//let pool be alive just after ~Worker
     QNetworkAccessManager qnam;
-    O2Requestor o2proxy{&qnam, o2global};
 
     template<typename T>
     using ptr = std::unique_ptr<T>;

@@ -22,6 +22,7 @@
 
 #include "loader.h"
 
+#include "brainmaps.h"
 #include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
@@ -484,9 +485,6 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-#include "brainmaps.h"
-#include "o2.h"
-
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     QTime time;
     time.start();
@@ -555,8 +553,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
         }
-        QUrl dcUrl = Dataset::apiSwitch(api, baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
-
         state->protectCube2Pointer.lock();
         const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(state->cubeEdgeLength, state->magnification)) == nullptr;
         state->protectCube2Pointer.unlock();
@@ -564,16 +560,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
         if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
-            auto request = QNetworkRequest(dcUrl);
+            auto request = Dataset::apiSwitch(api, baseUrl, globalCoord, loaderMagnification, state->cubeEdgeLength, type);
 //            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
 
-            auto request2 = QNetworkRequest(dcUrl);
-            request2.setRawHeader("Content-Type", "application/octet-stream");
             const auto cubeCord = globalCoord.cube(32, state->magnification);
             const auto shift = loaderMagnification + 5;
             std::array<float, 5> array{{static_cast<float>(loaderMagnification), 0.f, static_cast<float>(cubeCord.x << shift), static_cast<float>(cubeCord.y << shift), static_cast<float>(cubeCord.z << shift)}};
-
             QByteArray data(reinterpret_cast<char*>(&array), array.size() * sizeof(array[0]));
 
             if (globalCoord == center.cube(state->cubeEdgeLength, state->magnification).cube2Global(state->cubeEdgeLength, state->magnification)) {
@@ -581,11 +574,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 request.setPriority(QNetworkRequest::HighPriority);
             }
             auto * reply = [&]{
-                switch (api) {
-                case Dataset::API::WebKnossos: return qnam.post(request2, data);
-                case Dataset::API::GoogleBrainmaps: return o2proxy.get(request);
-                default: return qnam.get(request);
-                };
+                if (api == Dataset::API::WebKnossos) {
+                    request.setRawHeader("Content-Type", "application/octet-stream");
+                    return qnam.post(request, data);
+                } else {
+                    return qnam.get(request);
+                }
             }();
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
@@ -639,13 +633,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord << static_cast<int>(type) << reply->errorString() << reply->readAll();
-                        } else {
                             if (api == Dataset::API::GoogleBrainmaps) {
                                 qDebug() << "got errored" << reply->error();
                                 if (reply->error() == QNetworkReply::ContentAccessDenied || reply->error() == QNetworkReply::AuthenticationRequiredError) {
                                     auto pair = getBrainmapsToken();
                                     if (pair.first) {
-                                        o2global->setToken(pair.second);
+                                        Dataset::token = pair.second;
                                     }
                                 }
                             }

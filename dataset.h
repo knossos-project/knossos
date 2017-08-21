@@ -25,6 +25,7 @@
 
 #include "coordinate.h"
 
+#include <QNetworkRequest>
 #include <QString>
 #include <QUrl>
 
@@ -46,7 +47,7 @@ struct Dataset {
     void checkMagnifications();
     void applyToState() const;
 
-    static QUrl apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type);
+    static QNetworkRequest apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type);
     static bool isOverlay(const CubeType type);
 
     API api;
@@ -61,6 +62,8 @@ struct Dataset {
     bool overlay{false};
     QString experimentname{};
     QUrl url;
+
+    static QString token;
 };
 
 #endif//DATASET_H

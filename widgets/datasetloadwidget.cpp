@@ -22,6 +22,7 @@
 
 #include "datasetloadwidget.h"
 
+#include "brainmaps.h"
 #include "dataset.h"
 #include "GuiConstants.h"
 #include "loader.h"
@@ -227,15 +228,6 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
-#include "brainmaps.h"
-
-#include <o2.h>
-#include <o2requestor.h>
-
-#include <QDesktopServices>
-
-O2 * o2global;
-
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
@@ -289,55 +281,22 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         if (!pair.first) {
             return false;
         }
-
-        static QEventLoop pause;
-        QEventLoop & pauseRef = pause;
-        static O2 & o2 = [&pauseRef]() -> O2 & {
-            static O2 o2;
-            o2global = &o2;
-
-            o2.setClientId("417200973162-ivhe0mcenpc2pcf9ogtk9dd9lgfhuufj.apps.googleusercontent.com");
-            o2.setClientSecret("jvyyGrJH8Hy4-OzmqIrhTrLt");
-            o2.setRequestUrl("https://accounts.google.com/o/oauth2/v2/auth");//https://accounts.google.com/o/oauth2/auth
-//            o2.setTokenUrl("https://www.googleapis.com/oauth2/v4/token");
-            o2.setTokenUrl("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
-            o2.setRefreshTokenUrl("https://www.googleapis.com/oauth2/v4/token");// ?approval_prompt=force
-            o2.setScope("https://www.googleapis.com/auth/brainmaps");
-
-            QObject::connect(&o2, &O2::linkedChanged, [](){
-                qDebug() << "O2::linkedChanged";
-            });
-            QObject::connect(&o2, &O2::linkingFailed, [](){
-                qCritical() << "O2::linkingFailed";
-            });
-            QObject::connect(&o2, &O2::linkingSucceeded, [&pauseRef](){
-                qDebug() << "O2::linkingSucceeded";
-                pauseRef.exit();
-            });
-            QObject::connect(&o2, &O2::openBrowser, &QDesktopServices::openUrl);
-            QObject::connect(&o2, &O2::closeBrowser, [&pauseRef](){
-                qDebug() << "browser closed";
-            });
-
-            return o2;
-        }();
-        o2.setToken(pair.second);
-//        o2.setRefreshToken(pair.second);
-        o2.setLinked(true);
-
-//        o2.unlink();
-//        o2.link();
-//        pause.exec();
-
-        qDebug() << "token" << o2.token();
+        Dataset::token = pair.second;
 
 //        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata"};
 //        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/611024335609:j0126:rawdata"};
 
-        O2Requestor o2proxy(&Network::singleton().manager, o2global);
-//        const auto datasets = blockDownloadExtractData(*o2proxy.get(QNetworkRequest(QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
-//        qDebug() << datasets.second;
-        auto & reply = *o2proxy.get(QNetworkRequest(path));
+        auto googleRequest = [](auto path){
+            QNetworkRequest request(path);
+            request.setRawHeader("Authorization", (QString("Bearer ") + Dataset::token).toUtf8());
+            return request;
+        };
+
+        const auto datasets = blockDownloadExtractData(*Network::singleton().manager.get(googleRequest(
+                    QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
+        qDebug() << datasets.second;
+
+        auto & reply = *Network::singleton().manager.get(googleRequest(path));
         const auto config = blockDownloadExtractData(reply);
 
         if (config.first) {

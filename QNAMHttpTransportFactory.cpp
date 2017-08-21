@@ -1,5 +1,7 @@
 #include "QNAMHttpTransportFactory.h"
 
+#include "network.h"
+
 #include "googleapis/strings/stringpiece.h"
 #include "googleapis/client/data/data_reader.h"
 #include "googleapis/client/data/data_writer.h"
@@ -8,8 +10,6 @@
 #include <QNetworkReply>
 
 #include <limits>
-
-#include "network.h"
 
 class QNAMHttpTransport : public googleapis::client::HttpTransport {
 public:

@@ -37,6 +37,8 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
+QString Dataset::token;
+
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
 }
@@ -337,16 +339,19 @@ QUrl webKnossosCubeUrl(QUrl base, const int cubeEdgeLength, const Dataset::CubeT
     return base;
 }
 
-QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type) {
+QNetworkRequest Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type) {
     switch (api) {
-    case API::GoogleBrainmaps:
-        return googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type);
+    case API::GoogleBrainmaps: {
+        QNetworkRequest request{googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type)};
+        request.setRawHeader("Authorization", (QString("Bearer ") + Dataset::token).toUtf8());
+        return request;
+    }
     case API::Heidelbrain:
-        return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, cubeedgelength, scale, type);
+        return QNetworkRequest{knossosCubeUrl(baseUrl, QString(state->name), globalCoord, cubeedgelength, scale, type)};
     case API::OpenConnectome:
-        return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
+        return QNetworkRequest{openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength)};
     case API::WebKnossos:
-        return webKnossosCubeUrl(baseUrl, cubeedgelength, type);
+        return QNetworkRequest{webKnossosCubeUrl(baseUrl, cubeedgelength, type)};
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }
