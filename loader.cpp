@@ -484,6 +484,9 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
+#include "brainmaps.h"
+#include "o2.h"
+
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     QTime time;
     time.start();
@@ -636,6 +639,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord << static_cast<int>(type) << reply->errorString() << reply->readAll();
+                        } else if (api == Dataset::API::GoogleBrainmaps && reply->error() == QNetworkReply::AuthenticationRequiredError) {
+                            qDebug() << "got errored" << reply->error();
+                            auto pair = getBrainmapsToken();
+                            if (pair.first) {
+                                o2global->setToken(pair.second);
+                            }
                         }
                     }
                     reply->deleteLater();

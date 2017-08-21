@@ -227,21 +227,14 @@ void DatasetLoadWidget::processButtonClicked() {
     }
 }
 
+#include "brainmaps.h"
+
 #include <o2.h>
 #include <o2requestor.h>
 
 #include <QDesktopServices>
-#include <QProcess>
 
 O2 * o2global;
-
-#include "googleapis/client/transport/http_transport.h"
-#include "googleapis/client/auth/credential_store.h"
-#include "googleapis/client/auth/oauth2_authorization.h"
-#include "googleapis/client/auth/oauth2_service_authorization.h"
-#include "googleapis/client/util/status.h"
-
-#include "QNAMHttpTransportFactory.h"
 
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
@@ -292,33 +285,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (Dataset::isNeuroDataStore(path)) {
         info = Dataset::parseNeuroDataStoreJson(path, download.second);
     } else if (path.toString().contains("brainmaps")) {
-        namespace gutil = googleapis::util;
-        namespace gclient = googleapis::client;
-
-        auto o2config = std::make_unique<gclient::HttpTransportLayerConfig>();
-        o2config->ResetDefaultTransportFactory(new QNAMHttpTransportFactory{});
-        o2config->mutable_default_transport_options()->set_cacerts_path(gclient::HttpTransportOptions::kDisableSslVerification);
-
-        gutil::Status gstatus;
-        QFile saccfile(":resources/service_account.json");
-        saccfile.open(QIODevice::ReadOnly | QIODevice::Text);
-        std::unique_ptr<gclient::OAuth2AuthorizationFlow> flow{
-                gclient::OAuth2AuthorizationFlow::MakeFlowFromClientSecretsJson(
-                    QTextStream{&saccfile}.readAll().toStdString()
-                    , o2config->NewDefaultTransportOrDie(), &gstatus)};
-
-        qDebug() << gstatus.ToString().c_str();
-        if (!gstatus.ok()) {
-            throw std::runtime_error(gstatus.ToString().c_str());
-        }
-
-        flow->set_default_scopes("https://www.googleapis.com/auth/brainmaps");
-        gclient::OAuth2Credential credential;
-        auto status = flow->PerformRefreshToken(gclient::OAuth2RequestOptions{}, &credential);
-
-        qDebug() << status.ToString().c_str() << credential.access_token().as_string().c_str();
-
-        if (!status.ok()) {
+        const auto pair = getBrainmapsToken();
+        if (!pair.first) {
             return false;
         }
 
@@ -353,8 +321,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
             return o2;
         }();
-        o2.setToken(credential.access_token().as_string().c_str());
-        o2.setRefreshToken(credential.refresh_token().as_string().c_str());
+        o2.setToken(pair.second);
+//        o2.setRefreshToken(pair.second);
         o2.setLinked(true);
 
 //        o2.unlink();
