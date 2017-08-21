@@ -236,11 +236,12 @@ void DatasetLoadWidget::processButtonClicked() {
 O2 * o2global;
 
 #include "googleapis/client/transport/http_transport.h"
-#include "googleapis/client/transport/curl_http_transport.h"
 #include "googleapis/client/auth/credential_store.h"
 #include "googleapis/client/auth/oauth2_authorization.h"
 #include "googleapis/client/auth/oauth2_service_authorization.h"
 #include "googleapis/client/util/status.h"
+
+#include "QNAMHttpTransportFactory.h"
 
 /* dataset can be selected in three ways:
  * 1. by selecting the folder containing a k.conf (for multires datasets it's a "magX" folder)
@@ -295,20 +296,16 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         namespace gclient = googleapis::client;
 
         auto o2config = std::make_unique<gclient::HttpTransportLayerConfig>();
-        o2config->ResetDefaultTransportFactory(new gclient::CurlHttpTransportFactory(o2config.get()));
-        QProcess process;
-        process.start("cygpath", QStringList() << "--mixed" << "/mingw64");
-        process.waitForFinished();
-        auto output = process.readAllStandardOutput();
-        output.chop(1); // remove newline
-        qDebug() << output;
-        o2config->mutable_default_transport_options()->set_cacerts_path(output.toStdString() + "/ssl/cert.pem");
+        o2config->ResetDefaultTransportFactory(new QNAMHttpTransportFactory{});
+        o2config->mutable_default_transport_options()->set_cacerts_path(gclient::HttpTransportOptions::kDisableSslVerification);
 
         gutil::Status gstatus;
-        std::unique_ptr<gclient::OAuth2AuthorizationFlow> flow(gclient::OAuth2AuthorizationFlow::MakeFlowFromClientSecretsPath(
-                    "service_account.json"
-//                    "/home/mobile/Downloads/Songbird-API-d4d43b08f0ec.json"
-                    , o2config->NewDefaultTransportOrDie(), &gstatus));
+        QFile saccfile(":resources/service_account.json");
+        saccfile.open(QIODevice::ReadOnly | QIODevice::Text);
+        std::unique_ptr<gclient::OAuth2AuthorizationFlow> flow{
+                gclient::OAuth2AuthorizationFlow::MakeFlowFromClientSecretsJson(
+                    QTextStream{&saccfile}.readAll().toStdString()
+                    , o2config->NewDefaultTransportOrDie(), &gstatus)};
 
         qDebug() << gstatus.ToString().c_str();
         if (!gstatus.ok()) {
@@ -317,7 +314,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
         flow->set_default_scopes("https://www.googleapis.com/auth/brainmaps");
         gclient::OAuth2Credential credential;
-//        auto status = flow->RefreshCredentialWithOptions(gclient::OAuth2RequestOptions{}, &credential);
         auto status = flow->PerformRefreshToken(gclient::OAuth2RequestOptions{}, &credential);
 
         qDebug() << status.ToString().c_str() << credential.access_token().as_string().c_str();
@@ -384,7 +380,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
         info.url = path;
         auto foo = info.url.path();
-        foo.chop(1);
+        foo.chop(1);// remove slash
         info.url.setPath(foo);
     } else {
         info = Dataset::fromLegacyConf(path, download.second);
