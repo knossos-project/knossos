@@ -19,9 +19,8 @@
     For further information, visit https://knossostool.org
     or contact knossos-team@mpimf-heidelberg.mpg.de
 ]]
-
-project(knossos)
 cmake_minimum_required(VERSION 3.8)
+project(knossos)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
