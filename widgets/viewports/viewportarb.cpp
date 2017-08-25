@@ -22,6 +22,7 @@
 
 #include "viewportarb.h"
 
+#include "dataset.h"
 #include "segmentation/cubeloader.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -46,7 +47,7 @@ void ViewportArb::hideVP() {
 void ViewportArb::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         state->viewer->arbCubes(*this);
-    } else if (Segmentation::enabled && state->viewerState->showOnlyRawData == false) {
+    } else if (Dataset::current.overlay && state->viewerState->showOnlyRawData == false) {
         updateOverlayTexture();
     }
     ViewportOrtho::paintGL();
@@ -61,14 +62,14 @@ void ViewportArb::updateOverlayTexture() {
         return;
     }
     ocResliceNecessary = false;
-    const int width = (state->M - 1) * state->cubeEdgeLength / std::sqrt(2);
+    const int width = (state->M - 1) * Dataset::current.cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
     std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * state->magnification * x - v2 * state->magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * Dataset::current.magnification * x - v2 * Dataset::current.magnification * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {

@@ -62,30 +62,8 @@ public:
 
     bool quitSignal{false};
 
-    // Current dataset identifier string
-    QString name;
-
-    // stores the currently active magnification;
-    // it is set by magnification = 2^MAGx
-    // state->magnification should only be used by the viewer,
-    // but its value is copied over to loaderMagnification.
-    // This is locked for thread safety.
-    // do not change to uint, it causes bugs in the display of higher mag datasets
-    int magnification;
-
-    uint compressionRatio;
-
-    uint highestAvailableMag;
-    uint lowestAvailableMag;
-
     // Bytes in one datacube: 2^3N
     std::size_t cubeBytes;
-
-    // The edge length of a datacube is 2^N, which makes the size of a
-    // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
-    // So N cannot be larger than 10.
-    // Edge length of one cube in pixels: 2^N
-    int cubeEdgeLength;
 
     // Area of a cube slice in pixels;
     int cubeSliceArea;
@@ -94,17 +72,9 @@ public:
     int M;
     std::size_t cubeSetElements;
 
-
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
     std::size_t cubeSetBytes;
-
-
-    // Edge length of the current data set in data pixels.
-    Coordinate boundary;
-
-    // pixel-to-nanometer scale
-    floatCoordinate scale;
 
     // With 2^N being the edge length of a datacube in pixels and
     // M being the edge length of a supercube (the set of all

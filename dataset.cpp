@@ -37,6 +37,9 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
+std::vector<Dataset> Dataset::datasets{Dataset::dummyDataset()};
+Dataset & Dataset::current{Dataset::datasets[0]};
+
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
 }
@@ -221,21 +224,6 @@ void Dataset::checkMagnifications() {
     qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag).toUtf8().constData();
 }
 
-void Dataset::applyToState() const {
-    state->magnification = magnification;
-    state->lowestAvailableMag = lowestAvailableMag;
-    state->highestAvailableMag = highestAvailableMag;
-    //boundary and scale were already converted
-    state->boundary = boundary;
-    state->scale = scale;
-    state->name = experimentname;
-    state->cubeEdgeLength = cubeEdgeLength;
-    state->compressionRatio = compressionRatio;
-    Segmentation::enabled = overlay;
-
-    Skeletonizer::singleton().skeletonState.volBoundary = SkeletonState{}.volBoundary;
-}
-
 QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Dataset::CubeType type) {
     const auto cubeCoord = coord.cube(cubeEdgeLength, magnification);
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
@@ -322,7 +310,8 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
     }
 
     auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    path = path.arg(unknownScale).arg(coord.x / state->cubeEdgeLength).arg(coord.y / state->cubeEdgeLength).arg(coord.z / state->cubeEdgeLength);
+    const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    path = path.arg(unknownScale).arg(coord.x / cubeEdgeLen).arg(coord.y / cubeEdgeLen).arg(coord.z / cubeEdgeLen);
     base.setPath(path);
     base.setQuery(query);
 
@@ -334,7 +323,7 @@ QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate gl
     case API::GoogleBrainmaps:
         return googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type);
     case API::Heidelbrain:
-        return knossosCubeUrl(baseUrl, QString(state->name), globalCoord, cubeedgelength, std::pow(2, scale), type);
+        return knossosCubeUrl(baseUrl, QString(current.experimentname), globalCoord, cubeedgelength, std::pow(2, scale), type);
     case API::OpenConnectome:
         return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
     case API::WebKnossos:

@@ -31,55 +31,56 @@
 #include <boost/multi_array.hpp>
 
 std::pair<bool, char *> getRawCube(const Coordinate & pos) {
-    const auto posDc = pos.cube(state->cubeEdgeLength, state->magnification);
+    const auto posDc = pos.cube(Dataset::current.cubeEdgeLength, Dataset::current.magnification);
 
     state->protectCube2Pointer.lock();
-    auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(state->magnification)], posDc);
+    auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current.magnification)], posDc);
     state->protectCube2Pointer.unlock();
 
     return std::make_pair(rawcube != nullptr, rawcube);
 }
 
 boost::multi_array_ref<uint64_t, 3> getCubeRef(char * const rawcube) {
-    const auto dims = boost::extents[state->cubeEdgeLength][state->cubeEdgeLength][state->cubeEdgeLength];
+    const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
     return boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(rawcube), dims);
 }
 
 uint64_t readVoxel(const Coordinate & pos) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !Segmentation::enabled || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !Dataset::current.overlay || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
-    const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
+    const auto inCube = pos.insideCube(Dataset::current.cubeEdgeLength, Dataset::current.magnification);
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];
 }
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !Segmentation::enabled || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !Dataset::current.overlay || !cubeIt.first) {
         return false;
     }
-    const auto inCube = pos.insideCube(state->cubeEdgeLength, state->magnification);
+    const auto inCube = pos.insideCube(Dataset::current.cubeEdgeLength, Dataset::current.magnification);
     getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
-        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(state->cubeEdgeLength, state->magnification), state->magnification);
+        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(Dataset::current.cubeEdgeLength, Dataset::current.magnification), Dataset::current.magnification);
     }
     return true;
 }
 
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius) {
-    const auto x = xi * state->scale.x;
-    const auto y = yi * state->scale.y;
-    const auto z = zi * state->scale.z;
+    const auto x = xi * Dataset::current.scale.x;
+    const auto y = yi * Dataset::current.scale.y;
+    const auto z = zi * Dataset::current.scale.z;
     const auto sqdistance = x*x + y*y + z*z;
     return sqdistance < radius * radius;
 }
 
 std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, const brush_t & brush) { // calcs global AABB of local coordinate system's region
     const auto posArb = centerPos.toLocal(brush.v1, brush.v2, brush.n);
-    const auto width = brush.radius / state->scale.componentMul(brush.v1).length();
-    const auto height = brush.radius / state->scale.componentMul(brush.v2).length();
-    const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / state->scale.componentMul(brush.n).length() : 0;
+    const auto width = brush.radius / Dataset::current.scale.componentMul(brush.v1).length();
+    const auto height = brush.radius / Dataset::current.scale.componentMul(brush.v2).length();
+    const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / Dataset::current.scale.componentMul(brush.n).length() : 0;
     std::vector<floatCoordinate> localPoints(8);
     for (std::size_t i = 0; i < localPoints.size(); ++i) { // all possible combinations. Ordering like in a truth table (with - and + instead of false and true). I just didn't want to type it all out…
         localPoints[i].x = (i < 4) ? posArb.x - width : posArb.x + width;
@@ -98,20 +99,21 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
     for (auto &cubeCoord : cubeChangeSet) {
-        Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, state->magnification);
+        Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, Dataset::current.magnification);
     }
 }
 
 auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLast, const uint64_t value, CubeCoordSet & cubeChangeSet) {
-    const auto wholeCubeBegin = (globalFirst + state->cubeEdgeLength - 1).cube(state->cubeEdgeLength, state->magnification);
-    const auto wholeCubeEnd = globalLast.cube(state->cubeEdgeLength, state->magnification);
+    const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    const auto wholeCubeBegin = (globalFirst + cubeEdgeLen - 1).cube(cubeEdgeLen, Dataset::current.magnification);
+    const auto wholeCubeEnd = globalLast.cube(cubeEdgeLen, Dataset::current.magnification);
 
     //fill all whole cubes
     for (int z = wholeCubeBegin.z; z < wholeCubeEnd.z; ++z)
     for (int y = wholeCubeBegin.y; y < wholeCubeEnd.y; ++y)
     for (int x = wholeCubeBegin.x; x < wholeCubeEnd.x; ++x) {
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCoord = cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+        const auto globalCoord = cubeCoord.cube2Global(cubeEdgeLen, Dataset::current.magnification);
         auto rawcube = getRawCube(globalCoord);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
@@ -131,8 +133,9 @@ auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLa
 
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
-    const auto cubeBegin = globalFirst.cube(state->cubeEdgeLength, state->magnification);
-    const auto cubeEnd = globalLast.cube(state->cubeEdgeLength, state->magnification) + 1;
+    const auto & cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    const auto cubeBegin = globalFirst.cube(cubeEdgeLen, Dataset::current.magnification);
+    const auto cubeEnd = globalLast.cube(cubeEdgeLen, Dataset::current.magnification) + 1;
     CubeCoordSet cubeCoords;
 
     //traverse all remaining cubes
@@ -141,18 +144,18 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     for (int x = cubeBegin.x; x < cubeEnd.x; ++x) {
         skip(x, y, z);//skip cubes which got processed before
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCubeBegin = cubeCoord.cube2Global(state->cubeEdgeLength, state->magnification);
+        const auto globalCubeBegin = cubeCoord.cube2Global(cubeEdgeLen, Dataset::current.magnification);
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + state->cubeEdgeLength * state->magnification - 1;
-            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength, state->magnification);
-            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(state->cubeEdgeLength, state->magnification);
+            const auto globalCubeEnd = globalCubeBegin + cubeEdgeLen * Dataset::current.magnification - 1;
+            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current.magnification);
+            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current.magnification);
 
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                const Coordinate globalCoord{globalCubeBegin.x + x * state->magnification, globalCubeBegin.y + y * state->magnification, globalCubeBegin.z + z * state->magnification};
+                const Coordinate globalCoord{globalCubeBegin.x + x * Dataset::current.magnification, globalCubeBegin.y + y * Dataset::current.magnification, globalCubeBegin.z + z * Dataset::current.magnification};
                 func(cubeRef[z][y][x], globalCoord);
             }
             cubeCoords.emplace(cubeCoord);

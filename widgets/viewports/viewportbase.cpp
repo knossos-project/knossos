@@ -22,6 +22,7 @@
 
 #include "viewportbase.h"
 
+#include "dataset.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
@@ -37,7 +38,7 @@ bool ViewportBase::oglDebug = false;
 
 RenderOptions::RenderOptions()
     : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false)
-        , drawOverlay(Segmentation::enabled && state->viewerState->showOnlyRawData == false)
+        , drawOverlay(Dataset::current.overlay && state->viewerState->showOnlyRawData == false)
         , highlightActiveNode(state->viewerState->cumDistRenderThres <= 19.f)// no active node halo in lines and points mode
 {}
 

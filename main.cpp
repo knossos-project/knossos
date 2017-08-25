@@ -133,7 +133,6 @@ int main(int argc, char *argv[]) {
 
     stateInfo state;
     ::state = &state;
-    Dataset::dummyDataset().applyToState();
 
     SignalRelay signalRelay;
     Viewer viewer;

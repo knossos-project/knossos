@@ -22,6 +22,7 @@
 
 #include "skeletonizer.h"
 
+#include "dataset.h"
 #include "file_io.h"
 #include "functions.h"
 #include "mesh/mesh.h"
@@ -51,7 +52,11 @@
 #include <unordered_set>
 #include <vector>
 
-SkeletonState::SkeletonState() : volBoundary(2 * std::max({state->scale.x * state->boundary.x, state->scale.y * state->boundary.y, state->scale.z * state->boundary.z})) {}
+int SkeletonState::volBoundary() const {
+    const auto & scale = Dataset::current.scale;
+    const auto & boundary = Dataset::current.boundary;
+    return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});
+}
 
 template<typename T, typename Func>
 bool connectedComponent(T & node, Func func) {
@@ -111,7 +116,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
                           state->skeletonState->activeTree->treeID,
                           clickedCoordinate,
                           VPtype,
-                          state->magnification,
+                          Dataset::current.magnification,
                           boost::none,
                           true);
     if(!addedNode) {
@@ -141,7 +146,7 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
                            state->skeletonState->activeTree->treeID,
                            clickedCoordinate,
                            VPtype,
-                           state->magnification,
+                           Dataset::current.magnification,
                            boost::none,
                            true);
     if(!targetNode) {
@@ -172,7 +177,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
 
     xml.writeStartElement("parameters");
     xml.writeStartElement("experiment");
-    xml.writeAttribute("name", QString(state->name));
+    xml.writeAttribute("name", QString(Dataset::current.experimentname));
     xml.writeEndElement();
 
     xml.writeStartElement("lastsavedin");
@@ -188,7 +193,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
-    xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::enabled)));
+    xml.writeAttribute("overlay", QString::number(static_cast<int>(Dataset::current.overlay)));
     xml.writeEndElement();
 
     if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
@@ -208,9 +213,9 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
-    xml.writeAttribute("x", QString::number(state->scale.x));
-    xml.writeAttribute("y", QString::number(state->scale.y));
-    xml.writeAttribute("z", QString::number(state->scale.z));
+    xml.writeAttribute("x", QString::number(Dataset::current.scale.x));
+    xml.writeAttribute("y", QString::number(Dataset::current.scale.y));
+    xml.writeAttribute("z", QString::number(Dataset::current.scale.z));
     xml.writeEndElement();
 
     xml.writeStartElement("RadiusLocking");
@@ -388,14 +393,14 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
-                    const bool overlay = attributes.value("overlay").isEmpty() ? Segmentation::enabled : static_cast<bool>(attributes.value("overlay").toInt());
-                    if (experimentName != state->name || overlay != Segmentation::enabled) {
+                    const bool overlay = attributes.value("overlay").isEmpty() ? Dataset::current.overlay : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (experimentName != Dataset::current.experimentname || overlay != Dataset::current.overlay) {
                         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     if (!merge) {
                         Coordinate movementAreaMin;//0
-                        Coordinate movementAreaMax = state->boundary;
+                        Coordinate movementAreaMax = Dataset::current.boundary;
 
                         for (const auto & attribute : attributes) {
                             const auto & name = attribute.name();
@@ -727,9 +732,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
         QDebug{&buffer} << skippedElements;
         msgBox.setDetailedText(tr("Skipped elements: %1").arg(buffer));
     }
-    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != state->name;
+    const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != Dataset::current.experimentname;
     if (mismatchedDataset) {
-        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(state->name);
+        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(Dataset::current.experimentname);
     }
     const auto currentTaskCategory = Session::singleton().task.first;
     const auto currentTaskName = Session::singleton().task.second;
@@ -1078,7 +1083,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = state->scale.componentMul(targetNode.position - sourceNode.position).length();
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = Dataset::current.scale.componentMul(targetNode.position - sourceNode.position).length();
 
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);
@@ -1360,7 +1365,7 @@ bool Skeletonizer::editNode(std::uint64_t nodeID, nodeListElement *node, float n
     nodeID = node->nodeID;
 
     auto oldPos = node->position;
-    node->position = newPos.capped({0, 0, 0}, state->boundary);
+    node->position = newPos.capped({0, 0, 0}, Dataset::current.boundary);
 
     if(newRadius != 0.) {
         node->radius = newRadius;
@@ -1516,7 +1521,7 @@ void Skeletonizer::addSynapseFromNodes(std::vector<nodeListElement *> & nodes) {
               state->skeletonState->activeTree->treeID,
               coord,
               VIEWPORT_UNDEFINED,
-              state->magnification,
+              Dataset::current.magnification,
               boost::none,
               true);
 }

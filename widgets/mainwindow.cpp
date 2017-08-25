@@ -239,9 +239,9 @@ void MainWindow::resetTextureProperties() {
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
         orthoVP.texture.size = state->viewerState->texEdgeLength;
-        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / state->magnification;
+        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current.magnification;
         orthoVP.texture.FOV = 1;
-        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * state->cubeEdgeLength;
+        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current.cubeEdgeLength;
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
         }
@@ -562,11 +562,11 @@ void MainWindow::createMenus() {
 
     compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
         static uint originalCompressionRatio;
-        if (state->compressionRatio != 0) {
-            originalCompressionRatio = state->compressionRatio;
-            state->compressionRatio = 0;
+        if (Dataset::current.compressionRatio != 0) {
+            originalCompressionRatio = Dataset::current.compressionRatio;
+            Dataset::current.compressionRatio = 0;
         } else {
-            state->compressionRatio = originalCompressionRatio;
+            Dataset::current.compressionRatio = originalCompressionRatio;
         }
         state->viewer->updateDatasetMag();
         updateCompressionRatioDisplay();
@@ -1481,9 +1481,9 @@ void MainWindow::pythonPluginMgrSlot() {
 
 void MainWindow::updateCompressionRatioDisplay() {
     compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(
-                                        (state->compressionRatio == 0) ? "none" :
-                                        (state->compressionRatio == 1000) ? "jpg" :
-                                        (state->compressionRatio == 1001) ? "j2k" :
+                                        (Dataset::current.compressionRatio == 0) ? "none" :
+                                        (Dataset::current.compressionRatio == 1000) ? "jpg" :
+                                        (Dataset::current.compressionRatio == 1001) ? "j2k" :
                                                                             "jp2"));
 }
 

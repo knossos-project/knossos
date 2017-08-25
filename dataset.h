@@ -44,23 +44,38 @@ struct Dataset {
     static Dataset parseWebKnossosJson(const QString & json_raw);
     static Dataset fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
-    void applyToState() const;
 
     static QUrl apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type);
     static bool isOverlay(const CubeType type);
 
     API api;
+    // Edge length of the current data set in data pixels.
     Coordinate boundary{0,0,0};
+    // pixel-to-nanometer scale
     floatCoordinate scale{0,0,0};
+    // stores the currently active magnification;
+    // it is set by magnification = 2^MAGx
+    // Dataset::current.magnification should only be used by the viewer,
+    // but its value is copied over to loaderMagnification.
+    // This is locked for thread safety.
+    // do not change to uint, it causes bugs in the display of higher mag datasets
     int magnification{1};
-    int lowestAvailableMag{0};
-    int highestAvailableMag{0};
+    uint lowestAvailableMag{1};
+    uint highestAvailableMag{1};
+    // The edge length of a datacube is 2^N, which makes the size of a
+    // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
+    // So N cannot be larger than 10.
+    // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength{128};
     int compressionRatio{0};
     bool remote{false};
     bool overlay{false};
+    // Current dataset identifier string
     QString experimentname{};
     QUrl url;
+
+    static std::vector<Dataset> datasets;
+    static Dataset & current;
 };
 
 #endif//DATASET_H

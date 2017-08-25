@@ -20,10 +20,12 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+ #include "snapshotwidget.h"
+ 
+#include "dataset.h"
 #include "GuiConstants.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
-#include "snapshotwidget.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
@@ -200,7 +202,7 @@ void SnapshotWidget::showViewer(const QImage & image) {
     annotationName.remove(0, annotationName.lastIndexOf("/") + 1); // remove directory structure from name
     annotationName.chop(annotationName.endsWith(".k.zip") ? 6 : /* .nml */ 4); // remove file type
     const auto info = tr("%1 Viewport (%2)").arg(vp).arg(sizeCombo.currentText());
-    const auto defaultFilename = QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? state->name : annotationName);
+    const auto defaultFilename = QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? Dataset::current.experimentname : annotationName);
     SnapshotViewer previewer(image, info, saveDir, defaultFilename, this);
     previewer.exec();
     saveDir = previewer.getSaveDir();

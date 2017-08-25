@@ -20,8 +20,10 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "segmentation/segmentation.h"
 #include "session.h"
+
+#include "dataset.h"
+#include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 
@@ -74,13 +76,13 @@ bool Session::outsideMovementArea(const Coordinate & pos) {
 }
 
 void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
-    movementAreaMin = min.capped({0, 0, 0}, state->boundary);
-    movementAreaMax = max.capped({0, 0, 0}, state->boundary);
+    movementAreaMin = min.capped({0, 0, 0}, Dataset::current.boundary);
+    movementAreaMax = max.capped({0, 0, 0}, Dataset::current.boundary);
     emit movementAreaChanged();
 }
 
 void Session::resetMovementArea() {
-    updateMovementArea({0, 0, 0}, state->boundary);
+    updateMovementArea({0, 0, 0}, Dataset::current.boundary);
 }
 
 decltype(Session::annotationTimeMilliseconds) Session::getAnnotationTime() const {
