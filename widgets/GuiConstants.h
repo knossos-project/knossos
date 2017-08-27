@@ -98,7 +98,7 @@ const QString DATASET_LUT_FILE = "dataset_lut_file";
 const QString DATASET_LUT_FILE_USED = "dataset_lut_file_used";
 const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
-const QString SEGMENTATITION_HIGHLIGHT_BORDER = "segmentation border highlighting";
+const QString SEGMENTATITION_HIGHLIGHT_BORDER = "segmentation_border_highlighting";
 
 // Preferences Viewports Tab
 const QString ADD_ARB_VP = "add_arb_vp";
