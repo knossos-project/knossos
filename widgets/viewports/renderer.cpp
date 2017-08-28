@@ -78,7 +78,7 @@ auto lineSize(const float nanometerPerPixel) {
 }
 
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
     const auto isoBase = Dataset::current.scale.componentMul(base);
     const auto isoTop = Dataset::current.scale.componentMul(top);
     baseRadius *= Dataset::current.scale.x;
@@ -125,7 +125,7 @@ void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, con
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QColor & color, const RenderOptions & options) {
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f = {static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())};
+    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
     const auto isoPos = Dataset::current.scale.componentMul(pos);
     radius *= Dataset::current.scale.x;
 
@@ -1292,7 +1292,7 @@ void ViewportBase::pickMeshIdAtPosition() {
             continue;
         }
         tree.mesh->picking_color_buf.bind();
-        const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == tree.mesh->vertex_count * 4 * sizeof(GLubyte); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
+        const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == static_cast<int>(tree.mesh->vertex_count * 4 * sizeof(GLubyte)); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
         const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && pickingBufferFilled;
         if (pickingMeshValid || !tree.render) {// increment
             id_counter += tree.mesh->vertex_count;

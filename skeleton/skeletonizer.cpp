@@ -359,7 +359,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
-    boost::optional<Coordinate> loadedPosition;
+    auto loadedPosition = boost::make_optional(false, Coordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> edgeVector;
@@ -716,7 +716,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     if (!merge) {
         setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
-        if (loadedPosition.is_initialized()) {
+        if (loadedPosition) {
             state->viewer->setPosition(loadedPosition.get() - 1);
         }
     }

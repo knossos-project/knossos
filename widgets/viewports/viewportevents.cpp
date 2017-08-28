@@ -509,7 +509,7 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
                 remainder += 1.0f;
             }
             if(!scrollSteps.isNull()) {
-                for(std::size_t y = 0; y < std::abs(scrollSteps.y()); ++y) {
+                for(int y = 0; y < std::abs(scrollSteps.y()); ++y) {
                     if(scrollSteps.y() > 0) {
                         zoomIn();
                     } else {
