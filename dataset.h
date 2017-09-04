@@ -35,6 +35,7 @@ struct Dataset {
     enum class CubeType {
         RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED, SEGMENTATION_SZ_ZIP
     };
+    QString compressionString() const;
 
     static bool isNeuroDataStore(const QUrl & url);
 
@@ -49,6 +50,7 @@ struct Dataset {
     static bool isOverlay(const CubeType type);
 
     API api;
+    CubeType type{CubeType::RAW_UNCOMPRESSED};
     // Edge length of the current data set in data pixels.
     Coordinate boundary{0,0,0};
     // pixel-to-nanometer scale
@@ -67,7 +69,6 @@ struct Dataset {
     // So N cannot be larger than 10.
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength{128};
-    int compressionRatio{0};
     bool remote{false};
     bool overlay{false};
     // Current dataset identifier string

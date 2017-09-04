@@ -40,6 +40,18 @@
 std::vector<Dataset> Dataset::datasets{Dataset::dummyDataset()};
 Dataset & Dataset::current{Dataset::datasets[0]};
 
+QString Dataset::compressionString() const {
+    switch (type) {
+    case Dataset::CubeType::RAW_UNCOMPRESSED: return "8 bit gray";
+    case Dataset::CubeType::RAW_JPG: return "jpg";
+    case Dataset::CubeType::RAW_J2K: return "j2k";
+    case Dataset::CubeType::RAW_JP2_6: return "jp2";
+    case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED: return "64 bit id";
+    case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "sz.zip";
+    }
+    throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
+}
+
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
 }
@@ -47,6 +59,7 @@ bool Dataset::isNeuroDataStore(const QUrl & url) {
 Dataset Dataset::dummyDataset() {
     Dataset info;
     info.api = API::Heidelbrain;
+    info.type = CubeType::RAW_UNCOMPRESSED;
     info.boundary = {1000, 1000, 1000};
     info.scale = {1.f, 1.f, 1.f};
     info.lowestAvailableMag = 1;
@@ -79,7 +92,7 @@ Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     info.lowestAvailableMag = 1;
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
-    info.compressionRatio = 1000;//jpeg
+    info.type = CubeType::RAW_JPG;
     info.overlay = false;
 
     return info;
@@ -108,7 +121,7 @@ Dataset Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & j
     info.lowestAvailableMag = std::pow(2, mags[0].toInt());
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
-    info.compressionRatio = 1000;//jpeg
+    info.type = CubeType::RAW_JPG;
     info.overlay = false;
 
     return info;
@@ -138,7 +151,7 @@ Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
     info.lowestAvailableMag = mags[0].toInt();
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = mags[mags.size()-1].toInt();
-    info.compressionRatio = 0;//raw
+    info.type = CubeType::RAW_UNCOMPRESSED;
     info.overlay = false;
 
     return info;
@@ -195,7 +208,11 @@ Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
             }
             // discarding ftpFileTimeout parameter
         } else if (token == "compression_ratio") {
-            info.compressionRatio = tokenList.at(1).toInt();
+            const auto compressionRatio = tokenList.at(1).toInt();
+            info.type = compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED
+                      : compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
+                      : compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6
+                      : Dataset::CubeType::RAW_J2K;
         } else {
             qDebug() << "Skipping unknown parameter" << token;
         }

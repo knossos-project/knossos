@@ -188,7 +188,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     infotext += QString("Name: %1<br />Boundary (x y z): %2 %3 %4<br />Compression: %5<br />cubeEdgeLength: %6<br />Magnification: %7<br />Scale (x y z): %8 %9 %10")
         .arg(datasetinfo.experimentname)
         .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-        .arg(datasetinfo.compressionRatio)
+        .arg(datasetinfo.compressionString())
         .arg(datasetinfo.cubeEdgeLength)
         .arg(datasetinfo.magnification)
         .arg(datasetinfo.scale.x)
@@ -272,7 +272,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
 
     Dataset info;
-    Dataset::CubeType raw_compression;
     if (Dataset::isNeuroDataStore(path)) {
         info = Dataset::parseNeuroDataStoreJson(path, download.second);
     } else {
@@ -296,8 +295,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     const bool changedBoundaryOrScale = info.boundary != Dataset::current.boundary || info.scale != Dataset::current.scale;
     Dataset::datasets[0] = info;
-    raw_compression = info.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : info.compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
-            : info.compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6 : Dataset::CubeType::RAW_J2K;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     auto & cubeEdgeLen = Dataset::current.cubeEdgeLength;
@@ -320,7 +317,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    Loader::Controller::singleton().restart(info.url, info.api, raw_compression, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
+    Loader::Controller::singleton().restart(info.url, info.api, info.type, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
 
     emit updateDatasetCompression();
 

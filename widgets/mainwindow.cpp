@@ -561,12 +561,12 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/quit.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
-        static uint originalCompressionRatio;
-        if (Dataset::current.compressionRatio != 0) {
-            originalCompressionRatio = Dataset::current.compressionRatio;
-            Dataset::current.compressionRatio = 0;
+        static Dataset::CubeType originalType;
+        if (Dataset::current.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
+            originalType = Dataset::current.type;
+            Dataset::current.type = Dataset::CubeType::RAW_UNCOMPRESSED;
         } else {
-            Dataset::current.compressionRatio = originalCompressionRatio;
+            Dataset::current.type = originalType;
         }
         state->viewer->updateDatasetMag();
         updateCompressionRatioDisplay();
@@ -1480,11 +1480,7 @@ void MainWindow::pythonPluginMgrSlot() {
 }
 
 void MainWindow::updateCompressionRatioDisplay() {
-    compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(
-                                        (Dataset::current.compressionRatio == 0) ? "none" :
-                                        (Dataset::current.compressionRatio == 1000) ? "jpg" :
-                                        (Dataset::current.compressionRatio == 1001) ? "j2k" :
-                                                                            "jp2"));
+    compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(Dataset::current.compressionString()));
 }
 
 bool MainWindow::event(QEvent *event) {

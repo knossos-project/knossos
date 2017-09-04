@@ -641,7 +641,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     };
 
     const auto workaroundProcessLocalImmediately = baseUrl.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
-    auto typeDcOverride = Dataset::current.compressionRatio == 0 ? Dataset::CubeType::RAW_UNCOMPRESSED : typeDc;
+    const auto typeDcOverride = Dataset::current.type == Dataset::CubeType::RAW_UNCOMPRESSED ? Dataset::CubeType::RAW_UNCOMPRESSED : typeDc;
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             startDownload(globalCoord, typeDcOverride, dcDownload, dcDecompression, freeDcSlots, state->Dc2Pointer[loaderMagnification]);
