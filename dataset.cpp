@@ -37,7 +37,7 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
-std::vector<Dataset> Dataset::datasets{Dataset::dummyDataset()};
+std::vector<Dataset> Dataset::datasets{Dataset{}};
 Dataset & Dataset::current{Dataset::datasets[0]};
 
 QString Dataset::compressionString() const {
@@ -54,20 +54,6 @@ QString Dataset::compressionString() const {
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
-}
-
-Dataset Dataset::dummyDataset() {
-    Dataset info;
-    info.api = API::Heidelbrain;
-    info.type = CubeType::RAW_UNCOMPRESSED;
-    info.boundary = {1000, 1000, 1000};
-    info.scale = {1.f, 1.f, 1.f};
-    info.lowestAvailableMag = 1;
-    info.magnification = 1;
-    info.highestAvailableMag = 1;
-    info.cubeEdgeLength = 128;
-    info.overlay = false;
-    return info;
 }
 
 Dataset Dataset::parseGoogleJson(const QString & json_raw) {

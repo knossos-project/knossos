@@ -39,7 +39,6 @@ struct Dataset {
 
     static bool isNeuroDataStore(const QUrl & url);
 
-    static Dataset dummyDataset();
     static Dataset parseGoogleJson(const QString & json_raw);
     static Dataset parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
@@ -49,12 +48,12 @@ struct Dataset {
     static QUrl apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type);
     static bool isOverlay(const CubeType type);
 
-    API api;
+    API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};
     // Edge length of the current data set in data pixels.
-    Coordinate boundary{0,0,0};
+    Coordinate boundary{1000, 1000, 1000};
     // pixel-to-nanometer scale
-    floatCoordinate scale{0,0,0};
+    floatCoordinate scale{1.f, 1.f, 1.f};
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
     // Dataset::current.magnification should only be used by the viewer,
