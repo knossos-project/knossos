@@ -25,6 +25,7 @@
 
 #include "coordinate.h"
 
+#include <QList>
 #include <QString>
 #include <QUrl>
 
@@ -74,7 +75,7 @@ struct Dataset {
     QString experimentname;
     QUrl url;
 
-    static std::vector<Dataset> datasets;
+    static QList<Dataset> datasets;
     static Dataset & current;
 };
 
