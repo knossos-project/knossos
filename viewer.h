@@ -227,7 +227,7 @@ signals:
     void layerVisibilityChanged(const int);
 public slots:
     void updateCurrentPosition();
-    bool updateDatasetMag(const uint mag = 0);
+    bool updateDatasetMag(const int mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal);
@@ -252,11 +252,11 @@ public slots:
     void oc_reslice_notify_visible();
     void oc_reslice_notify_all(const Coordinate coord);
     void setMovementAreaFactor(float alpha);
-    uint highestMag();
-    uint lowestMag();
+    int highestMag();
+    int lowestMag();
     float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
     float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    uint calcMag(const float screenPxXPerDataPx);
+    int calcMag(const float screenPxXPerDataPx);
     void setMagnificationLock(const bool locked);
     void setLayerVisibility(const int index, const bool enabled);
 };

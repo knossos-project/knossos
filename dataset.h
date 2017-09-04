@@ -62,8 +62,8 @@ struct Dataset {
     // This is locked for thread safety.
     // do not change to uint, it causes bugs in the display of higher mag datasets
     int magnification{1};
-    uint lowestAvailableMag{1};
-    uint highestAvailableMag{1};
+    int lowestAvailableMag{1};
+    int highestAvailableMag{1};
     // The edge length of a datacube is 2^N, which makes the size of a
     // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
     // So N cannot be larger than 10.
@@ -72,7 +72,7 @@ struct Dataset {
     bool remote{false};
     bool overlay{false};
     // Current dataset identifier string
-    QString experimentname{};
+    QString experimentname;
     QUrl url;
 
     static std::vector<Dataset> datasets;

@@ -137,11 +137,11 @@ void Viewer::setMovementAreaFactor(float alpha) {
     emit movementAreaFactorChangedSignal();
 }
 
-uint Viewer::highestMag() {
+int Viewer::highestMag() {
     return viewerState.datasetMagLock ? Dataset::current.magnification : Dataset::current.highestAvailableMag;
 }
 
-uint Viewer::lowestMag() {
+int Viewer::lowestMag() {
     return viewerState.datasetMagLock ? Dataset::current.magnification : Dataset::current.lowestAvailableMag;
 }
 
@@ -163,17 +163,17 @@ float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
 
-uint Viewer::calcMag(const float screenPxXPerDataPx) {
+int Viewer::calcMag(const float screenPxXPerDataPx) {
     const float exactMag = Dataset::current.highestAvailableMag * lowestScreenPxXPerDataPx() / screenPxXPerDataPx;
-    const uint roundedPower = std::ceil(std::log(exactMag) / std::log(2));
-    return std::min(Dataset::current.highestAvailableMag, std::max(static_cast<uint>(std::pow(2, roundedPower)), Dataset::current.lowestAvailableMag));
+    const int roundedPower = std::ceil(std::log(exactMag) / std::log(2));
+    return std::min(Dataset::current.highestAvailableMag, std::max(static_cast<int>(std::pow(2, roundedPower)), Dataset::current.lowestAvailableMag));
 }
 
 void Viewer::setMagnificationLock(const bool locked) {
     viewerState.datasetMagLock = locked;
     if (!locked) {
-        const uint newMag = calcMag(viewportXY->screenPxXPerDataPx);
-        if (newMag != static_cast<uint>(Dataset::current.magnification)) {
+        const auto newMag = calcMag(viewportXY->screenPxXPerDataPx);
+        if (newMag != Dataset::current.magnification) {
             updateDatasetMag(newMag);
             float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / viewportXY->screenPxXPerDataPx;
             window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
@@ -774,17 +774,17 @@ void Viewer::calcDisplayedEdgeLength() {
 }
 
 void Viewer::zoom(const float factor) {
-    const bool reachedHighestMag = static_cast<uint>(Dataset::current.magnification) == Dataset::current.highestAvailableMag;
-    const bool reachedLowestMag = static_cast<uint>(Dataset::current.magnification) == Dataset::current.lowestAvailableMag;
+    const bool reachedHighestMag = Dataset::current.magnification == Dataset::current.highestAvailableMag;
+    const bool reachedLowestMag = Dataset::current.magnification == Dataset::current.lowestAvailableMag;
     const bool reachedMinZoom = viewportXY->texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
-    const bool reachedMaxZoom = viewportXY->texture.FOV * factor  < VPZOOMMAX && reachedLowestMag;
+    const bool reachedMaxZoom = viewportXY->texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
     const bool magUp = viewportXY->texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
     const bool magDown = viewportXY->texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
 
     const auto updateFOV = [this](const float newFOV) {
         window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) { orthoVP.texture.FOV = newFOV; });
     };
-    uint newMag = Dataset::current.magnification;
+    auto newMag = Dataset::current.magnification;
     if (reachedMinZoom) {
         updateFOV(VPZOOMMIN);
     } else if (reachedMaxZoom) {
@@ -800,11 +800,11 @@ void Viewer::zoom(const float factor) {
         newMag /= 2;
         updateFOV(VPZOOMMIN);
     } else {
-        const float zoomMax = static_cast<float>(Dataset::current.magnification) == Dataset::current.lowestAvailableMag ? VPZOOMMAX : 0.5;
+        const float zoomMax = Dataset::current.magnification == Dataset::current.lowestAvailableMag ? VPZOOMMAX : 0.5;
         updateFOV(std::max(std::min(viewportXY->texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
     }
 
-    if (newMag != static_cast<uint>(Dataset::current.magnification)) {
+    if (newMag != Dataset::current.magnification) {
         updateDatasetMag(newMag);
     }
     recalcTextureOffsets();
@@ -819,7 +819,7 @@ void Viewer::zoomReset() {
     emit zoomChanged();
 }
 
-bool Viewer::updateDatasetMag(const uint mag) {
+bool Viewer::updateDatasetMag(const int mag) {
     Loader::Controller::singleton().unloadCurrentMagnification(); //unload all the cubes
     if (mag != 0) {// change global mag after unloading
         const bool powerOf2 = mag > 0 && (mag & (mag - 1)) == 0;

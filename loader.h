@@ -91,7 +91,7 @@ private:
     int currentMaxMetric;
 
     std::atomic_bool isFinished{false};
-    uint loaderMagnification = 0;
+    int loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center, const UserMoveType userMoveType, const floatCoordinate & direction);

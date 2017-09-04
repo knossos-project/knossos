@@ -133,15 +133,15 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
         if (state->viewerState->datasetMagLock == false) {
-            if (prevFOV == VPZOOMMIN && static_cast<uint>(Dataset::current.magnification) < state->viewer->highestMag() && prevFOV < newFOV) {
+            if (prevFOV == VPZOOMMIN && Dataset::current.magnification < state->viewer->highestMag() && prevFOV < newFOV) {
                state->viewer->updateDatasetMag(Dataset::current.magnification * 2);
                newFOV = 0.5;
             }
-            else if(prevFOV == 0.5 && static_cast<uint>(Dataset::current.magnification) > state->viewer->lowestMag() && prevFOV > newFOV) {
+            else if(prevFOV == 0.5 && Dataset::current.magnification > state->viewer->lowestMag() && prevFOV > newFOV) {
                 state->viewer->updateDatasetMag(Dataset::current.magnification / 2);
                 newFOV = VPZOOMMIN;
             } else {
-                const float zoomMax = static_cast<float>(Dataset::current.magnification) == Dataset::current.lowestAvailableMag ? VPZOOMMAX : 0.5;
+                const float zoomMax = Dataset::current.magnification == Dataset::current.lowestAvailableMag ? VPZOOMMAX : 0.5;
                 newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
             }
         }
@@ -241,11 +241,11 @@ void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
     const float prevFOV = state->viewer->viewportXY->texture.FOV;
     float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
-    if (newFOV >= 1 && static_cast<uint>(Dataset::current.magnification) < state->viewer->highestMag() && prevFOV < std::round(newFOV)) {
+    if (newFOV >= 1 && Dataset::current.magnification < state->viewer->highestMag() && prevFOV < std::round(newFOV)) {
        state->viewer->updateDatasetMag(Dataset::current.magnification * 2);
        newFOV = 0.5;
     }
-    else if(newFOV <= 0.5 && static_cast<uint>(Dataset::current.magnification) > state->viewer->lowestMag() && prevFOV > std::round(newFOV)) {
+    else if(newFOV <= 0.5 && Dataset::current.magnification > state->viewer->lowestMag() && prevFOV > std::round(newFOV)) {
         state->viewer->updateDatasetMag(Dataset::current.magnification / 2);
         newFOV = 1.;
     }
