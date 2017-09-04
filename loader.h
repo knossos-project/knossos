@@ -94,7 +94,7 @@ private:
     int loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
-    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &center, const UserMoveType userMoveType, const floatCoordinate & direction);
+    std::vector<CoordOfCube> DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction);
     uint loadCubes();
     void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
     void snappyCacheClear();

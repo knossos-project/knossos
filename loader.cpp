@@ -84,7 +84,6 @@ void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, cons
     emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
     state->viewer->window->notifyUnsavedChanges();
     state->viewer->oc_reslice_notify_all(cubeCoord.cube2Global(Dataset::current.cubeEdgeLength, Dataset::current.magnification));
-
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
@@ -160,11 +159,10 @@ struct LO_Element {
     float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
+std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction) {
     const float floatHalfSc = state->M / 2.;
     const int halfSc = std::floor(floatHalfSc);
     const int cubeElemCount = state->cubeSetElements;
-    const auto currentOrigin = center.cube(Dataset::current.cubeEdgeLength, Dataset::current.magnification);
 
     int i = 0;
     currentMaxMetric = 0;
@@ -491,7 +489,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     cleanup(center);
     loaderMagnification = std::log2(Dataset::current.magnification);
     const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
-    const auto Dcoi = DcoiFromPos(center, userMoveType, direction);//datacubes of interest prioritized around the current position
+    const auto Dcoi = DcoiFromPos(center.cube(cubeEdgeLen, Dataset::current.magnification), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
     std::vector<Coordinate> allCubes;
     std::vector<Coordinate> visibleCubes;
