@@ -190,12 +190,6 @@ if(qtmultimedia_static_plugins)
     string(REGEX REPLACE [;]*DSServicePlugin[;]* ";" qtmultimedia_static_plugins_new "${qtmultimedia_static_plugins}")
     set_target_properties(Qt5::Multimedia PROPERTIES STATIC_PLUGINS "${qtmultimedia_static_plugins_new}")
 endif()
-# remove the static QVirtualKeyboardPlugin because its QtQuick plugin dependencies currently aren’t properly setup’d for CMake
-get_target_property(gui_static_plugins Qt5::Gui STATIC_PLUGINS)
-if(gui_static_plugins)
-    string(REGEX REPLACE [;]*QVirtualKeyboardPlugin[;]* ";" gui_static_plugins_new "${gui_static_plugins}")
-    set_target_properties(Qt5::Gui PROPERTIES STATIC_PLUGINS "${gui_static_plugins_new}")
-endif()
 
 find_program(LSBRELEASE lsb_release)
 if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")

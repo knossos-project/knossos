@@ -10,11 +10,6 @@ pacman -U --noconfirm pythonqt.pkg.tar.xz quazip.pkg.tar.xz
 
 PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
-# patch Qt for PythonQt
-cd /
-patch -Np0 -i $PROJECTPATH/qml_static_plugins.patch
-cd -
-
 # Append "-nightly" suffix in version file
 sed -i -E "/KVERSION/s/(([0-9]\.?)+)/\1-nightly/g" $PROJECTPATH/version.h
 
