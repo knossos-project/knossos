@@ -24,8 +24,10 @@
 			</tr>
 		</thead>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
-		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Merge</td></tr>
-		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Unmerge</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Merge object</td></tr>
+		<tr><td><span class="sh">Ctrl + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Merge subobject</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Unmerge object</td></tr>
+		<tr><td><span class="sh">Ctrl + Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Unmerge subobject</td></tr>
 		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change brush size</td></tr>
 		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
 		<tr><td><span class="sh">+</span></td><td>Increase overlay opacity</td></tr>
