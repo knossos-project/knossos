@@ -323,7 +323,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     treeFilterCombo.addItems({tr("Hide synapses"), tr("Show synapses"), tr("Show only synapses")});
     treeFilterCombo.setMinimumWidth(170);
     treeFilterCombo.setMaximumWidth(treeFilterCombo.minimumWidth());
-    treeSelectionFromNodeSelection.setToolTip("Select all trees which contain at least one of the selected nodes.");
 
     treeCommentFilter.setPlaceholderText("Tree comment");
     treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -367,12 +366,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
 
     colorDialog.setOption(QColorDialog::ShowAlphaChannel);
 
-    treeOptionsLayout.addWidget(&treeFilterCombo);
-    treeOptionsLayout.addWidget(&treeSelectionFromNodeSelection);
-    treeOptionsLayout.addStretch();
-    treeLayout.addLayout(&treeOptionsLayout);
     treeCommentLayout.addWidget(&treeCommentFilter);
     treeCommentLayout.addWidget(&treeRegex);
+    treeLayout.addWidget(&treeFilterCombo);
     treeLayout.addLayout(&treeCommentLayout);
     treeLayout.addWidget(&treeView);
     treeLayout.addWidget(&treeCountLabel);
@@ -480,9 +476,6 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&treeFilterCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
         treeModel.mode = static_cast<TreeModel::SynapseDisplayModes>(index);
         treeRecreate();
-    });
-    QObject::connect(&treeSelectionFromNodeSelection, &QPushButton::clicked, []() {
-        Skeletonizer::singleton().inferTreeSelectionFromNodeSelection();
     });
 
     QObject::connect(&nodeFilterGroupBox, &QGroupBox::clicked, [this](const bool checked) {
@@ -660,6 +653,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         linkAction->setVisible(tracingAdvanced);
         nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//jump to node
         nodeContextMenu.actions().at(i++)->setEnabled(!state->skeletonState->nodesByNodeID.empty());//jump to node with id
+        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//select containing trees
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);// synapse separator
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced && synapseNode);//jump to corresponding cleft
         nodeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
@@ -793,6 +787,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(*node.get());
         }
     });
+
+    QObject::connect(nodeContextMenu.addAction("Select containing trees"), &QAction::triggered, [this]() {
+        Skeletonizer::singleton().inferTreeSelectionFromNodeSelection();
+    });
+
     addDisabledSeparator(nodeContextMenu);
     QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
