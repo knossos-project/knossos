@@ -71,7 +71,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     cubeEdgeSpin.hide();
     cubeEdgeLabel.hide();
-    fovSpin.setSuffix("px");
+    fovSpin.setSuffix(" px");
     const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
     fovSpin.setRange(cubeEdgeLen * 2, cubeEdgeLen * 14);
     fovSpin.setSingleStep(cubeEdgeLen * 2);

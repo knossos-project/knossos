@@ -73,7 +73,7 @@ class NavigationTab : public QWidget {
     QButtonGroup recenteringButtonGroup;
     QRadioButton recenteringButton{"Recenter on new node (default)"};
     QRadioButton noRecenteringButton{"No recentering"};
-    QRadioButton additionalTracingDirectionMoveButton{"Additional movement in tracing direction"};
+    QRadioButton additionalTracingDirectionMoveButton{"Recenter ahead of tracing direction"};
     QSpinBox delayTimePerStepSpinBox;
     QSpinBox numberOfStepsSpinBox;
 

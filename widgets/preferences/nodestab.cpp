@@ -69,6 +69,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     overrideNodeRadiusSpin.setSingleStep(0.1);
     overrideNodeRadiusSpin.setSuffix(" px");
     edgeNodeRatioSpin.setSingleStep(0.1);
+    edgeNodeRatioSpin.setSuffix(" node radius");
     propertyRadiusCombo.setModel(&propertyModel);
     propertyRadiusCombo.setCurrentIndex(0);
     propertyRadiusScaleSpin.setMaximum(nodeListElement::MAX_RADIUS_SETTING);
@@ -90,7 +91,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     generalLayout.addRow(tr("Show node IDs"), &idCombo);
     generalLayout.addRow(&nodeCommentsCheck);
     generalLayout.addRow(&overrideNodeRadiusCheck, &overrideNodeRadiusSpin);
-    generalLayout.addRow(tr("Edge:node radius ratio"), &edgeNodeRatioSpin);
+    generalLayout.addRow(tr("Edge radius"), &edgeNodeRatioSpin);
     generalGroup.setLayout(&generalLayout);
     int row = 0;
     propertiesLayout.addWidget(&propertyRadiusLabel, row, 0, 1, 4);
