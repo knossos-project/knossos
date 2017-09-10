@@ -87,6 +87,14 @@ void LayerItemModel::addItem() {
     endInsertRows();
 }
 
+void LayerItemModel::removeItem(const QModelIndexList &indices) {
+    for(const auto& index : indices) {
+        beginRemoveRows(QModelIndex(), index.row(), index.row());
+        guiData.erase(guiData.begin() + index.row());
+        endRemoveRows();
+    }
+}
+
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
         Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
@@ -144,6 +152,10 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&addLayerButton, &QToolButton::clicked, [this](){
         itemModel.addItem();
+    });
+
+    QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
+        itemModel.removeItem(treeView.selectionModel()->selectedRows());
     });
 
     resize(700, 600);

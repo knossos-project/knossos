@@ -28,6 +28,7 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addItem();
+    void removeItem(const QModelIndexList &indices);
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {
