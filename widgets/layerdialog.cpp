@@ -132,12 +132,15 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.resizeColumnToContents(0);
     treeView.resizeColumnToContents(1);
     treeView.resizeColumnToContents(2);
-    treeView.header()->setSectionResizeMode(QHeaderView::Fixed);
-    treeView.header()->setSectionsClickable(false);
-    treeView.header()->setSectionsMovable(false);
+//    treeView.header()->setSectionResizeMode(QHeaderView::Fixed); // can cause some unwanted column sizes that are unresizable
+//    treeView.header()->setSectionsClickable(false);
+//    treeView.header()->setSectionsMovable(false);
     treeView.setRootIsDecorated(false);
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
+
+    addLayerButton.setIcon(QIcon(":/resources/icons/dialog-ok.png"));
+    removeLayerButton.setIcon(QIcon(":/resources/icons/application-exit.png"));
 
     controlButtonLayout.addWidget(&infoTextLabel);
     controlButtonLayout.addWidget(&moveUpButton);
