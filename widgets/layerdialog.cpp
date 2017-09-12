@@ -95,6 +95,17 @@ void LayerItemModel::removeItem(const QModelIndexList &indices) {
     }
 }
 
+void LayerItemModel::moveItem(const QModelIndexList &indices, int offset) {
+    for(const auto& index : indices) {
+        auto row = index.row();
+        if(row + offset >= 0 && row + offset < guiData.size()) {
+            beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + ((offset > 0) ? offset + 1 : offset)); // because moving is done into between rows
+            std::swap(guiData[row], guiData[row + offset]);
+            endMoveRows();
+        }
+    }
+}
+
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
         Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
@@ -159,6 +170,14 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
         itemModel.removeItem(treeView.selectionModel()->selectedRows());
+    });
+
+    QObject::connect(&moveUpButton, &QToolButton::clicked, [this](){
+        itemModel.moveItem(treeView.selectionModel()->selectedRows(), -1);
+    });
+
+    QObject::connect(&moveDownButton, &QToolButton::clicked, [this](){
+        itemModel.moveItem(treeView.selectionModel()->selectedRows(), 1);
     });
 
     resize(700, 600);

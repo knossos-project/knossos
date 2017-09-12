@@ -29,6 +29,7 @@ public:
 
     void addItem();
     void removeItem(const QModelIndexList &indices);
+    void moveItem(const QModelIndexList &indices, int offset);
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {
