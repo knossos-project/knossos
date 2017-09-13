@@ -395,7 +395,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     const auto path = attributes.value("path").toString();
                     const bool overlay = attributes.value("overlay").isEmpty() ? Dataset::current.overlay : static_cast<bool>(attributes.value("overlay").toInt());
                     if (experimentName != Dataset::current.experimentname || overlay != Dataset::current.overlay) {
-                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
+                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(state->mainWindow, overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     if (!merge) {
