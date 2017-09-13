@@ -36,7 +36,6 @@ protected:
 public:
     floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);
-    virtual void showHideButtons(bool isShow) override;
 
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
 };

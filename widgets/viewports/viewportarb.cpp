@@ -53,10 +53,6 @@ void ViewportArb::paintGL() {
     ViewportOrtho::paintGL();
 }
 
-void ViewportArb::showHideButtons(bool isShow) {
-    ViewportBase::showHideButtons(isShow);
-}
-
 void ViewportArb::updateOverlayTexture() {
     if (!ocResliceNecessary) {
         return;
