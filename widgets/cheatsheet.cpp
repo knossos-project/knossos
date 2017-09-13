@@ -2,9 +2,9 @@
 
 #include <QFile>
 
-Cheatsheet::Cheatsheet(QWidget *parent) : QDockWidget(parent) {
+Cheatsheet::Cheatsheet(QWidget *parent) : QDockWidget("Cheatsheet", parent) {
     setWidget(&browser);
-    setObjectName("Cheatsheet"); // unique name for QMainWindow::saveState()/restoreState()
+    setObjectName(windowTitle()); // unique name for QMainWindow::saveState()/restoreState()
     QObject::connect(&browser, &QTextBrowser::anchorClicked, this, &Cheatsheet::anchorClicked);
 }
 
