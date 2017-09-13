@@ -624,7 +624,7 @@ void ViewportOrtho::renderViewportFast() {
     glEnable(GL_TEXTURE_3D);
 
     for (auto & layer : state->viewer->layers) {
-        if (layer.enabled && layer.opacity >= 0.0f) {
+        if (layer.enabled && layer.opacity >= 0.0f && state->viewerState->showOnlyRawData) {
             if (layer.isOverlayData) {
                 overlay_data_shader.bind();
                 overlay_data_shader.setUniformValue("textureOpacity", Segmentation::singleton().alpha / 256.0f);
@@ -780,7 +780,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && state->viewerState->showOnlyRawData == false) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowInOrthoVPs)) {
         glPushMatrix();
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
             const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current.scale;
@@ -802,7 +802,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
 
     glDisable(GL_DEPTH_TEST);
-    if (options.drawCrosshairs && state->viewerState->showOnlyRawData == false) {
+    if (options.drawCrosshairs) {
         glPushMatrix();
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         glLineWidth(1);
@@ -827,7 +827,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh && !state->viewerState->showOnlyRawData) {
+    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -1437,16 +1437,16 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
         if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportXY);
+            renderArbitrarySlicePane(*state->viewer->window->viewportXY, options);
         }
         if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportXZ);
+            renderArbitrarySlicePane(*state->viewer->window->viewportXZ, options);
         }
         if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportZY);
+            renderArbitrarySlicePane(*state->viewer->window->viewportZY, options);
         }
         if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportArb);
+            renderArbitrarySlicePane(*state->viewer->window->viewportArb, options);
         }
         // colored slice boundaries
         glDisable(GL_TEXTURE_2D);
@@ -1793,12 +1793,12 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     glPopMatrix();
 }
 
-void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp) {
+void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOptions & options) {
     // Used for calculation of slice pane length inside the 3d view
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
-    for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && Dataset::current.overlay, vp.texture.overlayHandle)}) {
+    for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && options.drawOverlay, vp.texture.overlayHandle)}) {
         if (layer.first) {
             state->viewer->vpGenerateTexture(vp);// update texture before use
             glBindTexture(GL_TEXTURE_2D, layer.second);
