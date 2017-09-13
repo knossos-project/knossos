@@ -296,8 +296,8 @@ ViewportOrtho * MainWindow::viewportOrtho(const ViewportType vpType) {
 }
 
 void MainWindow::createToolbars() {
-    basicToolbar.setObjectName(basicToolbar.windowTitle());
-    defaultToolbar.setObjectName(defaultToolbar.windowTitle());
+    basicToolbar.setObjectName(basicToolbar.windowTitle()); // unique name for QMainWindow::saveState()/restoreState()
+    defaultToolbar.setObjectName(defaultToolbar.windowTitle()); // unique name for QMainWindow::saveState()/restoreState()
 
     basicToolbar.setMovable(false);
     basicToolbar.setFloatable(false);
