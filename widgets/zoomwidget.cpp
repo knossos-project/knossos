@@ -224,7 +224,7 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
 
     connect(&zoomDefaultsButton, &QPushButton::clicked, this, &ZoomWidget::zoomDefaultsClicked);
 
-    connect(&lockDatasetCheckBox, &QCheckBox::toggled, [this] (const bool on) {
+    connect(&lockDatasetCheckBox, &QCheckBox::toggled, [] (const bool on) {
         state->viewer->setMagnificationLock(on);
     });
     connect(state->viewer, &Viewer::magnificationLockChanged, [this](const bool locked){

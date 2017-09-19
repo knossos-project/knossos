@@ -581,7 +581,7 @@ void MainWindow::createMenus() {
     popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
     actionMenu.addSeparator();
 
-    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, [this]() {
+    createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, []() {
         if(state->skeletonState->selectedNodes.size() < 2) {
             if (state->skeletonState->activeNode != nullptr) {
                 state->viewer->window->toggleSynapseState(); //update statusbar
@@ -600,7 +600,7 @@ void MainWindow::createMenus() {
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     actionMenu.addSeparator();
     //segmentation
-    auto setOverlayOpacity = [this](int value) {
+    auto setOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
     increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
@@ -621,7 +621,7 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), []() {
         auto meshPriority = !state->skeletonState->meshLastClickCurrentlyVisited || !state->skeletonState->activeNode;
         if (state->skeletonState->meshLastClickInformation && meshPriority) {
             state->viewer->setPosition(state->skeletonState->meshLastClickInformation.get().coord);

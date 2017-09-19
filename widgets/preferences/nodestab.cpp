@@ -187,7 +187,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
         state->viewerState->nodePropertyColorMapMax = value;
         propertyMinMaxButton.setEnabled(true);
     });
-    QObject::connect(&propertyMinMaxButton, &QPushButton::clicked, [this]() { findAndSetPropertyRange(state->viewerState->highlightedNodePropertyByColor); });
+    QObject::connect(&propertyMinMaxButton, &QPushButton::clicked, []() { findAndSetPropertyRange(state->viewerState->highlightedNodePropertyByColor); });
     QObject::connect(&propertyLUTButton, &QPushButton::clicked, [this]() { loadNodeLUTRequest(); });
 
     createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_R, [this](){// R for radius

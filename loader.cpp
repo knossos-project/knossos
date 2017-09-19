@@ -581,7 +581,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);
-            QObject::connect(reply, &QNetworkReply::finished, [this, cubeEdgeLen, reply, type, globalCoord, center, &downloads, &decompressions, &freeSlots, &cubeHash](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, cubeEdgeLen, reply, type, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qCritical() << globalCoord << static_cast<int>(type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
@@ -593,7 +593,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, &cubeHash, &freeSlots, &downloads, &decompressions, globalCoord, watcher, type, currentSlot](){
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, &freeSlots, &decompressions, globalCoord, watcher, type, currentSlot](){
                         if (!watcher->isCanceled()) {
                             auto result = watcher->result();
 

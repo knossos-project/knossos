@@ -78,7 +78,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
 
     // trees render options
     QObject::connect(&highlightActiveTreeCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->highlightActiveTree = on; });
-    QObject::connect(&highlightIntersectionsCheck, &QCheckBox::clicked, [this](const bool checked) {
+    QObject::connect(&highlightIntersectionsCheck, &QCheckBox::clicked, [](const bool checked) {
         state->viewerState->showIntersections = checked;
     });
     QObject::connect(&lightEffectsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->lightOnOff = on; });

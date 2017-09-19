@@ -29,7 +29,7 @@
 
 ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
     menuButton.menu()->addAction(&resetAction);
-    connect(&resetAction, &QAction::triggered, [this]() {
+    connect(&resetAction, &QAction::triggered, []() {
         state->viewer->resetRotation();
     });
 }

@@ -101,8 +101,8 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
         fovSpin.setValue(cubeEdgeLen * (state->M - 1));
         segmentationOverlayCheckbox.setChecked(Dataset::current.overlay);
     };
-    QObject::connect(this, &DatasetLoadWidget::rejected, [&, this]() { resetSettings(); });
-    QObject::connect(&cancelButton, &QPushButton::clicked, [&, this]() { resetSettings(); hide(); });
+    QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
+    QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
     resize(600, 600);//random default size, will be overriden by settings if present
 
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));

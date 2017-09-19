@@ -107,7 +107,7 @@ void Viewer::loadSettings() {
     if (state->viewerState->defaultVPSizeAndPos) {
         mainWindow.resetViewports();
     } else {
-        mainWindow.forEachVPDo([&settings, this](ViewportBase & vp) {
+        mainWindow.forEachVPDo([&settings](ViewportBase & vp) {
             const auto docked = settings.value(VP_I_DOCKED.arg(vp.viewportType), true).toBool();
             vp.isDocked = docked;
             vp.dockPos = settings.value(VP_I_DOCKED_POS.arg(vp.viewportType)).toPoint();
@@ -908,7 +908,7 @@ void Viewer::run() {
         }
     }
 
-    window->forEachOrthoVPDo([this](ViewportOrtho & vp) {
+    window->forEachOrthoVPDo([](ViewportOrtho & vp) {
         vp.update();
     });
     window->viewport3D.get()->update();

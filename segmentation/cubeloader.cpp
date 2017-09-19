@@ -194,16 +194,16 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                 //for rectangular brushes no further range checks are needed
                 if (brush.mode == brush_t::mode_t::three_dim && brush.shape == brush_t::shape_t::angular) {
                     //rarest special case: processes completely exclosed cubes first
-                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                    cubeChangeSet = processRegion(region.first, region.second, [value](uint64_t & voxel, Coordinate){
                         voxel = value;
                     }, wholeCubes(region.first, region.second, value, cubeChangeSetWholeCube));
                 } else {
-                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                    cubeChangeSet = processRegion(region.first, region.second, [value](uint64_t & voxel, Coordinate){
                         voxel = value;
                     });
                 }
             } else {//inverse but selected
-                cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate){
+                cubeChangeSet = processRegion(region.first, region.second, [](uint64_t & voxel, Coordinate){
                     if (Segmentation::singleton().isSubObjectIdSelected(voxel)) {//if there’re selected objects, we only want to erase these
                         voxel = 0;
                     }
@@ -217,7 +217,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                 }
             });
         } else {//circle, inverse and selected
-            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos](uint64_t & voxel, Coordinate globalPos){
                 if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
                         && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
                     voxel = 0;

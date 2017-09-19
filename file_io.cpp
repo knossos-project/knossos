@@ -98,15 +98,15 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             }
             state->mainWindow->loadCustomPreferences(fileName);
         });
-        getSpecificFile("mergelist.txt", [&archive](auto & file){
+        getSpecificFile("mergelist.txt", [](auto & file){
             Segmentation::singleton().mergelistLoad(file);
         });
-        getSpecificFile("microworker.txt", [&archive](auto & file){
+        getSpecificFile("microworker.txt", [](auto & file){
             Segmentation::singleton().jobLoad(file);
         });
         //load skeleton after mergelist as it may depend on a loaded segmentation
         std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
-        getSpecificFile("annotation.xml", [&archive, &treeMap, mergeSkeleton, treeCmtOnMultiLoad](auto & file){
+        getSpecificFile("annotation.xml", [&treeMap, mergeSkeleton, treeCmtOnMultiLoad](auto & file){
             treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
         });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton

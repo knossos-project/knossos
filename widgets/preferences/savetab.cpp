@@ -81,7 +81,7 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::Wi
         }
         state->viewer->window->updateTitlebar();
     });
-    QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [this](auto id) {
+    QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](auto id) {
         Session::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
 }

@@ -110,7 +110,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&xMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
     QObject::connect(&yMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
     QObject::connect(&zMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, [this]() {
+    QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, []() {
         Session::singleton().resetMovementArea();
     });
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {

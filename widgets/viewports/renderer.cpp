@@ -1703,11 +1703,11 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            auto addVerticalPixelBorder = [&vertices, this](float x, float y, float z) {
+            auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
                 vertices.push_back({x, y    , z});
                 vertices.push_back({x, y + 1, z});
             };
-            auto addHorizontalPixelBorder = [&vertices, this](float x, float y, float z) {
+            auto addHorizontalPixelBorder = [&vertices](float x, float y, float z) {
                 vertices.push_back({x    , y, z});
                 vertices.push_back({x + 1, y, z});
             };

@@ -310,7 +310,7 @@ auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
 
 SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         , nodeView{nodeSortAndCommentFilterProxy, nodeModel} {
-    auto setupTable = [this](auto & table, auto & model, auto & sortIndex){
+    auto setupTable = [](auto & table, auto & model, auto & sortIndex){
         table.setModel(&model);
         table.setAllColumnsShowFocus(true);
         table.setUniformRowHeights(true);//perf hint from doc
@@ -489,7 +489,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
         nodeRecreate();
     });
-    QObject::connect(&nodeFilterModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int) { nodeRecreate(); });
+    QObject::connect(&nodeFilterModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int) { nodeRecreate(); });
     QObject::connect(&nodeFilterButtonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int id) {
         const auto flag = QFlags<NodeModel::FilterMode>(id);
         nodeModel.mode = nodeFilterButtonGroup.button(id)->isChecked() ? nodeModel.mode | flag : nodeModel.mode & ~flag;
@@ -675,19 +675,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
 
 
-    QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [this](){
+    QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [](){
         const auto * tree = state->skeletonState->selectedTrees.front();
         if (!tree->nodes.empty()) {
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
     });
     addDisabledSeparator(treeContextMenu);
-    QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [this](){
+    QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [](){
         const auto * tree = state->skeletonState->selectedTrees.front();
         assert(tree->properties.contains("preSynapse"));
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["preSynapse"].toLongLong()]);
     });
-    QObject::connect(treeContextMenu.addAction("Jump to postSynapse"), &QAction::triggered, [this](){
+    QObject::connect(treeContextMenu.addAction("Jump to postSynapse"), &QAction::triggered, [](){
         const auto * tree = state->skeletonState->selectedTrees.front();
         assert(tree->properties.contains("preSynapse"));
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
@@ -754,7 +754,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
 
-    QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [this](){
+    QObject::connect(nodeContextMenu.addAction("&Jump to node"), &QAction::triggered, [](){
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->selectedNodes.front());
     });
     QObject::connect(nodeContextMenu.addAction("Jump to node with &ID"), &QAction::triggered, [this](){
@@ -788,12 +788,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
 
-    QObject::connect(nodeContextMenu.addAction("Select containing trees"), &QAction::triggered, [this]() {
+    QObject::connect(nodeContextMenu.addAction("Select containing trees"), &QAction::triggered, []() {
         Skeletonizer::singleton().inferTreeSelectionFromNodeSelection();
     });
 
     addDisabledSeparator(nodeContextMenu);
-    QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [this](){
+    QObject::connect(nodeContextMenu.addAction("&Jump to corresponding cleft"), &QAction::triggered, [](){
         const auto & correspondingSynapse = state->skeletonState->selectedNodes.front()->correspondingSynapse;
         Skeletonizer::singleton().jumpToNode(correspondingSynapse->getCleft()->nodes.front());
     });
