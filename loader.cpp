@@ -414,7 +414,15 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
             std::copy(image.bits(), image.bits() + image.byteCount(), currentSlot);
             success = true;
         }
-    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
+    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
+        const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES / 4;
+        if (availableSize == expectedSize) {
+            boost::multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<uint16_t *>(data.data()), boost::extents[std::pow(Dataset::current().cubeEdgeLength, 3)]);
+            boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[std::pow(Dataset::current().cubeEdgeLength, 3)]);
+            std::copy(std::begin(dataRef), std::end(dataRef), std::begin(slotRef));
+            success = true;
+        }
+    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), currentSlot);

@@ -34,7 +34,7 @@ struct Dataset {
         Heidelbrain, WebKnossos, GoogleBrainmaps, OpenConnectome
     };
     enum class CubeType {
-        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED, SEGMENTATION_SZ_ZIP
+        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP
     };
     QString compressionString() const;
 

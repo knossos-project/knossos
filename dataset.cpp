@@ -45,7 +45,8 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
-    case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED: return "64 bit id";
+    case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
+    case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "sz.zip";
     }
     throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
@@ -268,7 +269,7 @@ QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coo
         filename = filename.arg(".6.jp2");
     } else if (type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
         filename = filename.arg(".seg.sz.zip");
-    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
+    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         filename = filename.arg(".seg");
     }
 
@@ -325,7 +326,7 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
     QString layer;
     if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         layer = "color";
-    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED) {
+    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         layer = "volume";
     }
 
@@ -353,15 +354,7 @@ QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate gl
 }
 
 bool Dataset::isOverlay(const CubeType type) {
-    switch (type) {
-    case CubeType::RAW_UNCOMPRESSED:
-    case CubeType::RAW_JPG:
-    case CubeType::RAW_J2K:
-    case CubeType::RAW_JP2_6:
-        return false;
-    case CubeType::SEGMENTATION_UNCOMPRESSED:
-    case CubeType::SEGMENTATION_SZ_ZIP:
-        return true;
-    };
-    throw std::runtime_error("unknown value for Dataset::CubeType");
+    return type == CubeType::SEGMENTATION_UNCOMPRESSED_16
+            || type == CubeType::SEGMENTATION_UNCOMPRESSED_64
+            || type == CubeType::SEGMENTATION_SZ_ZIP;
 }
