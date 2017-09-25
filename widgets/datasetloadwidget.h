@@ -42,9 +42,20 @@
 #include <QVBoxLayout>
 
 class FOVSpinBox : public QSpinBox {
+private:
+    int cubeEdge;
 public:
-    uint cubeEdge{128};
-
+    FOVSpinBox() {
+        setCubeEdge(128);
+    }
+    void setCubeEdge(const int newCubeEdge) {
+        cubeEdge = newCubeEdge;
+        setRange(cubeEdge * 2, cubeEdge * 14);
+        setSingleStep(cubeEdge * 2);
+        auto val = QString::number(value());
+        fixup(val);
+        setValue(val.toInt());
+    }
     virtual QValidator::State validate(QString &input, int &pos) const override {
         if (QSpinBox::validate(input, pos) == QValidator::Invalid) {
             return QValidator::Invalid;
@@ -52,7 +63,6 @@ public:
         auto number = valueFromText(input);
         return ((number % cubeEdge == 0) && ((number / cubeEdge) % 2 == 0)) ? QValidator::Acceptable : QValidator::Intermediate;
     }
-
     virtual void fixup(QString &input) const override {
         auto number = valueFromText(input);
         auto ratio = static_cast<int>(std::floor(static_cast<float>(number) / cubeEdge));

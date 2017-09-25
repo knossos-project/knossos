@@ -69,12 +69,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
 
     cubeEdgeSpin.setRange(1, 256);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    cubeEdgeSpin.hide();
-    cubeEdgeLabel.hide();
     fovSpin.setSuffix(" px");
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    fovSpin.setRange(cubeEdgeLen * 2, cubeEdgeLen * 14);
-    fovSpin.setSingleStep(cubeEdgeLen * 2);
     fovSpin.setAlignment(Qt::AlignLeft);
     fovSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -93,12 +88,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
 
     QObject::connect(&tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
     QObject::connect(&tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::updateDatasetInfo);
-    QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
+    QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int cubeedge){
+        fovSpin.setCubeEdge(cubeedge);
+        adaptMemoryConsumption();
+    });
     QObject::connect(&fovSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
-    static auto resetSettings = [&cubeEdgeLen, this]() {
-        fovSpin.setValue(cubeEdgeLen * (state->M - 1));
+    static auto resetSettings = [this]() {
+        fovSpin.setValue(Dataset::current().cubeEdgeLength * (state->M - 1));
         segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
     };
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
@@ -174,8 +172,8 @@ void DatasetLoadWidget::updateDatasetInfo() {
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+    fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
     fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
-    fovSpin.cubeEdge = datasetinfo.cubeEdgeLength;
     cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
     adaptMemoryConsumption();
 
@@ -196,7 +194,13 @@ void DatasetLoadWidget::updateDatasetInfo() {
         .arg(datasetinfo.scale.z);
 
     infoLabel.setText(infotext);
-    fovSpin.setSingleStep(datasetinfo.cubeEdgeLength * 2);
+
+    datasetSettingsLayout.takeRow(&cubeEdgeSpin);
+    cubeEdgeSpin.setParent(nullptr);
+    cubeEdgeLabel.setParent(nullptr);
+    if (!Dataset::isHeidelbrain(url)) {
+        datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
+    }
 }
 
 QStringList DatasetLoadWidget::getRecentPathItems() {
@@ -413,7 +417,7 @@ void DatasetLoadWidget::loadSettings() {
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
-    fovSpin.cubeEdge = cubeEdgeLen;
+    fovSpin.setCubeEdge(cubeEdgeLen);
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
     segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
     adaptMemoryConsumption();
