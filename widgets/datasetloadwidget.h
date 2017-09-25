@@ -64,9 +64,6 @@ public:
     }
 };
 
-class QScrollArea;
-class QPushButton;
-
 class DatasetLoadWidget : public DialogVisibilityNotify {
     Q_OBJECT
 
