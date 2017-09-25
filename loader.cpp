@@ -572,6 +572,25 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
 
         if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
+            if (dataset.type == Dataset::CubeType::SNAPPY) {
+                if (!freeSlots.empty()) {
+                    auto * currentSlot = freeSlots.front();
+                    freeSlots.pop_front();
+                    std::fill(currentSlot, currentSlot + state->cubeBytes * (dataset.isOverlay() ? OBJID_BYTES : 1), 0);
+                    state->protectCube2Pointer.lock();
+                    cubeHash[globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)] = currentSlot;
+                    state->protectCube2Pointer.unlock();
+                    if (dataset.isOverlay()) {
+                        state->viewer->oc_reslice_notify_all(globalCoord);
+                    } else {
+                        state->viewer->dc_reslice_notify_all(globalCoord);
+                    }
+                } else {
+                    qCritical() << globalCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
+                }
+                return;
+            }
+
             //transform googles oauth2 token from query item to request header
             QUrlQuery originalQuery(dcUrl);
             auto reducedQuery = originalQuery;

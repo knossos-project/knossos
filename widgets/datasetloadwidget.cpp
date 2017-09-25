@@ -311,6 +311,10 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
     Dataset::current().overlay = segmentationOverlayCheckbox.isChecked();
+    if (Dataset::current().overlay && Dataset::datasets.size() < 2) {// add empty overlay channel
+        Dataset::datasets.push_back(Dataset::datasets.front());
+        Dataset::datasets.back().type = Dataset::CubeType::SNAPPY;
+    }
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
