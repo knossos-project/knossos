@@ -138,6 +138,9 @@ int main(int argc, char *argv[]) {
     Viewer viewer;
     Scripting scripts;
     state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
+#ifndef NDEBUG
+    auto & splash = *state.mainWindow;// splash doesn’t exist in debug mode, use main window as datasetloadwidget’s parent
+#endif
     state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset(&splash);// load last used dataset or show
     viewer.timer.start(0);
 #ifdef NDEBUG
