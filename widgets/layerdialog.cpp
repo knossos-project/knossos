@@ -63,7 +63,19 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
-                guiData[index.row()].opacity = value.toString().left(-1).toFloat() / 100.0f;
+                guiData[index.row()].opacity = value.toFloat() / 100.0f;
+                break;
+            case 2:
+                guiData[index.row()].name = value.toString();
+                break;
+            case 3:
+                guiData[index.row()].type = value.toString();
+                break;
+            }
+        } else if (role == Qt::UserRole) { // raw data setter
+            switch(index.column()) {
+            case 1:
+                guiData[index.row()].opacity = value.toFloat();
                 break;
             case 2:
                 guiData[index.row()].name = value.toString();
