@@ -603,13 +603,20 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
                 request.setRawHeader("Authorization", authorization.toUtf8());
             }
+            QByteArray payload;
+            if (dataset.api == Dataset::API::WebKnossos) {
+                request.setRawHeader("Content-Type", "application/json");
+                payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(int_log(dataset.magnification)).arg(dataset.cubeEdgeLength).toUtf8();
+            }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
             if (globalCoord == center.cube(dataset.cubeEdgeLength, dataset.magnification).cube2Global(dataset.cubeEdgeLength, dataset.magnification)) {
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
             }
-            auto * reply = qnam.get(request);
+
+            auto * reply = dataset.api == Dataset::API::WebKnossos ? qnam.post(request, payload) : qnam.get(request);
+
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);

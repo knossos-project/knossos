@@ -160,7 +160,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     QString dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    const QUrl url{dataset + (!QUrl{dataset}.isLocalFile() ? "/" : "")};// add slash to avoid redirects
+    const QUrl url{dataset + (!QUrl{dataset}.isLocalFile() && !Dataset::isWebKnossos(dataset) ? "/" : "")};// add slash to avoid redirects
     bad = bad || !(download = Network::singleton().refresh(url)).first;
     if (bad) {
         infoLabel.setText("");
@@ -244,7 +244,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
-    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") ? "/" : ""));// add slash to avoid redirects
+    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") && !Dataset::isWebKnossos(path) ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {

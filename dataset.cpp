@@ -67,7 +67,7 @@ bool Dataset::isWebKnossos(const QUrl & url) {
 
 QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
     if (Dataset::isWebKnossos(url)) {
-        return Dataset::parseWebKnossosJson(data);
+        return Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         return Dataset::parseNeuroDataStoreJson(url, data);
     } else {
@@ -132,34 +132,58 @@ QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QStr
     return {info};
 }
 
-QList<Dataset> Dataset::parseWebKnossosJson(const QString & json_raw) {
+QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
+
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
-    const auto boundary_json = jmap["dataSource"].toObject()["dataLayers"].toArray()[1].toObject()["sections"].toArray()[0].toObject()["bboxBig"].toObject(); //use bboxBig from color because its bigger :X
-    info.boundary = {
-        boundary_json["width"].toInt(),
-        boundary_json["height"].toInt(),
-        boundary_json["depth"].toInt(),
-    };
+    info.url = jmap["dataStore"].toObject()["url"].toString() + "/data/datasets/" + jmap["name"].toString();
 
-    const auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
-    info.scale = {
-        static_cast<float>(scale_json[0].toDouble()),
-        static_cast<float>(scale_json[1].toDouble()),
-        static_cast<float>(scale_json[2].toDouble()),
-    };
+    decltype(Dataset::datasets) layers;
+    for (auto && layer : jmap["dataSource"].toObject()["dataLayers"].toArray()) {
+        const auto layerString = layer.toObject()["name"].toString();
+        const auto category = layer.toObject()["category"].toString();
+        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/dataToken/generate?dataSetName=%1&dataLayerName=%2").arg(infoUrl.path().split("/").back()).arg(layerString));
+        if (download.first) {
+            info.token = QJsonDocument::fromJson(download.second.toUtf8()).object()["token"].toString();
+        }
+        if (category == "color") {
+            info.type = CubeType::RAW_UNCOMPRESSED;
+            info.overlay = false;
+        } else {// "segmentation"
+            info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
+            info.overlay = true;
+        }
+        const auto boundary_json = layer.toObject()["boundingBox"].toObject();
+        info.boundary = {
+            boundary_json["width"].toInt(),
+            boundary_json["height"].toInt(),
+            boundary_json["depth"].toInt(),
+        };
 
-    const auto mags = jmap["dataSource"].toObject()["dataLayers"].toArray()[0].toObject()["sections"].toArray()[0].toObject()["resolutions"].toArray();
+        const auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
+        info.scale = {
+            static_cast<float>(scale_json[0].toDouble()),
+            static_cast<float>(scale_json[1].toDouble()),
+            static_cast<float>(scale_json[2].toDouble()),
+        };
 
-    info.lowestAvailableMag = mags[0].toInt();
-    info.magnification = info.lowestAvailableMag;
-    info.highestAvailableMag = mags[mags.size()-1].toInt();
-    info.type = CubeType::RAW_UNCOMPRESSED;
-    info.overlay = false;
+        auto mags = layer.toObject()["resolutions"].toArray().toVariantList();
+        std::sort(std::begin(mags), std::end(mags), [](auto lhs, auto rhs){
+            return lhs.toInt() < rhs.toInt();
+        });
 
-    return {info};
+        info.lowestAvailableMag = mags[0].toInt();
+        info.magnification = info.lowestAvailableMag;
+        info.highestAvailableMag = mags[mags.size()-1].toInt();
+
+        layers.push_back(info);
+        layers.back().url.setPath(info.url.path() + "/layers/" + layerString + "/data");
+        layers.back().url.setQuery(info.url.query().append("token=" + info.token));
+    }
+
+    return layers;
 }
 
 QList<Dataset> Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {

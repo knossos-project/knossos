@@ -45,7 +45,7 @@ struct Dataset {
     static QList<Dataset> parse(const QUrl & url, const QString &data);
     static QList<Dataset> parseGoogleJson(const QString & json_raw);
     static QList<Dataset> parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
-    static QList<Dataset> parseWebKnossosJson(const QString & json_raw);
+    static QList<Dataset> parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
     static QList<Dataset> fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
     Dataset createCorrespondingOverlayLayer();
@@ -82,6 +82,7 @@ struct Dataset {
     // Current dataset identifier string
     QString experimentname;
     QUrl url;
+    QString token;
 
     static QList<Dataset> datasets;
     static auto & current() { return datasets.front(); }
