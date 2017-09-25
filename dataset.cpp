@@ -51,8 +51,26 @@ QString Dataset::compressionString() const {
     throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
 }
 
+bool Dataset::isHeidelbrain(const QUrl & url) {
+    return !isNeuroDataStore(url) && !isWebKnossos(url);
+}
+
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
+}
+
+bool Dataset::isWebKnossos(const QUrl & url) {
+    return url.host().contains("webknossos");
+}
+
+Dataset Dataset::parse(const QUrl & url, const QString & data) {
+    if (Dataset::isWebKnossos(url)) {
+        return Dataset::parseWebKnossosJson(data);
+    } else if (Dataset::isNeuroDataStore(url)) {
+        return Dataset::parseNeuroDataStoreJson(url, data);
+    } else {
+        return Dataset::fromLegacyConf(url, data);
+    }
 }
 
 Dataset Dataset::parseGoogleJson(const QString & json_raw) {

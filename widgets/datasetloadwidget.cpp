@@ -169,7 +169,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
         return;
     }
 
-    const auto datasetinfo = Dataset::isNeuroDataStore(url) ? Dataset::parseNeuroDataStoreJson(url, download.second) : Dataset::fromLegacyConf(url, download.second);
+    const auto datasetinfo = Dataset::parse(url, download.second);
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -273,11 +273,8 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
         keepAnnotation = question.clickedButton() == keepButton;
     }
 
-    Dataset info;
-    if (Dataset::isNeuroDataStore(path)) {
-        info = Dataset::parseNeuroDataStoreJson(path, download.second);
-    } else {
-        info = Dataset::fromLegacyConf(path, download.second);
+    Dataset info = Dataset::parse(path, download.second);
+    if (Dataset::isHeidelbrain(path)) {
         try {
             info.checkMagnifications();
         } catch (std::exception &) {

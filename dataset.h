@@ -38,8 +38,11 @@ struct Dataset {
     };
     QString compressionString() const;
 
+    static bool isHeidelbrain(const QUrl & url);
     static bool isNeuroDataStore(const QUrl & url);
+    static bool isWebKnossos(const QUrl & url);
 
+    static Dataset parse(const QUrl & url, const QString & data);
     static Dataset parseGoogleJson(const QString & json_raw);
     static Dataset parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static Dataset parseWebKnossosJson(const QString & json_raw);
