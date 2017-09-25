@@ -83,7 +83,7 @@ void Loader::Controller::unloadCurrentMagnification() {
 void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
     emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
     state->viewer->window->notifyUnsavedChanges();
-    state->viewer->oc_reslice_notify_all(cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification));
+    state->viewer->oc_reslice_notify_all(cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, magnification));
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
@@ -290,7 +290,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
     snappyCache[cubeMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
     if (cubeMagnification == loaderMagnification) {//unload if currently loaded
-        const auto globalCoord = cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+        const auto globalCoord = cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, magnification);
         auto downloadIt = ocDownload.find(globalCoord);
         if (downloadIt != std::end(ocDownload)) {
             downloadIt->second->abort();
