@@ -112,9 +112,9 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
     zoomLayout.addWidget(&skeletonViewportSpinBox, row++, 1);
     zoomLayout.addWidget(&zoomDefaultsButton, row, 0, 1, 1, Qt::AlignLeft);
 
-    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(Dataset::current.magnification));
-    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(Dataset::current.highestAvailableMag));
-    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(Dataset::current.lowestAvailableMag));
+    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(Dataset::current().magnification));
+    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(Dataset::current().highestAvailableMag));
+    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(Dataset::current().lowestAvailableMag));
 
     separator.setFrameShape(QFrame::HLine);
     separator.setFrameShadow(QFrame::Sunken);
@@ -133,15 +133,15 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
         if (state->viewerState->datasetMagLock == false) {
-            if (prevFOV == VPZOOMMIN && Dataset::current.magnification < state->viewer->highestMag() && prevFOV < newFOV) {
-               state->viewer->updateDatasetMag(Dataset::current.magnification * 2);
+            if (prevFOV == VPZOOMMIN && Dataset::current().magnification < state->viewer->highestMag() && prevFOV < newFOV) {
+               state->viewer->updateDatasetMag(Dataset::current().magnification * 2);
                newFOV = 0.5;
             }
-            else if(prevFOV == 0.5 && Dataset::current.magnification > state->viewer->lowestMag() && prevFOV > newFOV) {
-                state->viewer->updateDatasetMag(Dataset::current.magnification / 2);
+            else if(prevFOV == 0.5 && Dataset::current().magnification > state->viewer->lowestMag() && prevFOV > newFOV) {
+                state->viewer->updateDatasetMag(Dataset::current().magnification / 2);
                 newFOV = VPZOOMMIN;
             } else {
-                const float zoomMax = Dataset::current.magnification == Dataset::current.lowestAvailableMag ? VPZOOMMAX : 0.5;
+                const float zoomMax = Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5;
                 newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
             }
         }
@@ -157,7 +157,7 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         const float newScreenPxXPerDataPx = (value / 100.) * state->viewer->lowestScreenPxXPerDataPx(false);
         if (!state->viewerState->datasetMagLock) {
             const uint newMag = state->viewer->calcMag(newScreenPxXPerDataPx);
-            if (newMag != static_cast<uint>(Dataset::current.magnification)) {
+            if (newMag != static_cast<uint>(Dataset::current().magnification)) {
                 state->viewer->updateDatasetMag(newMag);
             }
         }
@@ -241,12 +241,12 @@ void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
     const float prevFOV = state->viewer->viewportXY->texture.FOV;
     float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
-    if (newFOV >= 1 && Dataset::current.magnification < state->viewer->highestMag() && prevFOV < std::round(newFOV)) {
-       state->viewer->updateDatasetMag(Dataset::current.magnification * 2);
+    if (newFOV >= 1 && Dataset::current().magnification < state->viewer->highestMag() && prevFOV < std::round(newFOV)) {
+       state->viewer->updateDatasetMag(Dataset::current().magnification * 2);
        newFOV = 0.5;
     }
-    else if(newFOV <= 0.5 && Dataset::current.magnification > state->viewer->lowestMag() && prevFOV > std::round(newFOV)) {
-        state->viewer->updateDatasetMag(Dataset::current.magnification / 2);
+    else if(newFOV <= 0.5 && Dataset::current().magnification > state->viewer->lowestMag() && prevFOV > std::round(newFOV)) {
+        state->viewer->updateDatasetMag(Dataset::current().magnification / 2);
         newFOV = 1.;
     }
     state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
@@ -300,9 +300,9 @@ void ZoomWidget::update() {
     updateOrthogonalZoomSpinBox();
     skeletonViewportSpinBox.setValue(100 * state->mainWindow->viewport3D->zoomFactor);
 
-    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(Dataset::current.magnification));
-    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(Dataset::current.highestAvailableMag));
-    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(Dataset::current.lowestAvailableMag));
+    currentActiveMagDatasetLabel.setText(tr("Currently active mag dataset: %1").arg(Dataset::current().magnification));
+    highestActiveMagDatasetLabel.setText(tr("Highest available mag dataset: %1").arg(Dataset::current().highestAvailableMag));
+    lowestActiveMagDatasetLabel.setText(tr("Lowest available mag dataset: %1").arg(Dataset::current().lowestAvailableMag));
 }
 
 void ZoomWidget::loadSettings() {

@@ -239,9 +239,9 @@ void MainWindow::resetTextureProperties() {
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
         orthoVP.texture.size = state->viewerState->texEdgeLength;
-        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current.magnification;
+        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;
         orthoVP.texture.FOV = 1;
-        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current.cubeEdgeLength;
+        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
         }
@@ -562,11 +562,11 @@ void MainWindow::createMenus() {
 
     compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
         static Dataset::CubeType originalType;
-        if (Dataset::current.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
-            originalType = Dataset::current.type;
-            Dataset::current.type = Dataset::CubeType::RAW_UNCOMPRESSED;
+        if (Dataset::current().type != Dataset::CubeType::RAW_UNCOMPRESSED) {
+            originalType = Dataset::current().type;
+            Dataset::current().type = Dataset::CubeType::RAW_UNCOMPRESSED;
         } else {
-            Dataset::current.type = originalType;
+            Dataset::current().type = originalType;
         }
         state->viewer->updateDatasetMag();
         updateCompressionRatioDisplay();
@@ -1480,7 +1480,7 @@ void MainWindow::pythonPluginMgrSlot() {
 }
 
 void MainWindow::updateCompressionRatioDisplay() {
-    compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(Dataset::current.compressionString()));
+    compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(Dataset::current().compressionString()));
 }
 
 bool MainWindow::event(QEvent *event) {

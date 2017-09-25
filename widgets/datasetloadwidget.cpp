@@ -72,7 +72,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     cubeEdgeSpin.hide();
     cubeEdgeLabel.hide();
     fovSpin.setSuffix(" px");
-    const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     fovSpin.setRange(cubeEdgeLen * 2, cubeEdgeLen * 14);
     fovSpin.setSingleStep(cubeEdgeLen * 2);
     fovSpin.setAlignment(Qt::AlignLeft);
@@ -99,7 +99,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
     static auto resetSettings = [&cubeEdgeLen, this]() {
         fovSpin.setValue(cubeEdgeLen * (state->M - 1));
-        segmentationOverlayCheckbox.setChecked(Dataset::current.overlay);
+        segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
     };
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
     QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
@@ -296,17 +296,17 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     }
     datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
-    const bool changedBoundaryOrScale = info.boundary != Dataset::current.boundary || info.scale != Dataset::current.scale;
+    const bool changedBoundaryOrScale = info.boundary != Dataset::current().boundary || info.scale != Dataset::current().scale;
     Dataset::datasets[0] = info;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    auto & cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = cubeEdgeSpin.text().toInt();
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
-    Dataset::current.overlay = segmentationOverlayCheckbox.isChecked();
+    Dataset::current().overlay = segmentationOverlayCheckbox.isChecked();
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
@@ -325,9 +325,9 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     emit updateDatasetCompression();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
-        Session::singleton().updateMovementArea({0, 0, 0}, Dataset::current.boundary);
+        Session::singleton().updateMovementArea({0, 0, 0}, Dataset::current().boundary);
         // ...beginning with loading the middle of dataset
-        state->viewerState->currentPosition = {Dataset::current.boundary / 2};
+        state->viewerState->currentPosition = {Dataset::current().boundary / 2};
         state->viewer->updateDatasetMag();
         state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     }
@@ -344,17 +344,17 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_MRU, getRecentPathItems());
 
-    settings.setValue(DATASET_CUBE_EDGE, Dataset::current.cubeEdgeLength);
+    settings.setValue(DATASET_CUBE_EDGE, Dataset::current().cubeEdgeLength);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
-    settings.setValue(DATASET_OVERLAY, Dataset::current.overlay);
+    settings.setValue(DATASET_OVERLAY, Dataset::current().overlay);
 
     settings.endGroup();
 }
 
 void DatasetLoadWidget::applyGeometrySettings() {
     //settings depending on supercube and cube size
-    state->cubeSliceArea = std::pow(Dataset::current.cubeEdgeLength, 2);
-    state->cubeBytes = std::pow(Dataset::current.cubeEdgeLength, 3);
+    state->cubeSliceArea = std::pow(Dataset::current().cubeEdgeLength, 2);
+    state->cubeBytes = std::pow(Dataset::current().cubeEdgeLength, 3);
     state->cubeSetElements = std::pow(state->M, 3);
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
@@ -405,20 +405,20 @@ void DatasetLoadWidget::loadSettings() {
         tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
     }// QSignalBlocker
     updateDatasetInfo();
-    auto & cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
         state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     }
     if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        Dataset::current.overlay = settings.value(DATASET_OVERLAY, false).toBool();
+        Dataset::current().overlay = settings.value(DATASET_OVERLAY, false).toBool();
     }
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.cubeEdge = cubeEdgeLen;
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
-    segmentationOverlayCheckbox.setChecked(Dataset::current.overlay);
+    segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
     adaptMemoryConsumption();
     settings.endGroup();
     applyGeometrySettings();

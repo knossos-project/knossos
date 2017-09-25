@@ -102,11 +102,11 @@ void ViewportOrtho::initializeGL() {
         if (viewportType == ViewportType::VIEWPORT_XY) {
 //            state->viewer->gpucubeedge = 128;
             state->viewer->layers.emplace_back(*context());
-            state->viewer->layers.back().createBogusCube(Dataset::current.cubeEdgeLength, state->viewer->gpucubeedge);
+            state->viewer->layers.back().createBogusCube(Dataset::current().cubeEdgeLength, state->viewer->gpucubeedge);
             state->viewer->layers.emplace_back(*context());
 //            state->viewer->layers.back().enabled = false;
             state->viewer->layers.back().isOverlayData = true;
-            state->viewer->layers.back().createBogusCube(Dataset::current.cubeEdgeLength, state->viewer->gpucubeedge);
+            state->viewer->layers.back().createBogusCube(Dataset::current().cubeEdgeLength, state->viewer->gpucubeedge);
         }
 
         glEnable(GL_TEXTURE_3D);
@@ -167,7 +167,7 @@ void ViewportOrtho::sendCursorPosition() {
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = FOVinDCs * Dataset::current.cubeEdgeLength / static_cast<float>(texture.size);
+    float result = FOVinDCs * Dataset::current().cubeEdgeLength / static_cast<float>(texture.size);
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 

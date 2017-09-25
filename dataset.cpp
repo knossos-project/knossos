@@ -38,7 +38,6 @@
 #include <QUrlQuery>
 
 QList<Dataset> Dataset::datasets{Dataset{}};
-Dataset & Dataset::current{Dataset::datasets[0]};
 
 QString Dataset::compressionString() const {
     switch (type) {
@@ -313,7 +312,7 @@ QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, cons
     }
 
     auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    const auto cubeEdgeLen = Dataset::current.cubeEdgeLength;
+    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     path = path.arg(unknownScale).arg(coord.x / cubeEdgeLen).arg(coord.y / cubeEdgeLen).arg(coord.z / cubeEdgeLen);
     base.setPath(path);
     base.setQuery(query);
@@ -326,7 +325,7 @@ QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate gl
     case API::GoogleBrainmaps:
         return googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type);
     case API::Heidelbrain:
-        return knossosCubeUrl(baseUrl, QString(current.experimentname), globalCoord, cubeedgelength, std::pow(2, scale), type);
+        return knossosCubeUrl(baseUrl, QString(Dataset::current().experimentname), globalCoord, cubeedgelength, std::pow(2, scale), type);
     case API::OpenConnectome:
         return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
     case API::WebKnossos:

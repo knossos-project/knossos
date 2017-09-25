@@ -45,7 +45,7 @@ Remote::Remote() {
 void Remote::process(const Coordinate & pos, boost::optional<floatCoordinate> normal) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
-    const float jumpThreshold = 0.5f * Dataset::current.cubeEdgeLength * state->M * Dataset::current.magnification;//approximately inside sc
+    const float jumpThreshold = 0.5f * Dataset::current().cubeEdgeLength * state->M * Dataset::current().magnification;//approximately inside sc
     if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {
@@ -138,7 +138,7 @@ void Remote::remoteWalk() {
         }
     }
 
-    const auto seconds = recenteringOffset.length() / (state->viewerState->movementSpeed * Dataset::current.magnification);
+    const auto seconds = recenteringOffset.length() / (state->viewerState->movementSpeed * Dataset::current().magnification);
     const auto pixelCount = std::max({std::abs(recenteringOffset.x), std::abs(recenteringOffset.y), std::abs(recenteringOffset.z)});
     const auto totalMoves = std::max(1.0f, seconds / (std::max(ms, elapsed.elapsed()) / 1000.0f));
     floatCoordinate singleMove;

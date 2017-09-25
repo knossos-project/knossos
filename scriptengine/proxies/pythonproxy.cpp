@@ -61,15 +61,15 @@ QString PythonProxy::getKnossosRevision() {
 }
 
 int PythonProxy::getCubeEdgeLength() {
-    return Dataset::current.cubeEdgeLength;
+    return Dataset::current().cubeEdgeLength;
 }
 
 QList<int> PythonProxy::getOcPixel(QList<int> Dc, QList<int> pxInDc) {
-    char *cube = (char*)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current.magnification)], CoordOfCube(Dc[0], Dc[1], Dc[2]));
+    char *cube = (char*)Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)], CoordOfCube(Dc[0], Dc[1], Dc[2]));
     if (NULL == cube) {
         return QList<int>();
     }
-    int index = (pxInDc[2] * state->cubeSliceArea) + (pxInDc[1] * Dataset::current.cubeEdgeLength) + pxInDc[0];
+    int index = (pxInDc[2] * state->cubeSliceArea) + (pxInDc[1] * Dataset::current().cubeEdgeLength) + pxInDc[0];
     int byte_index = index * OBJID_BYTES;
     QList<int> charList;
     for (int i = 0; i < 3; i++) {
@@ -83,13 +83,13 @@ QList<int> PythonProxy::getPosition() {
 }
 
 QList<float> PythonProxy::getScale() {
-    return Dataset::current.scale.list();
+    return Dataset::current().scale.list();
 }
 
 
 char *PythonProxy::addrDcOc2Pointer(QList<int> coord, bool isOc) {
     coord2bytep_map_t *PointerMap = isOc ? state->Oc2Pointer : state->Dc2Pointer;
-    char *data = Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(Dataset::current.magnification)], coord);
+    char *data = Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(Dataset::current().magnification)], coord);
     if (data == NULL) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(coord[0]).arg(coord[1]).arg(coord[2]));
     }

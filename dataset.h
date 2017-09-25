@@ -57,7 +57,7 @@ struct Dataset {
     floatCoordinate scale{1.f, 1.f, 1.f};
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
-    // Dataset::current.magnification should only be used by the viewer,
+    // Dataset::current().magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
     // do not change to uint, it causes bugs in the display of higher mag datasets
@@ -76,7 +76,7 @@ struct Dataset {
     QUrl url;
 
     static QList<Dataset> datasets;
-    static Dataset & current;
+    static auto & current() { return datasets.front(); }
 };
 
 #endif//DATASET_H

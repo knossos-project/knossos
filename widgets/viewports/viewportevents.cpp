@@ -115,7 +115,7 @@ void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto subObjectId = readVoxel(coord);
     Segmentation::singleton().hoverSubObject(subObjectId);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, viewportType, event);
-    if(Segmentation::singleton().hoverVersion && Dataset::current.overlay) {
+    if(Segmentation::singleton().hoverVersion && Dataset::current().overlay) {
         Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
     }
     ViewportBase::handleMouseHover(event);
@@ -231,7 +231,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
                 clickedCoordinate += Coordinate(std::lround(movement.x * factor), std::lround(movement.y * factor), std::lround(movement.z * factor));
             }
 
-            clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, Dataset::current.boundary);// Do not allow clicks outside the dataset
+            clickedCoordinate = clickedCoordinate.capped({0, 0, 0}, Dataset::current().boundary);// Do not allow clicks outside the dataset
 
             if(state->skeletonState->synapseState == Synapse::State::PostSynapse) {
                 //The synapse workflow has been interrupted
@@ -340,7 +340,7 @@ void ViewportOrtho::handleMouseMotionMiddleHold(const QMouseEvent *event) {
         Coordinate moveTrunc = arbNodeDragCache;//truncate
         arbNodeDragCache -= moveTrunc;//only keep remaining fraction
         const auto newPos = draggedNode->position - moveTrunc;
-        Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, Dataset::current.magnification);
+        Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, Dataset::current().magnification);
     }
     ViewportBase::handleMouseMotionMiddleHold(event);
 }
@@ -462,7 +462,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
-        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, Dataset::current.magnification);;
+        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, Dataset::current().magnification);;
     } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         auto curRadius = seg.brush.getRadius();
         seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *
@@ -537,7 +537,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
         }
     } else if (event->modifiers() == Qt::NoModifier) {
         const float directionSign = event->delta() > 0 ? -1 : 1;
-        const auto multiplier = directionSign * state->viewerState->dropFrames * Dataset::current.magnification;
+        const auto multiplier = directionSign * state->viewerState->dropFrames * Dataset::current().magnification;
         state->viewer->userMove(n * multiplier, USERMOVE_DRILL, n);
     }
     ViewportBase::handleWheelEvent(event);
@@ -649,10 +649,10 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         const float directionSign = (keyLeft || keyUp) ? -1 : (keyRight || keyDown) ? 1 : direction * (keyD || keyE ? -1 : 1);
         if (keyLeft || keyRight || keyDown || keyUp || keyD || keyF) {
             const auto vector = (keyLeft || keyRight) ? v1 : (keyUp || keyDown) ? (v2 * -1) : (n * -1); // transform v2 and n from 1. to 8. octant
-            state->viewerState->repeatDirection = vector * directionSign * shiftMultiplier * state->viewerState->dropFrames * Dataset::current.magnification;
+            state->viewerState->repeatDirection = vector * directionSign * shiftMultiplier * state->viewerState->dropFrames * Dataset::current().magnification;
             state->viewer->userMove(state->viewerState->repeatDirection, USERMOVE_HORIZONTAL, n);
         } else if(event->key() == Qt::Key_R || keyE) {
-            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition - n * directionSign * shiftMultiplier * state->viewerState->walkFrames * Dataset::current.magnification);
+            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition - n * directionSign * shiftMultiplier * state->viewerState->walkFrames * Dataset::current().magnification);
         }
     } else if (keyD || keyF || keyLeft || keyRight || keyDown || keyUp) {
         // movement key pressed

@@ -67,8 +67,8 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
             if (match.hasMatch()) {
-                if (!Dataset::current.overlay) {
-                    Dataset::current.overlay = true;
+                if (!Dataset::current().overlay) {
+                    Dataset::current().overlay = true;
                     Loader::Controller::singleton().enableOverlay();
                 }
                 nonExtraFiles.insert(archive.getCurrentFileName());
@@ -204,7 +204,7 @@ void annotationFileSave(const QString & filename) {
         cubeTime.start();
         const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
         for (std::size_t i = 0; i < cubes.size(); ++i) {
-            const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current.experimentname).arg(QString::number(std::pow(2, i)));
+            const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(std::pow(2, i)));
             for (const auto & pair : cubes[i]) {
                 QuaZipFile file_write(&archive_write);
                 const auto cubeCoord = pair.first;

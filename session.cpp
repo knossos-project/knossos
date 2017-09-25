@@ -76,13 +76,13 @@ bool Session::outsideMovementArea(const Coordinate & pos) {
 }
 
 void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
-    movementAreaMin = min.capped({0, 0, 0}, Dataset::current.boundary);
-    movementAreaMax = max.capped({0, 0, 0}, Dataset::current.boundary);
+    movementAreaMin = min.capped({0, 0, 0}, Dataset::current().boundary);
+    movementAreaMax = max.capped({0, 0, 0}, Dataset::current().boundary);
     emit movementAreaChanged();
 }
 
 void Session::resetMovementArea() {
-    updateMovementArea({0, 0, 0}, Dataset::current.boundary);
+    updateMovementArea({0, 0, 0}, Dataset::current().boundary);
 }
 
 decltype(Session::annotationTimeMilliseconds) Session::getAnnotationTime() const {
