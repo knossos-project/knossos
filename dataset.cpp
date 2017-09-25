@@ -64,7 +64,7 @@ bool Dataset::isWebKnossos(const QUrl & url) {
     return url.host().contains("webknossos");
 }
 
-Dataset Dataset::parse(const QUrl & url, const QString & data) {
+QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
     if (Dataset::isWebKnossos(url)) {
         return Dataset::parseWebKnossosJson(data);
     } else if (Dataset::isNeuroDataStore(url)) {
@@ -74,7 +74,7 @@ Dataset Dataset::parse(const QUrl & url, const QString & data) {
     }
 }
 
-Dataset Dataset::parseGoogleJson(const QString & json_raw) {
+QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -99,10 +99,10 @@ Dataset Dataset::parseGoogleJson(const QString & json_raw) {
     info.type = CubeType::RAW_JPG;
     info.overlay = false;
 
-    return info;
+    return {info};
 }
 
-Dataset Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
+QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
@@ -128,10 +128,10 @@ Dataset Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & j
     info.type = CubeType::RAW_JPG;
     info.overlay = false;
 
-    return info;
+    return {info};
 }
 
-Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
+QList<Dataset> Dataset::parseWebKnossosJson(const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -158,10 +158,10 @@ Dataset Dataset::parseWebKnossosJson(const QString & json_raw) {
     info.type = CubeType::RAW_UNCOMPRESSED;
     info.overlay = false;
 
-    return info;
+    return {info};
 }
 
-Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
+QList<Dataset> Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     Dataset info;
     info.api = API::Heidelbrain;
 
@@ -236,7 +236,7 @@ Dataset Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     info.scale = info.scale / static_cast<float>(info.magnification);
     info.lowestAvailableMag = info.highestAvailableMag = info.magnification;
 
-    return info;
+    return {info};
 }
 
 void Dataset::checkMagnifications() {
@@ -245,7 +245,14 @@ void Dataset::checkMagnifications() {
     qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag).toUtf8().constData();
 }
 
-QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coord, const int cubeEdgeLength, const int magnification, const Dataset::CubeType type) {
+Dataset Dataset::createCorrespondingOverlayLayer() {
+    Dataset info = *this;
+    info.type = api == API::Heidelbrain ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
+    info.overlay = true;
+    return info;
+}
+
+QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
     const auto cubeCoord = coord.cube(cubeEdgeLength, magnification);
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
             .arg(magnification)
@@ -253,7 +260,7 @@ QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coo
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
     auto filename = QString(("%1_mag%2_x%3_y%4_z%5%6"))//2012-03-07_AreaX14_mag1_x0000_y0000_z0000.j2k
-            .arg(experimentName.section(QString("_mag"), 0, 0))
+            .arg(experimentname.section(QString("_mag"), 0, 0))
             .arg(magnification)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
             .arg(cubeCoord.y, 4, 10, QChar('0'))
@@ -273,87 +280,67 @@ QUrl knossosCubeUrl(QUrl base, QString && experimentName, const Coordinate & coo
         filename = filename.arg(".seg");
     }
 
-    base.setPath(base.path() + pos + filename);
+    auto base = url;
+    base.setPath(url.path() + pos + filename);
 
     return base;
 }
 
-QUrl googleCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeEdgeLength, const Dataset::CubeType type) {
-    auto query = QUrlQuery(base);
-    auto path = base.path() + "/binary/subvolume";
+QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
+    auto path = url.path() + "/binary/subvolume";
 
     if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         path += "/format=raw";
     } else if (type == Dataset::CubeType::RAW_JPG) {
         path += "/format=singleimage";
     }
-
-    path += "/scale=" + QString::number(scale);// >= 0
+    path += "/scale=" + QString::number(int_log(magnification));// >= 0
     path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
     path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
 
+    auto query = QUrlQuery(url);
     query.addQueryItem("alt", "media");
 
+    auto base = url;
     base.setPath(path);
     base.setQuery(query);
     //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
     return base;
 }
 
-QUrl openConnectomeCubeUrl(QUrl base, Coordinate coord, const int scale, const int cubeEdgeLength) {
-    auto query = QUrlQuery(base);
-    auto path = base.path();
+QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
+    auto path = url.path();
 
-    path += (!path.endsWith('/') ? "/" : "") + QString::number(scale);// >= 0
-    coord.x /= std::pow(2, scale);
-    coord.y /= std::pow(2, scale);
+    path += (!path.endsWith('/') ? "/" : "") + QString::number(int_log(magnification));// >= 0
+    coord.x /= magnification;
+    coord.y /= magnification;
     coord.z += 1;//offset
     path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength);
     path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength);
     path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeEdgeLength);
 
+    auto base = url;
     base.setPath(path + "/");
-    base.setQuery(query);
     //(string: server_name)/ocp/ca/(string: token_name)/(string: channel_name)/jpeg/(int: resolution)/(int: min_x),(int: max_x)/(int: min_y),(int: max_y)/(int: min_z),(int: max_z)/
     //(string: server_name)/nd/sd/(string: token_name)/(string: channel_name)/jpeg/(int: resolution)/(int: min_x),(int: max_x)/(int: min_y),(int: max_y)/(int: min_z),(int: max_z)/
     return base;
 }
 
-QUrl webKnossosCubeUrl(QUrl base, Coordinate coord, const int unknownScale, const int cubeEdgeLength, const Dataset::CubeType type) {
-    auto query = QUrlQuery(base);
-    query.addQueryItem("cubeSize", QString::number(cubeEdgeLength));
-
-    QString layer;
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        layer = "color";
-    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
-        layer = "volume";
-    }
-
-    auto path = base.path() + "/layers/" + layer + "/mag%1/x%2/y%3/z%4/bucket.raw";//mag >= 1
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    path = path.arg(unknownScale).arg(coord.x / cubeEdgeLen).arg(coord.y / cubeEdgeLen).arg(coord.z / cubeEdgeLen);
-    base.setPath(path);
-    base.setQuery(query);
-
-    return base;
-}
-
-QUrl Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type) {
+QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
     switch (api) {
     case API::GoogleBrainmaps:
-        return googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type);
+        return googleCubeUrl(globalCoord);
     case API::Heidelbrain:
-        return knossosCubeUrl(baseUrl, QString(Dataset::current().experimentname), globalCoord, cubeedgelength, std::pow(2, scale), type);
+        return knossosCubeUrl(globalCoord);
     case API::OpenConnectome:
-        return openConnectomeCubeUrl(baseUrl, globalCoord, scale, cubeedgelength);
+        return openConnectomeCubeUrl(globalCoord);
     case API::WebKnossos:
-        return webKnossosCubeUrl(baseUrl, globalCoord, scale + 1, cubeedgelength, type);
+        return url;
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }
 
-bool Dataset::isOverlay(const CubeType type) {
+bool Dataset::isOverlay() const {
     return type == CubeType::SEGMENTATION_UNCOMPRESSED_16
             || type == CubeType::SEGMENTATION_UNCOMPRESSED_64
             || type == CubeType::SEGMENTATION_SZ_ZIP;

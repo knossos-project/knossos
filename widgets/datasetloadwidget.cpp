@@ -167,7 +167,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
         return;
     }
 
-    const auto datasetinfo = Dataset::parse(url, download.second);
+    const auto datasetinfo = Dataset::parse(url, download.second).front();
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -277,10 +277,10 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
         keepAnnotation = question.clickedButton() == keepButton;
     }
 
-    Dataset info = Dataset::parse(path, download.second);
+    auto layers = Dataset::parse(path, download.second);
     if (Dataset::isHeidelbrain(path)) {
         try {
-            info.checkMagnifications();
+            layers.front().checkMagnifications();
         } catch (std::exception &) {
             if (!silent) {
                 QMessageBox warning(parent);
@@ -294,11 +294,14 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
             qDebug() << "no mags";
             return false;
         }
+        layers.push_back(layers.front().createCorrespondingOverlayLayer());
     }
+
     datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
-    const bool changedBoundaryOrScale = info.boundary != Dataset::current().boundary || info.scale != Dataset::current().scale;
-    Dataset::datasets[0] = info;
+    const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
+
+    Dataset::datasets = layers;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
@@ -321,7 +324,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
         }
     }
 
-    Loader::Controller::singleton().restart(info.url, info.api, info.type, Dataset::CubeType::SEGMENTATION_SZ_ZIP, info.experimentname);
+    Loader::Controller::singleton().restart(Dataset::datasets);
 
     emit updateDatasetCompression();
 

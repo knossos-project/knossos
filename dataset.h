@@ -42,15 +42,20 @@ struct Dataset {
     static bool isNeuroDataStore(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
-    static Dataset parse(const QUrl & url, const QString & data);
-    static Dataset parseGoogleJson(const QString & json_raw);
-    static Dataset parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
-    static Dataset parseWebKnossosJson(const QString & json_raw);
-    static Dataset fromLegacyConf(const QUrl & url, QString config);
+    static QList<Dataset> parse(const QUrl & url, const QString &data);
+    static QList<Dataset> parseGoogleJson(const QString & json_raw);
+    static QList<Dataset> parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
+    static QList<Dataset> parseWebKnossosJson(const QString & json_raw);
+    static QList<Dataset> fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
+    Dataset createCorrespondingOverlayLayer();
 
-    static QUrl apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type);
-    static bool isOverlay(const CubeType type);
+    QUrl apiSwitch(const Coordinate globalCoord) const;
+    QUrl knossosCubeUrl(const Coordinate coord) const;
+    QUrl googleCubeUrl(const Coordinate coord) const;
+    QUrl openConnectomeCubeUrl(const Coordinate coord) const;
+
+    bool isOverlay() const;
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};

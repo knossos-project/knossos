@@ -103,11 +103,7 @@ private:
     template<typename Func>
     void abortDownloadsFinishDecompression(Func);
 
-    const QUrl baseUrl;
-    const Dataset::API api;
-    const Dataset::CubeType typeDc;
-    const Dataset::CubeType typeOc;
-    const QString experimentName;
+    decltype(Dataset::datasets) datasets;
 public://matsch
     using CacheQueue = std::unordered_set<CoordOfCube>;
     std::vector<CacheQueue> OcModifiedCacheQueue;
@@ -124,13 +120,13 @@ public://matsch
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
     void allocateOverlayCubes();
-    Worker(const QUrl & baseUrl, const Dataset::API api, const Dataset::CubeType typeDc, const Dataset::CubeType typeOc, const QString & experimentName);
+    Worker(const decltype(datasets) &);
     ~Worker();
 signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const int magnification, const UserMoveType userMoveType, const floatCoordinate & direction);
 };
 
 class Controller : public QObject {
@@ -154,15 +150,15 @@ public:
     }
 
     template<typename... Args>
-    void restart(Args&&... args) {
+    void restart(const decltype(Dataset::datasets) & datasets) {
         suspendLoader();
         if (worker != nullptr) {
             worker->flushIntoSnappyCache();
             auto snappyCache = worker->snappyCache;
-            worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+            worker.reset(new Loader::Worker(datasets));
             worker->snappyCache = snappyCache;
         } else {
-            worker.reset(new Loader::Worker(std::forward<Args>(args)...));
+            worker.reset(new Loader::Worker(datasets));
         }
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);
@@ -187,7 +183,7 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const int magnification, const UserMoveType userMoveType, const floatCoordinate & direction);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
 };
