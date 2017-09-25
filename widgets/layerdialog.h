@@ -28,8 +28,8 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addItem();
-    void removeItem(const QModelIndexList &indices);
-    void moveItem(const QModelIndexList &indices, int offset);
+    void removeItem(const QModelIndex &index);
+    void moveItem(const QModelIndex &indices, int offset);
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {
@@ -59,6 +59,9 @@ public:
     QToolButton moveDownButton;
     QToolButton addLayerButton;
     QToolButton removeLayerButton;
+
+private:
+    void updateLayerOptions();
 };
 
 #endif // LAYERDIALOG_H

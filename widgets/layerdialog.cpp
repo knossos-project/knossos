@@ -90,6 +90,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             }
         }
     }
+    emit dataChanged(index, index, QVector<int>(role));
     return true;
 }
 
@@ -99,16 +100,17 @@ void LayerItemModel::addItem() {
     endInsertRows();
 }
 
-void LayerItemModel::removeItem(const QModelIndexList &indices) {
-    for(const auto& index : indices) {
-        beginRemoveRows(QModelIndex(), index.row(), index.row());
-        guiData.erase(guiData.begin() + index.row());
+void LayerItemModel::removeItem(const QModelIndex &index) {
+    if(index.isValid()) {
+        auto row = index.row();
+        beginRemoveRows(QModelIndex(), row, row);
+        guiData.erase(guiData.begin() + row);
         endRemoveRows();
     }
 }
 
-void LayerItemModel::moveItem(const QModelIndexList &indices, int offset) {
-    for(const auto& index : indices) {
+void LayerItemModel::moveItem(const QModelIndex &index, int offset) {
+    if(index.isValid()) {
         auto row = index.row();
         if(row + offset >= 0 && row + offset < guiData.size()) {
             beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + ((offset > 0) ? offset + 1 : offset)); // because moving is done into between rows
@@ -140,13 +142,19 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     setWindowTitle("Layers");
 
     int row = 0;
+    opacitySlider.setTracking(true);
+    opacitySlider.setMaximum(100);
     optionsLayout.addWidget(&opacitySliderLabel, row, 0);
     optionsLayout.addWidget(&opacitySlider, row, 1);
     optionsLayout.addWidget(&linearFilteringCheckBox, row, 2);
 
+    rangeDeltaSlider.setTracking(true);
+    rangeDeltaSlider.setMaximum(100);
     optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, 0);
     optionsLayout.addWidget(&rangeDeltaSlider, row, 1);
 
+    biasSlider.setTracking(true);
+    biasSlider.setMaximum(100);
     optionsLayout.addWidget(&biasSliderLabel, ++row, 0);
     optionsLayout.addWidget(&biasSlider, row, 1);
     optionsSpoiler.setContentLayout(optionsLayout);
@@ -181,17 +189,62 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     });
 
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
-        itemModel.removeItem(treeView.selectionModel()->selectedRows());
+        itemModel.removeItem(treeView.selectionModel()->currentIndex());
     });
 
     QObject::connect(&moveUpButton, &QToolButton::clicked, [this](){
-        itemModel.moveItem(treeView.selectionModel()->selectedRows(), -1);
+        itemModel.moveItem(treeView.selectionModel()->currentIndex(), -1);
     });
 
     QObject::connect(&moveDownButton, &QToolButton::clicked, [this](){
-        itemModel.moveItem(treeView.selectionModel()->selectedRows(), 1);
+        itemModel.moveItem(treeView.selectionModel()->currentIndex(), 1);
     });
+
+    QObject::connect(&opacitySlider, &QAbstractSlider::valueChanged, [this](int value){
+        const auto& currentIndex = treeView.selectionModel()->currentIndex();
+        if(currentIndex.isValid()) {
+            auto& selectedData = guiData[currentIndex.row()];
+            selectedData.opacity = static_cast<float>(value) / opacitySlider.maximum();
+            const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
+            emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
+        }
+    });
+
+    QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, [this](int value){
+        const auto& currentIndex = treeView.selectionModel()->currentIndex();
+        if(currentIndex.isValid()) {
+            auto& selectedData = guiData[currentIndex.row()];
+            selectedData.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
+        }
+    });
+
+    QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, [this](int value){
+        const auto& currentIndex = treeView.selectionModel()->currentIndex();
+        if(currentIndex.isValid()) {
+            auto& selectedData = guiData[currentIndex.row()];
+            selectedData.bias = static_cast<float>(value) / biasSlider.maximum();
+        }
+    });
+
+    QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int state){
+        const auto& currentIndex = treeView.selectionModel()->currentIndex();
+        if(currentIndex.isValid()) {
+            auto& selectedData = guiData[currentIndex.row()];
+            selectedData.linearFiltering = (state == Qt::Checked) ? true : false;
+        }
+    });
+
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerOptions);
+    QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerOptions);
 
     resize(700, 600);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
+
+void LayerDialogWidget::updateLayerOptions() {
+    auto& selectedData = guiData[treeView.selectionModel()->currentIndex().row()];
+    opacitySlider.setValue(static_cast<int>(selectedData.opacity * opacitySlider.maximum()));
+    rangeDeltaSlider.setValue(static_cast<int>(selectedData.rangeDelta * rangeDeltaSlider.maximum()));
+    biasSlider.setValue(static_cast<int>(selectedData.bias * biasSlider.maximum()));
+    linearFilteringCheckBox.setChecked(selectedData.linearFiltering);
 }
