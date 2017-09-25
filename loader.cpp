@@ -22,6 +22,7 @@
 
 #include "loader.h"
 
+#include "brainmaps.h"
 #include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
@@ -523,7 +524,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    auto startDownload = [this, center](const Dataset dataset, const Coordinate globalCoord, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
+    auto startDownload = [this, center](Dataset & dataset, const Coordinate globalCoord, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
         if (dataset.isOverlay()) {
             auto snappyIt = snappyCache[loaderMagnification].find(globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification));
             if (snappyIt != std::end(snappyCache[loaderMagnification])) {
@@ -598,15 +599,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             dcUrl.setQuery(reducedQuery);
 
             auto request = QNetworkRequest(dcUrl);
-
-            if (originalQuery.hasQueryItem("access_token")) {
-                const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
-                request.setRawHeader("Authorization", authorization.toUtf8());
-            }
             QByteArray payload;
             if (dataset.api == Dataset::API::WebKnossos) {
                 request.setRawHeader("Content-Type", "application/json");
                 payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(int_log(dataset.magnification)).arg(dataset.cubeEdgeLength).toUtf8();
+            } else if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                request.setRawHeader("Authorization", (QString("Bearer ") + dataset.token).toUtf8());
             }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
@@ -620,7 +618,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);
-            QObject::connect(reply, &QNetworkReply::finished, [this, dataset, reply, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, &dataset, reply, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
                 if (freeSlots.empty()) {
                     qCritical() << globalCoord << static_cast<int>(dataset.type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
@@ -631,6 +629,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (reply->error() == QNetworkReply::NoError) {
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
+//                    qDebug() << reply->size();
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
                     QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, [this, reply, dataset, &freeSlots, &decompressions, globalCoord, watcher, currentSlot](){
                         if (!watcher->isCanceled()) {
@@ -667,6 +666,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << globalCoord << static_cast<int>(dataset.type) << reply->errorString() << reply->readAll();
+                            if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                                qDebug() << "got errored" << reply->error();
+                                if (reply->error() == QNetworkReply::ContentAccessDenied || reply->error() == QNetworkReply::AuthenticationRequiredError) {
+                                    auto pair = getBrainmapsToken();
+                                    if (pair.first) {
+                                        dataset.token = pair.second;
+                                    }
+                                }
+                            }
                         }
                     }
                     reply->deleteLater();

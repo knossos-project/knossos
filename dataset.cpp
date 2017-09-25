@@ -311,16 +311,17 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
     return base;
 }
 
-QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
+QUrl Dataset::googleCubeUrl(Coordinate coord) const {
     auto path = url.path() + "/binary/subvolume";
 
     if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        path += "/format=raw";
+        path += "/subvolumeFormat=raw";
     } else if (type == Dataset::CubeType::RAW_JPG) {
-        path += "/format=singleimage";
+        path += "/subvolumeFormat=SINGLE_IMAGE";
     }
     path += "/scale=" + QString::number(int_log(magnification));// >= 0
     path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
+    coord /= magnification;
     path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
 
     auto query = QUrlQuery(url);
@@ -330,6 +331,10 @@ QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
     base.setPath(path);
     base.setQuery(query);
     //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
+
+    // https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata/binary/subvolume/subvolumeFormat=raw/scale=0/size=128,128,128/corner=0,0,0?alt=media
+    // https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata/binary/subvolume/subvolumeFormat=SINGLE_IMAGE/scale=0/size=128,128,128/corner=0,0,0?alt=media
+    // curl "https://brainmaps.googleapis.com/v1beta2/volumes/$project:$dataset :$volume/binary/tile/imageFormat=JPEG/jpegQuality=75/scale=0/size=256,256,1/corner=10,10,10?alt=media" -H "authorization:Bearer $token" -o output.jpg
     return base;
 }
 

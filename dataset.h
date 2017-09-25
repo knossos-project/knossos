@@ -52,7 +52,7 @@ struct Dataset {
 
     QUrl apiSwitch(const Coordinate globalCoord) const;
     QUrl knossosCubeUrl(const Coordinate coord) const;
-    QUrl googleCubeUrl(const Coordinate coord) const;
+    QUrl googleCubeUrl(Coordinate coord) const;
     QUrl openConnectomeCubeUrl(const Coordinate coord) const;
 
     bool isOverlay() const;
