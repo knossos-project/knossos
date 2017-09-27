@@ -49,8 +49,8 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 }
             };
 
-            Coordinate posDec = Coordinate::max(pos - 1, areaMin);
-            Coordinate posInc = Coordinate::min(pos + 1, areaMax);
+            const auto posDec = (pos - 1).capped(areaMin, areaMax);
+            const auto posInc = (pos + 1).capped(areaMin, areaMax);
 
             if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
                 walk({posInc.x, pos.y, pos.z});

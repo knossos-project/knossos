@@ -431,12 +431,12 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             brush_copy.shape = brush_t::shape_t::angular;
             brush_copy.radius = displayedlengthInNmX / 2;//set brush to fill visible area
 
-            auto halfWidth = width()/2 * 1/screenPxXPerDataPx;
-            auto halfHeight = height()/2 * 1/screenPxYPerDataPx;
-            Coordinate areaMin = state->viewerState->currentPosition - v1.abs() * halfWidth - v2.abs() * halfHeight;
-            Coordinate areaMax = state->viewerState->currentPosition + v1.abs() * halfWidth + v2.abs() * halfHeight;
-            areaMin = Coordinate::max(areaMin, Session::singleton().movementAreaMin);
-            areaMax = Coordinate::min(areaMax, Session::singleton().movementAreaMax);
+            const floatCoordinate displayedDataPx{floatCoordinate{displayedlengthInNmX, displayedlengthInNmX, displayedlengthInNmX} / Dataset::current().scale};
+            auto areaMin = state->viewerState->currentPosition - displayedDataPx / 2;
+            auto areaMax = state->viewerState->currentPosition + displayedDataPx / 2;
+
+            areaMin = areaMin.capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+            areaMax = areaMax.capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
 
             subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy, areaMin, areaMax);
         }
