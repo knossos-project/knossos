@@ -104,6 +104,7 @@ private:
     void abortDownloadsFinishDecompression(Func);
 
     decltype(Dataset::datasets) datasets;
+    int refreshNumber{0};
 public://matsch
     using CacheQueue = std::unordered_set<CoordOfCube>;
     std::vector<CacheQueue> OcModifiedCacheQueue;

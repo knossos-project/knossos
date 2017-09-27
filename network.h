@@ -55,7 +55,7 @@ public:
     std::pair<int, int> checkOnlineMags(const QUrl & url);
 
 signals:
-    void startedNetworkRequest(QNetworkReply & reply);
+    void startedNetworkRequest(QNetworkReply * reply);// use pointer for queued connections
     void progressChanged(const qint64 value, const qint64 maxValue);
     void finishedNetworkRequest();
 };

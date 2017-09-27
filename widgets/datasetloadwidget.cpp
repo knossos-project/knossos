@@ -247,7 +247,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     }
     path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") && !Dataset::isWebKnossos(path) ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
-    const auto skip = !path.toString().contains("google") && !path.toString().contains("webknossos");
+    const auto skip = !Dataset::isGoogleBrainmaps(path) && !Dataset::isWebKnossos(path);
     if (skip && !download.first) {
         if (!silent) {
             QMessageBox warning(parent);
@@ -297,41 +297,28 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
             return false;
         }
         layers.push_back(layers.front().createCorrespondingOverlayLayer());
-    } else if (path.toString().contains("brainmaps")) {
+    } else if (Dataset::isGoogleBrainmaps(path)) {
         const auto pair = getBrainmapsToken();
         if (!pair.first) {
             return false;
         }
-        Dataset info;
-        info.token = pair.second;
-
-//        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/417200973162:j0126:rawdata"};
-//        const QUrl url{"https://brainmaps.googleapis.com/v1beta2/volumes/611024335609:j0126:rawdata"};
-
-        auto googleRequest = [&info](auto path){
+        const auto googleRequest = [&pair](const auto & path){
             QNetworkRequest request(path);
-            request.setRawHeader("Authorization", (QString("Bearer ") + info.token).toUtf8());
+            request.setRawHeader("Authorization", (QString("Bearer ") + pair.second).toUtf8());
             return request;
         };
-
-        const auto datasets = blockDownloadExtractData(*Network::singleton().manager.get(googleRequest(
-                    QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
-        qDebug() << datasets.second;
 
         auto & reply = *Network::singleton().manager.get(googleRequest(path));
         const auto config = blockDownloadExtractData(reply);
 
+        Dataset info;
         if (config.first) {
-            info = Dataset::parseGoogleJson(config.second).first();
+            info = Dataset::parseGoogleJson(path, config.second).first();
+            info.token = pair.second;
         } else {
-            qDebug() << "download failed";
+            qDebug() << "googleRequest failed";
             return false;
         }
-        info.url = path;
-        auto foo = info.url.path();
-        foo.chop(1);// remove slash
-        info.url.setPath(foo);
-
         layers = {info};
     }
 

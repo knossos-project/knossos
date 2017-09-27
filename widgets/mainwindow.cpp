@@ -146,7 +146,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressAbortButton.setVisible(false);
     networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
-    QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply &
+    QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, this, [this](QNetworkReply *// receiver (this) is needed for queued connections
                  #ifndef Q_OS_UNIX
                      reply
                  #endif
@@ -154,10 +154,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         networkProgressBar.setVisible(true);
     #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
         networkProgressAbortButton.setVisible(true);
-        QObject::connect(&networkProgressAbortButton, &QPushButton::clicked, &reply, &QNetworkReply::abort);
+        QObject::connect(&networkProgressAbortButton, &QPushButton::clicked, reply, &QNetworkReply::abort);
     #endif
     });
-    QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, [this]() {
+    QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, this, [this]() {// receiver (this) is needed for queued connections
         networkProgressBar.setValue(0);// prevent (visible) resets when a new max is set
         networkProgressBar.setHidden(true);
         networkProgressAbortButton.setHidden(true);

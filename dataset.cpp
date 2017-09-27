@@ -53,8 +53,12 @@ QString Dataset::compressionString() const {
     throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
 }
 
+bool Dataset::isGoogleBrainmaps(const QUrl & url) {
+    return url.toString().contains(QRegularExpression{"google|brainmaps"});
+}
+
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isNeuroDataStore(url) && !isWebKnossos(url);
+    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isWebKnossos(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
@@ -66,18 +70,22 @@ bool Dataset::isWebKnossos(const QUrl & url) {
 }
 
 QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
-    if (Dataset::isWebKnossos(url)) {
-        return Dataset::parseWebKnossosJson(url, data);
+    if (Dataset::isGoogleBrainmaps(url)) {
+        return Dataset::parseGoogleJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         return Dataset::parseNeuroDataStoreJson(url, data);
+    } else if (Dataset::isWebKnossos(url)) {
+        return Dataset::parseWebKnossosJson(url, data);
     } else {
         return Dataset::fromLegacyConf(url, data);
     }
 }
 
-QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
+QList<Dataset> Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
+    info.url = infoUrl;
+    info.url.setPath(info.url.path().remove(QRegularExpression{"\\/$"}));// remove slash
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
     const auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();

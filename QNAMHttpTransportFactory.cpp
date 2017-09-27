@@ -7,11 +7,14 @@
 #include "googleapis/client/data/data_writer.h"
 #include "googleapis/client/transport/http_request.h"
 
+#include <QNetworkAccessManager>
 #include <QNetworkReply>
 
 #include <limits>
 
 class QNAMHttpTransport : public googleapis::client::HttpTransport {
+    friend class QNAMHttpRequest;
+    QNetworkAccessManager qnam;
 public:
     QNAMHttpTransport(const googleapis::client::HttpTransportOptions & options);
     virtual googleapis::client::HttpRequest * NewHttpRequest(const googleapis::client::HttpRequest::HttpMethod & method) override;
@@ -19,9 +22,10 @@ public:
 
 
 class QNAMHttpRequest : public googleapis::client::HttpRequest {
+    QNAMHttpTransport & transport;
 public:
     QNAMHttpRequest(const HttpMethod & method, QNAMHttpTransport * transport)
-            : HttpRequest{method, transport} {}
+            : HttpRequest{method, transport}, transport{*transport} {}
 
 protected:
     virtual void DoExecute(googleapis::client::HttpResponse * response) {
@@ -35,7 +39,7 @@ protected:
 
         std::string content;
         content_reader()->ReadToString(std::numeric_limits<int64_t>::max(), &content);
-        auto & reply = *Network::singleton().manager.post(request, QByteArray::fromStdString(content));
+        auto & reply = *transport.qnam.post(request, QByteArray::fromStdString(content));
         auto data = blockDownloadExtractData(reply);
 
         response->set_http_code(reply.error());

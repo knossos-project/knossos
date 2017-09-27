@@ -93,7 +93,7 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
             const auto total = std::accumulate(std::begin(bytesTotalAll), std::end(bytesTotalAll), qint64{0});
             emit Network::progressChanged(received, total);
         };
-        emit Network::singleton().startedNetworkRequest(*replyPtr);// register abort
+        emit Network::singleton().startedNetworkRequest(replyPtr);// register abort
         QObject::connect(replyPtr, &QNetworkReply::downloadProgress, processProgress);
         QObject::connect(replyPtr, &QNetworkReply::uploadProgress, processProgress);
     }
@@ -115,7 +115,7 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
         pause.exit();
     });
-    emit Network::singleton().startedNetworkRequest(reply);
+    emit Network::singleton().startedNetworkRequest(&reply);
     QObject::connect(&reply, &QNetworkReply::downloadProgress, &Network::singleton(), &Network::progressChanged);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, &Network::singleton(), &Network::progressChanged);
 

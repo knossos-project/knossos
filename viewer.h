@@ -189,9 +189,9 @@ public:
     // so we stop the rendering during display of said dialog
     template<typename F, typename... Args>
     auto suspend(F func, Args... args) {
-        timer.stop();
+        QMetaObject::invokeMethod(&timer, "stop");
         auto && res = func(args...);
-        timer.start();
+        QMetaObject::invokeMethod(&timer, "start");
         return res;
     }
     void saveSettings();

@@ -524,7 +524,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    auto startDownload = [this, center](Dataset & dataset, const Coordinate globalCoord, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
+    auto startDownload = [this, center, loadingNr](Dataset & dataset, const Coordinate globalCoord, decltype(dcDownload) & downloads, decltype(dcDecompression) & decompressions, decltype(freeDcSlots) & freeSlots, decltype(state->Dc2Pointer[0]) & cubeHash){
         if (dataset.isOverlay()) {
             auto snappyIt = snappyCache[loaderMagnification].find(globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification));
             if (snappyIt != std::end(snappyCache[loaderMagnification])) {
@@ -618,7 +618,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
             broadcastProgress(true);
-            QObject::connect(reply, &QNetworkReply::finished, [this, &dataset, reply, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, &dataset, reply, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash, loadingNr](){
                 if (freeSlots.empty()) {
                     qCritical() << globalCoord << static_cast<int>(dataset.type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
@@ -669,9 +669,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                             if (dataset.api == Dataset::API::GoogleBrainmaps) {
                                 qDebug() << "got errored" << reply->error();
                                 if (reply->error() == QNetworkReply::ContentAccessDenied || reply->error() == QNetworkReply::AuthenticationRequiredError) {
-                                    auto pair = getBrainmapsToken();
-                                    if (pair.first) {
-                                        dataset.token = pair.second;
+                                    if (refreshNumber < loadingNr) {
+                                        refreshNumber = loadingNr;
+                                        auto pair = getBrainmapsToken();
+                                        if (pair.first) {
+                                            dataset.token = pair.second;
+                                        }
                                     }
                                 }
                             }
