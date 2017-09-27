@@ -592,12 +592,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
 
-            //transform googles oauth2 token from query item to request header
-            QUrlQuery originalQuery(dcUrl);
-            auto reducedQuery = originalQuery;
-            reducedQuery.removeQueryItem("access_token");
-            dcUrl.setQuery(reducedQuery);
-
             auto request = QNetworkRequest(dcUrl);
             QByteArray payload;
             if (dataset.api == Dataset::API::WebKnossos) {

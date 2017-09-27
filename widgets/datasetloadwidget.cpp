@@ -247,8 +247,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     }
     path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") && !Dataset::isWebKnossos(path) ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
-    const auto skip = !Dataset::isGoogleBrainmaps(path) && !Dataset::isWebKnossos(path);
-    if (skip && !download.first) {
+    if (!Dataset::isGoogleBrainmaps(path) && !download.first) {
         if (!silent) {
             QMessageBox warning(parent);
             warning.setWindowFlags(Qt::WindowFlags{warning.windowFlags() | Qt::WindowStaysOnTopHint});
