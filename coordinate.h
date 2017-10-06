@@ -126,10 +126,6 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
-    constexpr CoordinateDerived abs() const {
-        return {std::abs(x), std::abs(y), std::abs(z)};
-    }
-
     constexpr float length() const {
         return std::sqrt(x*x + y*y + z*z);
     }

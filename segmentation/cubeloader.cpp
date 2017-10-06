@@ -90,7 +90,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
     auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
     floatCoordinate max{0, 0, 0};
     for (const auto localCoord : localPoints) {
-        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).abs().capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
         min = {std::min(worldCoord.x, min.x), std::min(worldCoord.y, min.y), std::min(worldCoord.z, min.z)};
         max = {std::max(worldCoord.x, max.x), std::max(worldCoord.y, max.y), std::max(worldCoord.z, max.z)};
     }
