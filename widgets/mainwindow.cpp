@@ -481,7 +481,7 @@ void MainWindow::notifyUnsavedChanges() {
 
 void MainWindow::updateTitlebar() {
     const auto & session = Session::singleton();
-    QString title = qApp->applicationDisplayName() + " showing ";
+    QString title = QString("%1 %2 showing ").arg(qApp->applicationDisplayName()).arg(KVERSION);
     if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {

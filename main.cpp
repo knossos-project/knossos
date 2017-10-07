@@ -119,9 +119,13 @@ int main(int argc, char *argv[]) {
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIN");
-    QCoreApplication::setApplicationName(QString("KNOSSOS %1").arg(KVERSION));
+    QCoreApplication::setApplicationName("KNOSSOS");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
+    QSettings newSettings;
+    if(!QFile(newSettings.fileName()).exists()) {
+        QSettings oldSettings(QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0");
+        QFile::copy(oldSettings.fileName(), newSettings.fileName());
+    }
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
