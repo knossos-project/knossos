@@ -36,16 +36,14 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
     const auto clickedsoid = readVoxel(seed);
 
     while (!work.empty()) {
-        auto pos = work.back();
+        const auto pos = work.back();
         work.pop_back();
 
-        auto subobjectId = readVoxel(pos);
-        if (subobjectId == clickedsoid) {
-            visitedVoxels.emplace(pos.x, pos.y, pos.z);
-
-            auto walk = [&](const Coordinate & newPos){
-                if (visitedVoxels.find(newPos) == std::end(visitedVoxels) && currentlyVisibleWrapWrap(center, pos)) {
-                    work.emplace_back(newPos);
+        if (readVoxel(pos) == clickedsoid) {
+            const auto walk = [&center, &visitedVoxels, &work](const auto x, const auto y, const auto z){
+                const bool wasntVisitedBefore = visitedVoxels.emplace(x, y, z).second;
+                if (wasntVisitedBefore && currentlyVisibleWrapWrap(center, {x, y, z})) {
+                    work.emplace_back(x, y, z);
                 }
             };
 
@@ -53,16 +51,16 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
             const auto posInc = (pos + 1).capped(areaMin, areaMax);
 
             if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
-                walk({posInc.x, pos.y, pos.z});
-                walk({posDec.x, pos.y, pos.z});
+                walk(posInc.x, pos.y, pos.z);
+                walk(posDec.x, pos.y, pos.z);
             }
             if (brush.view != brush_t::view_t::xz || brush.mode == brush_t::mode_t::three_dim) {
-                walk({pos.x, posInc.y, pos.z});
-                walk({pos.x, posDec.y, pos.z});
+                walk(pos.x, posInc.y, pos.z);
+                walk(pos.x, posDec.y, pos.z);
             }
             if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
-                walk({pos.x, pos.y, posInc.z});
-                walk({pos.x, pos.y, posDec.z});
+                walk(pos.x, pos.y, posInc.z);
+                walk(pos.x, pos.y, posDec.z);
             }
         }
     }
