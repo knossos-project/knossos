@@ -24,4 +24,4 @@ ninja -j2
 if [[ $APPVEYOR_REPO_BRANCH != "master" ]]; then
 	BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
 fi
-cp knossos.exe $PROJECTPATH/win${MINGW_PREFIX: -2}.standalone.KNOSSOS.${BRANCH_PREFIX}nightly.exe
+cp knossos.exe $PROJECTPATH/${BRANCH_PREFIX}win.standalone.KNOSSOS.nightly.exe

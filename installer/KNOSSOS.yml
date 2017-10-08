@@ -1,7 +1,0 @@
-app: KNOSSOS
-
-ingredients:
-  script:
-     - echo "5.0" > VERSION
-script:
-  - mv opt/knossos/* usr/bin/

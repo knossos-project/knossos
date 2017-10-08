@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=KNOSSOS nightly
-Comment=3D image visualisation and annotation tool
-Categories=Qt;Science;
-Exec=/opt/knossos-nightly/knossos
-Icon=/usr/share/pixmaps/knossos-nightly.png
-Terminal=false

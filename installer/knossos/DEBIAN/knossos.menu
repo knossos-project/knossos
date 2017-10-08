@@ -1,6 +1,0 @@
-?package(knossos):\
-  needs=X11|wm\
-  section=Science\
-  title="KNOSSOS"\
-  command="/opt/knossos/knossos"\
-  icon="/usr/share/pixmaps/knossos.png"

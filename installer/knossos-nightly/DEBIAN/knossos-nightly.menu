@@ -1,6 +1,0 @@
-?package(knossos-nightly):\
- needs=X11|wm\
- section=Science\
- title="KNOSSOS nightly"\
- command="/opt/knossos-nightly/knossos"\
- icon="/usr/share/pixmaps/knossos-nightly.png"

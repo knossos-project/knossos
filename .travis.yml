@@ -15,22 +15,19 @@ matrix:
 git:
   submodules: false
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export RELEASE_PKG_FILE=linux64.KNOSSOS.nightly.AppImage; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then mkdir artifact; fi
-
 script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -v ${PWD}:/root/knossos -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/knossos/; ./.travis_build.sh'; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/${RELEASE_PKG_FILE} .; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/knossos-release/; ../knossos/ci/travis_build.sh'; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/* .; fi
 
 deploy:
   provider: releases
   api_key:
     secure: WH5I/c6N4Ekb+dIWDxOEcwA6o1xNGkmI5nvDavO6PavvSzCydBTPQ5xXm7s1KD6M1+8MbF30REfO4mnRyjuzYbV7ap9Vm9S7YXOzXuHw19uxpGmnJyvcJnSJlPf7uNghGuoyBzZGS5SOoH/k6w6TGOitnE2PfI3pWQGbV8YTsyQ=
   file_glob: true
-  file: ${RELEASE_PKG_FILE}
+  file: "*.AppImage"
   skip_cleanup: true
   overwrite: true
   on:
     repo: knossos-project/knossos
+    all_branches: true
     condition: $TRAVIS_OS_NAME = linux

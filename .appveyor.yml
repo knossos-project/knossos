@@ -11,7 +11,7 @@ artifacts:
 
 build_script:
   - C:\msys64\usr\bin\pacman -Syuu --noconfirm
-  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/.appveyor_build.sh"
+  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/appveyor_build.sh"
 
 deploy:
   tag: nightly

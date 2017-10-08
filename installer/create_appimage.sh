@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# error on any failed command
+set -e 
+set -o pipefail
+
 mkdir -p deploy-tools
 cd deploy-tools
 
@@ -15,8 +19,8 @@ cd deploy
 ../deploy-tools/linuxdeployqt knossos -bundle-non-qt-libs
 
 cd lib
-rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcrypt.so.20
+rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcrypt.so.20 # will error if one of the files isn’t present
 cd ..
 
-rm -v *.AppImage
+rm -fv *.AppImage
 ../deploy-tools/appimagetool . --verbose --no-appstream

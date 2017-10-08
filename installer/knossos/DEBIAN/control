@@ -1,9 +1,0 @@
-Package: knossos
-Version: 5.0
-Section: misc
-Priority: extra
-Architecture: amd64
-Installed-Size: 
-Maintainer: KNOSSOS team <knossos-team@mpimf-heidelberg.mpg.de>
-Description: 3D image visualisation and annotation tool
-Homepage: https://knossostool.org
