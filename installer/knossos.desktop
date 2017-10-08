@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=KNOSSOS
+Comment=3D image visualisation and annotation tool
+Categories=Qt;Science;
+Exec=knossos
+Icon=knossos
+Terminal=false
