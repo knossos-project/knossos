@@ -11,8 +11,6 @@ matrix:
       sudo: required
       compiler: gcc
       services: docker
-#    - os: osx
-#      osx_image: xcode7.3
 
 git:
   submodules: false
@@ -20,23 +18,9 @@ git:
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export RELEASE_PKG_FILE=linux64.KNOSSOS.nightly.AppImage; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then mkdir artifact; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export RELEASE_PKG_FILE=osx.KNOSSOS.nightly.app.zip; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install qt5 snappy quazip ninja; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export CXXFLAGS="-I/usr/local/opt/qt5/include"; fi #qt5.8.0 is keg-only
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then OSXQT=`ls /usr/local/Cellar/qt5/`; fi #find current version (dir) of installed qt
-
-before_script:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then wget https://github.com/al3xst/PythonQt/releases/download/nightly-mac/pythonqt.tar.gz; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then tar -xvf pythonqt.tar.gz; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then mkdir knossos_build && cd knossos_build; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/Users/travis/build/knossos-project/knossos/pythonqt/lib/cmake/;/usr/local/Cellar/qt5/${OSXQT}/lib/cmake/;/usr/local/opt/qt5/lib/" ..; fi
 
 script:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then ninja -j1; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then mv knossos.app KNOSSOS.app; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then /usr/local/Cellar/qt5/${OSXQT}/bin/macdeployqt KNOSSOS.app; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/; ./build_and_pack.sh'; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -v ${PWD}:/root/knossos -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/knossos/; ./.travis_build.sh'; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/${RELEASE_PKG_FILE} .; fi
 
 deploy:
