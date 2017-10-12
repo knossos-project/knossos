@@ -38,6 +38,7 @@
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/mainwindow.h"
 
+#include <QCryptographicHash>
 #include <QDataStream>
 #include <QElapsedTimer>
 #include <QMessageBox>

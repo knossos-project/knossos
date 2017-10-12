@@ -30,8 +30,10 @@
 #include "viewer.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QDesktopWidget>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QHBoxLayout>
 #include <QSettings>
 

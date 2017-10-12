@@ -32,6 +32,7 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QMenu>
+#include <QMessageBox>
 #include <QOpenGLFramebufferObject>
 
 bool ViewportBase::oglDebug = false;

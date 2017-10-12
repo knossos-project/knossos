@@ -59,6 +59,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QPropertyAnimation>
 #include <QRegExp>
 #include <QSettings>
 #include <QSignalBlocker>

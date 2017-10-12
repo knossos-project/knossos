@@ -36,7 +36,6 @@
 #include "zoomwidget.h"
 
 #include <QSettings>
-#include <QtUiTools>
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
