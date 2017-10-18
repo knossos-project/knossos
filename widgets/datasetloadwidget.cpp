@@ -195,7 +195,9 @@ void DatasetLoadWidget::updateDatasetInfo() {
 
     infoLabel.setText(infotext);
 
-    datasetSettingsLayout.takeRow(&cubeEdgeSpin);
+    if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
+        datasetSettingsLayout.takeRow(&cubeEdgeSpin);
+    }
     cubeEdgeSpin.setParent(nullptr);
     cubeEdgeLabel.setParent(nullptr);
     if (!Dataset::isHeidelbrain(url)) {
