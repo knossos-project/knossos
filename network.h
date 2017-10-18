@@ -26,7 +26,6 @@
 #include <QNetworkCookieJar>
 #include <QNetworkAccessManager>
 #include <QObject>
-#include <QThread>
 
 class Network : public QObject {
     Q_OBJECT

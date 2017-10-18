@@ -32,7 +32,6 @@
 
 #include <QMouseEvent>
 #include <QObject>
-#include <QThread>
 
 #include <functional>
 

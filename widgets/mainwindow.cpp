@@ -67,7 +67,6 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStringList>
-#include <QThread>
 #include <QToolButton>
 
 class CoordinateSpin : public QSpinBox {
