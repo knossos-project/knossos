@@ -32,6 +32,7 @@
 
 #include <quazipfile.h>
 
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -42,17 +43,9 @@
 
 #include <ctime>
 
-QString annotationFileDefaultName() {
-    // Generate a default file name based on date and time.
-    auto currentTime = time(nullptr);
-    auto localTime = localtime(&currentTime);
-    return QString("annotation-%1%2%3T%4%5.000.k.zip")
-            .arg(1900 + localTime->tm_year)
-            //value, right aligned padded to width 2, base 10, filled with '0'
-            .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
-            .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
+QString annotationFileDefaultName() {// Generate a default file name based on date and time.
+    // ISO 8601 combined date and time in basic format (extended format cannot be used because Windows doesn’t allow ›:‹)
+    return QDateTime::currentDateTime().toString("'annotation-'yyyyMMddTHHmm'.000.k.zip'");
 }
 
 QString annotationFileDefaultPath() {
