@@ -169,7 +169,7 @@ class MainWindow : public QMainWindow {
     QLabel synapseStateLabel;
     QLabel unsavedChangesLabel;
     QLabel warningDisabledFeaturesLabel;
-    QPixmap warnPixmap{":resources/icons/warning_disabled_features.png"};
+    QPixmap warnPixmap{":/resources/icons/warning_disabled_features.png"};
 
     QTimer activityTimer;
     QParallelAnimationGroup activityAnimation;

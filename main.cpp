@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 #endif
     QApplication a(argc, argv);
 
-    QFile file(":resources/style.qss");
+    QFile file(":/resources/style.qss");
     file.open(QFile::ReadOnly);
     a.setStyleSheet(file.readAll());
     file.close();
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
 #ifdef NDEBUG
-    Splash splash(dynamic_cast<QGuiApplication&>(*QApplication::instance()).primaryScreen()->devicePixelRatio() == 1.0 ? ":resources/splash.png" : ":resources/splash@2x.png");
+    Splash splash(dynamic_cast<QGuiApplication&>(*QApplication::instance()).primaryScreen()->devicePixelRatio() == 1.0 ? ":/resources/splash.png" : ":/resources/splash@2x.png");
 #endif
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIN");
