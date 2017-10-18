@@ -121,11 +121,9 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("MPIN");
     QCoreApplication::setApplicationName("KNOSSOS");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings newSettings;
-    if(!QFile(newSettings.fileName()).exists()) {
-        QSettings oldSettings(QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0");
-        QFile::copy(oldSettings.fileName(), newSettings.fileName());
-    }
+
+    QFile::copy(QSettings{}.fileName(), QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName());
+
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
