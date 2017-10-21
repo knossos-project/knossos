@@ -84,7 +84,6 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
 }
 
 SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHOT_WIDGET, parent) {
-    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowIcon(QIcon(":/resources/icons/snapshot.png"));
     setWindowTitle("Snapshot Tool");
     sizeCombo.addItem("Viewport Size");

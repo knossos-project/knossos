@@ -47,8 +47,6 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(ANN
     mainLayout.addWidget(&tabs);
     mainLayout.setContentsMargins({});
     setLayout(&mainLayout);
-
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void AnnotationWidget::setSegmentationVisibility(const bool visible) {

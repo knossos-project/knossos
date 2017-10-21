@@ -1117,8 +1117,7 @@ void MainWindow::saveCustomPreferencesSlot() {
 }
 
 void MainWindow::defaultPreferencesSlot() {
-    QMessageBox question;
-    question.setWindowFlags(Qt::WindowStaysOnTopHint);
+    QMessageBox question{QApplication::activeWindow()};
     question.setIcon(QMessageBox::Question);
     question.setWindowTitle("Confirmation required");
     question.setText("Do you really want to load the default preferences?");
@@ -1252,12 +1251,11 @@ void MainWindow::loadSettings() {
         warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled, because it requires an OpenGL version ≥ 3.0.\nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
         statusBar()->addPermanentWidget(&warningDisabledFeaturesLabel);
         if (widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.isChecked()) {
-            QMessageBox msgBox(QApplication::activeWindow());
+            QMessageBox msgBox{QApplication::activeWindow()};
             msgBox.setCheckBox(new QCheckBox("Don’t show this message again.", &msgBox));
             QObject::connect(msgBox.checkBox(), &QCheckBox::clicked, [this](const bool checked) { widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.setChecked(!checked); });
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setText(warningDisabledFeaturesLabel.toolTip());
-            msgBox.setWindowFlags(msgBox.windowFlags() | Qt::WindowStaysOnTopHint);
             msgBox.exec();
         }
     }

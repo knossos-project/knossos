@@ -62,7 +62,6 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     layout->addWidget(customPathsEdit);
 
     setLayout(layout);
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
     connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
     connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));

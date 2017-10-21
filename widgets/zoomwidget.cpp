@@ -233,8 +233,6 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         reinitializeOrthoZoomWidgets();
     });
     connect(datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, &ZoomWidget::reinitializeOrthoZoomWidgets);
-
-    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {

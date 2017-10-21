@@ -5,6 +5,8 @@
 #include "version.h"
 
 AboutDialog::AboutDialog(QWidget * parent) : QDialog(parent), ui(new Ui::AboutDialog) {
+    setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+
     ui->setupUi(this);
     ui->knossosLabel->setText(tr("KNOSSOS %1").arg(KVERSION));
     ui->revisionLabelValue->setText(KREVISION);

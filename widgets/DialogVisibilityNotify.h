@@ -31,7 +31,9 @@ class DialogVisibilityNotify : public QDialog {
     Q_OBJECT
     const QString settingsPrefix;
 public:
-    DialogVisibilityNotify(const QString & settingsPrefix, QWidget * parent) : QDialog{parent}, settingsPrefix{settingsPrefix} {}
+    DialogVisibilityNotify(const QString & settingsPrefix, QWidget * parent) : QDialog{parent}, settingsPrefix{settingsPrefix} {
+        setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+    }
 signals:
     void visibilityChanged(bool);
 protected:

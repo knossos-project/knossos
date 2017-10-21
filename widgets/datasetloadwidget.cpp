@@ -102,8 +102,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
     QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
     resize(600, 600);//random default size, will be overriden by settings if present
-
-    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row) {
@@ -250,8 +248,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {
-            QMessageBox warning(parent);
-            warning.setWindowFlags(Qt::WindowFlags{warning.windowFlags() | Qt::WindowStaysOnTopHint});
+            QMessageBox warning{parent};
             warning.setIcon(QMessageBox::Warning);
             warning.setText("Unable to load Daataset.");
             warning.setInformativeText(QString("Failed to read config file from %1").arg(path.toString()));
@@ -264,8 +261,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
 
     bool keepAnnotation = silent;
     if (!silent && (!Session::singleton().annotationFilename.isEmpty() || Session::singleton().unsavedChanges)) {
-        QMessageBox question(parent);
-        question.setWindowFlags(Qt::WindowFlags{question.windowFlags() | Qt::WindowStaysOnTopHint});
+        QMessageBox question{parent};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
         question.setInformativeText(tr("It only makes sense to keep the annotation if the new dataset matches it."));
@@ -285,8 +281,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
             layers.front().checkMagnifications();
         } catch (std::exception &) {
             if (!silent) {
-                QMessageBox warning(parent);
-                warning.setWindowFlags(Qt::WindowFlags{warning.windowFlags() | Qt::WindowStaysOnTopHint});
+                QMessageBox warning{parent};
                 warning.setIcon(QMessageBox::Warning);
                 warning.setText("Dataset will not be loaded.");
                 warning.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");

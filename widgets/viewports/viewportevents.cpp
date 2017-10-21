@@ -586,8 +586,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         } else if(state->skeletonState->selectedNodes.size() > 0) {
             bool deleteNodes = true;
             if(state->skeletonState->selectedNodes.size() != 1) {
-                QMessageBox prompt;
-                prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+                QMessageBox prompt{QApplication::activeWindow()};
                 prompt.setIcon(QMessageBox::Question);
                 prompt.setWindowTitle("Cofirmation required");
                 prompt.setText("Delete selected nodes?");
@@ -607,8 +606,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             return;
         }
         if(state->skeletonState->selectedNodes.empty() == false) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            QMessageBox prompt{QApplication::activeWindow()};
             prompt.setIcon(QMessageBox::Question);
             prompt.setWindowTitle("Cofirmation required");
             prompt.setText("Unselect current node selection?");

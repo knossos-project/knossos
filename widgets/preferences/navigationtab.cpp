@@ -144,8 +144,6 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         numberOfStepsSpinBox.setEnabled(id == static_cast<int>(Recentering::AheadOfNode));
     });
     QObject::connect(&numberOfStepsSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->autoTracingSteps = value; });
-
-    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void NavigationTab::updateMovementArea() {

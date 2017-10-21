@@ -134,8 +134,7 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
 bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModelIndex & index, const QVariant & value, int role) {
     if (index.column() == 2 && role == Qt::CheckStateRole) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Question);
         const auto lock = obj.immutable ? tr("Unlock") : tr("Lock");
         prompt.setWindowTitle(lock + tr(" Object"));

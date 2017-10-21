@@ -33,7 +33,7 @@
 #include <QFileInfo>
 #include <QSettings>
 
-SaveTab::SaveTab(QWidget * parent) : QWidget(parent, Qt::WindowFlags() & ~Qt::WindowContextHelpButtonHint) {
+SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     autosaveIntervalSpinBox.setMinimum(1);
     autosaveIntervalSpinBox.setSuffix(" min");
     const auto filePath = QFileInfo(annotationFileDefaultPath()).dir().absolutePath();
