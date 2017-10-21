@@ -296,27 +296,30 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
             qDebug() << "no mags";
             return false;
         }
-        layers.push_back(layers.front().createCorrespondingOverlayLayer());
     }
 
     datasetUrl = {path};//remember config url
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
-    Dataset::datasets = layers;
-
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    auto & cubeEdgeLen = layers.front().cubeEdgeLength;
     cubeEdgeLen = cubeEdgeSpin.text().toInt();
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
-    Dataset::current().overlay = segmentationOverlayCheckbox.isChecked();
-    if (Dataset::current().overlay && Dataset::datasets.size() < 2) {// add empty overlay channel
-        Dataset::datasets.push_back(Dataset::datasets.front());
-        Dataset::datasets.back().type = Dataset::CubeType::SNAPPY;
+    layers.front().overlay = segmentationOverlayCheckbox.isChecked();
+    if (layers.front().overlay) {// add empty overlay channel
+        if (Dataset::isHeidelbrain(path)) {
+            layers.push_back(layers.front().createCorrespondingOverlayLayer());
+        }
+        if (layers.size() < 2) {
+            layers.push_back(Dataset::datasets.front());
+            layers.back().type = Dataset::CubeType::SNAPPY;
+        }
     }
+    Dataset::datasets = layers;
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
