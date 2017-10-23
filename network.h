@@ -39,7 +39,7 @@ public:
     QVariantList getCookiesForHost(const QString & host);
 
     static Network & singleton() {
-        static Network network;
+        static Network & network = *new Network;
         return network;
     }
 

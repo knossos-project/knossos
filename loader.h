@@ -137,7 +137,7 @@ public:
     std::unique_ptr<Loader::Worker> worker;
     std::atomic_uint loadingNr{0};
     static Controller & singleton(){
-        static Loader::Controller loader;
+        static Loader::Controller & loader = *new Loader::Controller;
         return loader;
     }
     void suspendLoader();

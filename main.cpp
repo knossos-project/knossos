@@ -22,6 +22,8 @@
 
 #include "coordinate.h"
 #include "dataset.h"
+#include "loader.h"
+#include "network.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
 #include "version.h"
@@ -40,6 +42,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 // obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
 //#if defined(Q_OS_WIN) && defined(QT_STATIC)
@@ -153,5 +156,8 @@ int main(int argc, char *argv[]) {
 #ifdef NDEBUG
     splash.finish(state.mainWindow);
 #endif
+    // ensure killed QNAM’s before QNetwork deinitializes
+    std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
+    std::unique_ptr<Network> network_deleter{&Network::singleton()};
     return a.exec();
 }
