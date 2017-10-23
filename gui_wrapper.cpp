@@ -25,6 +25,7 @@
 #include "session.h"
 #include "skeleton/skeletonizer.h"
 
+#include <QApplication>
 #include <QMessageBox>
 #include <QObject>
 
@@ -38,4 +39,13 @@ void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElem
         return;
     }
     Skeletonizer::singleton().toggleLink(lhs, rhs);
+}
+
+void loadLutError(const QString & path) {
+    QMessageBox lutErrorBox{QApplication::activeWindow()};
+    lutErrorBox.setIcon(QMessageBox::Warning);
+    lutErrorBox.setText(QObject::tr("LUT loading failed"));
+    lutErrorBox.setInformativeText(QObject::tr("LUTs are restricted to 256 RGB tuples"));
+    lutErrorBox.setDetailedText(QObject::tr("Path: %1").arg(path));
+    lutErrorBox.exec();
 }

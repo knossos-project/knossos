@@ -21,6 +21,8 @@
  */
 
 #include "datasetsegmentationtab.h"
+
+#include "gui_wrapper.h"
 #include "segmentation/segmentation.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -165,19 +167,15 @@ void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
             return QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut *.json)"));
         });
     }
+    useOwnDatasetColorsCheckBox.setChecked(false);// if it fails
     if (!path.isEmpty()) {//load LUT and apply
         try {
             state->viewer->loadDatasetLUT(path);
             lutFilePath = path;
             useOwnDatasetColorsCheckBox.setChecked(true);
         } catch (...) {
-            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
-            lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
-            lutErrorBox.exec();
-            useOwnDatasetColorsCheckBox.setChecked(false);
+            loadLutError(path);
         }
-    } else {
-        useOwnDatasetColorsCheckBox.setChecked(false);
     }
 }
 

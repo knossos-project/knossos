@@ -22,6 +22,7 @@
 
 #include "nodestab.h"
 
+#include "gui_wrapper.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -226,9 +227,7 @@ void NodesTab::loadNodeLUTRequest(QString path) {
             lutPath = path;
             lutLabel.setText("Current LUT: " + lutPath);
         }  catch (...) {
-            QMessageBox lutErrorBox(QMessageBox::Warning, "LUT loading failed", "LUTs are restricted to 256 RGB tuples", QMessageBox::Ok, this);
-            lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
-            lutErrorBox.exec();
+            loadLutError(path);
         }
     }
 }

@@ -22,6 +22,7 @@
 
 #include "treestab.h"
 
+#include "gui_wrapper.h"
 #include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
@@ -144,19 +145,15 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
             return QFileDialog::getOpenFileName(this, tr("Load Tree Color Lookup Table"), QDir::homePath(), tr("LUT file (*.lut *.json)"));
         });
     }
+    ownTreeColorsCheck.setChecked(false);// if it fails
     if (!path.isEmpty()) {//load LUT and apply
         try {
             state->viewer->loadTreeLUT(path);
             lutFilePath = path;
             ownTreeColorsCheck.setChecked(true);
         }  catch (...) {
-            QMessageBox lutErrorBox(QMessageBox::Warning, tr("LUT loading failed"), tr("LUTs are restricted to 256 RGB tuples"), QMessageBox::Ok, this);
-            lutErrorBox.setDetailedText(tr("Path: %1").arg(path));
-            lutErrorBox.exec();
-            ownTreeColorsCheck.setChecked(false);
+            loadLutError(path);
         }
-    } else {
-        ownTreeColorsCheck.setChecked(false);
     }
 }
 

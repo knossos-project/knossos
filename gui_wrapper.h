@@ -27,5 +27,6 @@
 #include "skeleton/tree.h"
 
 void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs);
+void loadLutError(const QString & path);
 
 #endif//GUI_WRAPPER_H
