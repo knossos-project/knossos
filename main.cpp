@@ -49,7 +49,12 @@
 
 class Splash : public QSplashScreen {
 public:
-    Splash(const QString & img_filename) : QSplashScreen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+    Splash(const QString & img_filename) : QSplashScreen(QPixmap(img_filename)) {
+#ifdef Q_OS_WIN// http://lists.qt-project.org/pipermail/qt-interest-old/2010-May/023534.html
+        // give splash a task bar icon, this is especially important if a message box blocks startup
+        const int exstyle = GetWindowLong(reinterpret_cast<HWND>(winId()), GWL_EXSTYLE);
+        SetWindowLong(reinterpret_cast<HWND>(winId()), GWL_EXSTYLE, exstyle & ~WS_EX_TOOLWINDOW);
+#endif
         show();
     }
 };
