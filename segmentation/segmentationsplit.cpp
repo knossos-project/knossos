@@ -62,6 +62,8 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 walk(pos.x, pos.y, posInc.z);
                 walk(pos.x, pos.y, posDec.z);
             }
+        } else {
+            visitedVoxels.erase(pos);
         }
     }
 
