@@ -1398,7 +1398,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     std::array<GLint, 4> vp;
     glGetIntegerv(GL_VIEWPORT, vp.data());
-    edgeLength = vp[2];// retrieve adjusted size for snapshot
+    edgeLength = vp[2]/devicePixelRatio(); // retrieve adjusted size for snapshot
     screenPxXPerDataPx = edgeLength / (2.0 * zoomedHalfBoundary);
     displayedlengthInNmX = edgeLength / screenPxXPerDataPx;
 
