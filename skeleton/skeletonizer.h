@@ -248,7 +248,6 @@ public:
     void inferTreeSelectionFromNodeSelection();
     void deleteSelectedTrees();
     void deleteSelectedNodes();
-    void toggleConnectionOfFirstPairOfSelectedNodes(QWidget * const parent);
 
     bool delTree(decltype(treeListElement::treeID) treeID);
     void clearSkeleton();

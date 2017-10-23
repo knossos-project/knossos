@@ -23,6 +23,7 @@
 #include "skeletonview.h"
 
 #include "action_helper.h"
+#include "gui_wrapper.h"
 #include "model_helper.h"
 #include "session.h"
 #include "skeleton/node.h"
@@ -841,7 +842,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     linkAction = nodeContextMenu.addAction("&Link/Unlink nodes");
     QObject::connect(linkAction, &QAction::triggered, [this](){
-        Skeletonizer::singleton().toggleConnectionOfFirstPairOfSelectedNodes(this);
+        checkedToggleNodeLink(this, *state->skeletonState->selectedNodes[0], *state->skeletonState->selectedNodes[1]);
     });
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
