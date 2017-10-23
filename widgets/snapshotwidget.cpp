@@ -71,7 +71,7 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
             this->saveDir = info.absolutePath() + "/";
             setCursor(Qt::BusyCursor);
             if (!imageLabel.pixmap()->save(path)) {
-                QMessageBox errorMsg(this);
+                QMessageBox errorMsg{QApplication::activeWindow()};
                 errorMsg.setIcon(QMessageBox::Critical);
                 errorMsg.setText(tr("Saving snapshot has failed, probably because of missing write permission for path %1").arg(this->saveDir));
                 errorMsg.exec();

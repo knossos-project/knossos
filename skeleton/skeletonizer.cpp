@@ -38,6 +38,7 @@
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/mainwindow.h"
 
+#include <QApplication>
 #include <QCryptographicHash>
 #include <QDataStream>
 #include <QElapsedTimer>
@@ -396,7 +397,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     const auto path = attributes.value("path").toString();
                     const bool overlay = attributes.value("overlay").isEmpty() ? Dataset::current().overlay : static_cast<bool>(attributes.value("overlay").toInt());
                     if (experimentName != Dataset::current().experimentname || overlay != Dataset::current().overlay) {
-                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(state->mainWindow, overlay, path, true);
+                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
                     if (!merge) {
@@ -725,7 +726,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
         setActiveNode(&skeletonState.trees.front().nodes.front());
     }
 
-    QMessageBox msgBox(state->viewer->window);
+    QMessageBox msgBox{QApplication::activeWindow()};
     auto msg = tr("");
     if (!skippedElements.empty()) {
         msg += tr("• Some unknown elements have been skipped.\n\n").arg(xml.lineNumber());
@@ -746,7 +747,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended.");
+        msgBox.setText(tr("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended."));
         msgBox.setInformativeText(msg);
         msgBox.exec();
     }
@@ -1861,7 +1862,7 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
         }
     }
     if (warning.isEmpty() == false) {
-        QMessageBox msgBox(state->viewer->window);
+        QMessageBox msgBox{QApplication::activeWindow()};
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setText(tr("Failed to load mesh for ") + filename);
         msgBox.setInformativeText(warning);

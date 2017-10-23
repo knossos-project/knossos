@@ -32,6 +32,7 @@
 #include "stateInfo.h"
 #include "viewer.h"// Viewer::suspend
 
+#include <QApplication>
 #include <QFormLayout>
 #include <QHeaderView>
 #include <QInputDialog>
@@ -40,8 +41,8 @@
 #include <QSignalBlocker>
 
 template<typename Func>
-void question(QWidget * const parent, Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
-    QMessageBox prompt(parent);
+void question(Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
+    QMessageBox prompt{QApplication::activeWindow()};
     prompt.setIcon(QMessageBox::Question);
     prompt.setText(text);
     prompt.setInformativeText(extraText);
@@ -578,7 +579,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto index = parent.row();//already is a source model index
         const auto droppedOnTreeID = treeModel.cache[index].get().treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID);
-        question(this, [droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text);
+        question([droppedOnTreeID](){Skeletonizer::singleton().moveSelectedNodesToTree(droppedOnTreeID);}, tr("Move"), text);
     });
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, selectElems<treeListElement>(treeView, treeModel, treeSortAndCommentFilterProxy));
@@ -693,21 +694,19 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         assert(tree->properties.contains("preSynapse"));
         Skeletonizer::singleton().jumpToNode(*state->skeletonState->nodesByNodeID[tree->properties["postSynapse"].toLongLong()]);
     });
-    QObject::connect(treeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, [this](){
-        reverseSynapseDirection(this);
-    });
+    QObject::connect(treeContextMenu.addAction("Reverse synapse direction"), &QAction::triggered, this, &SkeletonView::reverseSynapseDirection);
     addDisabledSeparator(treeContextMenu);
     copyAction(treeContextMenu, treeView);
     addDisabledSeparator(treeContextMenu);
     moveNodesAction = treeContextMenu.addAction("Move selected nodes to this tree");
-    QObject::connect(moveNodesAction, &QAction::triggered, [this](){
+    QObject::connect(moveNodesAction, &QAction::triggered, [](){
         const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
         const auto text = tr("Do you really want to move selected nodes to tree %1?").arg(treeID);
-        question(this, [treeID](){ Skeletonizer::singleton().moveSelectedNodesToTree(treeID); }, tr("Move"), text);
+        question([treeID](){ Skeletonizer::singleton().moveSelectedNodesToTree(treeID); }, tr("Move"), text);
     });
     mergeAction = treeContextMenu.addAction("&Merge trees");
-    QObject::connect(mergeAction, &QAction::triggered, [this](){
-        question(this, [](){
+    QObject::connect(mergeAction, &QAction::triggered, [](){
+        question([](){
             auto initiallySelectedTrees = state->skeletonState->selectedTrees;//HACK mergeTrees clears the selection by setting the merge result active
             while (initiallySelectedTrees.size() >= 2) {//2 at a time
                 const auto treeID1 = initiallySelectedTrees[0]->treeID;
@@ -749,9 +748,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         });
     });
-    deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [this](){
+    deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [](){
         if (!state->skeletonState->selectedTrees.empty()) {
-            question(this, [](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete selected trees?"));
+            question([](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete selected trees?"));
         }
     });
 
@@ -801,20 +800,18 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     swapSynapseDirectionAction = nodeContextMenu.addAction("Reverse synapse direction");
     swapSynapseDirectionAction->setShortcut(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_C);
     swapSynapseDirectionAction->setShortcutContext(Qt::ApplicationShortcut);
-    QObject::connect(swapSynapseDirectionAction, &QAction::triggered, [this]() {
-        reverseSynapseDirection(static_cast<QWidget *>(QObject::sender()));
-    });
+    QObject::connect(swapSynapseDirectionAction, &QAction::triggered, this, &SkeletonView::reverseSynapseDirection);
     addDisabledSeparator(nodeContextMenu);
     copyAction(nodeContextMenu, nodeView);
     addDisabledSeparator(nodeContextMenu);
     extractComponentAction = nodeContextMenu.addAction("&Extract connected component");
-    QObject::connect(extractComponentAction, &QAction::triggered, [this](){
+    QObject::connect(extractComponentAction, &QAction::triggered, [](){
         auto res = QMessageBox::Ok;
         static bool askExtractConnectedComponent = true;
         if (askExtractConnectedComponent) {
             const auto msg = tr("Do you really want to extract all nodes in this component into a new tree?");
 
-            QMessageBox msgBox(this);
+            QMessageBox msgBox{QApplication::activeWindow()};
             msgBox.setIcon(QMessageBox::Question);
             msgBox.setText(msg);
             msgBox.addButton(QMessageBox::Ok);
@@ -830,7 +827,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             const auto treeID = state->skeletonState->selectedTrees.front()->treeID;
             const bool extracted = Skeletonizer::singleton().extractConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
             if (!extracted) {
-                QMessageBox::information(this, "Nothing to extract", "The component spans an entire tree.");
+                QMessageBox box{QApplication::activeWindow()};
+                box.setIcon(QMessageBox::Information);
+                box.setText(tr("Nothing to extract"));
+                box.setInformativeText(tr("The component spans an entire tree."));
+                box.exec();
             } else {
                 auto msg = tr("Extracted from %1").arg(treeID);
                 if (Skeletonizer::singleton().findTreeByTreeID(treeID) == nullptr) {
@@ -841,8 +842,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
     linkAction = nodeContextMenu.addAction("&Link/Unlink nodes");
-    QObject::connect(linkAction, &QAction::triggered, [this](){
-        checkedToggleNodeLink(this, *state->skeletonState->selectedNodes[0], *state->skeletonState->selectedNodes[1]);
+    QObject::connect(linkAction, &QAction::triggered, [](){
+        checkedToggleNodeLink(*state->skeletonState->selectedNodes[0], *state->skeletonState->selectedNodes[1]);
     });
     QObject::connect(nodeContextMenu.addAction("Set &comment for nodes"), &QAction::triggered, [this](){
         bool applied = false;
@@ -870,12 +871,12 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             prevRadius = radius;// save for the next time the dialog is opened
         }
     });
-    deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [this](){
+    deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){
         if (!state->skeletonState->selectedNodes.empty()) {
             if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
                 Skeletonizer::singleton().deleteSelectedNodes();
             } else {
-                question(this, [](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"));
+                question([](){ Skeletonizer::singleton().deleteSelectedNodes(); }, tr("Delete"), tr("Delete the selected nodes?"));
             }
         }
     });
@@ -922,7 +923,7 @@ void SkeletonView::jumpToNextTree(const bool forward) const {
     });
 }
 
-void SkeletonView::reverseSynapseDirection(QWidget *parent) {
+void SkeletonView::reverseSynapseDirection() {
     const auto & selectedNodes = state->skeletonState->selectedNodes;
     const auto & selectedTrees = state->skeletonState->selectedTrees;
     if((selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode && selectedNodes.front()->correspondingSynapse != nullptr) ||
@@ -932,9 +933,9 @@ void SkeletonView::reverseSynapseDirection(QWidget *parent) {
         selectedTrees.front()->correspondingSynapse->toggleDirection();
     } else {
         // if two are selected, they should belong to the same synapse.
-        QMessageBox info(parent);
+        QMessageBox info{QApplication::activeWindow()};
         info.setIcon(QMessageBox::Information);
-        info.setText("Select one or two corresponding synapse nodes first");
+        info.setText(tr("Select one or two corresponding synapse nodes first"));
         info.exec();
         return;
     }

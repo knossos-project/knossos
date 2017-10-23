@@ -30,6 +30,7 @@
 #include "widgets/mainwindow.h"
 #include "widgets/viewports/viewportbase.h"
 
+#include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -135,13 +136,13 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
     // properties
-    static auto propertyConversionCheck = [this](auto index, auto property, auto & combo){
+    static auto propertyConversionCheck = [](auto index, auto property, auto & combo){
         if (index > Skeletonizer::singleton().getNumberProperties().size()) {
-            QMessageBox msgBox{this};
+            QMessageBox msgBox{QApplication::activeWindow()};
             msgBox.setIcon(QMessageBox::Question);
             msgBox.setText(tr("Property »%1« is not registered as evaluable. ").arg(property));
-            msgBox.setInformativeText("The conversion process will overwrite all values with 0 which cannot be interpreted as number."
-                                      "\nThe property will be marked as pure number in the annotation file.");
+            msgBox.setInformativeText(tr("The conversion process will overwrite all values with 0 which cannot be interpreted as number."
+                                         "\nThe property will be marked as pure number in the annotation file."));
             auto * doit = msgBox.addButton(tr("Convert Property"), QMessageBox::AcceptRole);
             msgBox.addButton(QMessageBox::Cancel);
             msgBox.setDefaultButton(doit);

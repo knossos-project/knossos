@@ -456,17 +456,21 @@ void MainWindow::updateTodosLeft() {
         // submit work
         QRegExp regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b");
         if(regex.exactMatch(job.submitPath)) { // submission by email
-            QMessageBox msgBox(QMessageBox::Information,
-                               "Good Job, you're done!", QString("Please save your work and send it to:\n%0").arg(job.submitPath));
+            QMessageBox msgBox{QApplication::activeWindow()};
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.setText(tr("Good Job, you're done!"));
+            msgBox.setInformativeText(tr("Please save your work and send it to:\n%0").arg(job.submitPath));
             msgBox.exec();
             return;
         }
         // submission by upload
-        QMessageBox msgBox(QMessageBox::Question,
-                           "Good Job, you're done!", "Submit your work now to receive a verification?",
-                           QMessageBox::Yes | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-        if(msgBox.exec() == QMessageBox::Yes) {
+        QMessageBox msgBox{QApplication::activeWindow()};
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setText(tr("Good Job, you're done!", "Submit your work now to receive a verification?"));
+        auto * submit = msgBox.addButton(tr("Submit"), QMessageBox::AcceptRole);
+        msgBox.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
+        msgBox.exec();
+        if (msgBox.clickedButton() == submit) {
             auto jobFilename = "final_" + QFileInfo(Session::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
             annotationFileSave(finishedJobPath);
@@ -593,9 +597,9 @@ void MainWindow::createMenus() {
         }
     }, Qt::ShiftModifier + Qt::Key_C);
 
-    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse Synapse Direction"),
-                                                this, [this](){ widgetContainer.annotationWidget.skeletonTab.reverseSynapseDirection(this); },
-                                                Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
+    swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse Synapse Direction")
+                                                , &widgetContainer.annotationWidget.skeletonTab, &SkeletonView::reverseSynapseDirection
+                                                , Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
 
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
@@ -704,7 +708,7 @@ void MainWindow::createMenus() {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     if (Session::singleton().unsavedChanges) {
-         QMessageBox question(this);
+         QMessageBox question{QApplication::activeWindow()};
          question.setIcon(QMessageBox::Question);
          question.setText(tr("Really quit KNOSSOS despite changes?"));
          question.setInformativeText(tr("All unsaved changes will be lost."));
@@ -738,7 +742,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     bool existingSkeleton = !state->skeletonState->trees.empty();
     bool existingBoth = existingSegmentation && existingSkeleton;
     if (!mergeAll && (existingSegmentation || existingSkeleton)) {
-        QMessageBox prompt(this);
+        QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Question);
         prompt.setText(QObject::tr("Which action would you like to choose?"));
         QString text = tr("There is existing: <ul>")
@@ -796,7 +800,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         }
     } catch (std::runtime_error & error) {
         if (!silent) {
-            QMessageBox fileErrorBox(this);
+            QMessageBox fileErrorBox{QApplication::activeWindow()};
             fileErrorBox.setIcon(QMessageBox::Warning);
             fileErrorBox.setText(tr("Loading failed."));
             fileErrorBox.setInformativeText(tr("One of the files could not be loaded successfully."));
@@ -832,7 +836,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
 bool MainWindow::newAnnotationSlot() {
     if (Session::singleton().unsavedChanges) {
-        QMessageBox question(this);
+        QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Create new annotation despite changes?"));
         question.setInformativeText(tr("Creating a new annotation will make you lose what you’ve done."));
@@ -897,7 +901,11 @@ void MainWindow::saveAsSlot() {
 
             if (prevFilename != fileName + ".k.zip") {
                 const auto message = tr("The supplied filename has been changed: \n%1 to\n%2.k.zip").arg(prevFilename).arg(fileName);
-                QMessageBox::information(this, tr("Fixed filename"), message);
+                QMessageBox box{QApplication::activeWindow()};
+                box.setIcon(QMessageBox::Information);
+                box.setText(tr("Fixed filename"));
+                box.setInformativeText(message);
+                box.exec();
             }
         }
         saveFileDirectory = QFileInfo(fileName).absolutePath();
@@ -931,9 +939,9 @@ try {
     if (silent) {
         throw;
     } else {
-        QMessageBox errorBox(this);
+        QMessageBox errorBox{QApplication::activeWindow()};
         errorBox.setIcon(QMessageBox::Critical);
-        errorBox.setText("File save failed");
+        errorBox.setText(tr("File save failed"));
         errorBox.setInformativeText(filename);
         errorBox.setDetailedText(error.what());
         errorBox.exec();
@@ -942,7 +950,11 @@ try {
 
 void MainWindow::exportToNml() {
     if (state->skeletonState->trees.empty()) {
-        QMessageBox::information(this, "No Save", "No skeleton was found. Not saving!");
+        QMessageBox box{QApplication::activeWindow()};
+        box.setIcon(QMessageBox::Information);
+        box.setText(tr("No Save"));
+        box.setInformativeText(tr("No skeleton was found. Not saving!"));
+        box.exec();
         return;
     }
     auto info = QFileInfo(Session::singleton().annotationFilename);
@@ -1070,7 +1082,7 @@ void MainWindow::toggleSynapseState() {
 
 void MainWindow::clearSkeletonSlot() {
     if(Session::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
-        QMessageBox question(this);
+        QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Do you really want to clear the skeleton?"));
         question.setInformativeText(tr("This erases all trees and their nodes and cannot be undone."));
@@ -1120,8 +1132,8 @@ void MainWindow::saveCustomPreferencesSlot() {
 void MainWindow::defaultPreferencesSlot() {
     QMessageBox question{QApplication::activeWindow()};
     question.setIcon(QMessageBox::Question);
-    question.setWindowTitle("Confirmation required");
-    question.setText("Do you really want to load the default preferences?");
+    question.setWindowTitle(tr("Confirmation required"));
+    question.setText(tr("Do you really want to load the default preferences?"));
     QPushButton *yes = question.addButton(QMessageBox::Yes);
     question.addButton(QMessageBox::No);
     question.exec();
@@ -1253,7 +1265,7 @@ void MainWindow::loadSettings() {
         statusBar()->addPermanentWidget(&warningDisabledFeaturesLabel);
         if (widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.isChecked()) {
             QMessageBox msgBox{QApplication::activeWindow()};
-            msgBox.setCheckBox(new QCheckBox("Don’t show this message again.", &msgBox));
+            msgBox.setCheckBox(new QCheckBox(tr("Don’t show this message again."), &msgBox));
             QObject::connect(msgBox.checkBox(), &QCheckBox::clicked, [this](const bool checked) { widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.setChecked(!checked); });
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setText(warningDisabledFeaturesLabel.toolTip());
@@ -1449,8 +1461,11 @@ void MainWindow::pythonInterpreterSlot() {
 }
 
 void MainWindow::pythonPluginMgrSlot() {
-    auto showError = [this](const QString &errorStr) {
-        QMessageBox errorBox(QMessageBox::Warning, "Python Plugin Manager: Error", errorStr, QMessageBox::Ok, this);
+    auto showError = [](const QString &errorStr) {
+        QMessageBox errorBox{QApplication::activeWindow()};
+        errorBox.setIcon(QMessageBox::Warning);
+        errorBox.setText(tr("Python Plugin Manager: Error"));
+        errorBox.setInformativeText(errorStr);
         errorBox.exec();
         return;
     };
@@ -1459,16 +1474,16 @@ void MainWindow::pythonPluginMgrSlot() {
     auto pluginMgrPath = QString("%1/%2").arg(pluginDir).arg(pluginMgrFn);
     auto existed = QFile(pluginMgrPath).exists();
     if (!existed && !QFile::copy(QString(":/resources/plugins/%1").arg(pluginMgrFn), pluginMgrPath)) {
-        return showError(QString("Cannot temporarily place default Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
+        return showError(tr("Cannot temporarily place default Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
     }
     state->scripting->importPlugin(PLUGIN_MGR_NAME, false);
     if (!existed) {
         QFile pluginMgrFile(pluginMgrPath);
         if (!pluginMgrFile.setPermissions(QFile::WriteOther)) {
-            return showError(QString("Cannot set write permissions for temporarily placed Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
+            return showError(tr("Cannot set write permissions for temporarily placed Plugin Manager in plugin directory:\n%1").arg(pluginMgrPath));
         }
         if (!pluginMgrFile.remove()) {
-            return showError(QString("Cannot remove temporarily placed Plugin Manager from plugin directory:\n%1").arg(pluginMgrPath));
+            return showError(tr("Cannot remove temporarily placed Plugin Manager from plugin directory:\n%1").arg(pluginMgrPath));
         }
     }
     state->scripting->openPlugin(PLUGIN_MGR_NAME, false);

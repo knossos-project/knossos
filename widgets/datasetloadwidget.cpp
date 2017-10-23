@@ -226,8 +226,12 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
 void DatasetLoadWidget::processButtonClicked() {
     const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
     if (dataset.isEmpty()) {
-        QMessageBox::information(this, "Unable to load", "No path selected");
-    } else if (loadDataset(this, boost::none, dataset)) {
+        QMessageBox box{QApplication::activeWindow()};
+        box.setIcon(QMessageBox::Information);
+        box.setText(tr("Unable to load"));
+        box.setInformativeText(tr("No path selected"));
+        box.exec();
+    } else if (loadDataset(boost::none, dataset)) {
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
@@ -237,7 +241,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 2. for multires datasets: by selecting the dataset folder (the folder containing the "magX" subfolders)
  * 3. by specifying a .conf directly.
  */
-bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {
+bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         open();
         return false;
@@ -248,10 +252,10 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {
-            QMessageBox warning{parent};
+            QMessageBox warning{QApplication::activeWindow()};
             warning.setIcon(QMessageBox::Warning);
-            warning.setText("Unable to load Daataset.");
-            warning.setInformativeText(QString("Failed to read config file from %1").arg(path.toString()));
+            warning.setText(tr("Unable to load Daataset."));
+            warning.setInformativeText(tr("Failed to read config file from %1").arg(path.toString()));
             warning.exec();
             open();
         }
@@ -261,7 +265,7 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
 
     bool keepAnnotation = silent;
     if (!silent && (!Session::singleton().annotationFilename.isEmpty() || Session::singleton().unsavedChanges)) {
-        QMessageBox question{parent};
+        QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
         question.setInformativeText(tr("It only makes sense to keep the annotation if the new dataset matches it."));
@@ -281,10 +285,10 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
             layers.front().checkMagnifications();
         } catch (std::exception &) {
             if (!silent) {
-                QMessageBox warning{parent};
+                QMessageBox warning{QApplication::activeWindow()};
                 warning.setIcon(QMessageBox::Warning);
-                warning.setText("Dataset will not be loaded.");
-                warning.setInformativeText("No magnifications could be detected. (knossos.conf in mag folder)");
+                warning.setText(tr("Dataset will not be loaded."));
+                warning.setInformativeText(tr("No magnifications could be detected. (knossos.conf in mag folder)"));
                 warning.exec();
                 open();
             }

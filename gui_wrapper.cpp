@@ -54,9 +54,9 @@ nodeListElement * checkedPopBranchNode() {
     return node;
 }
 
-void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs) {
+void checkedToggleNodeLink(nodeListElement & lhs, nodeListElement & rhs) {
     if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(lhs, rhs)) {
-        QMessageBox prompt(parent);
+        QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Warning);
         prompt.setText(QObject::tr("Cycle detected!"));
         prompt.setInformativeText(QObject::tr("If you want to allow cycles, please select 'Advanced Tracing' in the dropdown menu in the toolbar."));

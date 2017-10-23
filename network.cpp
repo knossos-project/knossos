@@ -28,6 +28,7 @@
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
 
+#include <QApplication>
 #include <QDir>
 #include <QEventLoop>
 #include <QHttpMultiPart>
@@ -234,7 +235,10 @@ void Network::submitSegmentationJob(const QString & path) {
    multiPart->setParent(reply);
    QObject::connect(reply, &QNetworkReply::finished, [reply]() {
        QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
-       QMessageBox verificationBox(QMessageBox::Information, "Your verification", content);
+       QMessageBox verificationBox{QApplication::activeWindow()};
+       verificationBox.setIcon(QMessageBox::Information);
+       verificationBox.setText(QObject::tr("Your verification"));
+       verificationBox.setInformativeText(content);
        verificationBox.exec();
        reply->deleteLater();
    });

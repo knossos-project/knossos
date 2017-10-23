@@ -181,9 +181,10 @@ void Scripting::createDefaultPluginDir() {
     }
     pluginDir = getDefaultPluginDir();
     if (!QDir().mkpath(pluginDir)) {
-        QMessageBox errorBox(QMessageBox::Warning, "Python Plugin Manager: Error",
-                             QString("Cannot create plugin directory:\n%1").arg(pluginDir),
-                             QMessageBox::Ok, NULL);
+        QMessageBox errorBox{QApplication::activeWindow()};
+        errorBox.setIcon(QMessageBox::Warning);
+        errorBox.setText(QObject::tr("Python Plugin Manager: Error"));
+        errorBox.setInformativeText(QObject::tr("Cannot create plugin directory:\n%1").arg(pluginDir));
         errorBox.exec();
         return;
     }
@@ -250,9 +251,10 @@ QString Scripting::getInstanceInContainerStr(const QString &pluginName) {
 
 bool Scripting::pluginActionError(const QString &actionStr, const QString &pluginName, const QString &errorStr, bool isQuiet) {
     if (!isQuiet) {
-        QMessageBox errorBox(QMessageBox::Warning, "Plugin action error",
-                             QString("Failed '%1' for plugin '%2':\n%3").arg(actionStr).arg(pluginName).arg(errorStr),
-                             QMessageBox::Ok, NULL);
+        QMessageBox errorBox{QApplication::activeWindow()};
+        errorBox.setIcon(QMessageBox::Warning);
+        errorBox.setText(QObject::tr("Plugin action error"));
+        errorBox.setInformativeText(QObject::tr("Failed '%1' for plugin '%2':\n%3").arg(actionStr).arg(pluginName).arg(errorStr));
         errorBox.exec();
     }
     return false;

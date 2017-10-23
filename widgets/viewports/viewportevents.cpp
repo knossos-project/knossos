@@ -134,7 +134,7 @@ void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
     auto * activeNode = state->skeletonState->activeNode;
     auto clickedNode = pickNode(event.x(), event.y(), 10);
     if (clickedNode && activeNode != nullptr) {
-        checkedToggleNodeLink(this, *activeNode, clickedNode.get());
+        checkedToggleNodeLink(*activeNode, clickedNode.get());
     }
 }
 
@@ -588,14 +588,13 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             if(state->skeletonState->selectedNodes.size() != 1) {
                 QMessageBox prompt{QApplication::activeWindow()};
                 prompt.setIcon(QMessageBox::Question);
-                prompt.setWindowTitle("Cofirmation required");
-                prompt.setText("Delete selected nodes?");
-                QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-                prompt.addButton("No", QMessageBox::ActionRole);
+                prompt.setText(tr("Delete selected nodes?"));
+                QPushButton *confirmButton = prompt.addButton(tr("Delete"), QMessageBox::AcceptRole);
+                prompt.addButton(tr("Cancel"), QMessageBox::RejectRole);
                 prompt.exec();
                 deleteNodes = prompt.clickedButton() == confirmButton;
             }
-            if(deleteNodes) {
+            if (deleteNodes) {
                 Skeletonizer::singleton().deleteSelectedNodes();
             }
         }
@@ -608,12 +607,11 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         if(state->skeletonState->selectedNodes.empty() == false) {
             QMessageBox prompt{QApplication::activeWindow()};
             prompt.setIcon(QMessageBox::Question);
-            prompt.setWindowTitle("Cofirmation required");
-            prompt.setText("Unselect current node selection?");
-            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-            prompt.addButton("No", QMessageBox::ActionRole);
+            prompt.setText(tr("Clear current node selection?"));
+            QPushButton *confirmButton = prompt.addButton(tr("Clear Selection"), QMessageBox::AcceptRole);
+            prompt.addButton(tr("Cancel"), QMessageBox::RejectRole);
             prompt.exec();
-            if(prompt.clickedButton() == confirmButton) {
+            if (prompt.clickedButton() == confirmButton) {
                 Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
