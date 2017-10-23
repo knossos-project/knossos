@@ -30,7 +30,7 @@
 #include <QAction>
 #include <QDialog>
 #include <QOpenGLDebugLogger>
-#include <QOpenGLFunctions_1_3>
+#include <QOpenGLFunctions_1_4>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QPushButton>
@@ -124,7 +124,7 @@ class segmentListElement;
 class Mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
-class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_3 {
+class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_4 { // glBlendFuncSeparate requires 1.4
     Q_OBJECT
 protected:
     QVBoxLayout vpLayout;
