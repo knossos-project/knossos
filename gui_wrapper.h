@@ -26,6 +26,7 @@
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
 
+nodeListElement * checkedPopBranchNode();
 void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs);
 void loadLutError(const QString & path);
 

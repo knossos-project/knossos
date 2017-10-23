@@ -22,6 +22,7 @@
 
 #include "file_io.h"
 #include "GuiConstants.h"
+#include "gui_wrapper.h"
 #include "htmlmacros.h"
 #include "loader.h"
 #include "mainwindow.h"
@@ -578,7 +579,7 @@ void MainWindow::createMenus() {
     newTreeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New Tree"), this, &MainWindow::newTreeSlot, Qt::Key_C);
     //skeleton
     pushBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Push Branch Node"), this, &MainWindow::pushBranchNodeSlot, Qt::Key_B);
-    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &MainWindow::popBranchNodeSlot, Qt::Key_J);
+    popBranchAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Pop Branch Node"), this, &checkedPopBranchNode, Qt::Key_J);
     actionMenu.addSeparator();
 
     createSynapse = &addApplicationShortcut(actionMenu, QIcon(), tr("Create Synapse"), this, []() {
@@ -1349,10 +1350,6 @@ void MainWindow::pushBranchNodeSlot() {
     if(state->skeletonState->activeNode) {
         Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
-}
-
-void MainWindow::popBranchNodeSlot() {
-    Skeletonizer::singleton().popBranchNodeAfterConfirmation(this);
 }
 
 void MainWindow::updateCommentShortcut(const int index, const QString & comment) {

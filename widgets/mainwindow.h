@@ -273,7 +273,6 @@ public slots:
     // from the event handler
     void newTreeSlot();
     void pushBranchNodeSlot();
-    void popBranchNodeSlot();
     void pythonPropertiesSlot();
     void pythonFileSlot();
     void pythonInterpreterSlot();

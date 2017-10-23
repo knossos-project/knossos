@@ -1582,30 +1582,6 @@ void Skeletonizer::jumpToNode(const nodeListElement & node) {
     emit jumpedToNodeSignal(node);
 }
 
-nodeListElement* Skeletonizer::popBranchNodeAfterConfirmation(QWidget * const parent) {
-    if (state->skeletonState->branchStack.empty()) {
-        QMessageBox box(parent);
-        box.setIcon(QMessageBox::Information);
-        box.setText("No branch points remain.");
-        box.exec();
-        qDebug() << "No branch points remain.";
-    } else if (state->skeletonState->branchpointUnresolved) {
-        QMessageBox prompt(parent);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setText("Unresolved branch point. \nDo you really want to jump to the next one?");
-        prompt.setInformativeText("No node has been added after jumping to the last branch point.");
-        prompt.addButton("Jump anyway", QMessageBox::AcceptRole);
-        auto * cancel = prompt.addButton("Cancel", QMessageBox::RejectRole);
-
-        prompt.exec();
-        if (prompt.clickedButton() == cancel) {
-            return nullptr;
-        }
-    }
-
-    return popBranchNode();
-}
-
 void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
     const auto index = (tree.treeID - 1) % state->viewerState->treeColors.size();
     tree.color = QColor::fromRgb(std::get<0>(state->viewerState->treeColors[index])

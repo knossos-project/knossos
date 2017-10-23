@@ -29,6 +29,31 @@
 #include <QMessageBox>
 #include <QObject>
 
+nodeListElement * checkedPopBranchNode() {
+    if (Skeletonizer::singleton().skeletonState.branchpointUnresolved) {
+        QMessageBox prompt{QApplication::activeWindow()};
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText(QObject::tr("Unresolved branch point. \nDo you really want to jump to the next one?"));
+        prompt.setInformativeText(QObject::tr("No node has been added after jumping to the last branch point."));
+        prompt.addButton(QObject::tr("Jump anyway"), QMessageBox::AcceptRole);
+        auto * cancel = prompt.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
+
+        prompt.exec();
+        if (prompt.clickedButton() == cancel) {
+            return nullptr;
+        }
+    }
+    auto * node = Skeletonizer::singleton().popBranchNode();
+    if (node == nullptr) {
+        QMessageBox box{QApplication::activeWindow()};
+        box.setIcon(QMessageBox::Information);
+        box.setText(QObject::tr("No branch points remain."));
+        box.exec();
+        qDebug() << box.text();
+    }
+    return node;
+}
+
 void checkedToggleNodeLink(QWidget * parent, nodeListElement & lhs, nodeListElement & rhs) {
     if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(lhs, rhs)) {
         QMessageBox prompt(parent);

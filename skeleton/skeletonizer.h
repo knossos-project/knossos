@@ -274,7 +274,6 @@ public:
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const bool merge, const QString & treeCmtOnMultiLoad = "");
     void saveXmlSkeleton(QIODevice &file) const;
 
-    nodeListElement *popBranchNodeAfterConfirmation(QWidget * const parent);
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);
     void goToNode(const NodeGenerator::Direction direction);
