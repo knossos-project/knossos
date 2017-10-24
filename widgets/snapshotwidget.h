@@ -34,15 +34,24 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QScrollArea>
 #include <QVBoxLayout>
 
 class SnapshotViewer : public QDialog {
     QGridLayout mainLayout;
 
     QLabel infoLabel;
-    QScrollArea imageArea;
-    QLabel imageLabel;
+    class AspectRatioLabel : public QLabel {
+    public:
+        QPixmap pixmap;// intentionally conflict the name of pixmap() because that only returns the scaled pixmap
+        AspectRatioLabel(QPixmap pixmap) : pixmap{pixmap} {
+            setPixmap(pixmap);
+            setMinimumSize(std::min(pixmap.width(), 400), std::min(pixmap.height(), 400));
+        }
+        virtual void resizeEvent(QResizeEvent *) override {
+            setPixmap(pixmap.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        }
+    };
+    AspectRatioLabel imageLabel;
     QPushButton saveButton{tr("Save…")};
     QPushButton copyButton{tr("Copy to clipboard")};
     QPushButton cancelButton{tr("Cancel")};

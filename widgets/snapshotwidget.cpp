@@ -40,28 +40,30 @@
 #include <boost/optional.hpp>
 #include <math.h>
 
-SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const QString & saveDir, const QString &defaultFilename, QWidget *parent) : QDialog(parent), saveDir(saveDir) {
+SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const QString & saveDir, const QString &defaultFilename, QWidget *parent)
+        : QDialog(parent), imageLabel{QPixmap::fromImage(image)}, saveDir(saveDir) {
     setWindowTitle("Snapshot Preview");
+
+    setWindowFlag(Qt::CustomizeWindowHint, true);
+    setWindowFlag(Qt::WindowMaximizeButtonHint, true);
+
     infoLabel.setText(info);
-    imageLabel.setPixmap(QPixmap::fromImage(image));
-    imageLabel.setScaledContents(true);
-    imageLabel.resize(400, 400);
-    imageArea.setWidget(&imageLabel);
+    infoLabel.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);// don’t steal vertical space
     int row = 0;
     mainLayout.addWidget(&infoLabel, row++, 0, 1, 3);
-    mainLayout.addWidget(&imageArea, row++, 0, 1, 3);
+    mainLayout.addWidget(&imageLabel, row++, 0, 1, 3);
     mainLayout.addWidget(&cancelButton, row, 0, Qt::AlignLeft);
     mainLayout.addWidget(&copyButton, row, 1);
     mainLayout.addWidget(&saveButton, row, 2);
-    mainLayout.setSizeConstraint(QLayout::SetFixedSize);
+
     setLayout(&mainLayout);
 
+    resize(minimumSize());// remove unnecessary spacing
+
     QObject::connect(&copyButton, &QPushButton::clicked, [this]() {
-        QApplication::clipboard()->setPixmap(*imageLabel.pixmap(), QClipboard::Clipboard);
+        QApplication::clipboard()->setPixmap(imageLabel.pixmap, QClipboard::Clipboard);
     });
-    QObject::connect(&cancelButton, &QPushButton::clicked, [this]() {
-        close();
-    });
+    QObject::connect(&cancelButton, &QPushButton::clicked, this, &QDialog::close);
     QObject::connect(&saveButton, &QPushButton::clicked, [&defaultFilename, this]() {
         const auto path = state->viewer->suspend([&defaultFilename, this]{
             return QFileDialog::getSaveFileName(this, tr("Save path"), this->saveDir + defaultFilename, tr("Images (*.png *.xpm *.xbm *.jpg *.bmp)"));
@@ -70,7 +72,7 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
             QFileInfo info(path);
             this->saveDir = info.absolutePath() + "/";
             setCursor(Qt::BusyCursor);
-            if (!imageLabel.pixmap()->save(path)) {
+            if (!imageLabel.pixmap.save(path)) {
                 QMessageBox errorMsg{QApplication::activeWindow()};
                 errorMsg.setIcon(QMessageBox::Critical);
                 errorMsg.setText(tr("Saving snapshot has failed, probably because of missing write permission for path %1").arg(this->saveDir));
