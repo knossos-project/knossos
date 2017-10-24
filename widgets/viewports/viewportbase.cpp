@@ -240,17 +240,19 @@ void ViewportBase::resizeEvent(QResizeEvent *event) {
 
 void ViewportBase::initializeGL() {
     static bool printed = false;
+    const auto glversion  = reinterpret_cast<const char*>(::glGetString(GL_VERSION));
+    const auto glvendor   = reinterpret_cast<const char*>(::glGetString(GL_VENDOR));
+    const auto glrenderer = reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
     if (!printed) {
-        qDebug() << reinterpret_cast<const char*>(::glGetString(GL_VERSION))
-                 << reinterpret_cast<const char*>(::glGetString(GL_VENDOR))
-                 << reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        qDebug() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
         printed = true;
     }
     if (!initializeOpenGLFunctions()) {
         QMessageBox msgBox{QApplication::activeWindow()}; //use property based api
         msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText(tr("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 1.3"));
+        msgBox.setText(tr("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 1.4"));
         msgBox.setInformativeText(tr("Please update drivers, or graphics hardware."));
+        msgBox.setDetailedText(QString("GL_VERSION:\t%1\nGL_VENDOR:\t%2\nGL_RENDERER:\t%3").arg(glversion).arg(glvendor).arg(glrenderer));
         msgBox.exec();
         throw std::runtime_error("initializeOpenGLFunctions failed");
     }
