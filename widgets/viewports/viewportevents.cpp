@@ -484,6 +484,7 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
             QPoint scrollPixels = event->pixelDelta();
             QPoint scrollAngle = event->angleDelta() / 8;
             float scrollAmount = 0.0f;
+
             if (!scrollPixels.isNull()) {
                 scrollAmount = scrollPixels.y() / 15.0f;
 //                qDebug() << "scrolling(pixel): " << scrollAmount << ", scrollAmount: " << scrollAmount;
@@ -491,10 +492,12 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
                 scrollAmount = scrollAngle.y() / 15.0f;
 //                qDebug() << "scrolling(angle): " << scrollAmount << ", scrollAmount: " << scrollAmount;
             } else { // fallback legacy mode zoom
-                if (event->delta() > 0) {
-                    zoomIn();
-                } else {
-                    zoomOut();
+                if(event->phase() == Qt::NoScrollPhase) { // macOS fix
+                    if (event->delta() > 0) {
+                        zoomIn();
+                    } else {
+                        zoomOut();
+                    }
                 }
             }
 
