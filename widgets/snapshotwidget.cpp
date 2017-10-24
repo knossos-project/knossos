@@ -36,6 +36,7 @@
 #include <QMessageBox>
 #include <QHBoxLayout>
 #include <QSettings>
+#include <QStandardItemModel>
 
 #include <boost/optional.hpp>
 #include <math.h>
@@ -109,7 +110,13 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     viewportChoiceLayout->addWidget(&vpZYRadio);
     viewportChoiceLayout->addWidget(&vpArbRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
-    QObject::connect(&vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int) { updateOptionVisibility(); });
+    QObject::connect(&vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int index) {
+        bool noOrigDataSize = (static_cast<ViewportType>(index) == VIEWPORT_SKELETON); // original dataset size does not make sense for skeleton vp
+        QStandardItem & item = *static_cast<QStandardItemModel &>(*sizeCombo.model()).item(1);
+        item.setFlags(noOrigDataSize ? item.flags() & ~(Qt::ItemIsSelectable|Qt::ItemIsEnabled) : Qt::ItemIsSelectable|Qt::ItemIsEnabled); // disable
+        item.setData(noOrigDataSize ? sizeCombo.palette().color(QPalette::Disabled, QPalette::Text) : QVariant() /* reset to default color */, Qt::TextColorRole); // grey out
+        updateOptionVisibility();
+    });
 
     auto imageOptionsLayout = new QVBoxLayout();
     imageOptionsLayout->addWidget(&withAxesCheck);
@@ -235,6 +242,7 @@ void SnapshotWidget::loadSettings() {
 
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     vpGroup.button(vp)->setChecked(true);
+    vpGroup.buttonClicked(vp);
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
     withBoxCheck.setChecked(settings.value(WITH_BOX, false).toBool());
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
