@@ -14,6 +14,13 @@
 #include <QCheckBox>
 #include <QTreeView>
 #include <QAbstractItemModel>
+#include <QMessageBox>
+
+class LayerLoadWidget : public QDialog {
+Q_OBJECT
+public:
+    LayerLoadWidget(QWidget * parent = 0);
+};
 
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
@@ -59,6 +66,8 @@ public:
     QToolButton moveDownButton;
     QToolButton addLayerButton;
     QToolButton removeLayerButton;
+
+    LayerLoadWidget layerLoadWidget;
 
 private:
     void updateLayerOptions();

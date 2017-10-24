@@ -138,7 +138,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
 }
 
 
-LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent) {
+LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent), layerLoadWidget(this) {
     setWindowTitle("Layers");
 
     int row = 0;
@@ -186,6 +186,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&addLayerButton, &QToolButton::clicked, [this](){
         itemModel.addItem();
+        layerLoadWidget.show();
     });
 
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
@@ -247,4 +248,8 @@ void LayerDialogWidget::updateLayerOptions() {
     rangeDeltaSlider.setValue(static_cast<int>(selectedData.rangeDelta * rangeDeltaSlider.maximum()));
     biasSlider.setValue(static_cast<int>(selectedData.bias * biasSlider.maximum()));
     linearFilteringCheckBox.setChecked(selectedData.linearFiltering);
+}
+
+LayerLoadWidget::LayerLoadWidget(QWidget *parent) : QDialog(parent) {
+    setModal(true);
 }
