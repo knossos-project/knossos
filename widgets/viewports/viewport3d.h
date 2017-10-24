@@ -58,6 +58,7 @@ protected:
 
 public:
     double zoomFactor{1.0};
+    float zoomSpeed{0.5f};
     QMatrix4x4 rotation;
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     ~Viewport3D();

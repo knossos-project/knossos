@@ -483,16 +483,13 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
 
             QPoint scrollPixels = event->pixelDelta();
             QPoint scrollAngle = event->angleDelta() / 8;
-            QPoint scrollSteps{0, 0};
-            static float remainder = 0.0f;
+            float scrollAmount = 0.0f;
             if (!scrollPixels.isNull()) {
-                scrollSteps = scrollPixels / 15;
-                remainder += std::fmod(scrollPixels.y() / 15.0f, 1.0f);
-                // qDebug() << "scrolling(pixel): " << scrollSteps << ", remainder: " << remainder;
+                scrollAmount = scrollPixels.y() / 15.0f;
+//                qDebug() << "scrolling(pixel): " << scrollAmount << ", scrollAmount: " << scrollAmount;
             } else if (!scrollAngle.isNull()) {
-                scrollSteps = scrollAngle / 15;
-                remainder += std::fmod(scrollAngle.y() / 15.0f, 1.0f);
-                // qDebug() << "scrolling(angle): " << scrollSteps << ", remainder: " << remainder;
+                scrollAmount = scrollAngle.y() / 15.0f;
+//                qDebug() << "scrolling(angle): " << scrollAmount << ", scrollAmount: " << scrollAmount;
             } else { // fallback legacy mode zoom
                 if (event->delta() > 0) {
                     zoomIn();
@@ -500,22 +497,10 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
                     zoomOut();
                 }
             }
-            if(remainder >= 1.0f) {
-                scrollSteps += QPoint(0, 1.0f);
-                remainder -= 1.0f;
-            }
-            if(remainder <= -1.0f) {
-                scrollSteps -= QPoint(0, 1.0f);
-                remainder += 1.0f;
-            }
-            if(!scrollSteps.isNull()) {
-                for(int y = 0; y < std::abs(scrollSteps.y()); ++y) {
-                    if(scrollSteps.y() > 0) {
-                        zoomIn();
-                    } else {
-                        zoomOut();
-                    }
-                }
+
+            if(scrollAmount != 0.0f) {
+                zoom(std::pow(2, scrollAmount * zoomSpeed));
+                scrollAmount = 0.0f;
             }
 
             const auto oldFactor = state->skeletonState->volBoundary() / oldZoom;
