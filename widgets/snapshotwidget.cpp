@@ -110,6 +110,8 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     viewportChoiceLayout->addWidget(&vpZYRadio);
     viewportChoiceLayout->addWidget(&vpArbRadio);
     viewportChoiceLayout->addWidget(&vp3dRadio);
+    viewportChoiceLayout->setAlignment(Qt::AlignTop); // ensures constant spacing between radio buttons
+
     QObject::connect(&vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int index) {
         bool noOrigDataSize = (static_cast<ViewportType>(index) == VIEWPORT_SKELETON); // original dataset size does not make sense for skeleton vp
         QStandardItem & item = *static_cast<QStandardItemModel &>(*sizeCombo.model()).item(1);
@@ -119,12 +121,13 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     });
 
     auto imageOptionsLayout = new QVBoxLayout();
-    imageOptionsLayout->addWidget(&withAxesCheck);
-    imageOptionsLayout->addWidget(&withBoxCheck);
-    imageOptionsLayout->addWidget(&withOverlayCheck);
-    imageOptionsLayout->addWidget(&withSkeletonCheck);
-    imageOptionsLayout->addWidget(&withScaleCheck);
-    imageOptionsLayout->addWidget(&withVpPlanes);
+    imageOptionsLayout->addWidget(&withOverlayCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withSkeletonCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withScaleCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withAxesCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withBoxCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withVpPlanes, Qt::AlignTop);
+    imageOptionsLayout->setAlignment(Qt::AlignTop);
 
     auto settingsLayout = new QHBoxLayout();
     settingsLayout->addLayout(viewportChoiceLayout);
@@ -134,9 +137,9 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     settingsLayout->addWidget(line);
     settingsLayout->addLayout(imageOptionsLayout);
 
-    mainLayout.addWidget(&sizeCombo);
+    mainLayout.addWidget(&sizeCombo, 0, Qt::AlignTop);
     mainLayout.addLayout(settingsLayout);
-    mainLayout.addWidget(&snapshotButton);
+    mainLayout.addWidget(&snapshotButton, 0, Qt::AlignBottom);
 
     QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
         const auto vp = static_cast<ViewportType>(vpGroup.checkedId());
@@ -182,6 +185,9 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         snapshotButton.setEnabled(xy || xz || zy || arb || skel);
     });
     setLayout(&mainLayout);
+    setMinimumSize(310, 280);
+    resize(minimumSize());
+    setMaximumSize(minimumSize());
 }
 
 void SnapshotWidget::openForVP(const ViewportType type) {
@@ -193,12 +199,12 @@ void SnapshotWidget::openForVP(const ViewportType type) {
 }
 
 void SnapshotWidget::updateOptionVisibility() {
-    withOverlayCheck.setVisible(vp3dRadio.isChecked() == false);
-    withSkeletonCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
-    withScaleCheck.setVisible(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
-    withAxesCheck.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
-    withBoxCheck.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
-    withVpPlanes.setVisible(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withOverlayCheck.setEnabled(vp3dRadio.isChecked() == false);
+    withSkeletonCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withScaleCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withAxesCheck.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withBoxCheck.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withVpPlanes.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
 }
 
 void SnapshotWidget::showViewer(const QImage & image) {
