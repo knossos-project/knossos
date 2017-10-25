@@ -1144,7 +1144,6 @@ void MainWindow::defaultPreferencesSlot() {
         loadSettings();
         state->viewer->loadTreeLUT();
         state->viewer->defaultDatasetLUT();
-        move(20, 50);
     }
 }
 
