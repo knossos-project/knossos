@@ -199,7 +199,7 @@ void SnapshotWidget::openForVP(const ViewportType type) {
 }
 
 void SnapshotWidget::updateOptionVisibility() {
-    withOverlayCheck.setEnabled(vp3dRadio.isChecked() == false);
+    withOverlayCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withSkeletonCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withScaleCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withAxesCheck.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
