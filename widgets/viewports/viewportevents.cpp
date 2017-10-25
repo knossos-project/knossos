@@ -600,6 +600,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             prompt.addButton(tr("Cancel"), QMessageBox::RejectRole);
             prompt.exec();
             if (prompt.clickedButton() == confirmButton) {
+                Skeletonizer::singleton().selectNodes({}); //select empty nodelist, so nodetree in skeletonview gets udpated
                 Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
