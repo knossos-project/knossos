@@ -123,6 +123,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     auto imageOptionsLayout = new QVBoxLayout();
     imageOptionsLayout->addWidget(&withOverlayCheck, Qt::AlignTop);
     imageOptionsLayout->addWidget(&withSkeletonCheck, Qt::AlignTop);
+    imageOptionsLayout->addWidget(&withMeshesCheck, Qt::AlignTop);
     imageOptionsLayout->addWidget(&withScaleCheck, Qt::AlignTop);
     imageOptionsLayout->addWidget(&withAxesCheck, Qt::AlignTop);
     imageOptionsLayout->addWidget(&withBoxCheck, Qt::AlignTop);
@@ -143,7 +144,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
 
     QObject::connect(&snapshotButton, &QPushButton::clicked, [this]() {
         const auto vp = static_cast<ViewportType>(vpGroup.checkedId());
-        SnapshotOptions options{boost::none, vp, 0, withAxesCheck.isChecked(), withBoxCheck.isChecked(), withOverlayCheck.isChecked(), withSkeletonCheck.isChecked(), withScaleCheck.isChecked(), withVpPlanes.isChecked()};
+        SnapshotOptions options{boost::none, vp, 0, withAxesCheck.isChecked(), withBoxCheck.isChecked(), withMeshesCheck.isChecked(), withOverlayCheck.isChecked(), withScaleCheck.isChecked(), withSkeletonCheck.isChecked(), withVpPlanes.isChecked()};
         if (sizeCombo.currentIndex() == 0) {
             emit snapshotVpSizeRequest(options);
         } else if (sizeCombo.currentIndex() == 1) {
@@ -199,11 +200,12 @@ void SnapshotWidget::openForVP(const ViewportType type) {
 }
 
 void SnapshotWidget::updateOptionVisibility() {
-    withOverlayCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
-    withSkeletonCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
-    withScaleCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withAxesCheck.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
     withBoxCheck.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
+    withMeshesCheck.setEnabled(!Segmentation::singleton().volume_render_toggle);
+    withOverlayCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withScaleCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
+    withSkeletonCheck.setEnabled(vp3dRadio.isChecked() == false || !Segmentation::singleton().volume_render_toggle);
     withVpPlanes.setEnabled(vp3dRadio.isChecked() && !Segmentation::singleton().volume_render_toggle);
 }
 
@@ -229,14 +231,15 @@ void SnapshotWidget::saveSettings() {
     settings.beginGroup(SNAPSHOT_WIDGET);
     settings.setValue(VISIBLE, isVisible());
 
-    settings.setValue(VIEWPORT, vpGroup.checkedId());
+    settings.setValue(SAVE_DIR, saveDir);
     settings.setValue(WITH_AXES, withAxesCheck.isChecked());
     settings.setValue(WITH_BOX, withBoxCheck.isChecked());
+    settings.setValue(WITH_MESHES, withMeshesCheck.isChecked());
     settings.setValue(WITH_OVERLAY, withOverlayCheck.isChecked());
-    settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_SCALE, withScaleCheck.isChecked());
+    settings.setValue(WITH_SKELETON, withSkeletonCheck.isChecked());
     settings.setValue(WITH_VP_PLANES, withVpPlanes.isChecked());
-    settings.setValue(SAVE_DIR, saveDir);
+    settings.setValue(VIEWPORT, vpGroup.checkedId());
     settings.endGroup();
 }
 
@@ -246,17 +249,18 @@ void SnapshotWidget::loadSettings() {
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
+    saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     vpGroup.button(vp)->setChecked(true);
     vpGroup.buttonClicked(vp);
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
     withBoxCheck.setChecked(settings.value(WITH_BOX, false).toBool());
+    withMeshesCheck.setChecked(settings.value(WITH_MESHES, true).toBool());
     withOverlayCheck.setChecked(settings.value(WITH_OVERLAY, true).toBool());
-    withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withScaleCheck.setChecked(settings.value(WITH_SCALE, true).toBool());
+    withSkeletonCheck.setChecked(settings.value(WITH_SKELETON, true).toBool());
     withVpPlanes.setChecked(settings.value(WITH_VP_PLANES, false).toBool());
     updateOptionVisibility();
-    saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
 
     settings.endGroup();
 }

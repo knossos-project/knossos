@@ -81,9 +81,10 @@ struct SnapshotOptions {
     int size{0};
     bool withAxes{true};
     bool withBox{true};
+    bool withMesh{true};
     bool withOverlay{true};
-    bool withSkeleton{true};
     bool withScale{true};
+    bool withSkeleton{true};
     bool withVpPlanes{true};
 };
 Q_DECLARE_METATYPE(SnapshotOptions)

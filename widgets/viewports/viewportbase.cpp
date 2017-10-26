@@ -450,7 +450,7 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     format.setSamples(state->viewerState->sampleBuffers);
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     QOpenGLFramebufferObject fbo(o.size, o.size, format);
-    const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, true, o.withSkeleton, o.withVpPlanes);
+    const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, o.withMesh, o.withSkeleton, o.withVpPlanes);
     fbo.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);

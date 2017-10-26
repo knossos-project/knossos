@@ -13,8 +13,8 @@ struct RenderOptions {
     bool drawBoundaryAxes{true};
     bool drawBoundaryBox{true};
     bool drawCrosshairs{true};
-    bool drawOverlay{true};
     bool drawMesh{true};
+    bool drawOverlay{true};
     bool drawSkeleton{true};
     bool drawViewportPlanes{true};
     bool enableLoddingAndLinesAndPoints{true};

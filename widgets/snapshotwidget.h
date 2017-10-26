@@ -71,7 +71,7 @@ class SnapshotWidget : public DialogVisibilityNotify {
     QComboBox sizeCombo;
     QButtonGroup vpGroup;
     QRadioButton vpXYRadio{"XY viewport"}, vpXZRadio{"XZ viewport"}, vpZYRadio{"ZY viewport"}, vpArbRadio{"Arb viewport"}, vp3dRadio{"3D viewport"};
-    QCheckBox withAxesCheck{"Dataset axes"}, withBoxCheck{"Dataset box"}, withOverlayCheck{"Segmentation overlay"}, withSkeletonCheck{"Skeleton overlay"}, withScaleCheck{"Physical scale"}, withVpPlanes{"Viewport planes"};
+    QCheckBox withAxesCheck{"Dataset axes"}, withBoxCheck{"Dataset box"}, withMeshesCheck{"Mesh"}, withOverlayCheck{"Segmentation overlay"}, withScaleCheck{"Physical scale"}, withSkeletonCheck{"Skeleton overlay"}, withVpPlanes{"Viewport planes"};
     QPushButton snapshotButton{"Take snapshot"};
 
     QString saveDir{QDir::homePath()};

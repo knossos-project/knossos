@@ -168,9 +168,10 @@ const QString SAVE_DIR = "save_dir";
 const QString VIEWPORT = "viewport";
 const QString WITH_AXES = "with_axes";
 const QString WITH_BOX = "with_box";
+const QString WITH_MESHES = "with_meshes";
 const QString WITH_OVERLAY = "with_overlay";
-const QString WITH_SKELETON = "with_skeleton";
 const QString WITH_SCALE = "with_scale";
+const QString WITH_SKELETON = "with_skeleton";
 const QString WITH_VP_PLANES = "with_vp_planes";
 
 #endif // GUICONSTANTS_H
