@@ -33,7 +33,6 @@
 #include <QHBoxLayout>
 #include <QMenu>
 #include <QMessageBox>
-#include <QOpenGLFramebufferObject>
 
 bool ViewportBase::oglDebug = false;
 
@@ -449,9 +448,12 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     QOpenGLFramebufferObjectFormat format;
     format.setSamples(state->viewerState->sampleBuffers);
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    QOpenGLFramebufferObject fbo(o.size, o.size, format);
+    QImage fboImage;
+    { // fbo scope
+    auto fbo = std::make_shared<QOpenGLFramebufferObject>(o.size, o.size, format);
+    snapshotFbo = fbo;
     const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, o.withMesh, o.withSkeleton, o.withVpPlanes);
-    fbo.bind();
+    fbo->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
     renderViewport(options);
     if(o.withScale) {
@@ -459,9 +461,9 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
         renderScaleBar();
     }
     glPopAttrib(); // restore viewport setting
-    fbo.release();
-
-    QImage fboImage(fbo.toImage());
+    fbo->release();
+    fboImage = fbo->toImage();
+    }
     // Need to specify image format with no premultiplied alpha.
     // Otherwise the image is automatically unpremultiplied on save even though it was never premultiplied in the first place. See https://doc.qt.io/qt-5/qopenglframebufferobject.html#toImage
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);

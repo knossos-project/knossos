@@ -30,6 +30,7 @@
 #include <QAction>
 #include <QDialog>
 #include <QOpenGLDebugLogger>
+#include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_1_4>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
@@ -128,6 +129,7 @@ Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & v
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_4 { // glBlendFuncSeparate requires 1.4
     Q_OBJECT
 protected:
+    std::weak_ptr<QOpenGLFramebufferObject> snapshotFbo;
     QVBoxLayout vpLayout;
     QHBoxLayout vpHeadLayout;
     QToolButton menuButton;

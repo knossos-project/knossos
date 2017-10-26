@@ -831,7 +831,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-        QOpenGLFramebufferObject fbo(width(), height(), format);
+        std::array<GLint, 4> vp;
+        glGetIntegerv(GL_VIEWPORT, vp.data());
+        QOpenGLFramebufferObject fbo(vp[2], vp[2], format);
         fbo.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
 
@@ -850,7 +852,11 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
-        fbo.release();
+        if (auto snapshotFboPtr = snapshotFbo.lock()) {
+            snapshotFboPtr->bind();
+        } else {
+            QOpenGLFramebufferObject::bindDefault();
+        }
 
         std::vector<floatCoordinate> vertices{
                 isoCurPos - dataPxX * v1 - dataPxY * v2,
