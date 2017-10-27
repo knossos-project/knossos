@@ -20,8 +20,8 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
- #include "snapshotwidget.h"
- 
+#include "snapshotwidget.h"
+
 #include "dataset.h"
 #include "GuiConstants.h"
 #include "segmentation/segmentation.h"
