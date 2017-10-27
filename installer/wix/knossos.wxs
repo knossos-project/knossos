@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
-  <?define Version='5.0.1'?>
+  <?define Version='5.1'?>
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
 
 <!-- Product ID should be Id='*' so it will be auto generated when creating a new installer
@@ -59,7 +59,7 @@ Upgrade Code should remain always the same! -->
 
     <DirectoryRef Id='INSTALLDIR'>
       <Component Id='MainExecutable' Win64='yes' Guid='b836aaf3-c2dd-4976-b28d-2836865657eb'>
-        <File Id='knossos.exe' Name='knossos.exe' Source='win.standalone.KNOSSOS-5.0.1.exe' KeyPath='yes'>
+        <File Id='knossos.exe' Name='knossos.exe' Source='win.standalone.KNOSSOS-5.1.exe' KeyPath='yes'>
           <Shortcut Id='ApplicationStartMenuShortcut'
             Directory='ApplicationProgramsFolder'
             Name='KNOSSOS'
