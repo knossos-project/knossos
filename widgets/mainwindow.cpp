@@ -20,6 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "buildinfo.h"
 #include "file_io.h"
 #include "GuiConstants.h"
 #include "gui_wrapper.h"
@@ -485,7 +486,7 @@ void MainWindow::notifyUnsavedChanges() {
 
 void MainWindow::updateTitlebar() {
     const auto & session = Session::singleton();
-    QString title = QString("%1 showing ").arg(qApp->applicationDisplayName());
+    QString title = QString("%1 %2 • ").arg(qApp->applicationDisplayName()).arg(KREVISION);
     if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {
@@ -516,7 +517,7 @@ void MainWindow::updateTitlebar() {
     }
 
     if(session.autoSaveTimer.isActive() == false) {
-        title.append(" Autosave: OFF");
+        title.append(" • Autosave: OFF");
     }
 
     setWindowTitle(title);
