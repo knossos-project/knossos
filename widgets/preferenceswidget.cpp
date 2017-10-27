@@ -39,6 +39,7 @@ PreferencesWidget::PreferencesWidget(QWidget *parent) : DialogVisibilityNotify(P
     setWindowTitle("Preferences");
     tabs.addTab(&treesTab, "Trees");
     tabs.addTab(&nodesTab, "Nodes");
+    tabs.addTab(&meshesTab, "Meshes");
     tabs.addTab(&datasetAndSegmentationTab, "Dataset && Segmentation");
     tabs.addTab(&viewportTab, "Viewports");
     tabs.addTab(&saveTab, "Save");
@@ -60,6 +61,7 @@ void PreferencesWidget::loadSettings() {
     saveTab.loadSettings(settings);
     datasetAndSegmentationTab.loadSettings(); // these settings must be loaded before treesTab settings, because treesTab’s msaa setting needs to back them up and reload them again.
     navigationTab.loadSettings(settings);
+    meshesTab.loadSettings(settings);
     nodesTab.loadSettings(settings);
     treesTab.loadSettings(settings);
     viewportTab.loadSettings(settings);

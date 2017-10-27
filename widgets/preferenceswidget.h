@@ -26,6 +26,7 @@
 #include "preferences/savetab.h"
 #include "preferences/datasetsegmentationtab.h"
 #include "preferences/navigationtab.h"
+#include "preferences/meshestab.h"
 #include "preferences/nodestab.h"
 #include "preferences/treestab.h"
 #include "preferences/viewporttab.h"
@@ -40,6 +41,7 @@ public:
     QTabWidget tabs;
     explicit PreferencesWidget(QWidget *parent = 0);
     DatasetAndSegmentationTab datasetAndSegmentationTab;
+    MeshesTab meshesTab;
     NodesTab nodesTab;
     TreesTab treesTab;
     ViewportTab viewportTab;

@@ -54,15 +54,6 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderingGroup.setLayout(&renderingLayout);
     visibilityLayout.setAlignment(Qt::AlignTop);
 
-    warnDisabledPickingCheck.setChecked(true);
-    warnDisabledPickingCheck.setToolTip(tr("Mesh picking is disabled if your graphics driver does not at least support OpenGL 3.0."));
-    meshGroupLayout.addWidget(&meshInOrthoVPsCheck);
-    meshGroupLayout.addWidget(&meshIn3DVPCheck);
-    meshSeparator.setFrameShape(QFrame::HLine);
-    meshSeparator.setFrameShadow(QFrame::Sunken);
-    meshGroupLayout.addWidget(&meshSeparator);
-    meshGroupLayout.addWidget(&warnDisabledPickingCheck);
-    meshGroup.setLayout(&meshGroupLayout);
     skelGroupLayout.addWidget(&skeletonInOrthoVPsCheck);
     skelGroupLayout.addWidget(&skeletonIn3DVPCheck);
     skeletonGroup.setLayout(&skelGroupLayout);
@@ -70,7 +61,6 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     visibilityLayout.addWidget(&allTreesRadio);
     visibilityLayout.addWidget(&selectedTreesRadio);
     visibilityLayout.addWidget(&skeletonGroup);
-    visibilityLayout.addWidget(&meshGroup);
     visibilityGroup.setLayout(&visibilityLayout);
 
     mainLayout.addWidget(&renderingGroup);
@@ -123,8 +113,6 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     // tree visibility
     QObject::connect(&allTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, !checked); });
     QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, checked); });
-    QObject::connect(&meshInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
-    QObject::connect(&meshIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
     QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
     QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
 
@@ -170,9 +158,6 @@ void TreesTab::saveSettings(QSettings & settings) const {
     settings.setValue(ONLY_SELECTED_TREES, selectedTreesRadio.isChecked());
     settings.setValue(SHOW_SKELETON_ORTHOVPS, skeletonInOrthoVPsCheck.isChecked());
     settings.setValue(SHOW_SKELETON_3DVP, skeletonIn3DVPCheck.isChecked());
-    settings.setValue(SHOW_MESH_ORTHOVPS, meshInOrthoVPsCheck.isChecked());
-    settings.setValue(SHOW_MESH_3DVP, meshIn3DVPCheck.isChecked());
-    settings.setValue(WARN_DISABLED_MESH_PICKING, warnDisabledPickingCheck.isChecked());
 }
 
 void TreesTab::loadSettings(const QSettings & settings) {
@@ -204,9 +189,4 @@ void TreesTab::loadSettings(const QSettings & settings) {
     skeletonInOrthoVPsCheck.clicked(skeletonInOrthoVPsCheck.isChecked());
     skeletonIn3DVPCheck.setChecked(settings.value(SHOW_SKELETON_3DVP, true).toBool());
     skeletonIn3DVPCheck.clicked(skeletonIn3DVPCheck.isChecked());
-    meshInOrthoVPsCheck.setChecked(settings.value(SHOW_MESH_ORTHOVPS, true).toBool());
-    meshInOrthoVPsCheck.clicked(meshInOrthoVPsCheck.isChecked());
-    meshIn3DVPCheck.setChecked(settings.value(SHOW_MESH_3DVP, true).toBool());
-    meshIn3DVPCheck.clicked(meshIn3DVPCheck.isChecked());
-    warnDisabledPickingCheck.setChecked(settings.value(WARN_DISABLED_MESH_PICKING, true).toBool());
 }

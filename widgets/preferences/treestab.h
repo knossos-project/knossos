@@ -84,12 +84,6 @@ class TreesTab : public QWidget
     QVBoxLayout visibilityLayout;
     QRadioButton allTreesRadio{tr("Show all trees")};
     QRadioButton selectedTreesRadio{tr("Show only selected trees")};
-    QGroupBox meshGroup{tr("Show meshes in")};
-    QFrame meshSeparator;
-    QCheckBox warnDisabledPickingCheck{tr("Warn on startup if picking is disabled.")};
-    QVBoxLayout meshGroupLayout;
-    QCheckBox meshInOrthoVPsCheck{tr("Orthogonal viewports")};
-    QCheckBox meshIn3DVPCheck{tr("3D viewport")};
     QGroupBox skeletonGroup{tr("Show skeleton in")};
     QVBoxLayout skelGroupLayout;
     QCheckBox skeletonInOrthoVPsCheck{tr("Orthogonal viewports")};

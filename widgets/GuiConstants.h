@@ -75,10 +75,13 @@ const QString ONLY_SELECTED_TREES = "only_selected_trees";
 const QString RENDERING_QUALITY = "rendering_quality";
 const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
 const QString SHOW_SKELETON_3DVP = "Show_skeleton_3dvp";
-const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";
-const QString SHOW_MESH_3DVP = "show_mesh_3dvp";
 const QString TREE_LUT_FILE = "tree_lut_file";
 const QString TREE_LUT_FILE_USED = "tree_lut_file_used";
+const QString WHOLE_SKELETON = "whole_skeleton";
+
+// Preferensces Meshes Tab
+const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";
+const QString SHOW_MESH_3DVP = "show_mesh_3dvp";
 const QString WARN_DISABLED_MESH_PICKING = "warn_disabled_mesh_picking_on_startup";
 const QString WHOLE_SKELETON = "whole_skeleton";
 

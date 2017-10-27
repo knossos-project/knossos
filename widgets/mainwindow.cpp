@@ -1262,10 +1262,10 @@ void MainWindow::loadSettings() {
         warningDisabledFeaturesLabel.setPixmap(warnPixmap.scaled(24, 24));
         warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled, because it requires an OpenGL version ≥ 3.0.\nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
         statusBar()->addPermanentWidget(&warningDisabledFeaturesLabel);
-        if (widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.isChecked()) {
+        if (widgetContainer.preferencesWidget.meshesTab.warnDisabledPickingCheck.isChecked()) {
             QMessageBox msgBox{QApplication::activeWindow()};
             msgBox.setCheckBox(new QCheckBox(tr("Don’t show this message again."), &msgBox));
-            QObject::connect(msgBox.checkBox(), &QCheckBox::clicked, [this](const bool checked) { widgetContainer.preferencesWidget.treesTab.warnDisabledPickingCheck.setChecked(!checked); });
+            QObject::connect(msgBox.checkBox(), &QCheckBox::clicked, [this](const bool checked) { widgetContainer.preferencesWidget.meshesTab.warnDisabledPickingCheck.setChecked(!checked); });
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setText(warningDisabledFeaturesLabel.toolTip());
             msgBox.exec();
