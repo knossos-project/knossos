@@ -222,11 +222,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         } else if(anchor.endsWith(PREF_NODE)) {
             prefWidget.tabs.setCurrentIndex(1); prefWidget.show(); prefWidget.raise();
         } else if(anchor.endsWith(PREF_SEG)) {
-            prefWidget.tabs.setCurrentIndex(2); prefWidget.show(); prefWidget.raise();
+            prefWidget.tabs.setCurrentIndex(3); prefWidget.show(); prefWidget.raise();
         } else if(anchor.endsWith(PREF_TREE)) {
             prefWidget.tabs.setCurrentIndex(0); prefWidget.show(); prefWidget.raise();
         } else if(anchor.endsWith(NAVIGATION)) {
-            prefWidget.tabs.setCurrentIndex(5); prefWidget.show(); prefWidget.raise();
+            prefWidget.tabs.setCurrentIndex(6); prefWidget.show(); prefWidget.raise();
         }
     });
 }
