@@ -584,6 +584,9 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             }
             if (deleteNodes) {
                 Skeletonizer::singleton().deleteSelectedNodes();
+                if(state->skeletonState->activeNode) {
+                    Skeletonizer::singleton().selectNodes({state->skeletonState->activeNode});
+                }
             }
         }
     } else if(event->key() == Qt::Key_Escape) {
@@ -600,7 +603,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             prompt.addButton(tr("Cancel"), QMessageBox::RejectRole);
             prompt.exec();
             if (prompt.clickedButton() == confirmButton) {
-                Skeletonizer::singleton().selectNodes({}); //select empty nodelist, so nodetree in skeletonview gets udpated
+                Skeletonizer::singleton().selectNodes({});
                 Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
