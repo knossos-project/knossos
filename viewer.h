@@ -146,7 +146,7 @@ struct ViewerState {
         std::vector<std::array<float, 4>> colors;
     } lineVertBuffer, pointVertBuffer;
     std::vector<bool> layerVisibility;
-
+    double meshAlphaFactor{1};
     bool MeshPickingEnabled{true};
 };
 

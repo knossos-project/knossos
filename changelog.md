@@ -5,6 +5,7 @@
 ### Annotation
 
 * Mesh slice in orthogonal viewports. Previously the mesh was only visible in the 3D view.
+* Mesh transparency can be adjusted.
 * Skeleton and Segmentation table entries are now copyable to clipboard.
 * Skeleton nodes table: A new context menu entry lets you select all trees that contain selected nodes.
 * Segmentation: Rendering of borders of segmentation objects can be toggled off now.

@@ -79,6 +79,7 @@ void PreferencesWidget::saveSettings() {
     saveTab.saveSettings(settings);
     datasetAndSegmentationTab.saveSettings();
     navigationTab.saveSettings(settings);
+    meshesTab.saveSettings(settings);
     nodesTab.saveSettings(settings);
     treesTab.saveSettings(settings);
     viewportTab.saveSettings(settings);

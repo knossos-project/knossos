@@ -1083,6 +1083,8 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
 
     int colorLocation = meshShader.attributeLocation("color");
     if (buf.useTreeColor == false) {
+        auto alphaFactorLocation = meshShader.attributeLocation("alphaFactor");
+        meshShader.setAttributeValue(alphaFactorLocation, state->viewerState->meshAlphaFactor);
         buf.color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
         meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
@@ -1092,6 +1094,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
         color = Qt::red;
     }
+    color.setAlpha(color.alpha() * state->viewerState->meshAlphaFactor);
     meshShader.setUniformValue("tree_color", color);
 
     if(buf.index_count != 0) {
