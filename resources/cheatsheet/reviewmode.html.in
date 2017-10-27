@@ -24,8 +24,11 @@
 				<th>Shortcut</th><th>Action</th>
 			</tr>
 		</thead>
+		<tr><td><span class="sh">Hold space</span></td><td>Reveal raw data temporarily</td></tr>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select Object / Node</td></tr>
-		<tr><td><span class="sh">Hold space</span></td><td>Temporarily reveal raw data</td></tr>
+        <tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
+    	<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
+        <tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
 	</table>
 	</p>
 </body>
