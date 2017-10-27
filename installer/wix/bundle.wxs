@@ -5,7 +5,7 @@
   <?define Version='5.1'?>
 <!-- Windows installer considers 1.0.0.0 to be equal to 1.0.0.1 -->
   <Bundle Version='$(var.Version)' 
-    UpgradeCode='01263c79-e944-4bf2-a3c6-dc20f62526a2'
+    UpgradeCode='b836aaf3-c2dd-4976-b28d-2836865657eb'
     IconSourceFile='../logo.ico' 
     AboutUrl='https://knossostool.org'
     Manufacturer='Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.'
