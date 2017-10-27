@@ -26,7 +26,6 @@
 #include "session.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
-#include "version.h"
 #include "widgets/viewports/viewportbase.h"
 
 #include <QObject>
@@ -129,6 +128,7 @@ public:
 };
 
 struct SkeletonState {
+    SkeletonState();
     treeListElement * activeTree{nullptr};
     nodeListElement * activeNode{nullptr};
 
@@ -176,7 +176,7 @@ struct SkeletonState {
     //boundary of the visualized volume in the skeleton viewport
     int volBoundary() const;
 
-    QString skeletonCreatedInVersion{KVERSION};
+    QString skeletonCreatedInVersion;
     QString skeletonLastSavedInVersion;
 };
 

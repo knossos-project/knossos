@@ -10,4 +10,10 @@ execute_process(
     WORKING_DIRECTORY ${GIT}
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+if(NOT KREVISION)
+    set(KREVISION "5.1")
+    message("couldn’t get version from git, setting to ${KREVISION}")
+else()
+    message("building ${KREVISION}")
+endif()
 configure_file(${SRC} ${DST} @ONLY)

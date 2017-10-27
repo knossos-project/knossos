@@ -30,7 +30,6 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "stateInfo.h"
-#include "version.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
@@ -53,7 +52,7 @@ void PythonProxy::annotation_add_file(const QString & name, const QByteArray & c
 }
 
 QString PythonProxy::getKnossosVersion() {
-    return KVERSION;
+    return KREVISION;
 }
 
 QString PythonProxy::getKnossosRevision() {

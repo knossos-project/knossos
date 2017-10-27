@@ -2,13 +2,12 @@
 #include "ui_aboutdialog.h"
 
 #include "buildinfo.h"
-#include "version.h"
 
 AboutDialog::AboutDialog(QWidget * parent) : QDialog(parent), ui(new Ui::AboutDialog) {
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
     ui->setupUi(this);
-    ui->knossosLabel->setText(tr("KNOSSOS %1").arg(KVERSION));
+    ui->knossosLabel->setText(tr("KNOSSOS"));
     ui->revisionLabelValue->setText(KREVISION);
     ui->revisionDateLabelValue->setText(KREVISIONDATE);
     ui->qtVersionLabelValue->setText(tr("using %1 (built with %2)").arg(qVersion()).arg(QT_VERSION_STR));

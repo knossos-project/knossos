@@ -32,7 +32,6 @@
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "version.h"
 #include "viewer.h"
 #include "viewports/viewportbase.h"
 #include "widgetcontainer.h"
@@ -486,7 +485,7 @@ void MainWindow::notifyUnsavedChanges() {
 
 void MainWindow::updateTitlebar() {
     const auto & session = Session::singleton();
-    QString title = QString("%1 %2 showing ").arg(qApp->applicationDisplayName()).arg(KVERSION);
+    QString title = QString("%1 showing ").arg(qApp->applicationDisplayName());
     if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {

@@ -22,8 +22,8 @@
 
 #include "network.h"
 
+#include "buildinfo.h"
 #include "stateInfo.h"
-#include "version.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
@@ -153,7 +153,7 @@ QPair<bool, QString> Network::refresh(const QUrl & url) {
 }
 
 QPair<bool, QString> Network::login(const QUrl & url, const QString & username, const QString & password) {
-    const auto postdata = QString("<login><username>%1</username><password>%2</password><knossos_version>%3</knossos_version></login>").arg(username).arg(password).arg(KVERSION);
+    const auto postdata = QString("<login><username>%1</username><password>%2</password><knossos_version>%3</knossos_version></login>").arg(username).arg(password).arg(KREVISION);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain; charset=utf-8");
     auto & reply = *manager.post(request, postdata.toUtf8());

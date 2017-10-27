@@ -22,6 +22,7 @@
 
 #include "skeletonizer.h"
 
+#include "buildinfo.h"
 #include "dataset.h"
 #include "file_io.h"
 #include "functions.h"
@@ -33,7 +34,6 @@
 #include "skeleton/tree.h"
 #include "stateInfo.h"
 #include "tinyply/tinyply.h"
-#include "version.h"
 #include "viewer.h"
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/mainwindow.h"
@@ -53,6 +53,8 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+
+SkeletonState::SkeletonState() : skeletonCreatedInVersion{KREVISION} {}
 
 int SkeletonState::volBoundary() const {
     const auto & scale = Dataset::current().scale;
@@ -183,7 +185,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
 
     xml.writeStartElement("lastsavedin");
-    xml.writeAttribute("version", QString(KVERSION));
+    xml.writeAttribute("version", QString(KREVISION));
     xml.writeEndElement();
 
     xml.writeStartElement("createdin");
