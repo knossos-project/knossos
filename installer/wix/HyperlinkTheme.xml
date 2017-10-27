@@ -31,7 +31,7 @@
         <Editbox Name="FolderEditbox" X="11" Y="143" Width="-91" Height="21" TabStop="yes" FontId="3" FileSystemAutoComplete="yes" />
         <Button Name="BrowseButton" X="-11" Y="142" Width="75" Height="23" TabStop="yes" FontId="3">#(loc.OptionsBrowseButton)</Button>
 
-        <Checkbox Name="LocalPythonCheckbox" X="11" Y="170" Width="260" Height="17" TabStop="yes" FontId="3">Install Python 2.7.13</Checkbox> 
+        <Checkbox Name="LocalPythonCheckbox" X="11" Y="170" Width="260" Height="17" TabStop="yes" FontId="3">Install Python 2.7.14</Checkbox> 
         <Checkbox Name="LocalDesktopShortcutCheckbox" X="11" Y="193" Width="260" Height="17" TabStop="yes" FontId="3">Create Desktop Shortcut</Checkbox>
 
         <Button Name="OptionsOkButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.OptionsOkButton)</Button>
