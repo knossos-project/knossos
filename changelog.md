@@ -1,5 +1,7 @@
 # KNOSSOS 5.1
 
+Release Date: 27th October 2017
+
 ## New Features:
 
 ### Annotation
