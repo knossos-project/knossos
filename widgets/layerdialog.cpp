@@ -1,32 +1,12 @@
 #include "layerdialog.h"
 
 #include <QHeaderView>
-
-// TODO: temporary!
-struct LayerGuiElement {
-    // data
-    int id; // or something else
-    float rangeDelta;
-    float bias;
-    bool linearFiltering;
-
-    // gui
-    float opacity = 1.0f;
-    bool visible = true;
-    QString name = "unnamed";
-    QString type = "untyped"; // should be ID
-};
-
-static std::vector<LayerGuiElement> guiData {
-    {0, 0.0f, 0.0f, false, 0.0f, false, "", ""},
-    {1, 0.2f, 0.2f, false, 0.225f, false, "a", "b"},
-    {2, 0.5f, 0.5f,  true, 0.5f,  true, "something", "else"},
-    {3, 1.0f, 1.0f,  true, 1.0f,  true, "more", "things"},
-    {4, 0.7f, 0.7f, false, 0.75f, false, "layername", "layertype"},
-};
+#include "dataset.h"
+#include "mainwindow.h"
+#include "stateInfo.h"
 
 int LayerItemModel::rowCount(const QModelIndex &) const {
-    return guiData.size();
+    return Dataset::datasets.size();
 }
 
 int LayerItemModel::columnCount(const QModelIndex &) const {
@@ -43,15 +23,48 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
+        auto& data = Dataset::datasets[index.row()];
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
-            case 1: return QString::number(guiData[index.row()].opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
-            case 2: return guiData[index.row()].name;
-            case 3: return guiData[index.row()].type;
+            case 1: return QString::number(data.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
+            case 2: return data.layerName;
+            case 3:
+                switch(data.type) {
+                case Dataset::CubeType::RAW_UNCOMPRESSED:
+                    return "RAW_UNCOMPRESSED";
+                case Dataset::CubeType::RAW_JPG:
+                    return "RAW_JPG";
+                case Dataset::CubeType::RAW_J2K:
+                    return "RAW_J2K";
+                case Dataset::CubeType::RAW_JP2_6:
+                    return "RAW_JP2_6";
+                case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16:
+                    return "SEGMENTATION_UNCOMPRESSED_16";
+                case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64:
+                    return "SEGMENTATION_UNCOMPRESSED_64";
+                case Dataset::CubeType::SEGMENTATION_SZ_ZIP:
+                    return "SEGMENTATION_SZ_ZIP";
+                case Dataset::CubeType::SNAPPY:
+                    return "SNAPPY";
+                }
+            case 4:
+                switch(data.api) {
+                case Dataset::API::Heidelbrain:
+                    return "Heidelbrain";
+                case Dataset::API::WebKnossos:
+                    return "WebKnossos";
+                case Dataset::API::GoogleBrainmaps:
+                    return "GoogleBrainmaps";
+                case Dataset::API::OpenConnectome:
+                    return "OpenConnectome";
+                }
+            case 5: return data.magnification;
+            case 6: return data.cubeEdgeLength;
+            case 7: return data.experimentname;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                return guiData[index.row()].visible ? Qt::Checked : Qt::Unchecked;
+                return data.visible ? Qt::Checked : Qt::Unchecked;
             }
         }
     }
@@ -60,33 +73,19 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
+        auto& data = Dataset::datasets[index.row()];
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
-                guiData[index.row()].opacity = value.toFloat() / 100.0f;
+                data.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
                 break;
             case 2:
-                guiData[index.row()].name = value.toString();
-                break;
-            case 3:
-                guiData[index.row()].type = value.toString();
-                break;
-            }
-        } else if (role == Qt::UserRole) { // raw data setter
-            switch(index.column()) {
-            case 1:
-                guiData[index.row()].opacity = value.toFloat();
-                break;
-            case 2:
-                guiData[index.row()].name = value.toString();
-                break;
-            case 3:
-                guiData[index.row()].type = value.toString();
+                data.layerName = value.toString();
                 break;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                guiData[index.row()].visible = value.toBool();
+                data.visible = value.toBool();
             }
         }
     }
@@ -96,7 +95,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
 
 void LayerItemModel::addItem() {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    guiData.emplace_back(LayerGuiElement{});
+    // insert row
     endInsertRows();
 }
 
@@ -104,7 +103,8 @@ void LayerItemModel::removeItem(const QModelIndex &index) {
     if(index.isValid()) {
         auto row = index.row();
         beginRemoveRows(QModelIndex(), row, row);
-        guiData.erase(guiData.begin() + row);
+        auto& datasets = Dataset::datasets;
+        datasets.erase(datasets.begin() + row);
         endRemoveRows();
     }
 }
@@ -112,12 +112,18 @@ void LayerItemModel::removeItem(const QModelIndex &index) {
 void LayerItemModel::moveItem(const QModelIndex &index, int offset) {
     if(index.isValid()) {
         auto row = index.row();
-        if(row + offset >= 0 && row + offset < guiData.size()) {
+        auto& datasets = Dataset::datasets;
+        if(row + offset >= 0 && row + offset < datasets.size()) {
             beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + ((offset > 0) ? offset + 1 : offset)); // because moving is done into between rows
-            std::swap(guiData[row], guiData[row + offset]);
+            datasets.swap(row, row + offset);
             endMoveRows();
         }
     }
+}
+
+void LayerItemModel::reset() {
+    beginResetModel();
+    endResetModel();
 }
 
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
@@ -162,7 +168,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setModel(&itemModel);
     treeView.resizeColumnToContents(0);
     treeView.resizeColumnToContents(1);
-    treeView.resizeColumnToContents(2);
 //    treeView.header()->setSectionResizeMode(QHeaderView::Fixed); // can cause some unwanted column sizes that are unresizable
 //    treeView.header()->setSectionsClickable(false);
 //    treeView.header()->setSectionsMovable(false);
@@ -170,8 +175,13 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
-    addLayerButton.setIcon(QIcon(":/resources/icons/dialog-ok.png"));
-    removeLayerButton.setIcon(QIcon(":/resources/icons/application-exit.png"));
+//    addLayerButton.setIcon(QIcon(":/resources/icons/dialog-ok.png"));
+//    removeLayerButton.setIcon(QIcon(":/resources/icons/application-exit.png"));
+
+    addLayerButton.setText("➕");
+    removeLayerButton.setText("➖");
+    moveUpButton.setText("🡅");
+    moveDownButton.setText("🡇");
 
     controlButtonLayout.addWidget(&infoTextLabel);
     controlButtonLayout.addWidget(&moveUpButton);
@@ -204,7 +214,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&opacitySlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& selectedData = guiData[currentIndex.row()];
+            auto& selectedData = Dataset::datasets[currentIndex.row()];
             selectedData.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
@@ -213,41 +223,49 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
-        if(currentIndex.isValid()) {
-            auto& selectedData = guiData[currentIndex.row()];
-            selectedData.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
+        if(currentIndex.isValid()) {;
+            auto& data = Dataset::datasets[currentIndex.row()];
+            data.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
         }
     });
 
     QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& selectedData = guiData[currentIndex.row()];
-            selectedData.bias = static_cast<float>(value) / biasSlider.maximum();
+            auto& data = Dataset::datasets[currentIndex.row()];
+            data.bias = static_cast<float>(value) / biasSlider.maximum();
         }
     });
 
     QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int state){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& selectedData = guiData[currentIndex.row()];
-            selectedData.linearFiltering = (state == Qt::Checked) ? true : false;
+            auto& data = Dataset::datasets[currentIndex.row()];
+            data.linearFiltering = (state == Qt::Checked) ? true : false;
         }
     });
 
-    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerOptions);
-    QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerOptions);
+    QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
+    QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
 
-    resize(700, 600);
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool /*showOverlays*/) {
+        qDebug() << "datasetChanged()";
+        itemModel.reset();
+        for(auto& dataset : Dataset::datasets) {
+            qDebug() << "dataset" << dataset.overlay;
+        }
+    });
+
+    resize(800, 600);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void LayerDialogWidget::updateLayerOptions() {
-    auto& selectedData = guiData[treeView.selectionModel()->currentIndex().row()];
-    opacitySlider.setValue(static_cast<int>(selectedData.opacity * opacitySlider.maximum()));
-    rangeDeltaSlider.setValue(static_cast<int>(selectedData.rangeDelta * rangeDeltaSlider.maximum()));
-    biasSlider.setValue(static_cast<int>(selectedData.bias * biasSlider.maximum()));
-    linearFilteringCheckBox.setChecked(selectedData.linearFiltering);
+void LayerDialogWidget::updateLayerProperties() {
+    auto& data = Dataset::datasets[treeView.selectionModel()->currentIndex().row()];
+    opacitySlider.setValue(static_cast<int>(data.opacity * opacitySlider.maximum()));
+    rangeDeltaSlider.setValue(static_cast<int>(data.rangeDelta * rangeDeltaSlider.maximum()));
+    biasSlider.setValue(static_cast<int>(data.bias * biasSlider.maximum()));
+    linearFilteringCheckBox.setChecked(data.linearFiltering);
 }
 
 LayerLoadWidget::LayerLoadWidget(QWidget *parent) : QDialog(parent) {

@@ -25,7 +25,7 @@ public:
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
 protected:
-    const std::vector<QString> header{"visible", "opacity", "name", "type"};
+    const std::vector<QString> header{"visible", "opacity", "name", "cubetype", "api", "mag", "edgelength", "experiment"};
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -37,6 +37,7 @@ public:
     void addItem();
     void removeItem(const QModelIndex &index);
     void moveItem(const QModelIndex &indices, int offset);
+    void reset();
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {
@@ -70,7 +71,7 @@ public:
     LayerLoadWidget layerLoadWidget;
 
 private:
-    void updateLayerOptions();
+    void updateLayerProperties();
 };
 
 #endif // LAYERDIALOG_H
