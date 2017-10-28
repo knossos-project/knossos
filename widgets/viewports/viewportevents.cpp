@@ -567,13 +567,13 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         });
         state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
-        if(ctrl) {
-            if(state->skeletonState->activeTree) {
+        if (ctrl) {
+            if (state->skeletonState->activeTree != nullptr) {
                 Skeletonizer::singleton().delTree(state->skeletonState->activeTree->treeID);
             }
-        } else if(state->skeletonState->selectedNodes.size() > 0) {
+        } else if (!state->skeletonState->selectedNodes.empty()) {
             bool deleteNodes = true;
-            if(state->skeletonState->selectedNodes.size() != 1) {
+            if (state->skeletonState->selectedNodes.size() > 1) {
                 QMessageBox prompt{QApplication::activeWindow()};
                 prompt.setIcon(QMessageBox::Question);
                 prompt.setText(tr("Delete selected nodes?"));
@@ -587,12 +587,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             }
         }
     } else if(event->key() == Qt::Key_Escape) {
-        if(state->skeletonState->selectedNodes.size() == 1
-           && state->skeletonState->activeNode->selected) {
-            // active node must always be selected if nothing else is selected.
-            return;
-        }
-        if(state->skeletonState->selectedNodes.empty() == false) {
+        if (state->skeletonState->selectedNodes.size() > 1) {// active node is not allowed to be deselected
             QMessageBox prompt{QApplication::activeWindow()};
             prompt.setIcon(QMessageBox::Question);
             prompt.setText(tr("Clear current node selection?"));
