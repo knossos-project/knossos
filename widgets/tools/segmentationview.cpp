@@ -86,12 +86,15 @@ int SegmentationObjectModel::columnCount(const QModelIndex &) const {
     return header.size();
 }
 
+static const auto lockToolTip = "Locked objects remain unmodified when merged.";
+
 QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return header[section];
-    } else {
-        return QVariant();//return invalid QVariant
+    } else if (section == 2 && role == Qt::ToolTipRole) {
+        return lockToolTip;
     }
+    return QVariant();//return invalid QVariant
 }
 
 QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, const QModelIndex & index, int role) const {
@@ -120,6 +123,8 @@ QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, con
             return output;
         }
         }
+    } else if (index.column() == 2 && role == Qt::ToolTipRole) {
+        return lockToolTip;
     }
     return QVariant();//return invalid QVariant
 }
@@ -134,17 +139,7 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
 bool SegmentationObjectModel::objectSet(Segmentation::Object & obj, const QModelIndex & index, const QVariant & value, int role) {
     if (index.column() == 2 && role == Qt::CheckStateRole) {
-        QMessageBox prompt{QApplication::activeWindow()};
-        prompt.setIcon(QMessageBox::Question);
-        const auto lock = obj.immutable ? tr("Unlock") : tr("Lock");
-        prompt.setWindowTitle(lock + tr(" Object"));
-        prompt.setText(lock + tr(" the object with id %1?").arg(obj.id));
-        const auto & lockButton = prompt.addButton(lock, QMessageBox::YesRole);
-        prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
-        prompt.exec();
-        if (prompt.clickedButton() == lockButton) {
-            obj.immutable = value.toBool();
-        }
+        obj.immutable = value.toBool();
     } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
         case 3: Segmentation::singleton().changeCategory(obj, value.toString()); break;
