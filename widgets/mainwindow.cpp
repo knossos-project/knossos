@@ -1134,11 +1134,11 @@ void MainWindow::defaultPreferencesSlot() {
     question.setIcon(QMessageBox::Question);
     question.setWindowTitle(tr("Confirmation required"));
     question.setText(tr("Do you really want to load the default preferences?"));
-    QPushButton *yes = question.addButton(QMessageBox::Yes);
-    question.addButton(QMessageBox::No);
+    QPushButton *reset = question.addButton("Reset", QMessageBox::AcceptRole);
+    question.addButton(QMessageBox::Cancel);
     question.exec();
 
-    if(question.clickedButton() == yes) {
+    if (question.clickedButton() == reset) {
         setWindowState(Qt::WindowNoState);
         clearSettings();
         loadSettings();

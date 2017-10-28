@@ -269,8 +269,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
         question.setInformativeText(tr("It only makes sense to keep the annotation if the new dataset matches it."));
-        const auto * const keepButton = question.addButton(tr("Yes, &keep"), QMessageBox::YesRole);
-        const auto * const clearButton = question.addButton(tr("No, start &new one"), QMessageBox::NoRole);
+        const auto * const keepButton = question.addButton(tr("Keep"), QMessageBox::AcceptRole);
+        const auto * const clearButton = question.addButton(tr("Start &new one"), QMessageBox::RejectRole);
         const auto * const cancelButton = question.addButton(QMessageBox::Cancel);
         question.exec();
         if (question.clickedButton() == cancelButton || (question.clickedButton() == clearButton && !state->viewer->window->newAnnotationSlot())) {// clear skeleton, mergelist and snappy cubes
