@@ -596,7 +596,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             prompt.exec();
             if (prompt.clickedButton() == confirmButton) {
                 Skeletonizer::singleton().selectNodes({});
-                Skeletonizer::singleton().setActiveNode(state->skeletonState->activeNode);
             }
         }
     } else if(event->key() == Qt::Key_F4) {
