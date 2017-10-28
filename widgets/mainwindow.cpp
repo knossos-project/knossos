@@ -1132,8 +1132,8 @@ void MainWindow::saveCustomPreferencesSlot() {
 void MainWindow::defaultPreferencesSlot() {
     QMessageBox question{QApplication::activeWindow()};
     question.setIcon(QMessageBox::Question);
-    question.setWindowTitle(tr("Confirmation required"));
-    question.setText(tr("Do you really want to load the default preferences?"));
+    question.setText(tr("Do you really want to reset to the default preferences?"));
+    question.setInformativeText(tr("Your current preferences will be replaced."));
     QPushButton *reset = question.addButton("Reset", QMessageBox::AcceptRole);
     question.addButton(QMessageBox::Cancel);
     question.exec();
