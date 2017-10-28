@@ -584,9 +584,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             }
             if (deleteNodes) {
                 Skeletonizer::singleton().deleteSelectedNodes();
-                if(state->skeletonState->activeNode) {
-                    Skeletonizer::singleton().selectNodes({state->skeletonState->activeNode});
-                }
             }
         }
     } else if(event->key() == Qt::Key_Escape) {

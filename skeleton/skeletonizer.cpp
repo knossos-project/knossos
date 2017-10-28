@@ -1815,6 +1815,9 @@ void Skeletonizer::deleteSelectedNodes() {
     bulkOperation(nodesToDelete, [this](auto & node){
         delNode(0, &node);
     });
+    if (skeletonState.activeNode != nullptr) {
+        selectNodes({state->skeletonState->activeNode});
+    }
 }
 
 bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElement & rhs) const {
