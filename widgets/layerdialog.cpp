@@ -249,11 +249,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool /*showOverlays*/) {
-        qDebug() << "datasetChanged()";
         itemModel.reset();
-        for(auto& dataset : Dataset::datasets) {
-            qDebug() << "dataset" << dataset.overlay;
-        }
     });
 
     resize(800, 600);
@@ -270,4 +266,26 @@ void LayerDialogWidget::updateLayerProperties() {
 
 LayerLoadWidget::LayerLoadWidget(QWidget *parent) : QDialog(parent) {
     setModal(true);
+
+    int row = 0;
+    listLayout.addWidget(&datasetLoadLabel, row, 0, Qt::AlignCenter);
+    listLayout.addWidget(&sessionLayerLabel, row, 1, Qt::AlignCenter);
+
+    listLayout.addWidget(&datasetLoadList, ++row, 0);
+    listLayout.addWidget(&sessionLayerList, row, 1);
+
+    listLayout.addWidget(&datasetLoadDescription, ++row, 0);
+    listLayout.addWidget(&sessionLayerDescription, row, 1);
+
+    buttonLayout.addWidget(&loadButton, 0, Qt::AlignRight);
+    buttonLayout.addWidget(&cancelButton, 0, Qt::AlignLeft);
+
+    mainLayout.addLayout(&listLayout);
+    mainLayout.addLayout(&buttonLayout);
+    setLayout(&mainLayout);
+
+    loadButton.setText("Load");
+    cancelButton.setText("Cancel");
+
+    resize(900, 500);
 }

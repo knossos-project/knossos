@@ -15,11 +15,26 @@
 #include <QTreeView>
 #include <QAbstractItemModel>
 #include <QMessageBox>
+#include <QListWidget>
 
 class LayerLoadWidget : public QDialog {
 Q_OBJECT
 public:
     LayerLoadWidget(QWidget * parent = 0);
+
+    QVBoxLayout mainLayout;
+    QGridLayout listLayout;
+    QHBoxLayout buttonLayout;
+
+    QToolButton loadButton;
+    QToolButton cancelButton;
+
+    QListWidget datasetLoadList;
+    QLabel datasetLoadLabel{"datasetLoadLabel"};
+    QLabel datasetLoadDescription{"datasetLoadDescription"};
+    QListWidget sessionLayerList;
+    QLabel sessionLayerLabel{"layerLoadLabel"};
+    QLabel sessionLayerDescription{"sessionLayerDescription"};
 };
 
 class LayerItemModel : public QAbstractListModel {
