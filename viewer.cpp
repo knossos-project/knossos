@@ -185,7 +185,7 @@ void Viewer::setMagnificationLock(const bool locked) {
     emit magnificationLockChanged(locked);
 }
 
-void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp, bool useCustomLUT) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -212,12 +212,12 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
             uint8_t r, g, b;
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
-                const uint8_t adjustIndex = reinterpret_cast<uint8_t*>(datacube)[0];
+                const uint8_t adjustIndex = datacube[0];
                 r = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
                 g = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
                 b = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
             } else {
-                r = g = b = reinterpret_cast<uint8_t*>(datacube)[0];
+                r = g = b = datacube[0];
             }
             if(partlyInMovementArea) {
                 bool factor = false;
@@ -236,9 +236,9 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                     r *= d; g *= d; b *= d;
                 }
             }
-            reinterpret_cast<uint8_t*>(slice)[0] = r;
-            reinterpret_cast<uint8_t*>(slice)[1] = g;
-            reinterpret_cast<uint8_t*>(slice)[2] = b;
+            slice[0] = r;
+            slice[1] = g;
+            slice[2] = b;
 
             datacube += voxelIncrement;
             slice += texNextLine;
@@ -250,7 +250,7 @@ void Viewer::dcSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     }
 }
 
-void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float, char *slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
+void Viewer::dcSliceExtract(uint8_t * datacube, floatCoordinate *currentPxInDc_float, uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
@@ -279,7 +279,7 @@ void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
         } else {
             if(useCustomLUT) {
                 //extract data as unsigned number from the datacube
-                const unsigned char adjustIndex = reinterpret_cast<unsigned char*>(datacube)[dcIndex];
+                const unsigned char adjustIndex = datacube[dcIndex];
                 slice[sliceIndex + 0] = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
                 slice[sliceIndex + 1] = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
                 slice[sliceIndex + 2] = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
@@ -313,7 +313,7 @@ void Viewer::dcSliceExtract(char *datacube, floatCoordinate *currentPxInDc_float
  * each pixel is tested for its position and is omitted if outside of the area.
  *
  */
-void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *slice, ViewportOrtho & vp) {
+void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -327,9 +327,9 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + cubeEdgeLen * Dataset::current().magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + cubeEdgeLen * Dataset::current().magnification;
 
-    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * OBJID_BYTES : OBJID_BYTES;
-    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen * OBJID_BYTES : state->cubeSliceArea * OBJID_BYTES;
-    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen * OBJID_BYTES;
+    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
+    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
+    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
     const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
     const std::size_t textRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 4 : 0;
 
@@ -343,7 +343,7 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
     const std::size_t max = cubeEdgeLen * (cubeEdgeLen - 1);
     std::size_t counter = 0;//slice position
     int offsetX = 0, offsetY = 0; // current texel's horizontal and vertical dataset pixel offset inside cube
-    int coordsPerLine = cubeEdgeLen*Dataset::current().magnification;
+    const int coordsPerLine = cubeEdgeLen * Dataset::current().magnification;
     for (auto y = cubeEdgeLen; y != 0; --y) {
         for (auto x = cubeEdgeLen; x != 0; --x) {// x and y’s values are not used
             bool hide = false;
@@ -351,25 +351,25 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                 if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
                     ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
                     // vertically out of movement area
-                    reinterpret_cast<uint8_t*>(slice)[3] = 0;
+                    slice[3] = 0;
                     hide = true;
                 }
                 else if(((vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
                         (vp.viewportType == VIEWPORT_ZY && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
                     // horizontally out of movement area
-                    reinterpret_cast<uint8_t*>(slice)[3] = 0;
+                    slice[3] = 0;
                     hide = true;
                 }
             }
 
             if(hide == false) {
-                uint64_t subobjectId = *reinterpret_cast<uint64_t*>(datacube);
+                const uint64_t subobjectId = datacube[0];
 
-                auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromSubobjectId(subobjectId);
-                reinterpret_cast<uint8_t*>(slice)[0] = std::get<0>(color);
-                reinterpret_cast<uint8_t*>(slice)[1] = std::get<1>(color);
-                reinterpret_cast<uint8_t*>(slice)[2] = std::get<2>(color);
-                reinterpret_cast<uint8_t*>(slice)[3] = std::get<3>(color);
+                const auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromSubobjectId(subobjectId);
+                slice[0] = std::get<0>(color);
+                slice[1] = std::get<1>(color);
+                slice[2] = std::get<2>(color);
+                slice[3] = std::get<3>(color);
 
                 const bool selected = (subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId);
                 const bool isPastFirstRow = counter >= min;
@@ -383,25 +383,25 @@ void Viewer::ocSliceExtract(char *datacube, Coordinate cubePosInAbsPx, char *sli
                         uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
                         if (selected && seg.mouseFocusedObjectId == objectId) {
                             if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                                const uint64_t left = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
-                                const uint64_t right = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
-                                const uint64_t top = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
+                                const uint64_t left   = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
+                                const uint64_t right  = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
+                                const uint64_t top    = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
                                 const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
                                 //enhance alpha of this voxel if any of the surrounding voxels belong to another object
                                 if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
-                                    reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                                    slice[3] = std::min(255, slice[3]*4);
                                 }
                             }
                         }
                     }
                     else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                        const uint64_t left = *reinterpret_cast<uint64_t*>(datacube - voxelIncrement);
-                        const uint64_t right = *reinterpret_cast<uint64_t*>(datacube + voxelIncrement);
-                        const uint64_t top = *reinterpret_cast<uint64_t*>(datacube - sliceIncrement);
-                        const uint64_t bottom = *reinterpret_cast<uint64_t*>(datacube + sliceIncrement);;
+                        const uint64_t left   = datacube[-voxelIncrement];
+                        const uint64_t right  = datacube[+voxelIncrement];
+                        const uint64_t top    = datacube[-sliceIncrement];
+                        const uint64_t bottom = datacube[+sliceIncrement];
                         //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
                         if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
-                            reinterpret_cast<uint8_t*>(slice)[3] = std::min(255, reinterpret_cast<uint8_t*>(slice)[3]*4);
+                            slice[3] = std::min(255, slice[3]*4);
                         }
                     }
                 }
@@ -463,7 +463,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
 
     const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::current().magnification);
 
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
     for(int x_dc = 0; x_dc < state->M; x_dc++) {
@@ -510,7 +510,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 const int index = texIndex(x_dc, y_dc, 3, &(vp.texture));
 
                 if (datacube != nullptr) {
-                    dcSliceExtract(datacube + slicePositionWithinCube,
+                    dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube) + slicePositionWithinCube,
                                    cubePosInAbsPx,
                                    texData.data() + index,
                                    vp,
@@ -536,7 +536,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
 
                 if (overlayCube != nullptr) {
-                    ocSliceExtract(overlayCube + slicePositionWithinCube * OBJID_BYTES,
+                    ocSliceExtract(reinterpret_cast<std::uint64_t *>(overlayCube) + slicePositionWithinCube,
                                    cubePosInAbsPx,
                                    texData.data() + index,
                                    vp);
@@ -691,7 +691,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
     rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
     currentPx_float = rowPx_float;
 
-    std::vector<char> texData(3 * std::pow(state->viewerState->texEdgeLength, 2));
+    std::vector<std::uint8_t> texData(3 * std::pow(state->viewerState->texEdgeLength, 2));
 
     glBindTexture(GL_TEXTURE_2D, vp.texture.texHandle);
 
@@ -713,7 +713,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
             t_old = t;
 
-            dcSliceExtract(datacube,
+            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube),
                            &currentPxInDc_float,
                            texData.data(),
                            s, &t,
