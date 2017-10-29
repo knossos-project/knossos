@@ -467,6 +467,7 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     // Need to specify image format with no premultiplied alpha.
     // Otherwise the image is automatically unpremultiplied on save even though it was never premultiplied in the first place. See https://doc.qt.io/qt-5/qopenglframebufferobject.html#toImage
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_RGB32);
+    image = image.copy();// prevent implicit sharing from breaking when fboImage gets out-of-scope
     if (o.path) {
         qDebug() << tr("snapshot ") + (!image.save(o.path.get()) ? "un" : "") + tr("successful.");
     } else {
