@@ -134,8 +134,9 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
+    qRegisterMetaType<Dataset>("Dataset");
+    qRegisterMetaType<QList<Dataset>>("QList<Dataset>");
     qRegisterMetaType<floatCoordinate>();
-
     qRegisterMetaType<SnapshotOptions>();
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();

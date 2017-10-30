@@ -482,7 +482,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     if (worker != nullptr) {
         worker->isFinished = false;
-        emit loadSignal(++loadingNr, center, Dataset::current().magnification, userMoveType, direction);
+        emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets);
     }
 }
 
@@ -492,14 +492,12 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const int magnification, const UserMoveType userMoveType, const floatCoordinate & direction) {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets) {
     QTime time;
     time.start();
-
+    datasets = changedDatasets;
     cleanup(center);
-    for (auto && dataset : datasets) {// apply changed mag to local loader dataset copies
-        dataset.magnification = magnification;
-    }
+    decltype(Dataset::magnification) magnification = Dataset::current().magnification;
     loaderMagnification = std::log2(magnification);
     const auto cubeEdgeLen = datasets.front().cubeEdgeLength;
     const auto Dcoi = DcoiFromPos(center.cube(cubeEdgeLen, magnification), userMoveType, direction);//datacubes of interest prioritized around the current position
