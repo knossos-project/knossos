@@ -143,6 +143,7 @@ public:
     void updateSelection();
     void updateTouchedObjSelection();
     void updateLabels();
+    void updateBrushEditRange(const int minSize, const int maxSize);
     uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
     uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
 public slots:

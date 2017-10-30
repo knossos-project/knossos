@@ -244,6 +244,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     threedBtn.setToolTip("Apply changes on several consecutive slices.");
 
     brushRadiusEdit.setRange(1, 1000);
+    brushRadiusEdit.setSuffix("nm");
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
@@ -510,6 +511,10 @@ void commitSelection(const QItemSelection & selected, const QItemSelection & des
 
 void commitSelection(const QItemSelection & selected, const QItemSelection & deselected) {
     commitSelection(selected, deselected, [](const int & i){return i;});
+}
+
+void SegmentationView::updateBrushEditRange(const int minSize, const int maxSize) {
+    brushRadiusEdit.setRange(minSize, maxSize);
 }
 
 void SegmentationView::touchedObjSelectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
