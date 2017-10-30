@@ -22,10 +22,6 @@
 
 #include "hashtable.h"
 
-bool Coordinate2BytePtr_hash_get_has_key(const coord2bytep_map_t &h, const CoordOfCube &c) {
-    return h.end() != h.find(c);
-}
-
 char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const CoordOfCube &c) {
     const auto gotIt = h.find(c);
     if (gotIt == std::end(h)) {
@@ -33,10 +29,4 @@ char* Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const Coor
     }
 
     return gotIt->second;
-}
-
-void Coordinate2BytePtr_hash_copy_keys_default_value(coord2bytep_map_t &target, const coord2bytep_map_t &source, char *v) {
-    for (auto kv : source) {
-        target[kv.first] = v;
-    }
 }
