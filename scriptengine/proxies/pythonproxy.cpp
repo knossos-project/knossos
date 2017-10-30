@@ -88,15 +88,15 @@ QList<float> PythonProxy::getScale() {
 
 char *PythonProxy::addrDcOc2Pointer(QList<int> coord, bool isOc) {
     coord2bytep_map_t *PointerMap = isOc ? state->Oc2Pointer : state->Dc2Pointer;
-    char *data = Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(Dataset::current().magnification)], coord);
+    void *data = Coordinate2BytePtr_hash_get_or_fail(PointerMap[(int)std::log2(Dataset::current().magnification)], coord);
     if (data == NULL) {
         emit echo(QString("no cube data found at Coordinate (%1, %2, %3)").arg(coord[0]).arg(coord[1]).arg(coord[2]));
     }
-    return data;
+    return reinterpret_cast<char*>(data);
 }
 
 QByteArray PythonProxy::readDc2Pointer(QList<int> coord) {
-    char *data = addrDcOc2Pointer(coord, false);
+    void *data = addrDcOc2Pointer(coord, false);
     if(!data) {
         return QByteArray();
     }
@@ -110,12 +110,12 @@ PyObject* PythonProxy::PyBufferAddrDcOc2Pointer(QList<int> coord, bool isOc) {
 }
 
 int PythonProxy::readDc2PointerPos(QList<int> coord, int pos) {
-    char *data = addrDcOc2Pointer(coord, false);
+    void *data = addrDcOc2Pointer(coord, false);
     if(!data) {
         return -1;
     }
 
-    return data[pos];
+    return reinterpret_cast<std::uint8_t*>(data)[pos];
 }
 
 bool PythonProxy::writeDc2Pointer(QList<int> coord, char *bytes) {

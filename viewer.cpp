@@ -250,7 +250,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     }
 }
 
-void Viewer::dcSliceExtract(uint8_t * datacube, floatCoordinate *currentPxInDc_float, uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
@@ -493,8 +493,8 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
             }
             state->protectCube2Pointer.lock();
-            char * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::current().magnification)], currentDc);
-            char * const overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)], currentDc);
+            void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::current().magnification)], currentDc);
+            void * const overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)], currentDc);
             state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
@@ -686,8 +686,6 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
     // from those cubes into the texture.
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    char *datacube = NULL;
-
     rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
     currentPx_float = rowPx_float;
 
@@ -707,7 +705,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer.lock();
-            datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::current().magnification)], {currentDc.x, currentDc.y, currentDc.z});
+            void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::current().magnification)], {currentDc.x, currentDc.y, currentDc.z});
             state->protectCube2Pointer.unlock();
 
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;

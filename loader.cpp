@@ -243,7 +243,7 @@ Loader::Worker::~Worker() {
 
 template<typename CubeHash, typename Slots, typename Keep>
 void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep) {
-    unloadCubes(loadedCubes, freeSlots, keep, [](const CoordOfCube &, char *){});
+    unloadCubes(loadedCubes, freeSlots, keep, [](const CoordOfCube &, void *){});
 }
 
 template<typename CubeHash, typename Slots, typename Keep, typename UnloadHook>
@@ -310,7 +310,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
     }
 }
 
-void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const char * cube) {
+void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const void * cube) {
     //insert empty string into snappy cache
     auto snappyIt = snappyCache[loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
@@ -391,7 +391,7 @@ void Loader::Worker::abortDownloadsFinishDecompression(Func keep) {
     finishDecompression(ocDecompression, keep);
 }
 
-std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, const Dataset dataset, coord2bytep_map_t & cubeHash, const Coordinate globalCoord) {
+std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, const Dataset dataset, coord2bytep_map_t & cubeHash, const Coordinate globalCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
         return {false, currentSlot};
     }
@@ -403,14 +403,14 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
     if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         const std::size_t expectedSize = state->cubeBytes;
         if (availableSize == expectedSize) {
-            std::copy(std::begin(data), std::end(data), currentSlot);
+            std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
         if (image.byteCount() == expectedSize) {
-            std::copy(image.bits(), image.bits() + image.byteCount(), currentSlot);
+            std::copy(image.bits(), image.bits() + image.byteCount(), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
@@ -424,7 +424,7 @@ std::pair<bool, char*> decompressCube(char * currentSlot, QIODevice & reply, con
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
         if (availableSize == expectedSize) {
-            std::copy(std::begin(data), std::end(data), currentSlot);
+            std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint64_t *>(currentSlot));
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
@@ -467,14 +467,14 @@ void Loader::Worker::cleanup(const Coordinate center) {
     state->protectCube2Pointer.lock();
     unloadCubes(state->Dc2Pointer[loaderMagnification], freeDcSlots, insideCurrentSupercubeWrap(center, datasets[0]));
     if (datasets.size() > 1) {
-        unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap(center, datasets[1]), [this](const
-                CoordOfCube & cubeCoord, char * remSlotPtr){
-        if (OcModifiedCacheQueue[loaderMagnification].find(cubeCoord) != std::end(OcModifiedCacheQueue[loaderMagnification])) {
-            snappyCacheBackupRaw(cubeCoord, remSlotPtr);
-            //remove from work queue
-            OcModifiedCacheQueue[loaderMagnification].erase(cubeCoord);
-        }
-    });
+        unloadCubes(state->Oc2Pointer[loaderMagnification], freeOcSlots, insideCurrentSupercubeWrap(center, datasets[1])
+                , [this](const CoordOfCube & cubeCoord, void * remSlotPtr){
+            if (OcModifiedCacheQueue[loaderMagnification].find(cubeCoord) != std::end(OcModifiedCacheQueue[loaderMagnification])) {
+                snappyCacheBackupRaw(cubeCoord, remSlotPtr);
+                //remove from work queue
+                OcModifiedCacheQueue[loaderMagnification].erase(cubeCoord);
+            }
+        });
     }
     state->protectCube2Pointer.unlock();
 }
@@ -576,7 +576,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (!freeSlots.empty()) {
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
-                    std::fill(currentSlot, currentSlot + state->cubeBytes * (dataset.isOverlay() ? OBJID_BYTES : 1), 0);
+                    std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + state->cubeBytes * (dataset.isOverlay() ? OBJID_BYTES : 1), 0);
                     state->protectCube2Pointer.lock();
                     cubeHash[globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)] = currentSlot;
                     state->protectCube2Pointer.unlock();
@@ -655,7 +655,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
-                        std::fill(currentSlot, currentSlot + state->cubeBytes * (dataset.isOverlay() ? OBJID_BYTES : 1), 0);
+                        std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + state->cubeBytes * (dataset.isOverlay() ? OBJID_BYTES : 1), 0);
                         state->protectCube2Pointer.lock();
                         cubeHash[globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)] = currentSlot;
                         state->protectCube2Pointer.unlock();

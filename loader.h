@@ -78,16 +78,16 @@ private:
 
     template<typename T>
     using ptr = std::unique_ptr<T>;
-    using DecompressionResult = std::pair<bool, char*>;
+    using DecompressionResult = std::pair<bool, void*>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
     std::unordered_map<Coordinate, QNetworkReply*> dcDownload;
     std::unordered_map<Coordinate, QNetworkReply*> ocDownload;
     std::unordered_map<Coordinate, DecompressionOperationPtr> dcDecompression;
     std::unordered_map<Coordinate, DecompressionOperationPtr> ocDecompression;
-    std::list<std::vector<char>> DcSetChunk;
-    std::list<std::vector<char>> OcSetChunk;
-    std::list<char*> freeDcSlots;
-    std::list<char*> freeOcSlots;
+    std::list<std::vector<std::uint8_t>> DcSetChunk;
+    std::list<std::vector<std::uint8_t>> OcSetChunk;
+    std::list<void*> freeDcSlots;
+    std::list<void*> freeOcSlots;
     int currentMaxMetric;
 
     std::atomic_bool isFinished{false};
@@ -96,7 +96,7 @@ private:
     floatCoordinate find_close_xyz(floatCoordinate direction);
     std::vector<CoordOfCube> DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction);
     uint loadCubes();
-    void snappyCacheBackupRaw(const CoordOfCube &, const char *cube);
+    void snappyCacheBackupRaw(const CoordOfCube &, const void * cube);
     void snappyCacheClear();
 
     void abortDownloadsFinishDecompression();

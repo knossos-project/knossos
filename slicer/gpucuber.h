@@ -92,7 +92,7 @@ public:
     void createBogusCube(const int cpucubeedge, const int gpucubeedge);
     template<typename cube_type, typename elem_type>
     void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
-    void cubeSubArray(const char * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
+    void cubeSubArray(const void * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
 };
 
 #endif//GPUCUBER_H

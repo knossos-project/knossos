@@ -147,7 +147,7 @@ void TextureLayer::cubeSubArray(const boost::const_multi_array_ref<elem_type, 3>
     static_cast<cube_type*>(textures[gpuCoord].get())->generate(view);
 }
 
-void TextureLayer::cubeSubArray(const char * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset) {
+void TextureLayer::cubeSubArray(const void * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset) {
     if (isOverlayData) {
         boost::const_multi_array_ref<std::uint64_t, 3> cube(reinterpret_cast<const std::uint64_t *>(data), boost::extents[cpucubeedge][cpucubeedge][cpucubeedge]);
         cubeSubArray<gpu_lut_cube>(cube, gpucubeedge, gpuCoord, offset);

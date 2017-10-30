@@ -30,7 +30,7 @@
 
 #include <boost/multi_array.hpp>
 
-std::pair<bool, char *> getRawCube(const Coordinate & pos) {
+std::pair<bool, void *> getRawCube(const Coordinate & pos) {
     const auto posDc = pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
 
     state->protectCube2Pointer.lock();
@@ -40,7 +40,7 @@ std::pair<bool, char *> getRawCube(const Coordinate & pos) {
     return std::make_pair(rawcube != nullptr, rawcube);
 }
 
-boost::multi_array_ref<uint64_t, 3> getCubeRef(char * const rawcube) {
+boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube) {
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
     return boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(rawcube), dims);
