@@ -198,7 +198,7 @@ An [AUR package](https://aur.archlinux.org/packages/knossos/) is also available.
 
 ## General Information
 
-Release Date: 24th January 2014
+Release Date: 28th January 2015
 
 Homepage: https://knossostool.org/
 Project host: https://github.com/knossos-project/
@@ -348,11 +348,19 @@ v4.1:
 - Debian Package for Linux (Tested on Ubuntu [i386/amd64](>= version 12))
 
 
+# KNOSSOS V3.4.2
+
+Release Date: 9th July 2013
+
+- Comments tab for quick placements of node comments with shortcuts F1 - F5.
+- Some bug fixes
+
+
 # KNOSSOS V3.4.1
 
 ## General Information
 
-Release Date: February 22, 2013
+Release Date: 8th June, 2013
 
 Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skeletonizer/
 
@@ -371,14 +379,6 @@ Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skele
 
 ## New Features / Enhancements
 
-### New Rendering Engine
-
-  Skeletons are displayed in KNOSSOS V3.4 with a new rendering engine that allows the fluent handling of skeletons with several 100k nodes. It is based on a heuristic level-of-detail algorithm that downsamples the spatial skeleton graph dynamically, dependent on the current zoom level applied by the user. The new rendering engine should also make KNOSSOS much more stable on older graphics cards (esp. compared to 3.2).
-
-### Better Rotation in Skeleton Viewport
-
-- Rotating the 3D skeleton with the mouse is now based on a rolling-ball rotation model.
-
 - New shortcuts for "walking" and "jumping" through the dataset:
 
   - [d]/[f]: move x steps backwards/forwards in the direction of the active viewport. 
@@ -394,7 +394,39 @@ Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skele
 - Adjusted idle time tolerance.
 
 
-# KNOSSOS V3.3
+# KNOSSOS V3.4
+
+## General Information
+
+Release Date: April 19, 2013
+
+Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skeletonizer/
+
+## Known Issues
+
+- Delay after launching the installer
+  
+  Windows only:
+  There are reports that the installer sometimes requires several minutes to launch. Please
+  just wait a few minutes in case nothing happens after double clicking it. We are investigating
+  the problem.
+
+## Important new Features
+
+- New Rendering Engine
+
+  Skeletons are displayed in KNOSSOS V3.4 with a new rendering engine that allows the fluent handling of skeletons with several 100k nodes. It is based on a heuristic level-of-detail algorithm that downsamples the spatial skeleton graph dynamically, dependent on the current zoom level applied by the user. The new rendering engine should also make KNOSSOS much more stable on older graphics cards (esp. compared to 3.2).
+
+- Better Rotation in Skeleton Viewport
+
+  Rotating the 3D skeleton with the mouse is now based on a rolling-ball rotation model.
+
+- Tracing Time
+
+  The tracing time is now obfuscated in skeleton files.
+
+
+# KNOSSOS V3.3 Beta
 
 ## General Information
 
@@ -424,7 +456,7 @@ Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skele
 
 ## General Information
 
-Release Date: October 11, 2012 
+Release Date: October 11, 2012
 
 Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skeletonizer/
 
