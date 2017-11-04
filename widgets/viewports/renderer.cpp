@@ -792,11 +792,15 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
     if (!options.nodePicking) {
-        if (!state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
-            slice(texture, 0, n);
-        }
-        if (options.drawOverlay && state->viewerState->layerVisibility.size() > 1 && state->viewerState->layerVisibility[1]) {
-            slice(texture, 1, n);
+        for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+            if (state->viewerState->layerVisibility[i]) {
+                if (options.drawOverlay || !Dataset::datasets[i].isOverlay()) {
+                    if (Dataset::datasets[i].isOverlay()) {
+                        glColor4f(1, 1, 1, 1);
+                    }
+                    slice(texture, i, n);
+                }
+            }
         }
     }
 
