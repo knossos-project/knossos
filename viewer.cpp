@@ -212,8 +212,8 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
     const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 3 : 3;// RGB per pixel
-    const std::size_t texRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 3 : 0;
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
+    const std::size_t texRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 4 : 0;
 
     int offsetX = 0, offsetY = 0;
     const int coordsPerLine = cubeEdgeLen * Dataset::current().magnification;
@@ -249,6 +249,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
             slice[0] = r;
             slice[1] = g;
             slice[2] = b;
+            slice[3] = 255;
 
             datacube += voxelIncrement;
             slice += texNextLine;
@@ -267,6 +268,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
        (currentPxInDc.x >= cubeEdgeLen) || (currentPxInDc.y >= cubeEdgeLen) || (currentPxInDc.z >= cubeEdgeLen)) {
         const int sliceIndex = 3 * ( s + *t  *  cubeEdgeLen * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
+        slice[sliceIndex + 3] = 255;
         (*t)++;
         if(*t < usedSizeInCubePixels) {
             // Actually, although currentPxInDc_float is passed by reference and updated here,
@@ -282,7 +284,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
           && (0 <= currentPxInDc.y && currentPxInDc.y < cubeEdgeLen)
           && (0 <= currentPxInDc.z && currentPxInDc.z < cubeEdgeLen)) {
 
-        const int sliceIndex = 3 * ( s + *t  *  cubeEdgeLen * state->M);
+        const int sliceIndex = 4 * ( s + *t  *  cubeEdgeLen * state->M);
         const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == NULL) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
@@ -298,6 +300,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
                 slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
             }
         }
+        slice[sliceIndex + 3] = 255;
         (*t)++;
         if(*t >= usedSizeInCubePixels) {
             break;
@@ -531,7 +534,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                                 y_px,
                                 cubeEdgeLen,
                                 cubeEdgeLen,
-                                Dataset::datasets[layerId].isOverlay() ? GL_RGBA : GL_RGB,
+                                GL_RGBA,
                                 GL_UNSIGNED_BYTE,
                                 texData.data() + index);
                 vp.texture.texHandle[layerId].release();
@@ -673,7 +676,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
         rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
         currentPx_float = rowPx_float;
 
-        std::vector<std::uint8_t> texData(3 * std::pow(state->viewerState->texEdgeLength, 2));
+        std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));// RGBA
 
         int s = 0, t = 0, t_old = 0;
         while(s < vp.texture.usedSizeInCubePixels) {
@@ -713,7 +716,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
                         0,
                         state->M*Dataset::current().cubeEdgeLength,
                         state->M*Dataset::current().cubeEdgeLength,
-                        GL_RGB,
+                        GL_RGBA,
                         GL_UNSIGNED_BYTE,
                     texData.data());
 
