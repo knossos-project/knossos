@@ -590,8 +590,6 @@ void ViewportOrtho::renderViewportFast() {
     const float hfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
     const float vfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
-    viewMatrix.scale(1, -1);//invert y because whe want our origin in the top right corner
-    viewMatrix.scale(xz || zy ? -1 : 1, 1);//HACK idk
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
 
@@ -624,7 +622,7 @@ void ViewportOrtho::renderViewportFast() {
     glEnable(GL_TEXTURE_3D);
 
     for (auto & layer : state->viewer->layers) {
-        if (layer.enabled && layer.opacity >= 0.0f && state->viewerState->showOnlyRawData) {
+        if (layer.enabled && layer.opacity >= 0.0f && !(state->viewerState->showOnlyRawData && layer.isOverlayData)) {
             if (layer.isOverlayData) {
                 overlay_data_shader.bind();
                 overlay_data_shader.setUniformValue("textureOpacity", Segmentation::singleton().alpha / 256.0f);
@@ -666,7 +664,8 @@ void ViewportOrtho::renderViewportFast() {
 
                     QMatrix4x4 modelMatrix;
                     modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
-                    modelMatrix.rotate(QQuaternion::fromAxes(v1, v2, -n));//HACK idk why the normal has to be negative
+                    modelMatrix.scale(1, 1 - 2*(zy + xy), 1 - 2*xz);// HACK still don’t know
+                    modelMatrix.rotate(QQuaternion::fromAxes(v1, v2, n));
 
                     render(ptr, modelMatrix);
                 }
