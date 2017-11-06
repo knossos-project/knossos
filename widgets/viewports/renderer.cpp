@@ -1805,9 +1805,9 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
+    state->viewer->vpGenerateTexture(vp);// update texture before use
     for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && options.drawOverlay, vp.texture.overlayHandle)}) {
         if (layer.first) {
-            state->viewer->vpGenerateTexture(vp);// update texture before use
             glBindTexture(GL_TEXTURE_2D, layer.second);
             glBegin(GL_QUADS);
                 glNormal3i(vp.n.x, vp.n.y, vp.n.z);
