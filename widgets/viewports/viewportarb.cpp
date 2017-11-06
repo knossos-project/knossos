@@ -54,10 +54,10 @@ void ViewportArb::paintGL() {
 }
 
 void ViewportArb::updateOverlayTexture() {
-    if (!ocResliceNecessary) {
+    if (!Segmentation::singleton().enabled || !resliceNecessary[Segmentation::singleton().layerId]) {
         return;
     }
-    ocResliceNecessary = false;
+    resliceNecessary[Segmentation::singleton().layerId] = false;
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;

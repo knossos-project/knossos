@@ -106,6 +106,7 @@ private:
     decltype(Dataset::datasets) datasets;
 public://matsch
     using CacheQueue = std::unordered_set<CoordOfCube>;
+    std::size_t snappyLayerId{1};
     std::vector<CacheQueue> OcModifiedCacheQueue;
     using SnappyCache = std::unordered_map<CoordOfCube, std::string>;
     std::vector<SnappyCache> snappyCache;

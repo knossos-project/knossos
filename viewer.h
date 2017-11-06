@@ -247,10 +247,9 @@ public slots:
     void addRotation(const QQuaternion & quaternion);
     void resetRotation();
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);
-    void dc_reslice_notify_visible();
-    void dc_reslice_notify_all(const Coordinate coord);
-    void oc_reslice_notify_visible();
-    void oc_reslice_notify_all(const Coordinate coord);
+    void reslice_notify_visible(const std::size_t layerId);
+    void reslice_notify_all(const std::size_t layerId, const Coordinate coord);
+    void segmentation_changed();
     void setMovementAreaFactor(float alpha);
     int highestMag();
     int lowestMag();

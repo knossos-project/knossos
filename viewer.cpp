@@ -38,6 +38,8 @@
 #include <QDesktopWidget>
 #include <QVector3D>
 
+#include <boost/container/static_vector.hpp>
+
 #include <fstream>
 #include <cmath>
 
@@ -56,18 +58,27 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
 
     QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run);// timer is started in main
 
-    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, this, &Viewer::oc_reslice_notify_visible);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::segmentation_changed);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, this, &Viewer::segmentation_changed);
 
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::updateCurrentPosition);
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::dc_reslice_notify_visible);
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, &Viewer::oc_reslice_notify_visible);
-    QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, this, &Viewer::dc_reslice_notify_visible);
+    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, [this](){
+        updateCurrentPosition();
+        for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+            reslice_notify_visible(layerId);
+        }
+    });
+    QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, [this](){
+        for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+            if (!Dataset::datasets[layerId].isOverlay()) {
+                reslice_notify_visible(layerId);
+            }
+        }
+    });
 
     keyRepeatTimer.start();
 }
@@ -439,9 +450,9 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp));
         return true;
     }
-    const bool dc_reslice = vp.dcResliceNecessary;
-    const bool oc_reslice = vp.ocResliceNecessary;
-    vp.dcResliceNecessary = vp.ocResliceNecessary = false;
+    const bool dc_reslice = vp.resliceNecessary[0];
+    const bool oc_reslice = vp.resliceNecessary[1];
+    vp.resliceNecessary[0] = vp.resliceNecessary[1] = false;
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const CoordInCube currentPosition_dc = state->viewerState->currentPosition.insideCube(cubeEdgeLen, Dataset::current().magnification);
 
@@ -677,10 +688,10 @@ void Viewer::setDefaultVPSizeAndPos(const bool on) {
 }
 
 void Viewer::vpGenerateTexture(ViewportArb &vp) {
-    if (!vp.dcResliceNecessary) {
+    if (!vp.resliceNecessary[0]) {
         return;
     }
-    vp.dcResliceNecessary = false;
+    vp.resliceNecessary[0] = false;
 
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
@@ -830,8 +841,9 @@ bool Viewer::updateDatasetMag(const int mag) {
         });
     }
     //clear the viewports
-    dc_reslice_notify_visible();
-    oc_reslice_notify_visible();
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        reslice_notify_visible(layerId);
+    }
 
     loader_notify();//start loading
     emit zoomChanged();
@@ -951,19 +963,27 @@ void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const 
 
 void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const floatCoordinate & viewportNormal) {
     auto & viewerState = *state->viewerState;
+    boost::container::static_vector<ViewportOrtho*, 4> resliceVPs;
     if (step.z != 0) {
-        viewportXY->dcResliceNecessary = viewportXY->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
+        resliceVPs.emplace_back(viewportXY);
     }
     if (step.x != 0) {
-        viewportZY->dcResliceNecessary = viewportZY->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
+        resliceVPs.emplace_back(viewportZY);
     }
     if (step.y != 0) {
-        viewportXZ->dcResliceNecessary = viewportXZ->ocResliceNecessary = viewportArb->dcResliceNecessary = viewportArb->ocResliceNecessary = true;
+        resliceVPs.emplace_back(viewportXZ);
+    }
+    if (!resliceVPs.empty()) {
+        resliceVPs.emplace_back(viewportArb);
+    }
+    for (auto && vp : resliceVPs) {
+        for (auto && elem : vp->resliceNecessary) {
+            elem = true;
+        }
     }
 
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
-
     const auto lastPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
     const auto lastPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, Dataset::current().magnification);
 
@@ -980,8 +1000,9 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     const auto newPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, Dataset::current().magnification);
 
     if (newPosition_dc != lastPosition_dc) {
-        dc_reslice_notify_visible();
-        oc_reslice_notify_visible();
+        for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+            reslice_notify_visible(layerId);
+        }
         // userMoveType How user movement was generated
         // Direction of user movement in case of drilling,
         // or normal to viewport plane in case of horizontal movement.
@@ -1050,34 +1071,25 @@ void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
     }
 }
 
-void Viewer::dc_reslice_notify_all(const Coordinate coord) {
+void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
-        dc_reslice_notify_visible();
+        reslice_notify_visible(layerId);
     }
-    window->viewportArb->dcResliceNecessary = true;//arb visibility is not tested
+    window->viewportArb->resliceNecessary[layerId] = true;//arb visibility is not tested
+    if (layerId == Segmentation::singleton().layerId) {
+        // if anything has changed, update the volume texture data
+        Segmentation::singleton().volume_update_required = true;
+    }
 }
 
-void Viewer::dc_reslice_notify_visible() {
-    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
-        vpOrtho.dcResliceNecessary = true;
+void Viewer::reslice_notify_visible(const std::size_t layerId) {
+    window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
+        vpOrtho.resliceNecessary[layerId] = true;
     });
 }
 
-void Viewer::oc_reslice_notify_all(const Coordinate coord) {
-    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
-        oc_reslice_notify_visible();
-    }
-    window->viewportArb->ocResliceNecessary = true;//arb visibility is not tested
-    // if anything has changed, update the volume texture data
-    Segmentation::singleton().volume_update_required = true;
-}
-
-void Viewer::oc_reslice_notify_visible() {
-    window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho) {
-        vpOrtho.ocResliceNecessary = true;
-    });
-    // if anything has changed, update the volume texture data
-    Segmentation::singleton().volume_update_required = true;
+void Viewer::segmentation_changed() {
+    reslice_notify_visible(Segmentation::singleton().layerId);
 }
 
 void Viewer::recalcTextureOffsets() {
@@ -1164,7 +1176,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
     }
     state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL;
 
-    dc_reslice_notify_visible();
+    reslice_notify_visible(0);// FIXME
 }
 
 /** Global interfaces  */
@@ -1201,7 +1213,9 @@ void Viewer::addRotation(const QQuaternion & quaternion) {
     viewportArb->v2 = coord(rotation.rotatedVector({0, 1, 0}).normalized());
     viewportArb->n  = coord(rotation.rotatedVector({0, 0, 1}).normalized());
 
-    viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
+    for (auto && elem : viewportArb->resliceNecessary) {
+        elem = true;
+    }
     recalcTextureOffsets();
     viewportArb->sendCursorPosition();
 }
@@ -1210,7 +1224,9 @@ void Viewer::resetRotation() {
     viewportArb->v1 = {1,  0,  0};
     viewportArb->v2 = {0, -1,  0};
     viewportArb->n  = {0,  0, -1};
-    viewportArb->ocResliceNecessary = viewportArb->dcResliceNecessary = true;
+    for (auto && elem : viewportArb->resliceNecessary) {
+        elem = true;
+    }
     recalcTextureOffsets();
     viewportArb->sendCursorPosition();
 }

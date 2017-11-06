@@ -123,16 +123,16 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     QObject::connect(&segmentationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int value){
         segmentationOverlaySlider.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     QObject::connect(&segmentationBorderHighlight, &QCheckBox::clicked, [](const bool checked) {
         Segmentation::singleton().highlightBorder = checked;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     
     QObject::connect(&volumeGroup, &QGroupBox::clicked, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
