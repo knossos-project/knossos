@@ -773,7 +773,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glPolygonMode(GL_FRONT, GL_FILL);
 
     if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
-        slice(texture, 0);
+        if (texture.texHandle.size() != 3) {
+            slice(texture, 0);
+        }
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -791,6 +793,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
+    if (texture.texHandle.size() == 3) {
+        glBlendFunc(GL_ONE, GL_ONE);
+    }
     if (!options.nodePicking) {
         for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
             if (state->viewerState->layerVisibility[i]) {
@@ -798,10 +803,16 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     if (Dataset::datasets[i].isOverlay()) {
                         glColor4f(1, 1, 1, 1);
                     }
+                    if (texture.texHandle.size() == 3) {
+                        glColor4f(i == 0, i == 1, i == 2, 1);
+                    }
                     slice(texture, i, n);
                 }
             }
         }
+    }
+    if (texture.texHandle.size() == 3) {// reset blend func
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     glDisable(GL_DEPTH_TEST);
