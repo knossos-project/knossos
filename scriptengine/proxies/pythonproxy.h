@@ -57,23 +57,12 @@ public slots:
     QString getKnossosVersion();
     QString getKnossosRevision();
     int getCubeEdgeLength();
-    QList<int> getOcPixel(QList<int> Dc, QList<int> pxInDc);
     QList<int> getPosition();
     QList<float> getScale();
     void setPosition(QList<int> coord);
 
     quint64 readOverlayVoxel(QList<int> coord);
     bool writeOverlayVoxel(QList<int> coord, quint64 val);
-    char *addrDcOc2Pointer(QList<int> coord, bool isOc);
-    PyObject *PyBufferAddrDcOc2Pointer(QList<int> coord, bool isOc);
-    QByteArray readDc2Pointer(QList<int> coord);
-    int readDc2PointerPos(QList<int> coord, int pos);
-    bool writeDc2Pointer(QList<int> coord, char *bytes);
-    bool writeDc2PointerPos(QList<int> coord, int pos, int val);
-    QByteArray readOc2Pointer(QList<int> coord);
-    quint64 readOc2PointerPos(QList<int> coord, int pos);
-    bool writeOc2Pointer(QList<int> coord, char *bytes);
-    bool writeOc2PointerPos(QList<int> coord, int pos, quint64 val);
     QVector<int> processRegionByStridedBufProxy(QList<int> globalFirst, QList<int> size, quint64 dataPtr,
                                         QList<int> strides, bool isWrite, bool isMarkedChanged);
     void coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList);
