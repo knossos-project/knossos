@@ -250,7 +250,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     }
 }
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
@@ -258,12 +258,12 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
         const int sliceIndex = 3 * ( s + *t  *  cubeEdgeLen * state->M);
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         (*t)++;
-        if(*t < vp.texture.usedSizeInCubePixels) {
+        if(*t < usedSizeInCubePixels) {
             // Actually, although currentPxInDc_float is passed by reference and updated here,
             // it is totally ignored (i.e. not read, then overwritten) by the calling function.
             // But to keep the functionality here compatible after this bugfix, we also replicate
             // this update here - from the originial below
-            *currentPxInDc_float -= vp.v2;
+            *currentPxInDc_float -= v2;
         }
         return;
     }
@@ -289,10 +289,10 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
             }
         }
         (*t)++;
-        if(*t >= vp.texture.usedSizeInCubePixels) {
+        if(*t >= usedSizeInCubePixels) {
             break;
         }
-        *currentPxInDc_float -= vp.v2;
+        *currentPxInDc_float -= v2;
         currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     }
 }
@@ -715,8 +715,8 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
                            &currentPxInDc_float,
                            texData.data(),
                            s, &t,
-                           vp,
-                           state->viewerState->datasetAdjustmentOn);
+                           vp.v2,
+                           state->viewerState->datasetAdjustmentOn, vp.texture.usedSizeInCubePixels);
             currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;

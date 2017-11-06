@@ -175,7 +175,7 @@ private:
     void vpGenerateTexture(ViewportArb & vp);
 
     void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT);
-    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
+    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp);
 
