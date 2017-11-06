@@ -129,6 +129,14 @@ void ViewportOrtho::resetTexture() {
         elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
         elem.setWrapMode(QOpenGLTexture::ClampToEdge);
         elem.allocateStorage();
+        std::vector<std::uint8_t> texData(4 * std::pow(texture.size, 2));
+        for (std::size_t i = 3; i < texData.size(); i += 4) {
+            texData[i-3] = 0;
+            texData[i-2] = 0;
+            texData[i-1] = 255;
+            texData[i] = 255;
+        }
+        elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
         elem.release();
     }
     state->viewer->applyTextureFilterSetting();
