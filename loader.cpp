@@ -492,7 +492,7 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets) {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets) {
     QTime time;
     time.start();
     datasets = changedDatasets;

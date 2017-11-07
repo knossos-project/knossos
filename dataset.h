@@ -25,11 +25,13 @@
 
 #include "coordinate.h"
 
-#include <QList>
 #include <QString>
 #include <QUrl>
 
+#include <boost/container/small_vector.hpp>
+
 struct Dataset {
+    using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
         Heidelbrain, WebKnossos, GoogleBrainmaps, OpenConnectome
     };
@@ -42,11 +44,11 @@ struct Dataset {
     static bool isNeuroDataStore(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
-    static QList<Dataset> parse(const QUrl & url, const QString &data);
-    static QList<Dataset> parseGoogleJson(const QString & json_raw);
-    static QList<Dataset> parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
-    static QList<Dataset> parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
-    static QList<Dataset> fromLegacyConf(const QUrl & url, QString config);
+    static list_t parse(const QUrl & url, const QString &data);
+    static list_t parseGoogleJson(const QString & json_raw);
+    static list_t parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
+    static list_t parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
+    static list_t fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
     Dataset createCorrespondingOverlayLayer();
 
@@ -83,7 +85,7 @@ struct Dataset {
     QUrl url;
     QString token;
 
-    static QList<Dataset> datasets;
+    static Dataset::list_t datasets;
     static auto & current() {
         if (!datasets.empty()) {
             return datasets.front();

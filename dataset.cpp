@@ -37,7 +37,7 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
-QList<Dataset> Dataset::datasets;
+Dataset::list_t Dataset::datasets;
 
 QString Dataset::compressionString() const {
     switch (type) {
@@ -65,7 +65,7 @@ bool Dataset::isWebKnossos(const QUrl & url) {
     return url.host().contains("webknossos");
 }
 
-QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
+Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
     if (Dataset::isWebKnossos(url)) {
         return Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
@@ -75,7 +75,7 @@ QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
     }
 }
 
-QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
+Dataset::list_t Dataset::parseGoogleJson(const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -102,7 +102,7 @@ QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
     return {info};
 }
 
-QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
@@ -130,7 +130,7 @@ QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QStr
     return {info};
 }
 
-QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
 
@@ -182,7 +182,7 @@ QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString 
     return layers;
 }
 
-QList<Dataset> Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
+Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     Dataset info;
     info.api = API::Heidelbrain;
 

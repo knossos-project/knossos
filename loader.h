@@ -126,7 +126,7 @@ signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets);
 };
 
 class Controller : public QObject {
@@ -178,7 +178,7 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
 };
