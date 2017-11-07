@@ -419,12 +419,8 @@ void DatasetLoadWidget::loadSettings() {
     updateDatasetInfo();
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
-    if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
-        state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
-    }
-    if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        Dataset::current().overlay = settings.value(DATASET_OVERLAY, false).toBool();
-    }
+    state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
+    Dataset::current().overlay = settings.value(DATASET_OVERLAY, false).toBool();
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
