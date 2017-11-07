@@ -84,7 +84,14 @@ struct Dataset {
     QString token;
 
     static QList<Dataset> datasets;
-    static auto & current() { return datasets.front(); }
+    static auto & current() {
+        if (!datasets.empty()) {
+            return datasets.front();
+        } else {
+            static Dataset dummy;
+            return dummy;
+        }
+    }
 };
 
 #endif//DATASET_H

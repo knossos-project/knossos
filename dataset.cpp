@@ -37,7 +37,7 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
-QList<Dataset> Dataset::datasets{Dataset{}};
+QList<Dataset> Dataset::datasets;
 
 QString Dataset::compressionString() const {
     switch (type) {
