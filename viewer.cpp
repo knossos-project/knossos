@@ -504,8 +504,7 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                     qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
                 }
                 state->protectCube2Pointer.lock();
-                void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::current().magnification)], currentDc);
-                void * const overlayCube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)], currentDc);
+                void * const cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::current().magnification)], currentDc);
                 state->protectCube2Pointer.unlock();
 
                 // Take care of the data textures.
@@ -516,10 +515,12 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
 
-                if (Dataset::datasets[layerId].isOverlay() && overlayCube != nullptr) {
-                    ocSliceExtract(reinterpret_cast<std::uint64_t *>(overlayCube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
-                } else if (!Dataset::datasets[layerId].isOverlay() && datacube != nullptr) {
-                    dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                if (cube != nullptr) {
+                    if (Dataset::datasets[layerId].isOverlay()) {
+                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
+                    } else {
+                        dcSliceExtract(reinterpret_cast<std::uint8_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                    }
                 } else {
                     std::fill(std::begin(texData), std::end(texData), 0);
                 }
@@ -686,7 +687,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp) {
                 if(currentPx.z < 0) { currentDc.z -= 1; }
 
                 state->protectCube2Pointer.lock();
-                void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->Dc2Pointer[int_log(Dataset::datasets[layerId].magnification)], {currentDc.x, currentDc.y, currentDc.z});
+                void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::datasets[layerId].magnification)], {currentDc.x, currentDc.y, currentDc.z});
                 state->protectCube2Pointer.unlock();
 
                 currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
@@ -874,7 +875,7 @@ void Viewer::run() {
                     const auto globalCoord = pair.first.cube2Global(gpucubeedge, Dataset::current().magnification);
                     const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
                     state->protectCube2Pointer.lock();
-                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail((layer.isOverlayData ? state->Oc2Pointer : state->Dc2Pointer)[int_log(Dataset::current().magnification)], cubeCoord);
+                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layer.isOverlayData][int_log(Dataset::current().magnification)], cubeCoord);
                     state->protectCube2Pointer.unlock();
                     if (ptr != nullptr) {
                         layer.cubeSubArray(ptr, Dataset::current().cubeEdgeLength, gpucubeedge, pair.first, pair.second);

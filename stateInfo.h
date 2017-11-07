@@ -31,6 +31,8 @@
 #include <QString>
 #include <QWaitCondition>
 
+#include <vector>
+
 class stateInfo;
 extern stateInfo * state;
 
@@ -84,7 +86,6 @@ public:
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
-
     QMutex protectCube2Pointer;
 
  //---  Info about the state of KNOSSOS in general. --------
@@ -95,8 +96,7 @@ public:
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    coord2bytep_map_t Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
-    coord2bytep_map_t Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
+    std::vector<std::vector<coord2bytep_map_t>> cube2Pointer;
 
     struct ViewerState * viewerState;
     class MainWindow * mainWindow{nullptr};
