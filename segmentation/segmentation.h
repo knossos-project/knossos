@@ -171,6 +171,7 @@ public:
     bool highlightBorder{true}; //highlight borders in segmentation viewport
 
     bool enabled{false};
+    std::size_t layerId;
 
     static Segmentation & singleton();
 

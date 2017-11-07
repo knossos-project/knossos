@@ -119,6 +119,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
 
         Segmentation::singleton().enabled = showOverlays;
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
+            if (Dataset::datasets[i].isOverlay()) {
+                Segmentation::singleton().layerId = i;
+            }
+        }
         widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
 
         const auto & dsb = Dataset::current().boundary;
