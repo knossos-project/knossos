@@ -131,6 +131,7 @@ void ViewportOrtho::resetTexture() {
         elem.allocateStorage();
         elem.release();
     }
+    state->viewer->applyTextureFilterSetting();
 }
 
 void ViewportOrtho::sendCursorPosition() {

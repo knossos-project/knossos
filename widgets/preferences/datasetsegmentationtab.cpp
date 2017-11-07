@@ -80,9 +80,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
         if (checked) {
-            state->viewer->applyTextureFilterSetting(GL_LINEAR);
+            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Linear);
         } else {
-            state->viewer->applyTextureFilterSetting(GL_NEAREST);
+            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Nearest);
         }
     });
     QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::clicked, [this](const bool checked) {

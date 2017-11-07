@@ -899,8 +899,23 @@ void Viewer::run() {
     window->updateTitlebar(); //display changes after filename
 }
 
-void Viewer::applyTextureFilterSetting(const GLint texFiltering) {
-    window->forEachOrthoVPDo([&texFiltering](ViewportOrtho & orthoVP) {// FIXME
+void Viewer::applyTextureFilterSetting() {
+    applyTextureFilterSetting(viewerState.textureFilter);
+}
+
+void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering) {
+    viewerState.textureFilter = texFiltering;
+    window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
+        for (std::size_t layerId{0}; layerId < orthoVP.texture.texHandle.size(); ++layerId) {
+            auto & elem = orthoVP.texture.texHandle[layerId];
+            if (elem.isCreated()) {
+                if (!Dataset::datasets[layerId].isOverlay()) {
+                    elem.setMinMagFilters(state->viewerState->textureFilter, state->viewerState->textureFilter);
+                } else {// overlay shall have sharp edges
+                    elem.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+                }
+            }
+        }
     });
 }
 
