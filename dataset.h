@@ -78,7 +78,6 @@ struct Dataset {
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength{128};
     bool remote{false};
-    bool overlay{false};
     // Current dataset identifier string
     QString experimentname;
     QUrl url;

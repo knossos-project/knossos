@@ -60,7 +60,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
             if (match.hasMatch()) {
-                if (!Dataset::current().overlay) {
+                if (!Segmentation::singleton().enabled) {
                     state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(true);// enable overlay
                 }
                 nonExtraFiles.insert(archive.getCurrentFileName());

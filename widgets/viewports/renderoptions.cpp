@@ -6,7 +6,7 @@
 RenderOptions::RenderOptions()
     : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false)
         , drawMesh{state->viewerState->showOnlyRawData == false}
-        , drawOverlay(Dataset::current().overlay && state->viewerState->showOnlyRawData == false)
+        , drawOverlay(Segmentation::singleton().enabled && state->viewerState->showOnlyRawData == false)
         , drawSkeleton{state->viewerState->showOnlyRawData == false}
         , highlightActiveNode(state->viewerState->cumDistRenderThres <= 19.f)// no active node halo in lines and points mode
 {}

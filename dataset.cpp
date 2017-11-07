@@ -98,7 +98,6 @@ QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
     info.type = CubeType::RAW_JPG;
-    info.overlay = false;
 
     return {info};
 }
@@ -127,7 +126,6 @@ QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QStr
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
     info.type = CubeType::RAW_JPG;
-    info.overlay = false;
 
     return {info};
 }
@@ -150,10 +148,8 @@ QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString 
         }
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
-            info.overlay = false;
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
-            info.overlay = true;
         }
         const auto boundary_json = layer.toObject()["boundingBox"].toObject();
         info.boundary = {
@@ -273,7 +269,6 @@ void Dataset::checkMagnifications() {
 Dataset Dataset::createCorrespondingOverlayLayer() {
     Dataset info = *this;
     info.type = api == API::Heidelbrain ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
-    info.overlay = true;
     return info;
 }
 

@@ -47,7 +47,7 @@ void ViewportArb::hideVP() {
 void ViewportArb::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         state->viewer->arbCubes(*this);
-    } else if (Dataset::current().overlay && state->viewerState->showOnlyRawData == false) {
+    } else if (Segmentation::singleton().enabled && state->viewerState->showOnlyRawData == false) {
         updateOverlayTexture();
     }
     ViewportOrtho::paintGL();

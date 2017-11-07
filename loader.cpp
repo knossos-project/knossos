@@ -215,7 +215,7 @@ Loader::Worker::Worker(const decltype(datasets) & datasets)
         freeDcSlots.emplace_back(DcSetChunk.back().data());//append newest element
     }
 
-    if(Dataset::current().overlay) {
+    if (datasets.size() > 1 && datasets[1].isOverlay()) {
         allocateOverlayCubes();
     }
 }
