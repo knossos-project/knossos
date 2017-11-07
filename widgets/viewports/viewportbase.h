@@ -33,6 +33,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_1_4>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLTexture>
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QToolButton>
@@ -40,6 +41,8 @@
 #include <QWidget>
 
 #include <boost/optional.hpp>
+
+#include <vector>
 
 enum ViewportType {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_ZY, VIEWPORT_ARBITRARY, VIEWPORT_SKELETON, VIEWPORT_UNDEFINED};
 Q_DECLARE_METATYPE(ViewportType)
@@ -52,12 +55,13 @@ constexpr const double SKELZOOMMIN = 0.25;
 constexpr const int DEFAULT_VP_MARGIN = 5;
 constexpr const int DEFAULT_VP_SIZE = 350;
 
+struct GLTexture2D : public QOpenGLTexture {
+    GLTexture2D() : QOpenGLTexture{QOpenGLTexture::Target2D} {}
+};
+
 struct viewportTexture {
     //Handles for OpenGl
-    uint texHandle{0};
-    GLint textureFilter{GL_LINEAR};
-    uint overlayHandle{0};
-
+    std::vector<GLTexture2D> texHandle;
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     floatCoordinate leftUpperPxInAbsPx;
     GLsizei size;

@@ -213,7 +213,7 @@ public:
     void arbCubes(ViewportArb & vp);
     void setEnableArbVP(const bool on);
     void setDefaultVPSizeAndPos(const bool on);
-    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
+    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, const std::size_t layerCount);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     QColor getNodeColor(const nodeListElement & node) const;

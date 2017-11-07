@@ -84,7 +84,7 @@ public:
     floatCoordinate v1;// vector in x direction
     floatCoordinate v2;// vector in y direction
     floatCoordinate  n;// faces away from the vp plane towards the camera
-    std::vector<std::atomic_bool> resliceNecessary{decltype(resliceNecessary)(2)};// FIXME legacy
+    std::vector<std::atomic_bool> resliceNecessary{decltype(resliceNecessary)(2)};// FIXME legacy;
     float displayedIsoPx;
     float screenPxYPerDataPx;
     float displayedlengthInNmY;

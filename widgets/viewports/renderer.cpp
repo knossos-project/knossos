@@ -734,10 +734,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto texhandle, floatCoordinate offset = {}){
+    auto slice = [&](auto & texture, std::size_t layerId, floatCoordinate offset = {}){
         if (!options.nodePicking) {
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, texhandle);
+            texture.texHandle[layerId].bind();
             glPushMatrix();
             glTranslatef(isoCurPos.x + offset.x, isoCurPos.y + offset.y, isoCurPos.z + offset.z);
             glBegin(GL_QUADS);
@@ -760,7 +760,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                            -dataPxX * v1.z + dataPxY * v2.z);
             glEnd();
             glPopMatrix();
-            glBindTexture(GL_TEXTURE_2D, 0);
+            texture.texHandle[layerId].release();
             glDisable(GL_TEXTURE_2D);
         }
     };
@@ -772,8 +772,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
-    if (!options.nodePicking && state->viewerState->layerVisibility[0]) {
-        slice(texture.texHandle);
+    if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
+        slice(texture, 0);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -792,11 +792,11 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
     if (!options.nodePicking) {
-        if (state->viewerState->layerVisibility[0]) {
-            slice(texture.texHandle, n);
+        if (!state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
+            slice(texture, 0, n);
         }
-        if (options.drawOverlay && state->viewerState->layerVisibility[1]) {
-            slice(texture.overlayHandle, n);
+        if (options.drawOverlay && state->viewerState->layerVisibility.size() > 1 && state->viewerState->layerVisibility[1]) {
+            slice(texture, 1, n);
         }
     }
 
@@ -1806,29 +1806,30 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxY = vp.displayedIsoPx;
 
     state->viewer->vpGenerateTexture(vp);// update texture before use
-    for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && options.drawOverlay, vp.texture.overlayHandle)}) {
-        if (layer.first) {
-            glBindTexture(GL_TEXTURE_2D, layer.second);
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        if (state->viewerState->layerVisibility[layerId] && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+            auto & texture = vp.texture;
+            texture.texHandle[layerId].bind();
             glBegin(GL_QUADS);
                 glNormal3i(vp.n.x, vp.n.y, vp.n.z);
-                glTexCoord2f(vp.texture.texLUx, vp.texture.texLUy);
+                glTexCoord2f(texture.texLUx, texture.texLUy);
                 glVertex3f(-dataPxX * vp.v1.x - dataPxY * vp.v2.x,
                            -dataPxX * vp.v1.y - dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texRUx, vp.texture.texRUy);
+                glTexCoord2f(texture.texRUx, texture.texRUy);
                 glVertex3f( dataPxX * vp.v1.x - dataPxY * vp.v2.x,
                             dataPxX * vp.v1.y - dataPxY * vp.v2.y,
                             dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texRLx, vp.texture.texRLy);
+                glTexCoord2f(texture.texRLx, texture.texRLy);
                 glVertex3f( dataPxX * vp.v1.x + dataPxY * vp.v2.x,
                             dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                             dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texLLx, vp.texture.texLLy);
+                glTexCoord2f(texture.texLLx, texture.texLLy);
                 glVertex3f(-dataPxX * vp.v1.x + dataPxY * vp.v2.x,
                            -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
             glEnd();
-            glBindTexture (GL_TEXTURE_2D, 0);
+            texture.texHandle[layerId].release();
         }
     }
 }

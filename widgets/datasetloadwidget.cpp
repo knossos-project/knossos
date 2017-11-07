@@ -319,7 +319,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     Dataset::datasets = layers;
 
-    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
+    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
     applyGeometrySettings();
 
@@ -420,7 +420,7 @@ void DatasetLoadWidget::loadSettings() {
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     segmentationOverlayCheckbox.setChecked(settings.value(DATASET_OVERLAY, false).toBool());
-    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
+    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.setCubeEdge(cubeEdgeLen);

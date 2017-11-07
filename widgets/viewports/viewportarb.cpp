@@ -27,6 +27,8 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <QOpenGLPixelTransferOptions>
+
 ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportOrtho(parent, viewportType) {
     menuButton.menu()->addAction(&resetAction);
     connect(&resetAction, &QAction::triggered, []() {
@@ -77,7 +79,9 @@ void ViewportArb::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    glBindTexture(GL_TEXTURE_2D, 0);
+    texture.texHandle[Segmentation::singleton().layerId].bind();
+    QOpenGLPixelTransferOptions options;
+    options.setRowLength(width);
+    texture.texHandle[Segmentation::singleton().layerId].setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data(), &options);
+    texture.texHandle[Segmentation::singleton().layerId].release();
 }
