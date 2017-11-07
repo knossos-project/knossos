@@ -143,11 +143,6 @@ public:
     void suspendLoader();
     ~Controller();
     void unloadCurrentMagnification();
-    void enableOverlay() {
-        suspendLoader();
-        worker->allocateOverlayCubes();
-        workerThread.start();
-    }
 
     template<typename... Args>
     void restart(const decltype(Dataset::datasets) & datasets) {

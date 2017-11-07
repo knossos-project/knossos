@@ -61,8 +61,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
             if (match.hasMatch()) {
                 if (!Dataset::current().overlay) {
-                    Dataset::current().overlay = true;
-                    Loader::Controller::singleton().enableOverlay();
+                    state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(true);// enable overlay
                 }
                 nonExtraFiles.insert(archive.getCurrentFileName());
                 QuaZipFile file(&archive);
