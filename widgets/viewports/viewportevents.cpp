@@ -565,7 +565,6 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
             vp.showHideButtons(false);
         });
-        state->viewer->oc_reslice_notify_visible();
     } else if(event->key() == Qt::Key_Delete) {
         if (ctrl) {
             if (state->skeletonState->activeTree != nullptr) {
@@ -646,7 +645,6 @@ void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
         state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
             vp.showHideButtons(state->viewerState->showVpDecorations);
         });
-        state->viewer->oc_reslice_notify_visible();
     }
 }
 
