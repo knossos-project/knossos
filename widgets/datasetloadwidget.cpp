@@ -419,13 +419,12 @@ void DatasetLoadWidget::loadSettings() {
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
-    Segmentation::singleton().enabled = settings.value(DATASET_OVERLAY, false).toBool();
+    segmentationOverlayCheckbox.setChecked(settings.value(DATASET_OVERLAY, false).toBool());
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.setCubeEdge(cubeEdgeLen);
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
-    segmentationOverlayCheckbox.setChecked(Segmentation::singleton().enabled);
     adaptMemoryConsumption();
     settings.endGroup();
     applyGeometrySettings();
