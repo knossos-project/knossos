@@ -741,32 +741,37 @@ void Viewer::calcLeftUpperTexAbsPx() {
 
 void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
-        float voxelV1X = Dataset::current().scale.componentMul(vpOrtho.v1).length() / Dataset::current().scale.x;
-        float voxelV2X = std::abs(Dataset::current().scale.componentMul(vpOrtho.v2).length()) / Dataset::current().scale.x;
+        const auto & layer = Dataset::current();
+        auto & texture = vpOrtho.texture;
+        float voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
+        float voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
 
-        vpOrtho.texture.texUsedX = vpOrtho.texture.usedSizeInCubePixels / vpOrtho.texture.size * vpOrtho.texture.FOV / voxelV1X;
-        vpOrtho.texture.texUsedY = vpOrtho.texture.usedSizeInCubePixels / vpOrtho.texture.size * vpOrtho.texture.FOV / voxelV2X;
+        texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
+        texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
 
-        vpOrtho.displayedIsoPx = Dataset::current().scale.x * 0.5 * vpOrtho.texture.usedSizeInCubePixels * vpOrtho.texture.FOV * Dataset::current().magnification;// FOV is within current mag
-        const auto dataPx = vpOrtho.texture.usedSizeInCubePixels * vpOrtho.texture.FOV * Dataset::current().magnification;
+        vpOrtho.displayedIsoPx = layer.scale.x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
+        const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
         vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
         vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
 
-        vpOrtho.displayedlengthInNmX = Dataset::current().scale.componentMul(vpOrtho.v1).length() * (vpOrtho.texture.texUsedX / vpOrtho.texture.texUnitsPerDataPx);
-        vpOrtho.displayedlengthInNmY = Dataset::current().scale.componentMul(vpOrtho.v2).length() * (vpOrtho.texture.texUsedY / vpOrtho.texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmX = layer.scale.componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmY = layer.scale.componentMul(vpOrtho.v2).length() * (texture.texUsedY / texture.texUnitsPerDataPx);
     });
 }
 
 void Viewer::zoom(const float factor) {
+    const auto & texture = viewportXY->texture;
     const bool reachedHighestMag = Dataset::current().magnification == Dataset::current().highestAvailableMag;
     const bool reachedLowestMag = Dataset::current().magnification == Dataset::current().lowestAvailableMag;
-    const bool reachedMinZoom = viewportXY->texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
-    const bool reachedMaxZoom = viewportXY->texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
-    const bool magUp = viewportXY->texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
-    const bool magDown = viewportXY->texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
+    const bool reachedMinZoom = texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
+    const bool reachedMaxZoom = texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
+    const bool magUp = texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
+    const bool magDown = texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
 
     const auto updateFOV = [this](const float newFOV) {
-        window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) { orthoVP.texture.FOV = newFOV; });
+        window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
+            orthoVP.texture.FOV = newFOV;
+        });
     };
     auto newMag = Dataset::current().magnification;
     if (reachedMinZoom) {
@@ -774,9 +779,9 @@ void Viewer::zoom(const float factor) {
     } else if (reachedMaxZoom) {
         updateFOV(VPZOOMMAX);
     } else if (state->viewerState->datasetMagLock) {
-        updateFOV(viewportXY->texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
-                  viewportXY->texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
-                  viewportXY->texture.FOV * factor);
+        updateFOV(texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
+                  texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
+                  texture.FOV * factor);
     } else if (magUp) {
         newMag *= 2;
         updateFOV(0.5);
@@ -785,7 +790,7 @@ void Viewer::zoom(const float factor) {
         updateFOV(VPZOOMMIN);
     } else {
         const float zoomMax = Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5;
-        updateFOV(std::max(std::min(viewportXY->texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
+        updateFOV(std::max(std::min(texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
     }
 
     if (newMag != Dataset::current().magnification) {
@@ -1078,45 +1083,46 @@ void Viewer::recalcTextureOffsets() {
     calcLeftUpperTexAbsPx();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        float midX = orthoVP.texture.texUnitsPerDataPx;
-        float midY = orthoVP.texture.texUnitsPerDataPx;
-        float xFactor = 0.5 * orthoVP.texture.texUsedX;
-        float yFactor = 0.5 * orthoVP.texture.texUsedY;
+        auto & texture = orthoVP.texture;
+        float midX = texture.texUnitsPerDataPx;
+        float midY = texture.texUnitsPerDataPx;
+        float xFactor = 0.5 * texture.texUsedX;
+        float yFactor = 0.5 * texture.texUsedY;
         if (orthoVP.viewportType == VIEWPORT_XY) {
-            midX *= state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x;
-            midY *= state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y;
+            midX *= state->viewerState->currentPosition.x - texture.leftUpperPxInAbsPx.x;
+            midY *= state->viewerState->currentPosition.y - texture.leftUpperPxInAbsPx.y;
         } else if (orthoVP.viewportType == VIEWPORT_XZ) {
-            midX *= state->viewerState->currentPosition.x - orthoVP.texture.leftUpperPxInAbsPx.x;
-            midY *= state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z;
+            midX *= state->viewerState->currentPosition.x - texture.leftUpperPxInAbsPx.x;
+            midY *= state->viewerState->currentPosition.z - texture.leftUpperPxInAbsPx.z;
         } else if (orthoVP.viewportType == VIEWPORT_ZY) {
-            midX *= state->viewerState->currentPosition.z - orthoVP.texture.leftUpperPxInAbsPx.z;
-            midY *= state->viewerState->currentPosition.y - orthoVP.texture.leftUpperPxInAbsPx.y;
+            midX *= state->viewerState->currentPosition.z - texture.leftUpperPxInAbsPx.z;
+            midY *= state->viewerState->currentPosition.y - texture.leftUpperPxInAbsPx.y;
         } else {
-            const auto texUsed = orthoVP.texture.usedSizeInCubePixels / orthoVP.texture.size;
+            const auto texUsed = texture.usedSizeInCubePixels / texture.size;
             midX = 0.5 * texUsed;
             midY = 0.5 * texUsed;
         }
         // Calculate the vertices in texture coordinates
         // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
 //        if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
-            orthoVP.texture.texLUx = midX - xFactor;
-            orthoVP.texture.texLUy = midY + yFactor;
-            orthoVP.texture.texRUx = midX + xFactor;
-            orthoVP.texture.texRUy = orthoVP.texture.texLUy;
-            orthoVP.texture.texRLx = orthoVP.texture.texRUx;
-            orthoVP.texture.texRLy = midY - yFactor;
-            orthoVP.texture.texLLx = orthoVP.texture.texLUx;
-            orthoVP.texture.texLLy = orthoVP.texture.texRLy;
+            texture.texLUx = midX - xFactor;
+            texture.texLUy = midY + yFactor;
+            texture.texRUx = midX + xFactor;
+            texture.texRUy = texture.texLUy;
+            texture.texRLx = texture.texRUx;
+            texture.texRLy = midY - yFactor;
+            texture.texLLx = texture.texLUx;
+            texture.texLLy = texture.texRLy;
 //        } else {// arb should use the entirety of (a specific part) of the texture
-//            const auto texUsed = 1;orthoVP.texture.fovPixel / orthoVP.texture.size * orthoVP.texture.FOV;
-//            orthoVP.texture.texLUx = 0;
-//            orthoVP.texture.texLUy = texUsed;
-//            orthoVP.texture.texRUx = texUsed;
-//            orthoVP.texture.texRUy = texUsed;
-//            orthoVP.texture.texRLx = texUsed;
-//            orthoVP.texture.texRLy = 0;
-//            orthoVP.texture.texLLx = 0;
-//            orthoVP.texture.texLLy = 0;
+//            const auto texUsed = 1;texture.fovPixel / texture.size * texture.FOV;
+//            texture.texLUx = 0;
+//            texture.texLUy = texUsed;
+//            texture.texRUx = texUsed;
+//            texture.texRUy = texUsed;
+//            texture.texRLx = texUsed;
+//            texture.texRLy = 0;
+//            texture.texLLx = 0;
+//            texture.texLLy = 0;
 //        }
     });
 }
