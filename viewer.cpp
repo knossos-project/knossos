@@ -818,10 +818,12 @@ bool Viewer::updateDatasetMag(const int mag) {
         if (!powerOf2 || mag < Dataset::current().lowestAvailableMag || mag > Dataset::current().highestAvailableMag) {
             return false;
         }
-        Dataset::current().magnification = mag;
-        window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
-            orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
-        });
+        for (auto && layer : Dataset::datasets) {
+            layer.magnification = mag;
+            window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
+                orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
+            });
+        }
     }
     //clear the viewports
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
