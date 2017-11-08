@@ -302,8 +302,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    auto & cubeEdgeLen = layers.front().cubeEdgeLength;
-    cubeEdgeLen = cubeEdgeSpin.text().toInt();
+    const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
+    for (auto && layer : layers) {
+        layer.cubeEdgeLength = cubeEdgeLen;
+    }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
