@@ -122,15 +122,14 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
         const auto & dsb = Dataset::current().boundary;
         const auto & dss = Dataset::current().scale;
-        std::vector<std::tuple<int, float>> mp {
-            std::make_tuple(dsb.x, dss.x),
-            std::make_tuple(dsb.y, dss.y),
-            std::make_tuple(dsb.z, dss.z),
+
+        std::vector<int> mp {
+            static_cast<int>(dsb.x * dss.x),
+            static_cast<int>(dsb.y * dss.y),
+            static_cast<int>(dsb.z * dss.z)
         };
 
-        auto mmax = std::max_element(mp.begin(), mp.end());
-
-        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, std::get<0>(*mmax) * std::get<1>(*mmax));
+        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, *(std::max_element(mp.begin(), mp.end())));
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
