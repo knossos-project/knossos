@@ -56,7 +56,7 @@
 
 SkeletonState::SkeletonState() : skeletonCreatedInVersion{KREVISION} {}
 
-int SkeletonState::volBoundary() const {
+double SkeletonState::volBoundary() const {
     const auto & scale = Dataset::current().scale;
     const auto & boundary = Dataset::current().boundary;
     return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});

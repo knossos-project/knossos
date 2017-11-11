@@ -174,7 +174,7 @@ struct SkeletonState {
     // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
     //boundary of the visualized volume in the skeleton viewport
-    int volBoundary() const;
+    double volBoundary() const;
 
     QString skeletonCreatedInVersion;
     QString skeletonLastSavedInVersion;
