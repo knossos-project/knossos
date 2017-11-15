@@ -245,6 +245,7 @@ signals:
     void categoriesChanged();
     void todosLeftChanged();
     void hoveredSubObjectChanged(const uint64_t subobject_id, const std::vector<uint64_t> & overlapObjects);
+    void volumeRenderToggled(const bool render);
 public slots:
     void clear();
     void deleteSelectedObjects();
@@ -253,6 +254,7 @@ public slots:
     void jumpToSelectedObject();
     bool placeCommentForSelectedObject(const QString & comment);
     void restoreDefaultColorForSelectedObjects();
+    void toggleVolumeRender(const bool render);
 };
 
 #endif // SEGMENTATION_H

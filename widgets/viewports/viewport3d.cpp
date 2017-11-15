@@ -45,6 +45,12 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     resetAction.setShortcut(QKeySequence("Ctrl+0"));
     resetAction.setShortcutContext(Qt::WidgetShortcut);
     QObject::connect(&resetAction, &QAction::triggered, &resetButton, &QPushButton::clicked);
+
+    menuButton.menu()->insertAction(menuButton.menu()->actions().back(), &showVolumeAction);
+    showVolumeAction.setCheckable(true);
+    QObject::connect(&showVolumeAction, &QAction::triggered, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::volumeRenderToggled, &showVolumeAction, &QAction::setChecked);
+
     addAction(&resetAction);
 
     for (auto * button : {&resetButton, &r180Button, &r90Button, &zyButton, &xzButton, &xyButton, &wiggleButton}) {

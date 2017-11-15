@@ -185,6 +185,9 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         }
         snapshotButton.setEnabled(xy || xz || zy || arb || skel);
     });
+
+    QObject::connect(&Segmentation::singleton(), &Segmentation::volumeRenderToggled, [this] (const bool) { updateOptionVisibility(); });
+
     setLayout(&mainLayout);
     setMinimumSize(310, 280);
     resize(minimumSize());

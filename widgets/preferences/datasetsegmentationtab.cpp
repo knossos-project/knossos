@@ -134,10 +134,10 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().highlightBorder = checked;
         state->viewer->oc_reslice_notify_visible();
     });
-    QObject::connect(&volumeGroup, &QGroupBox::clicked, [this](bool checked){
-        Segmentation::singleton().volume_render_toggle = checked;
-        emit volumeRenderToggled();
-    });
+    
+    QObject::connect(&volumeGroup, &QGroupBox::clicked, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::volumeRenderToggled, &volumeGroup, &QGroupBox::setChecked);
+
     QObject::connect(&volumeColorButton, &QPushButton::clicked, [this]() {
         const auto color = state->viewer->suspend([this]{
             return QColorDialog::getColor(Segmentation::singleton().volume_background_color, this, "Select background color");

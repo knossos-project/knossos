@@ -737,3 +737,8 @@ void Segmentation::restoreDefaultColorForSelectedObjects() {
         emit resetData();
     }
 }
+
+void Segmentation::toggleVolumeRender(const bool render) {
+    volume_render_toggle = render;
+    emit volumeRenderToggled(render);
+}
