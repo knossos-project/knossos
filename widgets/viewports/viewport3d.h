@@ -32,6 +32,7 @@ class Viewport3D : public ViewportBase {
     Q_OBJECT
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
     QAction resetAction{nullptr};
+    QAction showVolumeAction{tr("Show volume"), &menuButton};
     void resetWiggle();
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override;
