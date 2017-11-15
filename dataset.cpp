@@ -45,6 +45,7 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
+    case Dataset::CubeType::RAW_PNG: return "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "sz.zip";
@@ -54,11 +55,15 @@ QString Dataset::compressionString() const {
 }
 
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isNeuroDataStore(url) && !isWebKnossos(url);
+    return !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
+}
+
+bool Dataset::isPyKnossos(const QUrl & url) {
+    return url.path().contains("ariadne");
 }
 
 bool Dataset::isWebKnossos(const QUrl & url) {
@@ -70,6 +75,8 @@ QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
         return Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         return Dataset::parseNeuroDataStoreJson(url, data);
+    } else if (Dataset::isPyKnossos(url)) {
+        return Dataset::parsePyKnossosConf(url, data);
     } else {
         return Dataset::fromLegacyConf(url, data);
     }
@@ -128,6 +135,64 @@ QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QStr
     info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
     info.type = CubeType::RAW_JPG;
     info.overlay = false;
+
+    return {info};
+}
+
+QList<Dataset> Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
+    Dataset info;
+    info.api = API::PyKnossos;
+    QTextStream stream(&config);
+    QString line;
+    Coordinate numCubes;
+    while (!(line = stream.readLine()).isNull()) {
+        const QStringList tokenList = line.split(QRegularExpression("( = |,)"));
+        const QString token = tokenList.front();
+        if (token == "_BaseName") {
+            info.experimentname = tokenList.at(1);
+        } else if (token == "_DataScale") {
+            info.scale.x = tokenList.at(1).toFloat();
+            info.scale.y = tokenList.at(2).toFloat();
+            info.scale.z = tokenList.at(3).toFloat();
+            for (int i = 1; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
+                info.scales.emplace_back();
+                info.scales.back().x = tokenList.at(i).toFloat();
+                info.scales.back().y = tokenList.at(i+1).toFloat();
+                info.scales.back().z = tokenList.at(i+2).toFloat();
+                info.scales.back() = info.scales.back() / std::pow(2, i / 3);
+            }
+            info.magnification = info.lowestAvailableMag = 1;
+            info.highestAvailableMag = std::pow(2, (tokenList.size() - 1) / 3 - 1);
+        } else if (token == "_NumberofCubes") {
+            numCubes.x = tokenList.at(1).toInt();
+            numCubes.y = tokenList.at(2).toInt();
+            numCubes.z = tokenList.at(3).toInt();
+        } else if (token == "_FileType") {
+            info.type = CubeType::RAW_PNG;
+        } else if (token == "_Extent") {
+            info.boundary.x = tokenList.at(1).toFloat();
+            info.boundary.y = tokenList.at(2).toFloat();
+            info.boundary.z = tokenList.at(3).toFloat();
+        } else {
+            qDebug() << "Skipping parameter" << token;
+        }
+    }
+    info.cubeEdgeLength = 128;//info.boundary.x / numCubes.x;
+
+    if (info.url.isEmpty()) {
+        //find root of dataset if conf was inside mag folder
+        auto configDir = QFileInfo(configUrl.toLocalFile()).absoluteDir();
+        if (QRegularExpression("^mag[0-9]+$").match(configDir.dirName()).hasMatch()) {
+            configDir.cdUp();//support
+        }
+        info.url = QUrl::fromLocalFile(configDir.absolutePath());
+        qDebug() << "url" << info.url;
+    }
+
+    //transform boundary and scale of higher mag only datasets
+//    info.boundary = info.boundary * info.magnification;
+//    info.scale = info.scale / static_cast<float>(info.magnification);
+//    info.lowestAvailableMag = info.highestAvailableMag = info.magnification;
 
     return {info};
 }
@@ -272,7 +337,7 @@ void Dataset::checkMagnifications() {
 
 Dataset Dataset::createCorrespondingOverlayLayer() {
     Dataset info = *this;
-    info.type = api == API::Heidelbrain ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
+    info.type = (api == API::Heidelbrain || api == API::PyKnossos) ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
     info.overlay = true;
     return info;
 }
@@ -291,7 +356,7 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
 
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
+    if (type == Dataset::CubeType::RAW_UNCOMPRESSED || type == Dataset::CubeType::RAW_PNG) {
         filename = filename.arg(".raw");
     } else if (type == Dataset::CubeType::RAW_JPG) {
         filename = filename.arg(".jpg");
@@ -357,6 +422,11 @@ QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
         return googleCubeUrl(globalCoord);
     case API::Heidelbrain:
         return knossosCubeUrl(globalCoord);
+    case API::PyKnossos: {
+        auto url = knossosCubeUrl(globalCoord);
+        url.setPath(url.path().replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1)));
+        return url;
+    }
     case API::OpenConnectome:
         return openConnectomeCubeUrl(globalCoord);
     case API::WebKnossos:

@@ -406,7 +406,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
         }
-    } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6) {
+    } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
         if (image.byteCount() == expectedSize) {
@@ -438,7 +438,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
                 std::size_t uncompressedSize;
                 snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
                 const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
-                if (uncompressedSize == expectedSize) {
+                if (uncompressedSize <= expectedSize) {
                     success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
                 }
             }

@@ -825,6 +825,13 @@ bool Viewer::updateDatasetMag(const int mag) {
             return false;
         }
         Dataset::current().magnification = mag;
+        // scale shenanigans
+        const auto boundary = Dataset::current().boundary.componentMul(Dataset::current().scale);
+        const auto cpos = state->viewerState->currentPosition.componentMul(Dataset::current().scale);
+        Dataset::current().scale = Dataset::current().scales[std::log2(mag)];
+        Dataset::current().boundary = boundary / Dataset::current().scale;
+        setPosition(cpos / Dataset::current().scale);
+
         window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
             orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
         });

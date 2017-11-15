@@ -29,22 +29,26 @@
 #include <QString>
 #include <QUrl>
 
+#include <boost/container/small_vector.hpp>
+
 struct Dataset {
     enum class API {
-        Heidelbrain, WebKnossos, GoogleBrainmaps, OpenConnectome
+        Heidelbrain, WebKnossos, GoogleBrainmaps, PyKnossos, OpenConnectome
     };
     enum class CubeType {
-        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP, SNAPPY
+        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, RAW_PNG, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP, SNAPPY
     };
     QString compressionString() const;
 
     static bool isHeidelbrain(const QUrl & url);
     static bool isNeuroDataStore(const QUrl & url);
+    static bool isPyKnossos(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
     static QList<Dataset> parse(const QUrl & url, const QString &data);
     static QList<Dataset> parseGoogleJson(const QString & json_raw);
     static QList<Dataset> parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
+    static QList<Dataset> parsePyKnossosConf(const QUrl & configUrl, QString config);
     static QList<Dataset> parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
     static QList<Dataset> fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();
@@ -63,6 +67,7 @@ struct Dataset {
     Coordinate boundary{1000, 1000, 1000};
     // pixel-to-nanometer scale
     floatCoordinate scale{1.f, 1.f, 1.f};
+    boost::container::small_vector<floatCoordinate, 4> scales;
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
     // Dataset::current().magnification should only be used by the viewer,
