@@ -68,7 +68,7 @@ ViewportOrtho::~ViewportOrtho() {
 
 void ViewportOrtho::initializeGL() {
     ViewportBase::initializeGL();
-    resetTexture();
+    resetTexture(Dataset::datasets.size());
 
     if (state->gpuSlicer) {
         if (viewportType == ViewportType::VIEWPORT_XY) {
@@ -118,10 +118,14 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
     ViewportBase::mousePressEvent(event);
 }
 
-void ViewportOrtho::resetTexture() {
+void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     makeCurrent();
     if (!context()) {
         return;
+    }
+    if (layerCount != texture.texHandle.size()) {// can’t use resliceNecessary here because it’s legacy initialized
+        resliceNecessary = decltype(resliceNecessary)(layerCount);
+        texture.texHandle = decltype(texture.texHandle)(layerCount);
     }
     for (auto & elem : texture.texHandle) {
         elem.destroy();

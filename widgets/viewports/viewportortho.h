@@ -75,7 +75,7 @@ protected:
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     ~ViewportOrtho();
-    void resetTexture();
+    void resetTexture(const std::size_t layerCount);
     static bool showNodeComments;
 
     void sendCursorPosition();

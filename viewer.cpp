@@ -1233,14 +1233,10 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         viewerState.texEdgeLength = newTexEdgeLength;
         if (layerCount != viewerState.layerVisibility.size()) {
             viewerState.layerVisibility = decltype(viewerState.layerVisibility)(layerCount, true);
-            window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
-                vp.resliceNecessary = decltype(vp.resliceNecessary)(layerCount);
-                vp.texture.texHandle = decltype(vp.texture.texHandle)(layerCount);
-            });
         }
         window->resetTextureProperties();
-        window->forEachOrthoVPDo([](ViewportOrtho & vp) {
-            vp.resetTexture();
+        window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
+            vp.resetTexture(layerCount);
         });
         recalcTextureOffsets();
     }
