@@ -107,7 +107,7 @@ public:
 
 signals:
     void updateDatasetCompression();
-    void datasetChanged(bool showOverlays);
+    void datasetChanged();
     void datasetSwitchZoomDefaults();
 public slots:
     void adaptMemoryConsumption();

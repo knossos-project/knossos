@@ -104,11 +104,19 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         nodeLockingLabel.show();
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
-    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
+    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
+        Segmentation::singleton().enabled = false;
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {// determine segmentation layer
+            if (Dataset::datasets[i].isOverlay()) {
+                Segmentation::singleton().enabled = true;
+                Segmentation::singleton().layerId = i;
+            }
+        }
+
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         std::map<AnnotationMode, QString> rawModes = workModes;
         AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
-        if (!showOverlays) {
+        if (!Segmentation::singleton().enabled) {
              rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
         }
         else if (Session::singleton().guiMode == GUIMode::ProofReading) {
@@ -118,13 +126,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         workModeModel.recreate(rawModes);
         setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
 
-        Segmentation::singleton().enabled = showOverlays;
-        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            if (Dataset::datasets[i].isOverlay()) {
-                Segmentation::singleton().layerId = i;
-            }
-        }
-        widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
+        widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
         const auto & dsb = Dataset::current().boundary;
         const auto & dss = Dataset::current().scale;

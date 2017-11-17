@@ -344,7 +344,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         state->viewer->updateDatasetMag();
         state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     }
-    emit datasetChanged(segmentationOverlayCheckbox.isChecked());
+    emit datasetChanged();
 
     return true;
 }
