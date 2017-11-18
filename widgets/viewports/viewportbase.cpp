@@ -403,10 +403,17 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
+    const bool keyD = event->key() == Qt::Key_D;
+    const bool keyF = event->key() == Qt::Key_F;
+    const bool keyLeft = event->key() == Qt::Key_Left;
+    const bool keyRight = event->key() == Qt::Key_Right;
+    const bool keyUp = event->key() == Qt::Key_Up;
+    const bool keyDown = event->key() == Qt::Key_Down;
+    const auto singleVoxelKey = keyD || keyF || keyLeft || keyRight || keyUp || keyDown;
     if (event->key() == Qt::Key_Shift) {
         state->viewerState->repeatDirection /= 10;// decrease movement speed
         Segmentation::singleton().brush.setInverse(false);
-    } else if (!event->isAutoRepeat()) {// don’t let shift break keyrepeat
+    } else if (!event->isAutoRepeat() && singleVoxelKey) {
         state->viewer->userMoveRound();
         state->viewerState->keyRepeat = false;
         state->viewerState->notFirstKeyRepeat = false;
