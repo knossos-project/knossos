@@ -125,6 +125,9 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     }
     if (layerCount != texture.texHandle.size()) {// can’t use resliceNecessary here because it’s legacy initialized
         resliceNecessary = decltype(resliceNecessary)(layerCount);
+        for (auto && elem : resliceNecessary) {
+            elem = true;
+        }
         texture.texHandle = decltype(texture.texHandle)(layerCount);
     }
     for (auto & elem : texture.texHandle) {
