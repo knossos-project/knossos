@@ -65,6 +65,9 @@ void ViewportArb::updateOverlayTexture() {
     const auto begin = leftUpperPxInAbsPx_float;
     std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
+    // cache
+    auto subobjectIdCache = Segmentation::singleton().getBackgroundId();
+    auto colorCache = Segmentation::singleton().colorObjectFromSubobjectId(subobjectIdCache);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
         const auto dataPos = static_cast<Coordinate>(begin + v1 * Dataset::current().magnification * x - v2 * Dataset::current().magnification * y);
@@ -72,7 +75,9 @@ void ViewportArb::updateOverlayTexture() {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {
             const auto soid = readVoxel(dataPos);
-            const auto color = Segmentation::singleton().colorObjectFromSubobjectId(soid);
+            const auto color = (subobjectIdCache == soid) ? colorCache : Segmentation::singleton().colorObjectFromSubobjectId(soid);
+            subobjectIdCache = soid;
+            colorCache = color;
             viewportView[y][x][0] = std::get<0>(color);
             viewportView[y][x][1] = std::get<1>(color);
             viewportView[y][x][2] = std::get<2>(color);
