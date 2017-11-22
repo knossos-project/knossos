@@ -3,6 +3,7 @@
 
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/Spoiler.h"
+#include "widgets/datasetloadwidget.h"
 
 #include <QGroupBox>
 #include <QToolButton>
@@ -16,11 +17,17 @@
 #include <QAbstractItemModel>
 #include <QMessageBox>
 #include <QListWidget>
+#include <QFormLayout>
+#include <QSpinBox>
 
 class LayerLoadWidget : public QDialog {
 Q_OBJECT
 public:
     LayerLoadWidget(QWidget * parent = 0);
+
+    void loadSettings();
+    void updateDatasetInfo();
+    void adaptMemoryConsumption();
 
     QVBoxLayout mainLayout;
     QGridLayout listLayout;
@@ -31,10 +38,17 @@ public:
 
     QListWidget datasetLoadList;
     QLabel datasetLoadLabel{"datasetLoadLabel"};
-    QLabel datasetLoadDescription{"datasetLoadDescription"};
+    QLabel infoLabel{"info"};
     QListWidget sessionLayerList;
     QLabel sessionLayerLabel{"layerLoadLabel"};
-    QLabel sessionLayerDescription{"sessionLayerDescription"};
+
+    QGroupBox datasetSettingsGroup;
+    QFormLayout datasetSettingsLayout;
+    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
+    QLabel reloadRequiredLabel{tr("Reload dataset for changes to take effect.")};
+    QLabel superCubeSizeLabel;
+    QSpinBox cubeEdgeSpin;
+    FOVSpinBox fovSpin;
 };
 
 class LayerItemModel : public QAbstractListModel {
