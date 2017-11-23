@@ -126,6 +126,9 @@ void Viewport3D::paintGL() {
 }
 
 void Viewport3D::updateVolumeTexture() {
+    if (!Segmentation::singleton().enabled) {
+        return;
+    }
     auto& seg = Segmentation::singleton();
     int texLen = seg.volume_tex_len;
     if(seg.volume_tex_id == 0) {
