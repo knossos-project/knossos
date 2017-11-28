@@ -609,6 +609,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         }
         const auto & selectedTrees = state->skeletonState->selectedTrees;
+        const auto nodeEditing = Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
         const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
         mergeAction->setVisible(tracingAdvanced);
         moveNodesAction->setVisible(tracingAdvanced);
@@ -638,17 +639,18 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsMesh);//remove mesh
-        treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(selectedTrees.size() > 0);//delete
+        treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
         // make some actions always available when ctx menu isn’t shown
         treeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
-        treeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
+        treeContextMenu.actions().at(deleteActionIndex)->setEnabled(nodeEditing);
     });
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0, copyActionIndex, deleteActionIndex;
         const auto & selectedNodes = state->skeletonState->selectedNodes;
+        const auto nodeEditing = Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
         const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
         const auto synapseNode = selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode;
         extractComponentAction->setVisible(tracingAdvanced);
@@ -664,18 +666,17 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         ++i;// separator
         nodeContextMenu.actions().at(copyActionIndex = i++)->setEnabled(selectedNodes.size() > 0);//copy selected contents
         ++i;// separator
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 1);//split connected components
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() == 2);//link nodes needs two selected nodes
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set comment
-        nodeContextMenu.actions().at(i++)->setEnabled(selectedNodes.size() > 0);//set radius
-        nodeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(selectedNodes.size() > 0);//delete
+        nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set comment
+        nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set radius
+        nodeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
-        // make some actions always available when ctx menu isn’t shown
+        // make some actions available when ctx menu isn’t shown
         nodeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
-        nodeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
+        nodeContextMenu.actions().at(deleteActionIndex)->setEnabled(nodeEditing);
     });
-
 
     QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [](){
         const auto * tree = state->skeletonState->selectedTrees.front();

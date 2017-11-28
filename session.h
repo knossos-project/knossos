@@ -54,7 +54,7 @@ enum class AnnotationMode {
 
     Mode_MergeTracing = (1 << 11) | NodeEditing | LinkedNodes | SkeletonCycles,
 
-    Mode_Selection = (1 << 12) | Mode_TracingAdvanced | ObjectSelection,
+    Mode_Selection = (1 << 12) | ObjectSelection,
 };
 
 class Session : public QObject {
