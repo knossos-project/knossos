@@ -497,6 +497,7 @@ void MainWindow::notifyUnsavedChanges() {
 void MainWindow::updateTitlebar() {
     const auto & session = Session::singleton();
     QString title = QString("%1 %2 • ").arg(qApp->applicationDisplayName()).arg(KREVISION);
+    title.append(QString("%1 • ").arg(Dataset::current().experimentname));
     if (!session.annotationFilename.isEmpty()) {
         title.append(Session::singleton().annotationFilename);
     } else {
