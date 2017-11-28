@@ -139,7 +139,7 @@ void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
 }
 
 void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) || Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
             startNodeSelection(event->pos().x(), event->pos().y(), viewportType, event->modifiers());
@@ -174,7 +174,9 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         segmentation_brush_work(event, *this);
         return;
     }
-
+    if (!annotationMode.testFlag(AnnotationMode::NodeEditing)) {
+        return;
+    }
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
     if (Session::singleton().outsideMovementArea(clickedCoordinate)) {
         return;
@@ -355,7 +357,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         }
     }
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) || Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
         QSet<nodeListElement*> selectedNodes;
         int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
         int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
@@ -571,7 +573,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             if (state->skeletonState->activeTree != nullptr) {
                 Skeletonizer::singleton().delTree(state->skeletonState->activeTree->treeID);
             }
-        } else if (!state->skeletonState->selectedNodes.empty()) {
+        } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedNodes.empty()) {
             bool deleteNodes = true;
             if (state->skeletonState->selectedNodes.size() > 1) {
                 QMessageBox prompt{QApplication::activeWindow()};
