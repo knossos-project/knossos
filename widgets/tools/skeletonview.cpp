@@ -642,9 +642,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeView.viewport()->mapToGlobal(pos));
-        // make some actions always available when ctx menu isn’t shown
+        // make shortcuted actions always available for when ctx menu isn’t shown
         treeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
-        treeContextMenu.actions().at(deleteActionIndex)->setEnabled(nodeEditing);
+        treeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
     });
     nodeView.setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
@@ -673,9 +673,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
-        // make some actions available when ctx menu isn’t shown
+        // make shortcuted actions always available for when ctx menu isn’t shown
         nodeContextMenu.actions().at(copyActionIndex)->setEnabled(true);
-        nodeContextMenu.actions().at(deleteActionIndex)->setEnabled(nodeEditing);
+        nodeContextMenu.actions().at(deleteActionIndex)->setEnabled(true);
     });
 
     QObject::connect(treeContextMenu.addAction("&Jump to first node"), &QAction::triggered, [](){
@@ -749,8 +749,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         });
     });
-    deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [](){
-        if (!state->skeletonState->selectedTrees.empty()) {
+    deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [](){// this is also a shortcut and needs checks here
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedTrees.empty()) {
             question([](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete selected trees?"));
         }
     });
@@ -872,8 +872,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             prevRadius = radius;// save for the next time the dialog is opened
         }
     });
-    deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){
-        if (!state->skeletonState->selectedNodes.empty()) {
+    deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){// this is also a shortcut and needs checks here
+        if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedNodes.empty()) {
             if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
                 Skeletonizer::singleton().deleteSelectedNodes();
             } else {
