@@ -139,7 +139,7 @@ void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
 }
 
 void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) || Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeSelection)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
             startNodeSelection(event->pos().x(), event->pos().y(), viewportType, event->modifiers());
@@ -357,7 +357,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         }
     }
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) || Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
+    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeSelection)) {
         QSet<nodeListElement*> selectedNodes;
         int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
         int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
