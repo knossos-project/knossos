@@ -54,7 +54,7 @@ QString annotationFileDefaultPath() {
 
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
     QSet<QString> nonExtraFiles;
-    QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]*)x(?P<x>[0-9]*)y(?P<y>[0-9]*)z(?P<z>[0-9]*)((\.seg\.sz)|(\.segmentation\.snappy)))regex");
+    QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]+)x(?P<x>[0-9]+)y(?P<y>[0-9]+)z(?P<z>[0-9]+)(\.seg\.sz|\.segmentation\.snappy))regex");
     QuaZip archive(filename);
     if (archive.open(QuaZip::mdUnzip)) {
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
