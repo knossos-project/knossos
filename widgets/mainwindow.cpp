@@ -1279,7 +1279,7 @@ void MainWindow::loadSettings() {
 
     if (state->viewerState->MeshPickingEnabled == false) {
         warningDisabledFeaturesLabel.setPixmap(warnPixmap.scaled(24, 24));
-        warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled, because it requires an OpenGL version ≥ 3.0.\nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
+        warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled. \nIt requires an OpenGL version ≥ 3.0 Compatibility (not Core). \nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
         statusBar()->addPermanentWidget(&warningDisabledFeaturesLabel);
         if (widgetContainer.preferencesWidget.meshesTab.warnDisabledPickingCheck.isChecked()) {
             QMessageBox msgBox{QApplication::activeWindow()};
