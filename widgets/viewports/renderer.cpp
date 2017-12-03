@@ -811,6 +811,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             }
         }
     }
+    glColor4f(1, 1, 1, 1);
     if (texture.texHandle.size() == 3) {// reset blend func
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
@@ -838,6 +839,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glVertex3f(bottom.x(), bottom.y(), bottom.z());
         glEnd();
         glPopMatrix();
+        glColor4f(1, 1, 1, 1);
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
