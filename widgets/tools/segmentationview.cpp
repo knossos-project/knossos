@@ -237,6 +237,8 @@ public:
 #include "skeleton/skeletonizer.h"
 #include "vtkMarchingCubesTriangleCases.h"
 
+#include <QProgressDialog>
+
 #include <snappy.h>
 
 SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
@@ -468,7 +470,12 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
             std::size_t idCounter{0};
 
             const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+            QProgressDialog progress(tr("Generating Meshes for data value=%1 …").arg(value), "Cancel", 0, cubes[0].size(), QApplication::activeWindow());
+            progress.setWindowModality(Qt::WindowModal);
             for (const auto & pair : cubes[0]) {
+                if (progress.wasCanceled()) {
+                    break;
+                }
                 const auto cubeEdgeLen = 128;
                 const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
                 const std::size_t size = std::pow(cubeEdgeLen, 3);
@@ -490,18 +497,18 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                 }
 
                 const auto rowSize = dims[0];
-                const auto sliceSize = rowSize*dims[1];
+                const auto sliceSize = rowSize * dims[1];
 
-                for (std::size_t z = 0; z < (dims[2]-1); z++) {
+                for (std::size_t z = 0; z < (dims[2] - 1); ++z) {
                     const auto zOffset = z * sliceSize;
                     std::array<std::array<double, 3>, 8> pts;
-                    pts[0][2] = origin[2] + (z+extent[4])*spacing[2];
+                    pts[0][2] = origin[2] + (z + extent[4]) * spacing[2];
                     const auto znext = pts[0][2] + spacing[2];
-                    for (std::size_t y = 0; y < (dims[1]-1); y++) {
-                        const auto yOffset = y*rowSize;
-                        pts[0][1] = origin[1] + (y+extent[2])*spacing[1];
+                    for (std::size_t y = 0; y < (dims[1] - 1); ++y) {
+                        const auto yOffset = y * rowSize;
+                        pts[0][1] = origin[1] + (y + extent[2]) * spacing[1];
                         const auto ynext = pts[0][1] + spacing[1];
-                        for (std::size_t x = 0; x < (dims[0]-1); x++) {
+                        for (std::size_t x = 0; x < (dims[0] - 1); ++x) {
                             // get scalar values
                             const auto idx = x + yOffset + zOffset;
                             cubeVals[0] = data[idx];
@@ -514,7 +521,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                             cubeVals[7] = data[idx + dims[0] + sliceSize];
 
                             // create voxel points
-                            pts[0][0] = origin[0] + (x+extent[0])*spacing[0];
+                            pts[0][0] = origin[0] + (x + extent[0]) * spacing[0];
                             const auto xnext = pts[0][0] + spacing[0];
 
                             pts[1][0] = xnext;
@@ -547,36 +554,35 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
 
                             std::size_t index = 0;
                             // Build the case table
-                            for (std::size_t ii = 0; ii < 8; ii++) {
+                            for (std::size_t pi = 0; pi < 8; ++pi) {
                                 // for discrete marching cubes, we are looking for an
                                 // exact match of a scalar at a vertex to a value
-                                if (cubeVals[ii] == value) {
-                                    index |= CASE_MASK[ii];
+                                if (cubeVals[pi] == value) {
+                                    index |= CASE_MASK[pi];
                                 }
                             }
-                            if ( index == 0 || index == 255 ) {//no surface
+                            if (index == 0 || index == 255) {// no surface
                                 continue;
                             }
 
                             const auto triCase = triCases + index;
                             for (auto edge = triCase->edges; edge[0] > -1; edge += 3) {
-                                std::size_t ptIds[3];
-                                std::array<float, 3> vertex;
-                                for (std::size_t ii = 0; ii < 3; ii++) {//insert triangle
-                                    const auto vert = edges[edge[ii]];
+                                std::array<std::size_t, 3> ptIds;
+                                for (std::size_t vi = 0; vi < 3; vi++) {// insert triangle
+                                    const auto vert = edges[edge[vi]];
                                     // for discrete marching cubes, the interpolation point is always 0.5.
                                     const auto t = 0.5;
                                     const auto x1 = pts[vert[0]];
                                     const auto x2 = pts[vert[1]];
+                                    std::array<float, 3> vertex;
                                     vertex[0] = x1[0] + t * (x2[0] - x1[0]);
                                     vertex[1] = x1[1] + t * (x2[1] - x1[1]);
                                     vertex[2] = x1[2] + t * (x2[2] - x1[2]);
-
-                                    // add point
-                                    if (points.find({vertex[0], vertex[1], vertex[2]}) == std::end(points)) {
-                                        points[{vertex[0], vertex[1], vertex[2]}] = ptIds[ii] = idCounter++;
+                                    floatCoordinate coord{vertex[0], vertex[1], vertex[2]};
+                                    if (points.find(coord) == std::end(points)) {
+                                        points[coord] = ptIds[vi] = idCounter++;// add point
                                     } else {
-                                        ptIds[ii] = points[{vertex[0], vertex[1], vertex[2]}];
+                                        ptIds[vi] = points[coord];
                                     }
                                 }
                                 if (ptIds[0] != ptIds[1] && ptIds[0] != ptIds[2] && ptIds[1] != ptIds[2] ) {// check for degenerate triangle
@@ -589,6 +595,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                     }
                 }
                 qDebug() <<  points.size() << faces.size() / 3;
+                progress.setValue(progress.value() + 1);
             }
             QVector<float> verts(3 * points.size());
             for (auto && pair : points) {
@@ -620,7 +627,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(copyActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// copy selected contents
         ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
-        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() >= 1);// generate meshes
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
