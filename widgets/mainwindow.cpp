@@ -105,21 +105,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
-        Segmentation::singleton().enabled = false;
-        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {// determine segmentation layer
-            if (Dataset::datasets[i].isOverlay()) {
-                Segmentation::singleton().enabled = true;
-                Segmentation::singleton().layerId = i;
-            }
-        }
-
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         std::map<AnnotationMode, QString> rawModes = workModes;
         AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
         if (!Segmentation::singleton().enabled) {
-             rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-        }
-        else if (Session::singleton().guiMode == GUIMode::ProofReading) {
+            rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
+        } else if (Session::singleton().guiMode == GUIMode::ProofReading) {
             rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
             defaultMode = AnnotationMode::Mode_Merge;
         }

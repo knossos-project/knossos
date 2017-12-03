@@ -344,6 +344,15 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         state->viewer->updateDatasetMag();
         state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     }
+
+    Segmentation::singleton().enabled = false;
+    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {// determine segmentation layer
+        if (Dataset::datasets[i].isOverlay()) {
+            Segmentation::singleton().enabled = true;
+            Segmentation::singleton().layerId = i;
+        }
+    }
+
     emit datasetChanged();
 
     return true;
