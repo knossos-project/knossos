@@ -119,7 +119,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
             overlayGroup.setChecked(state->viewerState->layerVisibility.at(1));
         }
     });
-    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewerState->layerVisibility.at(1) = checked; });
+    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewerState->layerVisibility.at(Segmentation::singleton().layerId) = checked; });
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
