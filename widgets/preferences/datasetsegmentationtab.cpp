@@ -158,7 +158,17 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().volume_update_required = true;
     });
 
-    QObject::connect(&state->viewer->mainWindow, &MainWindow::overlayOpacityChanged, [this]() { segmentationOverlaySlider.setValue(Segmentation::singleton().alpha); });
+    QObject::connect(state->mainWindow, &MainWindow::overlayOpacityChanged, [this](){
+        segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
+    });
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](){
+        segmentationGroup.setEnabled(Segmentation::singleton().enabled);
+        overlayGroup.setChecked(Segmentation::singleton().enabled);
+        if (!Segmentation::singleton().enabled) {
+            volumeGroup.setChecked(false);
+            volumeGroup.clicked(false);
+        }
+    });
 }
 
 void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
