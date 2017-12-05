@@ -497,13 +497,13 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
 
                 marching_cubes(points, faces, idCounter, extractedCubes[pair.first], value, origin, dims, spacing, extent);
                 for (std::size_t i = 0; i < 6; ++i) {
-                    const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen, i % 4 < 2 ? cubeEdgeLen : 2.0, i < 4 ? cubeEdgeLen : 2.0}};
-                    const floatCoordinate origin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 127 : 0, i == 2 ? -1 : i == 3 ? 127 : 0, i == 4 ? -1 : i == 5 ? 127 : 0));
+                    const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
+                    const floatCoordinate origin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
                     const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
                     qDebug() << origin << dims[0] << dims[1] << dims[2];
 
-                    std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen, 2));
+                    std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
 
                     const auto rowSize = dims[0];
                     const auto sliceSize = rowSize * dims[1];
