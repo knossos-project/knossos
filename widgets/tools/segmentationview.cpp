@@ -486,8 +486,6 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                 if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(extractedCubes[pair.first].data()))) {
                     continue;
                 }
-                qDebug() << "foo" << time.nsecsElapsed() / 1e9;
-
                 const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
 
                 const std::array<double, 3> dims{{cubeEdgeLen, cubeEdgeLen, cubeEdgeLen}};
@@ -500,8 +498,6 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                     const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
                     const floatCoordinate origin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
                     const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
-
-                    qDebug() << origin << dims[0] << dims[1] << dims[2];
 
                     std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
 
@@ -527,17 +523,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                                 data[z * sliceSize + y * rowSize + x] =
                                         boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(cube.data()),
                                                                             boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen])[inCube.z][inCube.y][inCube.x];
-                                if (data[z * sliceSize + y * rowSize + x] != readVoxel(globalPos)) {
-                                    qDebug() << Coordinate(origin.x + (x + extent[0]), origin.y + (y + extent[2]), origin.z + (z + extent[4])) << coord << '-' << origin << ',' << x << y << z << '+' << extent[0] << extent[1] << extent[2];
-                                    qDebug() << globalPos << coord << inCube << z << y << x;
-                                    qWarning() << globalPos << data[z * sliceSize + y * rowSize + x] << readVoxel(globalPos);
-                                    exit(0);
-                                }
                             }
                         }
-                    }
-                    for (auto && cube : extractedCubes) {
-                        qDebug() << cube.first;
                     }
                     const auto scaledOrigin = Dataset::current().scale.componentMul(origin);
                     marching_cubes(points, faces, idCounter, data, value, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
