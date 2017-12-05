@@ -774,7 +774,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
         if (texture.texHandle.size() != 3) {
-            slice(texture, 0);
+            slice(texture, 0/*, (v1 - v2).componentMul(Dataset::current().scale) * -0.5*/);
         }
     }
 
@@ -806,7 +806,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     if (texture.texHandle.size() == 3) {
                         glColor4f(i == 0, i == 1, i == 2, 1);
                     }
-                    slice(texture, i, n);
+                    slice(texture, i, n/* - (v1 - v2).componentMul(Dataset::current().scale) * 0.5*/);
                 }
             }
         }
@@ -858,6 +858,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glLoadIdentity();
         glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
+        if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
+            const auto halfPixelOffset = 0.25 * (v1 - v2) * Dataset::current().scale;
+            glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
+        }
 
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
