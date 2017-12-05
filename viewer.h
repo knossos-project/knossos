@@ -64,6 +64,7 @@ struct ViewerState {
     ViewerState();
 
     int texEdgeLength = 512;
+    QOpenGLTexture::Filter textureFilter{QOpenGLTexture::Nearest};
     // don't jump between mags on zooming
     bool datasetMagLock;
     // Current position of the user crosshair.
@@ -175,7 +176,7 @@ private:
     void vpGenerateTexture(ViewportArb & vp);
 
     void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT);
-    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, ViewportArb &vp, bool useCustomLUT);
+    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp);
 
@@ -213,7 +214,7 @@ public:
     void arbCubes(ViewportArb & vp);
     void setEnableArbVP(const bool on);
     void setDefaultVPSizeAndPos(const bool on);
-    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge);
+    void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, const std::size_t layerCount);
     void loadNodeLUT(const QString & path);
     void loadTreeLUT(const QString & path = ":/resources/color_palette/default.json");
     QColor getNodeColor(const nodeListElement & node) const;
@@ -237,7 +238,8 @@ public slots:
     void userMoveClear();
     void recalcTextureOffsets();
     void calcDisplayedEdgeLength();
-    void applyTextureFilterSetting(const GLint texFiltering);
+    void applyTextureFilterSetting();
+    void applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering);
     void run();
     void loader_notify(const UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & direction = {0, 0, 0});
     void defaultDatasetLUT();
@@ -247,10 +249,9 @@ public slots:
     void addRotation(const QQuaternion & quaternion);
     void resetRotation();
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);
-    void dc_reslice_notify_visible();
-    void dc_reslice_notify_all(const Coordinate coord);
-    void oc_reslice_notify_visible();
-    void oc_reslice_notify_all(const Coordinate coord);
+    void reslice_notify_visible(const std::size_t layerId);
+    void reslice_notify_all(const std::size_t layerId, const Coordinate coord);
+    void segmentation_changed();
     void setMovementAreaFactor(float alpha);
     int highestMag();
     int lowestMag();

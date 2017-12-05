@@ -126,6 +126,9 @@ void Viewport3D::paintGL() {
 }
 
 void Viewport3D::updateVolumeTexture() {
+    if (!Segmentation::singleton().enabled) {
+        return;
+    }
     auto& seg = Segmentation::singleton();
     int texLen = seg.volume_tex_len;
     if(seg.volume_tex_id == 0) {
@@ -165,7 +168,7 @@ void Viewport3D::updateVolumeTexture() {
         auto cubeIndex = z*M*M + y*M + x;
         Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
         rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
-            Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)],
+            Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[Segmentation::singleton().layerId][int_log(Dataset::current().magnification)],
             {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
     }
     dcfetch_profiler.end(); // ----------------------------------------------------------- profiling

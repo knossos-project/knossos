@@ -96,7 +96,6 @@ public:
     QUrl datasetUrl;//meh
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
-    void changeDataset(bool isGUI);
     bool loadDataset(const boost::optional<bool> loadOverlay = boost::none, QUrl path = {}, const bool silent = false);
     void saveSettings();
     void loadSettings();
@@ -108,7 +107,7 @@ public:
 
 signals:
     void updateDatasetCompression();
-    void datasetChanged(bool showOverlays);
+    void datasetChanged();
     void datasetSwitchZoomDefaults();
 public slots:
     void adaptMemoryConsumption();

@@ -75,7 +75,7 @@ protected:
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     ~ViewportOrtho();
-    void resetTexture();
+    void resetTexture(const std::size_t layerCount);
     static bool showNodeComments;
 
     void sendCursorPosition();
@@ -84,8 +84,7 @@ public:
     floatCoordinate v1;// vector in x direction
     floatCoordinate v2;// vector in y direction
     floatCoordinate  n;// faces away from the vp plane towards the camera
-    std::atomic_bool dcResliceNecessary{true};
-    std::atomic_bool ocResliceNecessary{true};
+    std::vector<std::atomic_bool> resliceNecessary{decltype(resliceNecessary)(2)};// FIXME legacy;
     float displayedIsoPx;
     float screenPxYPerDataPx;
     float displayedlengthInNmY;

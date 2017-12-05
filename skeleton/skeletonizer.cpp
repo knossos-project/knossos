@@ -197,7 +197,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
-    xml.writeAttribute("overlay", QString::number(static_cast<int>(Dataset::current().overlay)));
+    xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
 
     if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
@@ -397,8 +397,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
-                    const bool overlay = attributes.value("overlay").isEmpty() ? Dataset::current().overlay : static_cast<bool>(attributes.value("overlay").toInt());
-                    if (experimentName != Dataset::current().experimentname || overlay != Dataset::current().overlay) {
+                    const bool overlay = attributes.value("overlay").isEmpty() ? Segmentation::singleton().enabled : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (experimentName != Dataset::current().experimentname || overlay != Segmentation::singleton().enabled) {
                         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {

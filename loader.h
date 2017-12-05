@@ -78,20 +78,16 @@ private:
 
     template<typename T>
     using ptr = std::unique_ptr<T>;
-    using DecompressionResult = std::pair<bool, void*>;
+    using DecompressionResult = std::pair<bool, void *>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
-    std::unordered_map<Coordinate, QNetworkReply*> dcDownload;
-    std::unordered_map<Coordinate, QNetworkReply*> ocDownload;
-    std::unordered_map<Coordinate, DecompressionOperationPtr> dcDecompression;
-    std::unordered_map<Coordinate, DecompressionOperationPtr> ocDecompression;
-    std::list<std::vector<std::uint8_t>> DcSetChunk;
-    std::list<std::vector<std::uint8_t>> OcSetChunk;
-    std::list<void*> freeDcSlots;
-    std::list<void*> freeOcSlots;
+    std::vector<std::unordered_map<Coordinate, QNetworkReply*>> slotDownload;
+    std::vector<std::unordered_map<Coordinate, DecompressionOperationPtr>> slotDecompression;
+    std::vector<std::list<std::vector<std::uint8_t>>> slotChunk;// slot ownership
+    std::vector<std::list<void *>> freeSlots;
     int currentMaxMetric;
 
     std::atomic_bool isFinished{false};
-    int loaderMagnification = 0;
+    std::size_t loaderMagnification = 0;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     std::vector<CoordOfCube> DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction);
@@ -106,6 +102,7 @@ private:
     decltype(Dataset::datasets) datasets;
 public://matsch
     using CacheQueue = std::unordered_set<CoordOfCube>;
+    std::size_t snappyLayerId{1};
     std::vector<CacheQueue> OcModifiedCacheQueue;
     using SnappyCache = std::unordered_map<CoordOfCube, std::string>;
     std::vector<SnappyCache> snappyCache;
@@ -119,14 +116,13 @@ public://matsch
     void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
-    void allocateOverlayCubes();
     Worker(const decltype(datasets) &);
     ~Worker();
 signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets);
 };
 
 class Controller : public QObject {
@@ -143,11 +139,6 @@ public:
     void suspendLoader();
     ~Controller();
     void unloadCurrentMagnification();
-    void enableOverlay() {
-        suspendLoader();
-        worker->allocateOverlayCubes();
-        workerThread.start();
-    }
 
     template<typename... Args>
     void restart(const decltype(Dataset::datasets) & datasets) {
@@ -183,7 +174,7 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const QList<Dataset> & changedDatasets);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const int magnification, const std::string cube);
 };

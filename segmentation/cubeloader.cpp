@@ -31,10 +31,13 @@
 #include <boost/multi_array.hpp>
 
 std::pair<bool, void *> getRawCube(const Coordinate & pos) {
+    if (!Segmentation::singleton().enabled) {
+        return {false, nullptr};
+    }
     const auto posDc = pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
 
     state->protectCube2Pointer.lock();
-    auto rawcube = Coordinate2BytePtr_hash_get_or_fail(state->Oc2Pointer[int_log(Dataset::current().magnification)], posDc);
+    auto * rawcube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[Segmentation::singleton().layerId][int_log(Dataset::current().magnification)], posDc);
     state->protectCube2Pointer.unlock();
 
     return std::make_pair(rawcube != nullptr, rawcube);
@@ -48,7 +51,7 @@ boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube) {
 
 uint64_t readVoxel(const Coordinate & pos) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !Dataset::current().overlay || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
@@ -57,7 +60,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !Dataset::current().overlay || !cubeIt.first) {
+    if (Session::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return false;
     }
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);

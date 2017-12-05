@@ -97,7 +97,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
     static auto resetSettings = [this]() {
         fovSpin.setValue(Dataset::current().cubeEdgeLength * (state->M - 1));
-        segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
+        segmentationOverlayCheckbox.setChecked(Segmentation::singleton().enabled);
     };
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
     QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
@@ -302,14 +302,15 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    auto & cubeEdgeLen = layers.front().cubeEdgeLength;
-    cubeEdgeLen = cubeEdgeSpin.text().toInt();
+    const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
+    for (auto && layer : layers) {
+        layer.cubeEdgeLength = cubeEdgeLen;
+    }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
-    layers.front().overlay = segmentationOverlayCheckbox.isChecked();
-    if (layers.front().overlay) {// add empty overlay channel
+    if (segmentationOverlayCheckbox.isChecked()) {// add empty overlay channel
         if (Dataset::isHeidelbrain(path) || Dataset::isPyKnossos(path)) {
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
         }
@@ -320,7 +321,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     Dataset::datasets = layers;
 
-    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
+    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
     applyGeometrySettings();
 
@@ -343,7 +344,16 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         state->viewer->updateDatasetMag();
         state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
     }
-    emit datasetChanged(segmentationOverlayCheckbox.isChecked());
+
+    Segmentation::singleton().enabled = false;
+    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {// determine segmentation layer
+        if (Dataset::datasets[i].isOverlay()) {
+            Segmentation::singleton().enabled = true;
+            Segmentation::singleton().layerId = i;
+        }
+    }
+
+    emit datasetChanged();
 
     return true;
 }
@@ -358,7 +368,7 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_CUBE_EDGE, Dataset::current().cubeEdgeLength);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
-    settings.setValue(DATASET_OVERLAY, Dataset::current().overlay);
+    settings.setValue(DATASET_OVERLAY, Segmentation::singleton().enabled);
 
     settings.endGroup();
 }
@@ -419,18 +429,13 @@ void DatasetLoadWidget::loadSettings() {
     updateDatasetInfo();
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
-    if (QApplication::arguments().filter("supercube-edge").empty()) {//if not provided by cmdline
-        state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
-    }
-    if (QApplication::arguments().filter("overlay").empty()) {//if not provided by cmdline
-        Dataset::current().overlay = settings.value(DATASET_OVERLAY, false).toBool();
-    }
-    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M);
+    state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
+    segmentationOverlayCheckbox.setChecked(settings.value(DATASET_OVERLAY, false).toBool());
+    state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());
 
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.setCubeEdge(cubeEdgeLen);
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
-    segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
     adaptMemoryConsumption();
     settings.endGroup();
     applyGeometrySettings();

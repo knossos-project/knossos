@@ -104,21 +104,20 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         nodeLockingLabel.show();
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
-    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool showOverlays) {
+    QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         std::map<AnnotationMode, QString> rawModes = workModes;
         AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
-        if (!showOverlays) {
-             rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-        }
-        else if (Session::singleton().guiMode == GUIMode::ProofReading) {
+        if (!Segmentation::singleton().enabled) {
+            rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
+        } else if (Session::singleton().guiMode == GUIMode::ProofReading) {
             rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
             defaultMode = AnnotationMode::Mode_Merge;
         }
         workModeModel.recreate(rawModes);
         setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
 
-        widgetContainer.annotationWidget.setSegmentationVisibility(showOverlays);
+        widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
         const auto & dsb = Dataset::current().boundary;
         const auto & dss = Dataset::current().scale;
@@ -1272,7 +1271,7 @@ void MainWindow::loadSettings() {
 
     if (state->viewerState->MeshPickingEnabled == false) {
         warningDisabledFeaturesLabel.setPixmap(warnPixmap.scaled(24, 24));
-        warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled, because it requires an OpenGL version ≥ 3.0.\nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
+        warningDisabledFeaturesLabel.setToolTip(tr("Mesh selection is disabled. \nIt requires an OpenGL version ≥ 3.0 Compatibility (not Core). \nYour version: %1").arg(reinterpret_cast<const char*>(::glGetString(GL_VERSION))));
         statusBar()->addPermanentWidget(&warningDisabledFeaturesLabel);
         if (widgetContainer.preferencesWidget.meshesTab.warnDisabledPickingCheck.isChecked()) {
             QMessageBox msgBox{QApplication::activeWindow()};

@@ -37,7 +37,7 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
-QList<Dataset> Dataset::datasets{Dataset{}};
+Dataset::list_t Dataset::datasets;
 
 QString Dataset::compressionString() const {
     switch (type) {
@@ -70,7 +70,7 @@ bool Dataset::isWebKnossos(const QUrl & url) {
     return url.host().contains("webknossos");
 }
 
-QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
+Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
     if (Dataset::isWebKnossos(url)) {
         return Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
@@ -82,7 +82,7 @@ QList<Dataset> Dataset::parse(const QUrl & url, const QString & data) {
     }
 }
 
-QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
+Dataset::list_t Dataset::parseGoogleJson(const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -105,12 +105,11 @@ QList<Dataset> Dataset::parseGoogleJson(const QString & json_raw) {
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
     info.type = CubeType::RAW_JPG;
-    info.overlay = false;
 
     return {info};
 }
 
-QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
@@ -134,12 +133,12 @@ QList<Dataset> Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QStr
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
     info.type = CubeType::RAW_JPG;
-    info.overlay = false;
 
     return {info};
 }
 
-QList<Dataset> Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
+
+Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
     Dataset info;
     info.api = API::PyKnossos;
     QTextStream stream(&config);
@@ -197,7 +196,7 @@ QList<Dataset> Dataset::parsePyKnossosConf(const QUrl & configUrl, QString confi
     return {info};
 }
 
-QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
 
@@ -215,10 +214,8 @@ QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString 
         }
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
-            info.overlay = false;
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
-            info.overlay = true;
         }
         const auto boundary_json = layer.toObject()["boundingBox"].toObject();
         info.boundary = {
@@ -251,7 +248,7 @@ QList<Dataset> Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString 
     return layers;
 }
 
-QList<Dataset> Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
+Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     Dataset info;
     info.api = API::Heidelbrain;
 
@@ -338,7 +335,6 @@ void Dataset::checkMagnifications() {
 Dataset Dataset::createCorrespondingOverlayLayer() {
     Dataset info = *this;
     info.type = (api == API::Heidelbrain || api == API::PyKnossos) ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
-    info.overlay = true;
     return info;
 }
 

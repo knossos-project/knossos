@@ -734,10 +734,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto texhandle, floatCoordinate offset = {}){
+    auto slice = [&](auto & texture, std::size_t layerId, floatCoordinate offset = {}){
         if (!options.nodePicking) {
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, texhandle);
+            texture.texHandle[layerId].bind();
             glPushMatrix();
             glTranslatef(isoCurPos.x + offset.x, isoCurPos.y + offset.y, isoCurPos.z + offset.z);
             glBegin(GL_QUADS);
@@ -760,7 +760,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                            -dataPxX * v1.z + dataPxY * v2.z);
             glEnd();
             glPopMatrix();
-            glBindTexture(GL_TEXTURE_2D, 0);
+            texture.texHandle[layerId].release();
             glDisable(GL_TEXTURE_2D);
         }
     };
@@ -772,8 +772,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
-    if (!options.nodePicking && state->viewerState->layerVisibility[0]) {
-        slice(texture.texHandle);
+    if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
+        if (texture.texHandle.size() != 3) {
+            slice(texture, 0);
+        }
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -791,13 +793,27 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
+    if (texture.texHandle.size() == 3) {
+        glBlendFunc(GL_ONE, GL_ONE);
+    }
     if (!options.nodePicking) {
-        if (state->viewerState->layerVisibility[0]) {
-            slice(texture.texHandle, n);
+        for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+            if (state->viewerState->layerVisibility[i]) {
+                if (options.drawOverlay || !Dataset::datasets[i].isOverlay()) {
+                    if (Dataset::datasets[i].isOverlay()) {
+                        glColor4f(1, 1, 1, 1);
+                    }
+                    if (texture.texHandle.size() == 3) {
+                        glColor4f(i == 0, i == 1, i == 2, 1);
+                    }
+                    slice(texture, i, n);
+                }
+            }
         }
-        if (options.drawOverlay && state->viewerState->layerVisibility[1]) {
-            slice(texture.overlayHandle, n);
-        }
+    }
+    glColor4f(1, 1, 1, 1);
+    if (texture.texHandle.size() == 3) {// reset blend func
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -823,6 +839,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glVertex3f(bottom.x(), bottom.y(), bottom.z());
         glEnd();
         glPopMatrix();
+        glColor4f(1, 1, 1, 1);
     }
     if (options.meshPicking) {
         pickMeshIdAtPosition();
@@ -1805,30 +1822,31 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
-    for (auto layer : {std::make_pair(static_cast<bool>(state->viewerState->layerVisibility[0]), vp.texture.texHandle), std::make_pair(state->viewerState->layerVisibility[1] && options.drawOverlay, vp.texture.overlayHandle)}) {
-        if (layer.first) {
-            state->viewer->vpGenerateTexture(vp);// update texture before use
-            glBindTexture(GL_TEXTURE_2D, layer.second);
+    state->viewer->vpGenerateTexture(vp);// update texture before use
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        if (state->viewerState->layerVisibility[layerId] && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+            auto & texture = vp.texture;
+            texture.texHandle[layerId].bind();
             glBegin(GL_QUADS);
                 glNormal3i(vp.n.x, vp.n.y, vp.n.z);
-                glTexCoord2f(vp.texture.texLUx, vp.texture.texLUy);
+                glTexCoord2f(texture.texLUx, texture.texLUy);
                 glVertex3f(-dataPxX * vp.v1.x - dataPxY * vp.v2.x,
                            -dataPxX * vp.v1.y - dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texRUx, vp.texture.texRUy);
+                glTexCoord2f(texture.texRUx, texture.texRUy);
                 glVertex3f( dataPxX * vp.v1.x - dataPxY * vp.v2.x,
                             dataPxX * vp.v1.y - dataPxY * vp.v2.y,
                             dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texRLx, vp.texture.texRLy);
+                glTexCoord2f(texture.texRLx, texture.texRLy);
                 glVertex3f( dataPxX * vp.v1.x + dataPxY * vp.v2.x,
                             dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                             dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-                glTexCoord2f(vp.texture.texLLx, vp.texture.texLLy);
+                glTexCoord2f(texture.texLLx, texture.texLLy);
                 glVertex3f(-dataPxX * vp.v1.x + dataPxY * vp.v2.x,
                            -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
             glEnd();
-            glBindTexture (GL_TEXTURE_2D, 0);
+            texture.texHandle[layerId].release();
         }
     }
 }

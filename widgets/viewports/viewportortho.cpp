@@ -61,42 +61,14 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
 
 ViewportOrtho::~ViewportOrtho() {
     makeCurrent();
-    if (texture.texHandle != 0) {
-        glDeleteTextures(1, &texture.texHandle);
+    for (auto & elem : texture.texHandle) {
+        elem.destroy();
     }
-    if (texture.overlayHandle != 0) {
-        glDeleteTextures(1, &texture.overlayHandle);
-    }
-    texture.texHandle = texture.overlayHandle = 0;
 }
 
 void ViewportOrtho::initializeGL() {
     ViewportBase::initializeGL();
-    // data texture
-    glGenTextures(1, &texture.texHandle);
-
-    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture.textureFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture.textureFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    // overlay texture
-    glGenTextures(1, &texture.overlayHandle);
-
-    glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    resetTexture();// allocates textures
+    resetTexture(Dataset::datasets.size());
 
     if (state->gpuSlicer) {
         if (viewportType == ViewportType::VIEWPORT_XY) {
@@ -146,17 +118,35 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
     ViewportBase::mousePressEvent(event);
 }
 
-void ViewportOrtho::resetTexture() {
-    if (texture.texHandle != 0) {
-        glBindTexture(GL_TEXTURE_2D, texture.texHandle);
-        std::vector<char> texData(static_cast<std::size_t>(3 * std::pow(texture.size, 2)));// RGB
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.size, texture.size, 0, GL_RGB, GL_UNSIGNED_BYTE, texData.data());
+void ViewportOrtho::resetTexture(const std::size_t layerCount) {
+    makeCurrent();
+    if (!context()) {
+        return;
     }
-    if (texture.overlayHandle != 0) {
-        glBindTexture(GL_TEXTURE_2D, texture.overlayHandle);
-        std::vector<char> texData(static_cast<std::size_t>(4 * std::pow(texture.size, 2)));// RGBA
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.size, texture.size, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    if (layerCount != texture.texHandle.size()) {// can’t use resliceNecessary here because it’s legacy initialized
+        resliceNecessary = decltype(resliceNecessary)(layerCount);
+        for (auto && elem : resliceNecessary) {
+            elem = true;
+        }
+        texture.texHandle = decltype(texture.texHandle)(layerCount);
     }
+    for (auto & elem : texture.texHandle) {
+        elem.destroy();
+        elem.setSize(texture.size, texture.size);
+        elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
+        elem.setWrapMode(QOpenGLTexture::ClampToEdge);
+        elem.allocateStorage();
+        std::vector<std::uint8_t> texData(4 * std::pow(texture.size, 2));
+        for (std::size_t i = 3; i < texData.size(); i += 4) {
+            texData[i-3] = 0;
+            texData[i-2] = 0;
+            texData[i-1] = 255;
+            texData[i] = 255;
+        }
+        elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
+        elem.release();
+    }
+    state->viewer->applyTextureFilterSetting();
 }
 
 void ViewportOrtho::sendCursorPosition() {

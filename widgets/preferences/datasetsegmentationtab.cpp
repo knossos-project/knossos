@@ -80,9 +80,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
         if (checked) {
-            state->viewer->applyTextureFilterSetting(GL_LINEAR);
+            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Linear);
         } else {
-            state->viewer->applyTextureFilterSetting(GL_NEAREST);
+            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Nearest);
         }
     });
     QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::clicked, [this](const bool checked) {
@@ -119,20 +119,20 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
             overlayGroup.setChecked(state->viewerState->layerVisibility.at(1));
         }
     });
-    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewerState->layerVisibility.at(1) = checked; });
+    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewerState->layerVisibility.at(Segmentation::singleton().layerId) = checked; });
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     QObject::connect(&segmentationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int value){
         segmentationOverlaySlider.setValue(value);
         Segmentation::singleton().alpha = value;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     QObject::connect(&segmentationBorderHighlight, &QCheckBox::clicked, [](const bool checked) {
         Segmentation::singleton().highlightBorder = checked;
-        state->viewer->oc_reslice_notify_visible();
+        state->viewer->segmentation_changed();
     });
     
     QObject::connect(&volumeGroup, &QGroupBox::clicked, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
@@ -158,7 +158,17 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().volume_update_required = true;
     });
 
-    QObject::connect(&state->viewer->mainWindow, &MainWindow::overlayOpacityChanged, [this]() { segmentationOverlaySlider.setValue(Segmentation::singleton().alpha); });
+    QObject::connect(state->mainWindow, &MainWindow::overlayOpacityChanged, [this](){
+        segmentationOverlaySlider.setValue(Segmentation::singleton().alpha);
+    });
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](){
+        segmentationGroup.setEnabled(Segmentation::singleton().enabled);
+        overlayGroup.setChecked(Segmentation::singleton().enabled);
+        if (!Segmentation::singleton().enabled) {
+            volumeGroup.setChecked(false);
+            volumeGroup.clicked(false);
+        }
+    });
 }
 
 void DatasetAndSegmentationTab::useOwnDatasetColorsButtonClicked(QString path) {
