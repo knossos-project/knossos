@@ -106,7 +106,7 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     Dataset info;
     info.api = API::OpenConnectome;
     info.url = infoUrl;
-    info.url.setPath(info.url.path().replace(QRegularExpression{"\\/info\\/?"}, "/image/jpeg/"));
+    info.url.setPath(info.url.path().replace(QRegularExpression{R"regex(\/info\/?)regex"}, "/image/jpeg/"));
     const auto dataset = QJsonDocument::fromJson(json_raw.toUtf8()).object()["dataset"].toObject();
     const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
     info.boundary = {

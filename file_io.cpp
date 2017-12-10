@@ -231,11 +231,11 @@ void nmlExport(const QString & filename) {
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
 QString updatedFileName(QString fileName) {
-    QRegExp versionRegEx = QRegExp("(\\.)([0-9]{3})(\\.)");
-    if (versionRegEx.indexIn(fileName) != -1) {
-        const auto versionIndex = versionRegEx.pos(2);//get second regex aka version without file extension
-        const auto incrementedVersion = fileName.midRef(versionIndex, 3).toInt() + 1;//3 chars following the dot
-        return fileName.replace(versionIndex, 3, QString("%1").arg(incrementedVersion, 3, 10, QChar('0')));//pad with zeroes
+    QRegularExpression versionRegEx{R"regex((\.)(?P<version>[0-9]{3})(\.))regex"};
+    const auto match = versionRegEx.match(fileName);
+    if (match.hasMatch()) {
+        const auto incrementedVersion = match.capturedRef("version").toInt() + 1;
+        return fileName.replace(match.capturedStart("version"), 3, QString("%1").arg(incrementedVersion, 3, 10, QChar('0')));// replace 3 version chars, pad with zeroes
     } else {
         QFileInfo info(fileName);
         return info.dir().absolutePath() + "/" + info.baseName() + ".001." + info.completeSuffix();

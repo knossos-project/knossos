@@ -782,7 +782,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             const bool done{dialog.exec() == QDialog::Accepted};
             return boost::make_optional(done, Skeletonizer::singleton().findNodeByNodeID(edit.text().toLongLong()));
         };
-        if (auto node = validatedInput(this, "Please enter node ID", QRegExpValidator{QRegExp{"\\d+"}})) {
+        if (auto node = validatedInput(this, "Please enter node ID", QRegExpValidator{QRegExp{R"regex(\d+)regex"}})) {
             Skeletonizer::singleton().setActive(*node.get());
             Skeletonizer::singleton().jumpToNode(*node.get());
         }

@@ -61,7 +61,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPropertyAnimation>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -464,8 +464,8 @@ void MainWindow::updateTodosLeft() {
     else if(Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
         todosLeftLabel.setText(QString("<font color='#00D36F'>  %1 more left</font>").arg(todosLeft));
         // submit work
-        QRegExp regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b");
-        if(regex.exactMatch(job.submitPath)) { // submission by email
+        QRegularExpression regex(R"regex(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b)regex");
+        if (regex.match(job.submitPath).hasMatch()) { // submission by email
             QMessageBox msgBox{QApplication::activeWindow()};
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setText(tr("Good Job, you're done!"));
@@ -905,7 +905,7 @@ void MainWindow::saveAsSlot() {
 
     if (!fileName.isEmpty()) {
         const auto prevFilename = fileName;
-        QRegExp kzipRegex(R"regex((\.k)|(\.zip))regex"); // any occurance of .k and .zip
+        QRegularExpression kzipRegex(R"regex((\.k)|(\.zip))regex"); // any occurance of .k and .zip
         if (fileName.contains(kzipRegex)) {
             fileName.remove(kzipRegex);
 
@@ -1167,11 +1167,12 @@ void MainWindow::copyClipboardCoordinates() {
 void MainWindow::pasteClipboardCoordinates(){
     const QString clipboardContent = QApplication::clipboard()->text();
 
-    const QRegExp clipboardRegEx(R"regex((\d+)\D+(\d+)\D+(\d+))regex");//match 3 groups of digits separated by non-digits
-    if (clipboardRegEx.indexIn(clipboardContent) != -1) {//also fails if clipboard is empty
-        const auto x = clipboardRegEx.cap(1).toInt();//index 0 is the whole matched text
-        const auto y = clipboardRegEx.cap(2).toInt();
-        const auto z = clipboardRegEx.cap(3).toInt();
+    const QRegularExpression clipboardRegEx{R"regex((\d+)\D+(\d+)\D+(\d+))regex"};//match 3 groups of digits separated by non-digits
+    const auto match = clipboardRegEx.match(clipboardContent);
+    if (match.hasMatch()) {// also fails if clipboard is empty
+        const auto x = match.captured(1).toInt();// index 0 is the whole matched text
+        const auto y = match.captured(2).toInt();
+        const auto z = match.captured(3).toInt();
 
         xField->setValue(x);
         yField->setValue(y);
