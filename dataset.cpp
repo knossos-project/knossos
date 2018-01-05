@@ -149,6 +149,8 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         const QString token = tokenList.front();
         if (token == "_BaseName") {
             info.experimentname = tokenList.at(1);
+        } else if (token == "_URL") {
+            info.url = tokenList.at(1);
         } else if (token == "_DataScale") {
             info.scale.x = tokenList.at(1).toFloat();
             info.scale.y = tokenList.at(2).toFloat();
