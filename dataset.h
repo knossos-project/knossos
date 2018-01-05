@@ -65,6 +65,7 @@ struct Dataset {
     Coordinate boundary{1000, 1000, 1000};
     // pixel-to-nanometer scale
     floatCoordinate scale{1.f, 1.f, 1.f};
+    boost::container::small_vector<floatCoordinate, 4> scales;
     // stores the currently active magnification;
     // it is set by magnification = 2^MAGx
     // Dataset::current().magnification should only be used by the viewer,

@@ -820,6 +820,19 @@ bool Viewer::updateDatasetMag(const int mag) {
         }
         for (auto && layer : Dataset::datasets) {
             layer.magnification = mag;
+            if (layer.scales.size() > std::log2(mag)) {
+                // convert sizes in dataset coordinates to physical coordinates and back with updated scale
+                // save intermediates in floatCoordinate as not to truncate them
+                const auto boundary = layer.scale.componentMul(layer.boundary);
+                const auto movementAreaMin = layer.scale.componentMul(Session::singleton().movementAreaMin);
+                const auto movementAreaMax = layer.scale.componentMul(Session::singleton().movementAreaMax);
+                const auto cpos = layer.scale.componentMul(state->viewerState->currentPosition);
+                layer.scale = layer.scales[std::log2(mag)] / layer.magnification;
+                layer.boundary = boundary / layer.scale;
+                Session::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
+                setPosition(cpos / layer.scale);
+            }
+
             window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
                 orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
             });

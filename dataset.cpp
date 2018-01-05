@@ -116,12 +116,11 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
         imagesize0[1].toInt(),
         imagesize0[2].toInt(),
     };
-    const auto voxelres0 = dataset["voxelres"].toObject()["0"].toArray();
-    info.scale = {
-        static_cast<float>(voxelres0[0].toDouble()),
-        static_cast<float>(voxelres0[1].toDouble()),
-        static_cast<float>(voxelres0[2].toDouble()),
-    };
+    for (auto scaleRef : dataset["voxelres"].toObject()) {
+        const auto scale = scaleRef.toArray();
+        info.scales.emplace_back(scale[0].toDouble(), scale[1].toDouble(), scale[2].toDouble());
+    }
+    info.scale = info.scales.front();
     const auto mags = dataset["resolutions"].toArray();
 
     info.lowestAvailableMag = std::pow(2, mags[0].toInt());
