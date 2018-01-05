@@ -1,7 +1,7 @@
 ﻿/*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2016
+ *  (C) Copyright 2007-2018
  *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
