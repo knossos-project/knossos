@@ -167,7 +167,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             numCubes.y = tokenList.at(2).toInt();
             numCubes.z = tokenList.at(3).toInt();
         } else if (token == "_FileType") {
-            info.type = CubeType::RAW_PNG;
+            info.type = tokenList.at(1).toInt() == 3 ? CubeType::RAW_JPG : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
             info.boundary.x = tokenList.at(1).toFloat();
             info.boundary.y = tokenList.at(2).toFloat();
