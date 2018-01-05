@@ -820,9 +820,12 @@ bool Viewer::updateDatasetMag(const int mag) {
         }
         // scale shenanigans
         const auto boundary = Dataset::current().boundary.componentMul(Dataset::current().scale);
+        const auto movementAreaMin = Session::singleton().movementAreaMin.componentMul(Dataset::current().scale);
+        const auto movementAreaMax = Session::singleton().movementAreaMax.componentMul(Dataset::current().scale);
         const auto cpos = state->viewerState->currentPosition.componentMul(Dataset::current().scale);
         Dataset::current().scale = Dataset::current().scales[std::log2(mag)];
         Dataset::current().boundary = boundary / Dataset::current().scale;
+        Session::singleton().updateMovementArea(movementAreaMin / Dataset::current().scale, movementAreaMax / Dataset::current().scale);
         setPosition(cpos / Dataset::current().scale);
 
         for (auto && layer : Dataset::datasets) {
