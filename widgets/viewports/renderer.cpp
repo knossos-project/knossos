@@ -1080,6 +1080,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
+    meshShader.setUniformValue("alpha_factor", static_cast<GLfloat>(state->viewerState->meshAlphaFactor));
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1099,8 +1100,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
 
     int colorLocation = meshShader.attributeLocation("color");
     if (buf.useTreeColor == false) {
-        auto alphaFactorLocation = meshShader.attributeLocation("alphaFactor");
-        meshShader.setAttributeValue(alphaFactorLocation, state->viewerState->meshAlphaFactor);
         buf.color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
         meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
