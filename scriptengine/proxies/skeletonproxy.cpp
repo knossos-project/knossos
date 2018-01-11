@@ -276,6 +276,10 @@ void SkeletonProxy::set_tree_color(quint64 tree_id, const QColor & color) {
     Skeletonizer::singleton().setColor(treeFromId(tree_id), color);
 }
 
+QColor SkeletonProxy::get_tree_color(quint64 tree_id) {
+    return treeFromId(tree_id).color;
+}
+
 bool SkeletonProxy::set_active_tree(quint64 tree_id) {
     if (!Skeletonizer::singleton().setActiveTreeByID(tree_id)) {
         emit echo(QString("could not set active tree (id %1)").arg(tree_id));
