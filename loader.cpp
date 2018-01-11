@@ -318,6 +318,9 @@ void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const v
 }
 
 void Loader::Worker::snappyCacheClear() {
+    if (snappyLayerId >= state->cube2Pointer.size()) {
+        return;
+    }
     //unload all modified cubes
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
         unloadCubes(state->cube2Pointer[snappyLayerId][mag], freeSlots[snappyLayerId], [this, mag](const CoordOfCube & cubeCoord){
