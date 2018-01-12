@@ -107,7 +107,9 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     info.api = API::OpenConnectome;
     info.url = infoUrl;
     info.url.setPath(info.url.path().replace(QRegularExpression{R"regex(\/info\/?)regex"}, "/image/jpeg/"));
-    const auto dataset = QJsonDocument::fromJson(json_raw.toUtf8()).object()["dataset"].toObject();
+    const auto jdoc = QJsonDocument::fromJson(json_raw.toUtf8()).object();
+    info.experimentname = jdoc["project"].toObject()["name"].toString();
+    const auto dataset = jdoc["dataset"].toObject();
     const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
     info.boundary = {
         imagesize0[0].toInt(),
@@ -137,6 +139,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
     info.url = jmap["dataStore"].toObject()["url"].toString() + "/data/datasets/" + jmap["name"].toString();
+    info.experimentname = jmap["name"].toString();
 
     decltype(Dataset::datasets) layers;
     for (auto && layer : jmap["dataSource"].toObject()["dataLayers"].toArray()) {
