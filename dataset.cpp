@@ -55,11 +55,15 @@ QString Dataset::compressionString() const {
 }
 
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isNeuroDataStore(url) && !isWebKnossos(url);
+    return !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
     return url.path().contains("/nd/sd/") || url.path().contains("/ocp/ca/");
+}
+
+bool Dataset::isPyKnossos(const QUrl & url) {
+    return url.path().endsWith("ariadne.conf") || url.path().endsWith(".pyknossos.conf");
 }
 
 bool Dataset::isWebKnossos(const QUrl & url) {
@@ -71,6 +75,8 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
         return Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         return Dataset::parseNeuroDataStoreJson(url, data);
+    } else if (Dataset::isPyKnossos(url)) {
+        return Dataset::parsePyKnossosConf(url, data);
     } else {
         return Dataset::fromLegacyConf(url, data);
     }
@@ -128,6 +134,42 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
     info.type = CubeType::RAW_JPG;
+
+    return {info};
+}
+
+Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
+    Dataset info;
+    info.api = API::PyKnossos;
+    QTextStream stream(&config);
+    QString line;
+    while (!(line = stream.readLine()).isNull()) {
+        const QStringList tokenList = line.split(QRegularExpression("( = |,)"));
+        const QString token = tokenList.front();
+        if (token == "_BaseName") {
+            info.experimentname = tokenList.at(1);
+        } else if (token == "_URL") {
+            info.url = tokenList.at(1);
+        } else if (token == "_DataScale") {
+            for (int i = 1; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
+                info.scales.emplace_back(tokenList.at(i).toFloat(), tokenList.at(i+1).toFloat(), tokenList.at(i+2).toFloat());
+            }
+            info.scale = info.scales.front();
+            info.magnification = info.lowestAvailableMag = 1;
+            info.highestAvailableMag = std::pow(2, (tokenList.size() - 1) / 3 - 1);
+        } else if (token == "_FileType") {
+            info.type = tokenList.at(1).toInt() == 3 ? CubeType::RAW_JPG : tokenList.at(1).toInt() == 2 ? CubeType::RAW_PNG : CubeType::RAW_UNCOMPRESSED;
+        } else if (token == "_Extent") {
+            info.boundary = Coordinate(tokenList.at(1).toFloat(), tokenList.at(2).toFloat(), tokenList.at(3).toFloat());
+        } else if (token != "[Dataset]" && token != "_BaseExt" && token != "_NumberofCubes" && token != "_Origin") {
+            qDebug() << "Skipping parameter" << token;
+        }
+    }
+    info.cubeEdgeLength = 128;
+
+    if (info.url.isEmpty()) {
+        info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+    }
 
     return {info};
 }
@@ -271,7 +313,7 @@ void Dataset::checkMagnifications() {
 
 Dataset Dataset::createCorrespondingOverlayLayer() {
     Dataset info = *this;
-    info.type = api == API::Heidelbrain ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
+    info.type = (api == API::Heidelbrain || api == API::PyKnossos) ? CubeType::SEGMENTATION_SZ_ZIP : CubeType::SEGMENTATION_UNCOMPRESSED_64;
     return info;
 }
 
@@ -355,6 +397,11 @@ QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
         return googleCubeUrl(globalCoord);
     case API::Heidelbrain:
         return knossosCubeUrl(globalCoord);
+    case API::PyKnossos: {
+        auto url = knossosCubeUrl(globalCoord);
+        url.setPath(url.path().replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1)));
+        return url;
+    }
     case API::OpenConnectome:
         return openConnectomeCubeUrl(globalCoord);
     case API::WebKnossos:

@@ -33,7 +33,7 @@
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
-        Heidelbrain, WebKnossos, GoogleBrainmaps, OpenConnectome
+        Heidelbrain, WebKnossos, GoogleBrainmaps, PyKnossos, OpenConnectome
     };
     enum class CubeType {
         RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, RAW_PNG, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP, SNAPPY
@@ -42,11 +42,13 @@ struct Dataset {
 
     static bool isHeidelbrain(const QUrl & url);
     static bool isNeuroDataStore(const QUrl & url);
+    static bool isPyKnossos(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
     static list_t parse(const QUrl & url, const QString &data);
     static list_t parseGoogleJson(const QString & json_raw);
     static list_t parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
+    static list_t parsePyKnossosConf(const QUrl & configUrl, QString config);
     static list_t parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
     static list_t fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();

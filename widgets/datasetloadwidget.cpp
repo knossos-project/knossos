@@ -198,7 +198,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     }
     cubeEdgeSpin.setParent(nullptr);
     cubeEdgeLabel.setParent(nullptr);
-    if (!Dataset::isHeidelbrain(url)) {
+    if (!(Dataset::isHeidelbrain(url) || Dataset::isPyKnossos(url))) {
         datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
     }
 }
@@ -311,7 +311,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
     if (segmentationOverlayCheckbox.isChecked()) {// add empty overlay channel
-        if (Dataset::isHeidelbrain(path)) {
+        if (Dataset::isHeidelbrain(path) || Dataset::isPyKnossos(path)) {
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
         }
         if (layers.size() < 2) {
