@@ -45,6 +45,7 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
+    case Dataset::CubeType::RAW_PNG: return "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "sz.zip";
@@ -288,7 +289,7 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
 
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
+    if (type == Dataset::CubeType::RAW_UNCOMPRESSED || type == Dataset::CubeType::RAW_PNG) {
         filename = filename.arg(".raw");
     } else if (type == Dataset::CubeType::RAW_JPG) {
         filename = filename.arg(".jpg");
