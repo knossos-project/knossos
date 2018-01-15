@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 template<typename T>
-void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const T value
+void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const std::unordered_set<T> & values
     , const std::array<double, 3> & origin, const std::array<double, 3> & dims, const std::array<double, 3> & spacing, const std::array<double, 6> & extent) {
     const auto triCases = vtkMarchingCubesTriangleCases::GetCases();
 
@@ -74,7 +74,7 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
                 for (std::size_t pi = 0; pi < 8; ++pi) {
                     // for discrete marching cubes, we are looking for an
                     // exact match of a scalar at a vertex to a value
-                    if (cubeVals[pi] == value) {
+                    if (values.find(cubeVals[pi]) != std::end(values)) {
                         index |= CASE_MASK[pi];
                     }
                 }
@@ -123,7 +123,7 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
 
 #include <snappy.h>
 
-auto generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
+auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
     std::unordered_map<floatCoordinate, int> points;
     QVector<unsigned int> faces;
     std::size_t idCounter{0};
@@ -160,8 +160,8 @@ auto generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker:
         const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
-//        marching_cubes(points, faces, idCounter, cube, value, origin, dims, spacing, extent);
-        marching_cubes(points, faces, idCounter, extractedCubes[pair.first], value, origin, dims, spacing, extent);
+//        marching_cubes(points, faces, idCounter, cube, values, origin, dims, spacing, extent);
+        marching_cubes(points, faces, idCounter, extractedCubes[pair.first], values, origin, dims, spacing, extent);
         for (std::size_t i = 0; i < 6; ++i) {
             const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
             const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
@@ -193,7 +193,7 @@ auto generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker:
                 }
             }
             const auto scaledOrigin = Dataset::current().scale.componentMul(unscaledOrigin);
-            marching_cubes(points, faces, idCounter, data, value, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
+            marching_cubes(points, faces, idCounter, data, values, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
         progress.setValue(progress.value() + 1);
     }
@@ -205,10 +205,13 @@ void generateMeshesForFirstSubobjectsOfSelectedObjects() {
     QProgressDialog progress(QObject::tr("Generating Meshes …"), "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << "Generating meshes for" << Segmentation::singleton().selectedObjectsCount() << "objects over" << cubes[0].size() << "cubes";
-    for (const auto & objectIndex : Segmentation::singleton().selectedObjectIndices) {
+    for (const auto objectIndex : Segmentation::singleton().selectedObjectIndices) {
         const auto oid = Segmentation::singleton().objects[objectIndex].id;
-        const auto soid = Segmentation::singleton().objects[objectIndex].subobjects.front().get().id;
-        auto [points, faces] = generateMeshForSubobjectID(soid, cubes[0], progress);
+        std::unordered_set<std::uint64_t> soids;
+        for (const auto & elem : Segmentation::singleton().objects[objectIndex].subobjects) {
+            soids.emplace(elem.get().id);
+        }
+        auto [points, faces] = generateMeshForSubobjectID(soids, cubes[0], progress);
 
         QVector<float> verts(3 * points.size());
         for (auto && pair : points) {
@@ -220,6 +223,6 @@ void generateMeshesForFirstSubobjectsOfSelectedObjects() {
         QVector<std::uint8_t> colors;
         Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
 
-        qDebug() << oid << soid << ':' << points.size() << "→" << faces.size() / 3;
+        qDebug() << oid << ':' << points.size() << "→" << faces.size() / 3;
     }
 }
