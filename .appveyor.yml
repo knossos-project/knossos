@@ -18,7 +18,7 @@ deploy:
   description: 'Nightly build from the latest successful commit'
   provider: GitHub
   auth_token:
-    secure: 662Gozhe3fmtaVUptOYmok9ayZxuk9PDVS6pN8QfZPwP+P102GV5SnSpHcDR1o77 # your encrypted token from GitHub
+    secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
     artifact: /.*\nightly.exe/ # artifact to release
   prerelease: true
   force_update: true
