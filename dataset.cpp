@@ -119,20 +119,20 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     const auto dataset = jdoc["dataset"].toObject();
     const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
     info.boundary = {
-        imagesize0[0].toInt(),
-        imagesize0[1].toInt(),
-        imagesize0[2].toInt(),
+        imagesize0.at(0).toInt(1000),
+        imagesize0.at(1).toInt(1000),
+        imagesize0.at(2).toInt(1000),
     };
     for (auto scaleRef : dataset["voxelres"].toObject()) {
         const auto scale = scaleRef.toArray();
-        info.scales.emplace_back(scale[0].toDouble(), scale[1].toDouble(), scale[2].toDouble());
+        info.scales.emplace_back(scale.at(0).toDouble(1), scale.at(1).toDouble(1), scale.at(2).toDouble(1));
     }
-    info.scale = info.scales.front();
+    info.scale = !info.scales.empty() ? info.scales.front() : decltype(info.scale){1, 1, 1};
     const auto mags = dataset["resolutions"].toArray();
 
-    info.lowestAvailableMag = std::pow(2, mags[0].toInt());
+    info.lowestAvailableMag = std::pow(2, mags.at(0).toInt(1));
     info.magnification = info.lowestAvailableMag;
-    info.highestAvailableMag = std::pow(2, mags[mags.size()-1].toInt());
+    info.highestAvailableMag = std::pow(2, mags.at(mags.size()-1).toInt(1));
     info.type = CubeType::RAW_JPG;
 
     return {info};
