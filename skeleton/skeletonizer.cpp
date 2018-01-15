@@ -1841,6 +1841,7 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
     const auto faceCount = ply.request_properties_from_element("face", {"vertex_indices"}, indices, missingIndices, 3);
     QString warning = tr("");
     if (vertexCount == 0 || faceCount == 0 || missingCoords > 0 || (missingColors > 0 && missingColors != 4) || missingIndices > 0) {
+        qWarning() << (vertexCount == 0) << (faceCount == 0) << (missingCoords > 0) << (missingColors > 0 && missingColors != 4) << (missingIndices > 0);
         warning = tr("Malformed ply file. KNOSSOS expects following header format (colors are optional):\n"
                      "ply\n"
                      "format [binary_little_endian|binary_big_endian|ascii] 1.0\n"
