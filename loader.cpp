@@ -206,6 +206,7 @@ Loader::Worker::Worker(const decltype(datasets) & layers)
     , OcModifiedCacheQueue(static_cast<std::size_t>(std::log2(Dataset::current().highestAvailableMag)+1))
     , snappyCache(static_cast<std::size_t>(std::log2(Dataset::current().highestAvailableMag)+1))
 {
+    qnam.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
     state->cube2Pointer.clear();
     state->cube2Pointer.shrink_to_fit();
 

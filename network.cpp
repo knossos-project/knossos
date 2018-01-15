@@ -44,6 +44,7 @@
 
 Network::Network(const QObject *) {
     manager.setCookieJar(&cookieJar);
+    manager.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
 }
 
 QVariantList Network::getCookiesForHost(const QString & host) {
