@@ -128,6 +128,8 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
     QVector<unsigned int> faces;
     std::size_t idCounter{0};
 
+    std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
+
     for (const auto & pair : cubes) {
         if (progress.wasCanceled()) {
             break;
@@ -147,10 +149,14 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
 //            continue;
 //        }
 
-        std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
-        extractedCubes[pair.first].resize(size);
-        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(extractedCubes[pair.first].data()))) {
-            continue;
+        {
+            auto & cube = extractedCubes[pair.first];
+            if (cube.empty()) {
+                cube.resize(size);
+                if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(cube.data()))) {
+                    continue;
+                }
+            }
         }
 
         const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
