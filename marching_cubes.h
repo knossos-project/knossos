@@ -201,6 +201,7 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
             const auto scaledOrigin = Dataset::current().scale.componentMul(unscaledOrigin);
             marching_cubes(points, faces, idCounter, data, values, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
+        extractedCubes.clear();
         progress.setValue(progress.value() + 1);
     }
     return std::make_tuple(points, faces);
