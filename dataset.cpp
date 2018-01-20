@@ -42,6 +42,7 @@ Dataset::list_t Dataset::datasets;
 QString Dataset::compressionString() const {
     switch (type) {
     case Dataset::CubeType::RAW_UNCOMPRESSED: return "8 bit gray";
+    case Dataset::CubeType::RAW_16: return "16 bit gray";
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
@@ -319,6 +320,8 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
                       : compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
                       : compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6
                       : Dataset::CubeType::RAW_J2K;
+        } else if (token == "16bit") {
+            info.type = Dataset::CubeType::RAW_16;
         } else {
             qDebug() << "Skipping unknown parameter" << token;
         }
@@ -374,7 +377,7 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
 
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED || type == Dataset::CubeType::RAW_PNG) {
+    if (type == Dataset::CubeType::RAW_UNCOMPRESSED || type == Dataset::CubeType::RAW_PNG || type == Dataset::CubeType::RAW_16) {
         filename = filename.arg(".raw");
     } else if (type == Dataset::CubeType::RAW_JPG) {
         filename = filename.arg(".jpg");
@@ -386,6 +389,8 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
         filename = filename.arg(".seg.sz.zip");
     } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         filename = filename.arg(".seg");
+    } else {
+        throw std::runtime_error(QObject::tr("no file extension for %1").arg(static_cast<int>(type)).toUtf8());
     }
 
     auto base = url;

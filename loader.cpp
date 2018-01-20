@@ -415,6 +415,15 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
         }
+    } else if (dataset.type == Dataset::CubeType::RAW_16) {
+        const std::size_t expectedSize = state->cubeBytes * 2;
+        if (availableSize == expectedSize) {
+            boost::multi_array_ref<std::uint16_t, 1> dataRef(reinterpret_cast<std::uint16_t *>(data.data()), boost::extents[std::pow(dataset.cubeEdgeLength, 3)]);
+            std::transform(std::begin(dataRef), std::end(dataRef), reinterpret_cast<std::uint8_t *>(currentSlot), [](const auto & elem){
+                return elem / std::pow(2, 8);// discard
+            });
+            success = true;
+        }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
         const qint64 expectedSize = state->cubeBytes;
