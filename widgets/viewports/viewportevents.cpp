@@ -474,6 +474,31 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
     }
 }
 
+void ViewportBase::applyZoom(const QWheelEvent *event, float direction) {
+    QPoint scrollPixels = event->pixelDelta();
+    QPoint scrollAngle = event->angleDelta() / 8;
+    float scrollAmount = 0.0f;
+
+    if (!scrollPixels.isNull()) {
+        scrollAmount = scrollPixels.y() / 15.0f;
+    } else if (!scrollAngle.isNull()) {
+        scrollAmount = scrollAngle.y() / 15.0f;
+    } else { // fallback legacy mode zoom
+        if(event->phase() == Qt::NoScrollPhase) { // macOS fix
+            if (event->delta() > 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        }
+    }
+
+    if(scrollAmount != 0.0f) {
+        zoom(std::pow(2, scrollAmount * zoomSpeed * direction));
+        scrollAmount = 0.0f;
+    }
+}
+
 void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::NoModifier) {
         if(Segmentation::singleton().volume_render_toggle) {
@@ -482,32 +507,7 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
         } else {
             const QPointF mouseRel{(event->x() - 0.5 * width()), (event->y() - 0.5 * height())};
             const auto oldZoom = zoomFactor;
-
-            QPoint scrollPixels = event->pixelDelta();
-            QPoint scrollAngle = event->angleDelta() / 8;
-            float scrollAmount = 0.0f;
-
-            if (!scrollPixels.isNull()) {
-                scrollAmount = scrollPixels.y() / 15.0f;
-//                qDebug() << "scrolling(pixel): " << scrollAmount << ", scrollAmount: " << scrollAmount;
-            } else if (!scrollAngle.isNull()) {
-                scrollAmount = scrollAngle.y() / 15.0f;
-//                qDebug() << "scrolling(angle): " << scrollAmount << ", scrollAmount: " << scrollAmount;
-            } else { // fallback legacy mode zoom
-                if(event->phase() == Qt::NoScrollPhase) { // macOS fix
-                    if (event->delta() > 0) {
-                        zoomIn();
-                    } else {
-                        zoomOut();
-                    }
-                }
-            }
-
-            if(scrollAmount != 0.0f) {
-                zoom(std::pow(2, scrollAmount * zoomSpeed));
-                scrollAmount = 0.0f;
-            }
-
+            applyZoom(event);
             const auto oldFactor = state->skeletonState->volBoundary() / oldZoom;
             const auto newFactor = state->skeletonState->volBoundary() / zoomFactor;
             state->skeletonState->translateX += mouseRel.x() * (oldFactor - newFactor) / width();
@@ -519,12 +519,7 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
 
 void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::CTRL) { // Orthogonal VP or outside VP
-        if(event->delta() > 0) {
-            zoomIn();
-        }
-        else {
-            zoomOut();
-        }
+        applyZoom(event, -1.0f);
     } else if (event->modifiers() == Qt::NoModifier) {
         const float directionSign = event->delta() > 0 ? -1 : 1;
         const auto multiplier = directionSign * state->viewerState->dropFrames * Dataset::current().magnification;

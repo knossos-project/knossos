@@ -169,6 +169,7 @@ protected:
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
+    void applyZoom(const QWheelEvent *event, float direction = 1.0f);
     // rendering
     virtual void initializeGL() override;
     virtual void hideVP();
@@ -200,6 +201,7 @@ protected:
     virtual void keyReleaseEvent(QKeyEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override { handleWheelEvent(event); }
 
+    float zoomSpeed{0.5f};
     QPoint mouseDown;
     QPoint prevMouseMove;
     int xrel(const int x) { return x - prevMouseMove.x(); }
