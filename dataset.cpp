@@ -149,7 +149,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (token == "_BaseName") {
             info.experimentname = tokenList.at(1);
         } else if (token == "_URL") {
-            info.url = tokenList.at(1);
+            info.url = line.section(" = ", 1);// tokelist may split URL in half
         } else if (token == "_DataScale") {
             for (int i = 1; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i).toFloat(), tokenList.at(i+1).toFloat(), tokenList.at(i+2).toFloat());
