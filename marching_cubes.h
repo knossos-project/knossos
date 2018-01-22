@@ -119,21 +119,25 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
 #include "skeleton/skeletonizer.h"
 
 #include <QApplication>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QProgressDialog>
+#include <QtConcurrentMap>
 
 #include <snappy.h>
 
+#include <iterator>
+
 auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
-    std::unordered_map<floatCoordinate, int> points;
-    QVector<unsigned int> faces;
-    std::size_t idCounter{0};
-
-    std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
-
-    for (const auto & pair : cubes) {
-        if (progress.wasCanceled()) {
-            break;
-        }
+    std::vector<std::unordered_map<floatCoordinate, int>> totalpoints(cubes.size());
+    std::vector<QVector<unsigned int>> totalfaces(cubes.size());
+    const auto processCube = [&](const auto & val){
+        const auto id = val.first;
+        const auto & pair = *val.second;
+        std::unordered_map<floatCoordinate, int> & points = totalpoints[id];
+        QVector<unsigned int> & faces = totalfaces[id];
+        std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
+        std::size_t idCounter{0};
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
@@ -154,7 +158,7 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
             if (cube.empty()) {
                 cube.resize(size);
                 if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(cube.data()))) {
-                    continue;
+                    std::runtime_error("failed to extract snappy cube in generateMeshForSubobjectID");
                 }
             }
         }
@@ -202,9 +206,41 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
             marching_cubes(points, faces, idCounter, data, values, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
         extractedCubes.clear();
-        progress.setValue(progress.value() + 1);
+    };
+    std::string s;
+    std::vector<std::pair<std::size_t, decltype(std::cbegin(cubes))>> threadids;
+    std::size_t i = 0;
+    for (auto it = std::begin(cubes); it != std::end(cubes); ++it) {
+        threadids.emplace_back(i, it);
+        ++i;
     }
-    return std::make_tuple(points, faces);
+    QFutureWatcher<void> watcher;
+    QObject::connect(&watcher, &decltype(watcher)::progressRangeChanged, &progress, &QProgressDialog::setRange);
+    QObject::connect(&watcher, &decltype(watcher)::progressValueChanged, &progress, &QProgressDialog::setValue);
+    watcher.setFuture(QtConcurrent::map(threadids, processCube));
+    watcher.waitForFinished();
+
+    QVector<float> verts;
+    std::vector<std::size_t> offsets;
+    for (const auto & elempoints : totalpoints) {
+        const auto offset = verts.size();
+        offsets.emplace_back(offset / 3);
+        verts.resize(offset + 3 * elempoints.size());
+        for (const auto & pair : elempoints) {
+            verts[offset + 3 * pair.second    ] = pair.first.x;
+            verts[offset + 3 * pair.second + 1] = pair.first.y;
+            verts[offset + 3 * pair.second + 2] = pair.first.z;
+        }
+    }
+    QVector<unsigned int> faces;
+    std::size_t offseti{0};
+    for (const auto & elemfaces : totalfaces) {
+        for (const auto & elem : elemfaces) {
+            faces.push_back(offsets[offseti] + elem);
+        }
+        ++offseti;
+    }
+    return std::make_tuple(verts, faces);
 }
 
 void generateMeshesForFirstSubobjectsOfSelectedObjects() {
@@ -218,18 +254,12 @@ void generateMeshesForFirstSubobjectsOfSelectedObjects() {
         for (const auto & elem : Segmentation::singleton().objects[objectIndex].subobjects) {
             soids.emplace(elem.get().id);
         }
-        auto [points, faces] = generateMeshForSubobjectID(soids, cubes[0], progress);
+        auto [verts, faces] = generateMeshForSubobjectID(soids, cubes[0], progress);
 
-        QVector<float> verts(3 * points.size());
-        for (auto && pair : points) {
-            verts[3 * pair.second    ] = pair.first.x;
-            verts[3 * pair.second + 1] = pair.first.y;
-            verts[3 * pair.second + 2] = pair.first.z;
-        }
         QVector<float> normals;
         QVector<std::uint8_t> colors;
         Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
 
-        qDebug() << oid << ':' << points.size() << "→" << faces.size() / 3;
+        qDebug() << oid << ':' << (verts.size() / 3) << "→" << faces.size() / 3;
     }
 }
