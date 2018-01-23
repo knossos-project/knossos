@@ -319,9 +319,21 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
     handleKeyPress(event);
 }
 
+void ViewportBase::tabletEvent(QTabletEvent *event) {
+    const auto notRelease = event->type() != QEvent::TabletRelease;
+    stylusDetected = notRelease;
+    stylusDetected &= event->pointerType() == QTabletEvent::Pen || event->pointerType() == QTabletEvent::Eraser;
+    if (event->pointerType() == QTabletEvent::Eraser && notRelease) {
+        Segmentation::singleton().brush.setInverse(true);
+    } else if (event->pointerType() == QTabletEvent::Eraser && event->type() == QEvent::TabletRelease) {
+        Segmentation::singleton().brush.setInverse(false);
+    }
+    QWidget::tabletEvent(event);
+}
+
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
     const auto mouseBtn = event->buttons();
-    const auto penmode = state->viewerState->penmode;
+    const auto penmode = state->viewerState->penmode || stylusDetected;
 
     if((!penmode && mouseBtn == Qt::LeftButton) || (penmode && mouseBtn == Qt::RightButton)) {
         Qt::KeyboardModifiers modifiers = event->modifiers();

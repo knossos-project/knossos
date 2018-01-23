@@ -197,6 +197,7 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void tabletEvent(QTabletEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override { handleWheelEvent(event); }
@@ -204,6 +205,7 @@ protected:
     float zoomSpeed{0.5f};
     QPoint mouseDown;
     QPoint prevMouseMove;
+    bool stylusDetected{false};
     int xrel(const int x) { return x - prevMouseMove.x(); }
     int yrel(const int y) { return y - prevMouseMove.y(); }
     virtual void handleKeyPress(const QKeyEvent *event);
