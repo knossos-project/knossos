@@ -214,11 +214,15 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
         threadids.emplace_back(i, it);
         ++i;
     }
+
+    QEventLoop pause;
     QFutureWatcher<void> watcher;
     QObject::connect(&watcher, &decltype(watcher)::progressRangeChanged, &progress, &QProgressDialog::setRange);
     QObject::connect(&watcher, &decltype(watcher)::progressValueChanged, &progress, &QProgressDialog::setValue);
+    QObject::connect(&watcher, &decltype(watcher)::finished, [&pause](){ pause.exit();} );
+    QObject::connect(&progress, &QProgressDialog::canceled, &watcher, &decltype(watcher)::cancel);
     watcher.setFuture(QtConcurrent::map(threadids, processCube));
-    watcher.waitForFinished();
+    pause.exec();
 
     QVector<float> verts;
     std::vector<std::size_t> offsets;
