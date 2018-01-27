@@ -97,6 +97,9 @@ struct ViewerState {
 
     float cumDistRenderThres{7.f};
 
+    bool onlyLinesAndPoints{false};
+    bool regenVertBuffer{true};
+
     bool defaultVPSizeAndPos{true};
 
     //In pennmode right and left click are switched
@@ -141,15 +144,29 @@ struct ViewerState {
     bool showZYplane{true};
     bool showArbplane{true};
     bool showVpDecorations{true};
-    // temporary vertex buffers that are available for rendering, get cleared every frame
-    struct {
-        std::vector<floatCoordinate> vertices;
-        std::vector<std::array<float, 4>> colors;
-    } lineVertBuffer, pointVertBuffer;
     std::vector<bool> layerVisibility;
     double meshAlphaFactor3d{1};
     double meshAlphaFactorSlicing{0.5};
     bool MeshPickingEnabled{true};
+
+    // vertex buffers that are available for rendering
+    struct {
+        std::vector<floatCoordinate> vertices;
+        std::vector<std::array<float, 4>> colors;
+
+        void clear() {
+            vertices.clear();
+            colors.clear();
+        }
+
+        template<typename T, typename U>
+        void emplace_back(T&& coord, U&& color) {
+            vertices.emplace_back(std::forward<T>(coord));
+            colors.emplace_back(std::forward<U>(color));
+        }
+    } lineVertBuffer, pointVertBuffer;
+
+    std::vector<std::array<float, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
 /**

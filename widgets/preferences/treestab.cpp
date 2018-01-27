@@ -32,15 +32,16 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
+
 TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     depthCutoffSpin.setSingleStep(0.5);
     depthCutoffSpin.setMinimum(0.5);
 
     renderQualityCombo.addItems({tr("High (slow)"), tr("Default (very fast)"), tr("Low (fastest)")});
     renderQualityCombo.setToolTip(tr("<b>Skeleton rendering quality:</b><br/>"
-                                  "<b>High:</b> Highest level of detail possible, but slower performance, especially for big skeletons. <br/>"
-                                  "<b>Default:</b> Dynamical adjustment of details depending on zoom level. <br/>"
-                                  "<b>Low:</b> Skeleton rendered as lines and points. Details decrease drastically when zoomed out. Very fast even for large skeletons. <br/>"));
+                                     "<b>High:</b> Highest level of detail possible, but slower performance, especially for big skeletons. <br/>"
+                                     "<b>Default:</b> Dynamical adjustment of details depending on zoom level. <br/>"
+                                     "<b>Low:</b> Skeleton rendered as lines and points. Details decrease drastically when zoomed out. Very fast even for large skeletons. <br/>"));
 
     // trees
     renderingLayout.setAlignment(Qt::AlignTop);
@@ -68,9 +69,13 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     setLayout(&mainLayout);
 
     // trees render options
-    QObject::connect(&highlightActiveTreeCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->highlightActiveTree = on; });
+    QObject::connect(&highlightActiveTreeCheck, &QCheckBox::clicked, [](const bool on) {
+        state->viewerState->highlightActiveTree = on;
+        state->viewerState->regenVertBuffer = true;
+    });
     QObject::connect(&highlightIntersectionsCheck, &QCheckBox::clicked, [](const bool checked) {
         state->viewerState->showIntersections = checked;
+        state->viewerState->regenVertBuffer = true;
     });
     QObject::connect(&lightEffectsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->lightOnOff = on; });
     QObject::connect(&msaaSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int samples){
@@ -103,18 +108,31 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&renderQualityCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int value){
         if(value == 0) { // tubes and spheres
             state->viewerState->cumDistRenderThres = 1.f;
+            state->viewerState->onlyLinesAndPoints = false;
         } else if(value == 1) { // switch dynamically
             state->viewerState->cumDistRenderThres = 7.f;
+            state->viewerState->onlyLinesAndPoints = false;
         } else { // lines and points
             state->viewerState->cumDistRenderThres = 20.f;
+            state->viewerState->onlyLinesAndPoints = true;
         }
     });
 
     // tree visibility
-    QObject::connect(&allTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, !checked); });
-    QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, checked); });
-    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
-    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
+    QObject::connect(&allTreesRadio, &QRadioButton::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, !checked);
+        state->viewerState->regenVertBuffer = true;
+    });
+    QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, checked);
+        state->viewerState->regenVertBuffer = true;
+    });
+    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked);
+    });
+    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked);
+    });
 
     createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_T, [this](){// T for trees
         if (allTreesRadio.isChecked()) {
