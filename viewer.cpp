@@ -66,6 +66,23 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &Viewer::segmentation_changed);
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, this, &Viewer::segmentation_changed);
 
+    static auto regVBuff = [](){
+        state->viewerState->regenVertBuffer = true;
+    };
+
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeAddedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeChangedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeRemovedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::propertiesChanged, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeAddedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, regVBuff);
+
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, [this](){
         updateCurrentPosition();
         for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
@@ -78,6 +95,9 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
                 reslice_notify_visible(layerId);
             }
         }
+    });
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](){
+        state->viewerState->regenVertBuffer = true;
     });
 
     keyRepeatTimer.start();

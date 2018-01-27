@@ -78,20 +78,13 @@ auto lineSize(const float nanometerPerPixel) {
 }
 
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
     const auto isoBase = Dataset::current().scale.componentMul(base);
     const auto isoTop = Dataset::current().scale.componentMul(top);
     baseRadius *= Dataset::current().scale.x;
     topRadius *= Dataset::current().scale.x;
 
-    if (options.useLinesAndPoints(std::max(baseRadius, topRadius) * screenPxXPerDataPx, smallestVisibleNodeSize())) {
-        state->viewerState->lineVertBuffer.vertices.emplace_back(isoBase);
-        state->viewerState->lineVertBuffer.vertices.emplace_back(isoTop);
-
-        state->viewerState->lineVertBuffer.colors.emplace_back(color4f);
-        state->viewerState->lineVertBuffer.colors.emplace_back(color4f);
-    } else {
-        glColor4fv(color4f.data());
+    if (!options.useLinesAndPoints(std::max(baseRadius, topRadius) * screenPxXPerDataPx, smallestVisibleNodeSize())) {
+        glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 
         glPushMatrix();
         GLUquadricObj * gluCylObj = gluNewQuadric();
@@ -125,16 +118,11 @@ void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, con
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QColor & color, const RenderOptions & options) {
-    decltype(state->viewerState->lineVertBuffer.colors)::value_type color4f{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
     const auto isoPos = Dataset::current().scale.componentMul(pos);
     radius *= Dataset::current().scale.x;
 
-    if (options.useLinesAndPoints(radius * screenPxXPerDataPx, smallestVisibleNodeSize())) {
-        state->viewerState->pointVertBuffer.vertices.emplace_back(isoPos);
-        color4f[3] = 1.0f;// opaque selection color
-        state->viewerState->pointVertBuffer.colors.emplace_back(color4f);
-    } else {
-        glColor4fv(color4f.data());
+    if (!options.useLinesAndPoints(radius * screenPxXPerDataPx, smallestVisibleNodeSize())) {
+        glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
         glPushMatrix();
         glTranslatef(isoPos.x, isoPos.y, isoPos.z);
         auto * gluSphereObj = gluNewQuadric();
@@ -274,7 +262,6 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     painter.end();//would otherwise fiddle with the gl state in the dtor
     restore_gl_state();
 }
-
 
 void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
     float p[2][3], a, currentAngle, length, radius, distSourceInter;
@@ -1903,6 +1890,126 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
     return foundNodes;
 }
 
+void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
+    state->viewerState->regenVertBuffer = false;
+    state->viewerState->lineVertBuffer.clear();
+    state->viewerState->pointVertBuffer.clear();
+    state->viewerState->colorPickingBuffer24.clear();
+    state->viewerState->colorPickingBuffer48.clear();
+    state->viewerState->colorPickingBuffer64.clear();
+
+    auto arrayFromQColor = [](QColor color){
+        return decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
+    };
+
+    auto addSegment = [arrayFromQColor](const segmentListElement & segment, const QColor & color) {
+        const auto isoBase = Dataset::current().scale.componentMul(segment.source.position);
+        const auto isoTop = Dataset::current().scale.componentMul(segment.target.position);
+
+        state->viewerState->lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
+        state->viewerState->lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
+    };
+
+    auto getPickingColor = [arrayFromQColor](const nodeListElement & node, const auto selectionPass) {
+        QColor color;
+
+        const auto name = GLNames::NodeOffset + node.nodeID;
+
+        int shift{0};
+        if (selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
+            shift = 24;
+        } else if (selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
+            shift = 48;
+        }
+        const auto bits = static_cast<GLuint>(name >> shift);// extract 24 first, middle or 16 last bits of interest
+        color.setRed(static_cast<std::uint8_t>(bits));
+        color.setGreen(static_cast<std::uint8_t>(bits >> 8));
+        color.setBlue(static_cast<std::uint8_t>(bits >> 16));
+        color.setAlpha(255);
+
+        return arrayFromQColor(color);
+    };
+
+    auto addNode = [arrayFromQColor, getPickingColor, options](const nodeListElement & node) {
+        auto color = state->viewer->getNodeColor(node);
+
+        if (node.selected && options.highlightSelection) {// highlight selected nodes
+            auto selectedNodeColor = QColor(Qt::green);
+//            selectedNodeColor.setAlphaF(0.5f);// results in half-transparent nodes in low mode
+            color = selectedNodeColor;
+        }
+
+        const auto isoPos = Dataset::current().scale.componentMul(node.position);
+
+        state->viewerState->colorPickingBuffer24.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits));
+        state->viewerState->colorPickingBuffer48.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits));
+        state->viewerState->colorPickingBuffer64.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits));
+        state->viewerState->pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
+    };
+
+    const auto * activeTree = state->skeletonState->activeTree;
+    const auto * activeNode = state->skeletonState->activeNode;
+    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
+                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
+                                                                               nullptr;
+    const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
+    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
+
+    for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
+        // focus on synapses, darken rest of skeleton
+        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
+                || (activeSynapse && activeSynapse->getCleft() != &currentTree);
+        const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
+        const bool selectionFilter = onlySelected && !currentTree.selected;
+        if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
+            // hide synapse takes precedence over render flag for synapses.
+            continue;
+        }
+
+        for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
+
+            //This sets the current color for the segment rendering
+            QColor currentColor = currentTree.color;
+            if (state->viewerState->highlightActiveTree && currentTree.treeID == state->skeletonState->activeTree->treeID) {
+                currentColor = Qt::red;
+            }
+            if (darken) {
+                currentColor.setAlpha(Synapse::darkenedAlpha);
+            }
+
+            for (const auto & currentSegment : nodeIt->segments) {
+                if (currentSegment.forward) {
+                    continue;
+                }
+                addSegment(currentSegment, currentColor);
+            }
+
+            addNode(*nodeIt);
+        }
+    }
+
+    /* Connect all synapses */
+    for (auto & synapse : state->skeletonState->synapses) {
+        const auto * activeTree = state->skeletonState->activeTree;
+        const auto * activeNode = state->skeletonState->activeNode;
+        const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
+        const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
+
+        if (synapseCreated) {
+            const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
+            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
+                segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
+                QColor color = Qt::black;
+                if (synapseSelected == false) {
+                    color.setAlpha(Synapse::darkenedAlpha);
+                }
+
+                addSegment(virtualSegment, color);
+            }
+        }
+    }
+}
+
 /*
  * Fast and simplified tree rendering that uses frustum culling and
  * a heuristic level-of-detail implementation that exploits the implicit
@@ -1938,148 +2045,149 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisable(GL_LIGHTING);
         glDisable(GL_COLOR_MATERIAL);
     }
-    state->viewerState->lineVertBuffer.vertices.clear();
-    state->viewerState->lineVertBuffer.colors.clear();
-    state->viewerState->pointVertBuffer.vertices.clear();
-    state->viewerState->pointVertBuffer.colors.clear();
 
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
     glPushMatrix();
 
-    const auto * activeTree = state->skeletonState->activeTree;
-    const auto * activeNode = state->skeletonState->activeNode;
-    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
-                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
-                                                                               nullptr;
-    const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
-    for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
-        // focus on synapses, darken rest of skeleton
-        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
-                || (activeSynapse && activeSynapse->getCleft() != &currentTree);
-        const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
-        const bool selectionFilter = onlySelected && !currentTree.selected;
-        if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
-            // hide synapse takes precedence over render flag for synapses.
-            continue;
-        }
-        nodeListElement * previousNode = nullptr;
-        nodeListElement * lastRenderedNode = nullptr;
-        float cumDistToLastRenderedNode = 0.f;
-
-        for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
-            /* We start with frustum culling:
-             * all nodes that are not in the current viewing frustum for the
-             * currently rendered viewports are discarded. This is very fast. */
-
-            /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
-
-            /* Every node is tested based on a precomputed circumsphere
-            that includes its segments. */
-
-            if (!sphereInFrustum(Dataset::current().scale.componentMul(nodeIt->position), nodeIt->circRadius)) {
-                previousNode = lastRenderedNode = nullptr;
+    if(state->viewerState->regenVertBuffer) {
+        generateSkeletonGeometry(options);
+    }
+    if(!state->viewerState->onlyLinesAndPoints) {
+        const auto * activeTree = state->skeletonState->activeTree;
+        const auto * activeNode = state->skeletonState->activeNode;
+        const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
+                                     (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
+                                                                                   nullptr;
+        const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
+        const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
+        for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
+            // focus on synapses, darken rest of skeleton
+            const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
+                    || (activeSynapse && activeSynapse->getCleft() != &currentTree);
+            const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
+            const bool selectionFilter = onlySelected && !currentTree.selected;
+            if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
+                // hide synapse takes precedence over render flag for synapses.
                 continue;
             }
+            nodeListElement * previousNode = nullptr;
+            nodeListElement * lastRenderedNode = nullptr;
+            float cumDistToLastRenderedNode = 0.f;
 
-            bool virtualSegRendered = false;
-            bool nodeVisible = true;
+            for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
+                /* We start with frustum culling:
+                 * all nodes that are not in the current viewing frustum for the
+                 * currently rendered viewports are discarded. This is very fast. */
 
-            /* First test whether this node is actually connected to the next,
-            i.e. whether the implicit sorting is not broken here. */
-            bool allowHeuristic = false;
-            if (std::next(nodeIt) != std::end(currentTree.nodes) && nodeIt->segments.size() <= 2) {
-                for (const auto & currentSegment : std::next(nodeIt)->segments) {
-                    if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
-                        /* Connected, heuristic is allowed */
-                        allowHeuristic = true;
-                        break;
-                    }
+                /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
+
+                /* Every node is tested based on a precomputed circumsphere
+                that includes its segments. */
+
+                if (!sphereInFrustum(Dataset::current().scale.componentMul(nodeIt->position), nodeIt->circRadius)) {
+                    previousNode = lastRenderedNode = nullptr;
+                    continue;
                 }
-            }
-            allowHeuristic = allowHeuristic && !options.nodePicking;
-            if (previousNode != nullptr && allowHeuristic) {
-                for (auto & currentSegment : nodeIt->segments) {
-                    //isBranchNode tells you only whether the node is on the branch point stack,
-                    //not whether it is actually a node connected to more than two other nodes!
-                    const bool mustBeRendered = nodeIt->getComment().isEmpty() == false || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
-                    const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
-                    if (cullingCandidate) {
-                        //Node is a candidate for LOD culling
-                        //Do we really skip this node? Test cum dist. to last rendered node!
-                        cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
-                        if ((cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) && options.enableLoddingAndLinesAndPoints) {
-                            nodeVisible = false;
+
+                bool virtualSegRendered = false;
+                bool nodeVisible = true;
+
+                /* First test whether this node is actually connected to the next,
+                i.e. whether the implicit sorting is not broken here. */
+                bool allowHeuristic = false;
+                if (std::next(nodeIt) != std::end(currentTree.nodes) && nodeIt->segments.size() <= 2) {
+                    for (const auto & currentSegment : std::next(nodeIt)->segments) {
+                        if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
+                            /* Connected, heuristic is allowed */
+                            allowHeuristic = true;
+                            break;
                         }
-                        break;
                     }
                 }
-            }
-
-            if (nodeVisible) {
-                //This sets the current color for the segment rendering
-                QColor currentColor = currentTree.color;
-                if((currentTree.treeID == state->skeletonState->activeTree->treeID)
-                    && (state->viewerState->highlightActiveTree)) {
-                    currentColor = Qt::red;
-                }
-                if (darken) {
-                    currentColor.setAlpha(Synapse::darkenedAlpha);
-                }
-
-                cumDistToLastRenderedNode = 0.f;
-
-                if (!options.nodePicking) {// don’t pick segments
-                    if (previousNode != lastRenderedNode) {
-                        virtualSegRendered = true;
-                        // We need a "virtual" segment now
-                        segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
-                        renderSegment(virtualSegment, currentColor, options);
-                    }
-                    /* Second pass over segments needed... But only if node is actually rendered! */
-                    for (const auto & currentSegment : nodeIt->segments) {
-                        if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
-                            continue;
+                allowHeuristic = allowHeuristic && !options.nodePicking;
+                if (previousNode != nullptr && allowHeuristic) {
+                    for (auto & currentSegment : nodeIt->segments) {
+                        //isBranchNode tells you only whether the node is on the branch point stack,
+                        //not whether it is actually a node connected to more than two other nodes!
+                        const bool mustBeRendered = nodeIt->getComment().isEmpty() == false || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
+                        const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
+                        if (cullingCandidate) {
+                            //Node is a candidate for LOD culling
+                            //Do we really skip this node? Test cum dist. to last rendered node!
+                            cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
+                            if ((cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) && options.enableLoddingAndLinesAndPoints) {
+                                nodeVisible = false;
+                            }
+                            break;
                         }
-                        renderSegment(currentSegment, currentColor, options);
                     }
                 }
 
-                renderNode(*nodeIt, options);
-                lastRenderedNode = &*nodeIt;
+                if (nodeVisible) {
+                    //This sets the current color for the segment rendering
+                    QColor currentColor = currentTree.color;
+                    if((currentTree.treeID == state->skeletonState->activeTree->treeID)
+                        && (state->viewerState->highlightActiveTree)) {
+                        currentColor = Qt::red;
+                    }
+                    if (darken) {
+                        currentColor.setAlpha(Synapse::darkenedAlpha);
+                    }
+
+                    cumDistToLastRenderedNode = 0.f;
+
+                    if (!options.nodePicking) {// don’t pick segments
+                        if (previousNode != lastRenderedNode) {
+                            virtualSegRendered = true;
+                            // We need a "virtual" segment now
+                            segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
+                            renderSegment(virtualSegment, currentColor, options);
+                        }
+                        /* Second pass over segments needed... But only if node is actually rendered! */
+                        for (const auto & currentSegment : nodeIt->segments) {
+                            if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
+                                continue;
+                            }
+                            renderSegment(currentSegment, currentColor, options);
+                        }
+                    }
+
+                    renderNode(*nodeIt, options);
+                    lastRenderedNode = &*nodeIt;
+                }
+                previousNode = &*nodeIt;
             }
-            previousNode = &*nodeIt;
         }
-    }
 
-    /* Connect all synapses */
-    if (!options.nodePicking) {
-        for (auto & synapse : state->skeletonState->synapses) {
-            const auto * activeTree = state->skeletonState->activeTree;
-            const auto * activeNode = state->skeletonState->activeNode;
-            const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
-            const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
+        /* Connect all synapses */
+        if (!options.nodePicking) {
+            for (auto & synapse : state->skeletonState->synapses) {
+                const auto * activeTree = state->skeletonState->activeTree;
+                const auto * activeNode = state->skeletonState->activeNode;
+                const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
+                const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
 
-            if (synapseCreated) {
-                const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-                if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
-                    segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-                    QColor color = Qt::black;
-                    if (synapseSelected == false) {
-                        color.setAlpha(Synapse::darkenedAlpha);
+                if (synapseCreated) {
+                    const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
+                    if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
+                        segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
+                        QColor color = Qt::black;
+                        if (synapseSelected == false) {
+                            color.setAlpha(Synapse::darkenedAlpha);
+                        }
+                        renderSegment(virtualSegment, color, options);
+
+                        auto post = synapse.getPostSynapse()->position;
+                        auto pre = synapse.getPreSynapse()->position;
+                        const auto offset = (post - pre)/10;
+                        Coordinate arrowbase = post - offset;
+
+                        renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
+                            , synapse.getPostSynapse()->position
+                            , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
                     }
-                    renderSegment(virtualSegment, color, options);
-
-                    auto post = synapse.getPostSynapse()->position;
-                    auto pre = synapse.getPreSynapse()->position;
-                    const auto offset = (post - pre)/10;
-                    Coordinate arrowbase = post - offset;
-
-                    renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
-                        , synapse.getPostSynapse()->position
-                        , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
                 }
             }
         }
@@ -2092,7 +2200,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     // higher render qualities only use lines and points if node < smallestVisibleSize
     glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
-    if (!options.nodePicking && !state->viewerState->lineVertBuffer.vertices.empty()) {
+    if (!options.nodePicking) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
 
@@ -2109,19 +2217,29 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glPointSize(alwaysLinesAndPoints ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render point geometry batch if it contains data */
-    if (!state->viewerState->pointVertBuffer.vertices.empty()) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
-        /* draw all nodes */
-        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices.data());
+    /* draw all nodes */
+    glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices.data());
+
+    if(options.nodePicking) {
+        if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
+            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer24.data());
+        } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
+            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer48.data());
+        } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
+            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer64.data());
+        }
+    } else {
         glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors.data());
-
-        glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertices.size());
-
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
     }
+
+    glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertices.size());
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
     glPointSize(1.f);
 
     glPopMatrix(); // Restore modelview matrix
