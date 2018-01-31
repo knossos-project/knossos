@@ -85,6 +85,7 @@ struct Dataset {
     bool remote{false};
     // Current dataset identifier string
     QString experimentname;
+    QString fileextension;
     QUrl url;
     QString token;
 

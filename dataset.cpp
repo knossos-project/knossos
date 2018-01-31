@@ -148,8 +148,22 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         const QString token = tokenList.front();
         if (token == "_BaseName") {
             info.experimentname = tokenList.at(1);
-        } else if (token == "_URL") {
-            info.url = line.section(" = ", 1);// tokelist may split URL in half
+        } else if (token == "_BaseURL") {
+            QUrl url{line.section(" = ", 1)};// tokelist may split URL in half
+            if (!info.url.isEmpty()) {// user info was provided beforehand
+                info.url.setHost(url.host());
+                info.url.setPath(url.path());
+            } else {// read complete url including user info
+                info.url = url;
+            }
+        } else if (token == "_UserName") {
+            info.url.setUserName(tokenList.at(1));
+        } else if (token == "_Password") {
+            info.url.setPassword(tokenList.at(1));
+        } else if (token == "_ServerFormat") {
+            info.api = tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
+        } else if (token == "_BaseExt") {
+            info.fileextension = tokenList.at(1);
         } else if (token == "_DataScale") {
             for (int i = 1; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i).toFloat(), tokenList.at(i+1).toFloat(), tokenList.at(i+2).toFloat());
@@ -158,11 +172,15 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.magnification = info.lowestAvailableMag = 1;
             info.highestAvailableMag = std::pow(2, (tokenList.size() - 1) / 3 - 1);
         } else if (token == "_FileType") {
-            info.type = tokenList.at(1).toInt() == 3 ? CubeType::RAW_JPG : tokenList.at(1).toInt() == 2 ? CubeType::RAW_PNG : CubeType::RAW_UNCOMPRESSED;
+            const auto type = tokenList.at(1).toInt();
+            if (type == 1) {
+                qWarning() << "_FileType = 1 not supported, loading as 2";
+            }
+            info.type = type == 3 ? CubeType::RAW_JPG : type == 0 ? CubeType::RAW_UNCOMPRESSED : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
             info.boundary = Coordinate(tokenList.at(1).toFloat(), tokenList.at(2).toFloat(), tokenList.at(3).toFloat());
-        } else if (token != "[Dataset]" && token != "_BaseExt" && token != "_NumberofCubes" && token != "_Origin") {
-            qDebug() << "Skipping parameter" << token;
+        } else if (token != "[Dataset]" && token != "_Description" && token != "_NumberofCubes" && token != "_Origin") {
+            qDebug() << "Skipping unknown parameter" << token;
         }
     }
     info.cubeEdgeLength = 128;
@@ -399,7 +417,12 @@ QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
         return knossosCubeUrl(globalCoord);
     case API::PyKnossos: {
         auto url = knossosCubeUrl(globalCoord);
-        url.setPath(url.path().replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1)));
+        auto path = url.path();
+        path.replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1));
+        if (!fileextension.isEmpty()) {
+            path.replace(QRegularExpression("\\.[^.]*$"), fileextension);
+        }
+        url.setPath(path);
         return url;
     }
     case API::OpenConnectome:
