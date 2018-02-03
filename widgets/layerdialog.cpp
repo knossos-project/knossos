@@ -6,6 +6,22 @@
 #include "stateInfo.h"
 #include "network.h"
 
+Dataset &LayerItemModel::getData(std::size_t i) const {
+    return Dataset::datasets[datasetOrder[i]];
+}
+
+LayerItemModel::LayerItemModel() {
+    for(std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
+        datasetOrder.emplace_back(i);
+    }
+
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool /*showOverlays*/) {
+        for(std::size_t i = datasetOrder.size(); i < Dataset::datasets.size(); ++i) { // adjust datasetOrder size to fit all elements in dataset
+            datasetOrder.emplace_back(i);
+        }
+    });
+}
+
 int LayerItemModel::rowCount(const QModelIndex &) const {
     return Dataset::datasets.size();
 }
@@ -24,7 +40,7 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
-        auto& data = Dataset::datasets[index.row()];
+        const auto& data = getData(index.row());
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
             case 1: return QString::number(data.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
@@ -74,7 +90,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
-        auto& data = Dataset::datasets[index.row()];
+        auto& data = getData(index.row());
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
@@ -96,7 +112,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
 
 void LayerItemModel::addItem() {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    // insert row
+    // TODO: insert row
     endInsertRows();
 }
 
@@ -104,8 +120,7 @@ void LayerItemModel::removeItem(const QModelIndex &index) {
     if(index.isValid()) {
         auto row = index.row();
         beginRemoveRows(QModelIndex(), row, row);
-        auto& datasets = Dataset::datasets;
-        datasets.erase(datasets.begin() + row);
+        // TODO: remove layer
         endRemoveRows();
     }
 }
@@ -113,10 +128,9 @@ void LayerItemModel::removeItem(const QModelIndex &index) {
 void LayerItemModel::moveItem(const QModelIndex &index, int offset) {
     if(index.isValid()) {
         auto row = index.row();
-        auto& datasets = Dataset::datasets;
-        if(row + offset >= 0 && row + offset < datasets.size()) {
+        if(row + offset >= 0 && row + offset < rowCount()) {
             beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + ((offset > 0) ? offset + 1 : offset)); // because moving is done into between rows
-            datasets.swap(row, row + offset);
+            std::swap(datasetOrder[row], datasetOrder[row + offset]);
             endMoveRows();
         }
     }
@@ -215,7 +229,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&opacitySlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& selectedData = Dataset::datasets[currentIndex.row()];
+            auto& selectedData = itemModel.getData(currentIndex.row());
             selectedData.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
@@ -225,7 +239,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {;
-            auto& data = Dataset::datasets[currentIndex.row()];
+            auto& data = itemModel.getData(currentIndex.row());
             data.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
         }
     });
@@ -233,7 +247,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& data = Dataset::datasets[currentIndex.row()];
+            auto& data = itemModel.getData(currentIndex.row());
             data.bias = static_cast<float>(value) / biasSlider.maximum();
         }
     });
@@ -241,7 +255,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int state){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& data = Dataset::datasets[currentIndex.row()];
+            auto& data = itemModel.getData(currentIndex.row());
             data.linearFiltering = (state == Qt::Checked) ? true : false;
         }
     });
@@ -258,7 +272,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 }
 
 void LayerDialogWidget::updateLayerProperties() {
-    auto& data = Dataset::datasets[treeView.selectionModel()->currentIndex().row()];
+    auto& data = itemModel.getData(treeView.selectionModel()->currentIndex().row());
     opacitySlider.setValue(static_cast<int>(data.opacity * opacitySlider.maximum()));
     rangeDeltaSlider.setValue(static_cast<int>(data.rangeDelta * rangeDeltaSlider.maximum()));
     biasSlider.setValue(static_cast<int>(data.bias * biasSlider.maximum()));
