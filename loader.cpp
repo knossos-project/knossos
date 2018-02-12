@@ -288,6 +288,11 @@ void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const in
 
 void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const int magnification, const std::string cube) {
     const auto cubeMagnification = std::log2(magnification);
+    if (cubeMagnification >= snappyCache.size()) {
+        qWarning() << QObject::tr("ignored snappy cube (%1, %2, %3) for higher than available mag %4 ((log2(%4) = %5) ≥ %6)")
+                      .arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z).arg(magnification).arg(cubeMagnification).arg(snappyCache.size());
+        return;
+    }
     snappyCache[cubeMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
     if (cubeMagnification == loaderMagnification) {//unload if currently loaded
