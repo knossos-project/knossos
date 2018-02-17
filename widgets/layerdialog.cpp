@@ -15,7 +15,7 @@ LayerItemModel::LayerItemModel() {
         datasetOrder.emplace_back(i);
     }
 
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool /*showOverlays*/) {
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         for(std::size_t i = datasetOrder.size(); i < Dataset::datasets.size(); ++i) { // adjust datasetOrder size to fit all elements in dataset
             datasetOrder.emplace_back(i);
         }
@@ -55,6 +55,8 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                     return "RAW_J2K";
                 case Dataset::CubeType::RAW_JP2_6:
                     return "RAW_JP2_6";
+                case Dataset::CubeType::RAW_PNG:
+                    return "RAW_PNG";
                 case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16:
                     return "SEGMENTATION_UNCOMPRESSED_16";
                 case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64:
@@ -72,6 +74,8 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                     return "WebKnossos";
                 case Dataset::API::GoogleBrainmaps:
                     return "GoogleBrainmaps";
+                case Dataset::API::PyKnossos:
+                    return "PyKnossos";
                 case Dataset::API::OpenConnectome:
                     return "OpenConnectome";
                 }
@@ -263,7 +267,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
 
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](bool /*showOverlays*/) {
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         itemModel.reset();
     });
 
@@ -441,7 +445,7 @@ void LayerLoadWidget::loadSettings() {
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.setCubeEdge(cubeEdgeLen);
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
-    segmentationOverlayCheckbox.setChecked(Dataset::current().overlay);
+    segmentationOverlayCheckbox.setChecked(Dataset::current().isOverlay());
     adaptMemoryConsumption();
     settings.endGroup();
     datasetLoadList.setCurrentRow(0);
