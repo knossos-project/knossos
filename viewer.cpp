@@ -445,12 +445,12 @@ static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportText
     return index;
 }
 
-bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
+void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     if (vp.viewportType == VIEWPORT_ARBITRARY) {
-        vpGenerateTexture(static_cast<ViewportArb&>(vp));
-        return true;
+        vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
+        return;
     }
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const CoordInCube currentPosition_dc = state->viewerState->currentPosition.insideCube(cubeEdgeLen, Dataset::current().magnification);
@@ -468,81 +468,78 @@ bool Viewer::vpGenerateTexture(ViewportOrtho & vp) {
         break;
     default:
         qDebug("No such slice view: %d.", vp.viewportType);
-        return false;
+        return;
     }
 
     std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
-    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        if (!vp.resliceNecessary[layerId]) {
-            continue;
-        }
-        vp.resliceNecessary[layerId] = false;
-        const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
-        for(int x_dc = 0; x_dc < state->M; x_dc++) {
-            for(int y_dc = 0; y_dc < state->M; y_dc++) {
-                const int x_px = x_dc * cubeEdgeLen;
-                const int y_px = y_dc * cubeEdgeLen;
+    if (!vp.resliceNecessary[layerId]) {
+        return;
+    }
+    vp.resliceNecessary[layerId] = false;
+    const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+    for(int x_dc = 0; x_dc < state->M; x_dc++) {
+        for(int y_dc = 0; y_dc < state->M; y_dc++) {
+            const int x_px = x_dc * cubeEdgeLen;
+            const int y_px = y_dc * cubeEdgeLen;
 
-                CoordOfCube currentDc;
+            CoordOfCube currentDc;
 
-                switch(vp.viewportType) {
-                // With an x/y-coordinate system in a viewport, we get the following
-                // mapping from viewport (slice) coordinates to global (dc)
-                // coordinates:
-                // XY-slice: x local is x global, y local is y global
-                // XZ-slice: x local is x global, y local is z global
-                // ZY-slice: x local is z global, y local is y global.
-                case VIEWPORT_XY:
-                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
-                    break;
-                case VIEWPORT_XZ:
-                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
-                    break;
-                case VIEWPORT_ZY:
-                    currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
-                    break;
-                default:
-                    qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
-                }
-                state->protectCube2Pointer.lock();
-                void * const cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::current().magnification)], currentDc);
-                state->protectCube2Pointer.unlock();
-
-                // Take care of the data textures.
-                Coordinate cubePosInAbsPx = {currentDc.x * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                             currentDc.y * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                             currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
-                // This is used to index into the texture. overlayData[index] is the first
-                // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
-
-                if (cube != nullptr) {
-                    if (Dataset::datasets[layerId].isOverlay()) {
-                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
-                    } else {
-                        dcSliceExtract(reinterpret_cast<std::uint8_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
-                    }
-                } else {
-                    std::fill(std::begin(texData), std::end(texData), 0);
-                }
-                vp.texture.texHandle[layerId].bind();
-                glTexSubImage2D(GL_TEXTURE_2D,
-                                0,
-                                x_px,
-                                y_px,
-                                cubeEdgeLen,
-                                cubeEdgeLen,
-                                GL_RGBA,
-                                GL_UNSIGNED_BYTE,
-                                texData.data() + index);
-                vp.texture.texHandle[layerId].release();
+            switch(vp.viewportType) {
+            // With an x/y-coordinate system in a viewport, we get the following
+            // mapping from viewport (slice) coordinates to global (dc)
+            // coordinates:
+            // XY-slice: x local is x global, y local is y global
+            // XZ-slice: x local is x global, y local is z global
+            // ZY-slice: x local is z global, y local is y global.
+            case VIEWPORT_XY:
+                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
+                break;
+            case VIEWPORT_XZ:
+                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
+                break;
+            case VIEWPORT_ZY:
+                currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
+                break;
+            default:
+                qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
             }
+            state->protectCube2Pointer.lock();
+            void * const cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::current().magnification)], currentDc);
+            state->protectCube2Pointer.unlock();
+
+            // Take care of the data textures.
+            Coordinate cubePosInAbsPx = {currentDc.x * Dataset::datasets[layerId].magnification * cubeEdgeLen,
+                                         currentDc.y * Dataset::datasets[layerId].magnification * cubeEdgeLen,
+                                         currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
+            // This is used to index into the texture. overlayData[index] is the first
+            // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+            const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
+
+            if (cube != nullptr) {
+                if (Dataset::datasets[layerId].isOverlay()) {
+                    ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
+                } else {
+                    dcSliceExtract(reinterpret_cast<std::uint8_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                }
+            } else {
+                std::fill(std::begin(texData), std::end(texData), 0);
+            }
+            vp.texture.texHandle[layerId].bind();
+            glTexSubImage2D(GL_TEXTURE_2D,
+                            0,
+                            x_px,
+                            y_px,
+                            cubeEdgeLen,
+                            cubeEdgeLen,
+                            GL_RGBA,
+                            GL_UNSIGNED_BYTE,
+                            texData.data() + index);
+            vp.texture.texHandle[layerId].release();
         }
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    return true;
 }
 
 void Viewer::arbCubes(ViewportArb & vp) {
@@ -662,67 +659,64 @@ void Viewer::setDefaultVPSizeAndPos(const bool on) {
     emit changedDefaultVPSizeAndPos();
 }
 
-void Viewer::vpGenerateTexture(ViewportArb &vp) {
-    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        if (Dataset::datasets[layerId].isOverlay() || !vp.resliceNecessary[layerId]) {
-            continue;
+void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
+    if (Dataset::datasets[layerId].isOverlay() || !vp.resliceNecessary[layerId]) {
+        return;
+    }
+    vp.resliceNecessary[layerId] = false;
+
+    // Load the texture for a viewport by going through all relevant datacubes and copying slices
+    // from those cubes into the texture.
+    floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
+
+    rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
+    currentPx_float = rowPx_float;
+
+    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));// RGBA
+
+    int s = 0, t = 0, t_old = 0;
+    while(s < vp.texture.usedSizeInCubePixels) {
+        t = 0;
+        while(t < vp.texture.usedSizeInCubePixels) {
+            Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
+            Coordinate currentDc = currentPx / Dataset::current().cubeEdgeLength;
+
+            if(currentPx.x < 0) { currentDc.x -= 1; }
+            if(currentPx.y < 0) { currentDc.y -= 1; }
+            if(currentPx.z < 0) { currentDc.z -= 1; }
+
+            state->protectCube2Pointer.lock();
+            void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::datasets[layerId].magnification)], {currentDc.x, currentDc.y, currentDc.z});
+            state->protectCube2Pointer.unlock();
+
+            currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
+            t_old = t;
+
+            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube),
+                           &currentPxInDc_float,
+                           texData.data(),
+                           s, &t,
+                           vp.v2,
+                           state->viewerState->datasetAdjustmentOn, vp.texture.usedSizeInCubePixels);
+            currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
-        vp.resliceNecessary[layerId] = false;
-
-        // Load the texture for a viewport by going through all relevant datacubes and copying slices
-        // from those cubes into the texture.
-        floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
-
-        rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
+        s++;
+        rowPx_float += vp.v1;
         currentPx_float = rowPx_float;
-
-        std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));// RGBA
-
-        int s = 0, t = 0, t_old = 0;
-        while(s < vp.texture.usedSizeInCubePixels) {
-            t = 0;
-            while(t < vp.texture.usedSizeInCubePixels) {
-                Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
-                Coordinate currentDc = currentPx / Dataset::current().cubeEdgeLength;
-
-                if(currentPx.x < 0) { currentDc.x -= 1; }
-                if(currentPx.y < 0) { currentDc.y -= 1; }
-                if(currentPx.z < 0) { currentDc.z -= 1; }
-
-                state->protectCube2Pointer.lock();
-                void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::datasets[layerId].magnification)], {currentDc.x, currentDc.y, currentDc.z});
-                state->protectCube2Pointer.unlock();
-
-                currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
-                t_old = t;
-
-                dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube),
-                               &currentPxInDc_float,
-                               texData.data(),
-                               s, &t,
-                               vp.v2,
-                               state->viewerState->datasetAdjustmentOn, vp.texture.usedSizeInCubePixels);
-                currentPx_float = currentPx_float - vp.v2 * (t - t_old);
-            }
-            s++;
-            rowPx_float += vp.v1;
-            currentPx_float = rowPx_float;
-        }
-
-        vp.texture.texHandle[layerId].bind();
-        glTexSubImage2D(GL_TEXTURE_2D,
-                        0,
-                        0,
-                        0,
-                        state->M*Dataset::current().cubeEdgeLength,
-                        state->M*Dataset::current().cubeEdgeLength,
-                        GL_RGBA,
-                        GL_UNSIGNED_BYTE,
-                    texData.data());
-
-        vp.texture.texHandle[layerId].release();
     }
 
+    vp.texture.texHandle[layerId].bind();
+    glTexSubImage2D(GL_TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    state->M*Dataset::current().cubeEdgeLength,
+                    state->M*Dataset::current().cubeEdgeLength,
+                    GL_RGBA,
+                    GL_UNSIGNED_BYTE,
+                texData.data());
+
+    vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

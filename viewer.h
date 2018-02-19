@@ -173,7 +173,7 @@ private:
     void initViewer();
     void rewire();
 
-    void vpGenerateTexture(ViewportArb & vp);
+    void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 
     void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT);
     void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels);
@@ -245,7 +245,7 @@ public slots:
     void defaultDatasetLUT();
     void loadDatasetLUT(const QString & path);
     void datasetColorAdjustmentsChanged();
-    bool vpGenerateTexture(ViewportOrtho & vp);
+    void vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId);
     void addRotation(const QQuaternion & quaternion);
     void resetRotation();
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);

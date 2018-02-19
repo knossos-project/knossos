@@ -736,6 +736,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     };
     auto slice = [&](auto & texture, std::size_t layerId, floatCoordinate offset = {}){
         if (!options.nodePicking) {
+            state->viewer->vpGenerateTexture(*this, layerId);
             glEnable(GL_TEXTURE_2D);
             texture.texHandle[layerId].bind();
             glPushMatrix();
@@ -1821,9 +1822,9 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxX = vp.displayedIsoPx;
     const float dataPxY = vp.displayedIsoPx;
 
-    state->viewer->vpGenerateTexture(vp);// update texture before use
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
         if (state->viewerState->layerVisibility[layerId] && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+            state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
             auto & texture = vp.texture;
             texture.texHandle[layerId].bind();
             glBegin(GL_QUADS);

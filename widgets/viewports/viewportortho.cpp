@@ -102,7 +102,6 @@ void ViewportOrtho::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
-        state->viewer->vpGenerateTexture(*this);
         renderViewport();
     }
     renderViewportFrontFace();
