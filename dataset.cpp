@@ -139,13 +139,19 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
 }
 
 Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
-    Dataset info;
-    info.api = API::PyKnossos;
+    Dataset::list_t infos;
     QTextStream stream(&config);
     QString line;
     while (!(line = stream.readLine()).isNull()) {
         const QStringList tokenList = line.split(QRegularExpression("( = |,)"));
         const QString token = tokenList.front();
+        if (token.startsWith("[Dataset")) {
+            infos.emplace_back();
+            infos.back().api = API::PyKnossos;
+            infos.back().cubeEdgeLength = 128;
+            continue;
+        }
+        auto & info = infos.back();
         if (token == "_BaseName") {
             info.experimentname = tokenList.at(1);
         } else if (token == "_BaseURL") {
@@ -179,17 +185,18 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.type = type == 3 ? CubeType::RAW_JPG : type == 0 ? CubeType::RAW_UNCOMPRESSED : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
             info.boundary = Coordinate(tokenList.at(1).toFloat(), tokenList.at(2).toFloat(), tokenList.at(3).toFloat());
-        } else if (token != "[Dataset]" && token != "_Description" && token != "_NumberofCubes" && token != "_Origin") {
+        } else if (!token.isEmpty() && token != "_Description" && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
     }
-    info.cubeEdgeLength = 128;
 
-    if (info.url.isEmpty()) {
-        info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+    for (auto && info : infos) {
+        if (info.url.isEmpty()) {
+            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+        }
     }
 
-    return {info};
+    return infos;
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
