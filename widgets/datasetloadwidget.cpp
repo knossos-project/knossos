@@ -315,7 +315,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
         }
         if (layers.size() < 2) {
-            layers.push_back(Dataset::datasets.front());
+            layers.push_back(layers.front());
             layers.back().type = Dataset::CubeType::SNAPPY;
         }
     }
