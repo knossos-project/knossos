@@ -311,7 +311,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
     Segmentation::singleton().enabled = false;
-    if (segmentationOverlayCheckbox.isChecked()) {// add empty overlay channel
+    if (segmentationOverlayCheckbox.isChecked()) {
         if (Dataset::isHeidelbrain(path)) {
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
         }
@@ -321,7 +321,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
                 Segmentation::singleton().layerId = i;
             }
         }
-        if (layers.size() < 2) {
+        if (!Segmentation::singleton().enabled) {// add empty overlay channel
+            Segmentation::singleton().enabled = true;
+            Segmentation::singleton().layerId = layers.size();
             layers.push_back(layers.front());
             layers.back().type = Dataset::CubeType::SNAPPY;
         }
