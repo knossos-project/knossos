@@ -311,7 +311,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
     if (segmentationOverlayCheckbox.isChecked()) {// add empty overlay channel
-        if (Dataset::isHeidelbrain(path) || Dataset::isPyKnossos(path)) {
+        if (Dataset::isHeidelbrain(path)) {
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
         }
         if (layers.size() < 2) {
