@@ -165,8 +165,8 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_BaseExt") {
             info.fileextension = tokenList.at(1);
         } else if (token == "_DataScale") {
-            for (int i = 1; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
-                info.scales.emplace_back(tokenList.at(i).toFloat(), tokenList.at(i+1).toFloat(), tokenList.at(i+2).toFloat());
+            for (int i = 3; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
+                info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
             }
             info.scale = info.scales.front();
             info.magnification = info.lowestAvailableMag = 1;
