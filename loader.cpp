@@ -202,7 +202,7 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const CoordOfCube & current
 Loader::Worker::Worker(const decltype(datasets) & layers)
     : slotDownload(static_cast<std::size_t>(layers.size())), slotDecompression(static_cast<std::size_t>(layers.size()))
     , slotChunk(static_cast<std::size_t>(layers.size())), freeSlots(static_cast<std::size_t>(layers.size()))
-    , datasets{layers}
+    , datasets{layers}, snappyLayerId{Segmentation::singleton().layerId}
     , OcModifiedCacheQueue(static_cast<std::size_t>(std::log2(Dataset::current().highestAvailableMag)+1))
     , snappyCache(static_cast<std::size_t>(std::log2(Dataset::current().highestAvailableMag)+1))
 {

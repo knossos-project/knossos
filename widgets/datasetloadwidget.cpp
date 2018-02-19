@@ -310,9 +310,16 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
+    Segmentation::singleton().enabled = false;
     if (segmentationOverlayCheckbox.isChecked()) {// add empty overlay channel
         if (Dataset::isHeidelbrain(path)) {
             layers.push_back(layers.front().createCorrespondingOverlayLayer());
+        }
+        for (std::size_t i = 0; i < layers.size(); ++i) {// determine segmentation layer
+            if (layers[i].isOverlay()) {
+                Segmentation::singleton().enabled = true;
+                Segmentation::singleton().layerId = i;
+            }
         }
         if (layers.size() < 2) {
             layers.push_back(layers.front());
@@ -343,14 +350,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         state->viewerState->currentPosition = {Dataset::current().boundary / 2};
         state->viewer->updateDatasetMag();
         state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
-    }
-
-    Segmentation::singleton().enabled = false;
-    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {// determine segmentation layer
-        if (Dataset::datasets[i].isOverlay()) {
-            Segmentation::singleton().enabled = true;
-            Segmentation::singleton().layerId = i;
-        }
     }
 
     emit datasetChanged();
