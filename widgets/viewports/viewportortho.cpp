@@ -145,7 +145,20 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
         elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
         elem.release();
     }
-    state->viewer->applyTextureFilterSetting();
+    setTextureFilter(state->viewerState->textureFilter);
+}
+
+void ViewportOrtho::setTextureFilter(const QOpenGLTexture::Filter textureFilter) {
+    for (std::size_t layerId{0}; layerId < texture.texHandle.size(); ++layerId) {
+        auto & elem = texture.texHandle[layerId];
+        if (elem.isCreated()) {
+            if (!Dataset::datasets[layerId].isOverlay()) {
+                elem.setMinMagFilters(textureFilter, textureFilter);
+            } else {// overlay shall have sharp edges
+                elem.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+            }
+        }
+    }
 }
 
 void ViewportOrtho::sendCursorPosition() {
