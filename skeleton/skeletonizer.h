@@ -185,9 +185,17 @@ class Skeletonizer : public QObject {
     QSet<QString> textProperties;
     QSet<QString> numberProperties;
 public:
+    bool simpleEnough(const std::vector<nodeListElement*> & nodes) {
+        return nodes.size() < 100;
+    }
+    bool simpleEnough(const std::vector<treeListElement*> & trees) {
+        return std::accumulate(std::begin(trees), std::end(trees), static_cast<std::size_t>(0), [](auto accum, const auto & elem){
+            return accum + elem->nodes.size();
+        }) + trees.size() < 100;
+    }
     template<typename T, typename Func>
     void bulkOperation(T & elems, Func func) {
-        const auto bigEnough = elems.size() > 100;
+        const auto bigEnough = !simpleEnough(elems);
         {
             QSignalBlocker blocker{this};
             if (!bigEnough) {// don’t block for small number of elements
