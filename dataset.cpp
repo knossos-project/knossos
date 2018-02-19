@@ -235,14 +235,22 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
             static_cast<float>(scale_json[2].toDouble()),
         };
 
-        auto mags = layer.toObject()["resolutions"].toArray().toVariantList();
-        std::sort(std::begin(mags), std::end(mags), [](auto lhs, auto rhs){
-            return lhs.toInt() < rhs.toInt();
-        });
+        QMap<int, floatCoordinate> magmap;
+        for (const auto & mag : layer.toObject()["resolutions"].toArray()) {
+            const auto scale = mag.toObject()["sclae"].toArray();
+            magmap[mag.toObject()["resolution"].toInt()] = {
+                static_cast<float>(scale[0].toDouble()),
+                static_cast<float>(scale[1].toDouble()),
+                static_cast<float>(scale[2].toDouble())
+            };
+        }
+        for (auto scale : magmap) {
+            info.scales.emplace_back(info.scale.componentMul(scale));
+        }
 
-        info.lowestAvailableMag = mags[0].toInt();
+        info.lowestAvailableMag = magmap.firstKey();
         info.magnification = info.lowestAvailableMag;
-        info.highestAvailableMag = mags[mags.size()-1].toInt();
+        info.highestAvailableMag = magmap.lastKey();
 
         layers.push_back(info);
         layers.back().url.setPath(info.url.path() + "/layers/" + layerString + "/data");
