@@ -147,7 +147,9 @@ public:
             worker->flushIntoSnappyCache();
             auto snappyCache = worker->snappyCache;
             worker.reset(new Loader::Worker(datasets));
+            const auto newSize = worker->snappyCache.size();
             worker->snappyCache = snappyCache;
+            worker->snappyCache.resize(newSize);// mag count may change when switching datasets
         } else {
             worker.reset(new Loader::Worker(datasets));
         }
