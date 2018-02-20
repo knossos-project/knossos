@@ -118,34 +118,33 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
 }
 
 void ViewportOrtho::resetTexture(const std::size_t layerCount) {
+    resliceNecessary = decltype(resliceNecessary)(layerCount);
+    for (auto && elem : resliceNecessary) {
+        elem = true;// can’t use vector init ctor for atomics
+    }
+    const bool changedLayerCount{layerCount != texture.texHandle.size()};
+    const bool changedTextureSize{!texture.texHandle.empty() && texture.size != texture.texHandle.front().width()};
     makeCurrent();
-    if (!context()) {
-        return;
-    }
-    if (layerCount != texture.texHandle.size()) {// can’t use resliceNecessary here because it’s legacy initialized
-        resliceNecessary = decltype(resliceNecessary)(layerCount);
-        for (auto && elem : resliceNecessary) {
-            elem = true;
-        }
+    if (context() != nullptr && (changedLayerCount || changedTextureSize)) {
         texture.texHandle = decltype(texture.texHandle)(layerCount);
-    }
-    for (auto & elem : texture.texHandle) {
-        elem.destroy();
-        elem.setSize(texture.size, texture.size);
-        elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
-        elem.setWrapMode(QOpenGLTexture::ClampToEdge);
-        elem.allocateStorage();
-        std::vector<std::uint8_t> texData(4 * std::pow(texture.size, 2));
-        for (std::size_t i = 3; i < texData.size(); i += 4) {
-            texData[i-3] = 0;
-            texData[i-2] = 0;
-            texData[i-1] = 255;
-            texData[i] = 255;
+        for (auto & elem : texture.texHandle) {
+            elem.destroy();
+            elem.setSize(texture.size, texture.size);
+            elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
+            elem.setWrapMode(QOpenGLTexture::ClampToEdge);
+            elem.allocateStorage();
+            std::vector<std::uint8_t> texData(4 * std::pow(texture.size, 2));
+            for (std::size_t i = 3; i < texData.size(); i += 4) {
+                texData[i-3] = 0;
+                texData[i-2] = 0;
+                texData[i-1] = 255;
+                texData[i] = 255;
+            }
+            elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
+            elem.release();
         }
-        elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
-        elem.release();
+        setTextureFilter(state->viewerState->textureFilter);
     }
-    setTextureFilter(state->viewerState->textureFilter);
 }
 
 void ViewportOrtho::setTextureFilter(const QOpenGLTexture::Filter textureFilter) {
