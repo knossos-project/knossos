@@ -773,7 +773,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glPolygonMode(GL_FRONT, GL_FILL);
 
     if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
-        if (texture.texHandle.size() != 3) {
+        if (Dataset::datasets.size() <= 3 || Dataset::datasets[2].isOverlay()) {// FIXME: not rgb dataset
             slice(texture, 0);
         }
     }
@@ -793,7 +793,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
 
-    if (texture.texHandle.size() == 3) {
+    if (Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
         glBlendFunc(GL_ONE, GL_ONE);
     }
     if (!options.nodePicking) {
@@ -803,8 +803,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                     if (Dataset::datasets[i].isOverlay()) {
                         glColor4f(1, 1, 1, 1);
                     }
-                    if (texture.texHandle.size() == 3) {
+                    if (i < 3 && Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
                         glColor4f(i == 0, i == 1, i == 2, 1);
+                    } else {
+                        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     slice(texture, i, n);
                 }
@@ -812,9 +814,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         }
     }
     glColor4f(1, 1, 1, 1);
-    if (texture.texHandle.size() == 3) {// reset blend func
-        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    }
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);// FIXME: rgb dataset
 
     glDisable(GL_DEPTH_TEST);
     if (options.drawCrosshairs) {
