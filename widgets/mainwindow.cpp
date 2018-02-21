@@ -577,15 +577,13 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/quit.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
     compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
-        static Dataset::CubeType originalType;
-        if (Dataset::current().type != Dataset::CubeType::RAW_UNCOMPRESSED) {
-            originalType = Dataset::current().type;
-            Dataset::current().type = Dataset::CubeType::RAW_UNCOMPRESSED;
-        } else {
-            Dataset::current().type = originalType;
+        if (Dataset::datasets.size() > 1 && !Dataset::datasets[1].allocationEnabled) {// TODO multi layer
+            std::swap(Dataset::datasets[0], Dataset::datasets[1]);
+            std::swap(Dataset::datasets[0].allocationEnabled, Dataset::datasets[1].allocationEnabled);
+            std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
+            state->viewer->updateDatasetMag();
+            updateCompressionRatioDisplay();
         }
-        state->viewer->updateDatasetMag();
-        updateCompressionRatioDisplay();
     }, Qt::Key_F4);
     actionMenu.addSeparator();
     //advanced skeleton
