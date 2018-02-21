@@ -217,6 +217,9 @@ Loader::Worker::Worker(const decltype(datasets) & layers)
     // memory location back into this list.
     for (std::size_t layerId{0}; layerId < layers.size(); ++layerId) {
         state->cube2Pointer.emplace_back(std::log2(layers[layerId].highestAvailableMag)+1);
+        if (!datasets[layerId].allocationEnabled) {
+            continue;
+        }
         const auto overlayFactor = layers[layerId].isOverlay() ? OBJID_BYTES : 1;
         qDebug() << "Allocating" << state->cubeSetBytes * overlayFactor / 1024. / 1024. << "MiB for cubes.";
         for (size_t i = 0; i < state->cubeSetBytes * overlayFactor; i += state->cubeBytes * overlayFactor) {
@@ -684,8 +687,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     for (auto globalCoord : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
-                startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer[layerId][loaderMagnification]);
-                workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
+                if (datasets[layerId].loadingEnabled) {
+                    startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer[layerId][loaderMagnification]);
+                    workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
+                }
             }
         }
     }

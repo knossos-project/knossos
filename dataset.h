@@ -88,6 +88,8 @@ struct Dataset {
     QString fileextension;
     QUrl url;
     QString token;
+    bool allocationEnabled{true};
+    bool loadingEnabled{true};
 
     static Dataset::list_t datasets;
     static auto & current() {

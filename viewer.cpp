@@ -39,6 +39,7 @@
 #include <QVector3D>
 
 #include <boost/container/static_vector.hpp>
+#include <boost/range/combine.hpp>
 
 #include <fstream>
 #include <cmath>
@@ -1233,6 +1234,9 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
             vp.resetTexture(layerCount);
         });
         recalcTextureOffsets();
+    }
+    for (auto tup : boost::combine(viewerState.layerVisibility, Dataset::datasets)) {
+        tup.get<0>() = tup.get<1>().loadingEnabled;// TODO multi layer
     }
 }
 

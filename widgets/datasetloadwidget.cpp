@@ -283,6 +283,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (Dataset::isHeidelbrain(path)) {
         try {
             layers.front().checkMagnifications();
+            for (auto & layer : layers) {// apply discovered mags to all layers
+                layer.lowestAvailableMag = layers.front().lowestAvailableMag;
+                layer.highestAvailableMag = layers.front().highestAvailableMag;
+            }
         } catch (std::exception &) {
             if (!silent) {
                 QMessageBox warning{QApplication::activeWindow()};
@@ -310,23 +314,21 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
-    Segmentation::singleton().enabled = false;
-    if (segmentationOverlayCheckbox.isChecked()) {
-        if (Dataset::isHeidelbrain(path)) {
-            layers.push_back(layers.front().createCorrespondingOverlayLayer());
+    Segmentation::singleton().enabled = segmentationOverlayCheckbox.isChecked();
+    bool overlayPresent{false};
+    for (std::size_t i = 0; i < layers.size(); ++i) {// determine segmentation layer
+        if (layers[i].isOverlay()) {
+            overlayPresent = true;
+            layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
+            Segmentation::singleton().layerId = i;// last layer gets snappy layer
         }
-        for (std::size_t i = 0; i < layers.size(); ++i) {// determine segmentation layer
-            if (layers[i].isOverlay()) {
-                Segmentation::singleton().enabled = true;
-                Segmentation::singleton().layerId = i;
-            }
-        }
-        if (!Segmentation::singleton().enabled) {// add empty overlay channel
-            Segmentation::singleton().enabled = true;
-            Segmentation::singleton().layerId = layers.size();
-            layers.push_back(layers.front());
-            layers.back().type = Dataset::CubeType::SNAPPY;
-        }
+    }
+    if (!overlayPresent) {// add empty overlay channel
+        const auto i = layers.size();
+        layers.emplace_back(layers.front());
+        layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
+        Segmentation::singleton().layerId = i;
+        layers.back().type = Dataset::CubeType::SNAPPY;
     }
     Dataset::datasets = layers;
 

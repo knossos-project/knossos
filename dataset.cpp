@@ -194,6 +194,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
+        if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = false;
+        }
     }
 
     return infos;
@@ -335,7 +338,14 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
     info.scale = info.scale / static_cast<float>(info.magnification);
     info.lowestAvailableMag = info.highestAvailableMag = info.magnification;
 
-    return {info};
+    if (info.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
+        auto info2 = info;
+        info2.type = Dataset::CubeType::RAW_UNCOMPRESSED;
+        info2.allocationEnabled = info2.loadingEnabled = false;
+        return {info, info2, info.createCorrespondingOverlayLayer()};
+    } else {
+        return {info, info.createCorrespondingOverlayLayer()};
+    }
 }
 
 void Dataset::checkMagnifications() {
