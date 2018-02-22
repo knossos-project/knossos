@@ -247,7 +247,7 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
     return std::make_tuple(verts, faces);
 }
 
-void generateMeshesForFirstSubobjectsOfSelectedObjects() {
+void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
     QProgressDialog progress(QObject::tr("Generating Meshes …"), "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
