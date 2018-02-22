@@ -222,11 +222,6 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
 if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
-elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "RELEASE")#no openmp for clang
-    find_package(OpenMP)
-    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_PARALLEL")
-    target_compile_options(${PROJECT_NAME} PRIVATE "-floop-parallelize-all" "-ftree-parallelize-loops=4")
 endif()
 
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
