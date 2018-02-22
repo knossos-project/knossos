@@ -1,12 +1,13 @@
-if(EXISTS ${GIT}/.git)
+find_package(Git)
+if(Git_FOUND AND EXISTS ${GIT}/.git)
     execute_process(
-        COMMAND git describe --always --dirty --tags
+        COMMAND ${GIT_EXECUTABLE} describe --always --dirty --tags
         OUTPUT_VARIABLE KREVISION
         WORKING_DIRECTORY ${GIT}
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     execute_process(
-        COMMAND git log -1 --format=%aI
+        COMMAND ${GIT_EXECUTABLE} log -1 --format=%aI
         OUTPUT_VARIABLE KREVISIONDATE
         WORKING_DIRECTORY ${GIT}
         OUTPUT_STRIP_TRAILING_WHITESPACE
