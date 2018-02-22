@@ -27,7 +27,7 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
             for (std::size_t x = 0; x < (dims[0] - 1); ++x) {
                 // get scalar values
                 const auto idx = x + yOffset + zOffset;
-                std::array<float, 8> cubeVals;
+                std::array<T, 8> cubeVals;
                 cubeVals[0] = data[idx];
                 cubeVals[1] = data[idx+1];
                 cubeVals[2] = data[idx+1 + dims[0]];
