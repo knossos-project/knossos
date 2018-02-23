@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 template<typename T>
-void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const std::unordered_set<T> & values
+void marching_cubes(std::unordered_map<floatCoordinate, int> & points, std::vector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const std::unordered_set<T> & values
     , const std::array<double, 3> & origin, const std::array<double, 3> & dims, const std::array<double, 3> & spacing, const std::array<double, 6> & extent) {
     const auto triCases = vtkMarchingCubesTriangleCases::GetCases();
 
@@ -103,9 +103,9 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
                         }
                     }
                     if (ptIds[0] != ptIds[1] && ptIds[0] != ptIds[2] && ptIds[1] != ptIds[2] ) {// check for degenerate triangle
-                        faces.push_back(ptIds[0]);
-                        faces.push_back(ptIds[1]);
-                        faces.push_back(ptIds[2]);
+                        faces.emplace_back(ptIds[0]);
+                        faces.emplace_back(ptIds[1]);
+                        faces.emplace_back(ptIds[2]);
                     }
                 }
             }
@@ -130,12 +130,12 @@ void marching_cubes(std::unordered_map<floatCoordinate, int> & points, QVector<u
 
 auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
     std::vector<std::unordered_map<floatCoordinate, int>> totalpoints(cubes.size());
-    std::vector<QVector<unsigned int>> totalfaces(cubes.size());
+    std::vector<std::vector<unsigned int>> totalfaces(cubes.size());
     const auto processCube = [&](const auto & val){
         const auto id = val.first;
         const auto & pair = *val.second;
         std::unordered_map<floatCoordinate, int> & points = totalpoints[id];
-        QVector<unsigned int> & faces = totalfaces[id];
+        std::vector<unsigned int> & faces = totalfaces[id];
         std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
         std::size_t idCounter{0};
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
