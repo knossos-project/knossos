@@ -52,6 +52,7 @@ public slots:
     void annotationLoad(const QString & filename, const bool merge = false);
     void annotationSave(const QString & filename);
     void annotation_add_file(const QString & name, const QByteArray & content);
+    QByteArray annotation_get_file(const QString & name);
     int annotation_time();
     void set_annotation_time(int ms);
     QString getKnossosVersion();
