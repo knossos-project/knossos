@@ -31,6 +31,7 @@
 #include "viewports/viewportortho.h"
 #include "viewports/viewport3d.h"
 #include "widgetcontainer.h"
+#include "widgets/coordinatespins.h"
 
 #include <QComboBox>
 #include <QDropEvent>
@@ -139,7 +140,7 @@ class MainWindow : public QMainWindow {
     virtual void dropEvent(QDropEvent *event) override;
     void resizeToFitViewports(int width, int height);
 
-    QSpinBox *xField, *yField, *zField;
+    CoordinateSpins currentPosSpins;
     QMenu fileMenu{"&File"};
     QMenu actionMenu{"&Action"};
     QMenu *pluginMenu;
@@ -262,10 +263,7 @@ public slots:
     void defaultPreferencesSlot();
 
     /* toolbar slots */
-    void copyClipboardCoordinates();
-    void pasteClipboardCoordinates();
     void coordinateEditingFinished();
-
     void updateCoordinateBar(int x, int y, int z);
     // viewports
     void resetViewports();

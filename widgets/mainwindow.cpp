@@ -70,19 +70,6 @@
 #include <QStringList>
 #include <QToolButton>
 
-class CoordinateSpin : public QSpinBox {
-public:
-    CoordinateSpin(const QString & prefix, MainWindow & mainWindow) : QSpinBox(&mainWindow) {
-        setPrefix(prefix);
-        setRange(0, 1000000);//allow min 0 as bogus value, we don’t adjust the max anyway
-        setValue(0 + 1);//inintialize for {0, 0, 0}
-        QObject::connect(this, &QSpinBox::editingFinished, &mainWindow, &MainWindow::coordinateEditingFinished);
-    }
-    virtual void fixup(QString & input) const override {
-        input = QString::number(0);//let viewer reset the value
-    }
-};
-
 template<typename Menu, typename Receiver, typename Slot>
 QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
     auto & action = *menu.addAction(icon, caption);
@@ -286,7 +273,9 @@ void MainWindow::createViewports() {
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
-        QObject::connect(&vp, &ViewportBase::snapshotTriggered, &this->widgetContainer.snapshotWidget, &SnapshotWidget::openForVP);
+        QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, [this]() { currentPosSpins.pasteButton.click(); });
+        QObject::connect(&vp, &ViewportBase::updateZoomWidget, &widgetContainer.zoomWidget, &ZoomWidget::update);
+        QObject::connect(&vp, &ViewportBase::snapshotTriggered, &widgetContainer.snapshotWidget, &SnapshotWidget::openForVP);
         QObject::connect(&vp, &ViewportBase::snapshotFinished, &widgetContainer.snapshotWidget, &SnapshotWidget::showViewer);
     });
 }
@@ -330,16 +319,13 @@ void MainWindow::createToolbars() {
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>");
     basicToolbar.addSeparator();
-    basicToolbar.addAction(QIcon(":/resources/icons/edit-copy.png"), "Copy", this, SLOT(copyClipboardCoordinates()));
-    basicToolbar.addAction(QIcon(":/resources/icons/edit-paste.png"), "Paste", this, SLOT(pasteClipboardCoordinates()));
+    basicToolbar.addWidget(&currentPosSpins.copyButton);
+    basicToolbar.addWidget(&currentPosSpins.pasteButton);
+    QObject::connect(&currentPosSpins, &CoordinateSpins::coordinatesChanged, this, &MainWindow::coordinateEditingFinished);
 
-    xField = new CoordinateSpin("x: ", *this);
-    yField = new CoordinateSpin("y: ", *this);
-    zField = new CoordinateSpin("z: ", *this);
-
-    basicToolbar.addWidget(xField);
-    basicToolbar.addWidget(yField);
-    basicToolbar.addWidget(zField);
+    basicToolbar.addWidget(&currentPosSpins.xSpin);
+    basicToolbar.addWidget(&currentPosSpins.ySpin);
+    basicToolbar.addWidget(&currentPosSpins.zSpin);
 
     defaultToolbar.setIconSize(QSize(24, 24));
 
@@ -1158,33 +1144,8 @@ void MainWindow::defaultPreferencesSlot() {
 
 /* toolbar slots */
 
-void MainWindow::copyClipboardCoordinates() {
-    const auto content = QString("%1, %2, %3").arg(xField->value()).arg(yField->value()).arg(zField->value());
-    QApplication::clipboard()->setText(content);
-}
-
-void MainWindow::pasteClipboardCoordinates(){
-    const QString clipboardContent = QApplication::clipboard()->text();
-
-    const QRegularExpression clipboardRegEx{R"regex((\d+)\D+(\d+)\D+(\d+))regex"};//match 3 groups of digits separated by non-digits
-    const auto match = clipboardRegEx.match(clipboardContent);
-    if (match.hasMatch()) {// also fails if clipboard is empty
-        const auto x = match.captured(1).toInt();// index 0 is the whole matched text
-        const auto y = match.captured(2).toInt();
-        const auto z = match.captured(3).toInt();
-
-        xField->setValue(x);
-        yField->setValue(y);
-        zField->setValue(z);
-
-        coordinateEditingFinished();
-    } else {
-        qDebug() << "Unable to extract coordinates from clipboard content" << clipboardContent;
-    }
-}
-
 void MainWindow::coordinateEditingFinished() {
-    floatCoordinate inputCoord{xField->value() - 1.f, yField->value() - 1.f, zField->value() - 1.f};
+    floatCoordinate inputCoord{currentPosSpins.get() - 1.f};
     state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
@@ -1298,9 +1259,7 @@ void MainWindow::clearSettings() {
 }
 
 void MainWindow::updateCoordinateBar(int x, int y, int z) {
-    xField->setValue(x + 1);
-    yField->setValue(y + 1);
-    zField->setValue(z + 1);
+    currentPosSpins.set({x + 1, y + 1, z + 1});
 }
 
 void MainWindow::resizeEvent(QResizeEvent *) {

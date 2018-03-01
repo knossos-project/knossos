@@ -1181,12 +1181,6 @@ void Viewer::rewire() {
         }
     });
     // end viewer signals
-    //viewport signals
-    window->forEachVPDo([this](ViewportBase & vp) {
-        QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
-        QObject::connect(&vp, &ViewportBase::updateZoomWidget, &window->widgetContainer.zoomWidget, &ZoomWidget::update);
-    });
-    // end viewport signals
 }
 
 void Viewer::addRotation(const QQuaternion & quaternion) {
