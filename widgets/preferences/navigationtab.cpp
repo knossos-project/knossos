@@ -28,38 +28,45 @@
 #include "widgets/GuiConstants.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QDesktopWidget>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSpacerItem>
 
 NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
-    for (auto * editPtr : {&xMinField, &yMinField, &zMinField, &xMaxField, &yMaxField, &zMaxField}) {
-//        edit->setSuffix(" px");// uses too much space for now
-        editPtr->setRange(1, 1000000);
-    }
-    xMinField.setPrefix("x: "); xMaxField.setPrefix("x: ");
-    yMinField.setPrefix("y: "); yMaxField.setPrefix("y: ");
-    zMinField.setPrefix("z: "); zMaxField.setPrefix("z: ");
+    sizeLabel.setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     outVisibilitySlider.setOrientation(Qt::Horizontal);
-    auto row = 0;
-    movementAreaLayout.addWidget(&minLabel, row++, 0, 1, 3);
-    movementAreaLayout.addWidget(&xMinField, row, 0);
-    movementAreaLayout.addWidget(&yMinField, row, 1);
-    movementAreaLayout.addWidget(&zMinField, row++, 2);
-    movementAreaLayout.addWidget(&maxLabel, row++, 0);
-    movementAreaLayout.addWidget(&xMaxField, row, 0);
-    movementAreaLayout.addWidget(&yMaxField, row, 1);
-    movementAreaLayout.addWidget(&zMaxField, row++, 2);
-    resetMovementAreaButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    movementAreaLayout.addWidget(&resetMovementAreaButton, row++, 0, 1, 3);
+
+    minAreaHeadLayout.setAlignment(Qt::AlignLeft);
+    minAreaHeadLayout.addWidget(&minLabel);
+    minAreaHeadLayout.addWidget(&minSpins.copyButton);
+    minAreaHeadLayout.addWidget(&minSpins.pasteButton);
+    movementAreaLayout.addLayout(&minAreaHeadLayout);
+    minAreaSpinsLayout.addWidget(&minSpins.xSpin);
+    minAreaSpinsLayout.addWidget(&minSpins.ySpin);
+    minAreaSpinsLayout.addWidget(&minSpins.zSpin);
+    movementAreaLayout.addLayout(&minAreaSpinsLayout);
+    maxAreaHeadLayout.setAlignment(Qt::AlignLeft);
+    maxAreaHeadLayout.addWidget(&maxLabel);
+    maxAreaHeadLayout.addWidget(&maxSpins.copyButton);
+    maxAreaHeadLayout.addWidget(&maxSpins.pasteButton);
+    movementAreaLayout.addLayout(&maxAreaHeadLayout);
+    maxAreaSpinsLayout.addWidget(&maxSpins.xSpin);
+    maxAreaSpinsLayout.addWidget(&maxSpins.ySpin);
+    maxAreaSpinsLayout.addWidget(&maxSpins.zSpin);
+    movementAreaLayout.addLayout(&maxAreaSpinsLayout);
+    movementAreaBottomLayout.addWidget(&resetMovementAreaButton);
+    movementAreaBottomLayout.addWidget(&sizeLabel, Qt::AlignRight);
+    movementAreaLayout.addLayout(&movementAreaBottomLayout);
     separator.setFrameShape(QFrame::HLine);
     separator.setFrameShadow(QFrame::Sunken);
     separator.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
-    movementAreaLayout.addWidget(&separator, row++, 0, 1, 3);
-    movementAreaLayout.addWidget(&outVisibilityLabel, row++, 0, 1, 3);
-    movementAreaLayout.addWidget(&outVisibilitySlider, row, 0, 1, 2);
-    movementAreaLayout.addWidget(&outVisibilitySpin, row++, 2);
+    movementAreaLayout.addWidget(&separator);
+    movementAreaLayout.addWidget(&outVisibilityLabel);
+    outVisibilityAdjustLayout.addWidget(&outVisibilitySlider);
+    outVisibilityAdjustLayout.addWidget(&outVisibilitySpin);
+    movementAreaLayout.addLayout(&outVisibilityAdjustLayout);
     movementAreaGroup.setLayout(&movementAreaLayout);
 
     movementSpeedSpinBox.setRange(1, 10000);
@@ -103,24 +110,18 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addLayout(&upperLayout);
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
+    QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
+    QObject::connect(&maxSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
 
-    QObject::connect(&xMinField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&yMinField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&zMinField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&xMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&yMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&zMaxField, &QSpinBox::editingFinished, this, &NavigationTab::updateMovementArea);
     QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, []() {
         Session::singleton().resetMovementArea();
     });
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
         auto & session = Session::singleton();
-        xMinField.setValue(session.movementAreaMin.x + 1);
-        yMinField.setValue(session.movementAreaMin.y + 1);
-        zMinField.setValue(session.movementAreaMin.z + 1);
-        xMaxField.setValue(session.movementAreaMax.x + 1);
-        yMaxField.setValue(session.movementAreaMax.y + 1);
-        zMaxField.setValue(session.movementAreaMax.z + 1);
+        minSpins.set(session.movementAreaMin + 1);
+        maxSpins.set(session.movementAreaMax + 1);
+        const auto size = session.movementAreaMax - session.movementAreaMin;
+        sizeLabel.setText(tr("Size: %1, %2, %3").arg(size.x).arg(size.y).arg(size.z));
     });
 
     QObject::connect(&outVisibilitySlider, &QSlider::valueChanged, [this](const int value) {
@@ -147,9 +148,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 }
 
 void NavigationTab::updateMovementArea() {
-    const Coordinate min{xMinField.value()-1, yMinField.value()-1, zMinField.value()-1};
-    const Coordinate max{xMaxField.value()-1, yMaxField.value()-1, zMaxField.value()-1};
-    Session::singleton().updateMovementArea(min, max);
+    Session::singleton().updateMovementArea(minSpins.get() - 1, maxSpins.get() - 1);
 }
 
 void NavigationTab::loadSettings(const QSettings & settings) {

@@ -23,6 +23,8 @@
 #ifndef NAVIGATIONTAB_H
 #define NAVIGATIONTAB_H
 
+#include "widgets/coordinatespins.h"
+
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QFormLayout>
@@ -34,6 +36,7 @@
 #include <QRadioButton>
 #include <QSlider>
 #include <QSpinBox>
+#include <QVBoxLayout>
 #include <QWidget>
 
 enum class Recentering {
@@ -50,11 +53,18 @@ class NavigationTab : public QWidget {
     QVBoxLayout rightupperLayout;
 
     QGroupBox movementAreaGroup{"Movement area"};
-    QGridLayout movementAreaLayout;
+    QVBoxLayout movementAreaLayout;
+    QHBoxLayout minAreaHeadLayout;
+    QHBoxLayout minAreaSpinsLayout;
+    QHBoxLayout maxAreaHeadLayout;
+    QHBoxLayout maxAreaSpinsLayout;
+    QHBoxLayout movementAreaBottomLayout;
     QLabel minLabel{tr("Min")};
     QLabel maxLabel{tr("Max")};
-    QSpinBox xMinField, yMinField, zMinField, xMaxField, yMaxField, zMaxField;
+    QLabel sizeLabel{tr("size:")};
+    CoordinateSpins minSpins, maxSpins;
     QLabel outVisibilityLabel{tr("Visibility of outside area")};
+    QHBoxLayout outVisibilityAdjustLayout;
     QSlider outVisibilitySlider;
     QSpinBox outVisibilitySpin;
     QPushButton resetMovementAreaButton{"Reset to dataset boundaries"};
