@@ -53,6 +53,9 @@ class main_class(QtGui.QWidget):
         # Action
         actionLayout = QtGui.QHBoxLayout()
         pluginsLayout.addLayout(actionLayout)
+        reloadButton = QtGui.QPushButton("Re-evaluate")
+        reloadButton.clicked.connect(self.reloadButtonClicked)
+        actionLayout.addWidget(reloadButton)
         refreshButton = QtGui.QPushButton("Refresh")
         refreshButton.clicked.connect(self.refreshButtonClicked)
         actionLayout.addWidget(refreshButton)
@@ -564,6 +567,12 @@ Each version component has to be the pythonic string representation of a number.
 
     def isLocal(self,name):
         return self.plugins[name]["Local"] <> ""
+
+    def reloadButtonClicked(self):
+        self.showMessage("re-evaluate", "re-evaluating plugin…")
+        for plugin in self.getSelectedPlugins():
+            KnossosModule.scripting.reloadPlugin(plugin, False)
+        self.showMessage("re-evaluate", "re-evaluation finished")
 
     def refreshButtonClicked(self):
         self.showMessage("refresh","refreshing plugin list...")
