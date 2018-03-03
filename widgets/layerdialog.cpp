@@ -5,9 +5,10 @@
 #include "mainwindow.h"
 #include "stateInfo.h"
 #include "network.h"
+#include "viewer.h"
 
-Dataset &LayerItemModel::getData(std::size_t i) const {
-    return Dataset::datasets[datasetOrder[i]];
+std::size_t LayerItemModel::ordered_i(std::size_t index) const {
+    return datasetOrder[index];
 }
 
 LayerItemModel::LayerItemModel() {
@@ -16,9 +17,14 @@ LayerItemModel::LayerItemModel() {
     }
 
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
-        for(std::size_t i = datasetOrder.size(); i < Dataset::datasets.size(); ++i) { // adjust datasetOrder size to fit all elements in dataset
+        // adjust datasetOrder size to fit all elements in dataset
+        for(std::size_t i = datasetOrder.size(); i < Dataset::datasets.size(); ++i) {
             datasetOrder.emplace_back(i);
         }
+    });
+
+    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this]() {
+        reset();
     });
 }
 
@@ -40,7 +46,7 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
-        const auto& data = getData(index.row());
+        const auto& data = Dataset::datasets[ordered_i(index.row())];
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
             case 1: return QString::number(data.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
@@ -85,7 +91,8 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                return data.visible ? Qt::Checked : Qt::Unchecked;
+                auto visible = state->viewerState->layerVisibility[ordered_i(index.row())];
+                return visible ? Qt::Checked : Qt::Unchecked;
             }
         }
     }
@@ -94,7 +101,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
-        auto& data = getData(index.row());
+        auto& data = Dataset::datasets[ordered_i(index.row())];
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
@@ -106,7 +113,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                data.visible = value.toBool();
+                state->viewerState->layerVisibility[ordered_i(index.row())] = value.toBool();
             }
         }
     }
@@ -159,7 +166,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
         }
         return flags;
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -233,7 +240,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&opacitySlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& selectedData = itemModel.getData(currentIndex.row());
+            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+            auto& selectedData = Dataset::datasets[ordered_index];
             selectedData.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
@@ -243,7 +251,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {;
-            auto& data = itemModel.getData(currentIndex.row());
+            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+            auto& data = Dataset::datasets[ordered_index];
             data.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
         }
     });
@@ -251,7 +260,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& data = itemModel.getData(currentIndex.row());
+            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+            auto& data = Dataset::datasets[ordered_index];
             data.bias = static_cast<float>(value) / biasSlider.maximum();
         }
     });
@@ -259,7 +269,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int state){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
-            auto& data = itemModel.getData(currentIndex.row());
+            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+            auto& data = Dataset::datasets[ordered_index];
             data.linearFiltering = (state == Qt::Checked) ? true : false;
         }
     });
@@ -276,7 +287,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 }
 
 void LayerDialogWidget::updateLayerProperties() {
-    auto& data = itemModel.getData(treeView.selectionModel()->currentIndex().row());
+    std::size_t ordered_index = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row());
+    auto& data = Dataset::datasets[ordered_index];
     opacitySlider.setValue(static_cast<int>(data.opacity * opacitySlider.maximum()));
     rangeDeltaSlider.setValue(static_cast<int>(data.rangeDelta * rangeDeltaSlider.maximum()));
     biasSlider.setValue(static_cast<int>(data.bias * biasSlider.maximum()));

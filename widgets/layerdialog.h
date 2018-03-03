@@ -72,7 +72,7 @@ public:
     void moveItem(const QModelIndex &indices, int offset);
     void reset();
 
-    Dataset& getData(std::size_t i) const;
+    std::size_t ordered_i(std::size_t index) const;
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {
