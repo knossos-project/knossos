@@ -616,6 +616,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
             if (globalCoord == center.cube(dataset.cubeEdgeLength, dataset.magnification).cube2Global(dataset.cubeEdgeLength, dataset.magnification)) {
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
@@ -679,14 +680,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     };
 
-    const auto workaroundProcessLocalImmediately = datasets[0].url.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
+//    const auto workaroundProcessLocalImmediately = datasets[0].url.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
     for (auto [layerId, globalCoord] : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             if (datasets[layerId].loadingEnabled) {
                 try {
                     startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
                 } catch (const std::out_of_range &) {}
-                workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
+//                workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
             }
         }
     }
