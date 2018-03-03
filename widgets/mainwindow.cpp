@@ -70,6 +70,14 @@
 #include <QStringList>
 #include <QToolButton>
 
+LoadingCursor::LoadingCursor() {
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+}
+
+LoadingCursor::~LoadingCursor() {
+    QApplication::restoreOverrideCursor();
+}
+
 template<typename Menu, typename Receiver, typename Slot>
 QAction & addApplicationShortcut(Menu & menu, const QIcon & icon, const QString & caption, const Receiver * receiver, const Slot slot, const QKeySequence & keySequence) {
     auto & action = *menu.addAction(icon, caption);
@@ -778,7 +786,9 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
     auto zips = std::vector<QString>(nmlEndIt, std::end(fileNames));
+
     try {
+        LoadingCursor loadingcursor;
         QSignalBlocker blocker{Skeletonizer::singleton()};
         for (const auto & filename : nmls) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
@@ -910,6 +920,7 @@ void MainWindow::saveAsSlot() {
 
 void MainWindow::save(QString filename, const bool silent, const bool allocIncrement)
 try {
+    LoadingCursor loadingcursor;
     if (filename.isEmpty()) {
         filename = annotationFileDefaultPath();
     } else {// to prevent update of the initial default path

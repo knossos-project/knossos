@@ -95,6 +95,12 @@ public:
     }
 };
 
+struct LoadingCursor {
+    LoadingCursor();
+    LoadingCursor(LoadingCursor&) = delete;
+    ~LoadingCursor();
+};
+
 class MainWindow : public QMainWindow {
     const bool evilHack;
     Q_OBJECT
