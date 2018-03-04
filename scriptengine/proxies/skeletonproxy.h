@@ -52,6 +52,7 @@ public slots:
     treeListElement * add_tree(quint64 tree_id, const QVariantHash & properties = {});
     void set_tree_comment(quint64 tree_id, const QString & comment);
     void set_tree_color(quint64 tree_id, const QColor & color);
+    void set_tree_render(quint64 tree_id, const bool render);
     QColor get_tree_color(quint64 tree_id);
     bool set_active_tree(quint64 tree_id);
     bool delete_tree(quint64 tree_id);
