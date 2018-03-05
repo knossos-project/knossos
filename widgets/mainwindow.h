@@ -239,6 +239,7 @@ public:
     void loadCustomPreferences(const QString & fileName);
 
 signals:
+    void aboutToSave();
     void overlayOpacityChanged();
 public slots:
     void refreshPluginMenu();

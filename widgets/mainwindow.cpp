@@ -937,6 +937,7 @@ try {
             }
         }
     }
+    emit aboutToSave();
     annotationFileSave(filename);
     Session::singleton().annotationFilename = filename;
     updateRecentFile(filename);
