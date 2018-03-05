@@ -569,7 +569,7 @@ Each version component has to be the pythonic string representation of a number.
         return self.plugins[name]["Local"] <> ""
 
     def reloadButtonClicked(self):
-        self.showMessage("re-evaluate", "re-evaluating plugin…")
+        self.showMessage("re-evaluate", "re-evaluating plugin...")
         for plugin in self.getSelectedPlugins():
             KnossosModule.scripting.reloadPlugin(plugin, False)
         self.showMessage("re-evaluate", "re-evaluation finished")
