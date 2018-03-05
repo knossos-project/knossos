@@ -173,7 +173,7 @@ void annotationFileSave(const QString & filename) {
                 throw std::runtime_error((filename + ": saving mergelist failed").toStdString());
             }
         }
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
+        if (Segmentation::singleton().job.id != 0) {
             QuaZipFile file_write(&archive_write);
             if (zipCreateFile(file_write, "microworker.txt", 1)) {
                 Segmentation::singleton().jobSave(file_write);

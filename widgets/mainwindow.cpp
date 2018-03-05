@@ -132,7 +132,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
 
     QObject::connect(&Session::singleton(), &Session::autoSaveSignal, [this](){ save(); });
 
@@ -439,12 +438,14 @@ void MainWindow::setJobModeUI(bool enabled) {
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
         forEachVPDo([] (ViewportBase & vp) { vp.hide(); });
         viewportXY.get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
+        QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
     } else {
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
         resetViewports();
+        QObject::disconnect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
     }
 }
 
@@ -829,7 +830,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     updateTitlebar();
 
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
+    if (Segmentation::singleton().job.id != 0) { // we need to apply job mode here to ensure that all necessary parts are loaded by now.
         setJobModeUI(true);
         Segmentation::singleton().startJobMode();
     }
