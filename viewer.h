@@ -147,7 +147,8 @@ struct ViewerState {
         std::vector<std::array<float, 4>> colors;
     } lineVertBuffer, pointVertBuffer;
     std::vector<bool> layerVisibility;
-    double meshAlphaFactor{1};
+    double meshAlphaFactor3d{1};
+    double meshAlphaFactorSlicing{0.5};
     bool MeshPickingEnabled{true};
 };
 
@@ -226,6 +227,8 @@ signals:
     void movementAreaFactorChangedSignal();
     void magnificationLockChanged(bool);
     void layerVisibilityChanged(const int);
+    void mesh3dAlphaFactorChanged(float);
+    void meshSlicingAlphaFactorChanged(float);
 public slots:
     void updateCurrentPosition();
     bool updateDatasetMag(const int mag = 0);
@@ -259,6 +262,8 @@ public slots:
     int calcMag(const float screenPxXPerDataPx);
     void setMagnificationLock(const bool locked);
     void setLayerVisibility(const int index, const bool enabled);
+    void setMesh3dAlphaFactor(const float alpha);
+    void setMeshSlicingAlphaFactor(const float alpha);
 };
 
 #endif // VIEWER_H

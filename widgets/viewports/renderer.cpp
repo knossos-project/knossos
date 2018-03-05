@@ -1077,11 +1077,13 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
     floatCoordinate normal = {0, 0, 0};
-    if (viewportType != VIEWPORT_SKELETON) {
+    const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
+    const float alphaFactor = isMeshSlicing ? state->viewerState->meshAlphaFactorSlicing : state->viewerState->meshAlphaFactor3d;
+    if (isMeshSlicing) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
-    meshShader.setUniformValue("alpha_factor", static_cast<GLfloat>(state->viewerState->meshAlphaFactor));
+    meshShader.setUniformValue("alpha_factor", alphaFactor);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1110,7 +1112,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
         color = Qt::red;
     }
-    color.setAlpha(color.alpha() * state->viewerState->meshAlphaFactor);
+    color.setAlpha(color.alpha() * alphaFactor);
     meshShader.setUniformValue("tree_color", color);
 
     if(buf.index_count != 0) {

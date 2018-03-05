@@ -83,7 +83,8 @@ const QString WHOLE_SKELETON = "whole_skeleton";
 const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";
 const QString SHOW_MESH_3DVP = "show_mesh_3dvp";
 const QString WARN_DISABLED_MESH_PICKING = "warn_disabled_mesh_picking_on_startup";
-const QString MESH_ALPHA = "mesh_alpha";
+const QString MESH_ALPHA_3D = "mesh_alpha_3d";
+const QString MESH_ALPHA_SLICING = "mesh_alpha_slicing";
 
 // Preferences Nodes Tab
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";

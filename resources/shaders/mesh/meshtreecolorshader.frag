@@ -30,7 +30,7 @@ void main() {
     if (length(vp_normal) > 0.0) {
         float dot_value = dot(frag_normal, vp_normal);
         if (dot_value < 0.0) {// vp_normal faces towards the camera
-            gl_FragColor = vec4(tree_color.rgb, 0.5);// show
+            gl_FragColor = tree_color;// show
 //                    gl_FragColor = vec4(0, dot_value, 0, 1);
         } else {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut

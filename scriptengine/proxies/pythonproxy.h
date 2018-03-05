@@ -40,6 +40,8 @@ signals:
     void viewport_snapshot_dataset_size(SnapshotOptions & options);
     void viewport_snapshot(const SnapshotOptions & options);
     void set_layer_visibility(int layer, bool visibilty);
+    void set_mesh_3d_alpha_factor(float alpha);
+    void set_mesh_slicing_alpha_factor(float alpha);
 
 public slots:
     ViewportType get_viewport_type(int i) {

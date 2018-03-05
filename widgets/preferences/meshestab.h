@@ -23,9 +23,12 @@ class MeshesTab : public QWidget {
     QCheckBox meshIn3DVPCheck{tr("3D viewport")};
     QCheckBox warnDisabledPickingCheck{tr("Warn on startup if picking is disabled.")};
     QHBoxLayout alphaLayout;
-    QLabel alphaLabel{tr("Opacity")};
-    QSlider alphaSlider;
-    QDoubleSpinBox alphaSpin;
+    QLabel alphaLabel3d{tr("3D Opacity")};
+    QSlider alphaSlider3d;
+    QDoubleSpinBox alphaSpin3d;
+    QLabel alphaLabelSlicing{tr("Slicing Opacity")};
+    QSlider alphaSliderSlicing;
+    QDoubleSpinBox alphaSpinSlicing;
 
 public:
     explicit MeshesTab(QWidget *parent = nullptr);

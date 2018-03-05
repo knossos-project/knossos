@@ -1284,3 +1284,13 @@ void Viewer::setLayerVisibility(const int index, const bool enabled) {
     viewerState.layerVisibility.at(index) = enabled;
     emit layerVisibilityChanged(index);
 }
+
+void Viewer::setMesh3dAlphaFactor(const float alpha) {
+    state->viewerState->meshAlphaFactor3d = alpha;
+    emit mesh3dAlphaFactorChanged(alpha);
+}
+
+void Viewer::setMeshSlicingAlphaFactor(const float alpha) {
+    state->viewerState->meshAlphaFactorSlicing = alpha;
+    emit meshSlicingAlphaFactorChanged(alpha);
+}

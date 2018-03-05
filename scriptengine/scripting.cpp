@@ -135,6 +135,8 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_dataset_size, snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest);
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, snapshotWidget, &SnapshotWidget::snapshotRequest);
     QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_layer_visibility, state->viewer, &Viewer::setLayerVisibility);
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_mesh_3d_alpha_factor, state->viewer, &Viewer::setMesh3dAlphaFactor);
+    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_mesh_slicing_alpha_factor, state->viewer, &Viewer::setMeshSlicingAlphaFactor);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 
