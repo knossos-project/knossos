@@ -426,6 +426,10 @@ void Segmentation::unselectObject(Object & object) {
     emit changedRowSelection(object.index);
 }
 
+void Segmentation::setObjectLocation(const uint64_t index, const Coordinate & position) {
+    objects[index].location = position;
+}
+
 void Segmentation::jumpToObject(Object & object) {
     state->viewer->setPositionWithRecentering(object.location);
 }

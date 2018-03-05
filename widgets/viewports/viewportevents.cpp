@@ -392,6 +392,7 @@ void ViewportOrtho::handleMouseReleaseLeft(const QMouseEvent *event) {
             if (subobjectId != segmentation.getBackgroundId()) {// don’t select the unsegmented area as object
                 auto & subobject = segmentation.subobjectFromId(subobjectId, clickPos);
                 auto objIndex = segmentation.largestObjectContainingSubobject(subobject);
+                Segmentation::singleton().setObjectLocation(objIndex, clickPos);
                 if (!event->modifiers().testFlag(Qt::ControlModifier)) {
                     segmentation.clearObjectSelection();
                     segmentation.selectObject(objIndex);

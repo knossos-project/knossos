@@ -221,6 +221,8 @@ public:
     void unselectObject(Object & object);
     void clearObjectSelection();
 
+    void setObjectLocation(const uint64_t, const Coordinate & position);
+
     void jumpToObject(const uint64_t & objectIndex);
     void jumpToObject(Object & object);
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist();
