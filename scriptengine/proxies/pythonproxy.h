@@ -68,6 +68,7 @@ public slots:
                                         QList<int> strides, bool isWrite, bool isMarkedChanged);
     void coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList);
     void setMovementArea(QList<int> minCoord, QList<int> maxCoord);
+    void set_work_mode(const int mode);
     void resetMovementArea();
     QList<int> getMovementArea();
     float getMovementAreaFactor();

@@ -37,7 +37,7 @@ enum class GUIMode {
     ProofReading
 };
 
-enum class AnnotationMode {
+enum AnnotationMode {
     NodeSelection = 1 << 0,
     NodeEditing = 1 << 1 | NodeSelection,
     LinkedNodes = 1 << 2,

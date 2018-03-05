@@ -96,6 +96,12 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     addObject("knossos_global_segmentation", &Segmentation::singleton());
     addObject("knossos_global_loader", &Loader::Controller::singleton());
+    addVariable("Mode_Tracing", AnnotationMode::Mode_Tracing);
+    addVariable("Mode_TracingAdvanced", AnnotationMode::Mode_TracingAdvanced);
+    addVariable("Mode_Paint", AnnotationMode::Mode_Paint);
+    addVariable("Mode_Merge", AnnotationMode::Mode_Merge);
+    addVariable("Mode_MergeSimple", AnnotationMode::Mode_MergeSimple);
+    addVariable("Mode_Selection", AnnotationMode::Mode_Selection);
     addWidgets();
 
     auto makeDecorator = [](QObject * decorator, const char * typeName){

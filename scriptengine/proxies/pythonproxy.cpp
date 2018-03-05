@@ -26,6 +26,7 @@
 #include "functions.h"
 #include "loader.h"
 #include "segmentation/cubeloader.h"
+#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -123,6 +124,10 @@ QList<int> PythonProxy::getMovementArea() {
 
 float PythonProxy::getMovementAreaFactor() {
     return state->viewerState->outsideMovementAreaFactor;
+}
+
+void PythonProxy::set_work_mode(const int mode) {
+    state->mainWindow->setWorkMode(static_cast<AnnotationMode>(mode));
 }
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
