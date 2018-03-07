@@ -39,6 +39,7 @@
 #include <QFile>
 #include <QFuture>
 #include <QImage>
+#include <QMutexLocker>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QtConcurrent>
@@ -236,13 +237,12 @@ Loader::Worker::~Worker() {
         return;//state is dead already
     }
 
-    state->protectCube2Pointer.lock();
+    QMutexLocker locker(&state->protectCube2Pointer);
     for (auto & layer : state->cube2Pointer) {
         for (auto & elem : layer) {
             elem.clear();
         }
     }
-    state->protectCube2Pointer.unlock();
 }
 
 template<typename CubeHash, typename Slots, typename Keep>
@@ -265,8 +265,7 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
 
 void Loader::Worker::unloadCurrentMagnification() {
     abortDownloadsFinishDecompression([](const Coordinate &){return false;});
-
-    state->protectCube2Pointer.lock();
+    QMutexLocker locker(&state->protectCube2Pointer);
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         for (auto &elem : state->cube2Pointer[layerId][loaderMagnification]) {
             const auto cubeCoord = elem.first;
@@ -282,7 +281,6 @@ void Loader::Worker::unloadCurrentMagnification() {
         }
         state->cube2Pointer[layerId][loaderMagnification].clear();
     }
-    state->protectCube2Pointer.unlock();
 }
 
 void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
@@ -308,14 +306,13 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
         if (decompressionIt != std::end(slotDecompression[snappyLayerId])) {
             decompressionIt->second->waitForFinished();
         }
-        state->protectCube2Pointer.lock();
+        QMutexLocker locker(&state->protectCube2Pointer);
         const auto coord = cubeCoord;
         auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[snappyLayerId][loaderMagnification], coord);
         if (cubePtr != nullptr) {
             freeSlots[snappyLayerId].emplace_back(cubePtr);
             state->cube2Pointer[snappyLayerId][loaderMagnification].erase(coord);
         }
-        state->protectCube2Pointer.unlock();
     }
 }
 
@@ -474,7 +471,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
 
 void Loader::Worker::cleanup(const Coordinate center) {
     abortDownloadsFinishDecompression(currentlyVisibleWrap(center));
-    state->protectCube2Pointer.lock();
+    QMutexLocker locker(&state->protectCube2Pointer);
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         unloadCubes(state->cube2Pointer[layerId][loaderMagnification], freeSlots[layerId], insideCurrentSupercubeWrap(center, datasets[layerId])
                     , [this, layerId](const CoordOfCube & cubeCoord, void * remSlotPtr){
@@ -487,7 +484,6 @@ void Loader::Worker::cleanup(const Coordinate center) {
             }
         });
     }
-    state->protectCube2Pointer.unlock();
 }
 
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
@@ -521,7 +517,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     std::vector<Coordinate> cacheCubes;
     for (auto && todo : Dcoi) {
         const Coordinate globalCoord = todo.cube2Global(cubeEdgeLen, magnification);
-        state->protectCube2Pointer.lock();
+        QMutexLocker locker(&state->protectCube2Pointer);
         for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
             // only queue downloads which are necessary
             if (Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][loaderMagnification], globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
@@ -533,7 +529,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 }
             }
         }
-        state->protectCube2Pointer.unlock();
     }
 
     auto startDownload = [this, center](const std::size_t layerId, const Dataset dataset, const Coordinate globalCoord, decltype(slotDownload)::value_type & downloads
