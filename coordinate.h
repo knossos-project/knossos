@@ -179,7 +179,7 @@ public:
     constexpr Coord(const Coord<T, tag> & rhs) : CoordinateBase<ComponentType, Coord<ComponentType, tag>>(rhs.x, rhs.y, rhs.z) {}
     template<typename T>
     constexpr operator Coord<T, tag>() const {
-        return Coord<T, tag>(this->x, this->y, this->z);
+        return Coord<T, tag>(std::round(this->x), std::round(this->y), std::round(this->z));
     }
     constexpr operator QVector3D() const {
         return QVector3D{this->x, this->y, this->z};
