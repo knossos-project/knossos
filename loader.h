@@ -97,7 +97,7 @@ private:
 
     void abortDownloadsFinishDecompression();
     template<typename Func>
-    void abortDownloadsFinishDecompression(Func);
+    void abortDownloadsFinishDecompression(std::size_t, Func);
 
     decltype(Dataset::datasets) datasets;
 public://matsch
