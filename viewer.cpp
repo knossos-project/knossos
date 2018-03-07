@@ -818,14 +818,19 @@ bool Viewer::updateDatasetMag(const int mag) {
             if (layer.scales.size() > std::log2(mag)) {
                 // convert sizes in dataset coordinates to physical coordinates and back with updated scale
                 // save intermediates in floatCoordinate as not to truncate them
-                const auto boundary = layer.scale.componentMul(layer.boundary);
-                const auto movementAreaMin = layer.scale.componentMul(Session::singleton().movementAreaMin);
-                const auto movementAreaMax = layer.scale.componentMul(Session::singleton().movementAreaMax);
-                const auto cpos = layer.scale.componentMul(state->viewerState->currentPosition);
+                const auto prevScale = layer.scale;
                 layer.scale = layer.scales[std::log2(mag)] / layer.magnification;
+
+                const auto boundary = prevScale.componentMul(layer.boundary);
                 layer.boundary = boundary / layer.scale;
-                Session::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
-                setPosition(cpos / layer.scale);
+
+                if (&layer == &Dataset::datasets.front()) {// only update movement area and position once
+                    const auto movementAreaMin = prevScale.componentMul(Session::singleton().movementAreaMin);
+                    const auto movementAreaMax = prevScale.componentMul(Session::singleton().movementAreaMax);
+                    const auto cpos = prevScale.componentMul(state->viewerState->currentPosition);
+                    Session::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
+                    setPosition(cpos / layer.scale);
+                }
             }
 
             window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
