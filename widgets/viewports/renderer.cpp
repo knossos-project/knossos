@@ -1899,7 +1899,7 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
     state->viewerState->colorPickingBuffer64.clear();
 
     auto arrayFromQColor = [](QColor color){
-        return decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<GLfloat>(color.redF()), static_cast<GLfloat>(color.greenF()), static_cast<GLfloat>(color.blueF()), static_cast<GLfloat>(color.alphaF())}};
+        return decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
     };
 
     auto addSegment = [arrayFromQColor](const segmentListElement & segment, const QColor & color) {
@@ -2206,7 +2206,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         /* draw all segments */
         glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices.data());
-        glColorPointer(4, GL_FLOAT, 0, state->viewerState->lineVertBuffer.colors.data());
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->lineVertBuffer.colors.data());
 
         glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertices.size());
 
@@ -2225,14 +2225,14 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     if(options.nodePicking) {
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
-            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer24.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer24.data());
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer48.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer48.data());
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            glColorPointer(4, GL_FLOAT, 0, state->viewerState->colorPickingBuffer64.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer64.data());
         }
     } else {
-        glColorPointer(4, GL_FLOAT, 0, state->viewerState->pointVertBuffer.colors.data());
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->pointVertBuffer.colors.data());
     }
 
     glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertices.size());
