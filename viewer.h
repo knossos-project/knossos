@@ -152,7 +152,7 @@ struct ViewerState {
     // vertex buffers that are available for rendering
     struct {
         std::vector<floatCoordinate> vertices;
-        std::vector<std::array<float, 4>> colors;
+        std::vector<std::array<std::uint8_t, 4>> colors;
 
         void clear() {
             vertices.clear();
@@ -166,7 +166,7 @@ struct ViewerState {
         }
     } lineVertBuffer, pointVertBuffer;
 
-    std::vector<std::array<float, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
+    std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
 /**
