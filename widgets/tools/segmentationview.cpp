@@ -23,6 +23,7 @@
 #include "segmentationview.h"
 
 #include "action_helper.h"
+#include "marching_cubes.h"
 #include "model_helper.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -232,15 +233,6 @@ public:
         protection = prev ? protection : false;
     }
 };
-
-#include "segmentation/cubeloader.h"
-#include "loader.h"
-#include "marching_cubes.h"
-#include "skeleton/skeletonizer.h"
-
-#include <QProgressDialog>
-
-#include <snappy.h>
 
 SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
     modeGroup.addButton(&twodBtn, 0);
@@ -464,85 +456,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         QObject::connect(contextMenu.addAction("Generate mesh"), &QAction::triggered, [](){
             QElapsedTimer time;
             time.start();
-
-            const auto value = Segmentation::singleton().objects[Segmentation::singleton().selectedObjectIndices.front()].subobjects.front().get().id;
-            std::unordered_map<floatCoordinate, int> points;
-            QVector<unsigned int> faces;
-            std::size_t idCounter{0};
-
-            const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
-            QProgressDialog progress(tr("Generating Meshes for data value=%1 …").arg(value), "Cancel", 0, cubes[0].size(), QApplication::activeWindow());
-            progress.setWindowModality(Qt::WindowModal);
-            for (const auto & pair : cubes[0]) {
-                if (progress.wasCanceled()) {
-                    break;
-                }
-                const std::size_t cubeEdgeLen = 128;
-                const std::size_t size = std::pow(cubeEdgeLen, 3);
-
-                std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
-                extractedCubes[pair.first].resize(size);
-
-                if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(extractedCubes[pair.first].data()))) {
-                    continue;
-                }
-                const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
-
-                const std::array<double, 3> dims{{cubeEdgeLen, cubeEdgeLen, cubeEdgeLen}};
-                const std::array<double, 3> origin{{cubeCoord.x, cubeCoord.y, cubeCoord.z}};
-                const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
-                const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
-
-                marching_cubes(points, faces, idCounter, extractedCubes[pair.first], value, origin, dims, spacing, extent);
-                for (std::size_t i = 0; i < 6; ++i) {
-                    const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
-                    const floatCoordinate origin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
-                    const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
-
-                    std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
-
-                    const auto rowSize = dims[0];
-                    const auto sliceSize = rowSize * dims[1];
-                    for (std::size_t z = 0; z < dims[2]; ++z) {
-                        for (std::size_t y = 0; y < dims[1]; ++y) {
-                            for (std::size_t x = 0; x < dims[0]; ++x) {
-                                const auto globalPos = Coordinate(origin.x + x, origin.y + y, origin.z + z);
-                                if (globalPos.x < 0 || globalPos.y < 0 || globalPos.z < 0) {
-                                    continue;
-                                }
-                                const CoordOfCube coord = globalPos.cube(cubeEdgeLen, 1);
-                                const auto inCube = globalPos.insideCube(cubeEdgeLen, 1);
-                                auto & cube = extractedCubes[coord];
-                                if (cube.empty()) {
-                                    cube.resize(size);
-                                    auto findIt = cubes[0].find(coord);
-                                    if (findIt == std::end(cubes[0]) || !snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
-                                        std::fill(std::begin(cube), std::end(cube), 0);
-                                    }
-                                }
-                                data[z * sliceSize + y * rowSize + x] =
-                                        boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(cube.data()),
-                                                                            boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen])[inCube.z][inCube.y][inCube.x];
-                            }
-                        }
-                    }
-                    const auto scaledOrigin = Dataset::current().scale.componentMul(origin);
-                    marching_cubes(points, faces, idCounter, data, value, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
-                }
-
-                qDebug() << points.size() << faces.size() / 3;
-                progress.setValue(progress.value() + 1);
-            }
-            QVector<float> verts(3 * points.size());
-            for (auto && pair : points) {
-                verts[3 * pair.second] = pair.first.x;
-                verts[3 * pair.second + 1] = pair.first.y;
-                verts[3 * pair.second + 2] = pair.first.z;
-            }
-            QVector<float> normals;
-            QVector<std::uint8_t> colors;
-            Skeletonizer::singleton().addMeshToTree(value, verts, normals, faces, colors, GL_TRIANGLES);
-
+            generateMeshForFirstSubobjectOfFirstSelectedObject();
             qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
         });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
