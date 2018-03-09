@@ -139,16 +139,21 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
-        std::array<std::vector<std::uint64_t>, 27> extractedCubes;// local lookup
-        auto extractedCubeForCoord = [&pair, &extractedCubes](const auto & coord) -> decltype(extractedCubes)::value_type & {
-            const auto ref = pair.first - CoordOfCube{1, 1, 1};
-            const auto diff = coord - ref;
-            return extractedCubes[diff.x * 4 + diff.y * 2 + diff.z];
-        };
-        auto & cube = extractedCubeForCoord(pair.first);
-        cube.resize(size);
+//        std::array<std::vector<std::uint64_t>, 27> extractedCubes{};// local lookup
+//        auto extractedCubeForCoord = [&pair, &extractedCubes](const auto & coord) -> decltype(extractedCubes)::value_type & {
+//            const auto ref = pair.first - CoordOfCube{1, 1, 1};
+//            const auto diff = coord - ref;
+//            return extractedCubes[diff.x * 4 + diff.y * 2 + diff.z];
+//        };
+//        auto & cube = extractedCubeForCoord(pair.first);
+//        cube.resize(size);
+//        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(cube.data()))) {
+//            continue;
+//        }
 
-        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(cube.data()))) {
+        std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;
+        extractedCubes[pair.first].resize(size);
+        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(extractedCubes[pair.first].data()))) {
             continue;
         }
 
@@ -159,7 +164,8 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
         const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
-        marching_cubes(points, faces, idCounter, cube, value, origin, dims, spacing, extent);
+//        marching_cubes(points, faces, idCounter, cube, value, origin, dims, spacing, extent);
+        marching_cubes(points, faces, idCounter, extractedCubes[pair.first], value, origin, dims, spacing, extent);
         for (std::size_t i = 0; i < 6; ++i) {
             const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
             const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
@@ -177,7 +183,8 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
                         }
                         const CoordOfCube coord = globalPos.cube(cubeEdgeLen, 1);
                         const auto inCube = globalPos.insideCube(cubeEdgeLen, 1);
-                        auto & cube = extractedCubeForCoord(coord);
+//                        auto & cube = extractedCubeForCoord(coord);
+                        auto & cube = extractedCubes[coord];
                         if (cube.empty()) {
                             cube.resize(size);
                             auto findIt = cubes[0].find(coord);
