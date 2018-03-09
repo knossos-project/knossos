@@ -237,6 +237,8 @@ public:
 #include "skeleton/skeletonizer.h"
 #include "vtkMarchingCubesTriangleCases.h"
 
+#include <QProgressDialog>
+
 #include <snappy.h>
 
 SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
@@ -468,7 +470,12 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
             std::size_t idCounter{0};
 
             const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+            QProgressDialog progress(tr("Generating Meshes for data value=%1 …").arg(value), "Cancel", 0, cubes[0].size(), QApplication::activeWindow());
+            progress.setWindowModality(Qt::WindowModal);
             for (const auto & pair : cubes[0]) {
+                if (progress.wasCanceled()) {
+                    break;
+                }
                 const auto cubeEdgeLen = 128;
                 const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
                 const std::size_t size = std::pow(cubeEdgeLen, 3);
@@ -588,6 +595,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                     }
                 }
                 qDebug() <<  points.size() << faces.size() / 3;
+                progress.setValue(progress.value() + 1);
             }
             QVector<float> verts(3 * points.size());
             for (auto && pair : points) {
