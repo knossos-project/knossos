@@ -708,8 +708,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     float dataPxX = displayedIsoPx;
     float dataPxY = displayedIsoPx;
 
-    const auto nears = Dataset::current().scale.x * state->viewerState->depthCutOff;
-    const auto fars = -Dataset::current().scale.x * state->viewerState->depthCutOff;
+    const auto maxScale = std::max({Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z});
+    const auto nears = maxScale * state->viewerState->depthCutOff;
+    const auto fars = -maxScale * state->viewerState->depthCutOff;
     const auto nearVal = -nears;
     const auto farVal = -fars;
     glMatrixMode(GL_PROJECTION);
