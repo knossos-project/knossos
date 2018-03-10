@@ -77,6 +77,26 @@ auto lineSize(const float nanometerPerPixel) {
     return std::max(smallestVisibleNodeSize(), state->viewerState->segRadiusToNodeRadius * uniformPointDiameter(nanometerPerPixel));
 }
 
+QColor getPickingColor(const nodeListElement & node, const RenderOptions::SelectionPass &selectionPass) {
+    QColor color;
+
+    const auto name = GLNames::NodeOffset + node.nodeID;
+
+    int shift{0};
+    if (selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
+        shift = 24;
+    } else if (selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
+        shift = 48;
+    }
+    const auto bits = static_cast<GLuint>(name >> shift);// extract 24 first, middle or 16 last bits of interest
+    color.setRed(static_cast<std::uint8_t>(bits));
+    color.setGreen(static_cast<std::uint8_t>(bits >> 8));
+    color.setBlue(static_cast<std::uint8_t>(bits >> 16));
+    color.setAlpha(255);
+
+    return color;
+}
+
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
     const auto isoBase = Dataset::current().scale.componentMul(base);
     const auto isoTop = Dataset::current().scale.componentMul(top);
@@ -160,18 +180,7 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
     const float radius = Skeletonizer::singleton().radius(node);
 
     if (options.nodePicking) {
-        const auto name = GLNames::NodeOffset + node.nodeID;
-        int shift{0};
-        if (options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            shift = 24;
-        } else if (options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            shift = 48;
-        }
-        const auto bits = static_cast<GLuint>(name >> shift);// extract 24 first, middle or 16 last bits of interest
-        color.setRed(static_cast<std::uint8_t>(bits));
-        color.setGreen(static_cast<std::uint8_t>(bits >> 8));
-        color.setBlue(static_cast<std::uint8_t>(bits >> 16));
-        color.setAlpha(255);
+        color = getPickingColor(node, options.selectionPass);
     }
 
     renderSphere(node.position, radius, color, options);
@@ -1910,27 +1919,7 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         state->viewerState->lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
     };
 
-    auto getPickingColor = [arrayFromQColor](const nodeListElement & node, const auto selectionPass) {
-        QColor color;
-
-        const auto name = GLNames::NodeOffset + node.nodeID;
-
-        int shift{0};
-        if (selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            shift = 24;
-        } else if (selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            shift = 48;
-        }
-        const auto bits = static_cast<GLuint>(name >> shift);// extract 24 first, middle or 16 last bits of interest
-        color.setRed(static_cast<std::uint8_t>(bits));
-        color.setGreen(static_cast<std::uint8_t>(bits >> 8));
-        color.setBlue(static_cast<std::uint8_t>(bits >> 16));
-        color.setAlpha(255);
-
-        return arrayFromQColor(color);
-    };
-
-    auto addNode = [arrayFromQColor, getPickingColor, options](const nodeListElement & node) {
+    auto addNode = [arrayFromQColor, options](const nodeListElement & node) {
         auto color = state->viewer->getNodeColor(node);
 
         if (node.selected && options.highlightSelection) {// highlight selected nodes
@@ -1941,9 +1930,9 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
 
         const auto isoPos = Dataset::current().scale.componentMul(node.position);
 
-        state->viewerState->colorPickingBuffer24.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits));
-        state->viewerState->colorPickingBuffer48.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits));
-        state->viewerState->colorPickingBuffer64.emplace_back(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits));
+        state->viewerState->colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
+        state->viewerState->colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
+        state->viewerState->colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
         state->viewerState->pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
     };
 
