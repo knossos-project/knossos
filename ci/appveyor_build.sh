@@ -10,9 +10,6 @@ pacman -U --noconfirm pythonqt.pkg.tar.xz quazip.pkg.tar.xz
 
 PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
-# Append "-nightly" suffix in version file
-sed -i -E "/KVERSION/s/(([0-9]\.?)+)/\1-nightly/g" $PROJECTPATH/version.h
-
 mkdir knossos-build
 cd knossos-build
 cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE $PROJECTPATH
