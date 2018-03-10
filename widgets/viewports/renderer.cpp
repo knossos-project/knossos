@@ -1899,6 +1899,23 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
     return foundNodes;
 }
 
+std::pair<bool, bool> darkenOrHideTree(treeListElement & currentTree) {
+    const auto * activeTree = state->skeletonState->activeTree;
+    const auto * activeNode = state->skeletonState->activeNode;
+    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
+                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
+                                                                               nullptr;
+    const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
+    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
+
+    const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
+            || (activeSynapse && activeSynapse->getCleft() != &currentTree);
+    const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
+    const bool selectionFilter = onlySelected && !currentTree.selected;
+    // hide synapse takes precedence over render flag for synapses.
+    return std::make_pair(darken, selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) ));
+}
+
 template<typename Func>
 void synapseLoop(Func func){
     for (auto & synapse : state->skeletonState->synapses) {
@@ -1958,27 +1975,14 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         state->viewerState->pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
     };
 
-    const auto * activeTree = state->skeletonState->activeTree;
-    const auto * activeNode = state->skeletonState->activeNode;
-    const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
-                                 (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
-                                                                               nullptr;
-    const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
-
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         // focus on synapses, darken rest of skeleton
-        const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
-                || (activeSynapse && activeSynapse->getCleft() != &currentTree);
-        const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
-        const bool selectionFilter = onlySelected && !currentTree.selected;
-        if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
-            // hide synapse takes precedence over render flag for synapses.
+        bool darken, hide;
+        std::tie(darken, hide) = darkenOrHideTree(currentTree);
+        if (hide) {
             continue;
         }
-
         for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
-
             //This sets the current color for the segment rendering
             QColor currentColor = currentTree.color;
             if (state->viewerState->highlightActiveTree && currentTree.treeID == state->skeletonState->activeTree->treeID) {
@@ -2059,21 +2063,11 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         generateSkeletonGeometry(options);
     }
     if(!state->viewerState->onlyLinesAndPoints) {
-        const auto * activeTree = state->skeletonState->activeTree;
-        const auto * activeNode = state->skeletonState->activeNode;
-        const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
-                                     (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
-                                                                                   nullptr;
-        const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-        const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
         for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
             // focus on synapses, darken rest of skeleton
-            const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
-                    || (activeSynapse && activeSynapse->getCleft() != &currentTree);
-            const bool hideSynapses = !darken && !synapseBuilding && !activeSynapse && currentTree.isSynapticCleft;
-            const bool selectionFilter = onlySelected && !currentTree.selected;
-            if (selectionFilter || (!currentTree.render && (!currentTree.isSynapticCleft || (currentTree.isSynapticCleft && hideSynapses)) )) {
-                // hide synapse takes precedence over render flag for synapses.
+            bool darken, hide;
+            std::tie(darken, hide) = darkenOrHideTree(currentTree);
+            if (hide) {
                 continue;
             }
             nodeListElement * previousNode = nullptr;
