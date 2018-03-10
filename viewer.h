@@ -167,6 +167,9 @@ struct ViewerState {
     } lineVertBuffer, pointVertBuffer;
 
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
+
+    QOpenGLBuffer point_buf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer line_buf{QOpenGLBuffer::VertexBuffer};
 };
 
 /**

@@ -2008,6 +2008,16 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
             }
         }
     }
+
+    const auto uploadVertexData = [](auto & buf, const auto & vertices){
+        buf.destroy();
+        buf.create();
+        buf.bind();
+        buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
+        buf.release();
+    };
+    uploadVertexData(state->viewerState->point_buf, state->viewerState->pointVertBuffer.vertices);
+    uploadVertexData(state->viewerState->line_buf, state->viewerState->lineVertBuffer.vertices);
 }
 
 /*
@@ -2205,10 +2215,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        glVertexPointer(3, GL_FLOAT, 0, state->viewerState->lineVertBuffer.vertices.data());
+        state->viewerState->line_buf.bind();
+        glVertexPointer(3, GL_FLOAT, 0, nullptr);
+        state->viewerState->line_buf.release();
+
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->lineVertBuffer.colors.data());
 
-        glDrawArrays(GL_LINES, 0, state->viewerState->lineVertBuffer.vertices.size());
+        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(state->viewerState->lineVertBuffer.vertices.size()));
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -2221,7 +2234,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
-    glVertexPointer(3, GL_FLOAT, 0, state->viewerState->pointVertBuffer.vertices.data());
+    state->viewerState->point_buf.bind();
+    glVertexPointer(3, GL_FLOAT, 0, nullptr);
+    state->viewerState->point_buf.release();
 
     if(options.nodePicking) {
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
@@ -2235,7 +2250,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->pointVertBuffer.colors.data());
     }
 
-    glDrawArrays(GL_POINTS, 0, state->viewerState->pointVertBuffer.vertices.size());
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(state->viewerState->pointVertBuffer.vertices.size()));
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
