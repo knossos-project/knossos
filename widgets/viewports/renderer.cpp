@@ -1899,6 +1899,28 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
     return foundNodes;
 }
 
+template<typename Func>
+void synapseLoop(Func func){
+    for (auto & synapse : state->skeletonState->synapses) {
+        const auto * activeTree = state->skeletonState->activeTree;
+        const auto * activeNode = state->skeletonState->activeNode;
+        const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
+        const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
+
+        if (synapseCreated) {
+            const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
+            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
+                segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
+                QColor color = Qt::black;
+                if (synapseSelected == false) {
+                    color.setAlpha(Synapse::darkenedAlpha);
+                }
+                func(synapse, virtualSegment, color);
+            }
+        }
+    }
+}
+
 void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
     state->viewerState->regenVertBuffer = false;
     state->viewerState->lineVertBuffer.clear();
@@ -1977,26 +1999,9 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         }
     }
 
-    /* Connect all synapses */
-    for (auto & synapse : state->skeletonState->synapses) {
-        const auto * activeTree = state->skeletonState->activeTree;
-        const auto * activeNode = state->skeletonState->activeNode;
-        const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
-        const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
-
-        if (synapseCreated) {
-            const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
-                segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-                QColor color = Qt::black;
-                if (synapseSelected == false) {
-                    color.setAlpha(Synapse::darkenedAlpha);
-                }
-
-                addSegment(virtualSegment, color);
-            }
-        }
-    }
+    synapseLoop([&addSegment](const auto &, const auto & virtualSegment, const auto & color){
+        addSegment(virtualSegment, color);
+    });
 
     const auto uploadVertexData = [](auto & buf, const auto & vertices){
         buf.destroy();
@@ -2162,33 +2167,18 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         /* Connect all synapses */
         if (!options.nodePicking) {
-            for (auto & synapse : state->skeletonState->synapses) {
-                const auto * activeTree = state->skeletonState->activeTree;
-                const auto * activeNode = state->skeletonState->activeNode;
-                const auto synapseCreated = synapse.getPostSynapse() != nullptr && synapse.getPreSynapse() != nullptr;
-                const auto synapseSelected = synapse.getCleft() == activeTree || synapse.getPostSynapse() == activeNode || synapse.getPreSynapse() == activeNode;
+            synapseLoop([this, &options](const auto & synapse, const auto & virtualSegment, const auto & color){
+                renderSegment(virtualSegment, color, options);
 
-                if (synapseCreated) {
-                    const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-                    if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
-                        segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
-                        QColor color = Qt::black;
-                        if (synapseSelected == false) {
-                            color.setAlpha(Synapse::darkenedAlpha);
-                        }
-                        renderSegment(virtualSegment, color, options);
+                auto post = synapse.getPostSynapse()->position;
+                auto pre = synapse.getPreSynapse()->position;
+                const auto offset = (post - pre)/10;
+                Coordinate arrowbase = post - offset;
 
-                        auto post = synapse.getPostSynapse()->position;
-                        auto pre = synapse.getPreSynapse()->position;
-                        const auto offset = (post - pre)/10;
-                        Coordinate arrowbase = post - offset;
-
-                        renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
-                            , synapse.getPostSynapse()->position
-                            , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
-                    }
-                }
-            }
+                renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
+                    , synapse.getPostSynapse()->position
+                    , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
+            });
         }
     }
 
