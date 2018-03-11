@@ -57,7 +57,7 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
             const auto soid = subobjectPair.first;
             const auto pos = subobjectPair.second;
             auto & subobject = seg.subobjectFromId(soid, pos);
-            const auto objectToMergeId = seg.smallestImmutableObjectContainingSubobject(subobject);
+            const auto objectToMergeIdx = seg.smallestImmutableObjectContainingSubobject(subobject);
             // if clicked object is currently selected, an unmerge is requested
             if (seg.isSelected(subobject)) {
                 if (event->modifiers().testFlag(Qt::ShiftModifier)) {
@@ -65,11 +65,11 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
                         seg.selectObjectFromSubObject(subobject, pos);
                         seg.unmergeSelectedObjects(pos);
                     } else {
-                        if(seg.isSelected(objectToMergeId)) { // if no other object to unmerge, just unmerge subobject
+                        if(seg.isSelected(objectToMergeIdx)) { // if no other object to unmerge, just unmerge subobject
                             seg.selectObjectFromSubObject(subobject, pos);
                         }
                         else {
-                            seg.selectObject(objectToMergeId);
+                            seg.selectObject(objectToMergeIdx);
                         }
                         seg.unmergeSelectedObjects(pos);
                     }
@@ -79,7 +79,7 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         seg.selectObjectFromSubObject(subobject, pos);
                     } else {
-                        seg.selectObject(objectToMergeId);//select largest object
+                        seg.selectObject(objectToMergeIdx);//select largest object
                     }
                 }
                 if (seg.selectedObjectsCount() >= 2) {
