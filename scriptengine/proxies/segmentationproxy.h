@@ -29,6 +29,10 @@
 class SegmentationProxy : public QObject {
     Q_OBJECT
 public slots:
+    void mergelist_clear();
+    void mergelist_load(QString &mergelist);
+    QString mergelist_save();
+
     void subobjectFromId(const quint64 subObjId, const QList<int> & coord);
     void setRenderOnlySelectedObjs(const bool b);
     bool isRenderOnlySelecdedObjs();

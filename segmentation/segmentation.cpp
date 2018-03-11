@@ -104,26 +104,11 @@ bool Segmentation::hasSegData() const {
 }
 
 void Segmentation::clear() {
-    Session::singleton().unsavedChanges |= hasSegData();
-
-    selectedObjectIndices.clear();
-    objects.clear();
-    objectIdToIndex.clear();
-    Object::highestId = 0;
-    Object::highestIndex = -1;
-    SubObject::highestId = 0;
-    subobjects.clear();
-    touched_subobject_id = 0;
-    categories = prefixed_categories;
-
     if (Loader::Controller::singleton().worker != nullptr) {
         //dispatch to loader thread, original cubes are reloaded automatically
         QTimer::singleShot(0, Loader::Controller::singleton().worker.get(), &Loader::Worker::snappyCacheClear);
     }
-
-    emit resetData();
-    emit resetSelection();
-    emit resetTouchedObjects();
+    mergelistClear();
 }
 
 std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
@@ -544,6 +529,27 @@ std::size_t Segmentation::selectedObjectsCount() const {
 
 void Segmentation::mergelistSave(QIODevice & file) const {
     QTextStream stream(&file);
+    mergelistSave(stream);
+}
+
+void Segmentation::mergelistClear() {
+    Session::singleton().unsavedChanges |= hasSegData();
+
+    selectedObjectIndices.clear();
+    objects.clear();
+    objectIdToIndex.clear();
+    Object::highestId = 0;
+    Object::highestIndex = -1;
+    SubObject::highestId = 0;
+    subobjects.clear();
+    touched_subobject_id = 0;
+    categories = prefixed_categories;
+    emit resetData();
+    emit resetSelection();
+    emit resetTouchedObjects();
+}
+
+void Segmentation::mergelistSave(QTextStream & stream) const {
     for (const auto & obj : objects) {
         stream << obj.id << ' ' << obj.todo << ' ' << obj.immutable;
         for (const auto & subObj : obj.subobjects) {
@@ -569,6 +575,10 @@ void Segmentation::mergelistLoad(QIODevice & file) {
         throw std::runtime_error("mergelistLoad open failed");
     }
     QTextStream stream(&file);
+    mergelistLoad(stream);
+}
+
+void Segmentation::mergelistLoad(QTextStream & stream) {
     QString line;
     {
         QSignalBlocker blocker{this};

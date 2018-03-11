@@ -232,8 +232,11 @@ public:
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
     //files
+    void mergelistClear();
     void mergelistSave(QIODevice & file) const;
+    void mergelistSave(QTextStream & stream) const;
     void mergelistLoad(QIODevice & file);
+    void mergelistLoad(QTextStream & stream);
     void loadOverlayLutFromFile(const QString & filename = ":/resources/color_palette/default.json");
 signals:
     void beforeAppendRow();

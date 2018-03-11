@@ -32,6 +32,22 @@ auto & objectFromId(const quint64 objId) {
     return Segmentation::singleton().objects[it->second];
 }
 
+void SegmentationProxy::mergelist_clear() {
+    Segmentation::singleton().mergelistClear();
+}
+
+void SegmentationProxy::mergelist_load(QString & mergelist) {
+    QTextStream stream(&mergelist);
+    Segmentation::singleton().mergelistLoad(stream);
+}
+
+QString SegmentationProxy::mergelist_save() {
+    QString mergelist;
+    QTextStream stream(&mergelist);
+    Segmentation::singleton().mergelistSave(stream);
+    return mergelist;
+}
+
 void SegmentationProxy::subobjectFromId(const quint64 subObjId, const QList<int> & coord) {
     Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord));
 }
