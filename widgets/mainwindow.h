@@ -132,6 +132,7 @@ class MainWindow : public QMainWindow {
     QAction *swapSynapticNodes;
     QAction *toggleSegmentsAction;
 
+    QAction *newObjectAction;
     QAction *decreaseOpacityAction;
     QAction *increaseOpacityAction;
     QAction *enlargeBrushAction;

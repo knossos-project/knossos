@@ -609,6 +609,9 @@ void MainWindow::createMenus() {
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     actionMenu.addSeparator();
     //segmentation
+    newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, []() {
+        Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);
+    }, Qt::Key_C);
     auto setOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
@@ -999,6 +1002,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
         setSegmentState(SegmentState::On);
     }
     newTreeAction->setVisible(trees);
+    newObjectAction->setVisible(mode.testFlag(AnnotationMode::Mode_Paint));
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
