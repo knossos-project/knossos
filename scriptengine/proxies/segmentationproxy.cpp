@@ -48,25 +48,25 @@ QString SegmentationProxy::mergelist_save() {
     return mergelist;
 }
 
-void SegmentationProxy::subobjectFromId(const quint64 subObjId, const QList<int> & coord) {
+void SegmentationProxy::subobject_from_id(const quint64 subObjId, const QList<int> & coord) {
     Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord));
 }
 
-void SegmentationProxy::setRenderOnlySelectedObjs(const bool b) {
+void SegmentationProxy::set_render_only_selected_objs(const bool b) {
     Segmentation::singleton().setRenderOnlySelectedObjs(b);
 }
 
-bool SegmentationProxy::isRenderOnlySelecdedObjs() {
+bool SegmentationProxy::is_render_only_selected_objs() {
     return Segmentation::singleton().renderOnlySelectedObjs;
 }
 
-quint64 SegmentationProxy::largestObjectContainingSubobject(const quint64 subObjId, const QList<int> & coord) {
+quint64 SegmentationProxy::largest_object_containing_subobject(const quint64 subObjId, const QList<int> & coord) {
     const auto & subobject = Segmentation::singleton().subobjectFromId(subObjId, Coordinate(coord));
     const auto objIndex = Segmentation::singleton().largestObjectContainingSubobject(subobject);
     return Segmentation::singleton().objects[objIndex].id;
 }
 
-QList<quint64> SegmentationProxy::subobjectIdsOfObject(const quint64 objId) {
+QList<quint64> SegmentationProxy::subobject_ids_of_object(const quint64 objId) {
     QList<quint64> subobjectIds;
     const auto & obj = objectFromId(objId);
     for (const auto & elem : obj.subobjects) {
@@ -83,7 +83,7 @@ QList<quint64> SegmentationProxy::objects() {
     return objectIds;
 }
 
-QList<quint64> SegmentationProxy::selectedObjects() {
+QList<quint64> SegmentationProxy::selected_objects() {
     QList<quint64> selectedIds;
     for (const auto index : Segmentation::singleton().selectedObjectIndices) {
         selectedIds.append(Segmentation::singleton().objects[index].id);
@@ -91,38 +91,38 @@ QList<quint64> SegmentationProxy::selectedObjects() {
     return selectedIds;
 }
 
-void SegmentationProxy::addSubobject(const quint64 objId, const quint64 subobjectId) {
+void SegmentationProxy::add_subobject(const quint64 objId, const quint64 subobjectId) {
     Segmentation::singleton().newSubObject(objectFromId(objId), subobjectId);
 }
 
-void SegmentationProxy::changeComment(const quint64 objId, const QString & comment) {
+void SegmentationProxy::change_comment(const quint64 objId, const QString & comment) {
     Segmentation::singleton().changeComment(objectFromId(objId), comment);
 }
 
-void SegmentationProxy::changeColor(const quint64 objId, const QColor & color) {
+void SegmentationProxy::change_color(const quint64 objId, const QColor & color) {
     Segmentation::singleton().changeColor(objectFromId(objId), std::make_tuple(color.red(), color.green(), color.blue()));
 }
 
-void SegmentationProxy::createObject(const quint64 objId, const quint64 initialSubobjectId, const QList<int> & location, const bool todo, const bool immutable) {
+void SegmentationProxy::create_object(const quint64 objId, const quint64 initialSubobjectId, const QList<int> & location, const bool todo, const bool immutable) {
     Segmentation::singleton().createObjectFromSubobjectId(initialSubobjectId, Coordinate(location), objId, todo, immutable);
 }
 
-void SegmentationProxy::removeObject(const quint64 objId) {
+void SegmentationProxy::remove_object(const quint64 objId) {
     Segmentation::singleton().removeObject(objectFromId(objId));
 }
 
-void SegmentationProxy::selectObject(const quint64 objId) {
+void SegmentationProxy::select_object(const quint64 objId) {
     Segmentation::singleton().selectObject(objectFromId(objId));
 }
 
-void SegmentationProxy::unselectObject(const quint64 objId) {
+void SegmentationProxy::unselect_object(const quint64 objId) {
     Segmentation::singleton().unselectObject(objectFromId(objId));
 }
 
-void SegmentationProxy::jumpToObject(const quint64 objId) {
+void SegmentationProxy::jump_to_object(const quint64 objId) {
     Segmentation::singleton().jumpToObject(objectFromId(objId));
 }
 
-QList<int> SegmentationProxy::objectLocation(const quint64 objId) {
+QList<int> SegmentationProxy::object_location(const quint64 objId) {
     return objectFromId(objId).location.list();
 }

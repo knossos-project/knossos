@@ -51,34 +51,34 @@ public slots:
         return {path, vpType, size, withAxes, withBox, withOverlay, withSkeleton, withScale, withVpPlanes};
     }
 
-    void annotationLoad(const QString & filename, const bool merge = false);
-    void annotationSave(const QString & filename);
+    void annotation_load(const QString & filename, const bool merge = false);
+    void annotation_save(const QString & filename);
     void annotation_add_file(const QString & name, const QByteArray & content);
     QByteArray annotation_get_file(const QString & name);
     int annotation_time();
     void set_annotation_time(int ms);
-    QString getKnossosVersion();
-    QString getKnossosRevision();
-    int getCubeEdgeLength();
-    QList<int> getPosition();
-    QList<float> getScale();
-    void setPosition(QList<int> coord);
+    QString get_knossos_version();
+    QString get_knossos_revision();
+    int get_cube_edge_length();
+    QList<int> get_position();
+    QList<float> get_scale();
+    void set_position(QList<int> coord);
 
-    quint64 readOverlayVoxel(QList<int> coord);
-    bool writeOverlayVoxel(QList<int> coord, quint64 val);
-    QVector<int> processRegionByStridedBufProxy(QList<int> globalFirst, QList<int> size, quint64 dataPtr,
+    quint64 read_overlay_voxel(QList<int> coord);
+    bool write_overlay_voxel(QList<int> coord, quint64 val);
+    QVector<int> process_region_by_strided_buf_proxy(QList<int> globalFirst, QList<int> size, quint64 dataPtr,
                                         QList<int> strides, bool isWrite, bool isMarkedChanged);
-    void coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList);
-    void setMovementArea(QList<int> minCoord, QList<int> maxCoord);
+    void coord_cubes_mark_changed_proxy(QVector<int> cubeChangeSetList);
+    void set_movement_area(QList<int> minCoord, QList<int> maxCoord);
     void set_work_mode(const int mode);
-    void resetMovementArea();
-    QList<int> getMovementArea();
-    float getMovementAreaFactor();
+    void reset_movement_area();
+    QList<int> get_movement_area();
+    float get_outside_movement_area_factor();
     void oc_reslice_notify_all(QList<int> coord);
-    int loaderLoadingNr();
-    bool loaderFinished();
-    bool loadStyleSheet(const QString &path);
-    void setMagnificationLock(const bool locked);
+    int loader_loading_nr();
+    bool loader_finished();
+    bool load_style_sheet(const QString &path);
+    void set_magnification_lock(const bool locked);
 };
 
 #endif // PYTHONPROXY_H

@@ -85,8 +85,8 @@ public slots:
 
     void export_converter(const QString &path);
 
-    QList<nodeListElement *> *selectedNodes();
-    void selectNodes(QList<nodeListElement *> nodes);
+    QList<nodeListElement *> *selected_nodes();
+    void select_nodes(QList<nodeListElement *> nodes);
 
     static QString help();
 };

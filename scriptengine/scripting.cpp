@@ -86,7 +86,7 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
 
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
-    addObject("signalRelay", state->signalRelay);
+    addObject("signal_relay", state->signalRelay);
     addObject("knossos", &pythonProxy);
     addObject("scripting", this);
     addObject("segmentation", &segmentationProxy);

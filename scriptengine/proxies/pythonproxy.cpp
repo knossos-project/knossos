@@ -39,11 +39,11 @@
 #include <QApplication>
 #include <QFile>
 
-void PythonProxy::annotationLoad(const QString & filename, const bool merge) {
+void PythonProxy::annotation_load(const QString & filename, const bool merge) {
     state->mainWindow->openFileDispatch({filename}, merge, true);
 }
 
-void PythonProxy::annotationSave(const QString & filename) {
+void PythonProxy::annotation_save(const QString & filename) {
     state->mainWindow->save(filename, true);
 }
 
@@ -59,27 +59,27 @@ QByteArray PythonProxy::annotation_get_file(const QString & name) {
     return Session::singleton().extraFiles[name];
 }
 
-QString PythonProxy::getKnossosVersion() {
+QString PythonProxy::get_knossos_version() {
     return KREVISION;
 }
 
-QString PythonProxy::getKnossosRevision() {
+QString PythonProxy::get_knossos_revision() {
     return KREVISION;
 }
 
-int PythonProxy::getCubeEdgeLength() {
+int PythonProxy::get_cube_edge_length() {
     return Dataset::current().cubeEdgeLength;
 }
 
-QList<int> PythonProxy::getPosition() {
+QList<int> PythonProxy::get_position() {
     return state->viewerState->currentPosition.list();
 }
 
-QList<float> PythonProxy::getScale() {
+QList<float> PythonProxy::get_scale() {
     return Dataset::current().scale.list();
 }
 
-QVector<int> PythonProxy::processRegionByStridedBufProxy(QList<int> globalFirst, QList<int> size,
+QVector<int> PythonProxy::process_region_by_strided_buf_proxy(QList<int> globalFirst, QList<int> size,
                              quint64 dataPtr, QList<int> strides, bool isWrite, bool isMarkChanged) {
     auto cubeChangeSet = processRegionByStridedBuf(Coordinate(globalFirst), Coordinate(globalFirst) + Coordinate(size) - 1, (char*)dataPtr, Coordinate(strides), isWrite, isMarkChanged);
     QVector<int> cubeChangeSetVector;
@@ -89,7 +89,7 @@ QVector<int> PythonProxy::processRegionByStridedBufProxy(QList<int> globalFirst,
     return cubeChangeSetVector;
 }
 
-void PythonProxy::coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList) {
+void PythonProxy::coord_cubes_mark_changed_proxy(QVector<int> cubeChangeSetList) {
     CubeCoordSet cubeChangeSet;
     auto elemNum = cubeChangeSetList.length();
     for (int i = 0; i < elemNum; i += 3) {
@@ -98,31 +98,31 @@ void PythonProxy::coordCubesMarkChangedProxy(QVector<int> cubeChangeSetList) {
     coordCubesMarkChanged(cubeChangeSet);
 }
 
-quint64 PythonProxy::readOverlayVoxel(QList<int> coord) {
+quint64 PythonProxy::read_overlay_voxel(QList<int> coord) {
     return readVoxel(coord);
 }
 
-bool PythonProxy::writeOverlayVoxel(QList<int> coord, quint64 val) {
+bool PythonProxy::write_overlay_voxel(QList<int> coord, quint64 val) {
     return writeVoxel(coord, val);
 }
 
-void PythonProxy::setPosition(QList<int> coord) {
+void PythonProxy::set_position(QList<int> coord) {
     state->viewer->setPosition({static_cast<float>(coord[0]), static_cast<float>(coord[1]), static_cast<float>(coord[2])});
 }
 
-void PythonProxy::resetMovementArea() {
+void PythonProxy::reset_movement_area() {
     Session::singleton().resetMovementArea();
 }
 
-void PythonProxy::setMovementArea(QList<int> minCoord, QList<int> maxCoord) {
+void PythonProxy::set_movement_area(QList<int> minCoord, QList<int> maxCoord) {
     Session::singleton().updateMovementArea(minCoord,maxCoord);
 }
 
-QList<int> PythonProxy::getMovementArea() {
+QList<int> PythonProxy::get_movement_area() {
     return  Session::singleton().movementAreaMin.list() + Session::singleton().movementAreaMax.list();
 }
 
-float PythonProxy::getMovementAreaFactor() {
+float PythonProxy::get_outside_movement_area_factor() {
     return state->viewerState->outsideMovementAreaFactor;
 }
 
@@ -134,15 +134,15 @@ void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
     state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Coordinate(coord));
 }
 
-int PythonProxy::loaderLoadingNr() {
+int PythonProxy::loader_loading_nr() {
     return Loader::Controller::singleton().loadingNr;
 }
 
-bool PythonProxy::loaderFinished() {
+bool PythonProxy::loader_finished() {
     return Loader::Controller::singleton().isFinished();
 }
 
-void PythonProxy::setMagnificationLock(const bool locked) {
+void PythonProxy::set_magnification_lock(const bool locked) {
     state->viewer->setMagnificationLock(locked);
 }
 
@@ -155,7 +155,7 @@ void PythonProxy::set_annotation_time(int ms) {
 }
 
 // UNTESTED
-bool PythonProxy::loadStyleSheet(const QString &filename) {
+bool PythonProxy::load_style_sheet(const QString &filename) {
     QFile file(filename);
     if(!file.open(QIODevice::ReadOnly)) {
         emit echo("Error reading the style sheet file");
