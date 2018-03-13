@@ -10,7 +10,6 @@ artifacts:
   - path: '*nightly.exe'
 
 build_script:
-  - C:\msys64\usr\bin\pacman -Rdd --noconfirm catgets libcatgets
   - C:\msys64\usr\bin\pacman -Syuu --noconfirm
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/appveyor_build.sh"
 
