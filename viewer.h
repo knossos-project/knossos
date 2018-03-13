@@ -153,6 +153,8 @@ struct ViewerState {
     struct {
         std::vector<floatCoordinate> vertices;
         std::vector<std::array<std::uint8_t, 4>> colors;
+        QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
+        QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
 
         void clear() {
             vertices.clear();
@@ -167,9 +169,6 @@ struct ViewerState {
     } lineVertBuffer, pointVertBuffer;
 
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
-
-    QOpenGLBuffer point_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer line_buf{QOpenGLBuffer::VertexBuffer};
 };
 
 /**

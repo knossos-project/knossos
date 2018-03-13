@@ -2015,8 +2015,11 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
         buf.release();
     };
-    uploadVertexData(state->viewerState->point_buf, state->viewerState->pointVertBuffer.vertices);
-    uploadVertexData(state->viewerState->line_buf, state->viewerState->lineVertBuffer.vertices);
+    uploadVertexData(state->viewerState->pointVertBuffer.color_buffer, state->viewerState->pointVertBuffer.colors);
+    uploadVertexData(state->viewerState->pointVertBuffer.vertex_buffer, state->viewerState->pointVertBuffer.vertices);
+
+    uploadVertexData(state->viewerState->lineVertBuffer.color_buffer, state->viewerState->lineVertBuffer.colors);
+    uploadVertexData(state->viewerState->lineVertBuffer.vertex_buffer, state->viewerState->lineVertBuffer.vertices);
 }
 
 /*
@@ -2189,11 +2192,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        state->viewerState->line_buf.bind();
+        state->viewerState->lineVertBuffer.vertex_buffer.bind();
         glVertexPointer(3, GL_FLOAT, 0, nullptr);
-        state->viewerState->line_buf.release();
+        state->viewerState->lineVertBuffer.vertex_buffer.release();
 
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->lineVertBuffer.colors.data());
+        state->viewerState->lineVertBuffer.color_buffer.bind();
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+        state->viewerState->lineVertBuffer.color_buffer.release();
 
         glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(state->viewerState->lineVertBuffer.vertices.size()));
 
@@ -2208,9 +2213,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
-    state->viewerState->point_buf.bind();
+    state->viewerState->pointVertBuffer.vertex_buffer.bind();
     glVertexPointer(3, GL_FLOAT, 0, nullptr);
-    state->viewerState->point_buf.release();
+    state->viewerState->pointVertBuffer.vertex_buffer.release();
 
     if(options.nodePicking) {
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
@@ -2221,7 +2226,9 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer64.data());
         }
     } else {
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->pointVertBuffer.colors.data());
+        state->viewerState->pointVertBuffer.color_buffer.bind();
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+        state->viewerState->pointVertBuffer.color_buffer.release();
     }
 
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(state->viewerState->pointVertBuffer.vertices.size()));
