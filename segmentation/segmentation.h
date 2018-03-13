@@ -245,6 +245,8 @@ signals:
     void removedRow();
     void changedRow(int index);
     void changedRowSelection(int index);
+    void merged(const quint64 index1, const quint64 index2); // used in plugin dfs_merge
+    void unmerged(const quint64 index1, const quint64 index2); // used in plugin dfs_merge
     void selectionChanged();
     void resetData();
     void resetSelection();

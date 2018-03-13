@@ -479,10 +479,12 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
     if (!tmp.empty()) {//only unmerge if subobjects remain
+        auto otherId = other.id;
         if (object.immutable) {
             unselectObject(object);
             createObject(tmp, position);
             selectObject(objects.back());
+            otherId = objects.back().id;
         } else {
             unselectObject(object);
             for (auto & elem : other.subobjects) {
@@ -493,6 +495,7 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Ob
             selectObject(object);
             emit changedRow(object.index);
         }
+        emit unmerged(object.id, otherId);
     }
 }
 
@@ -713,8 +716,9 @@ void Segmentation::mergeSelectedObjects() {
             emit changedRow(firstObj.index);
             removeObject(secondObj);
         }
+        emit todosLeftChanged();
+        emit merged(firstObj.id, secondObj.id);
     }
-    emit todosLeftChanged();
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
