@@ -517,10 +517,14 @@ void Segmentation::selectObjectFromSubObject(const uint64_t soid, const Coordina
     selectObject(objectFromSubobject(subobjectFromId(soid, position), position));
 }
 
-void Segmentation::selectObject(const uint64_t & objectIndex) {
+void Segmentation::selectObject(const uint64_t & objectIndex, const boost::optional<Coordinate> position) {
     if (objectIndex < objects.size()) {
         selectObject(objects[objectIndex]);
     }
+    if (position != boost::none) {
+        objects[objectIndex].location = position.get();
+    }
+    emit selectionChanged();
 }
 
 std::size_t Segmentation::selectedObjectsCount() const {

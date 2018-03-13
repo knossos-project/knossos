@@ -213,7 +213,7 @@ public:
     bool isSubObjectIdSelected(const uint64_t & subobjectId) const;
     std::size_t selectedObjectsCount() const;
     //selection modification
-    void selectObject(const uint64_t & objectIndex);
+    void selectObject(const uint64_t & objectIndex, const boost::optional<Coordinate> position = boost::none);
     void selectObject(Object & object);
     void selectObjectFromSubObject(SubObject &subobject, const Coordinate & position);
     void selectObjectFromSubObject(const uint64_t soid, const Coordinate & position);
@@ -245,6 +245,7 @@ signals:
     void removedRow();
     void changedRow(int index);
     void changedRowSelection(int index);
+    void selectionChanged();
     void resetData();
     void resetSelection();
     void resetTouchedObjects();
