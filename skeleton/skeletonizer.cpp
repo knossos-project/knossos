@@ -273,7 +273,7 @@ void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
         //Every "thing" (tree) has associated nodes and edges.
         xml.writeStartElement("thing");
         xml.writeAttribute("id", QString::number(currentTree.treeID));
-
+        xml.writeAttribute("visible", QString::number(currentTree.render));
         if (currentTree.colorSetManually) {
             xml.writeAttribute("color.r", QString::number(currentTree.color.redF()));
             xml.writeAttribute("color.g", QString::number(currentTree.color.greenF()));
@@ -554,6 +554,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
             }
         } else if(xml.name() == "thing") {
             decltype(treeListElement::treeID) treeID{0};
+            bool render = true;
             bool okr{false}, okg{false}, okb{false}, oka{false};
             float red{-1.0f}, green{-1.0f}, blue{-1.0f}, alpha{-1.0f};
             QVariantHash properties;
@@ -562,6 +563,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 const auto & value = attribute.value();
                 if (name == "id") {
                     treeID = value.toULongLong();
+                } else if (name == "visible") {
+                    render = value.toInt();
                 } else if (name == "color.r") {
                     red = value.toFloat(&okr);
                 } else if (name == "color.g") {
@@ -579,6 +582,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 neuronColor = QColor::fromRgbF(red, green, blue, alpha);
             }
             auto & tree = addTree(boost::make_optional(!merge, treeID), neuronColor, properties);
+            tree.render = render;
             if (merge) {
                 treeMap.emplace(std::piecewise_construct, std::forward_as_tuple(treeID), std::forward_as_tuple(tree));
                 treeID = tree.treeID;// newly assigned tree id
