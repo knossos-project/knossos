@@ -267,7 +267,8 @@ public:
     void addSynapseFromNodes(std::vector<nodeListElement *> & nodes);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);
-    bool editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag);
+    void setRadius(nodeListElement & node, const float radius);
+    void setPosition(nodeListElement & node, const Coordinate & position);
     bool delNode(std::uint64_t nodeID, nodeListElement *nodeToDel);
     void setSubobject(nodeListElement & node, const quint64 subobjectId);
     void setSubobjectSelectAndMergeWithPrevious(nodeListElement & node, const quint64 subobjectId, nodeListElement * previousNode);

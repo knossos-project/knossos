@@ -342,7 +342,7 @@ void ViewportOrtho::handleMouseMotionMiddleHold(const QMouseEvent *event) {
         Coordinate moveTrunc = arbNodeDragCache;//truncate
         arbNodeDragCache -= moveTrunc;//only keep remaining fraction
         const auto newPos = draggedNode->position - moveTrunc;
-        Skeletonizer::singleton().editNode(0, draggedNode, 0., newPos, Dataset::current().magnification);
+        Skeletonizer::singleton().setPosition(*draggedNode, newPos);
     }
     ViewportBase::handleMouseMotionMiddleHold(event);
 }
@@ -465,7 +465,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
         float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
-        Skeletonizer::singleton().editNode(0, state->skeletonState->activeNode, radius, state->skeletonState->activeNode->position, Dataset::current().magnification);;
+        Skeletonizer::singleton().setRadius(*state->skeletonState->activeNode, radius);
     } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         auto curRadius = seg.brush.getRadius();
         seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *

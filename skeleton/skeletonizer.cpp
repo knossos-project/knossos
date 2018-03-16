@@ -1357,34 +1357,20 @@ std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeLis
     return std::end(sourceNode.segments);
 }
 
-bool Skeletonizer::editNode(std::uint64_t nodeID, nodeListElement *node, float newRadius, const Coordinate & newPos, int inMag) {
-    if(!node) {
-        node = findNodeByNodeID(nodeID);
-    }
-    if(!node) {
-        qDebug() << tr("Cannot edit: node id %1 invalid.").arg(nodeID);
-        return false;
-    }
-
-    nodeID = node->nodeID;
-
-    auto oldPos = node->position;
-    node->position = newPos.capped({0, 0, 0}, Dataset::current().boundary);
-
-    if(newRadius != 0.) {
-        node->radius = newRadius;
-        updateCircRadius(node);
-    }
-    node->createdInMag = inMag;
-
+void Skeletonizer::setRadius(nodeListElement & node, const float radius) {
+    node.radius = radius;
+    updateCircRadius(&node);
     Session::singleton().unsavedChanges = true;
+    emit nodeChangedSignal(node);
+}
 
-    const quint64 newSubobjectId = readVoxel(newPos);
-    Skeletonizer::singleton().movedHybridNode(*node, newSubobjectId, oldPos);
-
-    emit nodeChangedSignal(*node);
-
-    return true;
+void Skeletonizer::setPosition(nodeListElement & node, const Coordinate & position) {
+    auto oldPos = node.position;
+    node.position = position.capped({0, 0, 0}, Dataset::current().boundary);
+    const quint64 newSubobjectId = readVoxel(position);
+    Skeletonizer::singleton().movedHybridNode(node, newSubobjectId, oldPos);
+    Session::singleton().unsavedChanges = true;
+    emit nodeChangedSignal(node);
 }
 
 bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {

@@ -166,16 +166,16 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
 
     if (index.column() == 1) {
         const Coordinate position{value.toInt() - 1, node.position.y, node.position.z};
-        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
+        Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 2) {
         const Coordinate position{node.position.x, value.toInt() - 1, node.position.z};
-        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
+        Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 3) {
         const Coordinate position{node.position.x, node.position.y, value.toInt() - 1};
-        Skeletonizer::singleton().editNode(0, &node, node.radius, position, node.createdInMag);
+        Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 4) {
         const float radius{value.toFloat()};
-        Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);
+        Skeletonizer::singleton().setRadius(node, radius);
     } else if (index.column() == 5) {
         const QString comment{value.toString()};
         Skeletonizer::singleton().setComment(node, comment);
@@ -867,7 +867,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         });
         if (applied) {
             Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedNodes, [radius](auto & node){
-                Skeletonizer::singleton().editNode(0, &node, radius, node.position, node.createdInMag);
+                Skeletonizer::singleton().setRadius(node, radius);
             });
             prevRadius = radius;// save for the next time the dialog is opened
         }

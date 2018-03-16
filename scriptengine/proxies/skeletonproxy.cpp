@@ -147,17 +147,25 @@ nodeListElement *SkeletonProxy::node_with_next_id(quint64 node_id, bool same_tre
     return Skeletonizer::singleton().getNodeWithNextID(node, same_tree);
 }
 
-bool SkeletonProxy::edit_node(quint64 node_id, float radius, int x, int y, int z, int in_mag) {
-    if (!Skeletonizer::singleton().editNode(node_id, 0, radius, {x, y, z}, in_mag)) {
-        emit echo (QString("Skeletonizer::editNode failed!"));
-        return false;
+bool SkeletonProxy::set_radius(const quint64 node_id, const float radius) {
+    auto * node = Skeletonizer::singleton().findNodeByNodeID(node_id);
+    if (node != nullptr) {
+        Skeletonizer::singleton().setRadius(*node, radius);
+        return true;
     }
-    return true;
+    return false;
 }
 
+bool SkeletonProxy::set_position(const quint64 node_id, const QVector3D & position) {
+    auto * node = Skeletonizer::singleton().findNodeByNodeID(node_id);
+    if (node != nullptr) {
+        Skeletonizer::singleton().setPosition(*node, Coordinate(position.x(), position.y(), position.z()));
+        return true;
+    }
+    return false;
+}
 
-
-QString SkeletonProxy::skeleton_file() {
+QString SkeletonProxy::skeleton_filename() {
     return Session::singleton().annotationFilename;
 }
 
