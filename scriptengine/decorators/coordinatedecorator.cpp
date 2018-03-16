@@ -38,8 +38,8 @@ int CoordinateDecorator::z(Coordinate *self) {
     return self->z;
 }
 
-QVector<int> CoordinateDecorator::vector(Coordinate *self) {
-    return self->vector();
+QList<int> CoordinateDecorator::list(Coordinate *self) {
+    return self->list();
 }
 
 QString CoordinateDecorator::static_Coordinate_help() {

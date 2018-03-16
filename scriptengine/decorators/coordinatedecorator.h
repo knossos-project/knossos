@@ -41,7 +41,7 @@ public slots:
     int x(Coordinate *self);
     int y(Coordinate *self);
     int z(Coordinate *self);
-    QVector<int> vector(Coordinate *self);
+    QList<int> list(Coordinate *self);
 
     QString static_Coordinate_help();
 
