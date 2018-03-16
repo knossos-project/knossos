@@ -64,6 +64,8 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     separator.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     movementAreaLayout.addWidget(&separator);
     movementAreaLayout.addWidget(&outVisibilityLabel);
+    outVisibilitySlider.setRange(0, 100);
+    outVisibilitySpin.setRange(0, 100);
     outVisibilityAdjustLayout.addWidget(&outVisibilitySlider);
     outVisibilityAdjustLayout.addWidget(&outVisibilitySpin);
     movementAreaLayout.addLayout(&outVisibilityAdjustLayout);
