@@ -153,12 +153,16 @@ struct ViewerState {
     struct {
         std::vector<floatCoordinate> vertices;
         std::vector<std::array<std::uint8_t, 4>> colors;
+        std::unordered_map<size_t, unsigned int> colorBufferOffset;
         QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
         QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
+
+        size_t lastSelectedNode{0};
 
         void clear() {
             vertices.clear();
             colors.clear();
+            colorBufferOffset.clear();
         }
 
         template<typename T, typename U>

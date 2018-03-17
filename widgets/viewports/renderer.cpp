@@ -1966,6 +1966,7 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
             auto selectedNodeColor = QColor(Qt::green);
 //            selectedNodeColor.setAlphaF(0.5f);// results in half-transparent nodes in low mode
             color = selectedNodeColor;
+            state->viewerState->pointVertBuffer.lastSelectedNode = node.nodeID;
         }
 
         const auto isoPos = Dataset::current().scale.componentMul(node.position);
@@ -1974,6 +1975,7 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         state->viewerState->colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
         state->viewerState->colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
         state->viewerState->pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
+        state->viewerState->pointVertBuffer.colorBufferOffset[node.nodeID] = static_cast<unsigned int>(state->viewerState->pointVertBuffer.vertices.size()-1);
     };
 
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {

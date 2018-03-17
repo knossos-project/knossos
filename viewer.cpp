@@ -79,7 +79,34 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, regVBuff);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, regVBuff);
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this]() {
+        if(state->skeletonState->selectedNodes.size() == 1 && !state->viewerState->regenVertBuffer) {
+            auto& svp = state->viewerState->pointVertBuffer;
+
+            //restore old node color
+            size_t offset = svp.colorBufferOffset[svp.lastSelectedNode];
+            QColor color = getNodeColor(*state->skeletonState->nodesByNodeID[svp.lastSelectedNode]);
+
+            svp.colors[offset] =  decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+
+            svp.color_buffer.bind();
+            svp.color_buffer.write(static_cast<int>(offset * sizeof(svp.colors[offset])), &svp.colors[offset], sizeof(svp.colors[offset]));
+            svp.color_buffer.release();
+
+            //colorize new active node
+            svp.lastSelectedNode = state->skeletonState->selectedNodes.front()->nodeID;
+            offset = svp.colorBufferOffset[svp.lastSelectedNode];
+
+            color = Qt::green;
+            decltype(state->viewerState->lineVertBuffer.colors)::value_type activeNodeColor{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+
+            svp.color_buffer.bind();
+            svp.color_buffer.write(static_cast<int>(offset * sizeof(activeNodeColor)), &activeNodeColor, sizeof(activeNodeColor));
+            svp.color_buffer.release();
+        } else {
+            state->viewerState->regenVertBuffer = true;
+        }
+    });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, regVBuff);
 
