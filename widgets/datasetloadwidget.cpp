@@ -351,8 +351,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (changedBoundaryOrScale || !keepAnnotation) {
         Session::singleton().updateMovementArea({0, 0, 0}, Dataset::current().boundary);
         // ...beginning with loading the middle of dataset
-        state->viewerState->currentPosition = {Dataset::current().boundary / 2};
-        state->viewer->userMove({0, 0, 0}, USERMOVE_NEUTRAL);
+        state->viewer->setPosition({Dataset::current().boundary / 2});
     }
     state->viewer->updateDatasetMag();// clear vps and notify loader
 
