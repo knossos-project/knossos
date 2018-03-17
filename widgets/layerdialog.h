@@ -24,7 +24,7 @@
 class LayerLoadWidget : public QDialog {
 Q_OBJECT
 public:
-    LayerLoadWidget(QWidget * parent = 0);
+    LayerLoadWidget(QWidget * parent = nullptr);
 
     void loadSettings();
     void updateDatasetInfo();
@@ -78,7 +78,7 @@ public:
 class LayerDialogWidget : public DialogVisibilityNotify {
 Q_OBJECT
 public:
-    explicit LayerDialogWidget(QWidget * parent = 0);
+    explicit LayerDialogWidget(QWidget * parent = nullptr);
 
     QVBoxLayout mainLayout;
 
