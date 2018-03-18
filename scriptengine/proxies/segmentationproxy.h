@@ -23,6 +23,8 @@
 #ifndef SEGMENTATIONPROXY_H
 #define SEGMENTATIONPROXY_H
 
+#include "coordinate.h"
+
 #include <QList>
 #include <QObject>
 
@@ -51,6 +53,8 @@ public slots:
     void unmerge_selected_objects(const Coordinate & position);
     void remove_object(const quint64 objId);
     void select_object(const quint64 objId);
+    quint64 subobject_at_location(const QList<int> &position);
+    quint64 touched_subobject_id();
     void unselect_object(const quint64 objId);
     void jump_to_object(const quint64 objId);
     QList<int> object_location(const quint64 objId);

@@ -22,6 +22,7 @@
 
 #include "segmentationproxy.h"
 
+#include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 
 auto & objectFromId(const quint64 objId) {
@@ -121,6 +122,14 @@ void SegmentationProxy::remove_object(const quint64 objId) {
 
 void SegmentationProxy::select_object(const quint64 objId) {
     Segmentation::singleton().selectObject(objectFromId(objId));
+}
+
+quint64 SegmentationProxy::touched_subobject_id() {
+    return Segmentation::singleton().touched_subobject_id;
+}
+
+quint64 SegmentationProxy::subobject_at_location(const QList<int> & position) {
+    return readVoxel({position});
 }
 
 void SegmentationProxy::unselect_object(const quint64 objId) {
