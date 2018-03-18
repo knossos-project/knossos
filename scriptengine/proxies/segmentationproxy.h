@@ -47,6 +47,8 @@ public slots:
     void change_comment(const quint64 objId, const QString & comment);
     void change_color(const quint64 objId, const QColor & color);
     void create_object(const quint64 objId, const quint64 initialSubobjectId, const QList<int> & location = {0, 0, 0}, const bool todo = false, const bool immutable = false);
+    void merge_selected_objects();
+    void unmerge_selected_objects(const Coordinate & position);
     void remove_object(const quint64 objId);
     void select_object(const quint64 objId);
     void unselect_object(const quint64 objId);

@@ -107,6 +107,14 @@ void SegmentationProxy::create_object(const quint64 objId, const quint64 initial
     Segmentation::singleton().createObjectFromSubobjectId(initialSubobjectId, Coordinate(location), objId, todo, immutable);
 }
 
+void SegmentationProxy::merge_selected_objects() {
+    Segmentation::singleton().mergeSelectedObjects();
+}
+
+void SegmentationProxy::unmerge_selected_objects(const Coordinate & position) {
+    Segmentation::singleton().unmergeSelectedObjects(position);
+}
+
 void SegmentationProxy::remove_object(const quint64 objId) {
     Segmentation::singleton().removeObject(objectFromId(objId));
 }
