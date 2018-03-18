@@ -267,6 +267,9 @@ void Loader::Worker::unloadCurrentMagnification() {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         abortDownloadsFinishDecompression(layerId, [](const Coordinate &){return false;});
         QMutexLocker locker(&state->protectCube2Pointer);
+        if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
+            continue;
+        }
         for (auto &elem : state->cube2Pointer[layerId][loaderMagnification]) {
             const auto cubeCoord = elem.first;
             const auto remSlotPtr = elem.second;
@@ -308,7 +311,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
         }
         QMutexLocker locker(&state->protectCube2Pointer);
         const auto coord = cubeCoord;
-        auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[snappyLayerId][loaderMagnification], coord);
+        auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, snappyLayerId, loaderMagnification, coord);
         if (cubePtr != nullptr) {
             freeSlots[snappyLayerId].emplace_back(cubePtr);
             state->cube2Pointer[snappyLayerId][loaderMagnification].erase(coord);
@@ -346,7 +349,7 @@ void Loader::Worker::flushIntoSnappyCache() {
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
         for (const auto & cubeCoord : OcModifiedCacheQueue[mag]) {
             state->protectCube2Pointer.lock();
-            auto cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[snappyLayerId][mag], {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+            auto cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, snappyLayerId, mag, {cubeCoord.x, cubeCoord.y, cubeCoord.z});
             state->protectCube2Pointer.unlock();
             if (cube != nullptr) {
                 snappyCacheBackupRaw(cubeCoord, cube);
@@ -400,7 +403,7 @@ void Loader::Worker::abortDownloadsFinishDecompression(std::size_t layerId, Func
     finishDecompression(slotDecompression[layerId], keep);
 }
 
-std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, coord2bytep_map_t & cubeHash, const Coordinate globalCoord) {
+std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const Coordinate globalCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
         return {false, currentSlot};
     }
@@ -470,6 +473,9 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
 void Loader::Worker::cleanup(const Coordinate center) {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         abortDownloadsFinishDecompression(layerId, currentlyVisibleWrap(center, datasets[layerId]));
+        if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
+            continue;
+        }
         QMutexLocker locker(&state->protectCube2Pointer);
         unloadCubes(state->cube2Pointer[layerId][loaderMagnification], freeSlots[layerId], insideCurrentSupercubeWrap(center, datasets[layerId])
                     , [this, layerId](const CoordOfCube & cubeCoord, void * remSlotPtr){
@@ -518,7 +524,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         QMutexLocker locker(&state->protectCube2Pointer);
         for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
             // only queue downloads which are necessary
-            if (Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][loaderMagnification], globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
+            if (Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layerId, loaderMagnification, globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
                 allCubes.emplace_back(globalCoord);
                 if (currentlyVisibleWrap(center, datasets[layerId])(globalCoord)) {
                     visibleCubes.emplace_back(globalCoord);
@@ -545,11 +551,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     }
                     const auto cubeCoord = globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification);
                     state->protectCube2Pointer.lock();
-                    auto * currentSlot = Coordinate2BytePtr_hash_get_or_fail(cubeHash, cubeCoord);
+                    const auto currentSlotIt = cubeHash.find(cubeCoord);
                     cubeHash.erase(cubeCoord);
                     state->protectCube2Pointer.unlock();
-                    if (currentSlot == nullptr) {
-                        currentSlot = freeSlots.front();
+                    auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
+                    if (currentSlot == freeSlots.front()) {
                         freeSlots.pop_front();
                     }
                     //directly uncompress snappy cube into the OC slot
@@ -573,7 +579,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         QUrl dcUrl = dataset.apiSwitch(globalCoord);
 
         state->protectCube2Pointer.lock();
-        const bool cubeNotAlreadyLoaded = Coordinate2BytePtr_hash_get_or_fail(cubeHash, globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)) == nullptr;
+        const bool cubeNotAlreadyLoaded = cubeHash.count(globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)) == 0;
         state->protectCube2Pointer.unlock();
         const bool cubeNotDownloading = downloads.find(globalCoord) == std::end(downloads);
         const bool cubeNotDecompressing = decompressions.find(globalCoord) == std::end(decompressions);
@@ -681,7 +687,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
                 if (datasets[layerId].loadingEnabled) {
-                    startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer[layerId][loaderMagnification]);
+                    try {
+                        startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
+                    } catch (const std::out_of_range &) {}
                     workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
                 }
             }

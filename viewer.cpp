@@ -554,7 +554,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
             }
             state->protectCube2Pointer.lock();
-            void * const cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::current().magnification)], currentDc);
+            void * const cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layerId, int_log(Dataset::current().magnification), currentDc);
             state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
@@ -734,7 +734,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer.lock();
-            void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layerId][int_log(Dataset::datasets[layerId].magnification)], {currentDc.x, currentDc.y, currentDc.z});
+            void * const datacube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layerId, int_log(Dataset::datasets[layerId].magnification), {currentDc.x, currentDc.y, currentDc.z});
             state->protectCube2Pointer.unlock();
 
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
@@ -945,7 +945,7 @@ void Viewer::run() {
                     const auto globalCoord = pair.first.cube2Global(gpucubeedge, Dataset::current().magnification);
                     const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
                     state->protectCube2Pointer.lock();
-                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[layer.isOverlayData][int_log(Dataset::current().magnification)], cubeCoord);
+                    const auto * ptr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layer.isOverlayData, int_log(Dataset::current().magnification), cubeCoord);
                     state->protectCube2Pointer.unlock();
                     if (ptr != nullptr) {
                         layer.cubeSubArray(ptr, Dataset::current().cubeEdgeLength, gpucubeedge, pair.first, pair.second);

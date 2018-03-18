@@ -37,7 +37,7 @@ std::pair<bool, void *> getRawCube(const Coordinate & pos) {
     const auto posDc = pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
 
     state->protectCube2Pointer.lock();
-    auto * rawcube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer[Segmentation::singleton().layerId][int_log(Dataset::current().magnification)], posDc);
+    auto * rawcube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, Segmentation::singleton().layerId, int_log(Dataset::current().magnification), posDc);
     state->protectCube2Pointer.unlock();
 
     return std::make_pair(rawcube != nullptr, rawcube);

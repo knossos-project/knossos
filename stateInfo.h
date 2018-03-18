@@ -96,7 +96,7 @@ public:
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    std::vector<std::vector<coord2bytep_map_t>> cube2Pointer;
+    coord2bytep_map_t cube2Pointer;
 
     struct ViewerState * viewerState;
     class MainWindow * mainWindow{nullptr};

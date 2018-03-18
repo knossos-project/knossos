@@ -27,8 +27,8 @@
 
 #include <unordered_map>
 
-using coord2bytep_map_t = std::unordered_map<CoordOfCube, void *>;
+using coord2bytep_map_t = std::vector<std::vector<std::unordered_map<CoordOfCube, void *>>>;
 
-void * Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const CoordOfCube &c);
+void * Coordinate2BytePtr_hash_get_or_fail(const coord2bytep_map_t &h, const std::size_t layerId, const std::size_t magindex, const CoordOfCube &c);
 
 #endif//HASHTABLE_H
