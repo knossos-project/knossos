@@ -40,6 +40,8 @@ RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, 
     options.enableTextScaling = true;
     options.highlightActiveNode = false;
     options.highlightSelection = false;
+    options.vp3dSliceBoundaries = false;
+    options.vp3dSliceIntersections = false;
     return options;
 }
 

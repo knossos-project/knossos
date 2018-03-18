@@ -1472,50 +1472,53 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             renderArbitrarySlicePane(*state->viewer->window->viewportArb, options);
         }
         // colored slice boundaries
-        glDisable(GL_TEXTURE_2D);
-        state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-            if (orthoVP.isVisible()) {
-                const float dataPxX = orthoVP.displayedIsoPx;
-                const float dataPxY = orthoVP.displayedIsoPx;
-                glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
-                glBegin(GL_LINE_LOOP);
-                    glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                               -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                               -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                    glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                                dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                                dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                    glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                                dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                                dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-                    glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                               -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                               -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
+        if (options.vp3dSliceBoundaries) {
+            glDisable(GL_TEXTURE_2D);
+            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+                if (orthoVP.isVisible()) {
+                    const float dataPxX = orthoVP.displayedIsoPx;
+                    const float dataPxY = orthoVP.displayedIsoPx;
+                    glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
+                    glBegin(GL_LINE_LOOP);
+                        glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                   -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                   -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
+                        glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                    dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                    dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
+                        glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                    dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                    dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
+                        glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                   -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                   -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
+                    glEnd();
+                }
+            });
+        }
+        // intersection lines
+        if (options.vp3dSliceIntersections) {
+            const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+            glColor4f(0., 0., 0., 1.);
+            if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+                glBegin(GL_LINES);
+                    glVertex3f(-size, 0, 0);
+                    glVertex3f( size, 0, 0);
                 glEnd();
             }
-        });
-        // intersection lines
-        const auto size = state->viewer->window->viewportXY->displayedIsoPx;
-        glColor4f(0., 0., 0., 1.);
-        if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
-            glBegin(GL_LINES);
-                glVertex3f(-size, 0, 0);
-                glVertex3f( size, 0, 0);
-            glEnd();
+            if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+                glBegin(GL_LINES);
+                    glVertex3f(0, -size, 0);
+                    glVertex3f(0,  size, 0);
+                glEnd();
+            }
+            if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+                glBegin(GL_LINES);
+                    glVertex3f(0, 0, -size);
+                    glVertex3f(0, 0,  size);
+                glEnd();
+            }
         }
-        if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
-            glBegin(GL_LINES);
-                glVertex3f(0, -size, 0);
-                glVertex3f(0,  size, 0);
-            glEnd();
-        }
-        if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
-            glBegin(GL_LINES);
-                glVertex3f(0, 0, -size);
-                glVertex3f(0, 0,  size);
-            glEnd();
-        }
-
         glPopMatrix();
     }
 

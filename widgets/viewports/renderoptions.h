@@ -23,6 +23,8 @@ struct RenderOptions {
     bool highlightSelection{true};
     bool nodePicking{false};
     bool meshPicking{false};
+    bool vp3dSliceBoundaries{true};
+    bool vp3dSliceIntersections{true};
     SelectionPass selectionPass{SelectionPass::NoSelection};
 };
 
