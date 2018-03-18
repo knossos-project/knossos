@@ -32,6 +32,8 @@
 #include <QSet>
 #include <QSignalBlocker>
 #include <QVariantHash>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #include <boost/optional.hpp>
 
@@ -280,7 +282,9 @@ public:
     bool setActiveTreeByID(decltype(treeListElement::treeID) treeID);
 
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const bool merge, const QString & treeCmtOnMultiLoad = "");
-    void saveXmlSkeleton(QIODevice &file) const;
+    std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QXmlStreamReader & xml, const bool merge, const QString & treeCmtOnMultiLoad);
+    void saveXmlSkeleton(QIODevice & file) const;
+    void saveXmlSkeleton(QXmlStreamWriter & file) const;
 
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);

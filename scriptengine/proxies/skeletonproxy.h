@@ -38,8 +38,11 @@ signals:
 
 public slots:
 
-    QString skeleton_file();
+    QString skeleton_filename();
     bool has_unsaved_changes();
+    void clear_skeleton();
+    QString save_skeleton();
+    void load_skeleton(QString & xml_string, const bool merge, const QString & treeCmtOnMultiLoad = "");
 
     void delete_skeleton();
     treeListElement *find_tree_by_id(quint64 tree_id);

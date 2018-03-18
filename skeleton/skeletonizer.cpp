@@ -45,8 +45,6 @@
 #include <QMessageBox>
 #include <QSignalBlocker>
 #include <QXmlStreamAttributes>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 #include <cstring>
 #include <queue>
@@ -174,6 +172,10 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
 
 void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
     QXmlStreamWriter xml(&file);
+    saveXmlSkeleton(xml);
+}
+
+void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
 
@@ -351,15 +353,16 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("loadXmlSkeleton open failed");
     }
+    QXmlStreamReader xml(&file);
+    return loadXmlSkeleton(xml, merge, treeCmtOnMultiLoad);
+}
 
+std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QXmlStreamReader & xml, const bool merge, const QString & treeCmtOnMultiLoad) {
     // If "createdin"-node does not exist, skeleton was created in a version before 3.2
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
     state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
     Session::singleton().guiMode = GUIMode::None;
-
-    QElapsedTimer bench;
-    QXmlStreamReader xml(&file);
 
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
@@ -374,6 +377,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     const QSet<QString> knownElements({"scale", "offset", "skeletonDisplayMode"});
     QSet<QString> skippedElements;
 
+    QElapsedTimer bench;
     bench.start();
     {
     QSignalBlocker blocker{this};

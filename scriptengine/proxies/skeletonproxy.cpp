@@ -169,6 +169,22 @@ QString SkeletonProxy::skeleton_filename() {
     return Session::singleton().annotationFilename;
 }
 
+void SkeletonProxy::clear_skeleton() {
+    Skeletonizer::singleton().clearSkeleton();
+}
+
+QString SkeletonProxy::save_skeleton() {
+    QString save_string;
+    QXmlStreamWriter xml(&save_string);
+    Skeletonizer::singleton().saveXmlSkeleton(xml);
+    return save_string;
+}
+
+void SkeletonProxy::load_skeleton(QString & xml_string, const bool merge, const QString & treeCmtOnMultiLoad) {
+    QXmlStreamReader xml(xml_string);
+    Skeletonizer::singleton().loadXmlSkeleton(xml, merge, treeCmtOnMultiLoad);
+}
+
 // TEST LATER
 void SkeletonProxy::export_converter(const QString &path) {
     QDir dir(path);
