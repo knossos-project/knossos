@@ -474,7 +474,10 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, o.withMesh, o.withSkeleton, o.withVpPlanes);
     fbo->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
+    bool tmpLinesAndPoints = state->viewerState->onlyLinesAndPoints;
+    state->viewerState->onlyLinesAndPoints = false;
     renderViewport(options);
+    state->viewerState->onlyLinesAndPoints = tmpLinesAndPoints;
     if(o.withScale) {
         setFrontFacePerspective();
         renderScaleBar();
