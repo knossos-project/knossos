@@ -130,7 +130,7 @@ Q_OBJECT
     // The colors should be "maximally different".
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
 
-    Object & createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t objectId = ++Object::highestId, const bool todo = false, const bool immutable = false);
+    Object & createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, uint64_t objectId = ++Object::highestId, const bool todo = false, const bool immutable = false);
     template<typename... Args>
     Object & createObject(Args && ... args);
     void removeObject(Object &);

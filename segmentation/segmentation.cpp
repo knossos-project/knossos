@@ -131,9 +131,9 @@ void Segmentation::createAndSelectObject(const Coordinate & position) {
     selectObject(newObject);
 }
 
-Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, const uint64_t objectId, const bool todo, const bool immutable) {
+Segmentation::Object & Segmentation::createObjectFromSubobjectId(const uint64_t initialSubobjectId, const Coordinate & location, uint64_t objectId, const bool todo, const bool immutable) {
     if (objectIdToIndex.find(objectId) != std::end(objectIdToIndex)) {
-        throw std::runtime_error(tr("object with id %1 already exists").arg(objectId).toStdString());
+        objectId = ++Object::highestId;
     }
     //first is iterator to the newly inserted key-value pair or the already existing value
     auto subobjectIt = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first;
