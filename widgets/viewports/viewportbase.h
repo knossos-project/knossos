@@ -164,6 +164,7 @@ private:
 
 protected:
     void renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog = boost::none);
+    QOpenGLShaderProgram sphereShader;
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;

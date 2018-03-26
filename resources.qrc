@@ -75,5 +75,7 @@
         <file>resources/splash.png</file>
         <file>resources/splash@2x.png</file>
         <file>resources/style.qss</file>
+        <file>resources/shaders/sphere.frag</file>
+        <file>resources/shaders/sphere.vert</file>
     </qresource>
 </RCC>
