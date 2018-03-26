@@ -7,18 +7,12 @@ uniform vec4 viewport;
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 
-varying float radius;
-varying vec2  center;
+//varying float radius;
+//varying vec2  center;
 
 void main() {
-	mat4 mvp = modelview_matrix * projection_matrix;
-	gl_Position   = mvp * vec4(vertex, 1.0);
-
-	gl_PointSize = 5.0 * min(viewport.z, viewport.w);
-	gl_FrontColor = vec4(0.5, 0.5, 0.5, 0.5);//gl_Color;
-
-	center = gl_Position.xy;
-	radius = 5.0;
+    mat4 mvp_matrix = projection_matrix * modelview_matrix;
+    gl_Position = mvp_matrix * vec4(vertex, 1.0);
 }
 
 //#version 120

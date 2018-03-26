@@ -1988,8 +1988,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
-    glMatrixMode(GL_MODELVIEW);
-
     glPushMatrix();
     const auto displayFlag = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
     auto & glBuffers = displayFlag.testFlag(TreeDisplay::OnlySelected) ? state->viewerState->selectedTreesBuffers : state->viewerState->AllTreesBuffers;
@@ -2110,23 +2108,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         }
     }
 
-    glTranslatef(0.5, 0.5, 0.5);
-
-    GLfloat modelview_mat[4][4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    GLfloat projection_mat[4][4];
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
-
-    GLfloat mviewport[4];
-    glGetFloatv(GL_VIEWPORT, &mviewport[0]);
-
-    sphereShader.bind();
-    sphereShader.setUniformValue("modelview_matrix", modelview_mat);
-    sphereShader.setUniformValue("projection_matrix", projection_mat);
-
-    QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
-    sphereShader.setUniformValue("viewport", tmp);
-
     // lighting isn’t really applicable to lines and points
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
@@ -2164,12 +2145,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    /* draw all nodes */
+//    /* draw all nodes */
     glBuffers.pointVertBuffer.vertex_buffer.bind();
-    //glVertexPointer(3, GL_FLOAT, 0, nullptr);
-    int vertexLocation = sphereShader.attributeLocation("vertex");
-    sphereShader.enableAttributeArray(vertexLocation);
-    sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    glVertexPointer(3, GL_FLOAT, 0, nullptr);
+//    const int vertexLocation = sphereShader.attributeLocation("vertex");
+//    sphereShader.enableAttributeArray(vertexLocation);
+//    sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     glBuffers.pointVertBuffer.vertex_buffer.release();
 
     if(options.nodePicking) {
@@ -2181,14 +2162,29 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
         }
     } else {
-        //glBuffers.pointVertBuffer.color_buffer.bind();
-        //glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        //glBuffers.pointVertBuffer.color_buffer.release();
+//        glBuffers.pointVertBuffer.color_buffer.bind();
+//        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+//        glBuffers.pointVertBuffer.color_buffer.release();
     }
+
+    //    glTranslatef(0.5, 0.5, 0.5);
+
+    GLfloat modelview_mat[4][4];
+    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+    GLfloat projection_mat[4][4];
+    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+    GLfloat mviewport[4];
+    glGetFloatv(GL_VIEWPORT, &mviewport[0]);
+    QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
+
+    sphereShader.bind();
+    sphereShader.setUniformValue("modelview_matrix", modelview_mat);
+    sphereShader.setUniformValue("projection_matrix", projection_mat);
+    sphereShader.setUniformValue("viewport", tmp);
 
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
 
-    sphereShader.disableAttributeArray(vertexLocation);
+//    sphereShader.disableAttributeArray(vertexLocation);
 
     sphereShader.release();
 

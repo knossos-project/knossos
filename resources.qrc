@@ -70,12 +70,12 @@
         <file>resources/shaders/normal slicingapply.frag</file>
         <file>resources/shaders/normal treecolor.frag</file>
         <file>resources/shaders/normal.vert</file>
+        <file>resources/shaders/sphere.frag</file>
+        <file>resources/shaders/sphere.vert</file>
         <file>resources/shaders/texturequad.frag</file>
         <file>resources/shaders/texturequad.vert</file>
         <file>resources/splash.png</file>
         <file>resources/splash@2x.png</file>
         <file>resources/style.qss</file>
-        <file>resources/shaders/sphere.frag</file>
-        <file>resources/shaders/sphere.vert</file>
     </qresource>
 </RCC>
