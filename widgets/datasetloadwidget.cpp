@@ -310,6 +310,8 @@ bool DatasetLoadWidget::loadDataset(QWidget * parent, const boost::optional<bool
         auto & reply = *Network::singleton().manager.get(googleRequest(path));
         const auto config = blockDownloadExtractData(reply);
 
+        qDebug() << config.first;
+
         Dataset info;
         if (config.first) {
             info = Dataset::parseGoogleJson(path, config.second).first();

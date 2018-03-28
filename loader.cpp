@@ -645,6 +645,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     downloads.erase(globalCoord);
                     watcher->setFuture(QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(*reply), dataset, std::ref(cubeHash), globalCoord)));
                 } else {
+                    //qDebug() << globalCoord << static_cast<int>(dataset.type) << reply->errorString();
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {//404 → fill
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
