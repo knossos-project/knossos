@@ -182,7 +182,7 @@ void TaskManagementWidget::logoutButtonClicked() {
     }
 }
 
-void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByteArray content) {
+void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByteArray & content) {
     QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
     taskDir.mkpath("./task-files");//filenames of new tasks contain subfolder
 

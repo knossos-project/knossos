@@ -35,7 +35,7 @@ struct NodeGenerator {
     std::unordered_set<const nodeListElement *> queuedNodes;
     Direction direction{Direction::Any};
     bool reachedEnd{true};
-    NodeGenerator() {}
+    NodeGenerator() = default;
     NodeGenerator(nodeListElement & node, const Direction direction);
     bool operator!=(NodeGenerator & other);
     NodeGenerator & operator++();
@@ -47,7 +47,7 @@ struct TreeTraverser {
     NodeGenerator nodeIter;
     std::list<treeListElement> * trees;
     std::unordered_map<decltype(nodeListElement::nodeID), nodeListElement *>::iterator progress;
-    TreeTraverser() {}
+    TreeTraverser() = default;
     TreeTraverser(std::list<treeListElement> & trees, nodeListElement * node = nullptr);
     bool operator!=(TreeTraverser & other);
     TreeTraverser & operator++();

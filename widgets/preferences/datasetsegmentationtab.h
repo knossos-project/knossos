@@ -73,7 +73,7 @@ class DatasetAndSegmentationTab : public QWidget
     void saveSettings() const;
     void loadSettings();
 public:
-    explicit DatasetAndSegmentationTab(QWidget *parent = 0);
+    explicit DatasetAndSegmentationTab(QWidget *parent = nullptr);
 
 signals:
     void volumeRenderToggled();

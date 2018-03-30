@@ -34,7 +34,7 @@ class treeListElement;
 class TreeListDecorator : public QObject {
     Q_OBJECT
 public:
-    explicit TreeListDecorator(QObject *parent = 0);
+    explicit TreeListDecorator(QObject *parent = nullptr);
 
 public slots:
     QColor color(treeListElement *self);

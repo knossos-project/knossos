@@ -34,35 +34,35 @@ class Viewport3D : public ViewportBase {
     QAction resetAction{nullptr};
     QAction showVolumeAction{tr("Show volume"), &menuButton};
     void resetWiggle();
-    virtual void zoom(const float zoomStep) override;
-    virtual float zoomStep() const override;
-    virtual void paintGL() override;
+    void zoom(const float zoomStep) override;
+    float zoomStep() const override;
+    void paintGL() override;
     bool wiggleDirection{true};
     int wiggle{0};
     QTimer wiggletimer;
     void renderVolumeVP();
     void renderSkeletonVP(const RenderOptions & options = RenderOptions());
-    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    void renderViewport(const RenderOptions &options = RenderOptions()) override;
     void renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOptions & options);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
-    virtual void renderViewportFrontFace() override;
+    void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
+    void renderViewportFrontFace() override;
 
-    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    virtual void handleWheelEvent(const QWheelEvent *event) override;
-    virtual void handleKeyPress(const QKeyEvent *event) override;
-    virtual void handleKeyRelease(const QKeyEvent *event) override;
-    virtual void focusOutEvent(QFocusEvent *event) override;
+    void handleMouseMotionLeftHold(const QMouseEvent *event) override;
+    void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    void handleWheelEvent(const QWheelEvent *event) override;
+    void handleKeyPress(const QKeyEvent *event) override;
+    void handleKeyRelease(const QKeyEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 protected:
-    virtual void renderMeshBufferIds(Mesh &buf) override;
+    void renderMeshBufferIds(Mesh &buf) override;
 
 public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
-    ~Viewport3D();
-    virtual void showHideButtons(bool isShow) override;
+    ~Viewport3D() override;
+    void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 

@@ -34,6 +34,7 @@
 #include <QObject>
 
 #include <functional>
+#include <utility>
 
 /*
  * This class emits on ctor a signal of arbitrary parameters that is passed to the ctor,
@@ -65,11 +66,11 @@ public:
     EmitOnCtorDtor(SignalType signalName, Class instance, Args && ...args) {
         emit std::mem_fn(signalName)(instance, this, std::forward<Args>(args)...);
     }
-    ~EmitOnCtorDtor() {
+    ~EmitOnCtorDtor() override {
         emit dtorSignal(dtorCtx);
     }
 public slots:
-    void dtorSetCtx(QVariant ctx) { dtorCtx = ctx;}
+    void dtorSetCtx(QVariant ctx) { dtorCtx = std::move(ctx);}
 signals:
     void dtorSignal(QVariant);
 private:

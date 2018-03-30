@@ -97,7 +97,7 @@ Q_DECLARE_METATYPE(SnapshotOptions)
 class ViewportBase;
 class ResizeButton : public QPushButton {
     Q_OBJECT
-    virtual void mouseMoveEvent(QMouseEvent * event) override;
+    void mouseMoveEvent(QMouseEvent * event) override;
 public:
     explicit ResizeButton(QWidget *parent) : QPushButton(parent) {}
 signals:
@@ -108,10 +108,10 @@ signals:
 class QViewportFloatWidget : public QDialog {
     ViewportBase *vp;
 protected:
-    virtual void closeEvent(QCloseEvent *event) override;
-    virtual void moveEvent(QMoveEvent *event) override;
-    virtual void resizeEvent(QResizeEvent *event) override;
-    virtual void showEvent(QShowEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+    void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 public:
     bool fullscreen{false};
     boost::optional<QPoint> nonMaximizedPos;
@@ -154,7 +154,7 @@ private:
 
     QSet<nodeListElement *> nodeSelection(int x, int y);
     // rendering
-    virtual void resizeGL(int width, int height) override;
+    void resizeGL(int width, int height) override;
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
     void renderMeshBuffer(Mesh & buf);
@@ -171,7 +171,7 @@ protected:
     virtual float zoomStep() const = 0;
     void applyZoom(const QWheelEvent *event, float direction = 1.0f);
     // rendering
-    virtual void initializeGL() override;
+    void initializeGL() override;
     virtual void hideVP();
     void setFrontFacePerspective();
     void renderScaleBar();
@@ -189,19 +189,19 @@ protected:
     boost::optional<nodeListElement &> pickNode(int x, int y, int width);
     void handleLinkToggle(const QMouseEvent & event);
 
-    virtual void moveEvent(QMoveEvent *event) override;
-    virtual void resizeEvent(QResizeEvent *event) override;
+    void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
     // event-handling
-    virtual void enterEvent(QEvent * event) override;
-    virtual void leaveEvent(QEvent * event) override;
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
-    virtual void tabletEvent(QTabletEvent *event) override;
-    virtual void keyPressEvent(QKeyEvent *event) override;
-    virtual void keyReleaseEvent(QKeyEvent *event) override;
-    virtual void wheelEvent(QWheelEvent *event) override { handleWheelEvent(event); }
+    void enterEvent(QEvent * event) override;
+    void leaveEvent(QEvent * event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void tabletEvent(QTabletEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override { handleWheelEvent(event); }
 
     float zoomSpeed{0.5f};
     QPoint mouseDown;
@@ -259,7 +259,7 @@ public:
     static bool oglDebug;
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType);
-    virtual ~ViewportBase();
+    ~ViewportBase() override;
 
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed

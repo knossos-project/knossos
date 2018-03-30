@@ -244,7 +244,7 @@ bool SkeletonProxy::delete_segment(quint64 source_id, quint64 target_id) {
 }
 
 bool SkeletonProxy::delete_node(quint64 node_id) {
-    if (!Skeletonizer::singleton().delNode(node_id, NULL)) {
+    if (!Skeletonizer::singleton().delNode(node_id, nullptr)) {
         emit echo(QString("could not delete the node with id %1").arg(node_id));
         return false;
     }

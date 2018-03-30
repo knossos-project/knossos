@@ -44,8 +44,8 @@ class PropertyModel : public QAbstractListModel {
     int numberPropertySize{0};
 public:
     PropertyModel();
-    virtual int rowCount(const QModelIndex &) const override;
-    virtual QVariant data(const QModelIndex & index, int role) const override;
+    int rowCount(const QModelIndex &) const override;
+    QVariant data(const QModelIndex & index, int role) const override;
     void recreate(const QSet<QString> & numberProperties, const QSet<QString> & textProperties);
 };
 
@@ -80,7 +80,7 @@ class NodesTab : public QWidget {
     void saveSettings(QSettings &settings) const;
     void loadSettings(const QSettings &settings);
 public:
-    explicit NodesTab(QWidget *parent = 0);
+    explicit NodesTab(QWidget *parent = nullptr);
     void updateProperties(const QSet<QString> & properties, const QSet<QString> & textProperties);
 };
 

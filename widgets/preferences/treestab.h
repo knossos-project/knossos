@@ -47,13 +47,13 @@ public:
         setSpecialValueText("off");
         setRange(0, 64);
     }
-    virtual QValidator::State validate(QString &input, int &pos) const override {
+    QValidator::State validate(QString &input, int &pos) const override {
         const auto inRange = QSpinBox::validate(input, pos) == QValidator::Invalid;
         const auto number = static_cast<unsigned long>(valueFromText(input));
         const auto valid = inRange && (std::bitset<sizeof(number)>(number).count() <= 1);
         return inRange ? QValidator::Invalid : valid ? QValidator::Acceptable : QValidator::Intermediate;
     }
-    virtual void stepBy(int steps) override {
+    void stepBy(int steps) override {
         // we want 0 as value for 2^0 but have to calculate with 1
         const auto oldValue = value() == 0 ? 1 : value();
         const int newValue = std::pow(2, std::floor(std::log2(oldValue)) + steps);
@@ -93,7 +93,7 @@ class TreesTab : public QWidget
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);
 public:
-    explicit TreesTab(QWidget *parent = 0);
+    explicit TreesTab(QWidget *parent = nullptr);
 
 signals:
 

@@ -38,43 +38,43 @@ class ViewportOrtho : public ViewportBase {
     QAction zoomResetAction{tr("Reset zoom"), &menuButton};
 
     floatCoordinate handleMovement(const QPoint & pos);
-    virtual void zoom(const float zoomStep) override;
-    virtual float zoomStep() const override { return 0.75; }
+    void zoom(const float zoomStep) override;
+    float zoomStep() const override { return 0.75; }
 
     void renderViewportFast();
-    virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
-    virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
+    void renderViewport(const RenderOptions &options = RenderOptions()) override;
+    void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
     void renderSegPlaneIntersection(const segmentListElement & segment);
-    virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
+    void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(const Coordinate coord);
-    virtual void renderViewportFrontFace() override;
+    void renderViewportFrontFace() override;
 
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
 
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
 
-    virtual void handleKeyPress(const QKeyEvent *event) override;
-    virtual void handleMouseHover(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseLeft(const QMouseEvent *event) override;
-    virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
-    virtual void handleMouseButtonRight(const QMouseEvent *event) override;
-    virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseRight(const QMouseEvent *event) override;
-    virtual void handleMouseButtonMiddle(const QMouseEvent *event) override;
-    virtual void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
-    virtual void handleMouseReleaseMiddle(const QMouseEvent *event) override;
-    virtual void handleWheelEvent(const QWheelEvent *event) override;
+    void handleKeyPress(const QKeyEvent *event) override;
+    void handleMouseHover(const QMouseEvent *event) override;
+    void handleMouseReleaseLeft(const QMouseEvent *event) override;
+    void handleMouseMotionLeftHold(const QMouseEvent *event) override;
+    void handleMouseButtonRight(const QMouseEvent *event) override;
+    void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    void handleMouseReleaseRight(const QMouseEvent *event) override;
+    void handleMouseButtonMiddle(const QMouseEvent *event) override;
+    void handleMouseMotionMiddleHold(const QMouseEvent *event) override;
+    void handleMouseReleaseMiddle(const QMouseEvent *event) override;
+    void handleWheelEvent(const QWheelEvent *event) override;
 
 protected:
-    virtual void initializeGL() override;
-    virtual void paintGL() override;
+    void initializeGL() override;
+    void paintGL() override;
 
-    virtual void renderMeshBufferIds(Mesh &buf) override;
+    void renderMeshBufferIds(Mesh &buf) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
-    ~ViewportOrtho();
+    ~ViewportOrtho() override;
     void resetTexture(const std::size_t layerCount);
     void setTextureFilter(const QOpenGLTexture::Filter textureFilter);
     static bool showNodeComments;

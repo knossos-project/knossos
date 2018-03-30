@@ -32,9 +32,9 @@ bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const
 class Rotation {
 public:
     floatCoordinate axis;
-    float alpha;
+    float alpha{};
 
-    Rotation() : axis(floatCoordinate(0, 0 ,0)), alpha(0) {}
+    Rotation() : axis(floatCoordinate(0, 0 ,0))  {}
     Rotation(const floatCoordinate & axis, const float alpha) : axis(axis), alpha(alpha) {}
 };
 

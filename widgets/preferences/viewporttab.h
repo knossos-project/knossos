@@ -71,7 +71,7 @@ class ViewportTab : public QWidget {
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);
 public:
-    explicit ViewportTab(QWidget *parent = 0);
+    explicit ViewportTab(QWidget *parent = nullptr);
 };
 
 #endif // VIEWPORTTAB_H

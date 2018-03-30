@@ -1720,22 +1720,22 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             const auto x = xy || xz ? xsize : zsize;
             const auto y = xz ? zsize : ysize;
             //integer coordinates to round to voxel boundaries
-            vertices.push_back({-x    , -y    , z});
-            vertices.push_back({ x + 1, -y    , z});
-            vertices.push_back({ x + 1,  y + 1, z});
-            vertices.push_back({-x    ,  y + 1, z});
+            vertices.emplace_back(-x    , -y    , z);
+            vertices.emplace_back( x + 1, -y    , z);
+            vertices.emplace_back( x + 1,  y + 1, z);
+            vertices.emplace_back(-x    ,  y + 1, z);
         } else if(seg.brush.getShape() == brush_t::shape_t::round) {
             const int xmax = xy ? xsize : xz ? xsize : zsize;
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
             auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
-                vertices.push_back({x, y    , z});
-                vertices.push_back({x, y + 1, z});
+                vertices.emplace_back(x, y    , z);
+                vertices.emplace_back(x, y + 1, z);
             };
             auto addHorizontalPixelBorder = [&vertices](float x, float y, float z) {
-                vertices.push_back({x    , y, z});
-                vertices.push_back({x + 1, y, z});
+                vertices.emplace_back(x    , y, z);
+                vertices.emplace_back(x + 1, y, z);
             };
             while (x >= y) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
                 auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);

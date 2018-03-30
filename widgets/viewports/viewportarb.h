@@ -31,13 +31,13 @@ class ViewportArb : public ViewportOrtho {
     void updateOverlayTexture();
 
 protected:
-    virtual void paintGL() override;
-    virtual void hideVP() override;
+    void paintGL() override;
+    void hideVP() override;
 public:
     floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);
 
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
+    float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
 };
 
 #endif // VIEWPORTARB_H

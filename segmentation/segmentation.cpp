@@ -467,7 +467,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist;
     for (auto & obj : objects) {
         if(obj.todo) {
-            todolist.push_back(obj);
+            todolist.emplace_back(obj);
         }
     }
     std::sort(todolist.begin(), todolist.end());
@@ -594,11 +594,11 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
             std::istringstream coordColorLineStream(stream.readLine().toStdString());
 
             uint64_t objId;
-            bool todo;
-            bool immutable;
+            bool todo = false;
+            bool immutable = false;
             Coordinate location;
             uint r; uint g; uint b;
-            uint64_t initialVolume;
+            uint64_t initialVolume = 0;
             QString category;
             QString comment;
 

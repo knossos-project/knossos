@@ -45,6 +45,7 @@
 
 #include <atomic>
 #include <list>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -117,7 +118,7 @@ public://matsch
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
     Worker(const decltype(datasets) &);
-    ~Worker();
+    ~Worker() override;
 signals:
     void progress(bool incremented, int count);
 public slots:
@@ -137,7 +138,7 @@ public:
         return loader;
     }
     void suspendLoader();
-    ~Controller();
+    ~Controller() override;
     void unloadCurrentMagnification();
 
     template<typename... Args>
@@ -146,12 +147,12 @@ public:
         if (worker != nullptr) {
             worker->flushIntoSnappyCache();
             auto snappyCache = worker->snappyCache;
-            worker.reset(new Loader::Worker(datasets));
+            worker = std::make_unique<Loader::Worker>(datasets);
             const auto newSize = worker->snappyCache.size();
             worker->snappyCache = snappyCache;
             worker->snappyCache.resize(newSize);// mag count may change when switching datasets
         } else {
-            worker.reset(new Loader::Worker(datasets));
+            worker = std::make_unique<Loader::Worker>(datasets);
         }
         workerThread.setObjectName("Loader");
         worker->moveToThread(&workerThread);

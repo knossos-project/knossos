@@ -34,7 +34,7 @@ class NodeListDecorator : public QObject
     template<typename, std::size_t> friend class Coord;
     Q_OBJECT
 public:
-    explicit NodeListDecorator(QObject *parent = 0);
+    explicit NodeListDecorator(QObject *parent = nullptr);
 
 signals:
 
