@@ -50,9 +50,9 @@ class AbstractSkeletonModel : public QAbstractListModel {
 public:
     bool selectionProtection{false};
     bool selectionFromModel{false};
-    int columnCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    Qt::ItemFlags flags(const QModelIndex & index) const override;
+    virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
     int rowCount(const QModelIndex &) const override;
 };
 
@@ -60,7 +60,7 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
     const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment", "Properties"};
-    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, nullptr, Qt::ItemIsUserCheckable, nullptr, Qt::ItemIsEditable, nullptr};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable, 0};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
     enum SynapseDisplayModes {
@@ -69,9 +69,9 @@ public:
         ShowOnly = 2
     };
     SynapseDisplayModes mode = SynapseDisplayModes::Hide;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
-    bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
+    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
+    virtual bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent) override;
     void recreate();
 signals:
     void moveNodes(const QModelIndex &);
@@ -92,15 +92,15 @@ public:
         Synapse        = 1 << 5
     };
     QFlags<FilterMode> mode = FilterMode::InSelectedTree;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
+    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     void recreate(const bool matchAll);
 };
 
 class NodeView : public QTreeView {
     QSortFilterProxyModel & proxy;
     NodeModel & source;
-    void mousePressEvent(QMouseEvent * event) override;
+    virtual void mousePressEvent(QMouseEvent * event) override;
 public:
     NodeView(QSortFilterProxyModel & proxy, NodeModel & source) : proxy{proxy}, source{source} {}
 };

@@ -45,8 +45,8 @@ public:
     explicit CommentSetting(QString  shortcut, QString  text = "", QColor  color = QColor(255, 255, 0, 255), const float nodeRadius = 1.5) :
         shortcut(std::move(shortcut)), text(std::move(text)), color(std::move(color)), nodeRadius(nodeRadius) {}
 
-    static QColor getColor(const QString& comment);
-    static float getRadius(const QString& comment);
+    static QColor getColor(const QString & comment);
+    static float getRadius(const QString & comment);
 };
 
 #endif // COMMENTSETTING_H

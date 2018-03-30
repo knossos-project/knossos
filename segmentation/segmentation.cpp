@@ -598,7 +598,7 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
             bool immutable = false;
             Coordinate location;
             uint r; uint g; uint b;
-            uint64_t initialVolume = 0;
+            uint64_t initialVolume;
             QString category;
             QString comment;
 

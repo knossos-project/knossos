@@ -34,7 +34,7 @@ public:
     floatCoordinate axis;
     float alpha{};
 
-    Rotation() : axis(floatCoordinate(0, 0 ,0))  {}
+    Rotation() = default;
     Rotation(const floatCoordinate & axis, const float alpha) : axis(axis), alpha(alpha) {}
 };
 

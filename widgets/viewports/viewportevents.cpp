@@ -52,7 +52,7 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->pos(), vp);
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
-    for (const auto& subobjectPair : subobjectIds) {
+    for (const auto & subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
             const auto soid = subobjectPair.first;
             const auto pos = subobjectPair.second;
